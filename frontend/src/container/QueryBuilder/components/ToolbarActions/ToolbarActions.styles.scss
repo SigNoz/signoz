@@ -78,7 +78,17 @@
 .right-toolbar {
 	display: flex;
 	align-items: center;
-	background-color: var(--bg-robin-600);
+	gap: 4px;
+
+	.query-in-progress-container {
+		.cancel-run {
+			width: 100px;
+		}
+	}
+
+	.run-query-btn {
+		width: 136px;
+	}
 }
 
 .right-actions {
@@ -86,15 +96,15 @@
 	align-items: center;
 }
 
-.loading-container {
+.query-in-progress-container {
 	display: flex;
-	gap: 8px;
+	gap: 4px;
 	align-items: center;
 
-	.loading-btn {
+	.query-in-progress-btn {
 		display: flex;
 		width: 32px;
-		height: 33px;
+		height: 32px;
 		padding: 4px 10px;
 		justify-content: center;
 		align-items: center;
@@ -146,8 +156,8 @@
 			}
 		}
 	}
-	.loading-container {
-		.loading-btn {
+	.query-in-progress-container {
+		.query-in-progress-btn {
 			background: var(--bg-vanilla-300) !important;
 		}
 
