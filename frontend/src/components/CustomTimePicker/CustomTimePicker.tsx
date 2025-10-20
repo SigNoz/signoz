@@ -446,14 +446,21 @@ function CustomTimePicker({
 		setInputStatus('');
 		setInputErrorMessage(null);
 
-		setValue(selectedValue);
+		// Get the raw/editable format for the current selection
+		let editableValue = selectedTime;
 
-		// Use setTimeout to ensure the value is set after state updates
-		setTimeout(() => {
-			if (inputRef.current && inputRef.current.input) {
-				inputRef.current.input.value = selectedValue;
-			}
-		}, 0);
+		// If it's a custom time, use the selectedValue (date range string)
+		if (selectedTime === 'custom') {
+			editableValue = selectedValue;
+		}
+		// If it's a predefined option, convert back to raw format
+		else if (selectedTime && selectedTime !== 'custom') {
+			// For predefined options, use the selectedTime as is (like "5m", "1h")
+			editableValue = selectedTime;
+		}
+
+		// Update state with the raw format for editing
+		setValue(editableValue);
 
 		setOpen(true);
 		// setCustomDTPickerVisible?.(true);
@@ -461,22 +468,20 @@ function CustomTimePicker({
 	};
 
 	const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
-		// store in ref — doesn't cause re-render
-		if (inputRef.current && inputRef.current.input) {
-			inputRef.current.input.value = e.target.value;
-		}
+		// Update the value state for controlled input
+		setValue(e.target.value);
 	};
 
 	const handleEnter = (): void => {
-		if (inputRef.current && inputRef.current.input) {
-			const newVal = inputRef.current.input.value;
-			setValue('');
+		const newVal = value;
+		setValue('');
 
-			setIsInputFocused(false);
-			if (newVal !== selectedValue) {
-				handleDateTimeChange(newVal);
-			}
-			inputRef.current?.input?.blur();
+		setIsInputFocused(false);
+		if (newVal !== selectedValue) {
+			handleDateTimeChange(newVal);
+		}
+		if (inputRef.current?.input) {
+			inputRef.current.input.blur();
 		}
 	};
 
@@ -485,16 +490,21 @@ function CustomTimePicker({
 			return;
 		}
 
+		// Don't close if custom date picker is visible
+		if (customDateTimeVisible) {
+			return;
+		}
+
 		setIsInputFocused(false);
 
-		if (inputRef.current && inputRef.current.input) {
-			const newVal = inputRef.current.input.value;
-			setValue('');
+		const newVal = value;
+		setValue('');
 
-			if (newVal !== selectedValue) {
-				handleDateTimeChange(newVal);
-			}
-			inputRef.current?.input?.blur();
+		if (newVal !== selectedValue) {
+			handleDateTimeChange(newVal);
+		}
+		if (inputRef.current?.input) {
+			inputRef.current.input.blur();
 		}
 
 		setOpen(false);
@@ -502,13 +512,7 @@ function CustomTimePicker({
 		setShowDateTimeOptions(false);
 	};
 
-	// Keep the input field synced when `value` changes externally
-	// Only sync when not focused to avoid conflicts with handleFocus
-	useEffect(() => {
-		if (inputRef.current && inputRef.current.input && !isInputFocused) {
-			inputRef.current.input.value = value;
-		}
-	}, [value, isInputFocused]);
+	// No need for manual DOM sync with controlled input
 
 	// this is required as TopNav component wraps the components and we need to clear the state on path change
 	useEffect(() => {
@@ -613,7 +617,7 @@ function CustomTimePicker({
 						status={value && inputStatus === 'error' ? 'error' : ''}
 						placeholder={selectedTimePlaceholderValue}
 						ref={inputRef}
-						defaultValue={isInputFocused ? value : ''}
+						value={isInputFocused ? value : ''}
 						onChange={handleChange}
 						onBlur={handleBlur}
 						onPressEnter={handleEnter}
