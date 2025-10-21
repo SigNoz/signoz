@@ -15,7 +15,7 @@
 		"lib": ["dom", "dom.iterable", "esnext"],
 		"allowSyntheticDefaultImports": true,
 		"noFallthroughCasesInSwitch": true,
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,

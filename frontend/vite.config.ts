@@ -1,5 +1,5 @@
-import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { loadEnv } from 'vite';
 
 import path from 'path';
 
@@ -12,6 +12,7 @@ export default ({ mode }: { mode: string }) => {
 		},
 		server: {
 			port: 8080,
+			strictPort: false,
 			proxy: {
 				'/tunnel': {
 					target: env.VITE_TUNNEL_DOMAIN,
