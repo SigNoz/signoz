@@ -217,16 +217,7 @@ const (
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string," +
 		"CAST((scope_string_key, scope_string_value), 'Map(String, String)') as scope "
 	LogsSQLSelectV2 = "SELECT " +
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, " +
-		"attributes_string, " +
-		"attributes_number, " +
-		"attributes_bool, " +
-		"resources_string, " +
-		"scope_string "
-	// LogsSQLSelectV3 is similar to V2 but does NOT select the legacy `body` string column.
-	// It instead selects JSON/body maps so the reader can compose the final body.
-	LogsSQLSelectV3 = "SELECT " +
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2, promoted, " +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, " +
 		"attributes_string, " +
 		"attributes_number, " +
 		"attributes_bool, " +

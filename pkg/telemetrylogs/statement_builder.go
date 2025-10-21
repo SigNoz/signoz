@@ -217,7 +217,6 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		cteArgs      [][]any
 	)
 
-	// per-request local collectors (no context usage)
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" {
@@ -240,6 +239,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(LogsV2SeverityNumberColumn)
 		sb.SelectMore(LogsV2ScopeNameColumn)
 		sb.SelectMore(LogsV2ScopeVersionColumn)
+		sb.SelectMore(LogsV2BodyColumn)
 		sb.SelectMore(LogsV2BodyV2Column)
 		sb.SelectMore(LogsV2PromotedColumn)
 		sb.SelectMore(LogsV2AttributesStringColumn)
@@ -532,7 +532,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		var err error
 
 		// For body JSON fields with feature flag enabled, use array join logic
-		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && constants.BodyV2QueryEnabled{
+		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && constants.BodyV2QueryEnabled {
 			// Build array join info for this field
 			groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
 			if err != nil {

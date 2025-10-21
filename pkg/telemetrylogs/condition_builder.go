@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -54,7 +55,6 @@ func (c *conditionBuilder) conditionFor(
 
 	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
 
-	// TODO: add body.message here
 	// make use of case insensitive index for body
 	if tblFieldName == "body" {
 		switch operator {
@@ -218,8 +218,7 @@ func (c *conditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
-		// For callers of legacy ConditionFor, we still build the condition (WHERE-only).
+	if constants.BodyV2QueryEnabled && strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
 		cond, err := c.jqb.BuildCondition(ctx, key, operator, value, sb)
 		if err != nil {
 			return "", err
@@ -236,11 +235,7 @@ func (c *conditionBuilder) ConditionFor(
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
 		field, _ := c.fm.FieldFor(ctx, key)
-		// Also skip for body JSON when JSONQueryBuilder is active; it handles existence semantics as needed
-		if c.jqb != nil && (strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) || strings.Contains(key.Name, ":")) {
-			return condition, nil
-		}
-		if slices.Contains(maps.Keys(IntrinsicFields), field) {
+		if slices.Contains(maps.Keys(IntrinsicFields), field) && !strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
 			return condition, nil
 		}
 

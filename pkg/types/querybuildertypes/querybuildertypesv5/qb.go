@@ -47,15 +47,6 @@ type Statement struct {
 	WarningsDocURL string
 }
 
-// ArrayJoinReq describes one ARRAY JOIN pipeline stage.
-type ArrayJoinReq struct {
-	DynamicArrayExpr  string
-	DynamicItemAlias  string
-	JSONItemAlias     string
-	Path              string
-	ScalarAccessHints []string
-}
-
 // StatementBuilder builds the query.
 type StatementBuilder[T any] interface {
 	// Build builds the query.
