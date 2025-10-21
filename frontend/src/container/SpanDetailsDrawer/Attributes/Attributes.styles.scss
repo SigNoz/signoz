@@ -83,6 +83,10 @@
 
 			.action-btn {
 				display: none;
+
+				&--is-open {
+					display: flex;
+				}
 				position: absolute;
 				right: 8px;
 				top: 50%;
