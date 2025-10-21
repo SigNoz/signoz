@@ -312,7 +312,7 @@ function App(): JSX.Element {
 				Userpilot.initialize(import.meta.env.VITE_USERPILOT_KEY);
 			}
 
-			if (!isSentryInitialized) {
+			if (!isSentryInitialized && import.meta.env.PROD) {
 				Sentry.init({
 					dsn: import.meta.env.VITE_SENTRY_DSN,
 					tunnel: import.meta.env.VITE_TUNNEL_URL,

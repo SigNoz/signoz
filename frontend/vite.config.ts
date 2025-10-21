@@ -1,12 +1,27 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 
 import path from 'path';
 
 export default ({ mode }: { mode: string }) => {
 	const env = loadEnv(mode, process.cwd(), '');
 	return {
-		plugins: [react()],
+		plugins: [
+			react(),
+			sentryVitePlugin({
+				org: process.env.VITE_SENTRY_ORG,
+				project: process.env.VITE_SENTRY_PROJECT_ID,
+				authToken: process.env.VITE_SENTRY_AUTH_TOKEN,
+				sourcemaps: {
+					filesToDeleteAfterUpload: ['src/AppRoutes/index.tsx'],
+				},
+			}),
+		],
+		build: {
+			sourcemap: true,
+		},
+
 		optimizeDeps: {
 			include: ['rc-util/es/hooks/useEvent'],
 		},

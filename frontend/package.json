@@ -43,6 +43,7 @@
 		"@radix-ui/react-tabs": "1.0.4",
 		"@radix-ui/react-tooltip": "1.0.7",
 		"@sentry/react": "8.41.0",
+		"@sentry/vite-plugin": "4.5.0",
 		"@sentry/webpack-plugin": "2.22.6",
 		"@signozhq/badge": "0.0.2",
 		"@signozhq/button": "0.0.2",
