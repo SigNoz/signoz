@@ -116,7 +116,7 @@ func toUint64(row []any, idx int) uint64 {
 	return uint64(row[idx].(uint64))
 }
 
-// applyOpsToItems sets DataWarning.TopLevelOps for matching service names.
+// applyOpsToItems sets topLevelOps for matching service names.
 // If opsMap is nil, it performs no changes and returns nil.
 func applyOpsToItems(items []*servicetypesv1.ResponseItem, opsMap map[string][]string) {
 	if len(items) == 0 {
