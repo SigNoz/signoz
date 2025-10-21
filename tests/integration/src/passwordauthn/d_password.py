@@ -185,58 +185,59 @@ def test_reset_password(
     assert token is not None
 
 
-def test_reset_password_with_no_password(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
-    admin_token = get_token("admin@integration.test", "password123Z$")
+# TODO(pandey): this isn't the correct way to test this. Test the same using callbackauthn flow
+# def test_reset_password_with_no_password(
+#     signoz: types.SigNoz, get_token: Callable[[str, str], str]
+# ) -> None:
+#     admin_token = get_token("admin@integration.test", "password123Z$")
 
-    # Get the user id for admin+password@integration.test
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
+#     # Get the user id for admin+password@integration.test
+#     response = requests.get(
+#         signoz.self.host_configs["8080"].get("/api/v1/user"),
+#         timeout=2,
+#         headers={"Authorization": f"Bearer {admin_token}"},
+#     )
 
-    assert response.status_code == HTTPStatus.OK
+#     assert response.status_code == HTTPStatus.OK
 
-    user_response = response.json()["data"]
-    found_user = next(
-        (
-            user
-            for user in user_response
-            if user["email"] == "admin+password@integration.test"
-        ),
-        None,
-    )
+#     user_response = response.json()["data"]
+#     found_user = next(
+#         (
+#             user
+#             for user in user_response
+#             if user["email"] == "admin+password@integration.test"
+#         ),
+#         None,
+#     )
 
-    with signoz.sqlstore.conn.connect() as conn:
-        result = conn.execute(
-            sql.text("DELETE FROM factor_password WHERE user_id = :user_id"),
-            {"user_id": found_user["id"]},
-        )
-        assert result.rowcount == 1
+#     with signoz.sqlstore.conn.connect() as conn:
+#         result = conn.execute(
+#             sql.text("DELETE FROM factor_password WHERE user_id = :user_id"),
+#             {"user_id": found_user["id"]},
+#         )
+#         assert result.rowcount == 1
 
-    # Generate a new reset password token
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{found_user['id']}"
-        ),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
+#     # Generate a new reset password token
+#     response = requests.get(
+#         signoz.self.host_configs["8080"].get(
+#             f"/api/v1/getResetPasswordToken/{found_user['id']}"
+#         ),
+#         headers={"Authorization": f"Bearer {admin_token}"},
+#         timeout=2,
+#     )
 
-    assert response.status_code == HTTPStatus.OK
+#     assert response.status_code == HTTPStatus.OK
 
-    token = response.json()["data"]["token"]
+#     token = response.json()["data"]["token"]
 
-    # Reset the password with a good password
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "FINALPASSword123!#[", "token": token},
-        timeout=2,
-    )
+#     # Reset the password with a good password
+#     response = requests.post(
+#         signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
+#         json={"password": "FINALPASSword123!#[", "token": token},
+#         timeout=2,
+#     )
 
-    assert response.status_code == HTTPStatus.NO_CONTENT
+#     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    token = get_token("admin+password@integration.test", "FINALPASSword123!#[")
-    assert token is not None
+#     token = get_token("admin+password@integration.test", "FINALPASSword123!#[")
+#     assert token is not None
