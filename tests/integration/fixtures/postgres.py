@@ -29,8 +29,8 @@ def postgres(
             password="password",
             dbname="signoz",
             driver="psycopg2",
-            network=network.id,
         )
+        container.with_network(network)
         container.start()
 
         engine = create_engine(
