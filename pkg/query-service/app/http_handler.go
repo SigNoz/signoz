@@ -532,8 +532,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Delete)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
 
-	// router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost) // Deprecated Usage, using the below endpoint
-	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.Signoz.Handlers.Services.Get)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost) // Deprecated Usage, use the below endpoint /v2/services
+	router.HandleFunc("/api/v2/services", am.ViewAccess(aH.Signoz.Handlers.Services.Get)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/top_operations", am.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", am.ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
