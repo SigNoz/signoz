@@ -23,6 +23,7 @@ import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 import { RelatedSignalsViews } from '../constants';
 import SpanLogs from '../SpanLogs/SpanLogs';
+import { hasInfraMetadata } from '../utils';
 
 const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 
@@ -70,22 +71,8 @@ function SpanRelatedSignals({
 
 	// Extract infrastructure metadata from span attributes
 	const infraMetadata = useMemo(() => {
-		if (!selectedSpan?.tagMap) return null;
-
-		// Infrastructure metadata keys that indicate infra signals are available
-		const infraMetadataKeys = [
-			'k8s.cluster.name',
-			'k8s.pod.name',
-			'k8s.node.name',
-			'host.name',
-		];
-
 		// Only return metadata if span has infrastructure metadata
-		const hasInfraMetadata = infraMetadataKeys.some(
-			(key) => selectedSpan.tagMap?.[key],
-		);
-
-		if (!hasInfraMetadata) {
+		if (!hasInfraMetadata(selectedSpan)) {
 			return null;
 		}
 

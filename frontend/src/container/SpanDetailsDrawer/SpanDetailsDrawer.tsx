@@ -30,6 +30,7 @@ import { RelatedSignalsViews } from './constants';
 import Events from './Events/Events';
 import LinkedSpans from './LinkedSpans/LinkedSpans';
 import SpanRelatedSignals from './SpanRelatedSignals/SpanRelatedSignals';
+import { hasInfraMetadata } from './utils';
 
 interface ISpanDetailsDrawerProps {
 	isSpanDetailsDocked: boolean;
@@ -83,20 +84,8 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			},
 		];
 
-		// Infrastructure metadata keys that indicate infra signals are available
-		const infraMetadataKeys = [
-			'k8s.cluster.name',
-			'k8s.pod.name',
-			'k8s.node.name',
-			'host.name',
-		];
-
 		// Only show Infra option if span has infrastructure metadata
-		const hasInfraMetadata = infraMetadataKeys.some(
-			(key) => selectedSpan?.tagMap?.[key],
-		);
-
-		if (hasInfraMetadata) {
+		if (hasInfraMetadata(selectedSpan)) {
 			baseOptions.push({
 				label: (
 					<div className="view-title">
@@ -109,7 +98,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		}
 
 		return baseOptions;
-	}, [selectedSpan?.tagMap]);
+	}, [selectedSpan]);
 
 	function getItems(span: Span, startTime: number): TabsProps['items'] {
 		return [
