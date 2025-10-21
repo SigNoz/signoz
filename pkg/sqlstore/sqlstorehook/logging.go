@@ -11,7 +11,6 @@ import (
 )
 
 type logging struct {
-	bun.QueryHook
 	logger *slog.Logger
 	level  slog.Level
 }
@@ -27,11 +26,11 @@ func NewLogging(ctx context.Context, providerSettings factory.ProviderSettings, 
 	}, nil
 }
 
-func (logging) BeforeQuery(ctx context.Context, event *bun.QueryEvent) context.Context {
+func (*logging) BeforeQuery(ctx context.Context, event *bun.QueryEvent) context.Context {
 	return ctx
 }
 
-func (hook logging) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
+func (hook *logging) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
 	hook.logger.Log(
 		ctx,
 		hook.level,
