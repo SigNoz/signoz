@@ -72,21 +72,28 @@ function SpanRelatedSignals({
 	const infraMetadata = useMemo(() => {
 		if (!selectedSpan?.tagMap) return null;
 
-		const clusterName = selectedSpan.tagMap['k8s.cluster.name'] || '';
-		const podName = selectedSpan.tagMap['k8s.pod.name'] || '';
-		const nodeName = selectedSpan.tagMap['k8s.node.name'] || '';
-		const hostName = selectedSpan.tagMap['host.name'] || '';
+		// Infrastructure metadata keys that indicate infra signals are available
+		const infraMetadataKeys = [
+			'k8s.cluster.name',
+			'k8s.pod.name',
+			'k8s.node.name',
+			'host.name',
+		];
 
-		// Only return metadata if we have at least one infrastructure identifier
-		if (!clusterName && !podName && !nodeName && !hostName) {
+		// Only return metadata if span has infrastructure metadata
+		const hasInfraMetadata = infraMetadataKeys.some(
+			(key) => selectedSpan.tagMap?.[key],
+		);
+
+		if (!hasInfraMetadata) {
 			return null;
 		}
 
 		return {
-			clusterName,
-			podName,
-			nodeName,
-			hostName,
+			clusterName: selectedSpan.tagMap['k8s.cluster.name'] || '',
+			podName: selectedSpan.tagMap['k8s.pod.name'] || '',
+			nodeName: selectedSpan.tagMap['k8s.node.name'] || '',
+			hostName: selectedSpan.tagMap['host.name'] || '',
 			spanTimestamp: dayjs(selectedSpan.timestamp).format(),
 		};
 	}, [selectedSpan]);
