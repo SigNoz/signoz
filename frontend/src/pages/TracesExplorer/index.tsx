@@ -56,6 +56,7 @@ function TracesExplorer(): JSX.Element {
 		handleRunQuery,
 		stagedQuery,
 		handleSetConfig,
+		updateQueriesData,
 	} = useQueryBuilder();
 
 	const { options } = useOptionsMenu({
@@ -116,6 +117,20 @@ function TracesExplorer(): JSX.Element {
 				set(stagedQuery, 'builder.queryTraceOperator[0].orderBy', []);
 			}
 
+			if (view === ExplorerViews.LIST || view === ExplorerViews.TRACE) {
+				// loop through all the queries and remove the group by
+
+				const updateQuery = updateQueriesData(
+					currentQuery,
+					'queryData',
+					(item) => ({ ...item, groupBy: [] }),
+				);
+
+				setDefaultQuery(updateQuery);
+
+				setShouldReset(true);
+			}
+
 			setSelectedView(view);
 
 			handleExplorerTabChange(
@@ -123,11 +138,12 @@ function TracesExplorer(): JSX.Element {
 			);
 		},
 		[
-			handleSetConfig,
-			handleExplorerTabChange,
 			selectedView,
-			setSelectedView,
+			currentQuery,
 			stagedQuery,
+			handleExplorerTabChange,
+			handleSetConfig,
+			updateQueriesData,
 		],
 	);
 
