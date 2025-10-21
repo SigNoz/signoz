@@ -701,6 +701,7 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{}
 var IsDotMetricsEnabled = false
 var PreferSpanMetrics = false
 var MaxJSONFlatteningDepth = 1
+var BodyV2QueryEnabled = GetOrDefaultEnv("BODY_V2_QUERY_ENABLED", "false") == "true"
 
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)

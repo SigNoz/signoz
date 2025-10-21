@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -133,12 +135,45 @@ func (ic *LogParsingPipelineController) ValidatePipelines(
 	return nil
 }
 
+func (ic *LogParsingPipelineController) getDefaultPipelines() ([]pipelinetypes.GettablePipeline, error) {
+	defaultPipelines := []pipelinetypes.GettablePipeline{}
+	if constants.BodyV2QueryEnabled {
+		preprocessingPipeline := pipelinetypes.GettablePipeline{
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
+				Name:    "Default Pipeline - PreProcessing Body",
+				Alias:   "PreprocessingBodyDefault",
+				Enabled: true,
+			},
+			Filter: &v3.FilterSet{
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key: "body",
+						},
+						Operator: v3.FilterOperatorExists,
+					},
+				},
+			},
+			Config: []pipelinetypes.PipelineOperator{
+				{
+					ID:      uuid.NewString(),
+					Type:    "preprocessor",
+					Enabled: true,
+					If:      "body != nil",
+				},
+			},
+		}
+
+		defaultPipelines = append(defaultPipelines, preprocessingPipeline)
+	}
+	return defaultPipelines, nil
+}
+
 // Returns effective list of pipelines including user created
 // pipelines and pipelines for installed integrations
 func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 	ctx context.Context, orgID valuer.UUID, version int,
 ) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
-
 	result := []pipelinetypes.GettablePipeline{}
 	if version >= 0 {
 		savedPipelines, errors := ic.getPipelinesByVersion(ctx, orgID.String(), version)
@@ -272,6 +307,13 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	if apiErr != nil {
 		return nil, "", apiErr
 	}
+
+	// recommend default pipelines along with user created pipelines
+	defaultPipelines, err := pc.getDefaultPipelines()
+	if err != nil {
+		return nil, "", model.InternalError(fmt.Errorf("failed to get default pipelines: %w", err))
+	}
+	pipelinesResp.Pipelines = append(pipelinesResp.Pipelines, defaultPipelines...)
 
 	updatedConf, apiErr := GenerateCollectorConfigWithPipelines(
 		currentConfYaml, pipelinesResp.Pipelines,
