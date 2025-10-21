@@ -123,7 +123,7 @@ function TracesExplorer(): JSX.Element {
 				const updateQuery = updateQueriesData(
 					currentQuery,
 					'queryData',
-					(item) => ({ ...item, groupBy: [] }),
+					(item) => ({ ...item, groupBy: [], orderBy: [] }),
 				);
 
 				setDefaultQuery(updateQuery);
@@ -210,11 +210,6 @@ function TracesExplorer(): JSX.Element {
 
 	useShareBuilderUrl({ defaultValue: defaultQuery, forceReset: shouldReset });
 
-	const isGroupByExist = useMemo(() => {
-		const queryData = currentQuery?.builder?.queryData ?? [];
-		return queryData.some((q) => (q?.groupBy?.length ?? 0) > 0);
-	}, [currentQuery]);
-
 	const hasMultipleQueries = useMemo(
 		() => currentQuery?.builder?.queryData?.length > 1,
 		[currentQuery],
@@ -245,19 +240,6 @@ function TracesExplorer(): JSX.Element {
 		const firstQuery = currentQuery.builder.queryData[0];
 		return `Please use a Trace Operator to combine results of multiple span queries. Else you'd only see the results from query "${firstQuery.queryName}"`;
 	}, [currentQuery]);
-
-	useEffect(() => {
-		const shouldChangeView = isGroupByExist;
-
-		if (
-			(selectedView === ExplorerViews.LIST ||
-				selectedView === ExplorerViews.TRACE) &&
-			shouldChangeView
-		) {
-			// Switch to timeseries view automatically
-			handleChangeSelectedView(ExplorerViews.TIMESERIES);
-		}
-	}, [selectedView, isGroupByExist, handleChangeSelectedView]);
 
 	useEffect(() => {
 		if (shouldReset) {
@@ -327,6 +309,8 @@ function TracesExplorer(): JSX.Element {
 	]);
 
 	const [warning, setWarning] = useState<Warning | undefined>(undefined);
+
+	console.log('currentQuery in traces explorer', currentQuery);
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
