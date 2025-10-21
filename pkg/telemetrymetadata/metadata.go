@@ -603,6 +603,14 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			})
 		}
 
+		// default message key
+		keys = append(keys, &telemetrytypes.TelemetryFieldKey{
+			Name:          telemetrylogs.BodyJSONStringSearchPrefix + "message",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		})
+
 		// Update completeness - if body JSON extraction was incomplete, overall result is incomplete
 		complete = complete && bodyJSONComplete
 	}

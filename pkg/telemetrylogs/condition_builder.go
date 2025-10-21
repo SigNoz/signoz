@@ -48,6 +48,14 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
+	if column.IsJSONColumn() && constants.BodyV2QueryEnabled && strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+		cond, err := c.jqb.BuildCondition(ctx, key, operator, value, sb)
+		if err != nil {
+			return "", err
+		}
+		return cond, nil
+	}
+
 	tblFieldName, err := c.fm.FieldFor(ctx, key)
 	if err != nil {
 		return "", err
@@ -56,7 +64,7 @@ func (c *conditionBuilder) conditionFor(
 	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
 
 	// make use of case insensitive index for body
-	if tblFieldName == "body" {
+	if tblFieldName == "body" || tblFieldName == "body_v2.message" {
 		switch operator {
 		case qbtypes.FilterOperatorLike:
 			return sb.ILike(tblFieldName, value), nil
@@ -152,8 +160,7 @@ func (c *conditionBuilder) conditionFor(
 	// in the UI based query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-
-		if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+		if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) && !constants.BodyV2QueryEnabled {
 			if operator == qbtypes.FilterOperatorExists {
 				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			} else {
@@ -162,7 +169,7 @@ func (c *conditionBuilder) conditionFor(
 		}
 
 		var value any
-		if _, ok := column.Type.(schema.JSONColumnType); ok {
+		if column.IsJSONColumn() {
 			value = "NULL"
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.NE(tblFieldName, value), nil
@@ -218,14 +225,6 @@ func (c *conditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	if constants.BodyV2QueryEnabled && strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
-		cond, err := c.jqb.BuildCondition(ctx, key, operator, value, sb)
-		if err != nil {
-			return "", err
-		}
-		return cond, nil
-	}
-
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
 	if err != nil {
 		return "", err

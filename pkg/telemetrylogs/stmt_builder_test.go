@@ -1145,6 +1145,124 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 	}
 }
 
+func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
+	constants.BodyV2QueryEnabled = true
+	defer func() {
+		constants.BodyV2QueryEnabled = false
+	}()
+
+	jqb := buildTestJSONQueryBuilder()
+
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm, jqb)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
+
+	statementBuilder := NewLogQueryStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		mockMetadataStore,
+		fm,
+		cb,
+		jqb,
+		resourceFilterStmtBuilder,
+		aggExprRewriter,
+		DefaultFullTextColumn,
+		BodyJSONStringSearchPrefix,
+		GetBodyJSONKey,
+	)
+
+	cases := []struct {
+		name        string
+		requestType qbtypes.RequestType
+		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		expected    qbtypes.Statement
+		expectedErr error
+	}{
+		{
+
+			name:        "body.message Exists",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body.message Exists"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND body_v2.message <> ? AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "body.message equals to empty string",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body.message = ''"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (body_v2.message = ? AND body_v2.message <> ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "", "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "body.message equals to 'Iron Award'",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body.message = 'Iron Award'"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (body_v2.message = ? AND body_v2.message <> ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "Iron Award", "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+
+			// normalize whitespace: collapse all runs of whitespace to single spaces for stable comparisons
+			normalize := func(s string) string {
+				b := make([]rune, 0, len(s))
+				prevSpace := false
+				for _, r := range s {
+					if r == '\n' || r == '\t' || r == '\r' || r == ' ' {
+						if !prevSpace {
+							b = append(b, ' ')
+							prevSpace = true
+						}
+					} else {
+						b = append(b, r)
+						prevSpace = false
+					}
+				}
+				return string(b)
+			}
+
+			if c.expectedErr != nil {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), c.expectedErr.Error())
+			} else {
+				require.NoError(t, err)
+				t.Log(q.Query)
+				require.Equal(t, normalize(c.expected.Query), normalize(q.Query))
+				require.Equal(t, c.expected.Args, q.Args)
+				require.Equal(t, c.expected.Warnings, q.Warnings)
+			}
+		})
+	}
+}
+
 /*
 		{
 	  "user": {
