@@ -95,6 +95,35 @@ function SpanRelatedSignals({
 		setSelectedView(e.target.value);
 	}, []);
 
+	const tabOptions = useMemo(() => {
+		const baseOptions = [
+			{
+				label: (
+					<div className="view-title">
+						<LogsIcon width={14} height={14} />
+						Logs
+					</div>
+				),
+				value: RelatedSignalsViews.LOGS,
+			},
+		];
+
+		// Add Infra option if infrastructure metadata is available
+		if (infraMetadata) {
+			baseOptions.push({
+				label: (
+					<div className="view-title">
+						<Server size={14} />
+						Infra
+					</div>
+				),
+				value: RelatedSignalsViews.INFRA,
+			});
+		}
+
+		return baseOptions;
+	}, [infraMetadata]);
+
 	const appliedFilters = useMemo(
 		(): TagFilterItem[] => [
 			{
@@ -193,39 +222,7 @@ function SpanRelatedSignals({
 					<div className="views-tabs-container">
 						<SignozRadioGroup
 							value={selectedView}
-							options={[
-								{
-									label: (
-										<div className="view-title">
-											<LogsIcon width={14} height={14} />
-											Logs
-										</div>
-									),
-									value: RelatedSignalsViews.LOGS,
-								},
-								// {
-								// 	label: (
-								// 		<div className="view-title">
-								// 			<LogsIcon width={14} height={14} />
-								// 			Metrics
-								// 		</div>
-								// 	),
-								// 	value: RelatedSignalsViews.METRICS,
-								// },
-								...(infraMetadata
-									? [
-											{
-												label: (
-													<div className="view-title">
-														<Server size={14} />
-														Infra
-													</div>
-												),
-												value: RelatedSignalsViews.INFRA,
-											},
-									  ]
-									: []),
-							]}
+							options={tabOptions}
 							onChange={handleTabChange}
 							className="related-signals-radio"
 						/>

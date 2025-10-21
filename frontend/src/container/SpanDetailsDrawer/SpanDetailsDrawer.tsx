@@ -15,7 +15,13 @@ import {
 	Search,
 	Server,
 } from 'lucide-react';
-import { Dispatch, SetStateAction, useCallback, useState } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
@@ -63,6 +69,47 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	const handleRelatedSignalsClose = useCallback((): void => {
 		setIsRelatedSignalsOpen(false);
 	}, []);
+
+	const relatedSignalsOptions = useMemo(() => {
+		const baseOptions = [
+			{
+				label: (
+					<div className="view-title">
+						<LogsIcon width={14} height={14} />
+						Logs
+					</div>
+				),
+				value: RelatedSignalsViews.LOGS,
+			},
+		];
+
+		// Infrastructure metadata keys that indicate infra signals are available
+		const infraMetadataKeys = [
+			'k8s.cluster.name',
+			'k8s.pod.name',
+			'k8s.node.name',
+			'host.name',
+		];
+
+		// Only show Infra option if span has infrastructure metadata
+		const hasInfraMetadata = infraMetadataKeys.some(
+			(key) => selectedSpan?.tagMap?.[key],
+		);
+
+		if (hasInfraMetadata) {
+			baseOptions.push({
+				label: (
+					<div className="view-title">
+						<Server size={14} />
+						Infra
+					</div>
+				),
+				value: RelatedSignalsViews.INFRA,
+			});
+		}
+
+		return baseOptions;
+	}, [selectedSpan?.tagMap]);
 
 	function getItems(span: Span, startTime: number): TabsProps['items'] {
 		return [
@@ -224,35 +271,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 							<div className="related-signals-section">
 								<SignozRadioGroup
 									value=""
-									options={[
-										{
-											label: (
-												<div className="view-title">
-													<LogsIcon width={14} height={14} />
-													Logs
-												</div>
-											),
-											value: RelatedSignalsViews.LOGS,
-										},
-									].concat(
-										// Only show Infra option if span has infrastructure metadata
-										selectedSpan?.tagMap?.['k8s.cluster.name'] ||
-											selectedSpan?.tagMap?.['k8s.pod.name'] ||
-											selectedSpan?.tagMap?.['k8s.node.name'] ||
-											selectedSpan?.tagMap?.['host.name']
-											? [
-													{
-														label: (
-															<div className="view-title">
-																<Server size={14} />
-																Infra
-															</div>
-														),
-														value: RelatedSignalsViews.INFRA,
-													},
-											  ]
-											: [],
-									)}
+									options={relatedSignalsOptions}
 									onChange={handleRelatedSignalsChange}
 									className="related-signals-radio"
 								/>
