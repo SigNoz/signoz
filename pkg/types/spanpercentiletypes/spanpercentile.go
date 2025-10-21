@@ -5,7 +5,7 @@ import (
 )
 
 type SpanPercentileRequest struct {
-	DurationNano       int64             `json:"duration_nano"`
+	DurationNano       int64             `json:"span_duration"`
 	Name               string            `json:"name"`
 	ServiceName        string            `json:"service_name"`
 	ResourceAttributes map[string]string `json:"resource_attributes"`
