@@ -1,4 +1,5 @@
 import { Button, Popover, Spin, Tooltip } from 'antd';
+import cx from 'classnames';
 import { OPERATORS } from 'constants/antlrQueryConstants';
 import { useTraceActions } from 'hooks/trace/useTraceActions';
 import { ArrowDownToDot, ArrowUpFromDot, Copy, Ellipsis } from 'lucide-react';
@@ -106,7 +107,7 @@ export default function SpanFieldActions({
 	);
 
 	return (
-		<div className="action-btn">
+		<div className={cx('action-btn', { 'action-btn--is-open': isOpen })}>
 			<Tooltip title="Filter for value">
 				<Button
 					className="filter-btn periscope-btn"
