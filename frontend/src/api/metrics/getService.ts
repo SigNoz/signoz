@@ -7,7 +7,6 @@ const getService = async (props: Props): Promise<PayloadProps> => {
 		end: `${props.end}`,
 		tags: props.selectedTags,
 	});
-	// Backend serves /api/v1/services but returns v5-style { status, data }
 	return response.data?.data ?? response.data;
 };
 
