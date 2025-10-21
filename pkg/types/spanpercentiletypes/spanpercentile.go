@@ -5,24 +5,37 @@ import (
 )
 
 type SpanPercentileRequest struct {
-	SpanID                  string   `json:"span_id"`
-	Start                   uint64   `json:"start"`
-	End                     uint64   `json:"end"`
-	AdditionalResourceAttrs []string `json:"additional_resource_attrs,omitempty"`
+	DurationNano       int64             `json:"duration_nano"`
+	Name               string            `json:"name"`
+	ServiceName        string            `json:"service_name"`
+	ResourceAttributes map[string]string `json:"resource_attributes"`
+	Start              uint64            `json:"start"`
+	End                uint64            `json:"end"`
 }
 
 func (req *SpanPercentileRequest) Validate() error {
-	if req.SpanID == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "span_id is required")
+	if req.Name == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "name is required")
+	}
+
+	if req.ServiceName == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "service_name is required")
+	}
+
+	if req.DurationNano <= 0 {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "duration_nano must be greater than 0")
 	}
 
 	if req.Start >= req.End {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "start time must be before end time")
 	}
 
-	for _, attr := range req.AdditionalResourceAttrs {
-		if attr == "" {
-			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "resource attribute cannot be empty")
+	for key, val := range req.ResourceAttributes {
+		if key == "" {
+			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "resource attribute key cannot be empty")
+		}
+		if val == "" {
+			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "resource attribute value cannot be empty")
 		}
 	}
 

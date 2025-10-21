@@ -2,67 +2,27 @@ package implspanpercentile
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 
-	"github.com/SigNoz/signoz/pkg/modules/preference"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	preferencetypes "github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	querier          querier.Querier
-	preferenceModule preference.Module
+	querier querier.Querier
 }
 
-func NewModule(querier querier.Querier, preferenceModule preference.Module) spanpercentile.Module {
+func NewModule(querier querier.Querier) spanpercentile.Module {
 	return &module{
-		querier:          querier,
-		preferenceModule: preferenceModule,
+		querier: querier,
 	}
 }
 
-func (m *module) GetSpanPercentileDetails(ctx context.Context, orgID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*qbtypes.QueryRangeResponse, error) {
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	userID := valuer.UUID{}
-	if err == nil {
-		userID = valuer.MustNewUUID(claims.UserID)
-	}
-
-	if len(req.AdditionalResourceAttrs) > 0 && !userID.IsZero() {
-		_ = m.preferenceModule.UpdateByUser(
-			ctx,
-			userID,
-			preferencetypes.NameSpanPercentileAdditionalResourceAttributes,
-			req.AdditionalResourceAttrs,
-		)
-	} else if len(req.AdditionalResourceAttrs) == 0 {
-		if !userID.IsZero() {
-			pref, err := m.preferenceModule.GetByUser(
-				ctx,
-				userID,
-				preferencetypes.NameSpanPercentileAdditionalResourceAttributes,
-			)
-			if err == nil && pref != nil {
-				valueJSON, err := pref.Value.MarshalJSON()
-				if err == nil {
-					var attrs []string
-					if err := json.Unmarshal(valueJSON, &attrs); err == nil {
-						req.AdditionalResourceAttrs = attrs
-					}
-				}
-			}
-		}
-
-		if len(req.AdditionalResourceAttrs) == 0 {
-			req.AdditionalResourceAttrs = []string{"deployment.environment"}
-		}
-	}
-
+func (m *module) GetSpanPercentileDetails(ctx context.Context, orgID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*spanpercentiletypes.SpanPercentileResponse, error) {
 	queryRangeRequest, err := buildSpanPercentileQuery(req)
 	if err != nil {
 		return nil, err
@@ -77,5 +37,112 @@ func (m *module) GetSpanPercentileDetails(ctx context.Context, orgID valuer.UUID
 		return nil, err
 	}
 
-	return result, nil
+	return transformToSpanPercentileResponse(result)
+}
+
+func transformToSpanPercentileResponse(queryResult *qbtypes.QueryRangeResponse) (*spanpercentiletypes.SpanPercentileResponse, error) {
+	if len(queryResult.Data.Results) == 0 {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no data returned from query")
+	}
+
+	scalarData, ok := queryResult.Data.Results[0].(*qbtypes.ScalarData)
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "unexpected result type")
+	}
+
+	if len(scalarData.Data) == 0 {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no rows returned from query")
+	}
+
+	row := scalarData.Data[0]
+
+	columnMap := make(map[string]int)
+	for i, col := range scalarData.Columns {
+		columnMap[col.Name] = i
+	}
+
+	p50Idx, ok := columnMap["p50_duration_nano"]
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing p50_duration_nano column")
+	}
+	p90Idx, ok := columnMap["p90_duration_nano"]
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing p90_duration_nano column")
+	}
+	p99Idx, ok := columnMap["p99_duration_nano"]
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing p99_duration_nano column")
+	}
+	positionIdx, ok := columnMap["percentile_position"]
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing percentile_position column")
+	}
+
+	p50, err := toInt64(row[p50Idx])
+	if err != nil {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid p50 value: %v", err)
+	}
+	p90, err := toInt64(row[p90Idx])
+	if err != nil {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid p90 value: %v", err)
+	}
+	p99, err := toInt64(row[p99Idx])
+	if err != nil {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid p99 value: %v", err)
+	}
+	position, err := toFloat64(row[positionIdx])
+	if err != nil {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid percentile_position value: %v", err)
+	}
+
+	description := fmt.Sprintf("faster than %.1f%% of spans", position)
+	if position < 50 {
+		description = fmt.Sprintf("slower than %.1f%% of spans", 100-position)
+	}
+
+	return &spanpercentiletypes.SpanPercentileResponse{
+		Percentiles: spanpercentiletypes.PercentileStats{
+			P50: p50,
+			P90: p90,
+			P99: p99,
+		},
+		Position: spanpercentiletypes.PercentilePosition{
+			Percentile:  position,
+			Description: description,
+		},
+	}, nil
+}
+
+func toInt64(val any) (int64, error) {
+	switch v := val.(type) {
+	case int64:
+		return v, nil
+	case int:
+		return int64(v), nil
+	case uint64:
+		return int64(v), nil
+	case float64:
+		return int64(v), nil
+	case float32:
+		return int64(v), nil
+	default:
+		return 0, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert %T to int64", val)
+	}
+}
+
+func toFloat64(val any) (float64, error) {
+	switch v := val.(type) {
+	case float64:
+		return v, nil
+	case float32:
+		return float64(v), nil
+	case int:
+		return float64(v), nil
+	case int64:
+		return float64(v), nil
+	case uint64:
+		return float64(v), nil
+	default:
+		return 0, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert %T to float64", val)
+	}
 }
