@@ -26,8 +26,12 @@ export const handlers = [
 		res(ctx.status(200), ctx.json(queryRangeSuccessResponse)),
 	),
 
+	// v1 route currently in backend, but returns v5-style wrapped payload
 	rest.post('http://localhost/api/v1/services', (req, res, ctx) =>
-		res(ctx.status(200), ctx.json(serviceSuccessResponse)),
+		res(
+			ctx.status(200),
+			ctx.json({ status: 'success', data: serviceSuccessResponse }),
+		),
 	),
 
 	rest.post(
