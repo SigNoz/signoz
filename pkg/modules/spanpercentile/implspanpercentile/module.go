@@ -92,19 +92,19 @@ func transformToSpanPercentileResponse(queryResult *qbtypes.QueryRangeResponse) 
 
 	p50, err := toInt64(row[p50Idx])
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid p50 value: %v", err)
+		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no spans found matching the specified criteria")
 	}
 	p90, err := toInt64(row[p90Idx])
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid p90 value: %v", err)
+		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no spans found matching the specified criteria")
 	}
 	p99, err := toInt64(row[p99Idx])
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid p99 value: %v", err)
+		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no spans found matching the specified criteria")
 	}
 	position, err := toFloat64(row[positionIdx])
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid percentile_position value: %v", err)
+		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no spans found matching the specified criteria")
 	}
 
 	description := fmt.Sprintf("faster than %.1f%% of spans", position)
@@ -134,8 +134,14 @@ func toInt64(val any) (int64, error) {
 	case uint64:
 		return int64(v), nil
 	case float64:
+		if v != v {
+			return 0, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is NaN")
+		}
 		return int64(v), nil
 	case float32:
+		if v != v {
+			return 0, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is NaN")
+		}
 		return int64(v), nil
 	default:
 		return 0, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert %T to int64", val)
@@ -145,8 +151,14 @@ func toInt64(val any) (int64, error) {
 func toFloat64(val any) (float64, error) {
 	switch v := val.(type) {
 	case float64:
+		if v != v {
+			return 0, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is NaN")
+		}
 		return v, nil
 	case float32:
+		if v != v {
+			return 0, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is NaN")
+		}
 		return float64(v), nil
 	case int:
 		return float64(v), nil
