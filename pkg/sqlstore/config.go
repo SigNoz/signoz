@@ -50,8 +50,8 @@ func newConfig() factory.Config {
 		},
 		Sqlite: SqliteConfig{
 			Path:        "/var/lib/signoz/signoz.db",
-			Mode:        "wal",
-			BusyTimeout: 5000 * time.Millisecond, // the defaults from https://github.com/mattn/go-sqlite3/blob/master/sqlite3.go#L1098
+			Mode:        "delete",
+			BusyTimeout: 10000 * time.Millisecond, // increasing the defaults from https://github.com/mattn/go-sqlite3/blob/master/sqlite3.go#L1098 because of transpilation from C to GO
 		},
 	}
 

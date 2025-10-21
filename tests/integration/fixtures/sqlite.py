@@ -41,8 +41,6 @@ def sqlite(
             env={
                 "SIGNOZ_SQLSTORE_PROVIDER": "sqlite",
                 "SIGNOZ_SQLSTORE_SQLITE_PATH": str(path),
-                "SIGNOZ_SQLSTORE_SQLITE_MODE": "delete",
-                "SIGNOZ_SQLSTORE_SQLITE_BUSY_TIMEOUT": "10s",
             },
         )
 
