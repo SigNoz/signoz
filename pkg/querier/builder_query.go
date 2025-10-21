@@ -3,7 +3,6 @@ package querier
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/bytedance/sonic"
 )
 
 type builderQuery[T any] struct {
@@ -254,19 +254,29 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		switch typedPayload := payload.(type) {
 		case *qbtypes.RawData:
 			for _, rr := range typedPayload.Rows {
-				if rr.Data["body_v2"] == nil || len(rr.Data["body_v2"].(map[string]any)) == 0 {
-					continue
+				seeder := func() error {
+					body := rr.Data["body_v2"].(map[string]any)
+					promoted := rr.Data["promoted"].(map[string]any)
+					seed(promoted, body)
+
+					str, err := sonic.MarshalString(body)
+					if err != nil {
+						return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal body")
+					}
+					rr.Data["body"] = str
+					return nil
 				}
 
-				body := rr.Data["body_v2"].(map[string]any)
-				promoted := rr.Data["promoted"].(map[string]any)
-				seed(promoted, body)
-
-				bytes, err := json.Marshal(body)
-				if err != nil {
-					return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal body")
+				switch {
+				case rr.Data["body_v2"] == nil || len(rr.Data["body_v2"].(map[string]any)) > 1 || rr.Data["body_v2"].(map[string]any)["message"] != "":
+					fallthrough
+				case rr.Data["promoted"] == nil || len(rr.Data["promoted"].(map[string]any)) > 0:
+					err := seeder()
+					if err != nil {
+						return nil, err
+					}
 				}
-				rr.Data["body"] = string(bytes)
+
 				delete(rr.Data, "body_v2")
 				delete(rr.Data, "promoted")
 			}
