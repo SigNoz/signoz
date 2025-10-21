@@ -84,6 +84,6 @@ func NewModules(
 		RawDataExport:  implrawdataexport.NewModule(querier),
 		AuthDomain:     implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)),
 		Session:        implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
-		SpanPercentile: implspanpercentile.NewModule(querier),
+		SpanPercentile: implspanpercentile.NewModule(querier, preference),
 	}
 }

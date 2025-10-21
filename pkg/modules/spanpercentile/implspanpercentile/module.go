@@ -3,8 +3,10 @@ package implspanpercentile
 import (
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/querier"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -13,16 +15,18 @@ import (
 )
 
 type module struct {
-	querier querier.Querier
+	querier          querier.Querier
+	preferenceModule preference.Module
 }
 
-func NewModule(querier querier.Querier) spanpercentile.Module {
+func NewModule(querier querier.Querier, preferenceModule preference.Module) spanpercentile.Module {
 	return &module{
-		querier: querier,
+		querier:          querier,
+		preferenceModule: preferenceModule,
 	}
 }
 
-func (m *module) GetSpanPercentileDetails(ctx context.Context, orgID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*spanpercentiletypes.SpanPercentileResponse, error) {
+func (m *module) GetSpanPercentileDetails(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*spanpercentiletypes.SpanPercentileResponse, error) {
 	queryRangeRequest, err := buildSpanPercentileQuery(req)
 	if err != nil {
 		return nil, err
@@ -35,6 +39,14 @@ func (m *module) GetSpanPercentileDetails(ctx context.Context, orgID valuer.UUID
 	result, err := m.querier.QueryRange(ctx, orgID, queryRangeRequest)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(req.ResourceAttributes) > 0 {
+		attrKeys := make([]any, 0, len(req.ResourceAttributes))
+		for key := range req.ResourceAttributes {
+			attrKeys = append(attrKeys, key)
+		}
+		_ = m.preferenceModule.UpdateByUser(ctx, userID, preferencetypes.NameSpanPercentileResourceAttributes, attrKeys)
 	}
 
 	return transformToSpanPercentileResponse(result)
