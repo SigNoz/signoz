@@ -7,7 +7,7 @@
 	"scripts": {
 		"i18n:generate-hash": "node ./i18-generate-hash.js",
 		"dev": "vite",
-		"build": "webpack --config=webpack.config.prod.js --progress",
+		"build": "vite build",
 		"prettify": "prettier --write .",
 		"fmt": "prettier --check .",
 		"lint": "eslint ./src",
@@ -44,7 +44,6 @@
 		"@radix-ui/react-tooltip": "1.0.7",
 		"@sentry/react": "8.41.0",
 		"@sentry/vite-plugin": "4.5.0",
-		"@sentry/webpack-plugin": "2.22.6",
 		"@signozhq/badge": "0.0.2",
 		"@signozhq/button": "0.0.2",
 		"@signozhq/calendar": "0.0.0",
