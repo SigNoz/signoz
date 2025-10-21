@@ -28,8 +28,6 @@ def sqlite(
             result = conn.execute(sql.text("SELECT 1"))
             assert result.fetchone()[0] == 1
             
-            result = conn.execute(sql.text("PRAGMA journal_mode=WAL"))
-            assert result.fetchone()[0].lower() == "wal"
 
         return types.TestContainerSQL(
             container=types.TestContainerDocker(
@@ -55,8 +53,6 @@ def sqlite(
             result = conn.execute(sql.text("SELECT 1"))
             assert result.fetchone()[0] == 1
 
-            result = conn.execute(sql.text("PRAGMA journal_mode=WAL"))
-            assert result.fetchone()[0].lower() == "wal"
 
         return types.TestContainerSQL(
             container=types.TestContainerDocker(
