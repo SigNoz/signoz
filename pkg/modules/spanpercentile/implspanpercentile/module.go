@@ -41,13 +41,11 @@ func (m *module) GetSpanPercentileDetails(ctx context.Context, orgID valuer.UUID
 		return nil, err
 	}
 
-	if len(req.ResourceAttributes) > 0 {
-		attrKeys := make([]any, 0, len(req.ResourceAttributes))
-		for key := range req.ResourceAttributes {
-			attrKeys = append(attrKeys, key)
-		}
-		_ = m.preferenceModule.UpdateByUser(ctx, userID, preferencetypes.NameSpanPercentileResourceAttributes, attrKeys)
+	attrKeys := make([]any, 0, len(req.ResourceAttributes))
+	for key := range req.ResourceAttributes {
+		attrKeys = append(attrKeys, key)
 	}
+	_ = m.preferenceModule.UpdateByUser(ctx, userID, preferencetypes.NameSpanPercentileResourceAttributes, attrKeys)
 
 	return transformToSpanPercentileResponse(result)
 }
