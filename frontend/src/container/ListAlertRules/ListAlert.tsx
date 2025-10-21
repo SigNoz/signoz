@@ -23,6 +23,7 @@ import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { sanitizeDefaultAlertQuery } from 'container/EditAlertV2/utils';
 import useSortableTable from 'hooks/ResizeTable/useSortableTable';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -36,6 +37,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { GettableAlert } from 'types/api/alerts/get';
 
 import DeleteAlert from './DeleteAlert';
@@ -141,7 +143,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	];
 
 	const onEditHandler = (record: GettableAlert, openInNewTab: boolean): void => {
-		const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
+		const compositeQuery = sanitizeDefaultAlertQuery(
+			mapQueryDataFromApi(record.condition.compositeQuery),
+			record.alertType as AlertTypes,
+		);
 		params.set(
 			QueryParams.compositeQuery,
 			encodeURIComponent(JSON.stringify(compositeQuery)),

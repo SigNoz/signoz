@@ -242,28 +242,26 @@ function ListView({
 	}, [isLoading, isFetching, isError, transformedQueryTableData, panelType]);
 	return (
 		<Container>
-			{transformedQueryTableData.length !== 0 && (
-				<div className="trace-explorer-controls">
-					<div className="order-by-container">
-						<div className="order-by-label">
-							Order by <Minus size={14} /> <ArrowUp10 size={14} />
-						</div>
-
-						<ListViewOrderBy
-							value={orderBy}
-							onChange={handleOrderChange}
-							dataSource={DataSource.TRACES}
-						/>
+			<div className="trace-explorer-controls">
+				<div className="order-by-container">
+					<div className="order-by-label">
+						Order by <Minus size={14} /> <ArrowUp10 size={14} />
 					</div>
 
-					<TraceExplorerControls
-						isLoading={isFetching}
-						totalCount={totalCount}
-						config={config}
-						perPageOptions={PER_PAGE_OPTIONS}
+					<ListViewOrderBy
+						value={orderBy}
+						onChange={handleOrderChange}
+						dataSource={DataSource.TRACES}
 					/>
 				</div>
-			)}
+
+				<TraceExplorerControls
+					isLoading={isFetching}
+					totalCount={totalCount}
+					config={config}
+					perPageOptions={PER_PAGE_OPTIONS}
+				/>
+			</div>
 
 			{isError && error && <ErrorInPlace error={error as APIError} />}
 

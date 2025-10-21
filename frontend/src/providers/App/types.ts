@@ -8,7 +8,7 @@ import {
 } from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
 import { UserResponse as User } from 'types/api/user/getUser';
-import { PayloadProps } from 'types/api/user/getVersion';
+import { Info } from 'types/api/v1/version/get';
 
 export interface IAppContext {
 	user: IUser;
@@ -36,7 +36,7 @@ export interface IAppContext {
 	updateOrg(orgId: string, updatedOrgName: string): void;
 	updateChangelog(payload: ChangelogSchema): void;
 	toggleChangelogModal(): void;
-	versionData: PayloadProps | null;
+	versionData: Info | null;
 	hasEditPermission: boolean;
 }
 
