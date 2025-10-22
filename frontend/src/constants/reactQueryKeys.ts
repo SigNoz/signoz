@@ -89,4 +89,7 @@ export const REACT_QUERY_KEY = {
 
 	// Routing Policies Query Keys
 	GET_ROUTING_POLICIES: 'GET_ROUTING_POLICIES',
+
+	// Span Percentiles Query Keys
+	GET_SPAN_PERCENTILES: 'GET_SPAN_PERCENTILES',
 } as const;
