@@ -14,7 +14,12 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-func buildSpanPercentileQuery(req *spanpercentiletypes.SpanPercentileRequest) (*qbtypes.QueryRangeRequest, error) {
+func buildSpanPercentileQuery(
+	ctx context.Context,
+	req *spanpercentiletypes.SpanPercentileRequest,
+	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	metadataStore telemetrytypes.MetadataStore,
+) (*qbtypes.QueryRangeRequest, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -24,6 +29,34 @@ func buildSpanPercentileQuery(req *spanpercentiletypes.SpanPercentileRequest) (*
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
 	endBucket := end / querybuilder.NsToSeconds
 
+	var cteFragments []string
+	var cteArgs [][]any
+
+	var attrKeys []string
+	for key := range req.ResourceAttributes {
+		attrKeys = append(attrKeys, key)
+	}
+	sort.Strings(attrKeys)
+
+	// Build resource filter CTE when resource attributes are present
+	if len(req.ResourceAttributes) > 0 {
+		filterExpr := buildResourceFilterExpression(req.ServiceName, req.ResourceAttributes, attrKeys)
+
+		query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Filter: &qbtypes.Filter{
+				Expression: filterExpr,
+			},
+		}
+
+		stmt, err := resourceFilterStmtBuilder.Build(ctx, start, end, qbtypes.RequestTypeRaw, query, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		cteFragments = append(cteFragments, fmt.Sprintf("__resource_filter AS (%s)", stmt.Query))
+		cteArgs = append(cteArgs, stmt.Args)
+	}
+
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select(
@@ -31,12 +64,6 @@ func buildSpanPercentileQuery(req *spanpercentiletypes.SpanPercentileRequest) (*
 		fmt.Sprintf("'%s' AS span_name", escapeSQLString(req.Name)),
 		fmt.Sprintf("'%s' AS service_name", escapeSQLString(req.ServiceName)),
 	)
-
-	var attrKeys []string
-	for key := range req.ResourceAttributes {
-		attrKeys = append(attrKeys, key)
-	}
-	sort.Strings(attrKeys)
 
 	for _, key := range attrKeys {
 		value := req.ResourceAttributes[key]
@@ -61,30 +88,22 @@ func buildSpanPercentileQuery(req *spanpercentiletypes.SpanPercentileRequest) (*
 	)
 
 	sb.Where(sb.Equal("s.name", req.Name))
-	sb.Where(sb.Equal("s.resource_string_service$$name", req.ServiceName))
 
-	ctx := context.Background()
-	fieldMapper := telemetrytraces.NewFieldMapper()
-
-	for _, key := range attrKeys {
-		value := req.ResourceAttributes[key]
-		resourceKey := &telemetrytypes.TelemetryFieldKey{
-			Name:          key,
-			FieldContext:  telemetrytypes.FieldContextResource,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-			Materialized:  false,
-		}
-		fieldName, err := fieldMapper.FieldFor(ctx, resourceKey)
-		if err != nil {
-			fieldName = fmt.Sprintf("s.resources_string['%s']", key)
-		}
-		sb.Where(sb.Equal(fieldName, value))
+	// Use fingerprint-based filtering when resource attributes are present
+	if len(req.ResourceAttributes) > 0 {
+		sb.Where("s.resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
+	} else {
+		// Fallback to direct service.name filtering when no additional attributes
+		sb.Where(sb.Equal("s.resource_string_service$$name", req.ServiceName))
 	}
 
 	sb.SQL("SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000, max_execution_time=10")
 
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	interpolatedQuery := interpolateArgs(query, args)
+	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
+	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
+	interpolatedQuery := interpolateArgs(finalSQL, finalArgs)
 
 	queryEnvelope := qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeClickHouseSQL,
@@ -106,6 +125,19 @@ func buildSpanPercentileQuery(req *spanpercentiletypes.SpanPercentileRequest) (*
 			FormatTableResultForUI: true,
 		},
 	}, nil
+}
+
+func buildResourceFilterExpression(serviceName string, resourceAttributes map[string]string, attrKeys []string) string {
+	var conditions []string
+
+	conditions = append(conditions, fmt.Sprintf("service.name = '%s'", escapeSQLString(serviceName)))
+
+	for _, key := range attrKeys {
+		value := resourceAttributes[key]
+		conditions = append(conditions, fmt.Sprintf("%s = '%s'", key, escapeSQLString(value)))
+	}
+
+	return strings.Join(conditions, " AND ")
 }
 
 func escapeResourceAttr(attr string) string {

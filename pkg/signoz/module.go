@@ -32,6 +32,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
+	"github.com/SigNoz/signoz/pkg/telemetrymeter"
+	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
@@ -64,12 +70,35 @@ func NewModules(
 	analytics analytics.Analytics,
 	querier querier.Querier,
 	authNs map[authtypes.AuthNProvider]authn.AuthN,
+	telemetryStore telemetrystore.TelemetryStore,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
 	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics)
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 	preference := implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference())
+
+	// Create telemetry metadata store for span percentile module
+	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
+		providerSettings,
+		telemetryStore,
+		telemetrytraces.DBName,
+		telemetrytraces.TagAttributesV2TableName,
+		telemetrytraces.SpanAttributesKeysTblName,
+		telemetrytraces.SpanIndexV3TableName,
+		telemetrymetrics.DBName,
+		telemetrymetrics.AttributesMetadataTableName,
+		telemetrymeter.DBName,
+		telemetrymeter.SamplesAgg1dTableName,
+		telemetrylogs.DBName,
+		telemetrylogs.LogsV2TableName,
+		telemetrylogs.TagAttributesV2TableName,
+		telemetrylogs.LogAttributeKeysTblName,
+		telemetrylogs.LogResourceKeysTblName,
+		telemetrymetadata.DBName,
+		telemetrymetadata.AttributesMetadataLocalTableName,
+	)
+
 	return Modules{
 		OrgGetter:      orgGetter,
 		OrgSetter:      orgSetter,
@@ -84,6 +113,6 @@ func NewModules(
 		RawDataExport:  implrawdataexport.NewModule(querier),
 		AuthDomain:     implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)),
 		Session:        implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
-		SpanPercentile: implspanpercentile.NewModule(querier, preference),
+		SpanPercentile: implspanpercentile.NewModule(querier, preference, providerSettings, telemetryMetadataStore),
 	}
 }

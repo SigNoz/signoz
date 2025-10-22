@@ -3,31 +3,53 @@ package implspanpercentile
 import (
 	"context"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
+	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	querier          querier.Querier
-	preferenceModule preference.Module
+	querier                   querier.Querier
+	preferenceModule          preference.Module
+	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	metadataStore             telemetrytypes.MetadataStore
 }
 
-func NewModule(querier querier.Querier, preferenceModule preference.Module) spanpercentile.Module {
+func NewModule(
+	querier querier.Querier,
+	preferenceModule preference.Module,
+	providerSettings factory.ProviderSettings,
+	metadataStore telemetrytypes.MetadataStore,
+) spanpercentile.Module {
+	// Create resource filter statement builder
+	resourceFilterFieldMapper := resourcefilter.NewFieldMapper()
+	resourceFilterConditionBuilder := resourcefilter.NewConditionBuilder(resourceFilterFieldMapper)
+	resourceFilterStmtBuilder := resourcefilter.NewTraceResourceFilterStatementBuilder(
+		providerSettings,
+		resourceFilterFieldMapper,
+		resourceFilterConditionBuilder,
+		metadataStore,
+	)
+
 	return &module{
-		querier:          querier,
-		preferenceModule: preferenceModule,
+		querier:                   querier,
+		preferenceModule:          preferenceModule,
+		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
+		metadataStore:             metadataStore,
 	}
 }
 
 func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*spanpercentiletypes.SpanPercentileResponse, error) {
-	queryRangeRequest, err := buildSpanPercentileQuery(req)
+	queryRangeRequest, err := buildSpanPercentileQuery(ctx, req, m.resourceFilterStmtBuilder, m.metadataStore)
 	if err != nil {
 		return nil, err
 	}

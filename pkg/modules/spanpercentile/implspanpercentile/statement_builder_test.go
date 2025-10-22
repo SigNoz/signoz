@@ -1,13 +1,30 @@
 package implspanpercentile
 
 import (
+	"context"
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 )
+
+func createTestResourceFilterBuilder() qbtypes.StatementBuilder[qbtypes.TraceAggregation] {
+	resourceFilterFieldMapper := resourcefilter.NewFieldMapper()
+	resourceFilterConditionBuilder := resourcefilter.NewConditionBuilder(resourceFilterFieldMapper)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+
+	return resourcefilter.NewTraceResourceFilterStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		resourceFilterFieldMapper,
+		resourceFilterConditionBuilder,
+		mockMetadataStore,
+	)
+}
 
 func TestBuildSpanPercentileQuery(t *testing.T) {
 	cases := []struct {
@@ -133,7 +150,10 @@ func TestBuildSpanPercentileQuery(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := buildSpanPercentileQuery(tc.request)
+			ctx := context.Background()
+			resourceFilterBuilder := createTestResourceFilterBuilder()
+			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+			result, err := buildSpanPercentileQuery(ctx, tc.request, resourceFilterBuilder, mockMetadataStore)
 
 			if tc.expectedErr != "" {
 				require.Error(t, err)
@@ -278,7 +298,10 @@ func TestQueryContainsServiceNameMaterializedColumn(t *testing.T) {
 		End:                1640995800000,
 	}
 
-	result, err := buildSpanPercentileQuery(req)
+	ctx := context.Background()
+	resourceFilterBuilder := createTestResourceFilterBuilder()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	result, err := buildSpanPercentileQuery(ctx, req, resourceFilterBuilder, mockMetadataStore)
 	require.NoError(t, err)
 
 	chQuery, ok := result.CompositeQuery.Queries[0].Spec.(qbtypes.ClickHouseQuery)
@@ -302,7 +325,10 @@ func TestFullQueryGeneration(t *testing.T) {
 		End:   1760517540000,
 	}
 
-	result, err := buildSpanPercentileQuery(req)
+	ctx := context.Background()
+	resourceFilterBuilder := createTestResourceFilterBuilder()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	result, err := buildSpanPercentileQuery(ctx, req, resourceFilterBuilder, mockMetadataStore)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -325,7 +351,6 @@ func TestFullQueryGeneration(t *testing.T) {
 		"WHERE s.timestamp >= '1760513940000000000'",
 		"AND s.timestamp < '1760517540000000000'",
 		"AND s.name = 'oteldemo.ProductCatalogService/ListProducts'",
-		"AND s.resource_string_service$$name = 'productcatalogservice'",
 		"SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000, max_execution_time=10",
 	}
 
