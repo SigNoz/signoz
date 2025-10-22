@@ -297,6 +297,11 @@ func New(
 	// Initialize authns
 	store := sqlauthnstore.NewStore(sqlstore)
 	authNs, err := authNsCallback(ctx, providerSettings, store, licensing)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize authz
 	authzProviderFactory := authzProviderFactoryCb(sqlstore)
 	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
 	if err != nil {
