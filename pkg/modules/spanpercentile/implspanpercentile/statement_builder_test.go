@@ -284,8 +284,52 @@ func TestQueryContainsServiceNameMaterializedColumn(t *testing.T) {
 	chQuery, ok := result.CompositeQuery.Queries[0].Spec.(qbtypes.ClickHouseQuery)
 	require.True(t, ok)
 
-	// Should use materialized column for service.name
 	require.True(t,
 		strings.Contains(chQuery.Query, "resource_string_service$$name"),
 		"Query should use materialized column for service.name")
+}
+
+func TestFullQueryGeneration(t *testing.T) {
+	req := &spanpercentiletypes.SpanPercentileRequest{
+		DurationNano: 216401,
+		Name:         "oteldemo.ProductCatalogService/ListProducts",
+		ServiceName:  "productcatalogservice",
+		ResourceAttributes: map[string]string{
+			"deployment.environment": "production",
+			"cloud.platform":         "gcp_kubernetes_engine",
+		},
+		Start: 1760513940000,
+		End:   1760517540000,
+	}
+
+	result, err := buildSpanPercentileQuery(req)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	chQuery, ok := result.CompositeQuery.Queries[0].Spec.(qbtypes.ClickHouseQuery)
+	require.True(t, ok, "Spec should be ClickHouseQuery type")
+
+	t.Logf("Full ClickHouse Query:\n%s", chQuery.Query)
+
+	expectedParts := []string{
+		"SELECT 216401 AS duration_nano",
+		"'oteldemo.ProductCatalogService/ListProducts' AS span_name",
+		"'productcatalogservice' AS service_name",
+		"'gcp_kubernetes_engine' AS cloud_platform",
+		"'production' AS deployment_environment",
+		"quantile(0.5)(s.duration_nano) AS p50_duration_nano",
+		"quantile(0.9)(s.duration_nano) AS p90_duration_nano",
+		"quantile(0.99)(s.duration_nano) AS p99_duration_nano",
+		"round((100.0 * countIf(s.duration_nano <= 216401)) / count(), 2) AS percentile_position",
+		"FROM signoz_traces.distributed_signoz_index_v3 AS s",
+		"WHERE s.timestamp >= '1760513940000000000'",
+		"AND s.timestamp < '1760517540000000000'",
+		"AND s.name = 'oteldemo.ProductCatalogService/ListProducts'",
+		"AND s.resource_string_service$$name = 'productcatalogservice'",
+		"SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000, max_execution_time=10",
+	}
+
+	for _, part := range expectedParts {
+		require.Contains(t, chQuery.Query, part, "Query should contain: %s", part)
+	}
 }
