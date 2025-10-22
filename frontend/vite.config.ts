@@ -11,7 +11,7 @@ export default ({ mode }: { mode: string }) => {
 			include: ['rc-util/es/hooks/useEvent'],
 		},
 		server: {
-			port: 8080,
+			port: 3301,
 			proxy: {
 				'/tunnel': {
 					target: env.VITE_TUNNEL_DOMAIN,
