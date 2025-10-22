@@ -51,7 +51,7 @@ func (provider *provider) GetTable(ctx context.Context, tableName sqlschema.Tabl
 	columns := []struct {
 		ColumnName  string  `bun:"column_name"`
 		Nullable    bool    `bun:"nullable"`
-		SqlDataType string  `bun:"udt_name"`
+		SQLDataType string  `bun:"udt_name"`
 		DefaultVal  *string `bun:"column_default"`
 	}{}
 
@@ -86,7 +86,7 @@ WHERE
 		sqlschemaColumns = append(sqlschemaColumns, &sqlschema.Column{
 			Name:     sqlschema.ColumnName(column.ColumnName),
 			Nullable: column.Nullable,
-			DataType: provider.fmter.DataTypeOf(column.SqlDataType),
+			DataType: provider.fmter.DataTypeOf(column.SQLDataType),
 			Default:  columnDefault,
 		})
 	}
