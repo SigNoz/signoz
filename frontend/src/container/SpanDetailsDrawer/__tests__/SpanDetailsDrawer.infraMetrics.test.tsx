@@ -432,6 +432,14 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		expect(logsButton).toBeInTheDocument();
 		expect(infraButton).toBeInTheDocument();
 
+		// Ensure logs tab is active and wait for content to load
+		fireEvent.click(logsButton);
+
+		await waitFor(() => {
+			// eslint-disable-next-line sonarjs/no-duplicate-string
+			expect(screen.getByTestId('open-in-explorer-button')).toBeInTheDocument();
+		});
+
 		// Click on infra tab
 		fireEvent.click(infraButton);
 
@@ -440,13 +448,22 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		});
 
 		// Should not show logs content anymore
-		expect(screen.queryByTestId('overlay-scrollbar')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('open-in-explorer-button'),
+		).not.toBeInTheDocument();
 
 		// Switch back to logs tab
 		fireEvent.click(logsButton);
 
 		// Should not show infra metrics anymore
-		expect(screen.queryByTestId('infra-metrics')).not.toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.queryByTestId('infra-metrics')).not.toBeInTheDocument();
+		});
+
+		// Verify logs content is shown again
+		await waitFor(() => {
+			expect(screen.getByTestId('open-in-explorer-button')).toBeInTheDocument();
+		});
 	});
 
 	it('should pass correct data source and handle multiple infra identifiers', async () => {

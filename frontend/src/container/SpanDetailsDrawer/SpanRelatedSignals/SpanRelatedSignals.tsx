@@ -225,6 +225,7 @@ function SpanRelatedSignals({
 								icon={<Compass size={18} />}
 								className="open-in-explorer"
 								onClick={handleExplorerPageRedirect}
+								data-testid="open-in-explorer-button"
 							/>
 						)}
 					</div>
