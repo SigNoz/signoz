@@ -1266,31 +1266,33 @@ export const formatTopErrorsDataForTable = (
 ): TopErrorsTableRowData[] => {
 	if (!data) return [];
 
-	return data.map((row) => ({
-		key: v4(),
-		endpointName:
-			row.metric[SPAN_ATTRIBUTES.URL_PATH] === 'n/a' ||
-			row.metric[SPAN_ATTRIBUTES.URL_PATH] === undefined
-				? '-'
-				: row.metric[SPAN_ATTRIBUTES.URL_PATH],
-		statusCode:
-			row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE] === 'n/a' ||
-			row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE] === undefined
-				? '-'
-				: row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE],
-		statusMessage:
-			row.metric.status_message === 'n/a' ||
-			row.metric.status_message === undefined
-				? '-'
-				: row.metric.status_message,
-		count:
-			row.values &&
-			row.values[0] &&
-			row.values[0][1] !== undefined &&
-			row.values[0][1] !== 'n/a'
-				? row.values[0][1]
-				: '-',
-	}));
+	return data
+		.filter((row) => row.metric)
+		.map((row) => ({
+			key: v4(),
+			endpointName:
+				row.metric[SPAN_ATTRIBUTES.URL_PATH] === 'n/a' ||
+				row.metric[SPAN_ATTRIBUTES.URL_PATH] === undefined
+					? '-'
+					: row.metric[SPAN_ATTRIBUTES.URL_PATH],
+			statusCode:
+				row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE] === 'n/a' ||
+				row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE] === undefined
+					? '-'
+					: row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE],
+			statusMessage:
+				row.metric.status_message === 'n/a' ||
+				row.metric.status_message === undefined
+					? '-'
+					: row.metric.status_message,
+			count:
+				row.values &&
+				row.values[0] &&
+				row.values[0][1] !== undefined &&
+				row.values[0][1] !== 'n/a'
+					? row.values[0][1]
+					: '-',
+		}));
 };
 
 export const getTopErrorsCoRelationQueryFilters = (

@@ -352,6 +352,7 @@ describe('API Monitoring Utils', () => {
 					metric: {
 						[SPAN_ATTRIBUTES.URL_PATH]: '/api/test',
 						[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]: '500',
+						// eslint-disable-next-line sonarjs/no-duplicate-string
 						status_message: 'Internal Server Error',
 					},
 					values: [[1000000100, '10']],
@@ -384,6 +385,51 @@ describe('API Monitoring Utils', () => {
 			// Assert
 			expect(result).toBeDefined();
 			expect(result).toEqual([]);
+		});
+
+		it('should filter out rows with undefined metric', () => {
+			// Arrange
+			const inputData = [
+				{
+					metric: {
+						[SPAN_ATTRIBUTES.URL_PATH]: '/api/valid',
+						[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]: '500',
+						status_message: 'Internal Server Error',
+					},
+					values: [[1000000100, '10']],
+					queryName: 'A',
+					legend: 'Valid Row',
+				},
+				{
+					metric: undefined,
+					values: [[1000000200, '5']],
+					queryName: 'B',
+					legend: 'Invalid Row',
+				},
+				{
+					metric: {
+						[SPAN_ATTRIBUTES.URL_PATH]: '/api/another',
+						[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]: '404',
+						status_message: 'Not Found',
+					},
+					values: [[1000000300, '3']],
+					queryName: 'C',
+					legend: 'Another Valid Row',
+				},
+			];
+
+			// Act
+			const result = formatTopErrorsDataForTable(
+				inputData as TopErrorsResponseRow[],
+			);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.length).toBe(2); // Should only include 2 valid rows
+			expect(result[0].endpointName).toBe('/api/valid');
+			expect(result[0].statusCode).toBe('500');
+			expect(result[1].endpointName).toBe('/api/another');
+			expect(result[1].statusCode).toBe('404');
 		});
 	});
 
