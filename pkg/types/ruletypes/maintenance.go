@@ -264,10 +264,6 @@ func (m GettablePlannedMaintenance) Validate() error {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "end time cannot be before start time")
 		}
 	}
-
-	if len(m.RuleIDs) == 0 {
-		m.SilenceAll = true
-	}
 	return nil
 }
 
