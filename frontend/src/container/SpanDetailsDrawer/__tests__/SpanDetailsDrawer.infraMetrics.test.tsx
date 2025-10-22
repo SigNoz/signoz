@@ -449,8 +449,11 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		expect(screen.queryByTestId('infra-metrics')).not.toBeInTheDocument();
 	});
 
-	it('should pass correct data source to infra metrics', async () => {
+	it('should pass correct data source and handle multiple infra identifiers', async () => {
 		renderSpanDetailsDrawer();
+
+		// Should show infra tab when span has any of: clusterName, podName, nodeName, hostName
+		expect(screen.getByRole('radio', { name: /infra/i })).toBeInTheDocument();
 
 		// Click on infra tab
 		const infraButton = screen.getByRole('radio', { name: /infra/i });
@@ -464,21 +467,6 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		expect(screen.getByTestId('infra-data-source')).toHaveTextContent(
 			DataSource.TRACES,
 		);
-	});
-
-	it('should handle infra tab selection when multiple infra identifiers exist', async () => {
-		renderSpanDetailsDrawer();
-
-		// Should show infra tab when span has any of: clusterName, podName, nodeName, hostName
-		expect(screen.getByRole('radio', { name: /infra/i })).toBeInTheDocument();
-
-		// Click on infra tab
-		const infraButton = screen.getByRole('radio', { name: /infra/i });
-		fireEvent.click(infraButton);
-
-		await waitFor(() => {
-			expect(screen.getByTestId('infra-metrics')).toBeInTheDocument();
-		});
 
 		// All infra identifiers should be passed through
 		expect(screen.getByTestId('infra-pod-name')).toHaveTextContent(
