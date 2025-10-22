@@ -5,7 +5,7 @@ import {
 	LocationDescriptorObject,
 	LocationState,
 } from 'history';
-import { isEventObject } from 'hooks/useSafeNavigate';
+import { isEventObject } from 'utils/isEventObject';
 
 // Create the base history instance
 const baseHistory = createBrowserHistory();

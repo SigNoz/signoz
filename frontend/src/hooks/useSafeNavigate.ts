@@ -6,6 +6,7 @@ import {
 	useLocation,
 	useNavigate,
 } from 'react-router-dom-v5-compat';
+import { isEventObject } from 'utils/isEventObject';
 
 // state uses 'any' because react-router's NavigateOptions interface uses it
 interface NavigateOptions {
@@ -88,28 +89,6 @@ const isDefaultNavigation = (currentUrl: URL, targetUrl: URL): boolean => {
 	const newKeys = Array.from(targetKeys).filter((key) => !currentKeys.has(key));
 
 	return newKeys.length > 0;
-};
-
-// Event types that have metaKey/ctrlKey properties
-type EventWithModifiers =
-	| MouseEvent
-	| KeyboardEvent
-	| React.MouseEvent<any, MouseEvent>
-	| React.KeyboardEvent<any>;
-
-// Helper function to determine if an argument is an event - Also used in utils/history.ts
-export const isEventObject = (arg: unknown): arg is EventWithModifiers => {
-	if (!arg || typeof arg !== 'object') return false;
-
-	return (
-		arg instanceof MouseEvent ||
-		arg instanceof KeyboardEvent ||
-		('nativeEvent' in arg &&
-			(arg.nativeEvent instanceof MouseEvent ||
-				arg.nativeEvent instanceof KeyboardEvent)) ||
-		'metaKey' in arg ||
-		'ctrlKey' in arg
-	);
 };
 
 // Helper function to extract options from arguments
