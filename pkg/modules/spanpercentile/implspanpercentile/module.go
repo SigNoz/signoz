@@ -73,19 +73,19 @@ func transformToSpanPercentileResponse(queryResult *qbtypes.QueryRangeResponse) 
 
 	p50Idx, ok := columnMap["p50_duration_nano"]
 	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing p50_duration_nano column")
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing p50_duration_nano column")
 	}
 	p90Idx, ok := columnMap["p90_duration_nano"]
 	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing p90_duration_nano column")
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing p90_duration_nano column")
 	}
 	p99Idx, ok := columnMap["p99_duration_nano"]
 	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing p99_duration_nano column")
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing p99_duration_nano column")
 	}
 	positionIdx, ok := columnMap["percentile_position"]
 	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing percentile_position column")
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing percentile_position column")
 	}
 
 	p50, err := toInt64(row[p50Idx])
