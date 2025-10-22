@@ -84,14 +84,14 @@ function DataSourceInfo({
 								icon={<img src="/Icons/container-plus.svg" alt="plus" />}
 								role="button"
 								tabIndex={0}
-								onClick={(): void => {
+								onClick={(event: React.MouseEvent): void => {
 									logEvent('Homepage: Connect dataSource clicked', {});
 
 									if (
 										activeLicense &&
 										activeLicense.platform === LicensePlatform.CLOUD
 									) {
-										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+										history.push(ROUTES.GET_STARTED_WITH_CLOUD, event);
 									} else {
 										window?.open(
 											DOCS_LINKS.ADD_DATA_SOURCE,
