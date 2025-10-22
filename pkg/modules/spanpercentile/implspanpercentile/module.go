@@ -26,7 +26,7 @@ func NewModule(querier querier.Querier, preferenceModule preference.Module) span
 	}
 }
 
-func (m *module) GetSpanPercentileDetails(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*spanpercentiletypes.SpanPercentileResponse, error) {
+func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*spanpercentiletypes.SpanPercentileResponse, error) {
 	queryRangeRequest, err := buildSpanPercentileQuery(req)
 	if err != nil {
 		return nil, err

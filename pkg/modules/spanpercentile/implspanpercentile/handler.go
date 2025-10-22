@@ -25,17 +25,17 @@ func NewHandler(module spanpercentile.Module) spanpercentile.Handler {
 func (h *handler) GetSpanPercentileDetails(w http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
-		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		render.Error(w, err)
 		return
 	}
 
 	spanPercentileRequest, err := parseSpanPercentileRequestBody(r)
 	if err != nil {
-		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		render.Error(w, err)
 		return
 	}
 
-	result, err := h.module.GetSpanPercentileDetails(r.Context(), valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), spanPercentileRequest)
+	result, err := h.module.GetSpanPercentile(r.Context(), valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), spanPercentileRequest)
 	if err != nil {
 		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
@@ -57,4 +57,3 @@ func parseSpanPercentileRequestBody(r *http.Request) (*spanpercentiletypes.SpanP
 
 	return req, nil
 }
-
