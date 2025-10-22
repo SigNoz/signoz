@@ -143,6 +143,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			// Wait for dropdown options to appear and verify only "Days" is available
 			await waitFor(() => {
+				// eslint-disable-next-line sonarjs/no-duplicate-string
 				const dropdownOptions = document.querySelectorAll('.ant-select-item');
 				expect(dropdownOptions).toHaveLength(1);
 				expect(dropdownOptions[0]).toHaveTextContent('Days');
@@ -242,17 +243,21 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			const totalDropdown = totalInput?.nextElementSibling?.querySelector(
 				'.ant-select-selector',
 			) as HTMLElement;
-			fireEvent.mouseDown(totalDropdown);
+			await user.click(totalDropdown);
 
-			// Wait for dropdown and select "Days"
+			// Wait for dropdown options to appear
 			await waitFor(() => {
 				const options = document.querySelectorAll('.ant-select-item');
-				const daysOption = Array.from(options).find((opt) =>
-					opt.textContent?.includes('Days'),
-				);
-				expect(daysOption).toBeInTheDocument();
-				fireEvent.click(daysOption as HTMLElement);
+				expect(options.length).toBeGreaterThan(0);
 			});
+
+			// Find and click the Days option
+			const options = document.querySelectorAll('.ant-select-item');
+			const daysOption = Array.from(options).find((opt) =>
+				opt.textContent?.includes('Days'),
+			);
+			expect(daysOption).toBeInTheDocument();
+			await user.click(daysOption as HTMLElement);
 
 			// Now change the value
 			await user.clear(totalInput);
@@ -266,20 +271,20 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			expect(saveButton).toBeInTheDocument();
 
-			// Wait for button to be enabled
+			// Wait for button to be enabled (ensures all state updates have settled)
 			await waitFor(() => {
 				expect(saveButton).not.toBeDisabled();
 			});
 
-			fireEvent.click(saveButton);
+			// Click save button
+			await user.click(saveButton);
 
-			// Wait for modal
-			const modal = await screen.findByRole('dialog');
-			expect(modal).toBeInTheDocument();
-
-			// Click OK
+			// Wait for modal to appear
 			const okButton = await screen.findByRole('button', { name: /ok/i });
-			fireEvent.click(okButton);
+			expect(okButton).toBeInTheDocument();
+
+			// Click OK button
+			await user.click(okButton);
 
 			// Verify API was called with empty S3 values (60 days)
 			await waitFor(() => {
