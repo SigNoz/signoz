@@ -39,7 +39,7 @@ func TestBuildSpanPercentileQuery(t *testing.T) {
 				"round((100.0 * countIf(s.duration_nano <= 206154)) / count(), 2) AS percentile_position",
 				"FROM signoz_traces.distributed_signoz_index_v3 AS s",
 				"s.name = 'OPTIONS'",
-				"SETTINGS max_threads = 12",
+				"SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000, max_execution_time=10",
 			},
 		},
 		{

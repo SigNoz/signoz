@@ -81,7 +81,7 @@ func buildSpanPercentileQuery(req *spanpercentiletypes.SpanPercentileRequest) (*
 		sb.Where(sb.Equal(fieldName, value))
 	}
 
-	sb.SQL("SETTINGS max_threads = 12, min_bytes_to_use_direct_io = 1, use_query_cache = 0, enable_filesystem_cache = 0, use_query_condition_cache = 0")
+	sb.SQL("SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000, max_execution_time=10")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	interpolatedQuery := interpolateArgs(query, args)
