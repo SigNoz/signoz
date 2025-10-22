@@ -47,6 +47,8 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	// Routing Policies list
 	const {
 		data: routingPolicies,
+		refetch: refetchRoutingPolicies,
+		isFetching: isFetchingRoutingPolicies,
 		isLoading: isLoadingRoutingPolicies,
 		isError: isErrorRoutingPolicies,
 	} = useGetRoutingPolicies();
@@ -213,7 +215,9 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		selectedRoutingPolicy,
 		routingPoliciesData,
 		isLoadingRoutingPolicies,
+		isFetchingRoutingPolicies,
 		isErrorRoutingPolicies,
+		refetchRoutingPolicies,
 		// Channels
 		channels,
 		isLoadingChannels,

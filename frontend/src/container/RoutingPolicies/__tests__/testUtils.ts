@@ -71,6 +71,8 @@ export function getUseRoutingPoliciesMockData(
 		isPolicyDetailsModalActionLoading: false,
 		isErrorChannels: false,
 		refreshChannels: jest.fn(),
+		isFetchingRoutingPolicies: false,
+		refetchRoutingPolicies: jest.fn(),
 		...overrides,
 	};
 }
