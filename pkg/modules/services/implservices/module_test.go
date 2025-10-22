@@ -16,7 +16,7 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 		name     string
 		req      servicetypesv1.Request
 		wantErr  string
-		assertOK func(t *testing.T, qr qbtypes.QueryRangeRequest, startMs, endMs uint64)
+		assertOK func(t *testing.T, qr *qbtypes.QueryRangeRequest, startMs, endMs uint64)
 	}{
 		{
 			name: "valid with tags builds scope+filter and query",
@@ -28,7 +28,7 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 					{Key: "env", Operator: "=", StringValues: []string{"prod"}},
 				},
 			},
-			assertOK: func(t *testing.T, qr qbtypes.QueryRangeRequest, startMs, endMs uint64) {
+			assertOK: func(t *testing.T, qr *qbtypes.QueryRangeRequest, startMs, endMs uint64) {
 				assert.Equal(t, uint64(1000), startMs)
 				assert.Equal(t, uint64(2000), endMs)
 				assert.Equal(t, qbtypes.RequestTypeScalar, qr.RequestType)
@@ -77,7 +77,7 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 				Start: "3000000000", // 3s ns -> 3000 ms
 				End:   "5000000000", // 5s ns -> 5000 ms
 			},
-			assertOK: func(t *testing.T, qr qbtypes.QueryRangeRequest, startMs, endMs uint64) {
+			assertOK: func(t *testing.T, qr *qbtypes.QueryRangeRequest, startMs, endMs uint64) {
 				assert.Equal(t, uint64(3000), startMs)
 				assert.Equal(t, uint64(5000), endMs)
 				qe := qr.CompositeQuery.Queries[0]

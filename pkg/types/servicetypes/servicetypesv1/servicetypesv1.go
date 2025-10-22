@@ -1,7 +1,5 @@
 package servicetypesv1
 
-import "time"
-
 // Request mirrors the /services API input shape
 type Request struct {
 	// Start and End are epoch nanoseconds encoded as strings
@@ -35,11 +33,4 @@ type ResponseItem struct {
 
 type DataWarning struct {
 	TopLevelOps []string `json:"topLevelOps"`
-}
-
-// For completeness with downstream potential usage
-type ServiceErrorItem struct {
-	Time      time.Time `json:"time"`
-	Timestamp int64     `json:"timestamp"`
-	NumErrors uint64    `json:"numErrors"`
 }

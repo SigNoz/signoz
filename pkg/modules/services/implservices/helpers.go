@@ -105,7 +105,11 @@ func toFloat(row []any, idx int) float64 {
 	if idx < 0 || idx >= len(row) || row[idx] == nil {
 		return 0
 	}
-	return float64(row[idx].(float64))
+	v, ok := row[idx].(float64)
+	if !ok {
+		return 0
+	}
+	return v
 }
 
 // toUint64 safely converts a cell value to uint64, guarding against negatives and nils.
@@ -113,7 +117,11 @@ func toUint64(row []any, idx int) uint64 {
 	if idx < 0 || idx >= len(row) || row[idx] == nil {
 		return 0
 	}
-	return uint64(row[idx].(uint64))
+	v, ok := row[idx].(uint64)
+	if !ok {
+		return 0
+	}
+	return v
 }
 
 // applyOpsToItems sets topLevelOps for matching service names.

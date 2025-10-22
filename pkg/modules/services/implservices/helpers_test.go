@@ -18,6 +18,7 @@ func TestToFloat(t *testing.T) {
 		{name: "float64", row: []any{1.5}, idx: 0, want: 1.5},
 		{name: "nil", row: []any{nil}, idx: 0, want: 0},
 		{name: "oob", row: []any{1}, idx: 1, want: 0},
+		{name: "wrong type -> 0", row: []any{"not-number"}, idx: 0, want: 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -37,6 +38,7 @@ func TestToUint64(t *testing.T) {
 		{name: "uint64", row: []any{uint64(5)}, idx: 0, want: 5},
 		{name: "nil -> 0", row: []any{nil}, idx: 0, want: 0},
 		{name: "oob -> 0", row: []any{1}, idx: 2, want: 0},
+		{name: "wrong type -> 0", row: []any{"not-number"}, idx: 0, want: 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

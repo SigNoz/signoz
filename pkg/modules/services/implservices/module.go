@@ -38,6 +38,11 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypesv1.Requ
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
 
+	orgUUID, err := valuer.NewUUID(orgID)
+	if err != nil {
+		return nil, err
+	}
+
 	// Prepare phase
 	queryRangeReq, startMs, endMs, err := m.buildQueryRangeRequest(req)
 	if err != nil {
@@ -45,7 +50,7 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypesv1.Requ
 	}
 
 	// Fetch phase
-	resp, err := m.executeQuery(ctx, orgID, &queryRangeReq)
+	resp, err := m.executeQuery(ctx, orgUUID, queryRangeReq)
 	if err != nil {
 		return nil, err
 	}
@@ -69,8 +74,6 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypesv1.Requ
 // FetchTopLevelOperations returns top-level operations per service using the legacy table
 func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
 	db := m.TelemetryStore.ClickhouseDB()
-	// Using distributed_top_level_operations under signoz_traces
-	// NOTE: we rely on the legacy semantics: SELECT name, serviceName, max(time)
 	query := "SELECT name, serviceName, max(time) as ts FROM signoz_traces.distributed_top_level_operations WHERE time >= @start"
 	args := []any{clickhouse.Named("start", start)}
 	if len(services) > 0 {
@@ -81,41 +84,41 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 
 	rows, err := db.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch top level operations")
 	}
 	defer rows.Close()
 
 	ops := make(map[string][]string)
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch top level operations")
+	}
 	for rows.Next() {
 		var name, serviceName string
 		var ts time.Time
 		if err := rows.Scan(&name, &serviceName, &ts); err != nil {
-			return nil, err
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan top level operation")
 		}
 		if _, ok := ops[serviceName]; !ok {
 			ops[serviceName] = []string{"overflow_operation"}
 		}
 		ops[serviceName] = append(ops[serviceName], name)
 	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
 	return ops, nil
 }
 
 // buildQueryRangeRequest constructs the QBv5 QueryRangeRequest and computes the time window.
-func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (qbtypes.QueryRangeRequest, uint64, uint64, error) {
+func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.QueryRangeRequest, uint64, uint64, error) {
 	// Parse start/end (nanoseconds) from strings and convert to milliseconds for QBv5
 	startNs, err := strconv.ParseUint(req.Start, 10, 64)
 	if err != nil {
-		return qbtypes.QueryRangeRequest{}, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time: %v", err)
+		return nil, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time: %v", err)
 	}
 	endNs, err := strconv.ParseUint(req.End, 10, 64)
 	if err != nil {
-		return qbtypes.QueryRangeRequest{}, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time: %v", err)
+		return nil, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time: %v", err)
 	}
 	if startNs >= endNs {
-		return qbtypes.QueryRangeRequest{}, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
+		return nil, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
 	}
 
 	startMs := startNs / 1_000_000
@@ -159,15 +162,11 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (qbtypes.Qu
 		},
 	}
 
-	return reqV5, startMs, endMs, nil
+	return &reqV5, startMs, endMs, nil
 }
 
 // executeQuery calls the underlying Querier with the provided request.
-func (m *module) executeQuery(ctx context.Context, orgID string, qr *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
-	orgUUID, err := valuer.NewUUID(orgID)
-	if err != nil {
-		return nil, err
-	}
+func (m *module) executeQuery(ctx context.Context, orgUUID valuer.UUID, qr *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
 	return m.Querier.QueryRange(ctx, orgUUID, qr)
 }
 
