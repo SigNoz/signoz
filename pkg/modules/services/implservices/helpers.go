@@ -41,19 +41,11 @@ func buildFilterAndScopeExpression(tags []servicetypesv1.TagFilterItem) (string,
 
 	// now also add the condition representing top level operations permitted only
 	filterExpr := strings.Join(parts, " AND ")
-	scopeExpr := fmt.Sprintf("isRoot = $%d OR isEntryPoint = $%d", valueItr, valueItr+1)
+	scopeExpr := "isRoot = true OR isEntryPoint = true"
 	if filterExpr != "" {
 		filterExpr = "(" + filterExpr + ") AND (" + scopeExpr + ")"
 	} else {
 		filterExpr = scopeExpr
-	}
-	variables[fmt.Sprintf("%d", valueItr)] = qbtypes.VariableItem{
-		Type:  qbtypes.DynamicVariableType,
-		Value: true,
-	}
-	variables[fmt.Sprintf("%d", valueItr+1)] = qbtypes.VariableItem{
-		Type:  qbtypes.DynamicVariableType,
-		Value: true,
 	}
 	return filterExpr, variables
 }
