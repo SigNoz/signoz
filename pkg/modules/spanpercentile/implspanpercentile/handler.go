@@ -37,8 +37,7 @@ func (h *handler) GetSpanPercentileDetails(w http.ResponseWriter, r *http.Reques
 
 	result, err := h.module.GetSpanPercentile(r.Context(), valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), spanPercentileRequest)
 	if err != nil {
-		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
-		render.Error(w, apiErrObj)
+		render.Error(w, err)
 		return
 	}
 

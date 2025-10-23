@@ -30,7 +30,6 @@ func NewModule(
 	providerSettings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
 ) spanpercentile.Module {
-	// Create resource filter statement builder
 	resourceFilterFieldMapper := resourcefilter.NewFieldMapper()
 	resourceFilterConditionBuilder := resourcefilter.NewConditionBuilder(resourceFilterFieldMapper)
 	resourceFilterStmtBuilder := resourcefilter.NewTraceResourceFilterStatementBuilder(

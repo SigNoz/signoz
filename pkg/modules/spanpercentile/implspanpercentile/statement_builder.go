@@ -38,24 +38,21 @@ func buildSpanPercentileQuery(
 	}
 	sort.Strings(attrKeys)
 
-	// Build resource filter CTE when resource attributes are present
-	if len(req.ResourceAttributes) > 0 {
-		filterExpr := buildResourceFilterExpression(req.ServiceName, req.ResourceAttributes, attrKeys)
+	filterExpr := buildResourceFilterExpression(req.ServiceName, req.ResourceAttributes, attrKeys)
 
-		query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Filter: &qbtypes.Filter{
-				Expression: filterExpr,
-			},
-		}
-
-		stmt, err := resourceFilterStmtBuilder.Build(ctx, start, end, qbtypes.RequestTypeRaw, query, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		cteFragments = append(cteFragments, fmt.Sprintf("__resource_filter AS (%s)", stmt.Query))
-		cteArgs = append(cteArgs, stmt.Args)
+	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Filter: &qbtypes.Filter{
+			Expression: filterExpr,
+		},
 	}
+
+	stmt, err := resourceFilterStmtBuilder.Build(ctx, start, end, qbtypes.RequestTypeRaw, query, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	cteFragments = append(cteFragments, fmt.Sprintf("__resource_filter AS (%s)", stmt.Query))
+	cteArgs = append(cteArgs, stmt.Args)
 
 	sb := sqlbuilder.NewSelectBuilder()
 
@@ -89,13 +86,7 @@ func buildSpanPercentileQuery(
 
 	sb.Where(sb.Equal("s.name", req.Name))
 
-	// Use fingerprint-based filtering when resource attributes are present
-	if len(req.ResourceAttributes) > 0 {
-		sb.Where("s.resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
-	} else {
-		// Fallback to direct service.name filtering when no additional attributes
-		sb.Where(sb.Equal("s.resource_string_service$$name", req.ServiceName))
-	}
+	sb.Where("s.resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
 
 	sb.SQL("SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000, max_execution_time=10")
 
