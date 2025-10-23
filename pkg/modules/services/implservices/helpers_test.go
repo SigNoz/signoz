@@ -104,7 +104,7 @@ func TestApplyOpsToItems(t *testing.T) {
 	}
 }
 
-func TestBuildFilterAndScopeExpression(t *testing.T) {
+func TestBuildFilterExpression(t *testing.T) {
 	tests := []struct {
 		name     string
 		tags     []servicetypesv1.TagFilterItem
@@ -112,9 +112,9 @@ func TestBuildFilterAndScopeExpression(t *testing.T) {
 		assertV  func(t *testing.T, vars map[string]qbtypes.VariableItem)
 	}{
 		{
-			name:     "no tags -> scope only",
+			name:     "no tags -> empty expr",
 			tags:     nil,
-			wantExpr: "isRoot = true OR isEntryPoint = true",
+			wantExpr: "",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
 				assert.Equal(t, 0, len(vars))
 			},
@@ -124,7 +124,7 @@ func TestBuildFilterAndScopeExpression(t *testing.T) {
 			tags: []servicetypesv1.TagFilterItem{
 				{Key: "service.name", Operator: "NotIn", StringValues: []string{"svc-a", "svc-b"}},
 			},
-			wantExpr: "(service.name NOT IN $1) AND (isRoot = true OR isEntryPoint = true)",
+			wantExpr: "service.name NOT IN $1",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
 				arr, ok := vars["1"].Value.([]any)
 				assert.True(t, ok)
@@ -136,7 +136,7 @@ func TestBuildFilterAndScopeExpression(t *testing.T) {
 			tags: []servicetypesv1.TagFilterItem{
 				{Key: "deployment.environment", Operator: "in", StringValues: []string{"staging"}},
 			},
-			wantExpr: "(deployment.environment IN $1) AND (isRoot = true OR isEntryPoint = true)",
+			wantExpr: "deployment.environment IN $1",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
 				arr, ok := vars["1"].Value.([]any)
 				assert.True(t, ok)
@@ -149,7 +149,7 @@ func TestBuildFilterAndScopeExpression(t *testing.T) {
 			tags: []servicetypesv1.TagFilterItem{
 				{Key: "service.name", Operator: "IN", StringValues: []string{"svc-a", "svc-b"}},
 			},
-			wantExpr: "(service.name IN $1) AND (isRoot = true OR isEntryPoint = true)",
+			wantExpr: "service.name IN $1",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
 				arr, ok := vars["1"].Value.([]any)
 				assert.True(t, ok)
@@ -161,7 +161,7 @@ func TestBuildFilterAndScopeExpression(t *testing.T) {
 			tags: []servicetypesv1.TagFilterItem{
 				{Key: "http.status_code", Operator: "in", NumberValues: []float64{200, 500}},
 			},
-			wantExpr: "(http.status_code IN $1) AND (isRoot = true OR isEntryPoint = true)",
+			wantExpr: "http.status_code IN $1",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
 				arr, ok := vars["1"].Value.([]any)
 				assert.True(t, ok)
@@ -173,18 +173,34 @@ func TestBuildFilterAndScopeExpression(t *testing.T) {
 			tags: []servicetypesv1.TagFilterItem{
 				{Key: "feature.flag", Operator: "IN", BoolValues: []bool{true, false}},
 			},
-			wantExpr: "(feature.flag IN $1) AND (isRoot = true OR isEntryPoint = true)",
+			wantExpr: "feature.flag IN $1",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
 				arr, ok := vars["1"].Value.([]any)
 				assert.True(t, ok)
 				assert.ElementsMatch(t, []any{true, false}, arr)
 			},
 		},
+		{
+			name: "in and not in both conditions",
+			tags: []servicetypesv1.TagFilterItem{
+				{Key: "service.name", Operator: "In", StringValues: []string{"svc-a", "svc-b"}},
+				{Key: "deployment.environment", Operator: "NotIn", StringValues: []string{"production", "staging"}},
+			},
+			wantExpr: "service.name IN $1 AND deployment.environment NOT IN $2",
+			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
+				arr, ok := vars["1"].Value.([]any)
+				assert.True(t, ok)
+				assert.ElementsMatch(t, []any{"svc-a", "svc-b"}, arr)
+				arr, ok = vars["2"].Value.([]any)
+				assert.True(t, ok)
+				assert.ElementsMatch(t, []any{"production", "staging"}, arr)
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			expr, vars := buildFilterAndScopeExpression(tt.tags)
+			expr, vars := buildFilterExpression(tt.tags)
 			assert.Equal(t, tt.wantExpr, expr)
 			if tt.assertV != nil {
 				tt := tt

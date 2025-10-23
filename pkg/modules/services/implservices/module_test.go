@@ -262,3 +262,202 @@ func TestMapQueryRangeRespToServices(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildTopOpsQueryRangeRequest(t *testing.T) {
+	m := &module{}
+
+	tests := []struct {
+		name    string
+		req     servicetypesv1.TopOperationsRequest
+		wantErr string
+		assertQ func(t *testing.T, qr *qbtypes.QueryRangeRequest)
+	}{
+		{
+			name: "with tag filters (In, NotIn) and no scope",
+			req: servicetypesv1.TopOperationsRequest{
+				Start:   "1000000000",
+				End:     "2000000000",
+				Service: "frontend",
+				Tags: []servicetypesv1.TagFilterItem{
+					{Key: "deployment.environment", Operator: "NotIn", StringValues: []string{"prod", "staging"}},
+					{Key: "http.method", Operator: "in", StringValues: []string{"GET"}},
+				},
+				Limit: 10,
+			},
+			assertQ: func(t *testing.T, qr *qbtypes.QueryRangeRequest) {
+				if assert.Equal(t, 1, len(qr.CompositeQuery.Queries)) {
+					qe := qr.CompositeQuery.Queries[0]
+					spec, ok := qe.Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
+					if !ok {
+						t.Fatalf("unexpected spec type: %T", qe.Spec)
+					}
+					assert.NotNil(t, spec.Filter)
+					expr := spec.Filter.Expression
+					// service.name added first as $1, then user tags as $2, $3
+					assert.Contains(t, expr, "service.name IN $1")
+					assert.Contains(t, expr, "deployment.environment NOT IN $2")
+					assert.Contains(t, expr, "http.method IN $3")
+					assert.NotContains(t, expr, "isRoot = true OR isEntryPoint = true")
+
+					// variables populated correctly
+					if v, ok := qr.Variables["1"]; assert.True(t, ok) {
+						vals, _ := v.Value.([]any)
+						if assert.Equal(t, 1, len(vals)) {
+							assert.Equal(t, "frontend", vals[0])
+						}
+					}
+					if v, ok := qr.Variables["2"]; assert.True(t, ok) {
+						vals, _ := v.Value.([]any)
+						if assert.Equal(t, 2, len(vals)) {
+							assert.ElementsMatch(t, []any{"prod", "staging"}, vals)
+						}
+					}
+					if v, ok := qr.Variables["3"]; assert.True(t, ok) {
+						vals, _ := v.Value.([]any)
+						if assert.Equal(t, 1, len(vals)) {
+							assert.Equal(t, "GET", vals[0])
+						}
+					}
+				}
+			},
+		},
+		{
+			name: "valid minimal filters, no scope added",
+			req: servicetypesv1.TopOperationsRequest{
+				Start:   "1000000000", // 1s ns -> 1000 ms
+				End:     "4000000000", // 4s ns -> 4000 ms
+				Service: "cartservice",
+				Limit:   50,
+			},
+			assertQ: func(t *testing.T, qr *qbtypes.QueryRangeRequest) {
+				assert.Equal(t, qbtypes.RequestTypeScalar, qr.RequestType)
+				if assert.Equal(t, 1, len(qr.CompositeQuery.Queries)) {
+					qe := qr.CompositeQuery.Queries[0]
+					assert.Equal(t, qbtypes.QueryTypeBuilder, qe.Type)
+					spec, ok := qe.Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
+					if !ok {
+						t.Fatalf("unexpected spec type: %T", qe.Spec)
+					}
+					assert.Equal(t, telemetrytypes.SignalTraces, spec.Signal)
+					if assert.NotNil(t, spec.Filter) {
+						expr := spec.Filter.Expression
+						// should contain only tag filter for service.name and NOT the scope expression
+						assert.Contains(t, expr, "service.name IN $1")
+						assert.NotContains(t, expr, "isRoot = true OR isEntryPoint = true")
+					}
+					if assert.Equal(t, 1, len(spec.GroupBy)) {
+						assert.Equal(t, "name", spec.GroupBy[0].TelemetryFieldKey.Name)
+						assert.Equal(t, telemetrytypes.FieldContextSpan, spec.GroupBy[0].TelemetryFieldKey.FieldContext)
+					}
+					if assert.Equal(t, 5, len(spec.Aggregations)) {
+						assert.Equal(t, "p50(duration_nano)", spec.Aggregations[0].Expression)
+						assert.Equal(t, "p50", spec.Aggregations[0].Alias)
+						assert.Equal(t, "p95(duration_nano)", spec.Aggregations[1].Expression)
+						assert.Equal(t, "p95", spec.Aggregations[1].Alias)
+						assert.Equal(t, "p99(duration_nano)", spec.Aggregations[2].Expression)
+						assert.Equal(t, "p99", spec.Aggregations[2].Alias)
+						assert.Equal(t, "count()", spec.Aggregations[3].Expression)
+						assert.Equal(t, "numCalls", spec.Aggregations[3].Alias)
+						assert.Equal(t, "countIf(status_code = 2)", spec.Aggregations[4].Expression)
+						assert.Equal(t, "errorCount", spec.Aggregations[4].Alias)
+					}
+					if assert.Equal(t, 1, len(spec.Order)) {
+						assert.Equal(t, "p99", spec.Order[0].Key.TelemetryFieldKey.Name)
+						assert.Equal(t, qbtypes.OrderDirectionDesc, spec.Order[0].Direction)
+					}
+					assert.Equal(t, 50, spec.Limit)
+				}
+			},
+		},
+		{
+			name:    "missing service -> error",
+			req:     servicetypesv1.TopOperationsRequest{Start: "1", End: "2"},
+			wantErr: "service is required",
+		},
+		{
+			name:    "invalid start",
+			req:     servicetypesv1.TopOperationsRequest{Start: "abc", End: "2", Service: "s"},
+			wantErr: "invalid start time",
+		},
+		{
+			name:    "invalid end",
+			req:     servicetypesv1.TopOperationsRequest{Start: "1", End: "abc", Service: "s"},
+			wantErr: "invalid end time",
+		},
+		{
+			name:    "start not before end",
+			req:     servicetypesv1.TopOperationsRequest{Start: "2", End: "2", Service: "s"},
+			wantErr: "start must be before end",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			qr, err := m.buildTopOpsQueryRangeRequest(&tt.req)
+			if tt.wantErr != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+				return
+			}
+			assert.NoError(t, err)
+			if tt.assertQ != nil {
+				tt.assertQ(t, qr)
+			}
+		})
+	}
+}
+
+func TestMapTopOpsQueryRangeResp(t *testing.T) {
+	m := &module{}
+
+	nameGroup := &qbtypes.ColumnDescriptor{
+		TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "name"},
+		Type:              qbtypes.ColumnTypeGroup,
+	}
+	agg := func(idx int64) *qbtypes.ColumnDescriptor {
+		return &qbtypes.ColumnDescriptor{AggregationIndex: idx, Type: qbtypes.ColumnTypeAggregation}
+	}
+
+	tests := []struct {
+		name string
+		resp *qbtypes.QueryRangeResponse
+		want []servicetypesv1.TopOperationItem
+	}{
+		{
+			name: "empty results -> empty slice",
+			resp: &qbtypes.QueryRangeResponse{Type: qbtypes.RequestTypeScalar, Data: qbtypes.QueryData{Results: []any{}}},
+			want: []servicetypesv1.TopOperationItem{},
+		},
+		{
+			name: "non-scalar result -> empty slice",
+			resp: &qbtypes.QueryRangeResponse{Type: qbtypes.RequestTypeScalar, Data: qbtypes.QueryData{Results: []any{"x"}}},
+			want: []servicetypesv1.TopOperationItem{},
+		},
+		{
+			name: "single row maps correctly",
+			resp: &qbtypes.QueryRangeResponse{
+				Type: qbtypes.RequestTypeScalar,
+				Data: qbtypes.QueryData{Results: []any{&qbtypes.ScalarData{
+					QueryName: "A",
+					Columns:   []*qbtypes.ColumnDescriptor{nameGroup, agg(0), agg(1), agg(2), agg(3), agg(4)},
+					Data:      [][]any{{"opA", float64(10), float64(20), float64(30), uint64(100), uint64(7)}},
+				}}},
+			},
+			want: []servicetypesv1.TopOperationItem{{
+				Name:       "opA",
+				P50:        10,
+				P95:        20,
+				P99:        30,
+				NumCalls:   100,
+				ErrorCount: 7,
+			}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := m.mapTopOpsQueryRangeResp(tt.resp)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

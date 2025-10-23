@@ -31,6 +31,41 @@ func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Mod
 	}
 }
 
+// FetchTopLevelOperations returns top-level operations per service using the legacy table
+func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
+	db := m.TelemetryStore.ClickhouseDB()
+	query := "SELECT name, serviceName, max(time) as ts FROM signoz_traces.distributed_top_level_operations WHERE time >= @start"
+	args := []any{clickhouse.Named("start", start)}
+	if len(services) > 0 {
+		query += " AND serviceName IN @services"
+		args = append(args, clickhouse.Named("services", services))
+	}
+	query += " GROUP BY name, serviceName ORDER BY ts DESC LIMIT 5000"
+
+	rows, err := db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch top level operations")
+	}
+	defer rows.Close()
+
+	ops := make(map[string][]string)
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch top level operations")
+	}
+	for rows.Next() {
+		var name, serviceName string
+		var ts time.Time
+		if err := rows.Scan(&name, &serviceName, &ts); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan top level operation")
+		}
+		if _, ok := ops[serviceName]; !ok {
+			ops[serviceName] = []string{"overflow_operation"}
+		}
+		ops[serviceName] = append(ops[serviceName], name)
+	}
+	return ops, nil
+}
+
 // Get implements services.Module
 // Builds a QBv5 traces aggregation grouped by service.name and maps results to ResponseItem.
 func (m *module) Get(ctx context.Context, orgID string, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, error) {
@@ -71,39 +106,29 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypesv1.Requ
 	return items, nil
 }
 
-// FetchTopLevelOperations returns top-level operations per service using the legacy table
-func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
-	db := m.TelemetryStore.ClickhouseDB()
-	query := "SELECT name, serviceName, max(time) as ts FROM signoz_traces.distributed_top_level_operations WHERE time >= @start"
-	args := []any{clickhouse.Named("start", start)}
-	if len(services) > 0 {
-		query += " AND serviceName IN @services"
-		args = append(args, clickhouse.Named("services", services))
+// GetTopOperations implements services.Module for QBV5 based top ops
+func (m *module) GetTopOperations(ctx context.Context, orgID string, req *servicetypesv1.TopOperationsRequest) ([]servicetypesv1.TopOperationItem, error) {
+	if req == nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
-	query += " GROUP BY name, serviceName ORDER BY ts DESC LIMIT 5000"
 
-	rows, err := db.Query(ctx, query, args...)
+	orgUUID, err := valuer.NewUUID(orgID)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch top level operations")
+		return nil, err
 	}
-	defer rows.Close()
 
-	ops := make(map[string][]string)
-	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch top level operations")
+	qr, err := m.buildTopOpsQueryRangeRequest(req)
+	if err != nil {
+		return nil, err
 	}
-	for rows.Next() {
-		var name, serviceName string
-		var ts time.Time
-		if err := rows.Scan(&name, &serviceName, &ts); err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan top level operation")
-		}
-		if _, ok := ops[serviceName]; !ok {
-			ops[serviceName] = []string{"overflow_operation"}
-		}
-		ops[serviceName] = append(ops[serviceName], name)
+
+	resp, err := m.executeQuery(ctx, orgUUID, qr)
+	if err != nil {
+		return nil, err
 	}
-	return ops, nil
+
+	items := m.mapTopOpsQueryRangeResp(resp)
+	return items, nil
 }
 
 // buildQueryRangeRequest constructs the QBv5 QueryRangeRequest and computes the time window.
@@ -124,8 +149,15 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.Q
 	startMs := startNs / 1_000_000
 	endMs := endNs / 1_000_000
 
-	filterExpr, variables := buildFilterAndScopeExpression(req.Tags)
+	// tags filter
+	filterExpr, variables := buildFilterExpression(req.Tags)
 	// ensure we only consider root or entry-point spans
+	scopeExpr := "isRoot = true OR isEntryPoint = true"
+	if filterExpr != "" {
+		filterExpr = "(" + filterExpr + ") AND (" + scopeExpr + ")"
+	} else {
+		filterExpr = scopeExpr
+	}
 
 	reqV5 := qbtypes.QueryRangeRequest{
 		Start:       startMs,
@@ -248,4 +280,106 @@ func (m *module) attachTopLevelOps(ctx context.Context, serviceNames []string, s
 	}
 	applyOpsToItems(items, opsMap)
 	return nil
+}
+
+func (m *module) buildTopOpsQueryRangeRequest(req *servicetypesv1.TopOperationsRequest) (*qbtypes.QueryRangeRequest, error) {
+	if req.Service == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "service is required")
+	}
+	startNs, err := strconv.ParseUint(req.Start, 10, 64)
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time: %v", err)
+	}
+	endNs, err := strconv.ParseUint(req.End, 10, 64)
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time: %v", err)
+	}
+	if startNs >= endNs {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
+	}
+	startMs := startNs / 1_000_000
+	endMs := endNs / 1_000_000
+
+	serviceTag := servicetypesv1.TagFilterItem{
+		Key:          "service.name",
+		Operator:     "In",
+		TagType:      "ResourceAttribute",
+		StringValues: []string{req.Service},
+	}
+	tags := append([]servicetypesv1.TagFilterItem{serviceTag}, req.Tags...)
+	filterExpr, variables := buildFilterExpression(tags)
+
+	reqV5 := qbtypes.QueryRangeRequest{
+		Start:       startMs,
+		End:         endMs,
+		RequestType: qbtypes.RequestTypeScalar,
+		Variables:   variables,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: []qbtypes.QueryEnvelope{
+				{Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalTraces,
+						Filter: &qbtypes.Filter{Expression: filterExpr},
+						GroupBy: []qbtypes.GroupByKey{
+							{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name:          "name",
+								FieldContext:  telemetrytypes.FieldContextSpan,
+								FieldDataType: telemetrytypes.FieldDataTypeString,
+							}},
+						},
+						Aggregations: []qbtypes.TraceAggregation{
+							{Expression: "p50(duration_nano)", Alias: "p50"},
+							{Expression: "p95(duration_nano)", Alias: "p95"},
+							{Expression: "p99(duration_nano)", Alias: "p99"},
+							{Expression: "count()", Alias: "numCalls"},
+							{Expression: "countIf(status_code = 2)", Alias: "errorCount"},
+						},
+						Order: []qbtypes.OrderBy{
+							{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "p99"}}, Direction: qbtypes.OrderDirectionDesc},
+						},
+						Limit: req.Limit,
+					},
+				},
+			},
+		},
+	}
+	return &reqV5, nil
+}
+
+func (m *module) mapTopOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []servicetypesv1.TopOperationItem {
+	if resp == nil || len(resp.Data.Results) == 0 {
+		return []servicetypesv1.TopOperationItem{}
+	}
+	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
+	if !ok || sd == nil {
+		return []servicetypesv1.TopOperationItem{}
+	}
+
+	nameIdx := -1
+	aggIdx := map[int]int{}
+	for i, c := range sd.Columns {
+		switch c.Type {
+		case qbtypes.ColumnTypeGroup:
+			if c.TelemetryFieldKey.Name == "name" {
+				nameIdx = i
+			}
+		case qbtypes.ColumnTypeAggregation:
+			aggIdx[int(c.AggregationIndex)] = i
+		}
+	}
+
+	out := make([]servicetypesv1.TopOperationItem, 0, len(sd.Data))
+	for _, row := range sd.Data {
+		item := servicetypesv1.TopOperationItem{
+			Name:       fmt.Sprintf("%v", row[nameIdx]),
+			P50:        toFloat(row, aggIdx[0]),
+			P95:        toFloat(row, aggIdx[1]),
+			P99:        toFloat(row, aggIdx[2]),
+			NumCalls:   toUint64(row, aggIdx[3]),
+			ErrorCount: toUint64(row, aggIdx[4]),
+		}
+		out = append(out, item)
+	}
+	return out
 }

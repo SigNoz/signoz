@@ -8,8 +8,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 )
 
-// buildFilterAndScopeExpression converts tag filters into a QBv5-compatible filter expression and set of variableItems
-func buildFilterAndScopeExpression(tags []servicetypesv1.TagFilterItem) (string, map[string]qbtypes.VariableItem) {
+// buildFilterExpression converts tag filters into a QBv5-compatible filter expression and set of variableItems.
+func buildFilterExpression(tags []servicetypesv1.TagFilterItem) (string, map[string]qbtypes.VariableItem) {
 	variables := make(map[string]qbtypes.VariableItem)
 	parts := make([]string, 0, len(tags))
 	valueItr := 1
@@ -39,14 +39,7 @@ func buildFilterAndScopeExpression(tags []servicetypesv1.TagFilterItem) (string,
 		valueItr++
 	}
 
-	// now also add the condition representing top level operations permitted only
 	filterExpr := strings.Join(parts, " AND ")
-	scopeExpr := "isRoot = true OR isEntryPoint = true"
-	if filterExpr != "" {
-		filterExpr = "(" + filterExpr + ") AND (" + scopeExpr + ")"
-	} else {
-		filterExpr = scopeExpr
-	}
 	return filterExpr, variables
 }
 

@@ -115,11 +115,14 @@ describe('TopOperation API Integration', () => {
 
 		server.use(
 			rest.post(
-				'http://localhost/api/v1/service/top_operations',
+				'http://localhost/api/v2/service/top_operations',
 				async (req, res, ctx) => {
 					const body = await req.json();
 					apiCalls.push({ endpoint: TOP_OPERATIONS_ENDPOINT, body });
-					return res(ctx.status(200), ctx.json(mockTopOperationsData));
+					return res(
+						ctx.status(200),
+						ctx.json({ status: 'success', data: mockTopOperationsData }),
+					);
 				},
 			),
 			rest.post(
