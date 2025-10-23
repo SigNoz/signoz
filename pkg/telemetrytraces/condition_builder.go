@@ -73,7 +73,7 @@ func (c *conditionBuilder) conditionFor(
 			}
 		}
 	} else {
-		tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+		tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
 	}
 
 	// regular operators

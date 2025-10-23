@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { GetUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 
 export const inputPropsTimeSeries = {
@@ -204,6 +204,7 @@ export const inputPropsTimeSeries = {
 	softMax: null,
 	softMin: null,
 	panelType: PANEL_TYPES.TIME_SERIES,
+	query: initialQueriesMap.metrics,
 } as GetUPlotChartOptions;
 
 export const inputPropsBar = {

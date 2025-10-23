@@ -7,7 +7,6 @@ import clickhouse_connect.driver
 import clickhouse_connect.driver.client
 import py
 from sqlalchemy import Engine
-from testcontainers.core.container import Network
 
 LegacyPath = py.path.local
 
@@ -108,6 +107,20 @@ class TestContainerClickhouse:
 
 
 @dataclass
+class TestContainerIDP:
+    __test__ = False
+    container: TestContainerDocker
+
+    def __cache__(self) -> dict:
+        return {
+            "container": self.container.__cache__(),
+        }
+
+    def __log__(self) -> str:
+        return f"TestContainerIDP(container={self.container.__log__()})"
+
+
+@dataclass
 class SigNoz:
     __test__ = False
     self: TestContainerDocker
@@ -134,7 +147,12 @@ class Operation:
         return f"Operation(name={self.name})"
 
 
-class Network(Network):  # pylint: disable=function-redefined
+@dataclass
+class Network:
+    __test__ = False
+    id: str
+    name: str
+
     def __cache__(self) -> dict:
         return {
             "id": self.id,
