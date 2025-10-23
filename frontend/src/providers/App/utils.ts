@@ -10,12 +10,11 @@ function getUserDefaults(): IUser {
 		getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN),
 		'',
 	);
-	const userId = defaultTo(getLocalStorageApi(LOCALSTORAGE.USER_ID), '');
 
 	return {
 		accessJwt,
 		refreshJwt,
-		id: userId,
+		id: '',
 		email: '',
 		displayName: '',
 		createdAt: 0,
