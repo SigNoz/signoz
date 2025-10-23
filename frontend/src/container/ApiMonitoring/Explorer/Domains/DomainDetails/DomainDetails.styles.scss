@@ -451,9 +451,23 @@
 	.endpoint-details-filters-container {
 		display: flex;
 		flex-direction: row;
+		align-items: center;
+		border: 1px solid var(--bg-slate-500);
+		height: 36px;
+		box-sizing: content-box;
+		.ant-select-selector {
+			border: none !important;
+		}
 
 		.endpoint-details-filters-container-dropdown {
 			width: 120px;
+			border-right: 1px solid var(--bg-slate-500);
+			height: 36px;
+			display: flex;
+			align-items: center;
+			.ant-select-single {
+				height: 32px;
+			}
 		}
 
 		.endpoint-details-filters-container-search {
