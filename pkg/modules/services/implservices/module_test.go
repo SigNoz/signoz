@@ -25,7 +25,7 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 				End:   "2000000000", // 2s in ns -> 2000 ms
 				Tags: []servicetypesv1.TagFilterItem{
 					{Key: "service.name", Operator: "in", StringValues: []string{"frontend", "backend"}},
-					{Key: "env", Operator: "=", StringValues: []string{"prod"}},
+					{Key: "env", Operator: "equals", StringValues: []string{"prod"}},
 				},
 			},
 			assertOK: func(t *testing.T, qr *qbtypes.QueryRangeRequest, startMs, endMs uint64) {
@@ -49,7 +49,7 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 				expr := spec.Filter.Expression
 				assert.Contains(t, expr, "service.name IN $1")
 				assert.Contains(t, expr, "env = $2")
-				assert.Contains(t, expr, "isRoot = $3 OR isEntryPoint = $4")
+				assert.Contains(t, expr, "isRoot = true OR isEntryPoint = true")
 
 				// GroupBy should include service.name
 				if assert.Equal(t, 1, len(spec.GroupBy)) {
@@ -83,7 +83,7 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 				qe := qr.CompositeQuery.Queries[0]
 				spec := qe.Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
 				if assert.NotNil(t, spec.Filter) {
-					assert.Equal(t, "isRoot = $1 OR isEntryPoint = $2", spec.Filter.Expression)
+					assert.Equal(t, "isRoot = true OR isEntryPoint = true", spec.Filter.Expression)
 				}
 			},
 		},
