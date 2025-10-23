@@ -1,9 +1,7 @@
 package implservices
 
 import (
-	"context"
 	"net/http"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -23,10 +21,7 @@ func NewHandler(m services.Module) services.Handler {
 }
 
 func (h *handler) Get(rw http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), 15*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
+	claims, err := authtypes.ClaimsFromContext(req.Context())
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -38,7 +33,7 @@ func (h *handler) Get(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	out, err := h.Module.Get(ctx, claims.OrgID, &in)
+	out, err := h.Module.Get(req.Context(), claims.OrgID, &in)
 	if err != nil {
 		render.Error(rw, err)
 		return
