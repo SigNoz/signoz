@@ -29,6 +29,7 @@ import {
 	Check,
 	ChevronDown,
 	Link2,
+	Loader2,
 	PanelRight,
 	PlusIcon,
 	Search,
@@ -143,12 +144,17 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		IResourceAttribute[]
 	>([] as IResourceAttribute[]);
 
+	const [initialWaitCompleted, setInitialWaitCompleted] = useState<boolean>(
+		false,
+	);
+
 	const [
 		shouldFetchSpanPercentilesData,
 		setShouldFetchSpanPercentilesData,
 	] = useState<boolean>(false);
 
 	const handleTimeRangeChange = useCallback((value: number): void => {
+		setShouldFetchSpanPercentilesData(true);
 		setSelectedTimeRange(value);
 	}, []);
 
@@ -303,14 +309,35 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 				name: selectedSpan?.name || '',
 				resource_attributes: selectedResourceAttributes,
 			}),
-		queryKey: [REACT_QUERY_KEY.GET_SPAN_PERCENTILES, selectedSpan?.spanId],
+		queryKey: [
+			REACT_QUERY_KEY.GET_SPAN_PERCENTILES,
+			selectedSpan?.spanId,
+			startTime,
+			endTime,
+		],
 		enabled:
 			selectedSpan !== null &&
 			shouldFetchSpanPercentilesData &&
-			!showResourceAttributesSelector,
+			!showResourceAttributesSelector &&
+			initialWaitCompleted,
 	});
 
+	// Prod Req - Wait for 2 seconds before fetching span percentile data on initial load
 	useEffect(() => {
+		const timer = setTimeout(() => {
+			setInitialWaitCompleted(true);
+		}, 2000); // 2-second delay
+
+		return (): void => clearTimeout(timer); // Cleanup on unmount
+	}, [selectedSpan?.spanId]);
+
+	useEffect(() => {
+		if (data?.statusCode !== 200) {
+			setSpanPercentileData(null);
+
+			return;
+		}
+
 		if (data) {
 			const percentileData = {
 				percentile: data.payload?.data?.position?.percentile || 0,
@@ -327,12 +354,19 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			const userSelectedResourceAttributesList = (userSelectedResourceAttributes
 				?.data?.value as string[]).map((attribute: string) => attribute);
 
-			const selectedResourceAttributesMap: Record<string, string> = {};
+			let selectedResourceAttributesMap: Record<string, string> = {};
 
 			userSelectedResourceAttributesList.forEach((attribute: string) => {
 				selectedResourceAttributesMap[attribute] =
 					selectedSpan?.tagMap?.[attribute] || '';
 			});
+
+			// filter out the attributes that are not in the selectedSpan?.tagMap
+			selectedResourceAttributesMap = Object.fromEntries(
+				Object.entries(selectedResourceAttributesMap).filter(
+					([key]) => selectedSpan?.tagMap?.[key] !== undefined,
+				),
+			);
 
 			const resourceAttributes = Object.entries(selectedSpan?.tagMap || {}).map(
 				([key, value]) => ({
@@ -397,7 +431,11 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	);
 
 	useEffect(() => {
-		if (shouldFetchSpanPercentilesData && !showResourceAttributesSelector) {
+		if (
+			shouldFetchSpanPercentilesData &&
+			!showResourceAttributesSelector &&
+			initialWaitCompleted
+		) {
 			refetchSpanPercentilesData();
 			setShouldFetchSpanPercentilesData(false);
 		}
@@ -431,6 +469,12 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 										{selectedSpan.name}
 									</Typography.Text>
 								</Tooltip>
+
+								{isLoadingSpanPercentilesData && (
+									<div className="loading-spinner-container">
+										<Loader2 size={16} className="animate-spin" />
+									</div>
+								)}
 
 								{!isLoadingSpanPercentilesData && spanPercentileData && (
 									<Tooltip

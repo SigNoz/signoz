@@ -60,6 +60,14 @@
 				justify-content: space-between;
 				align-items: center;
 
+				.loading-spinner-container {
+					padding: 4px 8px;
+					line-height: 18px; /* 128.571% */
+					letter-spacing: -0.07px;
+
+					display: inline-flex;
+				}
+
 				.span-percentile-value {
 					color: var(--text-sakura-400, #f56c87);
 					font-variant-numeric: lining-nums tabular-nums stacked-fractions
@@ -519,16 +527,16 @@
 			font-family: Inter;
 			font-size: 12px;
 		}
-	}
 
-	.span-percentile-tooltip-text-link {
-		color: var(--text-vanilla-400);
-		text-align: right;
-		font-family: Inter;
-		font-size: 12px;
-		font-style: normal;
-		font-weight: 500;
-		line-height: 20px; /* 166.667% */
+		.span-percentile-tooltip-text-link {
+			color: var(--text-vanilla-400);
+			text-align: right;
+			font-family: Inter;
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 20px; /* 166.667% */
+		}
 	}
 }
 
