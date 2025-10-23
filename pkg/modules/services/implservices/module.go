@@ -131,6 +131,31 @@ func (m *module) GetTopOperations(ctx context.Context, orgID string, req *servic
 	return items, nil
 }
 
+// GetEntryPointOperations implements services.Module for QBV5 based entry point ops
+func (m *module) GetEntryPointOperations(ctx context.Context, orgID string, req *servicetypesv1.EntryPointOperationsRequest) ([]servicetypesv1.EntryPointOperationItem, error) {
+	if req == nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	orgUUID, err := valuer.NewUUID(orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	qr, err := m.buildEntryPointOpsQueryRangeRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := m.executeQuery(ctx, orgUUID, qr)
+	if err != nil {
+		return nil, err
+	}
+
+	items := m.mapEntryPointOpsQueryRangeResp(resp)
+	return items, nil
+}
+
 // buildQueryRangeRequest constructs the QBv5 QueryRangeRequest and computes the time window.
 func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.QueryRangeRequest, uint64, uint64, error) {
 	// Parse start/end (nanoseconds) from strings and convert to milliseconds for QBv5
@@ -372,6 +397,114 @@ func (m *module) mapTopOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []ser
 	out := make([]servicetypesv1.TopOperationItem, 0, len(sd.Data))
 	for _, row := range sd.Data {
 		item := servicetypesv1.TopOperationItem{
+			Name:       fmt.Sprintf("%v", row[nameIdx]),
+			P50:        toFloat(row, aggIdx[0]),
+			P95:        toFloat(row, aggIdx[1]),
+			P99:        toFloat(row, aggIdx[2]),
+			NumCalls:   toUint64(row, aggIdx[3]),
+			ErrorCount: toUint64(row, aggIdx[4]),
+		}
+		out = append(out, item)
+	}
+	return out
+}
+
+func (m *module) buildEntryPointOpsQueryRangeRequest(req *servicetypesv1.EntryPointOperationsRequest) (*qbtypes.QueryRangeRequest, error) {
+	if req.Service == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "service is required")
+	}
+	startNs, err := strconv.ParseUint(req.Start, 10, 64)
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time: %v", err)
+	}
+	endNs, err := strconv.ParseUint(req.End, 10, 64)
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time: %v", err)
+	}
+	if startNs >= endNs {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
+	}
+	startMs := startNs / 1_000_000
+	endMs := endNs / 1_000_000
+
+	serviceTag := servicetypesv1.TagFilterItem{
+		Key:          "service.name",
+		Operator:     "In",
+		TagType:      "ResourceAttribute",
+		StringValues: []string{req.Service},
+	}
+	tags := append([]servicetypesv1.TagFilterItem{serviceTag}, req.Tags...)
+	filterExpr, variables := buildFilterExpression(tags)
+	scopeExpr := "isRoot = true OR isEntryPoint = true"
+	if filterExpr != "" {
+		filterExpr = "(" + filterExpr + ") AND (" + scopeExpr + ")"
+	} else {
+		filterExpr = scopeExpr
+	}
+
+	reqV5 := qbtypes.QueryRangeRequest{
+		Start:       startMs,
+		End:         endMs,
+		RequestType: qbtypes.RequestTypeScalar,
+		Variables:   variables,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: []qbtypes.QueryEnvelope{
+				{Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalTraces,
+						Filter: &qbtypes.Filter{Expression: filterExpr},
+						GroupBy: []qbtypes.GroupByKey{
+							{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name:          "name",
+								FieldContext:  telemetrytypes.FieldContextSpan,
+								FieldDataType: telemetrytypes.FieldDataTypeString,
+							}},
+						},
+						Aggregations: []qbtypes.TraceAggregation{
+							{Expression: "p50(duration_nano)", Alias: "p50"},
+							{Expression: "p95(duration_nano)", Alias: "p95"},
+							{Expression: "p99(duration_nano)", Alias: "p99"},
+							{Expression: "count()", Alias: "numCalls"},
+							{Expression: "countIf(status_code = 2)", Alias: "errorCount"},
+						},
+						Order: []qbtypes.OrderBy{
+							{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "p99"}}, Direction: qbtypes.OrderDirectionDesc},
+						},
+						Limit: req.Limit,
+					},
+				},
+			},
+		},
+	}
+	return &reqV5, nil
+}
+
+func (m *module) mapEntryPointOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []servicetypesv1.EntryPointOperationItem {
+	if resp == nil || len(resp.Data.Results) == 0 {
+		return []servicetypesv1.EntryPointOperationItem{}
+	}
+	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
+	if !ok || sd == nil {
+		return []servicetypesv1.EntryPointOperationItem{}
+	}
+
+	nameIdx := -1
+	aggIdx := map[int]int{}
+	for i, c := range sd.Columns {
+		switch c.Type {
+		case qbtypes.ColumnTypeGroup:
+			if c.TelemetryFieldKey.Name == "name" {
+				nameIdx = i
+			}
+		case qbtypes.ColumnTypeAggregation:
+			aggIdx[int(c.AggregationIndex)] = i
+		}
+	}
+
+	out := make([]servicetypesv1.EntryPointOperationItem, 0, len(sd.Data))
+	for _, row := range sd.Data {
+		item := servicetypesv1.EntryPointOperationItem{
 			Name:       fmt.Sprintf("%v", row[nameIdx]),
 			P50:        toFloat(row, aggIdx[0]),
 			P95:        toFloat(row, aggIdx[1]),

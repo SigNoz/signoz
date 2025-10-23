@@ -53,3 +53,22 @@ type TopOperationItem struct {
 	NumCalls   uint64  `json:"numCalls"`
 	ErrorCount uint64  `json:"errorCount"`
 }
+
+// EntryPointOperationsRequest is the request for /v2/entry_point_operations
+type EntryPointOperationsRequest struct {
+	Start   string          `json:"start"`
+	End     string          `json:"end"`
+	Service string          `json:"service"`
+	Tags    []TagFilterItem `json:"tags"`
+	Limit   int             `json:"limit,omitempty"`
+}
+
+// EntryPointOperationItem is the response item for entry point operations
+type EntryPointOperationItem struct {
+	Name       string  `json:"name"`
+	P50        float64 `json:"p50"`
+	P95        float64 `json:"p95"`
+	P99        float64 `json:"p99"`
+	NumCalls   uint64  `json:"numCalls"`
+	ErrorCount uint64  `json:"errorCount"`
+}

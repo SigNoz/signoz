@@ -461,3 +461,189 @@ func TestMapTopOpsQueryRangeResp(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildEntryPointOpsQueryRangeRequest(t *testing.T) {
+	m := &module{}
+
+	tests := []struct {
+		name    string
+		req     servicetypesv1.EntryPointOperationsRequest
+		wantErr string
+		assertQ func(t *testing.T, qr *qbtypes.QueryRangeRequest)
+	}{
+		{
+			name: "service only -> scope present, no extra filters",
+			req: servicetypesv1.EntryPointOperationsRequest{
+				Start:   "1000000000",
+				End:     "2000000000",
+				Service: "cartservice",
+				// no tags
+			},
+			assertQ: func(t *testing.T, qr *qbtypes.QueryRangeRequest) {
+				if assert.Equal(t, 1, len(qr.CompositeQuery.Queries)) {
+					qe := qr.CompositeQuery.Queries[0]
+					spec, ok := qe.Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
+					if !ok {
+						t.Fatalf("unexpected spec type: %T", qe.Spec)
+					}
+					assert.NotNil(t, spec.Filter)
+					expr := spec.Filter.Expression
+					assert.Contains(t, expr, "service.name IN $1")
+					assert.Contains(t, expr, "isRoot = true OR isEntryPoint = true")
+					// only one variable should exist
+					if assert.Len(t, qr.Variables, 1) {
+						v := qr.Variables["1"]
+						vals, _ := v.Value.([]any)
+						if assert.Equal(t, 1, len(vals)) {
+							assert.Equal(t, "cartservice", vals[0])
+						}
+					}
+					// groupBy is name (span)
+					if assert.Equal(t, 1, len(spec.GroupBy)) {
+						assert.Equal(t, "name", spec.GroupBy[0].TelemetryFieldKey.Name)
+						assert.Equal(t, telemetrytypes.FieldContextSpan, spec.GroupBy[0].TelemetryFieldKey.FieldContext)
+					}
+				}
+			},
+		},
+		{
+			name: "with filters and scope present",
+			req: servicetypesv1.EntryPointOperationsRequest{
+				Start:   "1000000000",
+				End:     "3000000000",
+				Service: "frontend",
+				Tags: []servicetypesv1.TagFilterItem{
+					{Key: "deployment.environment", Operator: "NotIn", StringValues: []string{"prod", "staging"}},
+					{Key: "http.method", Operator: "in", StringValues: []string{"GET"}},
+				},
+				Limit: 25,
+			},
+			assertQ: func(t *testing.T, qr *qbtypes.QueryRangeRequest) {
+				if assert.Equal(t, 1, len(qr.CompositeQuery.Queries)) {
+					qe := qr.CompositeQuery.Queries[0]
+					spec, ok := qe.Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
+					if !ok {
+						t.Fatalf("unexpected spec type: %T", qe.Spec)
+					}
+					assert.NotNil(t, spec.Filter)
+					expr := spec.Filter.Expression
+					assert.Contains(t, expr, "service.name IN $1")
+					assert.Contains(t, expr, "deployment.environment NOT IN $2")
+					assert.Contains(t, expr, "http.method IN $3")
+					assert.Contains(t, expr, "isRoot = true OR isEntryPoint = true")
+					if assert.Equal(t, 1, len(spec.GroupBy)) {
+						assert.Equal(t, "name", spec.GroupBy[0].TelemetryFieldKey.Name)
+						assert.Equal(t, telemetrytypes.FieldContextSpan, spec.GroupBy[0].TelemetryFieldKey.FieldContext)
+					}
+					if assert.Equal(t, 5, len(spec.Aggregations)) {
+						assert.Equal(t, "p50(duration_nano)", spec.Aggregations[0].Expression)
+						assert.Equal(t, "p50", spec.Aggregations[0].Alias)
+						assert.Equal(t, "p95(duration_nano)", spec.Aggregations[1].Expression)
+						assert.Equal(t, "p95", spec.Aggregations[1].Alias)
+						assert.Equal(t, "p99(duration_nano)", spec.Aggregations[2].Expression)
+						assert.Equal(t, "p99", spec.Aggregations[2].Alias)
+						assert.Equal(t, "count()", spec.Aggregations[3].Expression)
+						assert.Equal(t, "numCalls", spec.Aggregations[3].Alias)
+						assert.Equal(t, "countIf(status_code = 2)", spec.Aggregations[4].Expression)
+						assert.Equal(t, "errorCount", spec.Aggregations[4].Alias)
+					}
+					if assert.Equal(t, 1, len(spec.Order)) {
+						assert.Equal(t, "p99", spec.Order[0].Key.TelemetryFieldKey.Name)
+						assert.Equal(t, qbtypes.OrderDirectionDesc, spec.Order[0].Direction)
+					}
+					assert.Equal(t, 25, spec.Limit)
+				}
+			},
+		},
+		{
+			name:    "missing service -> error",
+			req:     servicetypesv1.EntryPointOperationsRequest{Start: "1", End: "2"},
+			wantErr: "service is required",
+		},
+		{
+			name:    "invalid start",
+			req:     servicetypesv1.EntryPointOperationsRequest{Start: "abc", End: "2", Service: "s"},
+			wantErr: "invalid start time",
+		},
+		{
+			name:    "invalid end",
+			req:     servicetypesv1.EntryPointOperationsRequest{Start: "1", End: "abc", Service: "s"},
+			wantErr: "invalid end time",
+		},
+		{
+			name:    "start not before end",
+			req:     servicetypesv1.EntryPointOperationsRequest{Start: "2", End: "2", Service: "s"},
+			wantErr: "start must be before end",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			qr, err := m.buildEntryPointOpsQueryRangeRequest(&tt.req)
+			if tt.wantErr != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+				return
+			}
+			assert.NoError(t, err)
+			if tt.assertQ != nil {
+				tt.assertQ(t, qr)
+			}
+		})
+	}
+}
+
+func TestMapEntryPointOpsQueryRangeResp(t *testing.T) {
+	m := &module{}
+
+	nameGroup := &qbtypes.ColumnDescriptor{
+		TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "name"},
+		Type:              qbtypes.ColumnTypeGroup,
+	}
+	agg := func(idx int64) *qbtypes.ColumnDescriptor {
+		return &qbtypes.ColumnDescriptor{AggregationIndex: idx, Type: qbtypes.ColumnTypeAggregation}
+	}
+
+	tests := []struct {
+		name string
+		resp *qbtypes.QueryRangeResponse
+		want []servicetypesv1.EntryPointOperationItem
+	}{
+		{
+			name: "empty results -> empty slice",
+			resp: &qbtypes.QueryRangeResponse{Type: qbtypes.RequestTypeScalar, Data: qbtypes.QueryData{Results: []any{}}},
+			want: []servicetypesv1.EntryPointOperationItem{},
+		},
+		{
+			name: "non-scalar result -> empty slice",
+			resp: &qbtypes.QueryRangeResponse{Type: qbtypes.RequestTypeScalar, Data: qbtypes.QueryData{Results: []any{"x"}}},
+			want: []servicetypesv1.EntryPointOperationItem{},
+		},
+		{
+			name: "single row maps correctly",
+			resp: &qbtypes.QueryRangeResponse{
+				Type: qbtypes.RequestTypeScalar,
+				Data: qbtypes.QueryData{Results: []any{&qbtypes.ScalarData{
+					QueryName: "A",
+					Columns:   []*qbtypes.ColumnDescriptor{nameGroup, agg(0), agg(1), agg(2), agg(3), agg(4)},
+					Data:      [][]any{{"op-entry", float64(5), float64(15), float64(25), uint64(12), uint64(1)}},
+				}}},
+			},
+			want: []servicetypesv1.EntryPointOperationItem{{
+				Name:       "op-entry",
+				P50:        5,
+				P95:        15,
+				P99:        25,
+				NumCalls:   12,
+				ErrorCount: 1,
+			}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := m.mapEntryPointOpsQueryRangeResp(tt.resp)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
