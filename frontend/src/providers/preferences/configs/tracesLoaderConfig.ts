@@ -7,9 +7,9 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 
 // --- TRACES preferences loader config ---
 const tracesLoaders = {
-	local: async (): Promise<{
+	local: (): {
 		columns: BaseAutocompleteData[];
-	}> => {
+	} => {
 		const local = getLocalStorageKey(LOCALSTORAGE.TRACES_LIST_OPTIONS);
 		if (local) {
 			try {
@@ -21,9 +21,9 @@ const tracesLoaders = {
 		}
 		return { columns: [] };
 	},
-	url: async (): Promise<{
+	url: (): {
 		columns: BaseAutocompleteData[];
-	}> => {
+	} => {
 		const urlParams = new URLSearchParams(window.location.search);
 		try {
 			const options = JSON.parse(urlParams.get('options') || '{}');
@@ -33,9 +33,9 @@ const tracesLoaders = {
 		} catch {}
 		return { columns: [] };
 	},
-	default: async (): Promise<{
+	default: (): {
 		columns: TelemetryFieldKey[];
-	}> => ({
+	} => ({
 		columns: defaultTraceSelectedColumns,
 	}),
 	priority: ['local', 'url', 'default'] as const,

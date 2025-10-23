@@ -225,5 +225,5 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 }
 
 func (module *module) MustGetTypeables() []authtypes.Typeable {
-	return []authtypes.Typeable{dashboardtypes.ResourceDashboard, dashboardtypes.ResourcesDashboards}
+	return []authtypes.Typeable{dashboardtypes.TypeableResourceDashboard, dashboardtypes.TypeableResourcesDashboards}
 }
