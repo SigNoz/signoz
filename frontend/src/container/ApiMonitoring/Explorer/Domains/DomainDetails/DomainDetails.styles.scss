@@ -422,30 +422,28 @@
 		gap: 8px;
 		.endpoint-meta-data-pill {
 			display: flex;
-			align-items: flex-start;
 			border-radius: 4px;
 			border: 1px solid var(--bg-slate-300);
-			width: fit-content;
+			overflow: hidden;
+			box-sizing: content-box;
 			.endpoint-meta-data-label {
-				display: flex;
 				padding: 6px 8px;
-				align-items: center;
-				gap: 4px;
 				border-right: 1px solid var(--bg-slate-300);
 				color: var(--text-vanilla-100);
+				font-size: 14px;
+				line-height: 18px; /* 128.571% */
+				letter-spacing: -0.07px;
+				padding: 6px 8px;
 				background: var(--bg-slate-500);
-				height: calc(100% - 12px);
 			}
 
 			.endpoint-meta-data-value {
-				display: flex;
 				padding: 6px 8px;
-				justify-content: center;
-				align-items: center;
-				gap: 10px;
 				color: var(--text-vanilla-400);
 				background: var(--bg-slate-400);
-				height: calc(100% - 12px);
+				font-size: 14px;
+				line-height: 18px;
+				letter-spacing: -0.07px;
 			}
 		}
 	}
