@@ -730,9 +730,5 @@ var MaterializedDataTypeMap = map[string]string{
 
 const InspectMetricsMaxTimeDiff = 1800000
 
-func GetDefaultSiteURL() string {
-	return GetOrDefaultEnv("SIGNOZ_SITE_URL", HTTPHostPort)
-}
-
 const DotMetricsEnabled = "DOT_METRICS_ENABLED"
 const maxJSONFlatteningDepth = "MAX_JSON_FLATTENING_DEPTH"
