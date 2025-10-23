@@ -187,8 +187,7 @@ func TestBuildSpanPercentileQuery(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			resourceFilterBuilder := createTestResourceFilterBuilder()
-			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-			result, err := buildSpanPercentileQuery(ctx, tc.request, resourceFilterBuilder, mockMetadataStore)
+			result, err := buildSpanPercentileQuery(ctx, tc.request, resourceFilterBuilder)
 
 			if tc.expectedErr != "" {
 				require.Error(t, err)
@@ -335,8 +334,7 @@ func TestQueryAlwaysUsesResourceFingerprint(t *testing.T) {
 
 	ctx := context.Background()
 	resourceFilterBuilder := createTestResourceFilterBuilder()
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	result, err := buildSpanPercentileQuery(ctx, req, resourceFilterBuilder, mockMetadataStore)
+	result, err := buildSpanPercentileQuery(ctx, req, resourceFilterBuilder)
 	require.NoError(t, err)
 
 	chQuery, ok := result.CompositeQuery.Queries[0].Spec.(qbtypes.ClickHouseQuery)
@@ -402,8 +400,7 @@ func TestCompleteQueryWithResourceFingerprinting(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			resourceFilterBuilder := createTestResourceFilterBuilder()
-			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-			result, err := buildSpanPercentileQuery(ctx, tc.request, resourceFilterBuilder, mockMetadataStore)
+			result, err := buildSpanPercentileQuery(ctx, tc.request, resourceFilterBuilder)
 			require.NoError(t, err)
 			require.NotNil(t, result)
 

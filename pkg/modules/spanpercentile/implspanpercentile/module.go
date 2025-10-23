@@ -48,7 +48,7 @@ func NewModule(
 }
 
 func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*spanpercentiletypes.SpanPercentileResponse, error) {
-	queryRangeRequest, err := buildSpanPercentileQuery(ctx, req, m.resourceFilterStmtBuilder, m.metadataStore)
+	queryRangeRequest, err := buildSpanPercentileQuery(ctx, req, m.resourceFilterStmtBuilder)
 	if err != nil {
 		return nil, err
 	}
