@@ -31,13 +31,6 @@ func buildFilterAndScopeExpression(tags []servicetypesv1.TagFilterItem) (string,
 				continue
 			}
 			parts = append(parts, fmt.Sprintf("%s IN $%s", t.Key, valueIdentifier))
-		case "equals":
-			if v, ok := pickEqualValueFromTag(t); ok {
-				variables[valueIdentifier] = qbtypes.VariableItem{Type: qbtypes.DynamicVariableType, Value: v}
-			} else {
-				continue
-			}
-			parts = append(parts, fmt.Sprintf("%s = $%s", t.Key, valueIdentifier))
 		default:
 			// skip unsupported for now
 			continue
@@ -80,21 +73,6 @@ func pickInValuesFromTag(t servicetypesv1.TagFilterItem) ([]any, bool) {
 			vals = append(vals, v)
 		}
 		return vals, true
-	}
-	return nil, false
-}
-
-// pickEqualValueFromTag returns a scalar any for EQUAL operator using the
-// precedence order string, bool, number. Returns false if none are populated.
-func pickEqualValueFromTag(t servicetypesv1.TagFilterItem) (any, bool) {
-	if len(t.StringValues) > 0 {
-		return t.StringValues[0], true
-	}
-	if len(t.BoolValues) > 0 {
-		return t.BoolValues[0], true
-	}
-	if len(t.NumberValues) > 0 {
-		return t.NumberValues[0], true
 	}
 	return nil, false
 }
