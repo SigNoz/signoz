@@ -126,11 +126,14 @@ describe('TopOperation API Integration', () => {
 				},
 			),
 			rest.post(
-				'http://localhost/api/v1/service/entry_point_operations',
+				'http://localhost/api/v2/service/entry_point_operations',
 				async (req, res, ctx) => {
 					const body = await req.json();
 					apiCalls.push({ endpoint: ENTRY_POINT_OPERATIONS_ENDPOINT, body });
-					return res(ctx.status(200), ctx.json({ data: mockEntryPointData }));
+					return res(
+						ctx.status(200),
+						ctx.json({ status: 'success', data: mockEntryPointData }),
+					);
 				},
 			),
 		);
