@@ -114,26 +114,31 @@ func TestBuildFilterAndScopeExpression(t *testing.T) {
 		{
 			name:     "no tags -> scope only",
 			tags:     nil,
-			wantExpr: "isRoot = $1 OR isEntryPoint = $2",
+			wantExpr: "isRoot = true OR isEntryPoint = true",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
-				v1, ok1 := vars["1"]
-				v2, ok2 := vars["2"]
-				assert.True(t, ok1)
-				assert.True(t, ok2)
-				assert.Equal(t, true, v1.Value)
-				assert.Equal(t, true, v2.Value)
+				assert.Equal(t, 0, len(vars))
 			},
 		},
 		{
-			name: "equal string",
+			name: "equals string",
 			tags: []servicetypesv1.TagFilterItem{
-				{Key: "deployment.environment", Operator: "equal", StringValues: []string{"prod"}},
+				{Key: "deployment.environment", Operator: "equals", StringValues: []string{"prod"}},
 			},
-			wantExpr: "(deployment.environment = $1) AND (isRoot = $2 OR isEntryPoint = $3)",
+			wantExpr: "(deployment.environment = $1) AND (isRoot = true OR isEntryPoint = true)",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
 				assert.Equal(t, "prod", vars["1"].Value)
-				assert.Equal(t, true, vars["2"].Value)
-				assert.Equal(t, true, vars["3"].Value)
+			},
+		},
+		{
+			name: "not in multiple strings",
+			tags: []servicetypesv1.TagFilterItem{
+				{Key: "service.name", Operator: "NotIn", StringValues: []string{"svc-a", "svc-b"}},
+			},
+			wantExpr: "(service.name NOT IN $1) AND (isRoot = true OR isEntryPoint = true)",
+			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
+				arr, ok := vars["1"].Value.([]any)
+				assert.True(t, ok)
+				assert.ElementsMatch(t, []any{"svc-a", "svc-b"}, arr)
 			},
 		},
 		{
@@ -141,7 +146,7 @@ func TestBuildFilterAndScopeExpression(t *testing.T) {
 			tags: []servicetypesv1.TagFilterItem{
 				{Key: "deployment.environment", Operator: "in", StringValues: []string{"staging"}},
 			},
-			wantExpr: "(deployment.environment IN $1) AND (isRoot = $2 OR isEntryPoint = $3)",
+			wantExpr: "(deployment.environment IN $1) AND (isRoot = true OR isEntryPoint = true)",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
 				arr, ok := vars["1"].Value.([]any)
 				assert.True(t, ok)
@@ -154,7 +159,7 @@ func TestBuildFilterAndScopeExpression(t *testing.T) {
 			tags: []servicetypesv1.TagFilterItem{
 				{Key: "service.name", Operator: "IN", StringValues: []string{"svc-a", "svc-b"}},
 			},
-			wantExpr: "(service.name IN $1) AND (isRoot = $2 OR isEntryPoint = $3)",
+			wantExpr: "(service.name IN $1) AND (isRoot = true OR isEntryPoint = true)",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
 				arr, ok := vars["1"].Value.([]any)
 				assert.True(t, ok)
@@ -166,7 +171,7 @@ func TestBuildFilterAndScopeExpression(t *testing.T) {
 			tags: []servicetypesv1.TagFilterItem{
 				{Key: "http.status_code", Operator: "in", NumberValues: []float64{200, 500}},
 			},
-			wantExpr: "(http.status_code IN $1) AND (isRoot = $2 OR isEntryPoint = $3)",
+			wantExpr: "(http.status_code IN $1) AND (isRoot = true OR isEntryPoint = true)",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
 				arr, ok := vars["1"].Value.([]any)
 				assert.True(t, ok)
@@ -178,7 +183,7 @@ func TestBuildFilterAndScopeExpression(t *testing.T) {
 			tags: []servicetypesv1.TagFilterItem{
 				{Key: "feature.flag", Operator: "IN", BoolValues: []bool{true, false}},
 			},
-			wantExpr: "(feature.flag IN $1) AND (isRoot = $2 OR isEntryPoint = $3)",
+			wantExpr: "(feature.flag IN $1) AND (isRoot = true OR isEntryPoint = true)",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
 				arr, ok := vars["1"].Value.([]any)
 				assert.True(t, ok)
@@ -186,17 +191,15 @@ func TestBuildFilterAndScopeExpression(t *testing.T) {
 			},
 		},
 		{
-			name: "equal bool and number",
+			name: "equals bool and number",
 			tags: []servicetypesv1.TagFilterItem{
-				{Key: "feature.flag", Operator: "Equal", BoolValues: []bool{true}},
-				{Key: "http.status_code", Operator: "=", NumberValues: []float64{200}},
+				{Key: "feature.flag", Operator: "equals", BoolValues: []bool{true}},
+				{Key: "http.status_code", Operator: "equals", NumberValues: []float64{200}},
 			},
-			wantExpr: "(feature.flag = $1 AND http.status_code = $2) AND (isRoot = $3 OR isEntryPoint = $4)",
+			wantExpr: "(feature.flag = $1 AND http.status_code = $2) AND (isRoot = true OR isEntryPoint = true)",
 			assertV: func(t *testing.T, vars map[string]qbtypes.VariableItem) {
 				assert.Equal(t, true, vars["1"].Value)
 				assert.Equal(t, 200.0, vars["2"].Value)
-				assert.Equal(t, true, vars["3"].Value)
-				assert.Equal(t, true, vars["4"].Value)
 			},
 		},
 	}

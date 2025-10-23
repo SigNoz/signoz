@@ -17,6 +17,13 @@ func buildFilterAndScopeExpression(tags []servicetypesv1.TagFilterItem) (string,
 		valueIdentifier := fmt.Sprintf("%d", valueItr)
 
 		switch strings.ToLower(t.Operator) {
+		case "notin":
+			if vals, ok := pickInValuesFromTag(t); ok {
+				variables[valueIdentifier] = qbtypes.VariableItem{Type: qbtypes.DynamicVariableType, Value: vals}
+			} else {
+				continue
+			}
+			parts = append(parts, fmt.Sprintf("%s NOT IN $%s", t.Key, valueIdentifier))
 		case "in":
 			if vals, ok := pickInValuesFromTag(t); ok {
 				variables[valueIdentifier] = qbtypes.VariableItem{Type: qbtypes.DynamicVariableType, Value: vals}
@@ -24,7 +31,7 @@ func buildFilterAndScopeExpression(tags []servicetypesv1.TagFilterItem) (string,
 				continue
 			}
 			parts = append(parts, fmt.Sprintf("%s IN $%s", t.Key, valueIdentifier))
-		case "equal", "=":
+		case "equals":
 			if v, ok := pickEqualValueFromTag(t); ok {
 				variables[valueIdentifier] = qbtypes.VariableItem{Type: qbtypes.DynamicVariableType, Value: v}
 			} else {
