@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -18,7 +17,6 @@ func buildSpanPercentileQuery(
 	ctx context.Context,
 	req *spanpercentiletypes.SpanPercentileRequest,
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
-	metadataStore telemetrytypes.MetadataStore,
 ) (*qbtypes.QueryRangeRequest, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
