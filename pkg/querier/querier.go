@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	pkgErrors "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -141,7 +140,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
 				// Parse expression to find dependencies
 				if err := spec.ParseExpression(); err != nil {
-					return nil, pkgErrors.WrapInternalf(err, pkgErrors.CodeInternal, "failed to parse trace operator expression")
+					return nil, err
 				}
 
 				deps := spec.CollectReferencedQueries(spec.ParsedExpression)
@@ -653,7 +652,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 
 	// Execute queries for missing ranges with bounded parallelism
 	freshResults := make([]*qbtypes.Result, len(missingRanges))
-	errors := make([]error, len(missingRanges))
+	errs := make([]error, len(missingRanges))
 	totalStats := qbtypes.ExecStats{}
 
 	q.logger.DebugContext(ctx, "executing queries for missing ranges",
@@ -674,14 +673,14 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 			// Create a new query with the missing time range
 			rangedQuery := q.createRangedQuery(query, *tr)
 			if rangedQuery == nil {
-				errors[idx] = pkgErrors.NewInternalf(pkgErrors.CodeInternal, "failed to create ranged query for range %d-%d", tr.From, tr.To)
+				errs[idx] = errors.NewInternalf(errors.CodeInternal, "failed to create ranged query for range %d-%d", tr.From, tr.To)
 				return
 			}
 
 			// Execute the ranged query
 			result, err := rangedQuery.Execute(ctx)
 			if err != nil {
-				errors[idx] = err
+				errs[idx] = err
 				return
 			}
 
@@ -693,7 +692,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	wg.Wait()
 
 	// Check for errors
-	for _, err := range errors {
+	for _, err := range errs {
 		if err != nil {
 			// If any query failed, fall back to full execution
 			q.logger.ErrorContext(ctx, "parallel query execution failed", "error", err)
