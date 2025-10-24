@@ -336,7 +336,7 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 	}
 }
 
-func (config Config)Collect(context.Context, valuer.UUID) (map[string]any, error){
+func (config Config)Collect(_ context.Context, _ valuer.UUID) (map[string]any, error){
 	stats := make(map[string]any)
 
 	// SQL Store Config Stats
