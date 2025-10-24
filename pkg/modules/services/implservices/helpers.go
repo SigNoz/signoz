@@ -82,7 +82,7 @@ func toFloat(row []any, idx int) float64 {
 	return v
 }
 
-// toUint64 safely converts a cell value to uint64, guarding against negatives and nils.
+// toUint64 safely converts a cell value to uint64.
 func toUint64(row []any, idx int) uint64 {
 	if idx < 0 || idx >= len(row) || row[idx] == nil {
 		return 0
@@ -95,7 +95,7 @@ func toUint64(row []any, idx int) uint64 {
 }
 
 // applyOpsToItems sets topLevelOps for matching service names.
-// If opsMap is nil, it performs no changes and returns nil.
+// If opsMap is nil, it performs no changes.
 func applyOpsToItems(items []*servicetypesv1.ResponseItem, opsMap map[string][]string) {
 	if len(items) == 0 {
 		return
