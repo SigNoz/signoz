@@ -314,6 +314,7 @@ func New(
 		modules.User,
 		licensing,
 		tokenizer,
+		config,
 	}
 
 	// Initialize stats reporter from the available stats reporter provider factories
