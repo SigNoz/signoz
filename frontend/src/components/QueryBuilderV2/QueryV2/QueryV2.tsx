@@ -266,7 +266,7 @@ export const QueryV2 = memo(function QueryV2({
 								panelType={panelType}
 								query={query}
 								index={index}
-								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}`}
+								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}-${signalSource}`}
 								version="v4"
 								signalSource={signalSource as 'meter' | ''}
 							/>

@@ -67,6 +67,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			queryAggregation.timeAggregation,
 			query.dataSource,
 			index,
+			signalSource,
 		],
 		async () =>
 			getAggregateAttribute({
@@ -100,6 +101,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				setOptionsData(options);
 				setAttributeKeys?.(data?.payload?.attributeKeys || []);
 			},
+			keepPreviousData: false,
 		},
 	);
 
@@ -164,8 +166,11 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				queryAggregation.timeAggregation,
 				query.dataSource,
 				index,
+				signalSource,
 			])?.payload?.attributeKeys || [];
+
 		setAttributeKeys?.(attributeKeys);
+
 		return attributeKeys;
 	}, [
 		debouncedValue,
@@ -173,6 +178,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		query.dataSource,
 		queryClient,
 		index,
+		signalSource,
 		setAttributeKeys,
 	]);
 

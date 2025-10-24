@@ -197,7 +197,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								queryVariant={config?.queryVariant || 'dropdown'}
 								showOnlyWhereClause={showOnlyWhereClause}
 								isListViewPanel={isListViewPanel}
-								signalSource={config?.signalSource || ''}
+								signalSource={query.source as 'meter' | ''}
 								onSignalSourceChange={onSignalSourceChange || ((): void => {})}
 								signalSourceChangeEnabled={signalSourceChangeEnabled}
 							/>

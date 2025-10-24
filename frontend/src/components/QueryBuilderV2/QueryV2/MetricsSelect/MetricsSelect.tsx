@@ -1,11 +1,18 @@
 import './MetricsSelect.styles.scss';
 
 import { Select } from 'antd';
+import {
+	initialQueriesMap,
+	initialQueryMeterWithType,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { AggregatorFilter } from 'container/QueryBuilder/filters';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
 export const SOURCE_OPTIONS: SelectOption<string, string>[] = [
@@ -43,25 +50,68 @@ export const MetricsSelect = memo(function MetricsSelect({
 		[handleChangeAggregatorAttribute, attributeKeys],
 	);
 
-	const [source, setSource] = useState<string>(
-		signalSource === 'meter' ? 'meter' : 'metrics',
+	const { updateAllQueriesOperators, handleSetQueryData } = useQueryBuilder();
+
+	const [source, setSource] = useState<string>('');
+
+	useEffect(() => {
+		setSource(signalSource === 'meter' ? 'meter' : 'metrics');
+	}, [signalSource]);
+
+	const defaultMeterQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueryMeterWithType,
+				PANEL_TYPES.BAR,
+				DataSource.METRICS,
+				'meter' as 'meter' | '',
+			),
+		[updateAllQueriesOperators],
+	);
+
+	const defaultMetricsQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap.metrics,
+				PANEL_TYPES.BAR,
+				DataSource.METRICS,
+				'',
+			),
+		[updateAllQueriesOperators],
 	);
 
 	const handleSignalSourceChange = (value: string): void => {
 		setSource(value);
 		onSignalSourceChange(value);
+		handleSetQueryData(
+			index,
+			value === 'meter'
+				? {
+						...defaultMeterQuery.builder.queryData[0],
+						source: 'meter',
+						queryName: query.queryName,
+				  }
+				: {
+						...defaultMetricsQuery.builder.queryData[0],
+						source: '',
+						queryName: query.queryName,
+				  },
+		);
 	};
 
 	return (
 		<div className="metrics-source-select-container">
-			<Select
-				className="source-selector"
-				placeholder="Source"
-				options={SOURCE_OPTIONS}
-				value={source}
-				onChange={handleSignalSourceChange}
-				disabled={!signalSourceChangeEnabled}
-			/>
+			{signalSourceChangeEnabled && (
+				<Select
+					className="source-selector"
+					placeholder="Source"
+					options={SOURCE_OPTIONS}
+					value={source}
+					defaultValue="metrics"
+					onChange={handleSignalSourceChange}
+				/>
+			)}
+
 			<AggregatorFilter
 				onChange={handleAggregatorAttributeChange}
 				query={query}
