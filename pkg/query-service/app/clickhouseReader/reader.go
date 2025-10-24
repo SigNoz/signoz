@@ -1609,8 +1609,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			ttlParams.ColdStorageVolume = ""
 		}
 
-		if params.ToColdStorageDuration > 0 {
-			ttlParams.ToColdStorageDuration = params.ToColdStorageDuration * 24 * 3600
+		if params.ToColdStorageDurationDays > 0 {
+			ttlParams.ToColdStorageDuration = params.ToColdStorageDurationDays * 24 * 3600
 		} else {
 			ttlParams.ToColdStorageDuration = 0
 		}
@@ -1642,8 +1642,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 
 	// Calculate cold storage duration
 	coldStorageDuration := -1
-	if len(params.ColdStorageVolume) > 0 && params.ToColdStorageDuration > 0 {
-		coldStorageDuration = int(params.ToColdStorageDuration) // Already in days
+	if len(params.ColdStorageVolume) > 0 && params.ToColdStorageDurationDays > 0 {
+		coldStorageDuration = int(params.ToColdStorageDurationDays) // Already in days
 	}
 
 	tableNames := []string{
