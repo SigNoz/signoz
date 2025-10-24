@@ -43,7 +43,7 @@ func RemoveExtraLabels(res *promql.Result, labelsToRemove ...string) error {
 	case promql.Scalar:
 		return nil
 	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "rule result is not a vector or scalar or matrix")
+		return errors.NewInternalf(errors.CodeInternal, "rule result is not a vector or scalar or matrix")
 	}
 	return nil
 }

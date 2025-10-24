@@ -387,7 +387,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			default:
-				return nil, errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "unsupported builder spec type %T", query.Spec)
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
 			}
 		}
 	}

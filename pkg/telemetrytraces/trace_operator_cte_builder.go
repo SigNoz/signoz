@@ -403,7 +403,7 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, selectFromCTE)
 	default:
-		return nil, errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "unsupported request type: %s", requestType)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 	}
 }
 

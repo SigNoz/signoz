@@ -206,10 +206,10 @@ func (c *conditionBuilder) conditionFor(
 				return sb.NE(leftOperand, true), nil
 			}
 		default:
-			return "", errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "exists operator is not supported for column type %s", column.Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
 		}
 	}
-	return "", errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "unsupported operator: %v", operator)
+	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
 
 func (c *conditionBuilder) ConditionFor(
