@@ -30,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/spf13/cobra"
@@ -333,4 +334,19 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 		logger.WarnContext(ctx, "[Deprecated] env SIGNOZ_JWT_SECRET is deprecated and scheduled for removal. Please use SIGNOZ_TOKENIZER_JWT_SECRET instead.")
 		config.Tokenizer.JWT.Secret = os.Getenv("SIGNOZ_JWT_SECRET")
 	}
+}
+
+func (config Config)Collect(context.Context, valuer.UUID) (map[string]any, error){
+	stats := make(map[string]any)
+
+	// SQL Store Config Stats
+	stats["config.sqlstore.provider"] = config.SQLStore.Provider
+	
+	// Tokenizer Config Stats
+	stats["config.tokenizer.provider"] = config.Tokenizer.Provider
+
+	// Cache Config Stats
+	stats["config.cache.provider"] = config.Cache.Provider
+
+	return stats, nil
 }
