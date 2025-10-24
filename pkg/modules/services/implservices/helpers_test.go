@@ -239,6 +239,16 @@ func TestValidateTagFilterItems(t *testing.T) {
 			tags:    []servicetypesv1.TagFilterItem{{Key: "service.name", Operator: "equals", StringValues: []string{"a"}}},
 			wantErr: "only in and notin operators are supported",
 		},
+		{
+			name:    "in with no values -> error",
+			tags:    []servicetypesv1.TagFilterItem{{Key: "env", Operator: "in"}},
+			wantErr: "at least one of stringValues, boolValues, or numberValues must be populated",
+		},
+		{
+			name:    "notin with no values -> error",
+			tags:    []servicetypesv1.TagFilterItem{{Key: "env", Operator: "notin"}},
+			wantErr: "at least one of stringValues, boolValues, or numberValues must be populated",
+		},
 	}
 
 	for _, tt := range tests {

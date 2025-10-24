@@ -125,6 +125,15 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 			},
 			wantErr: "only in and notin operators are supported",
 		},
+		{
+			name: "invalid tag: in but no values -> error",
+			req: servicetypesv1.Request{
+				Start: "1000000000",
+				End:   "2000000000",
+				Tags:  []servicetypesv1.TagFilterItem{{Key: "env", Operator: "in"}},
+			},
+			wantErr: "at least one of stringValues, boolValues, or numberValues must be populated",
+		},
 	}
 
 	for _, tt := range tests {
@@ -418,6 +427,16 @@ func TestBuildTopOpsQueryRangeRequest(t *testing.T) {
 			wantErr: "key is required",
 		},
 		{
+			name: "invalid tag: in but no values -> error (top ops)",
+			req: servicetypesv1.TopOperationsRequest{
+				Start:   "1000000000",
+				End:     "2000000000",
+				Service: "frontend",
+				Tags:    []servicetypesv1.TagFilterItem{{Key: "env", Operator: "in"}},
+			},
+			wantErr: "at least one of stringValues, boolValues, or numberValues must be populated",
+		},
+		{
 			name: "valid tag in top ops -> ok",
 			req: servicetypesv1.TopOperationsRequest{
 				Start:   "1000000000",
@@ -628,6 +647,16 @@ func TestBuildEntryPointOpsQueryRangeRequest(t *testing.T) {
 				Tags:    []servicetypesv1.TagFilterItem{{Key: "", Operator: "notin", StringValues: []string{"x"}}},
 			},
 			wantErr: "key is required",
+		},
+		{
+			name: "invalid tag: notin but no values -> error (entry ops)",
+			req: servicetypesv1.EntryPointOperationsRequest{
+				Start:   "1000000000",
+				End:     "2000000000",
+				Service: "cartservice",
+				Tags:    []servicetypesv1.TagFilterItem{{Key: "env", Operator: "notin"}},
+			},
+			wantErr: "at least one of stringValues, boolValues, or numberValues must be populated",
 		},
 		{
 			name: "valid tag in entry point ops -> ok",

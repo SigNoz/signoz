@@ -9,6 +9,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 )
 
+// validateTagFilterItems validates the tag filter items. This should be used before using
+// buildFilterExpression or any other function that uses tag filter items.
 func validateTagFilterItems(tags []servicetypesv1.TagFilterItem) error {
 	for _, t := range tags {
 		if t.Key == "" {
@@ -17,11 +19,15 @@ func validateTagFilterItems(tags []servicetypesv1.TagFilterItem) error {
 		if strings.ToLower(t.Operator) != "in" && strings.ToLower(t.Operator) != "notin" {
 			return errors.New("only in and notin operators are supported")
 		}
+		if len(t.StringValues) == 0 && len(t.BoolValues) == 0 && len(t.NumberValues) == 0 {
+			return errors.New("at least one of stringValues, boolValues, or numberValues must be populated")
+		}
 	}
 	return nil
 }
 
 // buildFilterExpression converts tag filters into a QBv5-compatible filter expression and set of variableItems.
+// before calling this function, should validate tags with validateTagFilterItems first.
 func buildFilterExpression(tags []servicetypesv1.TagFilterItem) (string, map[string]qbtypes.VariableItem) {
 	variables := make(map[string]qbtypes.VariableItem)
 	parts := make([]string, 0, len(tags))
@@ -45,7 +51,6 @@ func buildFilterExpression(tags []servicetypesv1.TagFilterItem) (string, map[str
 			}
 			parts = append(parts, fmt.Sprintf("%s IN $%s", t.Key, valueIdentifier))
 		default:
-			// skip unsupported for now
 			continue
 		}
 

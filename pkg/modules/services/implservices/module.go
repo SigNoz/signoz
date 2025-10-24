@@ -93,7 +93,7 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypesv1.Requ
 	// Process phase
 	items, serviceNames := m.mapQueryRangeRespToServices(resp, startMs, endMs)
 	if len(items) == 0 {
-		return []*servicetypesv1.ResponseItem{}, nil
+		return nil, nil
 	}
 
 	// attach top level ops to service items
