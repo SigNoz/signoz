@@ -97,6 +97,7 @@ export const metricsSpaceAggregationOperatorsByType = {
 	Gauge: metricsGaugeSpaceAggregateOperatorOptions,
 	Histogram: metricsHistogramSpaceAggregateOperatorOptions,
 	ExponentialHistogram: metricsHistogramSpaceAggregateOperatorOptions,
+	Summary: metricsGaugeSpaceAggregateOperatorOptions,
 };
 
 export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
@@ -372,6 +373,7 @@ export enum ATTRIBUTE_TYPES {
 	GAUGE = 'Gauge',
 	HISTOGRAM = 'Histogram',
 	EXPONENTIAL_HISTOGRAM = 'ExponentialHistogram',
+	SUMMARY = 'Summary',
 }
 
 export type IQueryBuilderState = 'search';
