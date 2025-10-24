@@ -34,6 +34,9 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Tags from 'components/Tags/Tags';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { QueryParams } from 'constants/query';
+import { initialQueryMeterWithType } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
@@ -43,6 +46,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { isNil, isUndefined } from 'lodash-es';
 import {
 	ArrowUpRight,
+	BellPlus,
 	CalendarClock,
 	Check,
 	Copy,
@@ -60,6 +64,7 @@ import { useTimezone } from 'providers/Timezone';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
+import { useHistory } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { ErrorResponse } from 'types/api';
 import {
@@ -71,6 +76,7 @@ import {
 	IngestionKeyProps,
 	PaginationProps,
 } from 'types/api/ingestionKeys/types';
+import { MeterAggregateOperator } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { getDaysUntilExpiry } from 'utils/timeUtils';
 
@@ -169,6 +175,8 @@ function MultiIngestionSettings(): JSX.Element {
 	const [totalIngestionKeys, setTotalIngestionKeys] = useState(0);
 
 	const { isEnterpriseSelfHostedUser } = useGetTenantLicense();
+
+	const history = useHistory();
 
 	const [
 		hasCreateLimitForIngestionKeyError,
@@ -694,6 +702,62 @@ function MultiIngestionSettings(): JSX.Element {
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
+	const handleCreateAlert = (
+		APIKey: IngestionKeyProps,
+		signal: LimitProps,
+	): void => {
+		let metricName = '';
+
+		switch (signal.signal) {
+			case 'metrics':
+				metricName = 'signoz.meter.metric.datapoint.count';
+				break;
+			case 'traces':
+				metricName = 'signoz.meter.span.size';
+				break;
+			case 'logs':
+				metricName = 'signoz.meter.log.size';
+				break;
+			default:
+				return;
+		}
+
+		const threshold =
+			signal.signal === 'metrics'
+				? signal.config?.day?.count || 0
+				: signal.config?.day?.size || 0;
+
+		const query = {
+			...initialQueryMeterWithType,
+			builder: {
+				...initialQueryMeterWithType.builder,
+				queryData: [
+					{
+						...initialQueryMeterWithType.builder.queryData[0],
+						aggregations: [
+							{
+								...initialQueryMeterWithType.builder.queryData[0].aggregations?.[0],
+								metricName,
+								timeAggregation: MeterAggregateOperator.INCREASE,
+								spaceAggregation: MeterAggregateOperator.SUM,
+							},
+						],
+					},
+				],
+			},
+		};
+
+		const stringifiedQuery = JSON.stringify(query);
+
+		history.push(
+			`${ROUTES.ALERTS_NEW}?showNewCreateAlertsPage=true&${
+				QueryParams.compositeQuery
+			}=${encodeURIComponent(stringifiedQuery)}&${
+				QueryParams.ingestionLimit
+			}=${threshold}`,
+		);
+	};
+
 	const columns: AntDTableProps<IngestionKeyProps>['columns'] = [
 		{
 			title: 'Ingestion Key',
@@ -1183,6 +1247,15 @@ function MultiIngestionSettings(): JSX.Element {
 																					</>
 																				))}
 																		</div>
+
+																		<Button
+																			icon={<BellPlus size={14} color={Color.BG_CHERRY_400} />}
+																			className="set-alert-btn periscope-btn ghost"
+																			type="text"
+																			onClick={(): void =>
+																				handleCreateAlert(APIKey, limitsDict[signalName])
+																			}
+																		/>
 																	</div>
 
 																	{/* SECOND limit usage/limit */}

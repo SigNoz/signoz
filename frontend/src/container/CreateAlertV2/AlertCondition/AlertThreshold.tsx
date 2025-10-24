@@ -3,21 +3,26 @@ import '../EvaluationSettings/styles.scss';
 
 import { Button, Select, Tooltip, Typography } from 'antd';
 import classNames from 'classnames';
+import { QueryParams } from 'constants/query';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import getRandomColor from 'lib/getRandomColor';
 import { Plus } from 'lucide-react';
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { v4 } from 'uuid';
 
 import { useCreateAlertState } from '../context';
 import {
+	INITIAL_EVALUATION_WINDOW_STATE,
 	INITIAL_INFO_THRESHOLD,
 	INITIAL_RANDOM_THRESHOLD,
 	INITIAL_WARNING_THRESHOLD,
 	THRESHOLD_MATCH_TYPE_OPTIONS,
 	THRESHOLD_OPERATOR_OPTIONS,
 } from '../context/constants';
+import { AlertThresholdMatchType } from '../context/types';
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
+import { CumulativeWindowTimeframes } from '../EvaluationSettings/types';
 import ThresholdItem from './ThresholdItem';
 import { AnomalyAndThresholdProps, UpdateThreshold } from './types';
 import {
@@ -37,14 +42,70 @@ function AlertThreshold({
 	const {
 		alertState,
 		thresholdState,
+		setEvaluationWindow,
 		setThresholdState,
 		notificationSettings,
 		setNotificationSettings,
 	} = useCreateAlertState();
 
 	const { currentQuery } = useQueryBuilder();
-
 	const queryNames = getQueryNames(currentQuery);
+
+	const location = useLocation();
+	const queryParams = new URLSearchParams(location.search);
+	const ingestionLimitFromURL = queryParams.get(QueryParams.ingestionLimit);
+
+	useEffect(() => {
+		// loop through currenttQuery and find the query that matches the selected query
+		const query = currentQuery?.builder?.queryData.find(
+			(query) => query.queryName === thresholdState.selectedQuery,
+		);
+
+		if (query && query.source === 'meter') {
+			setEvaluationWindow({
+				type: 'SET_WINDOW_TYPE',
+				payload: 'cumulative',
+			});
+
+			setEvaluationWindow({
+				type: 'SET_TIMEFRAME',
+				payload: CumulativeWindowTimeframes.CURRENT_DAY,
+			});
+
+			setEvaluationWindow({
+				type: 'SET_STARTING_AT',
+				payload: {
+					time: '00:00:00',
+					number: '0',
+					timezone: 'UTC',
+					unit: 'minutes',
+				},
+			});
+
+			setThresholdState({
+				type: 'SET_MATCH_TYPE',
+				payload: AlertThresholdMatchType.IN_TOTAL,
+			});
+
+			const thresholds = [...thresholdState.thresholds];
+
+			thresholds[0].thresholdValue = ingestionLimitFromURL
+				? parseInt(ingestionLimitFromURL, 10)
+				: 0;
+
+			setThresholdState({
+				type: 'SET_THRESHOLDS',
+				payload: thresholds,
+			});
+		} else {
+			setEvaluationWindow({
+				type: 'SET_INITIAL_STATE',
+				payload: INITIAL_EVALUATION_WINDOW_STATE,
+			});
+		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	useEffect(() => {
 		if (
@@ -93,6 +154,8 @@ function AlertThreshold({
 	};
 
 	const updateThreshold: UpdateThreshold = (id, field, value) => {
+		console.log('updateThreshold', id, field, value);
+
 		setThresholdState({
 			type: 'SET_THRESHOLDS',
 			payload: thresholdState.thresholds.map((t) =>
