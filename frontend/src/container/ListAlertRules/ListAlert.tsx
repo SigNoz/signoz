@@ -350,47 +350,51 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			key: 'action',
 			width: 10,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
-				<DropDown
-					onDropDownItemClick={(item): void => alertActionLogEvent(item.key, record)}
-					element={[
-						<ToggleAlertState
-							key="1"
-							disabled={record.disabled}
-							setData={setData}
-							id={id}
-						/>,
-						<ColumnButton
-							key="2"
-							onClick={(): void => onEditHandler(record, false)}
-							type="link"
-							loading={editLoader}
-						>
-							Edit
-						</ColumnButton>,
-						<ColumnButton
-							key="3"
-							onClick={(): void => onEditHandler(record, true)}
-							type="link"
-							loading={editLoader}
-						>
-							Edit in New Tab
-						</ColumnButton>,
-						<ColumnButton
-							key="3"
-							onClick={onCloneHandler(record)}
-							type="link"
-							loading={cloneLoader}
-						>
-							Clone
-						</ColumnButton>,
-						<DeleteAlert
-							key="4"
-							notifications={notificationsApi}
-							setData={setData}
-							id={id}
-						/>,
-					]}
-				/>
+				<div data-testid="alert-actions">
+					<DropDown
+						onDropDownItemClick={(item): void =>
+							alertActionLogEvent(item.key, record)
+						}
+						element={[
+							<ToggleAlertState
+								key="1"
+								disabled={record.disabled}
+								setData={setData}
+								id={id}
+							/>,
+							<ColumnButton
+								key="2"
+								onClick={(): void => onEditHandler(record, false)}
+								type="link"
+								loading={editLoader}
+							>
+								Edit
+							</ColumnButton>,
+							<ColumnButton
+								key="3"
+								onClick={(): void => onEditHandler(record, true)}
+								type="link"
+								loading={editLoader}
+							>
+								Edit in New Tab
+							</ColumnButton>,
+							<ColumnButton
+								key="3"
+								onClick={onCloneHandler(record)}
+								type="link"
+								loading={cloneLoader}
+							>
+								Clone
+							</ColumnButton>,
+							<DeleteAlert
+								key="4"
+								notifications={notificationsApi}
+								setData={setData}
+								id={id}
+							/>,
+						]}
+					/>
+				</div>
 			),
 		});
 	}

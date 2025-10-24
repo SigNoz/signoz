@@ -124,7 +124,11 @@ function LabelsInput({
 			{Object.keys(labels).length > 0 && (
 				<div className="labels-input__existing-labels">
 					{Object.entries(labels).map(([key, value]) => (
-						<span key={key} className="labels-input__label-pill">
+						<span
+							key={key}
+							className="labels-input__label-pill"
+							data-testid={`label-pill-${key}-${value}`}
+						>
 							{key}: {value}
 							<button
 								type="button"
