@@ -107,6 +107,24 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 			req:     servicetypesv1.Request{Start: "2001", End: "2000"},
 			wantErr: "start must be before end",
 		},
+		{
+			name: "invalid tag: missing key -> error",
+			req: servicetypesv1.Request{
+				Start: "1000000000",
+				End:   "2000000000",
+				Tags:  []servicetypesv1.TagFilterItem{{Key: "", Operator: "in", StringValues: []string{"x"}}},
+			},
+			wantErr: "key is required",
+		},
+		{
+			name: "invalid tag: unsupported operator -> error",
+			req: servicetypesv1.Request{
+				Start: "1000000000",
+				End:   "2000000000",
+				Tags:  []servicetypesv1.TagFilterItem{{Key: "env", Operator: "equals", StringValues: []string{"staging"}}},
+			},
+			wantErr: "only in and notin operators are supported",
+		},
 	}
 
 	for _, tt := range tests {
@@ -389,6 +407,32 @@ func TestBuildTopOpsQueryRangeRequest(t *testing.T) {
 			req:     servicetypesv1.TopOperationsRequest{Start: "2", End: "2", Service: "s"},
 			wantErr: "start must be before end",
 		},
+		{
+			name: "invalid tag in top ops -> error",
+			req: servicetypesv1.TopOperationsRequest{
+				Start:   "1000000000",
+				End:     "2000000000",
+				Service: "frontend",
+				Tags:    []servicetypesv1.TagFilterItem{{Key: "", Operator: "in", StringValues: []string{"x"}}},
+			},
+			wantErr: "key is required",
+		},
+		{
+			name: "valid tag in top ops -> ok",
+			req: servicetypesv1.TopOperationsRequest{
+				Start:   "1000000000",
+				End:     "2000000000",
+				Service: "frontend",
+				Tags:    []servicetypesv1.TagFilterItem{{Key: "deployment.environment", Operator: "in", StringValues: []string{"prod"}}},
+				Limit:   5,
+			},
+			assertQ: func(t *testing.T, qr *qbtypes.QueryRangeRequest) {
+				qe := qr.CompositeQuery.Queries[0]
+				spec := qe.Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
+				assert.Contains(t, spec.Filter.Expression, "service.name IN $1")
+				assert.Contains(t, spec.Filter.Expression, "deployment.environment IN $2")
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -574,6 +618,32 @@ func TestBuildEntryPointOpsQueryRangeRequest(t *testing.T) {
 			name:    "start not before end",
 			req:     servicetypesv1.EntryPointOperationsRequest{Start: "2", End: "2", Service: "s"},
 			wantErr: "start must be before end",
+		},
+		{
+			name: "invalid tag in entry point ops -> error",
+			req: servicetypesv1.EntryPointOperationsRequest{
+				Start:   "1000000000",
+				End:     "2000000000",
+				Service: "cartservice",
+				Tags:    []servicetypesv1.TagFilterItem{{Key: "", Operator: "notin", StringValues: []string{"x"}}},
+			},
+			wantErr: "key is required",
+		},
+		{
+			name: "valid tag in entry point ops -> ok",
+			req: servicetypesv1.EntryPointOperationsRequest{
+				Start:   "1000000000",
+				End:     "2000000000",
+				Service: "cartservice",
+				Tags:    []servicetypesv1.TagFilterItem{{Key: "deployment.environment", Operator: "notin", StringValues: []string{"prod"}}},
+				Limit:   10,
+			},
+			assertQ: func(t *testing.T, qr *qbtypes.QueryRangeRequest) {
+				spec := qr.CompositeQuery.Queries[0].Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
+				assert.Contains(t, spec.Filter.Expression, "service.name IN $1")
+				assert.Contains(t, spec.Filter.Expression, "deployment.environment NOT IN $2")
+				assert.Contains(t, spec.Filter.Expression, "isRoot = true OR isEntryPoint = true")
+			},
 		},
 	}
 

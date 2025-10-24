@@ -170,6 +170,9 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.Q
 	if startNs >= endNs {
 		return nil, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
 	}
+	if err := validateTagFilterItems(req.Tags); err != nil {
+		return nil, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid tags: %v", err)
+	}
 
 	startMs := startNs / 1_000_000
 	endMs := endNs / 1_000_000
@@ -322,13 +325,16 @@ func (m *module) buildTopOpsQueryRangeRequest(req *servicetypesv1.TopOperationsR
 	if startNs >= endNs {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
 	}
+	if err := validateTagFilterItems(req.Tags); err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid tags: %v", err)
+	}
+
 	startMs := startNs / 1_000_000
 	endMs := endNs / 1_000_000
 
 	serviceTag := servicetypesv1.TagFilterItem{
 		Key:          "service.name",
-		Operator:     "In",
-		TagType:      "ResourceAttribute",
+		Operator:     "in",
 		StringValues: []string{req.Service},
 	}
 	tags := append([]servicetypesv1.TagFilterItem{serviceTag}, req.Tags...)
@@ -424,13 +430,16 @@ func (m *module) buildEntryPointOpsQueryRangeRequest(req *servicetypesv1.EntryPo
 	if startNs >= endNs {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
 	}
+	if err := validateTagFilterItems(req.Tags); err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid tags: %v", err)
+	}
+
 	startMs := startNs / 1_000_000
 	endMs := endNs / 1_000_000
 
 	serviceTag := servicetypesv1.TagFilterItem{
 		Key:          "service.name",
-		Operator:     "In",
-		TagType:      "ResourceAttribute",
+		Operator:     "in",
 		StringValues: []string{req.Service},
 	}
 	tags := append([]servicetypesv1.TagFilterItem{serviceTag}, req.Tags...)

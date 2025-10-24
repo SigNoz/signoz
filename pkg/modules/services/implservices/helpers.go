@@ -1,12 +1,25 @@
 package implservices
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 )
+
+func validateTagFilterItems(tags []servicetypesv1.TagFilterItem) error {
+	for _, t := range tags {
+		if t.Key == "" {
+			return errors.New("key is required")
+		}
+		if strings.ToLower(t.Operator) != "in" && strings.ToLower(t.Operator) != "notin" {
+			return errors.New("only in and notin operators are supported")
+		}
+	}
+	return nil
+}
 
 // buildFilterExpression converts tag filters into a QBv5-compatible filter expression and set of variableItems.
 func buildFilterExpression(tags []servicetypesv1.TagFilterItem) (string, map[string]qbtypes.VariableItem) {

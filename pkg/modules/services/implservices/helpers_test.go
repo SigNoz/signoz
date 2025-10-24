@@ -209,3 +209,48 @@ func TestBuildFilterExpression(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateTagFilterItems(t *testing.T) {
+	tests := []struct {
+		name    string
+		tags    []servicetypesv1.TagFilterItem
+		wantErr string
+	}{
+		{
+			name:    "empty tags -> ok",
+			tags:    nil,
+			wantErr: "",
+		},
+		{
+			name:    "missing key -> error",
+			tags:    []servicetypesv1.TagFilterItem{{Key: "", Operator: "in", StringValues: []string{"a"}}},
+			wantErr: "key is required",
+		},
+		{
+			name: "valid in and notin",
+			tags: []servicetypesv1.TagFilterItem{
+				{Key: "service.name", Operator: "in", StringValues: []string{"svc-a", "svc-b"}},
+				{Key: "deployment.environment", Operator: "notin", StringValues: []string{"prod"}},
+			},
+			wantErr: "",
+		},
+		{
+			name:    "invalid operator -> error",
+			tags:    []servicetypesv1.TagFilterItem{{Key: "service.name", Operator: "equals", StringValues: []string{"a"}}},
+			wantErr: "only in and notin operators are supported",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateTagFilterItems(tt.tags)
+			if tt.wantErr == "" {
+				assert.NoError(t, err)
+			} else {
+				if assert.Error(t, err) {
+					assert.Contains(t, err.Error(), tt.wantErr)
+				}
+			}
+		})
+	}
+}
