@@ -409,7 +409,7 @@ type CustomRetentionTTLParams struct {
 	DefaultTTLDays            int                   `json:"defaultTTLDays"`
 	TTLConditions             []CustomRetentionRule `json:"ttlConditions"`
 	ColdStorageVolume         string                `json:"coldStorageVolume,omitempty"`
-	ToColdStorageDurationDays int64                 `json:"coldStorageDuration,omitempty"`
+	ToColdStorageDurationDays int64                 `json:"coldStorageDurationDays,omitempty"`
 }
 
 type CustomRetentionRule struct {
