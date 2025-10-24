@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
 	sdkmetric "go.opentelemetry.io/otel/metric"
+	sdkmetricnoop "go.opentelemetry.io/otel/metric/noop"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	sdktrace "go.opentelemetry.io/otel/trace"
@@ -90,6 +91,9 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		meterProvider = sdkmetricnoop.NewMeterProvider()
+		meterProviderShutdownFunc = func(context.Context) error { return nil }
 	}
 
 	sdk, err := contribsdkconfig.NewSDK(
