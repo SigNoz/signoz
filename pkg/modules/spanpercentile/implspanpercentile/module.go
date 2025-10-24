@@ -73,16 +73,16 @@ func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, userI
 
 func transformToSpanPercentileResponse(queryResult *qbtypes.QueryRangeResponse) (*spanpercentiletypes.SpanPercentileResponse, error) {
 	if len(queryResult.Data.Results) == 0 {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no data returned from query")
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "no data returned from query")
 	}
 
 	scalarData, ok := queryResult.Data.Results[0].(*qbtypes.ScalarData)
 	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "unexpected result type")
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "unexpected result type")
 	}
 
 	if len(scalarData.Data) == 0 {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no rows returned from query")
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "no rows returned from query")
 	}
 
 	row := scalarData.Data[0]
