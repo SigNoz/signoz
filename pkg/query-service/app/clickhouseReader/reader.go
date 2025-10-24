@@ -1610,7 +1610,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		}
 
 		if params.ToColdStorageDuration > 0 {
-			ttlParams.ToColdStorageDuration = params.ToColdStorageDuration
+			ttlParams.ToColdStorageDuration = params.ToColdStorageDuration * 24 * 3600
 		} else {
 			ttlParams.ToColdStorageDuration = 0
 		}
