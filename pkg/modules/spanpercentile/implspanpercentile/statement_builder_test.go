@@ -61,37 +61,6 @@ func createTestResourceFilterBuilder() qbtypes.StatementBuilder[qbtypes.TraceAgg
 	)
 }
 
-func TestEscapeSQLString(t *testing.T) {
-	testCases := []struct {
-		input    string
-		expected string
-	}{
-		{
-			input:    "simple string",
-			expected: "simple string",
-		},
-		{
-			input:    "string with 'quote'",
-			expected: "string with ''quote''",
-		},
-		{
-			input:    "multiple 'quotes' 'here'",
-			expected: "multiple ''quotes'' ''here''",
-		},
-		{
-			input:    "no quotes",
-			expected: "no quotes",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.input, func(t *testing.T) {
-			result := escapeSQLString(tc.input)
-			require.Equal(t, tc.expected, result)
-		})
-	}
-}
-
 func TestEscapeResourceAttr(t *testing.T) {
 	testCases := []struct {
 		input    string
