@@ -512,12 +512,14 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 												{showResourceAttributesSelector ? (
 													<Check
+														data-testid="check-icon"
 														size={16}
 														className="cursor-pointer span-percentiles-header-icon"
 														onClick={(): void => setShowResourceAttributesSelector(false)}
 													/>
 												) : (
 													<PlusIcon
+														data-testid="plus-icon"
 														size={16}
 														className="cursor-pointer span-percentiles-header-icon"
 														onClick={(): void => setShowResourceAttributesSelector(true)}
