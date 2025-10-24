@@ -70,24 +70,30 @@ function Metadata({
 		[metadata],
 	);
 
+	// Render un-editable field value
+	const renderUneditableField = useCallback((key: string, value: string) => {
+		if (key === 'metric_type') {
+			return <MetricTypeRenderer type={value as MetricType} />;
+		}
+		let fieldValue = value;
+		if (key === 'unit') {
+			fieldValue = getUniversalNameFromMetricUnit(value);
+		}
+		return <FieldRenderer field={fieldValue || '-'} />;
+	}, []);
+
 	const renderColumnValue = useCallback(
 		(field: { value: string; key: string }): JSX.Element => {
+			if (!isEditing) {
+				return renderUneditableField(field.key, field.value);
+			}
+
 			// Don't allow editing of unit if it's already set
 			const metricUnitAlreadySet = field.key === 'unit' && Boolean(metadata?.unit);
-			if (!isEditing || metricUnitAlreadySet) {
-				if (field.key === 'metric_type') {
-					return (
-						<div>
-							<MetricTypeRenderer type={field.value as MetricType} />
-						</div>
-					);
-				}
-				let fieldValue = field.value;
-				if (field.key === 'unit') {
-					fieldValue = getUniversalNameFromMetricUnit(field.value);
-				}
-				return <FieldRenderer field={fieldValue || '-'} />;
+			if (metricUnitAlreadySet) {
+				return renderUneditableField(field.key, field.value);
 			}
+
 			if (field.key === 'metric_type') {
 				return (
 					<Select
@@ -113,6 +119,7 @@ function Metadata({
 						onChange={(value): void => {
 							setMetricMetadata((prev) => ({ ...prev, unit: value }));
 						}}
+						data-testid="unit-select"
 					/>
 				);
 			}
@@ -134,25 +141,28 @@ function Metadata({
 					/>
 				);
 			}
-			return (
-				<Input
-					data-testid="description-input"
-					name={field.key}
-					defaultValue={
-						metricMetadata[
-							field.key as Exclude<keyof UpdateMetricMetadataProps, 'isMonotonic'>
-						]
-					}
-					onChange={(e): void => {
-						setMetricMetadata((prev) => ({
-							...prev,
-							[field.key]: e.target.value,
-						}));
-					}}
-				/>
-			);
+			if (field.key === 'description') {
+				return (
+					<Input
+						data-testid="description-input"
+						name={field.key}
+						defaultValue={
+							metricMetadata[
+								field.key as Exclude<keyof UpdateMetricMetadataProps, 'isMonotonic'>
+							]
+						}
+						onChange={(e): void => {
+							setMetricMetadata((prev) => ({
+								...prev,
+								[field.key]: e.target.value,
+							}));
+						}}
+					/>
+				);
+			}
+			return <FieldRenderer field="-" />;
 		},
-		[isEditing, metadata?.unit, metricMetadata],
+		[isEditing, metadata?.unit, metricMetadata, renderUneditableField],
 	);
 
 	const columns: ColumnsType<DataType> = useMemo(
