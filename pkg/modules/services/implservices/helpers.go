@@ -1,7 +1,6 @@
 package implservices
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -14,13 +13,13 @@ import (
 func validateTagFilterItems(tags []servicetypesv1.TagFilterItem) error {
 	for _, t := range tags {
 		if t.Key == "" {
-			return errors.New("key is required")
+			return fmt.Errorf("key is required")
 		}
 		if strings.ToLower(t.Operator) != "in" && strings.ToLower(t.Operator) != "notin" {
-			return errors.New("only in and notin operators are supported")
+			return fmt.Errorf("only in and notin operators are supported")
 		}
 		if len(t.StringValues) == 0 && len(t.BoolValues) == 0 && len(t.NumberValues) == 0 {
-			return errors.New("at least one of stringValues, boolValues, or numberValues must be populated")
+			return fmt.Errorf("at least one of stringValues, boolValues, or numberValues must be populated")
 		}
 	}
 	return nil
