@@ -131,14 +131,14 @@ def test_refresh_license(
 
     assert response.status_code == http.HTTPStatus.NO_CONTENT
 
-    with signoz.sqlstore.conn.connect() as conn:
-        result = conn.execute(
-            sql.text("SELECT data FROM license WHERE id=:id"),
-            {"id": "0196360e-90cd-7a74-8313-1aa815ce2a67"},
-        )
-        record = result.fetchone()[0]
-        assert json.loads(record)["valid_from"] == 1732146922
-
+    response = requests.get(
+        url=signoz.self.host_configs["8080"].get("/api/v3/licenses/active"),
+        headers={"Authorization": "Bearer " + access_token},
+        timeout=5,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json()["data"]["valid_from"] == 1732146922
+   
     response = requests.post(
         url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),
         json={"method": "GET", "url": "/v2/licenses/me"},
