@@ -185,6 +185,7 @@ def test_reset_password(
     assert token is not None
 
 
+
 def test_reset_password_with_no_password(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> None:
