@@ -4,11 +4,16 @@
 	align-items: baseline;
 	padding: 0 16px;
 
+	.alert-header {
+		flex: 1;
+	}
+
 	&__info-wrapper {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
 		height: 54px;
+		flex: 1;
 
 		.top-section {
 			display: flex;

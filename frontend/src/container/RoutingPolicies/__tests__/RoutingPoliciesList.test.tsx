@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import RoutingPoliciesList from '../RoutingPolicyList';
 import { RoutingPolicyListItemProps } from '../types';
@@ -7,6 +7,7 @@ import { getUseRoutingPoliciesMockData } from './testUtils';
 const useRoutingPolicesMockData = getUseRoutingPoliciesMockData();
 const mockHandlePolicyDetailsModalOpen = jest.fn();
 const mockHandleDeleteModalOpen = jest.fn();
+const mockRefetchRoutingPolicies = jest.fn();
 
 jest.mock('../RoutingPolicyListItem', () => ({
 	__esModule: true,
@@ -29,6 +30,8 @@ describe('RoutingPoliciesList', () => {
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
 				hasSearchTerm={false}
+				refetchRoutingPolicies={mockRefetchRoutingPolicies}
+				isRoutingPoliciesFetching={false}
 			/>,
 		);
 
@@ -53,6 +56,27 @@ describe('RoutingPoliciesList', () => {
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
 				hasSearchTerm={false}
+				refetchRoutingPolicies={mockRefetchRoutingPolicies}
+				isRoutingPoliciesFetching={false}
+			/>,
+		);
+		// Check for loading spinner by class name
+		expect(document.querySelector('.ant-spin-spinning')).toBeInTheDocument();
+		// Check that the table is in loading state (blurred)
+		expect(document.querySelector('.ant-spin-blur')).toBeInTheDocument();
+	});
+
+	it('renders loading state when data is being fetched', () => {
+		render(
+			<RoutingPoliciesList
+				routingPolicies={useRoutingPolicesMockData.routingPoliciesData}
+				isRoutingPoliciesLoading={false}
+				isRoutingPoliciesError={false}
+				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
+				handleDeleteModalOpen={mockHandleDeleteModalOpen}
+				hasSearchTerm={false}
+				refetchRoutingPolicies={mockRefetchRoutingPolicies}
+				isRoutingPoliciesFetching
 			/>,
 		);
 		// Check for loading spinner by class name
@@ -70,11 +94,18 @@ describe('RoutingPoliciesList', () => {
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
 				hasSearchTerm={false}
+				refetchRoutingPolicies={mockRefetchRoutingPolicies}
+				isRoutingPoliciesFetching={false}
 			/>,
 		);
 		expect(
 			screen.getByText('Something went wrong while fetching routing policies.'),
 		).toBeInTheDocument();
+
+		const retryButton = screen.getByRole('button', { name: 'Retry' });
+		expect(retryButton).toBeInTheDocument();
+		fireEvent.click(retryButton);
+		expect(mockRefetchRoutingPolicies).toHaveBeenCalled();
 	});
 
 	it('renders empty state', () => {
@@ -86,6 +117,8 @@ describe('RoutingPoliciesList', () => {
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
 				hasSearchTerm={false}
+				refetchRoutingPolicies={mockRefetchRoutingPolicies}
+				isRoutingPoliciesFetching={false}
 			/>,
 		);
 		expect(screen.getByText('No routing policies yet,')).toBeInTheDocument();
