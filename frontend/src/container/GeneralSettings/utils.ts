@@ -34,12 +34,22 @@ interface ITimeUnitConversion {
 	value: number;
 	timeUnitValue: SettingPeriod;
 }
+
+/**
+ * Converts hours value to the most relevant unit from the available units.
+ * @param value - The value in hours
+ * @param availableUnits - Optional array of available time units to consider. If not provided, all units are considered.
+ * @returns The converted value and the selected time unit
+ */
 export const convertHoursValueToRelevantUnit = (
 	value: number,
+	availableUnits?: ITimeUnit[],
 ): ITimeUnitConversion => {
-	if (value)
-		for (let idx = TimeUnits.length - 1; idx >= 0; idx -= 1) {
-			const timeUnit = TimeUnits[idx];
+	const unitsToConsider = availableUnits?.length ? availableUnits : TimeUnits;
+
+	if (value) {
+		for (let idx = unitsToConsider.length - 1; idx >= 0; idx -= 1) {
+			const timeUnit = unitsToConsider[idx];
 			const convertedValue = timeUnit.multiplier * value;
 
 			if (
@@ -49,7 +59,10 @@ export const convertHoursValueToRelevantUnit = (
 				return { value: convertedValue, timeUnitValue: timeUnit.value };
 			}
 		}
-	return { value, timeUnitValue: TimeUnits[0].value };
+	}
+
+	// Fallback to the first available unit
+	return { value, timeUnitValue: unitsToConsider[0].value };
 };
 
 export const convertHoursValueToRelevantUnitString = (
