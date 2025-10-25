@@ -4,6 +4,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authn"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
@@ -20,6 +21,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/session"
@@ -49,6 +52,7 @@ type Modules struct {
 	RawDataExport rawdataexport.Module
 	AuthDomain    authdomain.Module
 	Session       session.Module
+	Role          role.Module
 }
 
 func NewModules(
@@ -61,18 +65,20 @@ func NewModules(
 	analytics analytics.Analytics,
 	querier querier.Querier,
 	authNs map[authtypes.AuthNProvider]authn.AuthN,
+	authz authz.AuthZ,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
 	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics)
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
+	dashboard := impldashboard.NewModule(sqlstore, providerSettings, analytics)
 	return Modules{
 		OrgGetter:     orgGetter,
 		OrgSetter:     orgSetter,
 		Preference:    implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
 		SavedView:     implsavedview.NewModule(sqlstore),
 		Apdex:         implapdex.NewModule(sqlstore),
-		Dashboard:     impldashboard.NewModule(sqlstore, providerSettings, analytics),
+		Dashboard:     dashboard,
 		User:          user,
 		UserGetter:    userGetter,
 		QuickFilter:   quickfilter,
@@ -80,5 +86,6 @@ func NewModules(
 		RawDataExport: implrawdataexport.NewModule(querier),
 		AuthDomain:    implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)),
 		Session:       implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
+		Role:          implrole.NewModule(implrole.NewStore(sqlstore), authz, []role.RegisterTypeable{dashboard}),
 	}
 }

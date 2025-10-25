@@ -39,4 +39,7 @@ type Valuer interface {
 
 	// Implement encoding.TextUnmarshaler to allow the value to be unmarshalled from a string
 	encoding.TextUnmarshaler
+
+	// Implement encoding.TextUnmarshaler to allow the value to be marshalled unto a string
+	encoding.TextMarshaler
 }

@@ -13,6 +13,11 @@ var (
 )
 
 var (
+	_ json.Marshaler   = new(Selector)
+	_ json.Unmarshaler = new(Selector)
+)
+
+var (
 	typeUserSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeRoleSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeOrganizationSelectorRegex = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
@@ -50,11 +55,11 @@ func IsValidSelector(typed Type, selector string) error {
 		if !typeOrganizationSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeOrganizationSelectorRegex.String())
 		}
-	case TypeResource:
+	case TypeMetaResource:
 		if !typeResourceSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourceSelectorRegex.String())
 		}
-	case TypeResources:
+	case TypeMetaResources:
 		if !typeResourcesSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourcesSelectorRegex.String())
 		}
@@ -74,6 +79,10 @@ func MustNewSelector(typed Type, input string) Selector {
 
 func (selector Selector) String() string {
 	return selector.val
+}
+
+func (selector *Selector) MarshalJSON() ([]byte, error) {
+	return json.Marshal(selector.val)
 }
 
 func (typed *Selector) UnmarshalJSON(data []byte) error {

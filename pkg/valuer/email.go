@@ -103,3 +103,7 @@ func (enum *Email) UnmarshalText(text []byte) error {
 
 	return nil
 }
+
+func (enum Email) MarshalText() (text []byte, err error) {
+	return []byte(enum.StringValue()), nil
+}

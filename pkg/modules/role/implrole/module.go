@@ -17,12 +17,12 @@ type module struct {
 	authz    authz.AuthZ
 }
 
-func NewModule(ctx context.Context, store roletypes.Store, authz authz.AuthZ, registry []role.RegisterTypeable) (role.Module, error) {
+func NewModule(store roletypes.Store, authz authz.AuthZ, registry []role.RegisterTypeable) role.Module {
 	return &module{
 		store:    store,
 		authz:    authz,
 		registry: registry,
-	}, nil
+	}
 }
 
 func (module *module) Create(ctx context.Context, orgID valuer.UUID, displayName, description string) (*roletypes.Role, error) {

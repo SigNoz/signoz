@@ -16,6 +16,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/session"
@@ -38,6 +40,7 @@ type Handlers struct {
 	RawDataExport rawdataexport.Handler
 	AuthDomain    authdomain.Handler
 	Session       session.Handler
+	Role          role.Handler
 }
 
 func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Handlers {
@@ -53,5 +56,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Han
 		RawDataExport: implrawdataexport.NewHandler(modules.RawDataExport),
 		AuthDomain:    implauthdomain.NewHandler(modules.AuthDomain),
 		Session:       implsession.NewHandler(modules.Session),
+		Role:          implrole.NewHandler(modules.Role),
 	}
 }
