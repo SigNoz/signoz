@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -31,10 +32,10 @@ func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Mod
 	}
 }
 
-// FetchTopLevelOperations returns top-level operations per service using the legacy table
+// FetchTopLevelOperations returns top-level operations per service using db query
 func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
 	db := m.TelemetryStore.ClickhouseDB()
-	query := "SELECT name, serviceName, max(time) as ts FROM signoz_traces.distributed_top_level_operations WHERE time >= @start"
+	query := fmt.Sprintf("SELECT name, serviceName, max(time) as ts FROM %s.%s WHERE time >= @start", telemetrytraces.DBName, telemetrytraces.TopLevelOperationsTableName)
 	args := []any{clickhouse.Named("start", start)}
 	if len(services) > 0 {
 		query += " AND serviceName IN @services"
@@ -68,14 +69,9 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 
 // Get implements services.Module
 // Builds a QBv5 traces aggregation grouped by service.name and maps results to ResponseItem.
-func (m *module) Get(ctx context.Context, orgID string, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, error) {
+func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, error) {
 	if req == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
-	}
-
-	orgUUID, err := valuer.NewUUID(orgID)
-	if err != nil {
-		return nil, err
 	}
 
 	// Prepare phase
@@ -107,14 +103,9 @@ func (m *module) Get(ctx context.Context, orgID string, req *servicetypesv1.Requ
 }
 
 // GetTopOperations implements services.Module for QBV5 based top ops
-func (m *module) GetTopOperations(ctx context.Context, orgID string, req *servicetypesv1.TopOperationsRequest) ([]servicetypesv1.TopOperationItem, error) {
+func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error) {
 	if req == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
-	}
-
-	orgUUID, err := valuer.NewUUID(orgID)
-	if err != nil {
-		return nil, err
 	}
 
 	qr, err := m.buildTopOpsQueryRangeRequest(req)
@@ -132,14 +123,9 @@ func (m *module) GetTopOperations(ctx context.Context, orgID string, req *servic
 }
 
 // GetEntryPointOperations implements services.Module for QBV5 based entry point ops
-func (m *module) GetEntryPointOperations(ctx context.Context, orgID string, req *servicetypesv1.EntryPointOperationsRequest) ([]servicetypesv1.EntryPointOperationItem, error) {
+func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error) {
 	if req == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
-	}
-
-	orgUUID, err := valuer.NewUUID(orgID)
-	if err != nil {
-		return nil, err
 	}
 
 	qr, err := m.buildEntryPointOpsQueryRangeRequest(req)
@@ -171,7 +157,7 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.Q
 		return nil, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
 	}
 	if err := validateTagFilterItems(req.Tags); err != nil {
-		return nil, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid tags: %v", err)
+		return nil, 0, 0, err
 	}
 
 	startMs := startNs / 1_000_000
@@ -310,7 +296,7 @@ func (m *module) attachTopLevelOps(ctx context.Context, serviceNames []string, s
 	return nil
 }
 
-func (m *module) buildTopOpsQueryRangeRequest(req *servicetypesv1.TopOperationsRequest) (*qbtypes.QueryRangeRequest, error) {
+func (m *module) buildTopOpsQueryRangeRequest(req *servicetypesv1.OperationsRequest) (*qbtypes.QueryRangeRequest, error) {
 	if req.Service == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "service is required")
 	}
@@ -325,8 +311,11 @@ func (m *module) buildTopOpsQueryRangeRequest(req *servicetypesv1.TopOperationsR
 	if startNs >= endNs {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
 	}
+	if req.Limit < 1 || req.Limit > 5000 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
+	}
 	if err := validateTagFilterItems(req.Tags); err != nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid tags: %v", err)
+		return nil, err
 	}
 
 	startMs := startNs / 1_000_000
@@ -378,13 +367,13 @@ func (m *module) buildTopOpsQueryRangeRequest(req *servicetypesv1.TopOperationsR
 	return &reqV5, nil
 }
 
-func (m *module) mapTopOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []servicetypesv1.TopOperationItem {
+func (m *module) mapTopOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []servicetypesv1.OperationItem {
 	if resp == nil || len(resp.Data.Results) == 0 {
-		return []servicetypesv1.TopOperationItem{}
+		return []servicetypesv1.OperationItem{}
 	}
 	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
 	if !ok || sd == nil {
-		return []servicetypesv1.TopOperationItem{}
+		return []servicetypesv1.OperationItem{}
 	}
 
 	nameIdx := -1
@@ -400,9 +389,9 @@ func (m *module) mapTopOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []ser
 		}
 	}
 
-	out := make([]servicetypesv1.TopOperationItem, 0, len(sd.Data))
+	out := make([]servicetypesv1.OperationItem, 0, len(sd.Data))
 	for _, row := range sd.Data {
-		item := servicetypesv1.TopOperationItem{
+		item := servicetypesv1.OperationItem{
 			Name:       fmt.Sprintf("%v", row[nameIdx]),
 			P50:        toFloat(row, aggIdx[0]),
 			P95:        toFloat(row, aggIdx[1]),
@@ -415,7 +404,7 @@ func (m *module) mapTopOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []ser
 	return out
 }
 
-func (m *module) buildEntryPointOpsQueryRangeRequest(req *servicetypesv1.EntryPointOperationsRequest) (*qbtypes.QueryRangeRequest, error) {
+func (m *module) buildEntryPointOpsQueryRangeRequest(req *servicetypesv1.OperationsRequest) (*qbtypes.QueryRangeRequest, error) {
 	if req.Service == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "service is required")
 	}
@@ -430,8 +419,11 @@ func (m *module) buildEntryPointOpsQueryRangeRequest(req *servicetypesv1.EntryPo
 	if startNs >= endNs {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
 	}
+	if req.Limit < 1 || req.Limit > 5000 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
+	}
 	if err := validateTagFilterItems(req.Tags); err != nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid tags: %v", err)
+		return nil, err
 	}
 
 	startMs := startNs / 1_000_000
@@ -489,13 +481,13 @@ func (m *module) buildEntryPointOpsQueryRangeRequest(req *servicetypesv1.EntryPo
 	return &reqV5, nil
 }
 
-func (m *module) mapEntryPointOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []servicetypesv1.EntryPointOperationItem {
+func (m *module) mapEntryPointOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []servicetypesv1.OperationItem {
 	if resp == nil || len(resp.Data.Results) == 0 {
-		return []servicetypesv1.EntryPointOperationItem{}
+		return []servicetypesv1.OperationItem{}
 	}
 	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
 	if !ok || sd == nil {
-		return []servicetypesv1.EntryPointOperationItem{}
+		return []servicetypesv1.OperationItem{}
 	}
 
 	nameIdx := -1
@@ -511,9 +503,9 @@ func (m *module) mapEntryPointOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse
 		}
 	}
 
-	out := make([]servicetypesv1.EntryPointOperationItem, 0, len(sd.Data))
+	out := make([]servicetypesv1.OperationItem, 0, len(sd.Data))
 	for _, row := range sd.Data {
-		item := servicetypesv1.EntryPointOperationItem{
+		item := servicetypesv1.OperationItem{
 			Name:       fmt.Sprintf("%v", row[nameIdx]),
 			P50:        toFloat(row, aggIdx[0]),
 			P95:        toFloat(row, aggIdx[1]),

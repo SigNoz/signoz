@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type handler struct {
@@ -33,7 +34,12 @@ func (h *handler) Get(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	out, err := h.Module.Get(req.Context(), claims.OrgID, &in)
+	orgUUID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	out, err := h.Module.Get(req.Context(), orgUUID, &in)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -48,13 +54,18 @@ func (h *handler) GetTopOperations(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var in servicetypesv1.TopOperationsRequest
+	var in servicetypesv1.OperationsRequest
 	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	out, err := h.Module.GetTopOperations(req.Context(), claims.OrgID, &in)
+	orgUUID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	out, err := h.Module.GetTopOperations(req.Context(), orgUUID, &in)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -69,13 +80,18 @@ func (h *handler) GetEntryPointOperations(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	var in servicetypesv1.EntryPointOperationsRequest
+	var in servicetypesv1.OperationsRequest
 	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	out, err := h.Module.GetEntryPointOperations(req.Context(), claims.OrgID, &in)
+	orgUUID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	out, err := h.Module.GetEntryPointOperations(req.Context(), orgUUID, &in)
 	if err != nil {
 		render.Error(rw, err)
 		return

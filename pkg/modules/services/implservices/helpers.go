@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 )
@@ -13,13 +14,13 @@ import (
 func validateTagFilterItems(tags []servicetypesv1.TagFilterItem) error {
 	for _, t := range tags {
 		if t.Key == "" {
-			return fmt.Errorf("key is required")
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "key is required")
 		}
 		if strings.ToLower(t.Operator) != "in" && strings.ToLower(t.Operator) != "notin" {
-			return fmt.Errorf("only in and notin operators are supported")
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "only in and notin operators are supported")
 		}
 		if len(t.StringValues) == 0 && len(t.BoolValues) == 0 && len(t.NumberValues) == 0 {
-			return fmt.Errorf("at least one of stringValues, boolValues, or numberValues must be populated")
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "at least one of stringValues, boolValues, or numberValues must be populated")
 		}
 	}
 	return nil

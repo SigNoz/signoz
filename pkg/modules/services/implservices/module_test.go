@@ -295,13 +295,13 @@ func TestBuildTopOpsQueryRangeRequest(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		req     servicetypesv1.TopOperationsRequest
+		req     servicetypesv1.OperationsRequest
 		wantErr string
 		assertQ func(t *testing.T, qr *qbtypes.QueryRangeRequest)
 	}{
 		{
 			name: "with tag filters (In, NotIn) and no scope",
-			req: servicetypesv1.TopOperationsRequest{
+			req: servicetypesv1.OperationsRequest{
 				Start:   "1000000000",
 				End:     "2000000000",
 				Service: "frontend",
@@ -350,7 +350,7 @@ func TestBuildTopOpsQueryRangeRequest(t *testing.T) {
 		},
 		{
 			name: "valid minimal filters, no scope added",
-			req: servicetypesv1.TopOperationsRequest{
+			req: servicetypesv1.OperationsRequest{
 				Start:   "1000000000", // 1s ns -> 1000 ms
 				End:     "4000000000", // 4s ns -> 4000 ms
 				Service: "cartservice",
@@ -398,47 +398,59 @@ func TestBuildTopOpsQueryRangeRequest(t *testing.T) {
 		},
 		{
 			name:    "missing service -> error",
-			req:     servicetypesv1.TopOperationsRequest{Start: "1", End: "2"},
+			req:     servicetypesv1.OperationsRequest{Start: "1", End: "2"},
 			wantErr: "service is required",
 		},
 		{
+			name:    "invalid limit low",
+			req:     servicetypesv1.OperationsRequest{Start: "1", End: "2", Service: "s", Limit: 0},
+			wantErr: "limit must be between 1 and 5000",
+		},
+		{
+			name:    "invalid limit high",
+			req:     servicetypesv1.OperationsRequest{Start: "1", End: "2", Service: "s", Limit: 5001},
+			wantErr: "limit must be between 1 and 5000",
+		},
+		{
 			name:    "invalid start",
-			req:     servicetypesv1.TopOperationsRequest{Start: "abc", End: "2", Service: "s"},
+			req:     servicetypesv1.OperationsRequest{Start: "abc", End: "2", Service: "s"},
 			wantErr: "invalid start time",
 		},
 		{
 			name:    "invalid end",
-			req:     servicetypesv1.TopOperationsRequest{Start: "1", End: "abc", Service: "s"},
+			req:     servicetypesv1.OperationsRequest{Start: "1", End: "abc", Service: "s"},
 			wantErr: "invalid end time",
 		},
 		{
 			name:    "start not before end",
-			req:     servicetypesv1.TopOperationsRequest{Start: "2", End: "2", Service: "s"},
+			req:     servicetypesv1.OperationsRequest{Start: "2", End: "2", Service: "s"},
 			wantErr: "start must be before end",
 		},
 		{
 			name: "invalid tag in top ops -> error",
-			req: servicetypesv1.TopOperationsRequest{
+			req: servicetypesv1.OperationsRequest{
 				Start:   "1000000000",
 				End:     "2000000000",
 				Service: "frontend",
+				Limit:   10,
 				Tags:    []servicetypesv1.TagFilterItem{{Key: "", Operator: "in", StringValues: []string{"x"}}},
 			},
 			wantErr: "key is required",
 		},
 		{
 			name: "invalid tag: in but no values -> error (top ops)",
-			req: servicetypesv1.TopOperationsRequest{
+			req: servicetypesv1.OperationsRequest{
 				Start:   "1000000000",
 				End:     "2000000000",
 				Service: "frontend",
 				Tags:    []servicetypesv1.TagFilterItem{{Key: "env", Operator: "in"}},
+				Limit:   10,
 			},
 			wantErr: "at least one of stringValues, boolValues, or numberValues must be populated",
 		},
 		{
 			name: "valid tag in top ops -> ok",
-			req: servicetypesv1.TopOperationsRequest{
+			req: servicetypesv1.OperationsRequest{
 				Start:   "1000000000",
 				End:     "2000000000",
 				Service: "frontend",
@@ -484,17 +496,17 @@ func TestMapTopOpsQueryRangeResp(t *testing.T) {
 	tests := []struct {
 		name string
 		resp *qbtypes.QueryRangeResponse
-		want []servicetypesv1.TopOperationItem
+		want []servicetypesv1.OperationItem
 	}{
 		{
 			name: "empty results -> empty slice",
 			resp: &qbtypes.QueryRangeResponse{Type: qbtypes.RequestTypeScalar, Data: qbtypes.QueryData{Results: []any{}}},
-			want: []servicetypesv1.TopOperationItem{},
+			want: []servicetypesv1.OperationItem{},
 		},
 		{
 			name: "non-scalar result -> empty slice",
 			resp: &qbtypes.QueryRangeResponse{Type: qbtypes.RequestTypeScalar, Data: qbtypes.QueryData{Results: []any{"x"}}},
-			want: []servicetypesv1.TopOperationItem{},
+			want: []servicetypesv1.OperationItem{},
 		},
 		{
 			name: "single row maps correctly",
@@ -506,7 +518,7 @@ func TestMapTopOpsQueryRangeResp(t *testing.T) {
 					Data:      [][]any{{"opA", float64(10), float64(20), float64(30), uint64(100), uint64(7)}},
 				}}},
 			},
-			want: []servicetypesv1.TopOperationItem{{
+			want: []servicetypesv1.OperationItem{{
 				Name:       "opA",
 				P50:        10,
 				P95:        20,
@@ -530,17 +542,18 @@ func TestBuildEntryPointOpsQueryRangeRequest(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		req     servicetypesv1.EntryPointOperationsRequest
+		req     servicetypesv1.OperationsRequest
 		wantErr string
 		assertQ func(t *testing.T, qr *qbtypes.QueryRangeRequest)
 	}{
 		{
 			name: "service only -> scope present, no extra filters",
-			req: servicetypesv1.EntryPointOperationsRequest{
+			req: servicetypesv1.OperationsRequest{
 				Start:   "1000000000",
 				End:     "2000000000",
 				Service: "cartservice",
 				// no tags
+				Limit: 10,
 			},
 			assertQ: func(t *testing.T, qr *qbtypes.QueryRangeRequest) {
 				if assert.Equal(t, 1, len(qr.CompositeQuery.Queries)) {
@@ -571,7 +584,7 @@ func TestBuildEntryPointOpsQueryRangeRequest(t *testing.T) {
 		},
 		{
 			name: "with filters and scope present",
-			req: servicetypesv1.EntryPointOperationsRequest{
+			req: servicetypesv1.OperationsRequest{
 				Start:   "1000000000",
 				End:     "3000000000",
 				Service: "frontend",
@@ -620,47 +633,59 @@ func TestBuildEntryPointOpsQueryRangeRequest(t *testing.T) {
 		},
 		{
 			name:    "missing service -> error",
-			req:     servicetypesv1.EntryPointOperationsRequest{Start: "1", End: "2"},
+			req:     servicetypesv1.OperationsRequest{Start: "1", End: "2"},
 			wantErr: "service is required",
 		},
 		{
 			name:    "invalid start",
-			req:     servicetypesv1.EntryPointOperationsRequest{Start: "abc", End: "2", Service: "s"},
+			req:     servicetypesv1.OperationsRequest{Start: "abc", End: "2", Service: "s"},
 			wantErr: "invalid start time",
 		},
 		{
 			name:    "invalid end",
-			req:     servicetypesv1.EntryPointOperationsRequest{Start: "1", End: "abc", Service: "s"},
+			req:     servicetypesv1.OperationsRequest{Start: "1", End: "abc", Service: "s"},
 			wantErr: "invalid end time",
 		},
 		{
 			name:    "start not before end",
-			req:     servicetypesv1.EntryPointOperationsRequest{Start: "2", End: "2", Service: "s"},
+			req:     servicetypesv1.OperationsRequest{Start: "2", End: "2", Service: "s"},
 			wantErr: "start must be before end",
 		},
 		{
+			name:    "invalid limit low",
+			req:     servicetypesv1.OperationsRequest{Start: "1", End: "2", Service: "s", Limit: 0},
+			wantErr: "limit must be between 1 and 5000",
+		},
+		{
+			name:    "invalid limit high",
+			req:     servicetypesv1.OperationsRequest{Start: "1", End: "2", Service: "s", Limit: 5001},
+			wantErr: "limit must be between 1 and 5000",
+		},
+		{
 			name: "invalid tag in entry point ops -> error",
-			req: servicetypesv1.EntryPointOperationsRequest{
+			req: servicetypesv1.OperationsRequest{
 				Start:   "1000000000",
 				End:     "2000000000",
 				Service: "cartservice",
+				Limit:   10,
 				Tags:    []servicetypesv1.TagFilterItem{{Key: "", Operator: "notin", StringValues: []string{"x"}}},
 			},
 			wantErr: "key is required",
 		},
 		{
 			name: "invalid tag: notin but no values -> error (entry ops)",
-			req: servicetypesv1.EntryPointOperationsRequest{
+			req: servicetypesv1.OperationsRequest{
 				Start:   "1000000000",
 				End:     "2000000000",
 				Service: "cartservice",
+				Limit:   10,
 				Tags:    []servicetypesv1.TagFilterItem{{Key: "env", Operator: "notin"}},
 			},
 			wantErr: "at least one of stringValues, boolValues, or numberValues must be populated",
 		},
 		{
 			name: "valid tag in entry point ops -> ok",
-			req: servicetypesv1.EntryPointOperationsRequest{
+			req: servicetypesv1.OperationsRequest{
 				Start:   "1000000000",
 				End:     "2000000000",
 				Service: "cartservice",
@@ -706,17 +731,17 @@ func TestMapEntryPointOpsQueryRangeResp(t *testing.T) {
 	tests := []struct {
 		name string
 		resp *qbtypes.QueryRangeResponse
-		want []servicetypesv1.EntryPointOperationItem
+		want []servicetypesv1.OperationItem
 	}{
 		{
 			name: "empty results -> empty slice",
 			resp: &qbtypes.QueryRangeResponse{Type: qbtypes.RequestTypeScalar, Data: qbtypes.QueryData{Results: []any{}}},
-			want: []servicetypesv1.EntryPointOperationItem{},
+			want: []servicetypesv1.OperationItem{},
 		},
 		{
 			name: "non-scalar result -> empty slice",
 			resp: &qbtypes.QueryRangeResponse{Type: qbtypes.RequestTypeScalar, Data: qbtypes.QueryData{Results: []any{"x"}}},
-			want: []servicetypesv1.EntryPointOperationItem{},
+			want: []servicetypesv1.OperationItem{},
 		},
 		{
 			name: "single row maps correctly",
@@ -728,7 +753,7 @@ func TestMapEntryPointOpsQueryRangeResp(t *testing.T) {
 					Data:      [][]any{{"op-entry", float64(5), float64(15), float64(25), uint64(12), uint64(1)}},
 				}}},
 			},
-			want: []servicetypesv1.EntryPointOperationItem{{
+			want: []servicetypesv1.OperationItem{{
 				Name:       "op-entry",
 				P50:        5,
 				P95:        15,
