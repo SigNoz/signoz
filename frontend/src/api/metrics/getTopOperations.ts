@@ -15,6 +15,7 @@ const getTopOperations = async (props: Props): Promise<PayloadProps> => {
 			end: `${props.end}`,
 			service: props.service,
 			tags: props.selectedTags,
+			limit: 5000,
 		});
 
 		return response.data?.data ?? response.data;
