@@ -2,8 +2,50 @@
 	display: flex;
 	flex-direction: column;
 
+	.date-time-picker-container {
+		position: relative;
+
+		.date-time-picker-input {
+			border-radius: 4px;
+			padding: 6px 6px 6px 8px;
+
+			border-radius: 2px;
+			border: 1px solid var(--Slate-400, #1d212d);
+			background: var(--Ink-300, #16181d);
+
+			&.custom-time {
+				.ant-input {
+					min-width: 280px;
+				}
+			}
+		}
+
+		.date-time-picker-content {
+			min-width: 580px;
+			max-width: 580px;
+
+			position: absolute;
+			top: 36px; // 32px + 4px
+			right: 0;
+			width: 100%;
+			z-index: 1000;
+
+			border-radius: 4px !important;
+			border: 1px solid var(--bg-slate-400);
+			box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2) !important;
+			padding: 0px !important;
+			border-radius: 4px;
+			background: linear-gradient(
+				139deg,
+				rgba(18, 19, 23, 0.8) 0%,
+				rgba(18, 19, 23, 0.9) 98.68%
+			) !important;
+			backdrop-filter: blur(20px);
+		}
+	}
+
 	.timeSelection-input {
-		&:hover {
+		&:hover:not(.ant-input-affix-wrapper-status-error) {
 			border-color: #1d212d !important;
 		}
 	}
@@ -49,9 +91,14 @@
 	padding-left: 0px !important;
 
 	&.custom-time {
-		input:not(:focus) {
+		input {
 			min-width: 280px;
 		}
+	}
+
+	.ant-input {
+		background: var(--Ink-300, #16181d);
+		color: var(--bg-vanilla-100);
 	}
 
 	input::placeholder {
@@ -118,6 +165,11 @@
 
 		input::placeholder {
 			color: var(---bg-ink-300);
+		}
+
+		.ant-input {
+			background: var(--bg-vanilla-100);
+			color: var(--bg-ink-400);
 		}
 
 		input:focus::placeholder {
@@ -239,7 +291,7 @@
 	}
 
 	.custom-time-picker {
-		.timeSelection-input {
+		.timeSelection-input:not(.ant-input-affix-wrapper-status-error) {
 			&:hover {
 				border-color: var(--bg-vanilla-300) !important;
 			}
