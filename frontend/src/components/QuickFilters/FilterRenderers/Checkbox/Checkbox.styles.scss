@@ -45,6 +45,12 @@
 		flex-direction: column;
 		gap: 8px;
 
+		.filter-separator {
+			height: 1px;
+			background-color: var(--bg-slate-400);
+			margin: 4px 0;
+		}
+
 		.value {
 			display: flex;
 			align-items: center;
@@ -175,6 +181,12 @@
 				.title {
 					color: var(--bg-ink-400);
 				}
+			}
+		}
+
+		.values {
+			.filter-separator {
+				background-color: var(--bg-vanilla-300);
 			}
 		}
 	}
