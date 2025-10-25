@@ -2,11 +2,11 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
@@ -21,11 +21,11 @@ type Server struct {
 
 func New(logger *slog.Logger, cfg Config, handler http.Handler) (*Server, error) {
 	if handler == nil {
-		return nil, fmt.Errorf("cannot build http server, handler is required")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "cannot build http server, handler is required")
 	}
 
 	if logger == nil {
-		return nil, fmt.Errorf("cannot build http server, logger is required")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "cannot build http server, logger is required")
 	}
 
 	srv := &http.Server{

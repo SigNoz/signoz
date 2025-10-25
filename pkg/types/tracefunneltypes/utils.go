@@ -1,7 +1,6 @@
 package tracefunneltypes
 
 import (
-	"fmt"
 	"sort"
 	"time"
 
@@ -13,10 +12,10 @@ import (
 // ValidateTimestamp validates a timestamp
 func ValidateTimestamp(timestamp int64, fieldName string) error {
 	if timestamp == 0 {
-		return fmt.Errorf("%s is required", fieldName)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s is required", fieldName)
 	}
 	if timestamp < 0 {
-		return fmt.Errorf("%s must be positive", fieldName)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s must be positive", fieldName)
 	}
 	return nil
 }
@@ -28,18 +27,18 @@ func ValidateTimestampIsMilliseconds(timestamp int64) bool {
 
 func ValidateFunnelSteps(steps []*FunnelStep) error {
 	if len(steps) < 2 {
-		return fmt.Errorf("funnel must have at least 2 steps")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "funnel must have at least 2 steps")
 	}
 
 	for i, step := range steps {
 		if step.ServiceName == "" {
-			return fmt.Errorf("step %d: service name is required", i+1)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "step %d: service name is required", i+1)
 		}
 		if step.SpanName == "" {
-			return fmt.Errorf("step %d: span name is required", i+1)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "step %d: span name is required", i+1)
 		}
 		if step.Order < 0 {
-			return fmt.Errorf("step %d: order must be non-negative", i+1)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "step %d: order must be non-negative", i+1)
 		}
 	}
 

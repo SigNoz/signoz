@@ -39,7 +39,7 @@ func (b *base) Error() string {
 		return b.e.Error()
 	}
 
-	return fmt.Sprintf("%s(%s): %s", b.t.s, b.c, b.m)
+	return b.m
 }
 
 // New returns a base error. It requires type, code and message as input.

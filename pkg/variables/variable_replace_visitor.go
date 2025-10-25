@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	grammar "github.com/SigNoz/signoz/pkg/parser/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/antlr4-go/antlr/v4"
@@ -26,7 +27,7 @@ func NewErrorListener() *ErrorListener {
 
 // SyntaxError is called when a syntax error is encountered
 func (e *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol any, line, column int, msg string, ex antlr.RecognitionException) {
-	e.SyntaxErrors = append(e.SyntaxErrors, fmt.Errorf("line %d:%d %s", line, column, msg))
+	e.SyntaxErrors = append(e.SyntaxErrors, errors.NewInvalidInputf(errors.CodeInvalidInput, "line %d:%d %s", line, column, msg))
 }
 
 // variableReplacementVisitor implements the visitor interface
@@ -62,13 +63,13 @@ func ReplaceVariablesInExpression(expression string, variables map[string]qbtype
 	tree := parser.Query()
 
 	if len(parserErrorListener.SyntaxErrors) > 0 {
-		return "", fmt.Errorf("syntax errors in expression: %v", parserErrorListener.SyntaxErrors)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "syntax errors in expression: %v", parserErrorListener.SyntaxErrors)
 	}
 
 	result := visitor.Visit(tree).(string)
 
 	if len(visitor.errors) > 0 {
-		return "", fmt.Errorf("errors processing expression: %v", visitor.errors)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "errors processing expression: %v", visitor.errors)
 	}
 
 	// If the entire expression should be skipped, return empty string

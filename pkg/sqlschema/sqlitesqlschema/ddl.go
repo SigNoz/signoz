@@ -251,7 +251,7 @@ func parseAllColumns(in string) ([]sqlschema.ColumnName, error) {
 				quote = ']'
 				continue
 			} else if s[i] == ')' {
-				return columns, fmt.Errorf("unexpected token: %s", string(s[i]))
+				return columns, errors.NewInternalf(ErrCodeInvalidDDL, "unexpected token: %s", string(s[i]))
 			}
 			state = parseAllColumnsState_ReadingRawName
 			name = append(name, s[i])
@@ -267,7 +267,7 @@ func parseAllColumns(in string) ([]sqlschema.ColumnName, error) {
 				columns = append(columns, sqlschema.ColumnName(name))
 			}
 			if isQuote(s[i]) {
-				return nil, fmt.Errorf("unexpected token: %s", string(s[i]))
+				return nil, errors.NewInternalf(ErrCodeInvalidDDL, "unexpected token: %s", string(s[i]))
 			}
 			if isSpace(s[i]) {
 				state = parseAllColumnsState_EndOfName

@@ -1,9 +1,10 @@
 package factory
 
 import (
-	"fmt"
 	"log/slog"
 	"regexp"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 var _ slog.LogValuer = (Name{})
@@ -29,7 +30,7 @@ func (n Name) String() string {
 // NewName creates a new name.
 func NewName(name string) (Name, error) {
 	if !nameRegex.MatchString(name) {
-		return Name{}, fmt.Errorf("invalid factory name %q", name)
+		return Name{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid factory name %q", name)
 	}
 	return Name{name: name}, nil
 }

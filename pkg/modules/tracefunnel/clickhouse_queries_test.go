@@ -7,8 +7,8 @@ import (
 
 func TestBuildFunnelValidationQuery(t *testing.T) {
 	tests := []struct {
-		name     string
-		steps    []struct {
+		name  string
+		steps []struct {
 			ServiceName   string
 			SpanName      string
 			ContainsError int
@@ -90,7 +90,7 @@ func TestBuildFunnelValidationQuery(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := BuildFunnelValidationQuery(tt.steps, tt.startTs, tt.endTs)
-			
+
 			for _, want := range tt.wantContains {
 				if !strings.Contains(got, want) {
 					t.Errorf("BuildFunnelValidationQuery() missing expected string: %q", want)
@@ -103,8 +103,8 @@ func TestBuildFunnelValidationQuery(t *testing.T) {
 
 func TestBuildFunnelOverviewQuery(t *testing.T) {
 	tests := []struct {
-		name     string
-		steps    []struct {
+		name  string
+		steps []struct {
 			ServiceName    string
 			SpanName       string
 			ContainsError  int
@@ -168,7 +168,7 @@ func TestBuildFunnelOverviewQuery(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := BuildFunnelOverviewQuery(tt.steps, tt.startTs, tt.endTs)
-			
+
 			for _, want := range tt.wantContains {
 				if !strings.Contains(got, want) {
 					t.Errorf("BuildFunnelOverviewQuery() missing expected string: %q", want)
@@ -181,8 +181,8 @@ func TestBuildFunnelOverviewQuery(t *testing.T) {
 
 func TestBuildFunnelCountQuery(t *testing.T) {
 	tests := []struct {
-		name     string
-		steps    []struct {
+		name  string
+		steps []struct {
 			ServiceName   string
 			SpanName      string
 			ContainsError int
@@ -241,7 +241,7 @@ func TestBuildFunnelCountQuery(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := BuildFunnelCountQuery(tt.steps, tt.startTs, tt.endTs)
-			
+
 			for _, want := range tt.wantContains {
 				if !strings.Contains(got, want) {
 					t.Errorf("BuildFunnelCountQuery() missing expected string: %q", want)
@@ -254,8 +254,8 @@ func TestBuildFunnelCountQuery(t *testing.T) {
 
 func TestBuildFunnelStepOverviewQuery(t *testing.T) {
 	tests := []struct {
-		name     string
-		steps    []struct {
+		name  string
+		steps []struct {
 			ServiceName    string
 			SpanName       string
 			ContainsError  int
@@ -347,14 +347,14 @@ func TestBuildFunnelStepOverviewQuery(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := BuildFunnelStepOverviewQuery(tt.steps, tt.startTs, tt.endTs, tt.stepStart, tt.stepEnd)
-			
+
 			for _, want := range tt.wantContains {
 				if !strings.Contains(got, want) {
 					t.Errorf("BuildFunnelStepOverviewQuery() missing expected string: %q", want)
 					t.Logf("Got query:\n%s", got)
 				}
 			}
-			
+
 			if tt.wantFallback && !strings.Contains(got, "SELECT 0 AS conversion_rate") {
 				t.Errorf("BuildFunnelStepOverviewQuery() expected fallback query for invalid step range")
 			}
@@ -376,14 +376,14 @@ func TestTemporalOrderingLogic(t *testing.T) {
 		{ServiceName: "s3", SpanName: "sp3", ContainsError: 0, LatencyPointer: "start", Clause: ""},
 		{ServiceName: "s4", SpanName: "sp4", ContainsError: 0, LatencyPointer: "start", Clause: ""},
 	}, 1000000000, 2000000000)
-	
+
 	// Check that each step has proper temporal ordering (cumulative format)
 	temporalChecks := []string{
 		"t2_time > t1_time",
 		"t2_time > t1_time AND t3_time > t2_time",
 		"t2_time > t1_time AND t3_time > t2_time AND t4_time > t3_time",
 	}
-	
+
 	for _, check := range temporalChecks {
 		if !strings.Contains(query, check) {
 			t.Errorf("Missing temporal ordering check: %s", check)

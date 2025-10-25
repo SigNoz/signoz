@@ -1,7 +1,6 @@
 package pipelinetypes
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -114,7 +113,7 @@ func RegexForStrptimeLayout(layout string) (string, error) {
 	strptimeDirectiveRegexp := regexp.MustCompile(`%.`)
 	layoutRegex = strptimeDirectiveRegexp.ReplaceAllStringFunc(layoutRegex, replaceStrptimeDirectiveWithRegex)
 	if len(errs) != 0 {
-		return "", fmt.Errorf("couldn't generate regex for ctime format: %v", errs)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "couldn't generate regex for ctime format: %v", errs)
 	}
 
 	return layoutRegex, nil

@@ -110,12 +110,12 @@ func (store *store) Update(ctx context.Context, funnel *traceFunnels.StorableFun
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to update funnel")
 	}
-	
+
 	err = tx.Commit()
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to commit transaction")
 	}
-	
+
 	return nil
 }
 

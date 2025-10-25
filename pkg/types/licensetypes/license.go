@@ -3,7 +3,6 @@ package licensetypes
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"time"
 
@@ -113,9 +112,9 @@ func extractKeyFromMapStringInterface[T any](data map[string]interface{}, key st
 		if value, ok := val.(T); ok {
 			return value, nil
 		}
-		return zeroValue, fmt.Errorf("%s key is not a valid %s", key, reflect.TypeOf(zeroValue))
+		return zeroValue, errors.NewInvalidInputf(errors.CodeInvalidInput, "%s key is not a valid %s", key, reflect.TypeOf(zeroValue))
 	}
-	return zeroValue, fmt.Errorf("%s key is missing", key)
+	return zeroValue, errors.NewInvalidInputf(errors.CodeInvalidInput, "%s key is missing", key)
 }
 
 func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {

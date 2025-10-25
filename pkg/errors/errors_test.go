@@ -17,7 +17,7 @@ func TestNewf(t *testing.T) {
 	typ := typ{"test-error"}
 	err := Newf(typ, MustNewCode("test_code"), "test error info with %s", "string")
 	assert.NotNil(t, err)
-	assert.Equal(t, "test-error(test_code): test error info with string", err.Error())
+	assert.Equal(t, "test error info with string", err.Error())
 }
 
 func TestWrapf(t *testing.T) {
@@ -29,10 +29,10 @@ func TestWrapf(t *testing.T) {
 func TestError(t *testing.T) {
 	typ := typ{"test-error"}
 	err1 := New(typ, MustNewCode("test_code"), "info for err1")
-	assert.Equal(t, "test-error(test_code): info for err1", err1.Error())
+	assert.Equal(t, "info for err1", err1.Error())
 
 	err2 := Wrapf(err1, typ, MustNewCode("test_code"), "info for err2")
-	assert.Equal(t, "test-error(test_code): info for err1", err2.Error())
+	assert.Equal(t, "info for err1", err2.Error())
 }
 
 func TestUnwrapb(t *testing.T) {

@@ -2,7 +2,6 @@ package signoz
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/url"
 	"os"
@@ -16,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
@@ -182,11 +182,11 @@ func validateConfig(config Config) error {
 	for i := 0; i < rvConfig.NumField(); i++ {
 		factoryConfig, ok := rvConfig.Field(i).Interface().(factory.Config)
 		if !ok {
-			return fmt.Errorf("%q is not of type \"factory.Config\"", rvConfig.Type().Field(i).Name)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "%q is not of type \"factory.Config\"", rvConfig.Type().Field(i).Name)
 		}
 
 		if err := factoryConfig.Validate(); err != nil {
-			return fmt.Errorf("failed to validate config %q: %w", rvConfig.Type().Field(i).Tag.Get("mapstructure"), err)
+			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to validate config %q", rvConfig.Type().Field(i).Tag.Get("mapstructure"))
 		}
 	}
 

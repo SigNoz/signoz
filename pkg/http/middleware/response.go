@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 const (
@@ -100,7 +101,7 @@ func (writer *nonFlushingBadResponseLoggingWriter) Hijack() (net.Conn, *bufio.Re
 	if ok {
 		return hj.Hijack()
 	}
-	return nil, nil, fmt.Errorf("cannot cast underlying response writer to Hijacker")
+	return nil, nil, errors.NewInternalf(errors.CodeInternal, "cannot cast underlying response writer to Hijacker")
 }
 
 func (writer *nonFlushingBadResponseLoggingWriter) StatusCode() int {
