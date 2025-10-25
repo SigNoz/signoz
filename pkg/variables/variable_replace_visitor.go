@@ -14,20 +14,20 @@ import (
 // ErrorListener collects syntax errors during parsing
 type ErrorListener struct {
 	*antlr.DefaultErrorListener
-	SyntaxErrors []string
+	SyntaxErrors []error
 }
 
 // NewErrorListener creates a new error listener
 func NewErrorListener() *ErrorListener {
 	return &ErrorListener{
 		DefaultErrorListener: antlr.NewDefaultErrorListener(),
-		SyntaxErrors:         []string{},
+		SyntaxErrors:         []error{},
 	}
 }
 
 // SyntaxError is called when a syntax error is encountered
 func (e *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol any, line, column int, msg string, ex antlr.RecognitionException) {
-	e.SyntaxErrors = append(e.SyntaxErrors, fmt.Sprintf("line %d:%d %s", line, column, msg))
+	e.SyntaxErrors = append(e.SyntaxErrors, errors.NewInvalidInputf(errors.CodeInvalidInput, "line %d:%d %s", line, column, msg))
 }
 
 // variableReplacementVisitor implements the visitor interface

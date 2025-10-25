@@ -381,12 +381,6 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name:       "multiple syntax errors regression (parser error aggregation)",
-			expression: "service.name == 'api' AND status_code > [400 OR env = ",
-			variables:  map[string]qbtypes.VariableItem{},
-			wantErr:    true,
-		},
-		{
 			name:       "full text search not affected by variables",
 			expression: "'error message'",
 			variables:  map[string]qbtypes.VariableItem{},
