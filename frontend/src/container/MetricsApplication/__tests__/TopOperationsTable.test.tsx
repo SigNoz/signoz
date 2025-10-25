@@ -168,6 +168,7 @@ describe('TopOperation API Integration', () => {
 			end: `${defaultApiCallExpectation.end}`,
 			service: defaultApiCallExpectation.service,
 			tags: defaultApiCallExpectation.selectedTags,
+			limit: 5000,
 		});
 	});
 
@@ -201,6 +202,7 @@ describe('TopOperation API Integration', () => {
 			end: `${defaultApiCallExpectation.end}`,
 			service: defaultApiCallExpectation.service,
 			tags: defaultApiCallExpectation.selectedTags,
+			limit: 5000,
 		});
 	});
 
