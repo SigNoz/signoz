@@ -35,8 +35,8 @@ type DataWarning struct {
 	TopLevelOps []string `json:"topLevelOps"`
 }
 
-// TopOperationsRequest is the request for /v2/service/top_operations
-type TopOperationsRequest struct {
+// OperationsRequest is the common request for both top_operations and entry_point_operations
+type OperationsRequest struct {
 	Start   string          `json:"start"`
 	End     string          `json:"end"`
 	Service string          `json:"service"`
@@ -44,27 +44,8 @@ type TopOperationsRequest struct {
 	Limit   int             `json:"limit,omitempty"`
 }
 
-// TopOperationItem is the response item for top operations
-type TopOperationItem struct {
-	Name       string  `json:"name"`
-	P50        float64 `json:"p50"`
-	P95        float64 `json:"p95"`
-	P99        float64 `json:"p99"`
-	NumCalls   uint64  `json:"numCalls"`
-	ErrorCount uint64  `json:"errorCount"`
-}
-
-// EntryPointOperationsRequest is the request for /v2/entry_point_operations
-type EntryPointOperationsRequest struct {
-	Start   string          `json:"start"`
-	End     string          `json:"end"`
-	Service string          `json:"service"`
-	Tags    []TagFilterItem `json:"tags"`
-	Limit   int             `json:"limit,omitempty"`
-}
-
-// EntryPointOperationItem is the response item for entry point operations
-type EntryPointOperationItem struct {
+// OperationItem is the common response item shape for both APIs
+type OperationItem struct {
 	Name       string  `json:"name"`
 	P50        float64 `json:"p50"`
 	P95        float64 `json:"p95"`
