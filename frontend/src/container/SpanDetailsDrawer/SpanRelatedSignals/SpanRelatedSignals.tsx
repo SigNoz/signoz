@@ -11,38 +11,19 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { Span } from 'types/api/trace/getTraceV2';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 import { RelatedSignalsViews } from '../constants';
 import SpanLogs from '../SpanLogs/SpanLogs';
+import { useSpanContextLogs } from '../SpanLogs/useSpanContextLogs';
 
 const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
-
-interface AppliedFiltersProps {
-	filters: TagFilterItem[];
-}
-
-function AppliedFilters({ filters }: AppliedFiltersProps): JSX.Element {
-	return (
-		<div className="span-related-signals-drawer__applied-filters">
-			<div className="span-related-signals-drawer__filters-list">
-				{filters.map((filter) => (
-					<div key={filter.id} className="span-related-signals-drawer__filter-tag">
-						<Typography.Text>
-							{filter.key?.key}={filter.value}
-						</Typography.Text>
-					</div>
-				))}
-			</div>
-		</div>
-	);
-}
 
 interface SpanRelatedSignalsProps {
 	selectedSpan: Span;
@@ -66,6 +47,23 @@ function SpanRelatedSignals({
 	);
 	const isDarkMode = useIsDarkMode();
 
+	const {
+		logs,
+		isLoading,
+		isError,
+		isFetching,
+		isLogSpanRelated,
+		hasTraceIdLogs,
+	} = useSpanContextLogs({
+		traceId: selectedSpan.traceId,
+		spanId: selectedSpan.spanId,
+		timeRange: {
+			startTime: traceStartTime - FIVE_MINUTES_IN_MS,
+			endTime: traceEndTime + FIVE_MINUTES_IN_MS,
+		},
+		isDrawerOpen: isOpen,
+	});
+
 	const handleTabChange = useCallback((e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
 	}, []);
@@ -74,25 +72,6 @@ function SpanRelatedSignals({
 		setSelectedView(RelatedSignalsViews.LOGS);
 		onClose();
 	}, [onClose]);
-
-	const appliedFilters = useMemo(
-		(): TagFilterItem[] => [
-			{
-				id: 'trace-id-filter',
-				key: {
-					key: 'trace_id',
-					id: 'trace-id-key',
-					dataType: 'string' as const,
-					isColumn: true,
-					type: '',
-					isJSON: false,
-				} as BaseAutocompleteData,
-				op: '=',
-				value: selectedSpan.traceId,
-			},
-		],
-		[selectedSpan.traceId],
-	);
 
 	const handleExplorerPageRedirect = useCallback((): void => {
 		const startTimeMs = traceStartTime - FIVE_MINUTES_IN_MS;
@@ -145,6 +124,14 @@ function SpanRelatedSignals({
 			'noopener,noreferrer',
 		);
 	}, [selectedSpan.traceId, traceStartTime, traceEndTime]);
+
+	const emptyStateConfig = useMemo(
+		() => ({
+			...getEmptyLogsListConfig(() => {}),
+			showClearFiltersButton: false,
+		}),
+		[],
+	);
 
 	return (
 		<Drawer
@@ -210,23 +197,28 @@ function SpanRelatedSignals({
 								icon={<Compass size={18} />}
 								className="open-in-explorer"
 								onClick={handleExplorerPageRedirect}
-							/>
+							>
+								Open in Logs Explorer
+							</Button>
 						)}
 					</div>
 
 					{selectedView === RelatedSignalsViews.LOGS && (
-						<>
-							<AppliedFilters filters={appliedFilters} />
-							<SpanLogs
-								traceId={selectedSpan.traceId}
-								spanId={selectedSpan.spanId}
-								timeRange={{
-									startTime: traceStartTime - FIVE_MINUTES_IN_MS,
-									endTime: traceEndTime + FIVE_MINUTES_IN_MS,
-								}}
-								handleExplorerPageRedirect={handleExplorerPageRedirect}
-							/>
-						</>
+						<SpanLogs
+							traceId={selectedSpan.traceId}
+							spanId={selectedSpan.spanId}
+							timeRange={{
+								startTime: traceStartTime - FIVE_MINUTES_IN_MS,
+								endTime: traceEndTime + FIVE_MINUTES_IN_MS,
+							}}
+							logs={logs}
+							isLoading={isLoading}
+							isError={isError}
+							isFetching={isFetching}
+							isLogSpanRelated={isLogSpanRelated}
+							handleExplorerPageRedirect={handleExplorerPageRedirect}
+							emptyStateConfig={!hasTraceIdLogs ? emptyStateConfig : undefined}
+						/>
 					)}
 				</div>
 			)}
