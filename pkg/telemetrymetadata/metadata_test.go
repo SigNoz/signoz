@@ -55,6 +55,7 @@ func TestGetKeys(t *testing.T) {
 		telemetrylogs.LogResourceKeysTblName,
 		DBName,
 		AttributesMetadataLocalTableName,
+		nil, // No cache for tests
 	)
 
 	rows := cmock.NewRows([]cmock.ColumnType{
