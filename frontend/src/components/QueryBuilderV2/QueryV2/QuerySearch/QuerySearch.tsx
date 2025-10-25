@@ -1219,8 +1219,24 @@ function QuerySearch({
 		</div>
 	);
 
+	const handleKeyDown = (event: React.KeyboardEvent): void => {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			if (onRun) {
+				onRun(query);
+			} else {
+				handleRunQuery();
+			}
+		}
+	};
+
 	return (
-		<div className="code-mirror-where-clause">
+		<div
+			className="code-mirror-where-clause"
+			onKeyDown={handleKeyDown}
+			role="textbox"
+			tabIndex={0}
+		>
 			{editingMode && (
 				<div className={`context-indicator context-indicator-${editingMode}`}>
 					Currently editing: {renderContextBadge()}
