@@ -52,6 +52,7 @@ function CreateAlertHeader(): JSX.Element {
 					}
 					className="alert-header__input title"
 					placeholder="Enter alert rule name"
+					data-testid="alert-name-input"
 				/>
 				<LabelsInput
 					labels={alertState.labels}

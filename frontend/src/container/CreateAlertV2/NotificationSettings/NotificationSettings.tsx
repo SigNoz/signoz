@@ -37,6 +37,7 @@ function NotificationSettings(): JSX.Element {
 						},
 					});
 				}}
+				data-testid="repeat-notifications-time-input"
 			/>
 			<Select
 				value={notificationSettings.reNotification.unit || null}
@@ -54,6 +55,7 @@ function NotificationSettings(): JSX.Element {
 						},
 					});
 				}}
+				data-testid="repeat-notifications-unit-select"
 			/>
 			<Typography.Text>while</Typography.Text>
 			<Select
@@ -73,6 +75,7 @@ function NotificationSettings(): JSX.Element {
 						},
 					});
 				}}
+				data-testid="repeat-notifications-conditions-select"
 			/>
 		</div>
 	);
@@ -98,6 +101,7 @@ function NotificationSettings(): JSX.Element {
 						});
 					}}
 					defaultShowInput={notificationSettings.reNotification.enabled}
+					data-testid="repeat-notifications-container"
 				/>
 			</div>
 		</div>

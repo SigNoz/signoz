@@ -12,6 +12,7 @@ export interface IAdvancedOptionItemProps {
 	tooltipText?: string;
 	onToggle?: () => void;
 	defaultShowInput: boolean;
+	'data-testid'?: string;
 }
 
 export enum RollingWindowTimeframes {

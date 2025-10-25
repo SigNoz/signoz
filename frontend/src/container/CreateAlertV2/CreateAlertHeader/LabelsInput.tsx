@@ -124,7 +124,11 @@ function LabelsInput({
 			{Object.keys(labels).length > 0 && (
 				<div className="labels-input__existing-labels">
 					{Object.entries(labels).map(([key, value]) => (
-						<span key={key} className="labels-input__label-pill">
+						<span
+							key={key}
+							className="labels-input__label-pill"
+							data-testid={`label-pill-${key}-${value}`}
+						>
 							{key}: {value}
 							<button
 								type="button"
@@ -143,6 +147,7 @@ function LabelsInput({
 					className="labels-input__add-button"
 					type="button"
 					onClick={handleAddLabelsClick}
+					data-testid="alert-add-label-button"
 				>
 					+ Add labels
 				</button>
@@ -158,6 +163,7 @@ function LabelsInput({
 						placeholder={inputState.isKeyInput ? 'Enter key' : 'Enter value'}
 						// eslint-disable-next-line jsx-a11y/no-autofocus
 						autoFocus
+						data-testid="alert-add-label-input"
 					/>
 				</div>
 			)}

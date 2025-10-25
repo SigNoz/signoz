@@ -127,6 +127,7 @@ function EvaluationWindowDetails({
 						value={evaluationWindow.startingAt.number || null}
 						onChange={handleNumberChange}
 						placeholder="Select starting at"
+						data-testid="evaluation-window-details-starting-at-select"
 					/>
 				</div>
 			</div>
@@ -154,6 +155,7 @@ function EvaluationWindowDetails({
 						value={evaluationWindow.startingAt.timezone || null}
 						onChange={handleTimezoneChange}
 						placeholder="Select timezone"
+						data-testid="evaluation-window-details-timezone-select"
 					/>
 				</div>
 			</div>
@@ -174,6 +176,7 @@ function EvaluationWindowDetails({
 						value={evaluationWindow.startingAt.number || null}
 						onChange={handleNumberChange}
 						placeholder="Select starting at"
+						data-testid="evaluation-window-details-starting-at-select"
 					/>
 				</div>
 				<div className="select-group time-select-group">
@@ -190,6 +193,7 @@ function EvaluationWindowDetails({
 						value={evaluationWindow.startingAt.timezone || null}
 						onChange={handleTimezoneChange}
 						placeholder="Select timezone"
+						data-testid="evaluation-window-details-timezone-select"
 					/>
 				</div>
 			</div>
@@ -211,6 +215,7 @@ function EvaluationWindowDetails({
 					value={evaluationWindow.startingAt.number}
 					onChange={(e): void => handleNumberChange(e.target.value)}
 					placeholder="Enter value"
+					data-testid="evaluation-window-details-custom-rolling-window-duration-input"
 				/>
 			</div>
 			<div className="select-group time-select-group">
@@ -220,6 +225,7 @@ function EvaluationWindowDetails({
 					value={evaluationWindow.startingAt.unit || null}
 					onChange={handleUnitChange}
 					placeholder="Select unit"
+					data-testid="evaluation-window-details-custom-rolling-window-unit-select"
 				/>
 			</div>
 		</div>
