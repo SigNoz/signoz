@@ -1,8 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import {
-	convertFiltersToExpressionWithExistingQuery,
-	removeKeysFromExpression,
-} from 'components/QueryBuilderV2/utils';
+import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/queryProcessor';
+import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import { cloneDeep, isArray, isEmpty } from 'lodash-es';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import {
