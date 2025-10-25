@@ -673,9 +673,7 @@ export const getUPlotChartOptions = ({
 
 								// Marker click handler - checkbox behavior (toggle individual series)
 								if (currentMarker) {
-									const markerClickHandler = (e: Event): void => {
-										e.stopPropagation?.(); // Prevent event bubbling to text handler
-
+									const markerClickHandler = (): void => {
 										if (stackChart) {
 											handleStackChart();
 										}
@@ -697,19 +695,34 @@ export const getUPlotChartOptions = ({
 										}
 									};
 
-									currentMarker.addEventListener('click', markerClickHandler);
-
-									// Store cleanup function for marker click listener
-									(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
-										currentMarker.removeEventListener('click', markerClickHandler);
+									requestAnimationFrame(() => {
+										const currentMarkerElement = thElement.querySelector(
+											'.u-marker',
+										) as HTMLElement;
+										if (currentMarkerElement) {
+											currentMarkerElement.style.cursor = 'pointer';
+											currentMarkerElement.style.pointerEvents = 'auto';
+											currentMarkerElement.addEventListener(
+												'click',
+												markerClickHandler,
+												false,
+											);
+											currentMarkerElement.addEventListener(
+												'mousedown',
+												(e) => {
+													e.preventDefault();
+													markerClickHandler();
+												},
+												false,
+											);
+										}
 									});
 								}
 
 								// Text click handler - show only/show all behavior (existing behavior)
 								if (textElement) {
-									const textClickHandler = (e: Event): void => {
-										e.stopPropagation?.(); // Prevent event bubbling
-
+									// Create the click handler function
+									const clickHandler = (): void => {
 										if (stackChart) {
 											handleStackChart();
 										}
@@ -740,11 +753,40 @@ export const getUPlotChartOptions = ({
 										}
 									};
 
-									textElement.addEventListener('click', textClickHandler);
+									// Use requestAnimationFrame to ensure DOM is fully ready
+									requestAnimationFrame(() => {
+										// Re-query the element to ensure we have the current DOM element
+										const currentTextElement = thElement.querySelector(
+											'.legend-text',
+										) as HTMLElement;
 
-									// Store cleanup function for text click listener
-									(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
-										textElement.removeEventListener('click', textClickHandler);
+										if (currentTextElement) {
+											// Force the element to be clickable
+											currentTextElement.style.cursor = 'pointer';
+											currentTextElement.style.pointerEvents = 'auto';
+
+											// Add multiple event listeners to ensure we catch the click
+											currentTextElement.addEventListener('click', clickHandler, false);
+											currentTextElement.addEventListener(
+												'mousedown',
+												(e) => {
+													e.preventDefault();
+													clickHandler();
+												},
+												false,
+											);
+
+											// Also add to the parent th element as a fallback
+											thElement.addEventListener(
+												'click',
+												(e) => {
+													if (e.target === currentTextElement) {
+														clickHandler();
+													}
+												},
+												false,
+											);
+										}
 									});
 								}
 							}
