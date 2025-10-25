@@ -272,7 +272,7 @@ function App(): JSX.Element {
 			) {
 				window.pylon = {
 					chat_settings: {
-						app_id: process.env.PYLON_APP_ID,
+						app_id: import.meta.env.VITE_PYLON_APP_ID,
 						email: user.email,
 						name: user.displayName,
 					},
@@ -301,21 +301,21 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if (process.env.POSTHOG_KEY) {
-				posthog.init(process.env.POSTHOG_KEY, {
+			if (import.meta.env.VITE_POSTHOG_KEY) {
+				posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
 					api_host: 'https://us.i.posthog.com',
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 				});
 			}
 
-			if (process.env.USERPILOT_KEY) {
-				Userpilot.initialize(process.env.USERPILOT_KEY);
+			if (import.meta.env.VITE_USERPILOT_KEY) {
+				Userpilot.initialize(import.meta.env.VITE_USERPILOT_KEY);
 			}
 
 			if (!isSentryInitialized) {
 				Sentry.init({
-					dsn: process.env.SENTRY_DSN,
-					tunnel: process.env.TUNNEL_URL,
+					dsn: import.meta.env.VITE_SENTRY_DSN,
+					tunnel: import.meta.env.VITE_TUNNEL_URL,
 					environment: 'production',
 					integrations: [
 						Sentry.browserTracingIntegration(),
