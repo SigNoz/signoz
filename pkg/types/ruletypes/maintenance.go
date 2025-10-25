@@ -24,6 +24,7 @@ type StorablePlannedMaintenance struct {
 	Description string    `bun:"description,type:text"`
 	Schedule    *Schedule `bun:"schedule,type:text,notnull"`
 	OrgID       string    `bun:"org_id,type:text"`
+	SilenceAll  bool      `bun:"silence_all,type:boolean"`
 }
 
 type GettablePlannedMaintenance struct {
@@ -38,6 +39,7 @@ type GettablePlannedMaintenance struct {
 	UpdatedBy   string    `json:"updatedBy"`
 	Status      string    `json:"status"`
 	Kind        string    `json:"kind"`
+	SilenceAll  bool      `json:"silenceAll"`
 }
 
 type StorablePlannedMaintenanceRule struct {
@@ -64,7 +66,7 @@ func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bo
 		}
 	}
 	// If no alert ids, then skip all alerts
-	if len(m.RuleIDs) == 0 {
+	if m.SilenceAll {
 		found = true
 	}
 
@@ -295,6 +297,7 @@ func (m GettablePlannedMaintenance) MarshalJSON() ([]byte, error) {
 		UpdatedBy   string    `json:"updatedBy" db:"updated_by"`
 		Status      string    `json:"status"`
 		Kind        string    `json:"kind"`
+		SilenceAll  bool      `json:"silenceAll" db:"silence_all"`
 	}{
 		Id:          m.Id,
 		Name:        m.Name,
@@ -307,6 +310,7 @@ func (m GettablePlannedMaintenance) MarshalJSON() ([]byte, error) {
 		UpdatedBy:   m.UpdatedBy,
 		Status:      status,
 		Kind:        kind,
+		SilenceAll:  m.SilenceAll,
 	})
 }
 
@@ -328,6 +332,7 @@ func (m *GettablePlannedMaintenanceRule) ConvertGettableMaintenanceRuleToGettabl
 		UpdatedAt:   m.UpdatedAt,
 		CreatedBy:   m.CreatedBy,
 		UpdatedBy:   m.UpdatedBy,
+		SilenceAll:  m.SilenceAll,
 	}
 }
 
