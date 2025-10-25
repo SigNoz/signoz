@@ -153,7 +153,13 @@ function TraceDetailsV2(): JSX.Element {
 				)}
 			</ResizablePanel>
 
-			<ResizableHandle withHandle className="resizable-handle" />
+			<ResizableHandle
+				withHandle
+				className="resizable-handle"
+				onDragging={(): void => {
+					setIsSpanDetailsDocked(false);
+				}}
+			/>
 
 			<ResizablePanel
 				defaultSize={20}
