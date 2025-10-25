@@ -26,6 +26,7 @@ function HistogramPanelWrapper({
 	enableDrillDown = false,
 }: PanelWrapperProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
+	const legendScrollPositionRef = useRef<number>(0);
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
 	const containerDimensions = useResizeObserver(graphRef);
@@ -129,6 +130,10 @@ function HistogramPanelWrapper({
 				onClickHandler: enableDrillDown
 					? clickHandlerWithContextMenu
 					: onClickHandler ?? _noop,
+				legendScrollPosition: legendScrollPositionRef.current,
+				setLegendScrollPosition: (position: number) => {
+					legendScrollPositionRef.current = position;
+				},
 			}),
 		[
 			containerDimensions,

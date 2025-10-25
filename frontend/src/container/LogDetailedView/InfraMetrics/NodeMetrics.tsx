@@ -83,6 +83,13 @@ function NodeMetrics({
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
 
 	const chartData = useMemo(
 		() => queries.map(({ data }) => getUPlotChartData(data?.payload)),
@@ -109,6 +116,13 @@ function NodeMetrics({
 						uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 					timezone: timezone.value,
 					query: currentQuery,
+					legendScrollPosition: legendScrollPositionRef.current,
+					setLegendScrollPosition: (position: {
+						scrollTop: number;
+						scrollLeft: number;
+					}) => {
+						legendScrollPositionRef.current = position;
+					},
 				}),
 			),
 		[
