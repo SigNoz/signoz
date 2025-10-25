@@ -22,6 +22,8 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	showOnlyWhereClause = false,
 	showTraceOperator = false,
 	version,
+	onSignalSourceChange,
+	signalSourceChangeEnabled = false,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
@@ -175,6 +177,8 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							queryVariant={config?.queryVariant || 'dropdown'}
 							showOnlyWhereClause={showOnlyWhereClause}
 							isListViewPanel={isListViewPanel}
+							onSignalSourceChange={onSignalSourceChange || ((): void => {})}
+							signalSourceChangeEnabled={signalSourceChangeEnabled}
 						/>
 					) : (
 						currentQuery.builder.queryData.map((query, index) => (
@@ -193,7 +197,9 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								queryVariant={config?.queryVariant || 'dropdown'}
 								showOnlyWhereClause={showOnlyWhereClause}
 								isListViewPanel={isListViewPanel}
-								signalSource={config?.signalSource || ''}
+								signalSource={query.source as 'meter' | ''}
+								onSignalSourceChange={onSignalSourceChange || ((): void => {})}
+								signalSourceChangeEnabled={signalSourceChangeEnabled}
 							/>
 						))
 					)}

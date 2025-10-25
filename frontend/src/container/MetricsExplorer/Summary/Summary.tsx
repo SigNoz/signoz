@@ -290,13 +290,6 @@ function Summary(): JSX.Element {
 		],
 	);
 
-	console.log({
-		isMetricsListDataEmpty,
-		isMetricsTreeMapDataEmpty,
-		treeMapData,
-		sec: treeMapData?.payload?.data[heatmapView],
-	});
-
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
