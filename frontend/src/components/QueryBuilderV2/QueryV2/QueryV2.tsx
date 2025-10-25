@@ -33,7 +33,12 @@ export const QueryV2 = memo(function QueryV2({
 	showOnlyWhereClause = false,
 	signalSource = '',
 	isMultiQueryAllowed = false,
-}: QueryProps & { ref: React.RefObject<HTMLDivElement> }): JSX.Element {
+	queriesCount = 1,
+}: QueryProps & {
+	ref: React.RefObject<HTMLDivElement>;
+	// eslint-disable-next-line react/require-default-props
+	queriesCount?: number;
+}): JSX.Element {
 	const { cloneQuery, panelType } = useQueryBuilder();
 
 	const showFunctions = query?.functions?.length > 0;
@@ -186,12 +191,16 @@ export const QueryV2 = memo(function QueryV2({
 												icon: <Copy size={14} />,
 												onClick: handleCloneEntity,
 											},
-											{
-												label: 'Delete',
-												key: 'delete-query',
-												icon: <Trash size={14} />,
-												onClick: handleDeleteQuery,
-											},
+											...(queriesCount && queriesCount > 1
+												? [
+														{
+															label: 'Delete',
+															key: 'delete-query',
+															icon: <Trash size={14} />,
+															onClick: handleDeleteQuery,
+														},
+												  ]
+												: []),
 										],
 									}}
 									placement="bottomRight"
