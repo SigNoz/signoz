@@ -28,7 +28,15 @@ function ConfigureGoogleAuthAuthnProvider({
 				</Typography.Paragraph>
 			</section>
 
-			<Form.Item label="Domain" name="name" className="field">
+			<Form.Item
+				label="Domain"
+				name="name"
+				className="field"
+				tooltip={{
+					title:
+						'The email domain for users who should use SSO (e.g., `example.com` for users with `@example.com` emails)',
+				}}
+			>
 				<Input disabled={!isCreate} />
 			</Form.Item>
 

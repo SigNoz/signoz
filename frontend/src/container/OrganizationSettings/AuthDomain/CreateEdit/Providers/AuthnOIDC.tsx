@@ -16,7 +16,14 @@ function ConfigureOIDCAuthnProvider({
 				</Typography.Text>
 			</section>
 
-			<Form.Item label="Domain" name="name">
+			<Form.Item
+				label="Domain"
+				name="name"
+				tooltip={{
+					title:
+						'The email domain for users who should use SSO (e.g., `example.com` for users with `@example.com` emails)',
+				}}
+			>
 				<Input disabled={!isCreate} />
 			</Form.Item>
 

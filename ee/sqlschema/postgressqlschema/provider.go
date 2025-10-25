@@ -2,6 +2,7 @@ package postgressqlschema
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
@@ -47,50 +48,45 @@ func (provider *provider) Operator() sqlschema.SQLOperator {
 }
 
 func (provider *provider) GetTable(ctx context.Context, tableName sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
-	rows, err := provider.
+	columns := []struct {
+		ColumnName  string  `bun:"column_name"`
+		Nullable    bool    `bun:"nullable"`
+		SQLDataType string  `bun:"udt_name"`
+		DefaultVal  *string `bun:"column_default"`
+	}{}
+
+	err := provider.
 		sqlstore.
 		BunDB().
-		QueryContext(ctx, `
+		NewRaw(`
 SELECT 
     c.column_name, 
-	c.is_nullable = 'YES', 
+	c.is_nullable = 'YES' as nullable, 
 	c.udt_name, 
 	c.column_default 
 FROM 
     information_schema.columns AS c
 WHERE
-    c.table_name = ?`, string(tableName))
+    c.table_name = ?`, string(tableName)).
+		Scan(ctx, &columns)
 	if err != nil {
 		return nil, nil, err
 	}
+	if len(columns) == 0 {
+		return nil, nil, sql.ErrNoRows
+	}
 
-	defer func() {
-		if err := rows.Close(); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "error closing rows", "error", err)
-		}
-	}()
-
-	columns := make([]*sqlschema.Column, 0)
-	for rows.Next() {
-		var (
-			name        string
-			sqlDataType string
-			nullable    bool
-			defaultVal  *string
-		)
-		if err := rows.Scan(&name, &nullable, &sqlDataType, &defaultVal); err != nil {
-			return nil, nil, err
-		}
-
+	sqlschemaColumns := make([]*sqlschema.Column, 0)
+	for _, column := range columns {
 		columnDefault := ""
-		if defaultVal != nil {
-			columnDefault = *defaultVal
+		if column.DefaultVal != nil {
+			columnDefault = *column.DefaultVal
 		}
 
-		columns = append(columns, &sqlschema.Column{
-			Name:     sqlschema.ColumnName(name),
-			Nullable: nullable,
-			DataType: provider.fmter.DataTypeOf(sqlDataType),
+		sqlschemaColumns = append(sqlschemaColumns, &sqlschema.Column{
+			Name:     sqlschema.ColumnName(column.ColumnName),
+			Nullable: column.Nullable,
+			DataType: provider.fmter.DataTypeOf(column.SQLDataType),
 			Default:  columnDefault,
 		})
 	}
@@ -208,7 +204,7 @@ WHERE
 
 	return &sqlschema.Table{
 		Name:                  tableName,
-		Columns:               columns,
+		Columns:               sqlschemaColumns,
 		PrimaryKeyConstraint:  primaryKeyConstraint,
 		ForeignKeyConstraints: foreignKeyConstraints,
 	}, uniqueConstraints, nil

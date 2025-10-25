@@ -1,6 +1,8 @@
 package sqlstore
 
 import (
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
@@ -23,6 +25,12 @@ type PostgresConfig struct {
 type SqliteConfig struct {
 	// Path is the path to the sqlite database.
 	Path string `mapstructure:"path"`
+
+	// Mode is the mode to use for the sqlite database.
+	Mode string `mapstructure:"mode"`
+
+	// BusyTimeout is the timeout for the sqlite database to wait for a lock.
+	BusyTimeout time.Duration `mapstructure:"busy_timeout"`
 }
 
 type ConnectionConfig struct {
@@ -41,7 +49,9 @@ func newConfig() factory.Config {
 			MaxOpenConns: 100,
 		},
 		Sqlite: SqliteConfig{
-			Path: "/var/lib/signoz/signoz.db",
+			Path:        "/var/lib/signoz/signoz.db",
+			Mode:        "delete",
+			BusyTimeout: 10000 * time.Millisecond, // increasing the defaults from https://github.com/mattn/go-sqlite3/blob/master/sqlite3.go#L1098 because of transpilation from C to GO
 		},
 	}
 

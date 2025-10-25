@@ -18,11 +18,6 @@ import UPlot from 'uplot';
 
 import { dataMatch, optionsUpdateState } from './utils';
 
-// Extended uPlot interface with custom properties
-interface ExtendedUPlot extends uPlot {
-	_legendScrollCleanup?: () => void;
-}
-
 export interface UplotProps {
 	options: uPlot.Options;
 	data: uPlot.AlignedData;
@@ -71,12 +66,6 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 
 		const destroy = useCallback((chart: uPlot | null) => {
 			if (chart) {
-				// Clean up legend scroll event listener
-				const extendedChart = chart as ExtendedUPlot;
-				if (extendedChart._legendScrollCleanup) {
-					extendedChart._legendScrollCleanup();
-				}
-
 				onDeleteRef.current?.(chart);
 				chart.destroy();
 				chartRef.current = null;

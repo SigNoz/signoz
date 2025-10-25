@@ -6,6 +6,10 @@ import ROUTES from 'constants/routes';
 import { DashboardProvider, useDashboard } from 'providers/Dashboard/Dashboard';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter } from 'react-router-dom';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
+
+import { initializeDefaultVariables } from '../initializeDefaultVariables';
+import { normalizeUrlValueForVariable } from '../normalizeUrlValue';
 
 // Mock the dashboard API
 jest.mock('api/v1/dashboards/id/get');
@@ -50,7 +54,7 @@ jest.mock('react-redux', () => ({
 jest.mock('uuid', () => ({ v4: jest.fn(() => 'mock-uuid') }));
 
 function TestComponent(): JSX.Element {
-	const { dashboardResponse, dashboardId } = useDashboard();
+	const { dashboardResponse, dashboardId, selectedDashboard } = useDashboard();
 
 	return (
 		<div>
@@ -59,6 +63,14 @@ function TestComponent(): JSX.Element {
 			<div data-testid="is-loading">{dashboardResponse.isLoading.toString()}</div>
 			<div data-testid="is-fetching">
 				{dashboardResponse.isFetching.toString()}
+			</div>
+			<div data-testid="dashboard-variables">
+				{selectedDashboard?.data?.variables
+					? JSON.stringify(selectedDashboard.data.variables)
+					: 'null'}
+			</div>
+			<div data-testid="dashboard-data">
+				{selectedDashboard?.data?.title || 'No Title'}
 			</div>
 		</div>
 	);
@@ -105,6 +117,38 @@ function renderWithDashboardProvider(
 		</QueryClientProvider>,
 	);
 }
+
+// Mock URL variables hook
+const mockGetUrlVariables = jest.fn();
+const mockUpdateUrlVariable = jest.fn();
+const mockClearUrlVariables = jest.fn();
+const mockSetUrlVariables = jest.fn();
+
+jest.mock('hooks/dashboard/useVariablesFromUrl', () => ({
+	__esModule: true,
+	default: jest.fn(() => ({
+		getUrlVariables: mockGetUrlVariables,
+		updateUrlVariable: mockUpdateUrlVariable,
+		clearUrlVariables: mockClearUrlVariables,
+		setUrlVariables: mockSetUrlVariables,
+	})),
+}));
+
+// Mock normalization function
+jest.mock('providers/Dashboard/normalizeUrlValue', () => ({
+	normalizeUrlValueForVariable: jest.fn(),
+}));
+
+// Mock initialize default variables
+jest.mock('providers/Dashboard/initializeDefaultVariables', () => ({
+	initializeDefaultVariables: jest.fn(),
+}));
+
+const mockNormalizeUrlValueForVariable = jest.mocked(
+	normalizeUrlValueForVariable,
+);
+
+const mockInitializeDefaultVariables = jest.mocked(initializeDefaultVariables);
 
 describe('Dashboard Provider - Query Key with Route Params', () => {
 	const DASHBOARD_ID = 'test-dashboard-id';
@@ -287,6 +331,247 @@ describe('Dashboard Provider - Query Key with Route Params', () => {
 				{ dashboardId: dashboardId2 },
 				dashboardId2,
 			]);
+		});
+	});
+});
+
+describe('Dashboard Provider - URL Variables Integration', () => {
+	const DASHBOARD_ID = 'test-dashboard-id';
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+		/* eslint-disable @typescript-eslint/no-explicit-any */
+		mockGetDashboard.mockResolvedValue({
+			httpStatusCode: 200,
+			data: {
+				id: DASHBOARD_ID,
+				title: 'Test Dashboard',
+				data: {
+					variables: {
+						environment: {
+							id: 'env-id',
+							name: 'environment',
+							multiSelect: false,
+							allSelected: false,
+							showALLOption: true,
+						} as any,
+						services: {
+							id: 'svc-id',
+							name: 'services',
+							multiSelect: true,
+							allSelected: false,
+							showALLOption: true,
+						} as any,
+					},
+				},
+			},
+		} as any);
+		/* eslint-enable @typescript-eslint/no-explicit-any */
+		mockGetUrlVariables.mockReturnValue({});
+		mockNormalizeUrlValueForVariable.mockImplementation((urlValue) => {
+			if (urlValue === undefined || urlValue === null) {
+				return urlValue;
+			}
+			return urlValue as IDashboardVariable['selectedValue'];
+		});
+	});
+
+	describe('URL Variable Synchronization', () => {
+		it('should initialize variables correctly when no URL variables exist', async () => {
+			// Empty URL variables - tests initialization flow
+			mockGetUrlVariables.mockReturnValue({});
+
+			const { getByTestId } = renderWithDashboardProvider(
+				`/dashboard/${DASHBOARD_ID}`,
+				{
+					dashboardId: DASHBOARD_ID,
+				},
+			);
+
+			await waitFor(() => {
+				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
+			});
+
+			// Verify initializeDefaultVariables was called
+			await waitFor(() => {
+				expect(mockInitializeDefaultVariables).toHaveBeenCalledWith(
+					{
+						environment: {
+							id: 'env-id',
+							name: 'environment',
+							multiSelect: false,
+							allSelected: false,
+							showALLOption: true,
+						},
+						services: {
+							id: 'svc-id',
+							name: 'services',
+							multiSelect: true,
+							allSelected: false,
+							showALLOption: true,
+						},
+					},
+					mockGetUrlVariables,
+					mockUpdateUrlVariable,
+				);
+			});
+
+			// Verify dashboard state contains the variables with default values
+			await waitFor(() => {
+				const dashboardVariables = getByTestId('dashboard-variables');
+				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
+
+				expect(parsedVariables).toHaveProperty('environment');
+				expect(parsedVariables).toHaveProperty('services');
+				// Default allSelected values should be preserved
+				expect(parsedVariables.environment.allSelected).toBe(false);
+				expect(parsedVariables.services.allSelected).toBe(false);
+			});
+		});
+
+		it('should merge URL variables with dashboard data and normalize values correctly', async () => {
+			const urlVariables = {
+				environment: 'development',
+				services: ['db', 'cache'],
+			};
+
+			mockGetUrlVariables.mockReturnValue(urlVariables);
+			mockNormalizeUrlValueForVariable
+				.mockReturnValueOnce('development')
+				.mockReturnValueOnce(['db', 'cache']);
+
+			const { getByTestId } = renderWithDashboardProvider(
+				`/dashboard/${DASHBOARD_ID}`,
+				{
+					dashboardId: DASHBOARD_ID,
+				},
+			);
+
+			await waitFor(() => {
+				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
+			});
+
+			// Verify normalization was called with correct values and variable configs
+			await waitFor(() => {
+				expect(mockNormalizeUrlValueForVariable).toHaveBeenCalledWith(
+					'development',
+					{
+						id: 'env-id',
+						name: 'environment',
+						multiSelect: false,
+						allSelected: false,
+						showALLOption: true,
+					},
+				);
+				expect(mockNormalizeUrlValueForVariable).toHaveBeenCalledWith(
+					['db', 'cache'],
+					{
+						id: 'svc-id',
+						name: 'services',
+						multiSelect: true,
+						allSelected: false,
+						showALLOption: true,
+					},
+				);
+			});
+
+			// Verify the dashboard state reflects the normalized URL values
+			await waitFor(() => {
+				const dashboardVariables = getByTestId('dashboard-variables');
+				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
+
+				// The selectedValue should be updated with normalized URL values
+				expect(parsedVariables.environment.selectedValue).toBe('development');
+				expect(parsedVariables.services.selectedValue).toEqual(['db', 'cache']);
+
+				// allSelected should be set to false when URL values override
+				expect(parsedVariables.environment.allSelected).toBe(false);
+				expect(parsedVariables.services.allSelected).toBe(false);
+			});
+		});
+
+		it('should handle ALL_SELECTED_VALUE from URL and set allSelected correctly', async () => {
+			const urlVariables = {
+				services: '__ALL__',
+			};
+
+			mockGetUrlVariables.mockReturnValue(urlVariables);
+
+			const { getByTestId } = renderWithDashboardProvider(
+				`/dashboard/${DASHBOARD_ID}`,
+				{
+					dashboardId: DASHBOARD_ID,
+				},
+			);
+
+			await waitFor(() => {
+				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
+			});
+
+			// Should not call normalize for __ALL__ values
+			expect(mockNormalizeUrlValueForVariable).not.toHaveBeenCalledWith(
+				'__ALL__',
+				expect.anything(),
+			);
+
+			// Verify that allSelected is set to true for the services variable
+			await waitFor(() => {
+				const dashboardVariables = getByTestId('dashboard-variables');
+				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
+
+				expect(parsedVariables.services.allSelected).toBe(true);
+				// Environment should remain unaffected
+				expect(parsedVariables.environment.allSelected).toBe(false);
+			});
+		});
+
+		it('should clear URL variables when not on dashboard page', async () => {
+			mockUseRouteMatch.mockReturnValue(null); // Not on dashboard page
+
+			renderWithDashboardProvider('/other-page', null);
+
+			await waitFor(() => {
+				expect(mockClearUrlVariables).toHaveBeenCalled();
+			});
+		});
+	});
+
+	describe('Variable Value Normalization', () => {
+		it('should normalize URL variables when they exist', async () => {
+			const urlVariables = {
+				environment: ['development', 'staging'], // Array for single-select
+				services: 'api', // Single value for multi-select
+			};
+
+			mockGetUrlVariables.mockReturnValue(urlVariables);
+			mockNormalizeUrlValueForVariable
+				.mockReturnValueOnce('development')
+				.mockReturnValueOnce(['api']);
+
+			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
+				dashboardId: DASHBOARD_ID,
+			});
+
+			await waitFor(() => {
+				// Verify normalization was called with the specific values and variable configs
+				expect(mockNormalizeUrlValueForVariable).toHaveBeenCalledWith(
+					['development', 'staging'],
+					{
+						id: 'env-id',
+						name: 'environment',
+						multiSelect: false,
+						allSelected: false,
+						showALLOption: true,
+					},
+				);
+				expect(mockNormalizeUrlValueForVariable).toHaveBeenCalledWith('api', {
+					id: 'svc-id',
+					name: 'services',
+					multiSelect: true,
+					allSelected: false,
+					showALLOption: true,
+				});
+			});
 		});
 	});
 });

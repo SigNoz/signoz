@@ -16,7 +16,14 @@ function ConfigureSAMLAuthnProvider({
 				</Typography.Text>
 			</section>
 
-			<Form.Item label="Domain" name="name">
+			<Form.Item
+				label="Domain"
+				name="name"
+				tooltip={{
+					title:
+						'The email domain for users who should use SSO (e.g., `example.com` for users with `@example.com` emails)',
+				}}
+			>
 				<Input disabled={!isCreate} />
 			</Form.Item>
 
@@ -24,7 +31,7 @@ function ConfigureSAMLAuthnProvider({
 				label="SAML ACS URL"
 				name={['samlConfig', 'samlIdp']}
 				tooltip={{
-					title: `The entityID of the SAML identity provider. It can typically be found in the EntityID attribute of the EntityDescriptor element in the SAML metadata of the identity provider. Example: <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="{samlEntity}">`,
+					title: `The SSO endpoint of the SAML identity provider. It can typically be found in the SingleSignOnService element in the SAML metadata of the identity provider. Example: <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="{samlIdp}"/>`,
 				}}
 			>
 				<Input />
@@ -34,7 +41,7 @@ function ConfigureSAMLAuthnProvider({
 				label="SAML Entity ID"
 				name={['samlConfig', 'samlEntity']}
 				tooltip={{
-					title: `The SSO endpoint of the SAML identity provider. It can typically be found in the SingleSignOnService element in the SAML metadata of the identity provider. Example: <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="{samlIdp}"/>`,
+					title: `The entityID of the SAML identity provider. It can typically be found in the EntityID attribute of the EntityDescriptor element in the SAML metadata of the identity provider. Example: <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="{samlEntity}">`,
 				}}
 			>
 				<Input />

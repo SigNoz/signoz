@@ -21,6 +21,7 @@ export type ThresholdProps = {
 	selectedGraph: PANEL_TYPES;
 	tableOptions?: Array<{ value: string; label: string }>;
 	columnUnits?: ColumnUnit;
+	yAxisUnit?: string;
 };
 
 export type ShowCaseValueProps = {
