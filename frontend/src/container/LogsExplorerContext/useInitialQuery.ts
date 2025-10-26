@@ -57,25 +57,16 @@ const useInitialQuery = (log: ILog): Query => {
 			),
 		).find(Boolean);
 
-	const getFallbackItems = (
-		items: TagFilterItem[],
-		foundPriorityItem: boolean,
-	): TagFilterItem[] => {
-		if (foundPriorityItem) {
-			return []; // Skip fallback if we found priority items
-		}
-
-		return items.filter((item) => {
+	const getFallbackItems = (items: TagFilterItem[]): TagFilterItem[] =>
+		items.filter((item) => {
 			if (!item.key?.key) return false;
 
 			const { key } = item.key;
 
 			return (
-				!SERVICE_AND_ENVIRONMENT_KEYS.includes(key) &&
-				(FALLBACK_STARTS_WITH_REGEX.test(key) || FALLBACK_CONTAINS_REGEX.test(key))
+				FALLBACK_STARTS_WITH_REGEX.test(key) || FALLBACK_CONTAINS_REGEX.test(key)
 			);
 		});
-	};
 
 	const updateFilters = (filters: TagFilter): TagFilter => {
 		const availableItems = filters.items;
@@ -88,12 +79,14 @@ const useInitialQuery = (log: ILog): Query => {
 		const priorityItem = findFirstPriorityItem(availableItems);
 		if (priorityItem) {
 			selectedItems.push(priorityItem);
-		}
-
-		// Step 3: Fallback to current regex logic (only if no priority items found)
-		const fallbackItems = getFallbackItems(availableItems, !!priorityItem);
-		if (fallbackItems.length > 0) {
-			selectedItems.push(...fallbackItems);
+		} else {
+			// Step 3: Fallback to current regex logic (only if no priority items found)
+			const fallbackItems = getFallbackItems(availableItems).filter(
+				(item) => !isServiceOrEnvironmentAttribute(item.key?.key || ''),
+			);
+			if (fallbackItems.length > 0) {
+				selectedItems.push(...fallbackItems);
+			}
 		}
 
 		return {
