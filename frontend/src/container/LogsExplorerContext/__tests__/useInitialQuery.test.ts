@@ -116,6 +116,17 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 		severity_number: 9,
 	});
 
+	// Helper function to assert that specific keys are NOT present in filter items
+	const assertKeysNotPresent = (
+		items: TagFilterItem[],
+		excludedKeys: string[],
+	): void => {
+		excludedKeys.forEach((key) => {
+			const found = items.find((item) => item.key?.key === key);
+			expect(found).toBeUndefined();
+		});
+	};
+
 	describe('K8s Environment Context Flow', () => {
 		it('should include service.name and k8s.pod.name when user opens log context from Kubernetes pod', () => {
 			// Log from k8s pod with multiple resource attributes
@@ -165,6 +176,19 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 				}),
 			);
 
+			// Verify exact count of filter items (should be exactly 3)
+			const calledWith = mockedConvertFiltersToExpression.mock.calls[0][0];
+			expect(calledWith.items).toHaveLength(3);
+
+			// Verify specific unwanted keys are excluded
+			assertKeysNotPresent(calledWith.items, [
+				'k8s.pod.name', // Other k8s attributes should be excluded
+				'k8s.deployment.name',
+				'host.name', // Lower priority attributes should be excluded
+				'container.id',
+				'random.attribute', // Non-matching attributes should be excluded
+			]);
+
 			// Verify exact call counts to catch unintended multiple invocations
 			expect(mockedConvertFiltersToExpression).toHaveBeenCalledTimes(1);
 			expect(mockUpdateAllQueriesOperators).toHaveBeenCalledTimes(1);
@@ -211,12 +235,24 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 				}),
 			);
 
-			// Verify host attributes are NOT included due to lower priority
+			// Verify exact count of filter items (should be exactly 3)
 			const calledWith = mockedConvertFiltersToExpression.mock.calls[0][0];
+			expect(calledWith.items).toHaveLength(3);
+
+			// Verify host attributes are NOT included due to lower priority
 			const hostItems = calledWith.items.filter((item: TagFilterItem) =>
 				item.key?.key?.startsWith('host.'),
 			);
 			expect(hostItems).toHaveLength(0);
+
+			// Verify specific unwanted keys are excluded
+			assertKeysNotPresent(calledWith.items, [
+				'cloud.provider',
+				'cloud.region',
+				'host.name',
+				'host.id',
+				'unnecessary.tag',
+			]);
 
 			// Verify exact call counts to catch unintended multiple invocations
 			expect(mockedConvertFiltersToExpression).toHaveBeenCalledTimes(1);
@@ -266,6 +302,13 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 				}),
 			);
 
+			// Verify exact count of filter items (should be exactly 4)
+			const calledWith = mockedConvertFiltersToExpression.mock.calls[0][0];
+			expect(calledWith.items).toHaveLength(4);
+
+			// Verify specific unwanted keys are excluded
+			assertKeysNotPresent(calledWith.items, ['random.key', 'another.attribute']);
+
 			// Verify exact call counts to catch unintended multiple invocations
 			expect(mockedConvertFiltersToExpression).toHaveBeenCalledTimes(1);
 			expect(mockUpdateAllQueriesOperators).toHaveBeenCalledTimes(1);
@@ -300,8 +343,11 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 				}),
 			);
 
-			// Verify that service.name is included
+			// Verify exact count of filter items (should be exactly 1)
 			const calledWith = mockedConvertFiltersToExpression.mock.calls[0][0];
+			expect(calledWith.items).toHaveLength(1);
+
+			// Verify that service.name is included
 			const serviceItems = calledWith.items.filter(
 				(item: TagFilterItem) => item.key?.key === 'service.name',
 			);
@@ -317,6 +363,13 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 						item.key.key.startsWith('container.')),
 			);
 			expect(priorityItems).toHaveLength(0);
+
+			// Verify specific unwanted keys are excluded
+			assertKeysNotPresent(calledWith.items, [
+				'custom.tag', // Non-matching attributes should be excluded
+				'user.id',
+				'request.id',
+			]);
 
 			// Verify exact call counts to catch unintended multiple invocations
 			expect(mockedConvertFiltersToExpression).toHaveBeenCalledTimes(1);
