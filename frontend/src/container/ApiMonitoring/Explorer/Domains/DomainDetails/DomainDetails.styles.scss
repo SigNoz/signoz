@@ -784,11 +784,14 @@
 
 			.ant-table-cell:has(.top-services-item-latency) {
 				text-align: center;
-				
+				opacity: 0.8;
+				background: rgba(171, 189, 255, 0.04);
 			}
 
 			.ant-table-cell:has(.top-services-item-latency-title) {
 				text-align: center;
+				opacity: 0.8;
+				background: rgba(171, 189, 255, 0.04);
 			}
 
 			.ant-table-tbody > tr:hover > td {
