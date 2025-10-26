@@ -64,7 +64,7 @@ function SpanOverview({
 	span,
 	isSpanCollapsed,
 	handleCollapseUncollapse,
-	setSelectedSpan,
+	handleSpanClick,
 	handleAddSpanToFunnel,
 	selectedSpan,
 	filteredSpanIds,
@@ -75,7 +75,7 @@ function SpanOverview({
 	isSpanCollapsed: boolean;
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	selectedSpan: Span | undefined;
-	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+	handleSpanClick: (span: Span) => void;
 	handleAddSpanToFunnel: (span: Span) => void;
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
@@ -116,9 +116,7 @@ function SpanOverview({
 					backgroundRepeat: 'repeat',
 					backgroundSize: `${CONNECTOR_WIDTH + 1}px 54px`,
 				}}
-				onClick={(): void => {
-					setSelectedSpan(span);
-				}}
+				onClick={(): void => handleSpanClick(span)}
 			>
 				{!isRootSpan && (
 					<div className="connector-lines">
@@ -211,7 +209,7 @@ function SpanOverview({
 export function SpanDuration({
 	span,
 	traceMetadata,
-	setSelectedSpan,
+	handleSpanClick,
 	selectedSpan,
 	filteredSpanIds,
 	isFilterActive,
@@ -219,7 +217,7 @@ export function SpanDuration({
 	span: Span;
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
-	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+	handleSpanClick: (span: Span) => void;
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
 }): JSX.Element {
@@ -230,9 +228,6 @@ export function SpanDuration({
 	const spread = traceMetadata.endTime - traceMetadata.startTime;
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.durationNano * 1e2) / (spread * 1e6);
-
-	const urlQuery = useUrlQuery();
-	const { safeNavigate } = useSafeNavigate();
 
 	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 
@@ -289,14 +284,7 @@ export function SpanDuration({
 				})}
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
-				onClick={(): void => {
-					setSelectedSpan(span);
-					if (span?.spanId) {
-						urlQuery.set('spanId', span?.spanId);
-					}
-
-					safeNavigate({ search: urlQuery.toString() });
-				}}
+				onClick={(): void => handleSpanClick(span)}
 			>
 				<div
 					className="span-line"
@@ -350,7 +338,7 @@ function getWaterfallColumns({
 	uncollapsedNodes,
 	traceMetadata,
 	selectedSpan,
-	setSelectedSpan,
+	handleSpanClick,
 	handleAddSpanToFunnel,
 	filteredSpanIds,
 	isFilterActive,
@@ -359,7 +347,7 @@ function getWaterfallColumns({
 	uncollapsedNodes: string[];
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
-	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+	handleSpanClick: (span: Span) => void;
 	handleAddSpanToFunnel: (span: Span) => void;
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
@@ -374,7 +362,7 @@ function getWaterfallColumns({
 					handleCollapseUncollapse={handleCollapseUncollapse}
 					isSpanCollapsed={!uncollapsedNodes.includes(props.row.original.spanId)}
 					selectedSpan={selectedSpan}
-					setSelectedSpan={setSelectedSpan}
+					handleSpanClick={handleSpanClick}
 					handleAddSpanToFunnel={handleAddSpanToFunnel}
 					traceMetadata={traceMetadata}
 					filteredSpanIds={filteredSpanIds}
@@ -402,7 +390,7 @@ function getWaterfallColumns({
 					span={props.row.original}
 					traceMetadata={traceMetadata}
 					selectedSpan={selectedSpan}
-					setSelectedSpan={setSelectedSpan}
+					handleSpanClick={handleSpanClick}
 					filteredSpanIds={filteredSpanIds}
 					isFilterActive={isFilterActive}
 				/>
@@ -479,6 +467,21 @@ function Success(props: ISuccessProps): JSX.Element {
 		setSelectedSpanToAddToFunnel(span);
 	}, []);
 
+	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
+
+	const handleSpanClick = useCallback(
+		(span: Span): void => {
+			setSelectedSpan(span);
+			if (span?.spanId) {
+				urlQuery.set('spanId', span?.spanId);
+			}
+
+			safeNavigate({ search: urlQuery.toString() });
+		},
+		[setSelectedSpan, urlQuery, safeNavigate],
+	);
+
 	const columns = useMemo(
 		() =>
 			getWaterfallColumns({
@@ -486,7 +489,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				uncollapsedNodes,
 				traceMetadata,
 				selectedSpan,
-				setSelectedSpan,
+				handleSpanClick,
 				handleAddSpanToFunnel,
 				filteredSpanIds,
 				isFilterActive,
@@ -496,7 +499,7 @@ function Success(props: ISuccessProps): JSX.Element {
 			uncollapsedNodes,
 			traceMetadata,
 			selectedSpan,
-			setSelectedSpan,
+			handleSpanClick,
 			handleAddSpanToFunnel,
 			filteredSpanIds,
 			isFilterActive,

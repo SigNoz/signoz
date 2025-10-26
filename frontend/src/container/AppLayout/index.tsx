@@ -12,8 +12,8 @@ import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
 import logEvent from 'api/common/logEvent';
 import manageCreditCardApi from 'api/v1/portal/create';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
+import getUserVersion from 'api/v1/version/get';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';
-import getUserVersion from 'api/v1/version/getVersion';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
 import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
@@ -317,14 +317,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			getUserVersionResponse.isFetched &&
 			getUserVersionResponse.isSuccess &&
 			getUserVersionResponse.data &&
-			getUserVersionResponse.data.payload
+			getUserVersionResponse.data.data
 		) {
 			dispatch({
 				type: UPDATE_CURRENT_VERSION,
 				payload: {
-					currentVersion: getUserVersionResponse.data.payload.version,
-					ee: getUserVersionResponse.data.payload.ee,
-					setupCompleted: getUserVersionResponse.data.payload.setupCompleted,
+					currentVersion: getUserVersionResponse.data.data.version,
+					ee: getUserVersionResponse.data.data.ee,
+					setupCompleted: getUserVersionResponse.data.data.setupCompleted,
 				},
 			});
 		}

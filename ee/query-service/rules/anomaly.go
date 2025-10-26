@@ -78,11 +78,6 @@ func NewAnomalyRule(
 
 	opts = append(opts, baserules.WithLogger(logger))
 
-	if p.RuleCondition.CompareOp == ruletypes.ValueIsBelow {
-		target := -1 * *p.RuleCondition.Target
-		p.RuleCondition.Target = &target
-	}
-
 	baseRule, err := baserules.NewBaseRule(id, orgID, p, reader, opts...)
 	if err != nil {
 		return nil, err

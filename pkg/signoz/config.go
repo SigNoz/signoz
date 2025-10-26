@@ -29,6 +29,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/tokenizer"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/spf13/cobra"
@@ -92,6 +94,9 @@ type Config struct {
 
 	// Gateway config
 	Gateway gateway.Config `mapstructure:"gateway"`
+
+	// Tokenizer config
+	Tokenizer tokenizer.Config `mapstructure:"tokenizer"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
@@ -150,6 +155,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		sharder.NewConfigFactory(),
 		statsreporter.NewConfigFactory(),
 		gateway.NewConfigFactory(),
+		tokenizer.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
@@ -323,4 +329,24 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 			config.Gateway.URL = u
 		}
 	}
+
+	if os.Getenv("SIGNOZ_JWT_SECRET") != "" {
+		logger.WarnContext(ctx, "[Deprecated] env SIGNOZ_JWT_SECRET is deprecated and scheduled for removal. Please use SIGNOZ_TOKENIZER_JWT_SECRET instead.")
+		config.Tokenizer.JWT.Secret = os.Getenv("SIGNOZ_JWT_SECRET")
+	}
+}
+
+func (config Config)Collect(_ context.Context, _ valuer.UUID) (map[string]any, error){
+	stats := make(map[string]any)
+
+	// SQL Store Config Stats
+	stats["config.sqlstore.provider"] = config.SQLStore.Provider
+	
+	// Tokenizer Config Stats
+	stats["config.tokenizer.provider"] = config.Tokenizer.Provider
+
+	// Cache Config Stats
+	stats["config.cache.provider"] = config.Cache.Provider
+
+	return stats, nil
 }

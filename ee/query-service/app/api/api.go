@@ -20,7 +20,6 @@ import (
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
 )
@@ -35,10 +34,7 @@ type APIHandlerOptions struct {
 	Gateway                       *httputil.ReverseProxy
 	GatewayUrl                    string
 	// Querier Influx Interval
-	FluxInterval      time.Duration
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
-	JWT               *authtypes.JWT
+	FluxInterval time.Duration
 }
 
 type APIHandler struct {
@@ -93,7 +89,8 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/features", am.ViewAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
 
 	// paid plans specific routes
-	router.HandleFunc("/api/v1/complete/saml", am.OpenAccess(ah.receiveSAML)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/complete/saml", am.OpenAccess(ah.Signoz.Handlers.Session.CreateSessionBySAMLCallback)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/complete/oidc", am.OpenAccess(ah.Signoz.Handlers.Session.CreateSessionByOIDCCallback)).Methods(http.MethodGet)
 
 	// base overrides
 	router.HandleFunc("/api/v1/version", am.OpenAccess(ah.getVersion)).Methods(http.MethodGet)
