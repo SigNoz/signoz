@@ -71,7 +71,6 @@ const useVariablesFromUrl = (): UseVariablesFromUrlReturn => {
 	const clearUrlVariables = useCallback((): void => {
 		const params = new URLSearchParams(urlQuery.toString());
 		params.delete(QueryParams.variables);
-		params.delete('options');
 
 		history.replace({
 			search: params.toString(),
