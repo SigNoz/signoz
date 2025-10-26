@@ -3,6 +3,7 @@ import { ColumnsType } from 'antd/lib/table';
 import getAll from 'api/v1/user/get';
 import deleteUser from 'api/v1/user/id/delete';
 import update from 'api/v1/user/id/update';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
@@ -11,9 +12,7 @@ import { useAppContext } from 'providers/App/App';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
-import { UserResponse } from 'types/api/user/getUsers';
 import { ROLES } from 'types/roles';
 
 import DeleteMembersDetails from '../DeleteMembersDetails';
@@ -210,10 +209,8 @@ function UserFunction({
 
 function Members(): JSX.Element {
 	const { org } = useAppContext();
-	const { status, data, isLoading } = useQuery<
-		SuccessResponseV2<UserResponse[]>,
-		APIError
-	>({
+
+	const { data, isLoading, error } = useQuery({
 		queryFn: () => getAll(),
 		queryKey: ['getOrgUser', org?.[0].id],
 	});
@@ -221,7 +218,7 @@ function Members(): JSX.Element {
 	const [dataSource, setDataSource] = useState<DataType[]>([]);
 
 	useEffect(() => {
-		if (status === 'success' && data?.data && Array.isArray(data.data)) {
+		if (data?.data && Array.isArray(data.data)) {
 			const updatedData: DataType[] = data?.data?.map((e) => ({
 				accessLevel: e.role,
 				email: e.email,
@@ -231,7 +228,7 @@ function Members(): JSX.Element {
 			}));
 			setDataSource(updatedData);
 		}
-	}, [data?.data, status]);
+	}, [data]);
 
 	const columns: ColumnsType<DataType> = [
 		{
@@ -293,14 +290,17 @@ function Members(): JSX.Element {
 					<div className="members-count"> ({dataSource.length}) </div>
 				)}
 			</Typography.Title>
-			<ResizeTable
-				columns={columns}
-				tableLayout="fixed"
-				dataSource={dataSource}
-				pagination={false}
-				loading={status === 'loading'}
-				bordered
-			/>
+			{!(error as APIError) && (
+				<ResizeTable
+					columns={columns}
+					tableLayout="fixed"
+					dataSource={dataSource}
+					pagination={false}
+					loading={isLoading}
+					bordered
+				/>
+			)}
+			{(error as APIError) && <ErrorContent error={error as APIError} />}
 		</div>
 	);
 }

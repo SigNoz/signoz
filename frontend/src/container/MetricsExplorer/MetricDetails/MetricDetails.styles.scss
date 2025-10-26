@@ -224,10 +224,6 @@
 				align-items: center !important;
 			}
 
-			.metric-type-renderer {
-				max-height: 12px;
-			}
-
 			.metric-metadata-key {
 				cursor: pointer;
 				padding-left: 10px;
@@ -388,6 +384,14 @@
 			.top-attributes-item-count {
 				color: var(--bg-slate-400);
 			}
+		}
+	}
+}
+
+.metric-metadata-value {
+	.y-axis-unit-selector-component {
+		.ant-select {
+			width: auto !important;
 		}
 	}
 }
