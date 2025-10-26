@@ -55,11 +55,9 @@ export const getServiceAndEnvironmentFilterItems = (
 export const findFirstPriorityItem = (
 	items: TagFilterItem[],
 ): TagFilterItem | undefined =>
-	PRIORITY_CATEGORIES.flatMap((categoryPriorities) =>
-		categoryPriorities.map((priorityKey) =>
-			items.find((item) => item.key?.key === priorityKey),
-		),
-	).find(Boolean);
+	PRIORITY_CATEGORIES.flat()
+		.map((priorityKey) => items.find((item) => item.key?.key === priorityKey))
+		.find(Boolean);
 
 export const getFallbackItems = (items: TagFilterItem[]): TagFilterItem[] =>
 	items.filter((item) => {
