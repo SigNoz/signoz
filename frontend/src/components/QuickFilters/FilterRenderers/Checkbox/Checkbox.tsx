@@ -29,6 +29,7 @@ import { v4 as uuid } from 'uuid';
 
 import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
 
+
 const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in'];
 
@@ -219,8 +220,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 						items:
 							idx === lastUsedQuery
 								? item.filters?.items?.filter(
-										(fil) => !isEqual(fil.key?.key, filter.attributeKey.key),
-								  ) || []
+									(fil) => !isEqual(fil.key?.key, filter.attributeKey.key),
+								) || []
 								: [...(item.filters?.items || [])],
 						op: item.filters?.op || 'AND',
 					},
@@ -484,42 +485,58 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		!searchText &&
 		!attributeValues.length;
 
+	const headerId = `${filter.title
+		.split(' ')
+		.join('-')
+		.toLocaleLowerCase()}-header`;
+	const contentId = `${filter.title
+		.split(' ')
+		.join('-')
+		.toLocaleLowerCase()}-content`;
+
 	return (
-		<div className="checkbox-filter">
-			<section
-				className="filter-header-checkbox"
-				onClick={(): void => {
-					if (isOpen) {
-						setIsOpen(false);
-						setVisibleItemsCount(10);
-					} else {
-						setIsOpen(true);
-					}
-				}}
-			>
-				<section className="left-action">
-					{isOpen ? (
-						<ChevronDown size={13} cursor="pointer" />
-					) : (
-						<ChevronRight size={13} cursor="pointer" />
-					)}
-					<Typography.Text className="title">{filter.title}</Typography.Text>
-				</section>
-				<section className="right-action">
-					{isOpen && !!attributeValues.length && (
-						<Typography.Text
-							className="clear-all"
-							onClick={(e): void => {
-								e.stopPropagation();
-								e.preventDefault();
-								handleClearFilterAttribute();
-							}}
-						>
-							Clear All
-						</Typography.Text>
-					)}
-				</section>
-			</section>
+		<div id="accordionGroup" className="checkbox-filter">
+			<Typography.Title level={3} className="filter-header">
+				<Button
+					type="text"
+					id={headerId}
+					aria-expanded={isOpen}
+					aria-controls={contentId}
+					className="filter-header-checkbox"
+					onClick={(): void => {
+						if (isOpen) {
+							setIsOpen(false);
+							setVisibleItemsCount(10);
+						} else {
+							setIsOpen(true);
+						}
+					}}
+				>
+					<section className="left-action">
+						{isOpen ? (
+							<ChevronDown size={13} cursor="pointer" />
+						) : (
+							<ChevronRight size={13} cursor="pointer" />
+						)}
+						<Typography.Text className="title">{filter.title}</Typography.Text>
+					</section>
+				</Button>
+
+				{isOpen && !!attributeValues.length && (
+					<Button
+						type="text"
+						onClick={(e): void => {
+							e.stopPropagation();
+							e.preventDefault();
+							handleClearFilterAttribute();
+						}}
+						className="right-action"
+					>
+						<Typography.Text className="clear-all">Clear All</Typography.Text>
+					</Button>
+				)}
+			</Typography.Title>
+
 			{isOpen &&
 				(isLoading || isLoadingKeyValueSuggestions) &&
 				!attributeValues.length && (
@@ -528,7 +545,12 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					</section>
 				)}
 			{isOpen && !isLoading && !isLoadingKeyValueSuggestions && (
-				<>
+				<div
+					className="filter-values"
+					id={contentId}
+					role="region"
+					aria-labelledby={headerId}
+				>
 					{!isEmptyStateWithDocsEnabled && (
 						<section className="search">
 							<Input
@@ -603,7 +625,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							</Typography.Text>
 						</section>
 					)}
-				</>
+				</div>
 			)}
 		</div>
 	);
