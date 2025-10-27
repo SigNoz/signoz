@@ -100,7 +100,7 @@
 				);
 
 				stroke-width: 1px;
-				stroke: var(--Slate-500, #161922);
+				stroke: var(--bg-slate-500, #161922);
 				filter: drop-shadow(2px 4px 16px rgba(0, 0, 0, 0.2));
 				backdrop-filter: blur(20px);
 				border: 1px solid var(--bg-slate-500);
@@ -147,8 +147,8 @@
 
 							.ant-select-selector {
 								border-radius: 50px;
-								border: 1px solid var(--Slate-400, #1d212d);
-								background: var(--Slate-500, #161922);
+								border: 1px solid var(--bg-slate-400, #1d212d);
+								background: var(--bg-slate-500, #161922);
 								color: var(--bg-vanilla-400);
 								font-family: Inter;
 								font-size: 12px;
@@ -295,7 +295,7 @@
 					}
 
 					border-radius: 4px;
-					border: 1px solid var(--Slate-400, #1d212d);
+					border: 1px solid var(--bg-slate-400, #1d212d);
 					background: linear-gradient(
 						139deg,
 						rgba(18, 19, 23, 1) 0%,
@@ -658,7 +658,7 @@
 								background: rgba(78, 116, 248, 0.2);
 
 								.span-percentile-values-table-data-row-key {
-									color: var(--Robin-300, #95acfb);
+									color: var(--text-robin-300, #95acfb);
 								}
 
 								.dashed-line {
