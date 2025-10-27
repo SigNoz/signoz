@@ -52,4 +52,5 @@ export enum QueryParams {
 	selectedExplorerView = 'selectedExplorerView',
 	variables = 'variables',
 	ingestionLimit = 'ingestionLimit',
+	ingestionKeyId = 'ingestionKeyId',
 }

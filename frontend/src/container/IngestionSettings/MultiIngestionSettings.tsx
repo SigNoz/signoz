@@ -754,7 +754,7 @@ function MultiIngestionSettings(): JSX.Element {
 				QueryParams.compositeQuery
 			}=${encodeURIComponent(stringifiedQuery)}&${
 				QueryParams.ingestionLimit
-			}=${threshold}`,
+			}=${threshold}&${QueryParams.ingestionKeyId}=${APIKey.id}`,
 		);
 	};
 

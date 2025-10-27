@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 
 import { useCreateAlertState } from '../context';
 import { INITIAL_EVALUATION_WINDOW_STATE } from '../context/constants';
+import { AlertThresholdMatchType } from '../context/types';
 import EvaluationWindowPopover from './EvaluationWindowPopover';
 import { CumulativeWindowTimeframes } from './types';
 import { getEvaluationWindowTypeText, getTimeframeText } from './utils';
@@ -16,6 +17,7 @@ function EvaluationSettings(): JSX.Element {
 		evaluationWindow,
 		setEvaluationWindow,
 		thresholdState,
+		setThresholdState,
 	} = useCreateAlertState();
 
 	const [
@@ -51,6 +53,11 @@ function EvaluationSettings(): JSX.Element {
 					unit: 'minutes',
 				},
 			});
+
+			setThresholdState({
+				type: 'SET_MATCH_TYPE',
+				payload: AlertThresholdMatchType.IN_TOTAL,
+			});
 		} else {
 			setEvaluationWindow({
 				type: 'SET_INITIAL_STATE',
@@ -61,7 +68,7 @@ function EvaluationSettings(): JSX.Element {
 		currentQuery,
 		thresholdState.selectedQuery,
 		setEvaluationWindow,
-		evaluationWindow.windowType,
+		setThresholdState,
 	]);
 
 	const popoverContent = (

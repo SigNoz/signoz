@@ -3,8 +3,10 @@ import '../EvaluationSettings/styles.scss';
 
 import { Button, Select, Tooltip, Typography } from 'antd';
 import classNames from 'classnames';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import getRandomColor from 'lib/getRandomColor';
 import { Plus } from 'lucide-react';
 import { useEffect } from 'react';
@@ -54,6 +56,14 @@ function AlertThreshold({
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
 	const ingestionLimitFromURL = queryParams.get(QueryParams.ingestionLimit);
+	const ingestionKeyIdFromURL = queryParams.get(QueryParams.ingestionKeyId);
+
+	const { handleChangeQueryData } = useQueryOperations({
+		index: 0,
+		query: currentQuery.builder.queryData[0],
+		isListViewPanel: false,
+		entityVersion: ENTITY_VERSION_V5,
+	});
 
 	useEffect(() => {
 		// loop through currenttQuery and find the query that matches the selected query
@@ -87,16 +97,21 @@ function AlertThreshold({
 				payload: AlertThresholdMatchType.IN_TOTAL,
 			});
 
-			const thresholds = [...thresholdState.thresholds];
+			if (ingestionLimitFromURL) {
+				const thresholds = [...thresholdState.thresholds];
 
-			thresholds[0].thresholdValue = ingestionLimitFromURL
-				? parseInt(ingestionLimitFromURL, 10)
-				: 0;
+				thresholds[0].thresholdValue = parseInt(ingestionLimitFromURL, 10);
+				setThresholdState({
+					type: 'SET_THRESHOLDS',
+					payload: thresholds,
+				});
+			}
 
-			setThresholdState({
-				type: 'SET_THRESHOLDS',
-				payload: thresholds,
-			});
+			if (ingestionKeyIdFromURL) {
+				handleChangeQueryData('filter', {
+					expression: `signoz.workspace.key.id='${ingestionKeyIdFromURL}'`,
+				});
+			}
 		} else {
 			setEvaluationWindow({
 				type: 'SET_INITIAL_STATE',
@@ -154,8 +169,6 @@ function AlertThreshold({
 	};
 
 	const updateThreshold: UpdateThreshold = (id, field, value) => {
-		console.log('updateThreshold', id, field, value);
-
 		setThresholdState({
 			type: 'SET_THRESHOLDS',
 			payload: thresholdState.thresholds.map((t) =>
