@@ -83,9 +83,7 @@ export const updateFilters = (filters: TagFilter): TagFilter => {
 		selectedItems.push(priorityItem);
 	} else {
 		// Step 3: Fallback to current regex logic (only if no priority items found)
-		const fallbackItems = getFallbackItems(availableItems).filter(
-			(item) => !isServiceOrEnvironmentAttribute(item.key?.key || ''),
-		);
+		const fallbackItems = getFallbackItems(availableItems);
 		if (fallbackItems.length > 0) {
 			selectedItems.push(...fallbackItems);
 		}
@@ -93,6 +91,9 @@ export const updateFilters = (filters: TagFilter): TagFilter => {
 
 	return {
 		...filters,
-		items: selectedItems,
+		// deduplication
+		items: Array.from(
+			new Map(selectedItems.map((item) => [item.key?.key || '', item])).values(),
+		),
 	};
 };
