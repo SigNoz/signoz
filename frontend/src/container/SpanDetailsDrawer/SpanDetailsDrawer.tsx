@@ -324,11 +324,13 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 	// Prod Req - Wait for 2 seconds before fetching span percentile data on initial load
 	useEffect(() => {
+		setInitialWaitCompleted(false);
+
 		const timer = setTimeout(() => {
 			setInitialWaitCompleted(true);
 		}, 2000); // 2-second delay
 
-		return (): void => clearTimeout(timer); // Cleanup on unmount
+		return (): void => clearTimeout(timer); // Cleanup on re-run or unmount
 	}, [selectedSpan?.spanId]);
 
 	useEffect(() => {
