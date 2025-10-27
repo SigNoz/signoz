@@ -20,6 +20,8 @@ type SQLStore interface {
 	// Returns the dialect of the database.
 	Dialect() SQLDialect
 
+	Formatter() SQLFormatter
+
 	// RunInTxCtx runs the given callback in a transaction. It creates and injects a new context with the transaction.
 	// If a transaction is present in the context, it will be used.
 	RunInTxCtx(ctx context.Context, opts *SQLStoreTxOptions, cb func(ctx context.Context) error) error
@@ -85,4 +87,15 @@ type SQLDialect interface {
 	// Toggles foreign key constraint for the given database. This makes sense only for sqlite. This cannot take a transaction as an argument and needs to take the db
 	// as an argument.
 	ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error
+}
+
+type SQLFormatter interface {
+	// JSON operations for cross-database compatibility
+	JSONExtractString(column, path string) string
+	JSONType(column, path string) string
+	JSONIsArray(column, path string) string
+	JSONArrayElements(column, path, alias string) string
+	JSONArrayAgg(expression string) string
+	JSONArrayLiteral(values ...string) string
+	TextToJsonColumn(column string) string
 }
