@@ -61,16 +61,14 @@ const mockTracesRetention: PayloadPropsTraces = {
 const mockLogsRetentionWithS3: PayloadPropsLogs = {
 	version: 'v2',
 	default_ttl_days: 30,
-	logs_ttl_duration_hrs: 720, // 30 days in hours
-	logs_move_ttl_duration_hrs: 240, // 10 days in hours
+	cold_storage_ttl_days: 240, // 10 days in hours
 	status: '',
 };
 
 const mockLogsRetentionWithoutS3: PayloadPropsLogs = {
 	version: 'v2',
 	default_ttl_days: 30,
-	logs_ttl_duration_hrs: 720,
-	logs_move_ttl_duration_hrs: -1,
+	cold_storage_ttl_days: -1,
 	status: '',
 };
 
@@ -186,7 +184,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 					type: 'logs',
 					defaultTTLDays: 30,
 					coldStorageVolume: 's3',
-					coldStorageDuration: 5,
+					coldStorageDurationDays: 5,
 					ttlConditions: [],
 				});
 			});
@@ -292,7 +290,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 					type: 'logs',
 					defaultTTLDays: 60,
 					coldStorageVolume: '',
-					coldStorageDuration: 0,
+					coldStorageDurationDays: 0,
 					ttlConditions: [],
 				});
 			});
@@ -323,7 +321,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			// S3 retention: 240 hours = 10 days (displays as 10 Days - only Days allowed)
 			const s3Input = inputs?.[1] as HTMLInputElement;
-			expect(s3Input.value).toBe('10');
+			expect(s3Input.value).toBe('240');
 
 			// Verify dropdowns: total shows Months, S3 shows Days
 			const dropdowns = logsCard?.querySelectorAll('.ant-select-selection-item');
