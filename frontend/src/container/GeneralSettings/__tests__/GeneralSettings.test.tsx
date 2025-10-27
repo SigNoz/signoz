@@ -61,7 +61,7 @@ const mockTracesRetention: PayloadPropsTraces = {
 const mockLogsRetentionWithS3: PayloadPropsLogs = {
 	version: 'v2',
 	default_ttl_days: 30,
-	cold_storage_ttl_days: 240, // 10 days in hours
+	cold_storage_ttl_days: 24,
 	status: '',
 };
 
