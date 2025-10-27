@@ -2,9 +2,9 @@ package telemetrytypes
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -123,7 +123,7 @@ func (f *FieldDataType) UnmarshalJSON(data []byte) error {
 // Scan implements the sql.Scanner interface
 func (f *FieldDataType) Scan(value interface{}) error {
 	if f == nil {
-		return fmt.Errorf("fielddatatype: nil receiver")
+		return errors.NewInternalf(errors.CodeInternal, "fielddatatype: nil receiver")
 	}
 
 	if value == nil {
@@ -133,7 +133,7 @@ func (f *FieldDataType) Scan(value interface{}) error {
 
 	str, ok := value.(string)
 	if !ok {
-		return fmt.Errorf("fielddatatype: expected string, got %T", value)
+		return errors.NewInternalf(errors.CodeInternal, "fielddatatype: expected string, got %T", value)
 	}
 
 	// Normalize the string
