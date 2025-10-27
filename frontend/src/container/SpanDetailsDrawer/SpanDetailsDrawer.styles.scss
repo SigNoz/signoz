@@ -57,10 +57,12 @@
 			position: relative;
 			padding: 2px 12px;
 
-			&:hover {
-				background-color: var(--bg-slate-500);
-				.action-btn {
-					display: flex;
+			&--interactive {
+				&:hover {
+					background-color: var(--bg-slate-500);
+					.action-btn {
+						display: flex;
+					}
 				}
 			}
 

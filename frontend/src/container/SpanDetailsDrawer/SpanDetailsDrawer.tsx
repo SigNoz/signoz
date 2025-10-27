@@ -142,7 +142,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			{selectedSpan && !isSpanDetailsDocked && (
 				<>
 					<section className="description">
-						<div className="item">
+						<div className="item item--interactive">
 							<Typography.Text className="attribute-key">span name</Typography.Text>
 							<Tooltip title={selectedSpan.name}>
 								<div className="value-wrapper">
@@ -156,7 +156,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								fieldValue={selectedSpan.name}
 							/>
 						</div>
-						<div className="item">
+						<div className="item item--interactive">
 							<Typography.Text className="attribute-key">span id</Typography.Text>
 							<div className="value-wrapper">
 								<Typography.Text className="attribute-value">
@@ -176,7 +176,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								</Typography.Text>
 							</div>
 						</div>
-						<div className="item">
+						<div className="item item--interactive">
 							<Typography.Text className="attribute-key">duration</Typography.Text>
 							<div className="value-wrapper">
 								<Typography.Text className="attribute-value">
@@ -188,7 +188,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								fieldValue={selectedSpan.durationNano.toString()}
 							/>
 						</div>
-						<div className="item">
+						<div className="item item--interactive">
 							<Typography.Text className="attribute-key">service</Typography.Text>
 							<div className="service">
 								<div className="dot" style={{ backgroundColor: color }} />
@@ -205,7 +205,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								fieldValue={selectedSpan.serviceName}
 							/>
 						</div>
-						<div className="item">
+						<div className="item item--interactive">
 							<Typography.Text className="attribute-key">span kind</Typography.Text>
 							<div className="value-wrapper">
 								<Typography.Text className="attribute-value">
@@ -217,7 +217,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								fieldValue={selectedSpan.spanKind}
 							/>
 						</div>
-						<div className="item">
+						<div className="item item--interactive">
 							<Typography.Text className="attribute-key">
 								status code string
 							</Typography.Text>
@@ -233,7 +233,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 						</div>
 
 						{selectedSpan.statusMessage && (
-							<div className="item">
+							<div className="item item--interactive">
 								<Typography.Text className="attribute-key">
 									status message
 								</Typography.Text>
