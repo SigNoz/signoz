@@ -3,10 +3,8 @@ import '../EvaluationSettings/styles.scss';
 
 import { Button, Select, Tooltip, Typography } from 'antd';
 import classNames from 'classnames';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import getRandomColor from 'lib/getRandomColor';
 import { Plus } from 'lucide-react';
 import { useEffect } from 'react';
@@ -56,14 +54,6 @@ function AlertThreshold({
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
 	const ingestionLimitFromURL = queryParams.get(QueryParams.ingestionLimit);
-	const ingestionKeyIdFromURL = queryParams.get(QueryParams.ingestionKeyId);
-
-	const { handleChangeQueryData } = useQueryOperations({
-		index: 0,
-		query: currentQuery.builder.queryData[0],
-		isListViewPanel: false,
-		entityVersion: ENTITY_VERSION_V5,
-	});
 
 	useEffect(() => {
 		// loop through currenttQuery and find the query that matches the selected query
@@ -104,12 +94,6 @@ function AlertThreshold({
 				setThresholdState({
 					type: 'SET_THRESHOLDS',
 					payload: thresholds,
-				});
-			}
-
-			if (ingestionKeyIdFromURL) {
-				handleChangeQueryData('filter', {
-					expression: `signoz.workspace.key.id='${ingestionKeyIdFromURL}'`,
 				});
 			}
 		} else {

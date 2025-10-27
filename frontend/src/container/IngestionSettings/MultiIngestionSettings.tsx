@@ -742,6 +742,9 @@ function MultiIngestionSettings(): JSX.Element {
 								spaceAggregation: MeterAggregateOperator.SUM,
 							},
 						],
+						filter: {
+							expression: `signoz.workspace.key.id='${APIKey.id}'`,
+						},
 					},
 				],
 			},
@@ -754,7 +757,7 @@ function MultiIngestionSettings(): JSX.Element {
 				QueryParams.compositeQuery
 			}=${encodeURIComponent(stringifiedQuery)}&${
 				QueryParams.ingestionLimit
-			}=${threshold}&${QueryParams.ingestionKeyId}=${APIKey.id}`,
+			}=${threshold}`,
 		);
 	};
 
