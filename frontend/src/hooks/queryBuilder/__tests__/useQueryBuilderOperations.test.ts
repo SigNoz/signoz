@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
 import {
 	BaseAutocompleteData,
@@ -33,6 +33,14 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 		} as BaseAutocompleteData,
 		timeAggregation: MetricAggregateOperator.AVG,
 		spaceAggregation: '',
+		aggregations: [
+			{
+				timeAggregation: MetricAggregateOperator.AVG,
+				metricName: 'test_metric',
+				temporality: '',
+				spaceAggregation: '',
+			},
+		],
 		having: [],
 		limit: null,
 		queryName: 'test_query',
@@ -128,6 +136,112 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 					aggregateOperator: MetricAggregateOperator.COUNT,
 					timeAggregation: MetricAggregateOperator.RATE,
 					spaceAggregation: MetricAggregateOperator.SUM,
+				}),
+			);
+		});
+
+		it('should preserve aggregation operators when metric type remains the same (GAUGE to GAUGE)', () => {
+			const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
+			const newAttribute: BaseAutocompleteData = {
+				key: 'new_gauge_metric',
+				dataType: DataTypes.Float64,
+				type: ATTRIBUTE_TYPES.GAUGE,
+			};
+
+			act(() => {
+				result.current.handleChangeAggregatorAttribute(newAttribute);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenCalledWith(
+				0,
+				expect.objectContaining({
+					aggregateAttribute: newAttribute,
+					aggregations: [
+						{
+							timeAggregation: MetricAggregateOperator.AVG,
+							metricName: 'new_gauge_metric',
+							temporality: '',
+							spaceAggregation: '',
+						},
+					],
+				}),
+			);
+		});
+
+		it('should reset aggregation operators when metric type changes (GAUGE to SUM) with v5 from start', () => {
+			const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
+			const newAttribute: BaseAutocompleteData = {
+				key: 'new_sum_metric',
+				dataType: DataTypes.Float64,
+				type: ATTRIBUTE_TYPES.SUM,
+			};
+
+			act(() => {
+				result.current.handleChangeAggregatorAttribute(newAttribute);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenCalledWith(
+				0,
+				expect.objectContaining({
+					aggregations: [
+						{
+							timeAggregation: MetricAggregateOperator.RATE,
+							metricName: 'new_sum_metric',
+							temporality: '',
+							spaceAggregation: '',
+						},
+					],
+				}),
+			);
+		});
+
+		it('should preserve aggregation operators when metric type remains the same (SUM to SUM)', () => {
+			const sumMockQuery: IBuilderQuery = {
+				...defaultMockQuery,
+				aggregateAttribute: undefined,
+				aggregateOperator: '',
+				timeAggregation: undefined,
+				spaceAggregation: undefined,
+				aggregations: [
+					{
+						timeAggregation: MetricAggregateOperator.RATE,
+						metricName: 'original_sum_metric',
+						temporality: '',
+						spaceAggregation: MetricAggregateOperator.SUM,
+					},
+				],
+			};
+
+			const { result } = renderHook(() =>
+				useQueryOperations({
+					query: sumMockQuery,
+					index: 0,
+					entityVersion: ENTITY_VERSION_V5,
+				}),
+			);
+
+			const newAttribute: BaseAutocompleteData = {
+				key: 'new_sum_metric',
+				dataType: DataTypes.Float64,
+				type: ATTRIBUTE_TYPES.SUM,
+			};
+
+			act(() => {
+				result.current.handleChangeAggregatorAttribute(newAttribute);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenCalledWith(
+				0,
+				expect.objectContaining({
+					aggregateAttribute: newAttribute,
+					aggregations: [
+						{
+							timeAggregation: MetricAggregateOperator.RATE,
+							metricName: 'new_sum_metric',
+							temporality: '',
+							spaceAggregation: '',
+						},
+					],
 				}),
 			);
 		});
