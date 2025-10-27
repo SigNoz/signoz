@@ -236,9 +236,7 @@ function SpanLogs({
 				<img src="/Icons/no-data.svg" alt="no-data" className="no-data-img" />
 				<Typography.Text className="no-data-text-1">
 					No logs found for selected span.
-					<span className="no-data-text-2">
-						Try viewing logs for the current trace.
-					</span>
+					<span className="no-data-text-2">View logs for the current trace.</span>
 				</Typography.Text>
 			</section>
 			<section className="action-section">
@@ -249,7 +247,7 @@ function SpanLogs({
 					onClick={handleExplorerPageRedirect}
 					size="md"
 				>
-					Log Explorer
+					View Logs
 				</Button>
 			</section>
 		</div>
