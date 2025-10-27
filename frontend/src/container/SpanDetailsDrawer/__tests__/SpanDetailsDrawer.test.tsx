@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable sonarjs/no-identical-functions */
 
 import getSpanPercentiles from 'api/trace/getSpanPercentiles';
@@ -252,6 +253,8 @@ const renderSpanDetailsDrawer = (props = {}): void => {
 			/>
 		</QueryBuilderContext.Provider>,
 	);
+};
+
 // Constants for repeated strings
 const SEARCH_RESOURCE_ATTRIBUTES_PLACEHOLDER = 'Search resource attributes';
 const P75_TEXT = 'p75';
