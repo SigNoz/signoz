@@ -319,9 +319,9 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			const totalInput = inputs?.[0] as HTMLInputElement;
 			expect(totalInput.value).toBe('1');
 
-			// S3 retention: 240 hours = 10 days (displays as 10 Days - only Days allowed)
+			// S3 retention: 24 day
 			const s3Input = inputs?.[1] as HTMLInputElement;
-			expect(s3Input.value).toBe('240');
+			expect(s3Input.value).toBe('24');
 
 			// Verify dropdowns: total shows Months, S3 shows Days
 			const dropdowns = logsCard?.querySelectorAll('.ant-select-selection-item');
