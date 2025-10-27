@@ -1,0 +1,39 @@
+.authn-provider-selector {
+	display: flex;
+	flex-direction: column;
+
+	.header {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.selector {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+
+		.provider {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			gap: 16px;
+
+			.title-description {
+				.title {
+					font-weight: bold;
+				}
+			}
+		}
+	}
+}
+
+.ant-modal-body {
+	.auth-domain-configure {
+		.action-buttons {
+			display: flex;
+			justify-content: end;
+			gap: 8px;
+			margin-top: 16px;
+		}
+	}
+}

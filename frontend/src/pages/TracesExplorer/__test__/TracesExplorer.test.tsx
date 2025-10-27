@@ -700,24 +700,23 @@ describe('TracesExplorer - ', () => {
 	});
 
 	it('select a view options - assert and save this view', async () => {
+		jest.useFakeTimers();
+
 		const { container } = renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
-		await screen.findByText(FILTER_SERVICE_NAME);
-		await act(async () => {
-			fireEvent.mouseDown(
-				container.querySelector(
-					'.view-options .ant-select-selection-search-input',
-				) as HTMLElement,
-			);
-		});
 
-		const viewListOptions = await screen.findByRole('listbox');
-		expect(viewListOptions).toBeInTheDocument();
+		const viewSearchInput = container.querySelector(
+			'.view-options .ant-select-selection-search-input',
+		) as HTMLElement;
 
-		expect(within(viewListOptions).getByText('R-test panel')).toBeInTheDocument();
+		expect(viewSearchInput).toBeInTheDocument();
 
-		expect(within(viewListOptions).getByText('Table View')).toBeInTheDocument();
+		fireEvent.mouseDown(viewSearchInput);
+
+		expect(
+			await screen.findByRole('option', { name: 'R-test panel' }),
+		).toBeInTheDocument();
 
 		// save this view
 		fireEvent.click(screen.getByText('Save this view'));

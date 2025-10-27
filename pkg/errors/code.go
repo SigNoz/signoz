@@ -1,22 +1,22 @@
 package errors
 
 import (
-	"fmt"
 	"regexp"
 )
 
 var (
-	CodeInvalidInput     Code = Code{"invalid_input"}
-	CodeInternal              = Code{"internal"}
-	CodeUnsupported           = Code{"unsupported"}
-	CodeNotFound              = Code{"not_found"}
-	CodeMethodNotAllowed      = Code{"method_not_allowed"}
-	CodeAlreadyExists         = Code{"already_exists"}
-	CodeUnauthenticated       = Code{"unauthenticated"}
-	CodeForbidden             = Code{"forbidden"}
-	CodeCanceled              = Code{"canceled"}
-	CodeTimeout               = Code{"timeout"}
-	CodeUnknown               = Code{"unknown"}
+	CodeInvalidInput       Code = Code{"invalid_input"}
+	CodeInternal                = Code{"internal"}
+	CodeUnsupported             = Code{"unsupported"}
+	CodeNotFound                = Code{"not_found"}
+	CodeMethodNotAllowed        = Code{"method_not_allowed"}
+	CodeAlreadyExists           = Code{"already_exists"}
+	CodeUnauthenticated         = Code{"unauthenticated"}
+	CodeForbidden               = Code{"forbidden"}
+	CodeCanceled                = Code{"canceled"}
+	CodeTimeout                 = Code{"timeout"}
+	CodeUnknown                 = Code{"unknown"}
+	CodeLicenseUnavailable      = Code{"license_unavailable"}
 )
 
 var (
@@ -27,7 +27,7 @@ type Code struct{ s string }
 
 func NewCode(s string) (Code, error) {
 	if !codeRegex.MatchString(s) {
-		return Code{}, fmt.Errorf("invalid code: %v", s)
+		return Code{}, NewInvalidInputf(CodeInvalidInput, "invalid code: %v", s)
 	}
 
 	return Code{s: s}, nil
