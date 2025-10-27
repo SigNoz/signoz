@@ -10,7 +10,13 @@ import { v4 as uuid } from 'uuid';
 const FALLBACK_STARTS_WITH_REGEX = /^(k8s|cloud|host|deployment)/; // regex to filter out resources that start with the specified keywords
 const FALLBACK_CONTAINS_REGEX = /(env|service|file|container|tenant)/; // regex to filter out resources that contains the specified keywords
 
-// Priority configuration
+// Priority categories for filter selection
+// Strategy:
+// - Always include: service.name, deployment.environment, env, environment
+// - Select ONE category only: stops at the first category with a matching attribute
+// - Within category: picks the first available attribute by order
+// - Order (highest to lowest priority): Kubernetes > Cloud > Host > Container
+// - Fallback: If no priority match, uses regex-based filtering (excludes the above attributes)
 const PRIORITY_CATEGORIES = [
 	['k8s.pod.uid', 'k8s.pod.name', 'k8s.deployment.name'],
 	['cloud.resource_id', 'cloud.provider', 'cloud.region'],
