@@ -173,7 +173,8 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 	// Validate states after unmarshaling
 	for _, state := range ns.Renotify.AlertStates {
 		if state != model.StateFiring && state != model.StateNoData {
-			return fmt.Errorf("invalid alert state: %s", state)
+			return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid alert state: %s", state)
+
 		}
 	}
 	return nil
