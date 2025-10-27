@@ -2,9 +2,9 @@ package telemetrytypestest
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -12,12 +12,12 @@ import (
 func LoadFieldKeysFromJSON(filePath string) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
 	jsonData, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read JSON file: %w", err)
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to read JSON file")
 	}
 
 	var result map[string][]*telemetrytypes.TelemetryFieldKey
 	if err := json.Unmarshal(jsonData, &result); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to unmarshal JSON")
 	}
 
 	return result, nil
@@ -27,7 +27,7 @@ func LoadFieldKeysFromJSON(filePath string) (map[string][]*telemetrytypes.Teleme
 func LoadFieldKeysFromJSONString(jsonStr string) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
 	var result map[string][]*telemetrytypes.TelemetryFieldKey
 	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to unmarshal JSON")
 	}
 
 	return result, nil
