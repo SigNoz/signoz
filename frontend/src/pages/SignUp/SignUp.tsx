@@ -4,12 +4,10 @@ import { Button, Form, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import accept from 'api/v1/invite/id/accept';
 import getInviteDetails from 'api/v1/invite/id/get';
-import loginApi from 'api/v1/login/login';
-import signUpApi from 'api/v1/register/signup';
+import signUpApi from 'api/v1/register/post';
+import passwordAuthNContext from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
-import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -17,10 +15,8 @@ import { useLocation } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { InviteDetails } from 'types/api/user/getInviteDetails';
-import { Signup as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
 
 import { FormContainer, Label } from './styles';
-import { isPasswordNotValidMessage, isPasswordValid } from './utils';
 
 type FormValues = {
 	email: string;
@@ -34,15 +30,7 @@ type FormValues = {
 function SignUp(): JSX.Element {
 	const [loading, setLoading] = useState(false);
 
-	const [precheck, setPrecheck] = useState<LoginPrecheckPayloadProps>({
-		sso: false,
-		isUser: false,
-	});
-
 	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
-		false,
-	);
-	const [isPasswordPolicyError, setIsPasswordPolicyError] = useState<boolean>(
 		false,
 	);
 	const { search } = useLocation();
@@ -71,7 +59,6 @@ function SignUp(): JSX.Element {
 			getInviteDetailsResponse.data.data
 		) {
 			const responseDetails = getInviteDetailsResponse.data.data;
-			if (responseDetails.precheck) setPrecheck(responseDetails.precheck);
 			form.setFieldValue('firstName', responseDetails.name);
 			form.setFieldValue('email', responseDetails.email);
 			form.setFieldValue('organizationName', responseDetails.organization);
@@ -115,20 +102,20 @@ function SignUp(): JSX.Element {
 	const signUp = async (values: FormValues): Promise<void> => {
 		try {
 			const { organizationName, password, email } = values;
-			await signUpApi({
+			const user = await signUpApi({
 				email,
 				orgDisplayName: organizationName,
 				password,
 				token: params.get('token') || undefined,
 			});
 
-			const loginResponse = await loginApi({
+			const token = await passwordAuthNContext({
 				email,
 				password,
+				orgId: user.data.orgId,
 			});
 
-			const { data } = loginResponse;
-			await afterLogin(data.userId, data.accessJwt, data.refreshJwt);
+			await afterLogin(token.data.accessToken, token.data.refreshToken);
 		} catch (error) {
 			showErrorModal(error as APIError);
 		}
@@ -137,16 +124,17 @@ function SignUp(): JSX.Element {
 	const acceptInvite = async (values: FormValues): Promise<void> => {
 		try {
 			const { password, email } = values;
-			await accept({
+			const user = await accept({
 				password,
 				token: params.get('token') || '',
 			});
-			const loginResponse = await loginApi({
+			const token = await passwordAuthNContext({
 				email,
 				password,
+				orgId: user.data.orgId,
 			});
-			const { data } = loginResponse;
-			await afterLogin(data.userId, data.accessJwt, data.refreshJwt);
+
+			await afterLogin(token.data.accessToken, token.data.refreshToken);
 		} catch (error) {
 			notifications.error({
 				message: (error as APIError).getErrorCode(),
@@ -155,57 +143,12 @@ function SignUp(): JSX.Element {
 		}
 	};
 
-	const handleSubmitSSO = async (): Promise<void> => {
-		if (!params.get('token')) {
-			notifications.error({
-				message:
-					'Invite token is required for signup, please request one from your admin',
-			});
-			return;
-		}
-		setLoading(true);
-		try {
-			const response = await accept({
-				password: '',
-				token: params.get('token') || '',
-				sourceUrl: encodeURIComponent(window.location.href),
-			});
-
-			if (response.data?.sso) {
-				if (response.data?.ssoUrl) {
-					window.location.href = response.data?.ssoUrl;
-				} else {
-					notifications.error({
-						message: 'Signup completed but failed to initiate login',
-					});
-					// take user to login page as there is nothing to do here
-					history.push(ROUTES.LOGIN);
-				}
-			}
-		} catch (error) {
-			notifications.error({
-				message: 'Something went wrong',
-			});
-		}
-
-		setLoading(false);
-	};
-
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleSubmit = (): void => {
 		(async (): Promise<void> => {
 			try {
 				const values = form.getFieldsValue();
 				setLoading(true);
-
-				if (!isPasswordValid(values.password)) {
-					logEvent('Account Creation Page - Invalid Password', {
-						email: values.email,
-					});
-					setIsPasswordPolicyError(true);
-					setLoading(false);
-					return;
-				}
 
 				if (isSignUp) {
 					await signUp(values);
@@ -232,9 +175,6 @@ function SignUp(): JSX.Element {
 		if ('password' in changedValues || 'confirmPassword' in changedValues) {
 			const { password, confirmPassword } = form.getFieldsValue();
 
-			const isInvalidPassword = !isPasswordValid(password) && password.length > 0;
-			setIsPasswordPolicyError(isInvalidPassword);
-
 			const isSamePassword = password === confirmPassword;
 			setConfirmPasswordError(!isSamePassword);
 		}
@@ -245,9 +185,9 @@ function SignUp(): JSX.Element {
 		return (
 			loading ||
 			!values.email ||
-			(!precheck.sso && (!values.password || !values.confirmPassword)) ||
-			confirmPasswordError ||
-			isPasswordPolicyError
+			!values.password ||
+			!values.confirmPassword ||
+			confirmPasswordError
 		);
 	};
 
@@ -266,7 +206,7 @@ function SignUp(): JSX.Element {
 				</div>
 
 				<FormContainer
-					onFinish={!precheck.sso ? handleSubmit : handleSubmitSSO}
+					onFinish={handleSubmit}
 					onValuesChange={handleValuesChange}
 					form={form}
 					className="signup-form"
@@ -292,23 +232,19 @@ function SignUp(): JSX.Element {
 						</FormContainer.Item>
 					</div>
 
-					{!precheck.sso && (
-						<>
-							<div className="password-container">
-								<Label htmlFor="currentPassword">Password</Label>
-								<FormContainer.Item noStyle name="password">
-									<Input.Password required id="currentPassword" />
-								</FormContainer.Item>
-							</div>
+					<div className="password-container">
+						<Label htmlFor="currentPassword">Password</Label>
+						<FormContainer.Item noStyle name="password">
+							<Input.Password required id="currentPassword" />
+						</FormContainer.Item>
+					</div>
 
-							<div className="password-container">
-								<Label htmlFor="confirmPassword">Confirm Password</Label>
-								<FormContainer.Item noStyle name="confirmPassword">
-									<Input.Password required id="confirmPassword" />
-								</FormContainer.Item>
-							</div>
-						</>
-					)}
+					<div className="password-container">
+						<Label htmlFor="confirmPassword">Confirm Password</Label>
+						<FormContainer.Item noStyle name="confirmPassword">
+							<Input.Password required id="confirmPassword" />
+						</FormContainer.Item>
+					</div>
 
 					<div className="password-error-container">
 						{confirmPasswordError && (
@@ -317,12 +253,6 @@ function SignUp(): JSX.Element {
 								className="password-error-message"
 							>
 								Passwords don’t match. Please try again
-							</Typography.Paragraph>
-						)}
-
-						{isPasswordPolicyError && (
-							<Typography.Paragraph className="password-error-message">
-								{isPasswordNotValidMessage}
 							</Typography.Paragraph>
 						)}
 					</div>

@@ -12,7 +12,7 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 def test_traces_list(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
-    get_jwt_token: Callable[[str, str], str],
+    get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     """
@@ -138,7 +138,7 @@ def test_traces_list(
         ]
     )
 
-    token = get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
     # Query all traces for the past 5 minutes
     response = requests.post(

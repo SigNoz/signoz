@@ -5,12 +5,15 @@ import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { UpdateMetricMetadataProps } from 'api/metricsExplorer/updateMetricMetadata';
 import { ResizeTable } from 'components/ResizeTable';
+import YAxisUnitSelector from 'components/YAxisUnitSelector';
+import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import {
@@ -35,6 +38,7 @@ function Metadata({
 		metricType: metadata?.metric_type || MetricType.SUM,
 		description: metadata?.description || '',
 		temporality: metadata?.temporality,
+		unit: metadata?.unit,
 	});
 	const { notifications } = useNotifications();
 	const {
@@ -44,6 +48,7 @@ function Metadata({
 	const [activeKey, setActiveKey] = useState<string | string[]>(
 		'metric-metadata',
 	);
+	const queryClient = useQueryClient();
 
 	const tableData = useMemo(
 		() =>
@@ -63,6 +68,101 @@ function Metadata({
 						}))
 				: [],
 		[metadata],
+	);
+
+	// Render un-editable field value
+	const renderUneditableField = useCallback((key: string, value: string) => {
+		if (key === 'metric_type') {
+			return <MetricTypeRenderer type={value as MetricType} />;
+		}
+		let fieldValue = value;
+		if (key === 'unit') {
+			fieldValue = getUniversalNameFromMetricUnit(value);
+		}
+		return <FieldRenderer field={fieldValue || '-'} />;
+	}, []);
+
+	const renderColumnValue = useCallback(
+		(field: { value: string; key: string }): JSX.Element => {
+			if (!isEditing) {
+				return renderUneditableField(field.key, field.value);
+			}
+
+			// Don't allow editing of unit if it's already set
+			const metricUnitAlreadySet = field.key === 'unit' && Boolean(metadata?.unit);
+			if (metricUnitAlreadySet) {
+				return renderUneditableField(field.key, field.value);
+			}
+
+			if (field.key === 'metric_type') {
+				return (
+					<Select
+						data-testid="metric-type-select"
+						options={Object.entries(METRIC_TYPE_VALUES_MAP).map(([key]) => ({
+							value: key,
+							label: METRIC_TYPE_LABEL_MAP[key as MetricType],
+						}))}
+						value={metricMetadata.metricType}
+						onChange={(value): void => {
+							setMetricMetadata((prev) => ({
+								...prev,
+								metricType: value as MetricType,
+							}));
+						}}
+					/>
+				);
+			}
+			if (field.key === 'unit') {
+				return (
+					<YAxisUnitSelector
+						value={metricMetadata.unit}
+						onChange={(value): void => {
+							setMetricMetadata((prev) => ({ ...prev, unit: value }));
+						}}
+						data-testid="unit-select"
+					/>
+				);
+			}
+			if (field.key === 'temporality') {
+				return (
+					<Select
+						data-testid="temporality-select"
+						options={Object.values(Temporality).map((key) => ({
+							value: key,
+							label: key,
+						}))}
+						value={metricMetadata.temporality}
+						onChange={(value): void => {
+							setMetricMetadata((prev) => ({
+								...prev,
+								temporality: value as Temporality,
+							}));
+						}}
+					/>
+				);
+			}
+			if (field.key === 'description') {
+				return (
+					<Input
+						data-testid="description-input"
+						name={field.key}
+						defaultValue={
+							metricMetadata[
+								field.key as Exclude<keyof UpdateMetricMetadataProps, 'isMonotonic'>
+							]
+						}
+						onChange={(e): void => {
+							setMetricMetadata((prev) => ({
+								...prev,
+								[field.key]: e.target.value,
+							}));
+						}}
+					/>
+				);
+			}
+			return <FieldRenderer field="-" />;
+		},
+		[isEditing, metadata?.unit, metricMetadata, renderUneditableField],
 	);
 
 	const columns: ColumnsType<DataType> = useMemo(
@@ -90,74 +190,10 @@ function Metadata({
 				align: 'left',
 				ellipsis: true,
 				className: 'metric-metadata-value',
-				render: (field: { value: string; key: string }): JSX.Element => {
-					if (!isEditing || field.key === 'unit') {
-						if (field.key === 'metric_type') {
-							return (
-								<div>
-									<MetricTypeRenderer type={field.value as MetricType} />
-								</div>
-							);
-						}
-						return <FieldRenderer field={field.value || '-'} />;
-					}
-					if (field.key === 'metric_type') {
-						return (
-							<Select
-								data-testid="metric-type-select"
-								options={Object.entries(METRIC_TYPE_VALUES_MAP).map(([key]) => ({
-									value: key,
-									label: METRIC_TYPE_LABEL_MAP[key as MetricType],
-								}))}
-								defaultValue={metricMetadata.metricType}
-								onChange={(value): void => {
-									setMetricMetadata((prev) => ({
-										...prev,
-										metricType: value as MetricType,
-									}));
-								}}
-							/>
-						);
-					}
-					if (field.key === 'temporality') {
-						return (
-							<Select
-								data-testid="temporality-select"
-								options={Object.values(Temporality).map((key) => ({
-									value: key,
-									label: key,
-								}))}
-								defaultValue={metricMetadata.temporality}
-								onChange={(value): void => {
-									setMetricMetadata((prev) => ({
-										...prev,
-										temporality: value as Temporality,
-									}));
-								}}
-							/>
-						);
-					}
-					return (
-						<Input
-							data-testid="description-input"
-							name={field.key}
-							defaultValue={
-								metricMetadata[
-									field.key as Exclude<keyof UpdateMetricMetadataProps, 'isMonotonic'>
-								]
-							}
-							onChange={(e): void => {
-								setMetricMetadata((prev) => ({
-									...prev,
-									[field.key]: e.target.value,
-								}));
-							}}
-						/>
-					);
-				},
+				render: renderColumnValue,
 			},
 		],
-		[isEditing, metricMetadata, setMetricMetadata],
+		[renderColumnValue],
 	);
 
 	const handleSave = useCallback(() => {
@@ -185,6 +221,7 @@ function Metadata({
 						});
 						refetchMetricDetails();
 						setIsEditing(false);
+						queryClient.invalidateQueries(['metricsList']);
 					} else {
 						notifications.error({
 							message:
@@ -205,6 +242,7 @@ function Metadata({
 		metricMetadata,
 		notifications,
 		refetchMetricDetails,
+		queryClient,
 	]);
 
 	const actionButton = useMemo(() => {
