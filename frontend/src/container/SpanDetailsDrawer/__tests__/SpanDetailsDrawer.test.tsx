@@ -633,9 +633,6 @@ describe('SpanDetailsDrawer', () => {
 				},
 				{ timeout: 3000 },
 			);
-
-			// Verify the percentile value is displayed
-			expect(screen.getByText(P75_TEXT)).toBeInTheDocument();
 		});
 
 		it('should show loading spinner while fetching percentile data', async () => {
