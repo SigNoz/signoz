@@ -1891,13 +1891,15 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error getting V1 TTL: %s", apiErr.Error())
 		}
 
-		// Map V1 fields to response
-		response.LogsTime = ttlResult.LogsTime
-		response.LogsMoveTime = ttlResult.LogsMoveTime
 		response.ExpectedLogsTime = ttlResult.ExpectedLogsTime
 		response.ExpectedLogsMoveTime = ttlResult.ExpectedLogsMoveTime
 		response.Status = ttlResult.Status
-		response.DefaultTTLDays = ttlResult.LogsTime / 24
+		if ttlResult.LogsTime > 0 {
+			response.DefaultTTLDays = ttlResult.LogsTime / 24
+		}
+		if ttlResult.LogsMoveTime > 0 {
+			response.ColdStorageTTLDays = ttlResult.LogsMoveTime / 24
+		}
 
 		// For V1, we don't have TTL conditions
 		response.TTLConditions = []model.CustomRetentionRule{}

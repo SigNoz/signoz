@@ -427,8 +427,8 @@ type GetCustomRetentionTTLResponse struct {
 	Status  string `json:"status"`
 
 	// V1 fields
-	LogsTime             int `json:"logs_ttl_duration_hrs,omitempty"`
-	LogsMoveTime         int `json:"logs_move_ttl_duration_hrs,omitempty"`
+	// LogsTime             int `json:"logs_ttl_duration_hrs,omitempty"`
+	// LogsMoveTime         int `json:"logs_move_ttl_duration_hrs,omitempty"`
 	ExpectedLogsTime     int `json:"expected_logs_ttl_duration_hrs,omitempty"`
 	ExpectedLogsMoveTime int `json:"expected_logs_move_ttl_duration_hrs,omitempty"`
 
