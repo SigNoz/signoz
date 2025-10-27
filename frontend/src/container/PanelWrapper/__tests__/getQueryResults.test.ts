@@ -1,5 +1,6 @@
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { QueryData } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -127,5 +128,162 @@ describe('getLegend', () => {
 	it('should fallback to label or query name when no alias/expression', () => {
 		const legendsData = getLegend(mockQueryData, mockQuery, MOCK_LABEL_NAME);
 		expect(legendsData).toBe(MOCK_LABEL_NAME);
+	});
+
+	it('should return alias when single query with multiple aggregations and no group by', () => {
+		const payloadQuery = getMockQuery({
+			...mockQuery,
+			builder: {
+				...mockQuery.builder,
+				queryData: [
+					{
+						...mockQuery.builder.queryData[0],
+						queryName: mockQueryData.queryName,
+						dataSource: DataSource.LOGS,
+						aggregations: [
+							{ expression: "sum(bytes) as 'total'" },
+							{ expression: 'count()' },
+						],
+						groupBy: [],
+					},
+				],
+			},
+		});
+
+		const legendsData = getLegend(mockQueryData, payloadQuery, MOCK_LABEL_NAME);
+		expect(legendsData).toBe('total');
+	});
+
+	it("should return '<alias>-<label>' when multiple queries with group by", () => {
+		const payloadQuery = getMockQuery({
+			...mockQuery,
+			builder: {
+				...mockQuery.builder,
+				queryData: [
+					{
+						...mockQuery.builder.queryData[0],
+						queryName: mockQueryData.queryName,
+						dataSource: DataSource.LOGS,
+						aggregations: [
+							{ expression: "sum(bytes) as 'sum_b'" },
+							{ expression: 'count()' },
+						],
+						groupBy: [
+							{ key: 'serviceName', dataType: DataTypes.String, type: 'resource' },
+						],
+					},
+					{
+						...mockQuery.builder.queryData[0],
+						queryName: 'B',
+						dataSource: DataSource.LOGS,
+						aggregations: [{ expression: 'count()' }],
+					},
+				],
+			},
+		});
+
+		const legendsData = getLegend(mockQueryData, payloadQuery, MOCK_LABEL_NAME);
+		expect(legendsData).toBe(`sum_b-${MOCK_LABEL_NAME}`);
+	});
+
+	it('should return label according to the index of the query', () => {
+		const payloadQuery = getMockQuery({
+			...mockQuery,
+			builder: {
+				...mockQuery.builder,
+				queryData: [
+					{
+						...mockQuery.builder.queryData[0],
+						queryName: mockQueryData.queryName,
+						dataSource: DataSource.LOGS,
+						aggregations: [
+							{ expression: "sum(bytes) as 'sum_a'" },
+							{ expression: 'count()' },
+						],
+						groupBy: [
+							{ key: 'serviceName', dataType: DataTypes.String, type: 'resource' },
+						],
+					},
+					{
+						...mockQuery.builder.queryData[0],
+						queryName: 'B',
+						dataSource: DataSource.LOGS,
+						aggregations: [{ expression: 'count()' }],
+					},
+				],
+			},
+		});
+
+		const legendsData = getLegend(
+			{
+				...mockQueryData,
+				metaData: {
+					...mockQueryData.metaData,
+					index: 1,
+				},
+			} as QueryData,
+			payloadQuery,
+			MOCK_LABEL_NAME,
+		);
+		expect(legendsData).toBe(`count()-${MOCK_LABEL_NAME}`);
+	});
+
+	it('should handle trace operator with multiple queries and group by', () => {
+		const payloadQuery = getMockQuery({
+			...mockQuery,
+			builder: {
+				...mockQuery.builder,
+				queryData: [
+					{
+						...mockQuery.builder.queryData[0],
+						queryName: 'A',
+						dataSource: DataSource.TRACES,
+						aggregations: [{ expression: 'count()' }],
+					},
+				],
+				queryTraceOperator: [
+					{
+						...mockQuery.builder.queryData[0],
+						queryName: mockQueryData.queryName,
+						dataSource: DataSource.TRACES,
+						aggregations: [
+							{ expression: "count() as 'total_count' avg(duration_nano)" },
+						],
+						groupBy: [
+							{ key: 'service.name', dataType: DataTypes.String, type: 'resource' },
+						],
+						expression: 'A',
+					},
+				],
+			},
+		});
+
+		const legendsData = getLegend(mockQueryData, payloadQuery, MOCK_LABEL_NAME);
+		expect(legendsData).toBe(`total_count-${MOCK_LABEL_NAME}`);
+	});
+
+	it('should handle single trace operator query with group by', () => {
+		const payloadQuery = getMockQuery({
+			...mockQuery,
+			builder: {
+				...mockQuery.builder,
+				queryData: [],
+				queryTraceOperator: [
+					{
+						...mockQuery.builder.queryData[0],
+						queryName: mockQueryData.queryName,
+						dataSource: DataSource.TRACES,
+						aggregations: [{ expression: "count() as 'total' avg(duration_nano)" }],
+						groupBy: [
+							{ key: 'service.name', dataType: DataTypes.String, type: 'resource' },
+						],
+						expression: 'A && B',
+					},
+				],
+			},
+		});
+
+		const legendsData = getLegend(mockQueryData, payloadQuery, MOCK_LABEL_NAME);
+		expect(legendsData).toBe(`total-${MOCK_LABEL_NAME}`);
 	});
 });
