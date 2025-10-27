@@ -237,7 +237,6 @@ func postProcessTraceOperator(
 	return result
 }
 
-
 // applyMetricReduceTo applies reduce to operation using the metric's ReduceTo field
 func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.ReduceTo) *qbtypes.Result {
 	tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
