@@ -23,14 +23,7 @@ export const checkVersionState = (
 };
 
 // list of forbidden tags to remove in dompurify
-export const FORBID_DOM_PURIFY_TAGS = [
-	'img',
-	'form',
-	'style',
-	'script',
-	'meta',
-	'link',
-];
+export const FORBID_DOM_PURIFY_TAGS = ['img', 'form', 'style'];
 export const FORBID_DOM_PURIFY_ATTR = ['style'];
 
 export const isFeatureKeys = (key: string): key is keyof typeof FeatureKeys =>

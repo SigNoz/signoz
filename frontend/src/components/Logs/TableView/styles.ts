@@ -23,7 +23,6 @@ export const TableBodyContent = styled.div<TableBodyContentProps>`
 	-webkit-line-clamp: ${(props): number => props.linesPerRow};
 	line-clamp: ${(props): number => props.linesPerRow};
 	-webkit-box-orient: vertical;
-	white-space: pre-wrap;
 	${({ fontSize }): string =>
 		fontSize === FontSize.SMALL
 			? `font-size:11px; line-height:16px;`
