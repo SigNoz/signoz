@@ -137,8 +137,8 @@ function GeneralSettings({
 		if (logsCurrentTTLValues) {
 			setLogsTotalRetentionPeriod(logsCurrentTTLValues.default_ttl_days * 24);
 			setLogsS3RetentionPeriod(
-				logsCurrentTTLValues.logs_move_ttl_duration_hrs
-					? logsCurrentTTLValues.logs_move_ttl_duration_hrs
+				logsCurrentTTLValues.cold_storage_ttl_days
+					? logsCurrentTTLValues.cold_storage_ttl_days * 24
 					: null,
 			);
 		}
@@ -294,8 +294,9 @@ function GeneralSettings({
 			isTracesSaveDisabled = true;
 
 		if (
-			logsCurrentTTLValues.logs_ttl_duration_hrs === logsTotalRetentionPeriod &&
-			logsCurrentTTLValues.logs_move_ttl_duration_hrs === logsS3RetentionPeriod
+			logsCurrentTTLValues.default_ttl_days * 24 === logsTotalRetentionPeriod &&
+			logsCurrentTTLValues.cold_storage_ttl_days &&
+			logsCurrentTTLValues.cold_storage_ttl_days * 24 === logsS3RetentionPeriod
 		)
 			isLogsSaveDisabled = true;
 
@@ -306,8 +307,8 @@ function GeneralSettings({
 			errorText,
 		];
 	}, [
-		logsCurrentTTLValues.logs_move_ttl_duration_hrs,
-		logsCurrentTTLValues.logs_ttl_duration_hrs,
+		logsCurrentTTLValues.cold_storage_ttl_days,
+		logsCurrentTTLValues.default_ttl_days,
 		logsS3RetentionPeriod,
 		logsTotalRetentionPeriod,
 		metricsCurrentTTLValues.metrics_move_ttl_duration_hrs,
@@ -363,7 +364,7 @@ function GeneralSettings({
 						type,
 						defaultTTLDays: apiCallTotalRetention ? apiCallTotalRetention / 24 : -1, // convert Hours to days
 						coldStorageVolume: s3RetentionDays > 0 ? 's3' : '',
-						coldStorageDuration: s3RetentionDays,
+						coldStorageDurationDays: s3RetentionDays,
 						ttlConditions: [],
 					});
 				} else {
@@ -417,8 +418,9 @@ function GeneralSettings({
 					// Updates the currentTTL Values in order to avoid pushing the same values.
 					setLogsCurrentTTLValues((prev) => ({
 						...prev,
-						logs_ttl_duration_hrs: logsTotalRetentionPeriod || -1,
-						logs_move_ttl_duration_hrs: logsS3RetentionPeriod || -1,
+						cold_storage_ttl_days: logsS3RetentionPeriod
+							? logsS3RetentionPeriod / 24
+							: -1,
 						default_ttl_days: logsTotalRetentionPeriod
 							? logsTotalRetentionPeriod / 24 // convert Hours to days
 							: -1,
