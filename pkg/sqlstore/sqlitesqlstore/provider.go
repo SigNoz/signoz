@@ -3,13 +3,17 @@ package sqlitesqlstore
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	sqlite3 "github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
+
+	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 )
 
 type provider struct {
@@ -38,7 +42,12 @@ func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config, hooks ...sqlstore.SQLStoreHook) (sqlstore.SQLStore, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlitesqlstore")
 
-	sqldb, err := sql.Open("sqlite3", "file:"+config.Sqlite.Path+"?_foreign_keys=true")
+	connectionParams := url.Values{}
+	// do not update the order of the connection params as busy_timeout doesn't work if it's not the first parameter
+	connectionParams.Add("_pragma", fmt.Sprintf("busy_timeout(%d)", config.Sqlite.BusyTimeout.Milliseconds()))
+	connectionParams.Add("_pragma", fmt.Sprintf("journal_mode(%s)", config.Sqlite.Mode))
+	connectionParams.Add("_pragma", "foreign_keys(1)")
+	sqldb, err := sql.Open("sqlite", "file:"+config.Sqlite.Path+"?"+connectionParams.Encode())
 	if err != nil {
 		return nil, err
 	}
@@ -82,8 +91,8 @@ func (provider *provider) WrapNotFoundErrf(err error, code errors.Code, format s
 }
 
 func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error {
-	if sqlite3Err, ok := err.(sqlite3.Error); ok {
-		if sqlite3Err.ExtendedCode == sqlite3.ErrConstraintUnique {
+	if sqlite3Err, ok := err.(*sqlite.Error); ok {
+		if sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE || sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY {
 			return errors.Wrapf(err, errors.TypeAlreadyExists, code, format, args...)
 		}
 	}
