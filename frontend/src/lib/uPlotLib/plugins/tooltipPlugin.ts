@@ -56,7 +56,6 @@ const generateTooltipContent = (
 ): HTMLElement => {
 	const container = document.createElement('div');
 	container.classList.add('tooltip-container');
-	const overlay = document.getElementById('overlay');
 	let tooltipCount = 0;
 
 	let tooltipTitle = '';
@@ -172,12 +171,8 @@ const generateTooltipContent = (
 		});
 	}
 
-	// Show tooltip only if atleast only series has a value at the hovered timestamp
+	// Early return if no valid data points - avoids unnecessary DOM manipulation
 	if (tooltipCount <= 0) {
-		if (overlay && overlay.style.display === 'block') {
-			overlay.style.display = 'none';
-		}
-
 		return container;
 	}
 
@@ -186,48 +181,43 @@ const generateTooltipContent = (
 		UplotTooltipDataProps
 	> = sortTooltipContentBasedOnValue(formattedData);
 
-	const div = document.createElement('div');
-	div.classList.add('tooltip-content-row');
-	div.textContent = isHistogramGraphs ? '' : tooltipTitle;
-	div.classList.add('tooltip-content-header');
-	container.appendChild(div);
+	const headerDiv = document.createElement('div');
+	headerDiv.classList.add('tooltip-content-row', 'tooltip-content-header');
+	headerDiv.textContent = isHistogramGraphs ? '' : tooltipTitle;
+	container.appendChild(headerDiv);
 
 	const sortedKeys = Object.keys(sortedData);
 
 	if (Array.isArray(sortedKeys) && sortedKeys.length > 0) {
+		// Use DocumentFragment for better performance when adding multiple elements
+		const fragment = document.createDocumentFragment();
+
 		sortedKeys.forEach((key) => {
 			if (sortedData[key]) {
 				const { textContent, color, focus } = sortedData[key];
 				const div = document.createElement('div');
-				div.classList.add('tooltip-content-row');
-				div.classList.add('tooltip-content');
+				div.classList.add('tooltip-content-row', 'tooltip-content');
+
 				const squareBox = document.createElement('div');
 				squareBox.classList.add('pointSquare');
-
 				squareBox.style.borderColor = color;
 
 				const text = document.createElement('div');
 				text.classList.add('tooltip-data-point');
-
 				text.textContent = textContent;
 				text.style.color = color;
 
 				if (focus) {
 					text.classList.add('focus');
-				} else {
-					text.classList.remove('focus');
 				}
 
 				div.appendChild(squareBox);
 				div.appendChild(text);
-
-				container.appendChild(div);
+				fragment.appendChild(div);
 			}
 		});
-	}
 
-	if (overlay && overlay.style.display === 'none') {
-		overlay.style.display = 'block';
+		container.appendChild(fragment);
 	}
 
 	return container;
@@ -259,83 +249,163 @@ const tooltipPlugin = ({
 	timezone,
 	colorMapping,
 	query,
-}: // eslint-disable-next-line sonarjs/cognitive-complexity
-ToolTipPluginProps): any => {
+}: ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
-	let bLeft: any;
-	let bTop: any;
+	// Cache bounding box to avoid recalculating on every cursor move
+	let cachedBBox: DOMRect | null = null;
+	let isActive = false;
+	let lastIdx: number | null = null;
+	let overlay: HTMLElement | null = null;
 
+	// Sync bounds and cache the result
 	const syncBounds = (): void => {
-		const bbox = over.getBoundingClientRect();
-		bLeft = bbox.left;
-		bTop = bbox.top;
+		if (over) {
+			cachedBBox = over.getBoundingClientRect();
+		}
 	};
 
-	let overlay = document.getElementById('overlay');
+	// Create overlay once and reuse it
+	const getOrCreateOverlay = (): HTMLElement => {
+		if (!overlay) {
+			overlay = document.getElementById('overlay');
+			if (!overlay) {
+				overlay = document.createElement('div');
+				overlay.id = 'overlay';
+				overlay.style.display = 'none';
+				overlay.style.position = 'absolute';
+				document.body.appendChild(overlay);
+			}
+		}
+		return overlay;
+	};
 
-	if (!overlay) {
-		overlay = document.createElement('div');
-		overlay.id = 'overlay';
-		overlay.style.display = 'none';
-		overlay.style.position = 'absolute';
-		document.body.appendChild(overlay);
-	}
+	const showOverlay = (): void => {
+		const overlayEl = getOrCreateOverlay();
+		if (overlayEl && overlayEl.style.display === 'none') {
+			overlayEl.style.display = 'block';
+		}
+	};
+
+	const hideOverlay = (): void => {
+		const overlayEl = getOrCreateOverlay();
+		if (overlayEl && overlayEl.style.display === 'block') {
+			overlayEl.style.display = 'none';
+		}
+	};
+
+	const plotEnter = (): void => {
+		isActive = true;
+		showOverlay();
+	};
+
+	const plotLeave = (): void => {
+		isActive = false;
+		lastIdx = null;
+		hideOverlay();
+	};
 
 	const apiResult = apiResponse?.data?.result || [];
+
+	// Cleanup function to remove event listeners
+	const cleanup = (): void => {
+		if (over) {
+			over.removeEventListener('mouseenter', plotEnter);
+			over.removeEventListener('mouseleave', plotLeave);
+		}
+	};
 
 	return {
 		hooks: {
 			init: (u: any): void => {
 				over = u?.over;
 				bound = over;
-				over.onmouseenter = (): void => {
-					if (overlay) {
-						overlay.style.display = 'block';
-					}
-				};
-				over.onmouseleave = (): void => {
-					if (overlay) {
-						overlay.style.display = 'none';
-					}
-				};
+
+				// Initial bounds sync
+				syncBounds();
+
+				over.addEventListener('mouseenter', plotEnter);
+				over.addEventListener('mouseleave', plotLeave);
 			},
 			setSize: (): void => {
+				// Re-sync bounds when size changes
 				syncBounds();
+			},
+			// Cache bounding box on syncRect for better performance
+			syncRect: (u: any, rect: DOMRect): void => {
+				cachedBBox = rect;
 			},
 			setCursor: (u: {
 				cursor: { left: any; top: any; idx: any };
 				data: any[];
 				series: uPlot.Options['series'];
 			}): void => {
-				if (overlay) {
-					overlay.textContent = '';
-					const { left, top, idx } = u.cursor;
-
-					if (Number.isInteger(idx)) {
-						const anchor = { left: left + bLeft, top: top + bTop };
-						const content = generateTooltipContent(
-							apiResult,
-							u.data,
-							idx,
-							isDarkMode,
-							yAxisUnit,
-							u.series,
-							isBillingUsageGraphs,
-							isHistogramGraphs,
-							isMergedSeries,
-							stackBarChart,
-							timezone,
-							colorMapping,
-							query,
-						);
-						if (customTooltipElement) {
-							content.appendChild(customTooltipElement);
-						}
-						overlay.appendChild(content);
-						placement(overlay, anchor, 'right', 'start', { bound });
-					}
+				const overlayEl = getOrCreateOverlay();
+				if (!overlayEl) {
+					return;
 				}
+
+				const { left, top, idx } = u.cursor;
+
+				// Early return if not active or no valid index
+				if (!isActive || !Number.isInteger(idx)) {
+					if (isActive && lastIdx !== null) {
+						// Clear tooltip content when hovering outside valid area
+						overlayEl.textContent = '';
+						lastIdx = null;
+					}
+					return;
+				}
+
+				// Only regenerate tooltip if index changed (performance optimization)
+				if (lastIdx === idx) {
+					return;
+				}
+
+				lastIdx = idx;
+
+				// Clear previous content
+				overlayEl.textContent = '';
+
+				// Use cached bounding box if available
+				const bbox = cachedBBox || over.getBoundingClientRect();
+				const anchor = {
+					left: left + bbox.left,
+					top: top + bbox.top,
+				};
+
+				const content = generateTooltipContent(
+					apiResult,
+					u.data,
+					idx,
+					isDarkMode,
+					yAxisUnit,
+					u.series,
+					isBillingUsageGraphs,
+					isHistogramGraphs,
+					isMergedSeries,
+					stackBarChart,
+					timezone,
+					colorMapping,
+					query,
+				);
+
+				// Only show tooltip if there's actual content
+				if (content.children.length > 1) {
+					if (customTooltipElement) {
+						content.appendChild(customTooltipElement);
+					}
+					overlayEl.appendChild(content);
+					placement(overlayEl, anchor, 'right', 'start', { bound });
+					showOverlay();
+				} else {
+					hideOverlay();
+				}
+			},
+			destroy: (): void => {
+				// Cleanup on destroy
+				cleanup();
+				hideOverlay();
 			},
 		},
 	};
