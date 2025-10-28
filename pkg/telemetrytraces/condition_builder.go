@@ -285,9 +285,13 @@ func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.Telemetry
 	case SpanSearchScopeRoot:
 		return "parent_span_id = ''", nil
 	case SpanSearchScopeEntryPoint:
-		startS := int64(startNs / 1_000_000_000)
-		return fmt.Sprintf("((name, resource_string_service$$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s WHERE time >= toDateTime(%d))) AND parent_span_id != ''",
-			DBName, TopLevelOperationsTableName, startS), nil
+		if startNs > 0 { // only add time filter if it is a valid time, else do not add
+			startS := int64(startNs / 1_000_000_000)
+			return fmt.Sprintf("((name, resource_string_service$$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s WHERE time >= toDateTime(%d))) AND parent_span_id != ''",
+				DBName, TopLevelOperationsTableName, startS), nil
+		}
+		return fmt.Sprintf("((name, resource_string_service$$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
+			DBName, TopLevelOperationsTableName), nil
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid span search scope: %s", key.Name)
 	}
