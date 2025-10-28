@@ -156,12 +156,11 @@ export function verticalMarkersPlugin({
 	};
 }
 
-// MOVE TO REACT
+// MOVE TO REACT. or use portal for tooltip.
 // correct the format should work with expected data from BE
 // Remove cognitive complexity rule.
 
-// add support to pass customHooks to GetUPlotChartOptions. and pass marker hooks using this
-// should only pass marker hook if data is present(shouldRenderMarker memo)
+// logic to get marker plugin to be added to context
 // depending on type of marker parse the data to choose color. example deployment should be red etc.
 // pass such data with multple colors to check render.
 // PERF CHECK.

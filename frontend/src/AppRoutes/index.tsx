@@ -27,6 +27,7 @@ import { IUser } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { KBarCommandPaletteProvider } from 'providers/KBarCommandPaletteProvider';
+import { MarkersProvider } from 'providers/Markers/Markers';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
@@ -379,30 +380,34 @@ function App(): JSX.Element {
 									<PrivateRoute>
 										<ResourceProvider>
 											<QueryBuilderProvider>
-												<DashboardProvider>
-													<KeyboardHotkeysProvider>
-														<AlertRuleProvider>
-															<AppLayout>
-																<PreferenceContextProvider>
-																	<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																		<Switch>
-																			{routes.map(({ path, component, exact }) => (
-																				<Route
-																					key={`${path}`}
-																					exact={exact}
-																					path={path}
-																					component={component}
-																				/>
-																			))}
-																			<Route exact path="/" component={Home} />
-																			<Route path="*" component={NotFound} />
-																		</Switch>
-																	</Suspense>
-																</PreferenceContextProvider>
-															</AppLayout>
-														</AlertRuleProvider>
-													</KeyboardHotkeysProvider>
-												</DashboardProvider>
+												<MarkersProvider>
+													<DashboardProvider>
+														<KeyboardHotkeysProvider>
+															<AlertRuleProvider>
+																<AppLayout>
+																	<PreferenceContextProvider>
+																		<Suspense
+																			fallback={<Spinner size="large" tip="Loading..." />}
+																		>
+																			<Switch>
+																				{routes.map(({ path, component, exact }) => (
+																					<Route
+																						key={`${path}`}
+																						exact={exact}
+																						path={path}
+																						component={component}
+																					/>
+																				))}
+																				<Route exact path="/" component={Home} />
+																				<Route path="*" component={NotFound} />
+																			</Switch>
+																		</Suspense>
+																	</PreferenceContextProvider>
+																</AppLayout>
+															</AlertRuleProvider>
+														</KeyboardHotkeysProvider>
+													</DashboardProvider>
+												</MarkersProvider>
 											</QueryBuilderProvider>
 										</ResourceProvider>
 									</PrivateRoute>
