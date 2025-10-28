@@ -159,7 +159,9 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			continue
 		}
 
-		results, err := r.Threshold.ShouldAlert(toCommonSeries(series), r.Unit())
+		results, err := r.Threshold.Eval(toCommonSeries(series), r.Unit(), ruletypes.EvalFilters{
+			ActiveAlerts: r.ActiveAlertsLabelFP(),
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -233,6 +235,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 				Value:             result.V,
 				GeneratorURL:      r.GeneratorURL(),
 				Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
+				IsRecovering:      result.IsRecovering,
 			}
 		}
 	}
@@ -304,6 +307,20 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			})
 		}
 
+		// convert firing alert to recovering alert
+		if a.State == model.StateFiring && a.IsRecovering {
+			a.State = model.StateRecovering
+			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
+				RuleID:       r.ID(),
+				RuleName:     r.Name(),
+				State:        a.State,
+				StateChanged: true,
+				UnixMilli:    ts.UnixMilli(),
+				Labels:       model.LabelsString(labelsJSON),
+				Fingerprint:  a.QueryResultLables.Hash(),
+				Value:        a.Value,
+			})
+		}
 	}
 	r.health = ruletypes.HealthGood
 	r.lastError = err

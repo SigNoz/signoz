@@ -56,8 +56,29 @@ type RuleReceivers struct {
 	Name     string   `json:"name"`
 }
 
+// EvalFilters are dependent values used to evaluate the threshold rules
+type EvalFilters struct {
+	// ActiveAlerts is a map of active alert fingerprints
+	// used to check if a sample is part of an active alert
+	// when evaluating the recovery threshold
+	ActiveAlerts map[uint64]struct{}
+}
+
+// HasActiveAlert checks if the given sample figerprint is active
+// as an alert
+func (eval EvalFilters) HasActiveAlert(sampleLabelFp uint64) bool {
+	if len(eval.ActiveAlerts) == 0 {
+		return false
+	}
+	_, ok := eval.ActiveAlerts[sampleLabelFp]
+	return ok
+}
+
 type RuleThreshold interface {
 	ShouldAlert(series v3.Series, unit string) (Vector, error)
+	// Eval runs the given series through the threshold rules
+	// using the given filters and returns the matching series
+	Eval(series v3.Series, unit string, filters EvalFilters) (Vector, error)
 	GetRuleReceivers() []RuleReceivers
 }
 
@@ -111,6 +132,46 @@ func (r BasicRuleThresholds) ShouldAlert(series v3.Series, unit string) (Vector,
 	return resultVector, nil
 }
 
+// prepareAlertHashFromSampleLabels returns the fingerprint of the given sample
+// which is used to detect if the sample is currently alerting or not.
+// It calculates the fingerpint for the given sample
+func prepareAlertHashFromSampleLabels(sample Sample) uint64 {
+	// TODO: keep this logic in centeral place in use in threshold_rule.go
+	// plus other places to generate the `resultLabels` and set in alert
+	builder := labels.NewBuilder(sample.Metric).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel)
+	return builder.Labels().Hash()
+}
+
+func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalFilters EvalFilters) (Vector, error) {
+	var resultVector Vector
+	thresholds := []BasicRuleThreshold(r)
+	sortThresholds(thresholds)
+	for _, threshold := range thresholds {
+		smpl, shouldAlert := threshold.shouldAlert(series, unit)
+		if shouldAlert {
+			smpl.Target = threshold.target(unit)
+			smpl.TargetUnit = threshold.TargetUnit
+			resultVector = append(resultVector, smpl)
+			continue
+		}
+		// If target threshold didn't match, check with recovery threshold
+		// only if the alert is active.
+		alertHash := prepareAlertHashFromSampleLabels(smpl)
+		if evalFilters.HasActiveAlert(alertHash) {
+			// alert is active check if recovery met
+			smpl, shouldAlertRecovery := threshold.matchesRecoveryThreshold(series, unit)
+			if shouldAlertRecovery {
+				smpl.Target = threshold.recoveryTarget(unit)
+				smpl.TargetUnit = threshold.TargetUnit
+				// Add IsRecovering to notify that metrics is in recovery stage
+				smpl.IsRecovering = true
+				resultVector = append(resultVector, smpl)
+			}
+		}
+	}
+	return resultVector, nil
+}
+
 func sortThresholds(thresholds []BasicRuleThreshold) {
 	sort.Slice(thresholds, func(i, j int) bool {
 
@@ -132,14 +193,22 @@ func sortThresholds(thresholds []BasicRuleThreshold) {
 	})
 }
 
-func (b BasicRuleThreshold) target(ruleUnit string) float64 {
+func (b BasicRuleThreshold) convertToRuleUnit(val float64, ruleUnit string) float64 {
 	unitConverter := converter.FromUnit(converter.Unit(b.TargetUnit))
 	// convert the target value to the y-axis unit
 	value := unitConverter.Convert(converter.Value{
-		F: *b.TargetValue,
+		F: val,
 		U: converter.Unit(b.TargetUnit),
 	}, converter.Unit(ruleUnit))
 	return value.F
+}
+
+func (b BasicRuleThreshold) target(ruleUnit string) float64 {
+	return b.convertToRuleUnit(*b.TargetValue, ruleUnit)
+}
+
+func (b BasicRuleThreshold) recoveryTarget(ruleUnit string) float64 {
+	return b.convertToRuleUnit(*b.RecoveryTarget, ruleUnit)
 }
 
 func (b BasicRuleThreshold) getCompareOp() CompareOp {
@@ -177,6 +246,13 @@ func (b BasicRuleThreshold) Validate() error {
 	return errors.Join(errs...)
 }
 
+func (b BasicRuleThreshold) matchesRecoveryThreshold(series v3.Series, ruleUnit string) (Sample, bool) {
+	return b.shouldAlertWithTarget(series, b.recoveryTarget(ruleUnit))
+}
+func (b BasicRuleThreshold) shouldAlert(series v3.Series, ruleUnit string) (Sample, bool) {
+	return b.shouldAlertWithTarget(series, b.target(ruleUnit))
+}
+
 func removeGroupinSetPoints(series v3.Series) []v3.Point {
 	var result []v3.Point
 	for _, s := range series.Points {
@@ -187,7 +263,7 @@ func removeGroupinSetPoints(series v3.Series) []v3.Point {
 	return result
 }
 
-func (b BasicRuleThreshold) shouldAlert(series v3.Series, ruleUnit string) (Sample, bool) {
+func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float64) (Sample, bool) {
 	var shouldAlert bool
 	var alertSmpl Sample
 	var lbls labels.Labels
@@ -195,8 +271,6 @@ func (b BasicRuleThreshold) shouldAlert(series v3.Series, ruleUnit string) (Samp
 	for name, value := range series.Labels {
 		lbls = append(lbls, labels.Label{Name: name, Value: value})
 	}
-
-	target := b.target(ruleUnit)
 
 	lbls = append(lbls, labels.Label{Name: LabelThresholdName, Value: b.Name})
 

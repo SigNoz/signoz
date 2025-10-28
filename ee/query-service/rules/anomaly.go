@@ -246,7 +246,9 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 				continue
 			}
 		}
-		results, err := r.Threshold.ShouldAlert(*series, r.Unit())
+		results, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalFilters{
+			ActiveAlerts: r.ActiveAlertsLabelFP(),
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -296,7 +298,9 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 				continue
 			}
 		}
-		results, err := r.Threshold.ShouldAlert(*series, r.Unit())
+		results, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalFilters{
+			ActiveAlerts: r.ActiveAlertsLabelFP(),
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -410,6 +414,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 			GeneratorURL:      r.GeneratorURL(),
 			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
 			Missing:           smpl.IsMissing,
+			IsRecovering:      smpl.IsRecovering,
 		}
 	}
 
@@ -473,6 +478,21 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 				RuleID:       r.ID(),
 				RuleName:     r.Name(),
 				State:        state,
+				StateChanged: true,
+				UnixMilli:    ts.UnixMilli(),
+				Labels:       model.LabelsString(labelsJSON),
+				Fingerprint:  a.QueryResultLables.Hash(),
+				Value:        a.Value,
+			})
+		}
+
+		// convert firing alert to recovering alert
+		if a.State == model.StateFiring && a.IsRecovering {
+			a.State = model.StateRecovering
+			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
+				RuleID:       r.ID(),
+				RuleName:     r.Name(),
+				State:        a.State,
 				StateChanged: true,
 				UnixMilli:    ts.UnixMilli(),
 				Labels:       model.LabelsString(labelsJSON),

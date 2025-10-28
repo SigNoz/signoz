@@ -18,6 +18,7 @@ const (
 	StateFiring
 	StateNoData
 	StateDisabled
+	StateRecovering
 )
 
 func (s AlertState) String() string {
@@ -32,6 +33,8 @@ func (s AlertState) String() string {
 		return "nodata"
 	case StateDisabled:
 		return "disabled"
+	case StateRecovering:
+		return "recovering"
 	}
 	panic(errors.Errorf("unknown alert state: %d", s))
 }
@@ -58,6 +61,8 @@ func (s *AlertState) UnmarshalJSON(b []byte) error {
 			*s = StateNoData
 		case "disabled":
 			*s = StateDisabled
+		case "recovering":
+			*s = StateRecovering
 		default:
 			*s = StateInactive
 		}
@@ -83,6 +88,8 @@ func (s *AlertState) Scan(value interface{}) error {
 		*s = StateNoData
 	case "disabled":
 		*s = StateDisabled
+	case "recovering":
+		*s = StateRecovering
 	}
 	return nil
 }
