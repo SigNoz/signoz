@@ -194,7 +194,7 @@ describe('TableDrilldown', () => {
 		expect(urlObj.searchParams.has('compositeQuery')).toBe(true);
 
 		const compositeQuery = JSON.parse(
-			urlObj.searchParams.get('compositeQuery') || '{}',
+			decodeURIComponent(urlObj.searchParams.get('compositeQuery') || '{}'),
 		);
 
 		// Verify the query structure includes the filters from clicked data
@@ -270,7 +270,7 @@ describe('TableDrilldown', () => {
 		expect(urlObj.searchParams.has('compositeQuery')).toBe(true);
 
 		const compositeQuery = JSON.parse(
-			urlObj.searchParams.get('compositeQuery') || '{}',
+			decodeURIComponent(urlObj.searchParams.get('compositeQuery') || '{}'),
 		);
 		// Verify the query structure includes the filters from clicked data
 		expect(compositeQuery.builder).toBeDefined();
