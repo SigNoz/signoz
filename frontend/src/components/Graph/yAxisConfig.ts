@@ -1,9 +1,7 @@
 import { formattedValueToString, getValueFormat } from '@grafana/data';
-import {
-	AdditionalLabelsMappingForGrafanaUnits,
-	UniversalUnitToGrafanaUnit,
-} from 'components/YAxisUnitSelector/constants';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
+
+import { formatUniversalUnit } from '../YAxisUnitSelector/formatter';
 
 export const getYAxisFormattedValue = (
 	value: string,
@@ -51,40 +49,21 @@ export const getYAxisFormattedValue = (
 	return `${parseFloat(value)}`;
 };
 
+function isUniversalUnit(format: string): boolean {
+	return Object.values(UniversalYAxisUnit).includes(
+		format as UniversalYAxisUnit,
+	);
+}
+
 export const getToolTipValue = (value: string, format?: string): string => {
-	const universalMappingExists = format && format in UniversalUnitToGrafanaUnit;
-	const universalMappingNotFound =
-		format &&
-		format in UniversalYAxisUnit &&
-		!(format in UniversalUnitToGrafanaUnit);
-
-	let processedFormat = universalMappingExists
-		? UniversalUnitToGrafanaUnit[format as UniversalYAxisUnit]
-		: format;
-
-	// If using universal units but a compatible mapping is not found, use `short` for numeric formatting
-	// e.g. So that instead of showing "1000" it shows "1k"
-	if (universalMappingNotFound) {
-		processedFormat = 'short';
-	}
 	try {
-		const valueFormat = getValueFormat(processedFormat)(
-			parseFloat(value),
-			undefined,
-			undefined,
-			undefined,
-		);
-		// For universal units, check if it requires a custom suffix
-		const suffix = valueFormat?.suffix?.trim() || '';
-		if (
-			universalMappingExists &&
-			suffix in AdditionalLabelsMappingForGrafanaUnits
-		) {
-			return `${valueFormat.text} ${AdditionalLabelsMappingForGrafanaUnits[suffix]}`;
+		// Separate logic for universal units
+		if (format && isUniversalUnit(format)) {
+			return formatUniversalUnit(parseFloat(value), format as UniversalYAxisUnit);
 		}
-		return (
-			formattedValueToString(valueFormat) +
-			(universalMappingNotFound ? ` ${format}` : '')
+
+		return formattedValueToString(
+			getValueFormat(format)(parseFloat(value), undefined, undefined, undefined),
 		);
 	} catch (error) {
 		console.error(error);

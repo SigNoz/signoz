@@ -1,4 +1,4 @@
-import { UniversalYAxisUnit, YAxisUnit } from './types';
+import { UnitFamilyConfig, UniversalYAxisUnit, YAxisUnit } from './types';
 
 // Mapping of universal y-axis units to their AWS, UCUM, and OpenMetrics equivalents
 export const UniversalYAxisUnitMappings: Record<
@@ -723,17 +723,72 @@ export const AdditionalLabelsMappingForGrafanaUnits: Record<string, string> = {
 	YBs: 'YB/s',
 
 	// Bits
-	kbits: 'kb',
-	mbits: 'mb',
-	gbits: 'gb',
-	tbits: 'tb',
-	pbits: 'pb',
-	ebits: 'eb',
-	zbits: 'zb',
-	ybits: 'yb',
+	kbits: 'Kb',
+	mbits: 'Mb',
+	gbits: 'Gb',
+	tbits: 'Tb',
+	pbits: 'Pb',
+	ebits: 'Eb',
+	zbits: 'Zb',
+	ybits: 'Yb',
 
 	// Bit rate
 	Ebits: 'Eb/s',
 	Zbits: 'Zb/s',
 	Ybits: 'Yb/s',
 };
+
+/**
+ * Configuration for unit families that need custom scaling
+ * These are units where Grafana doesn't auto-scale between levels
+ */
+export const CUSTOM_SCALING_FAMILIES: UnitFamilyConfig[] = [
+	// Bits (b → Kb → Mb → Gb → Tb → Pb → Eb → Zb → Yb)
+	{
+		units: [
+			UniversalYAxisUnit.BITS,
+			UniversalYAxisUnit.KILOBITS,
+			UniversalYAxisUnit.MEGABITS,
+			UniversalYAxisUnit.GIGABITS,
+			UniversalYAxisUnit.TERABITS,
+			UniversalYAxisUnit.PETABITS,
+			UniversalYAxisUnit.EXABITS,
+			UniversalYAxisUnit.ZETTABITS,
+			UniversalYAxisUnit.YOTTABITS,
+		],
+		scaleFactor: 1000,
+	},
+	// Bit rates (b/s → Kb/s → Mb/s → ... → Yb/s)
+	{
+		units: [
+			UniversalYAxisUnit.BITS_SECOND,
+			UniversalYAxisUnit.KILOBITS_SECOND,
+			UniversalYAxisUnit.MEGABITS_SECOND,
+			UniversalYAxisUnit.GIGABITS_SECOND,
+			UniversalYAxisUnit.TERABITS_SECOND,
+			UniversalYAxisUnit.PETABITS_SECOND,
+			UniversalYAxisUnit.EXABITS_SECOND,
+			UniversalYAxisUnit.ZETTABITS_SECOND,
+			UniversalYAxisUnit.YOTTABITS_SECOND,
+		],
+		scaleFactor: 1000,
+	},
+	// High-order bytes (EB → ZB → YB)
+	{
+		units: [
+			UniversalYAxisUnit.EXABYTES,
+			UniversalYAxisUnit.ZETTABYTES,
+			UniversalYAxisUnit.YOTTABYTES,
+		],
+		scaleFactor: 1000,
+	},
+	// High-order byte rates (EB/s → ZB/s → YB/s)
+	{
+		units: [
+			UniversalYAxisUnit.EXABYTES_SECOND,
+			UniversalYAxisUnit.ZETTABYTES_SECOND,
+			UniversalYAxisUnit.YOTTABYTES_SECOND,
+		],
+		scaleFactor: 1000,
+	},
+];

@@ -364,3 +364,13 @@ export enum YAxisUnit {
 
 	OPEN_METRICS_PERCENT_UNIT = 'percentunit',
 }
+
+export interface ScaledValue {
+	value: number;
+	label: string;
+}
+
+export interface UnitFamilyConfig {
+	units: UniversalYAxisUnit[];
+	scaleFactor: number;
+}
