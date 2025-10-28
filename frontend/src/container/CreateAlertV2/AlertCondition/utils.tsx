@@ -50,6 +50,7 @@ export function getCategorySelectOptionByName(
 			(unit) => ({
 				label: unit.name,
 				value: unit.id,
+				'data-testid': `threshold-unit-select-option-${unit.id}`,
 			}),
 		) || []
 	);
@@ -401,6 +402,7 @@ export function RoutingPolicyBanner({
 			</Typography.Text>
 			<Switch
 				checked={notificationSettings.routingPolicies}
+				data-testid="routing-policies-switch"
 				onChange={(value): void => {
 					setNotificationSettings({
 						type: 'SET_ROUTING_POLICIES',

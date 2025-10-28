@@ -82,7 +82,7 @@ function EvaluationSettings(): JSX.Element {
 			trigger="click"
 			showArrow={false}
 		>
-			<Button>
+			<Button data-testid="evaluation-settings-button">
 				<div className="evaluate-alert-conditions-button-left">
 					{getTimeframeText(evaluationWindow)}
 				</div>

@@ -182,6 +182,7 @@ function AlertThreshold({
 						}}
 						style={{ width: 80 }}
 						options={queryNames}
+						data-testid="alert-threshold-query-select"
 					/>
 					<Typography.Text className="sentence-text">is</Typography.Text>
 					<Select
@@ -194,6 +195,7 @@ function AlertThreshold({
 						}}
 						style={{ width: 180 }}
 						options={THRESHOLD_OPERATOR_OPTIONS}
+						data-testid="alert-threshold-operator-select"
 					/>
 					<Typography.Text className="sentence-text">
 						the threshold(s)
@@ -208,6 +210,7 @@ function AlertThreshold({
 						}}
 						style={{ width: 180 }}
 						options={matchTypeOptionsWithTooltips}
+						data-testid="alert-threshold-match-type-select"
 					/>
 					<Typography.Text className="sentence-text">
 						during the <EvaluationSettings />
@@ -235,6 +238,7 @@ function AlertThreshold({
 					icon={<Plus size={16} />}
 					onClick={addThreshold}
 					className="add-threshold-btn"
+					data-testid="add-threshold-button"
 				>
 					Add Threshold
 				</Button>
