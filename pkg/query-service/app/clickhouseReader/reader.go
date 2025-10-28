@@ -304,8 +304,6 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, start, end
 	}
 	query += ` GROUP BY name, serviceName ORDER BY ts DESC LIMIT 5000`
 
-	fmt.Println("query", query)
-
 	rows, err := r.db.Query(ctx, query, clickhouse.Named("start", start), clickhouse.Named("services", services))
 
 	if err != nil {

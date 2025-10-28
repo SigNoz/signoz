@@ -43,7 +43,6 @@ type filterExpressionVisitor struct {
 
 	keysWithWarnings map[string]bool
 	startNs          uint64
-	endNs            uint64
 }
 
 type FilterExprVisitorOpts struct {
@@ -61,7 +60,6 @@ type FilterExprVisitorOpts struct {
 	IgnoreNotFoundKeys bool
 	Variables          map[string]qbtypes.VariableItem
 	StartNs            uint64
-	EndNs              uint64
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor
@@ -82,7 +80,6 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		variables:          opts.Variables,
 		keysWithWarnings:   make(map[string]bool),
 		startNs:            opts.StartNs,
-		endNs:              opts.EndNs,
 	}
 }
 
