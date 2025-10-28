@@ -12,12 +12,11 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 	target := 100.0
 
 	tests := []struct {
-		name           string
-		threshold      BasicRuleThreshold
-		series         v3.Series
-		ruleUnit       string
-		shouldAlert    bool
-		expectedTarget float64
+		name        string
+		threshold   BasicRuleThreshold
+		series      v3.Series
+		ruleUnit    string
+		shouldAlert bool
 	}{
 		{
 			name: "milliseconds to seconds conversion - should alert",
@@ -34,9 +33,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 0.15, Timestamp: 1000}, // 150ms in seconds
 				},
 			},
-			ruleUnit:       "s",
-			shouldAlert:    true,
-			expectedTarget: 0.1,
+			ruleUnit:    "s",
+			shouldAlert: true,
 		},
 		{
 			name: "milliseconds to seconds conversion - should not alert",
@@ -53,9 +51,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 0.05, Timestamp: 1000}, // 50ms in seconds
 				},
 			},
-			ruleUnit:       "s",
-			shouldAlert:    false,
-			expectedTarget: 0.1,
+			ruleUnit:    "s",
+			shouldAlert: false,
 		},
 		{
 			name: "seconds to milliseconds conversion - should alert",
@@ -72,9 +69,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 150000, Timestamp: 1000}, // 150000ms = 150s
 				},
 			},
-			ruleUnit:       "ms",
-			shouldAlert:    true,
-			expectedTarget: 100000,
+			ruleUnit:    "ms",
+			shouldAlert: true,
 		},
 		// Binary byte conversions
 		{
@@ -92,9 +88,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 0.15, Timestamp: 1000}, // 0.15KiB ≈ 153.6 bytes
 				},
 			},
-			ruleUnit:       "kbytes",
-			shouldAlert:    true,
-			expectedTarget: 0.09765625, // 100/1024
+			ruleUnit:    "kbytes",
+			shouldAlert: true,
 		},
 		{
 			name: "kibibytes to mebibytes conversion - should alert",
@@ -111,9 +106,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 0.15, Timestamp: 1000},
 				},
 			},
-			ruleUnit:       "mbytes",
-			shouldAlert:    true,
-			expectedTarget: 0.09765625,
+			ruleUnit:    "mbytes",
+			shouldAlert: true,
 		},
 		// ValueIsBelow with unit conversion
 		{
@@ -131,9 +125,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 0.05, Timestamp: 1000}, // 50ms in seconds
 				},
 			},
-			ruleUnit:       "s",
-			shouldAlert:    true,
-			expectedTarget: 0.1,
+			ruleUnit:    "s",
+			shouldAlert: true,
 		},
 		{
 			name: "milliseconds to seconds with OnAverage - should alert",
@@ -152,9 +145,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 0.15, Timestamp: 3000}, // 150ms
 				},
 			},
-			ruleUnit:       "s",
-			shouldAlert:    true,
-			expectedTarget: 0.1,
+			ruleUnit:    "s",
+			shouldAlert: true,
 		},
 		{
 			name: "decimal megabytes to gigabytes with InTotal - should alert",
@@ -173,9 +165,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 0.03, Timestamp: 3000}, // 30MB
 				},
 			},
-			ruleUnit:       "decgbytes",
-			shouldAlert:    true,
-			expectedTarget: 0.1,
+			ruleUnit:    "decgbytes",
+			shouldAlert: true,
 		},
 		{
 			name: "milliseconds to seconds with AllTheTimes - should alert",
@@ -194,9 +185,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 0.15, Timestamp: 3000}, // 150ms
 				},
 			},
-			ruleUnit:       "s",
-			shouldAlert:    true,
-			expectedTarget: 0.1,
+			ruleUnit:    "s",
+			shouldAlert: true,
 		},
 		{
 			name: "kilobytes to megabytes with Last - should not alert",
@@ -214,9 +204,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 0.05, Timestamp: 2000}, // 50kB (last value)
 				},
 			},
-			ruleUnit:       "decmbytes",
-			shouldAlert:    false,
-			expectedTarget: 0.1,
+			ruleUnit:    "decmbytes",
+			shouldAlert: false,
 		},
 		// Mixed units - bytes/second rate conversions
 		{
@@ -234,9 +223,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 0.15, Timestamp: 1000},
 				},
 			},
-			ruleUnit:       "KBs",
-			shouldAlert:    true,
-			expectedTarget: 0.1,
+			ruleUnit:    "KBs",
+			shouldAlert: true,
 		},
 		// Same unit (no conversion needed)
 		{
@@ -254,9 +242,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 150, Timestamp: 1000}, // 150ms
 				},
 			},
-			ruleUnit:       "ms",
-			shouldAlert:    true,
-			expectedTarget: 100,
+			ruleUnit:    "ms",
+			shouldAlert: true,
 		},
 		// Empty unit (unitless) - no conversion
 		{
@@ -274,9 +261,8 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 					{Value: 150, Timestamp: 1000}, // 150 (unitless)
 				},
 			},
-			ruleUnit:       "",
-			shouldAlert:    true,
-			expectedTarget: 100,
+			ruleUnit:    "",
+			shouldAlert: true,
 		},
 	}
 
