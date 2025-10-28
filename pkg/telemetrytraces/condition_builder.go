@@ -33,8 +33,6 @@ func (c *conditionBuilder) conditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	startNs uint64,
-	endNs uint64,
 ) (string, error) {
 
 	switch operator {
@@ -232,7 +230,7 @@ func (c *conditionBuilder) ConditionFor(
 		return c.buildSpanScopeCondition(key, operator, value, startNs, endNs)
 	}
 
-	condition, err := c.conditionFor(ctx, key, operator, value, sb, startNs, endNs)
+	condition, err := c.conditionFor(ctx, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
@@ -247,7 +245,7 @@ func (c *conditionBuilder) ConditionFor(
 			return condition, nil
 		}
 
-		existsCondition, err := c.conditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, startNs, endNs)
+		existsCondition, err := c.conditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}
