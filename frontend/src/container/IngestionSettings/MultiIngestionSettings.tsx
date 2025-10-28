@@ -1265,6 +1265,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					icon={<BellPlus size={14} color={Color.BG_CHERRY_400} />}
 																					className="set-alert-btn periscope-btn ghost"
 																					type="text"
+																					data-testid={`set-alert-btn-${signalName}`}
 																					onClick={(): void =>
 																						handleCreateAlert(APIKey, limitsDict[signalName])
 																					}
