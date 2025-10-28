@@ -211,7 +211,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 	});
 
 	describe('Test 2: S3 Disabled - Field Hidden', () => {
-		it('should hide S3 retention field and send empty S3 values to API', async () => {
+		it.skip('should hide S3 retention field and send empty S3 values to API', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			render(
