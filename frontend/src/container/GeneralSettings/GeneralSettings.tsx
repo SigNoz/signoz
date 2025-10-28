@@ -137,7 +137,8 @@ function GeneralSettings({
 		if (logsCurrentTTLValues) {
 			setLogsTotalRetentionPeriod(logsCurrentTTLValues.default_ttl_days * 24);
 			setLogsS3RetentionPeriod(
-				logsCurrentTTLValues.cold_storage_ttl_days
+				logsCurrentTTLValues.cold_storage_ttl_days &&
+					logsCurrentTTLValues.cold_storage_ttl_days > 0
 					? logsCurrentTTLValues.cold_storage_ttl_days * 24
 					: null,
 			);
