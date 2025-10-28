@@ -22,6 +22,7 @@ jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
 
 const mockUseQuery = jest.fn();
 jest.mock('react-query', () => ({
+	...jest.requireActual('react-query'),
 	useQuery: (queryKey: any, queryFn: any, options: any): any =>
 		mockUseQuery(queryKey, queryFn, options),
 }));

@@ -88,12 +88,30 @@
 		"link": "https://signoz.io/docs/migration/migrate-from-signoz-self-host-to-signoz-cloud/"
 	},
 	{
+		"dataSource": "migrate-from-existing-opentelemetry",
+		"label": "From Existing OpenTelemetry",
+		"tags": ["migrate to SigNoz"],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"apm migration",
+			"opentelemetry",
+			"migration guide",
+			"migrate",
+			"migration",
+			"otel collector",
+			"opentelemetry collector",
+			"otlp"
+		],
+		"imgUrl": "/Logos/opentelemetry.svg",
+		"link": "https://signoz.io/docs/migration/migrate-from-opentelemetry-to-signoz/"
+	},
+	{
 		"dataSource": "java",
 		"entityID": "dataSource",
 		"label": "Java",
 		"id": "java",
 		"imgUrl": "/Logos/java.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -285,7 +303,7 @@
 		"dataSource": "python",
 		"label": "Python",
 		"imgUrl": "/Logos/python.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -450,7 +468,7 @@
 	{
 		"dataSource": "javascript",
 		"label": "JavaScript",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -697,7 +715,7 @@
 		"dataSource": "golang",
 		"label": "Golang",
 		"imgUrl": "/Logos/go.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -761,7 +779,7 @@
 		"dataSource": "php",
 		"label": "PHP",
 		"imgUrl": "/Logos/php.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -784,7 +802,6 @@
 			"php zipkin tracing",
 			"otel php exporter",
 			"php http instrumentation",
-			"php prometheus exporter",
 			"php-fpm monitoring",
 			"php on kubernetes",
 			"php in containers",
@@ -829,7 +846,7 @@
 		"dataSource": "dotnet",
 		"label": ".NET",
 		"imgUrl": "/Logos/dotnet.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -861,7 +878,6 @@
 			".net kubernetes",
 			"dotnet in containers",
 			"opentelemetry exporter .net",
-			".net prometheus exporter",
 			"c# opentelemetry",
 			"monitor c# app",
 			"entity framework telemetry",
@@ -902,7 +918,7 @@
 		"dataSource": "ruby-on-rails",
 		"label": "Ruby on Rails",
 		"imgUrl": "/Logos/ruby-on-rails.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -967,7 +983,7 @@
 		"dataSource": "elixir",
 		"label": "Elixir",
 		"imgUrl": "/Logos/elixir.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1026,7 +1042,7 @@
 		"dataSource": "rust",
 		"label": "Rust",
 		"imgUrl": "/Logos/rust.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1079,7 +1095,7 @@
 		"dataSource": "swift",
 		"label": "Swift",
 		"imgUrl": "/Logos/swift.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1110,7 +1126,6 @@
 			"urlsession instrumentation",
 			"ios sdk opentelemetry",
 			"apple ecosystem observability",
-			"swift prometheus exporter",
 			"ios otlp exporter",
 			"ios telemetry sdk"
 		],
@@ -1146,7 +1161,7 @@
 		"dataSource": "opentelemetry-cpp",
 		"label": "C++",
 		"imgUrl": "/Logos/cpp.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1188,7 +1203,7 @@
 		"dataSource": "nginx-tracing",
 		"label": "Nginx - Tracing",
 		"imgUrl": "/Logos/nginx.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": ["tracing", "nginx server", "nginx proxy", "nginx"],
 		"id": "nginx-tracing",
@@ -1198,7 +1213,7 @@
 		"dataSource": "opentelemetry-wordpress",
 		"label": "WordPress",
 		"imgUrl": "/Logos/wordpress.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1224,7 +1239,7 @@
 		"dataSource": "opentelemetry-cloudflare",
 		"label": "Cloudflare",
 		"imgUrl": "/Logos/cloudflare.svg",
-		"tags": ["apm"],
+		"tags": ["apm/traces", "logs"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1541,7 +1556,7 @@
 	},
 	{
 		"dataSource": "from-log-file",
-		"label": "From Log File",
+		"label": "Collect Logs From Log File",
 		"imgUrl": "/Logos/from-log-file.svg",
 		"tags": ["logs"],
 		"module": "logs",
@@ -2657,6 +2672,170 @@
 		"link": "https://signoz.io/docs/community/llm-monitoring/"
 	},
 	{
+		"dataSource": "anthropic-api",
+		"label": "Anthropic API",
+		"imgUrl": "/Logos/anthropic-api-monitoring.svg",
+		"tags": ["LLM Monitoring"],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"llm monitoring",
+			"large language model observability",
+			"monitor anthropic",
+			"llm response time tracing",
+			"llm metrics",
+			"otel llm integration",
+			"llm performance tracking",
+			"metrics",
+			"traces",
+			"logs"
+		],
+		"link": "https://signoz.io/docs/anthropic-monitoring/"
+	},
+	{
+		"dataSource": "claude-code",
+		"label": "Claude Code",
+		"imgUrl": "/Logos/claude-code.svg",
+		"tags": ["LLM Monitoring"],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"claude code monitoring",
+			"claude code observability",
+			"claude code performance tracking",
+			"claude code latency tracing",
+			"claude code metrics",
+			"otel claude integration",
+			"claude code response time",
+			"claude code logs",
+			"claude code error tracking",
+			"claude code debugging",
+			"metrics",
+			"logs"
+		],
+		"link": "https://signoz.io/docs/claude-code-monitoring/"
+	},
+	{
+		"dataSource": "deepseek-api",
+		"label": "DeepSeek API",
+		"imgUrl": "/Logos/deepseek.svg",
+		"tags": ["LLM Monitoring"],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"deepseek api monitoring",
+			"deepseek api observability",
+			"deepseek api performance tracking",
+			"deepseek api latency tracing",
+			"deepseek api metrics",
+			"otel deepseek integration",
+			"deepseek api response time",
+			"deepseek api logs",
+			"deepseek api error tracking",
+			"deepseek api debugging",
+			"metrics",
+			"logs"
+		],
+		"link": "https://signoz.io/docs/deepseek-monitoring/"
+	},
+	{
+		"dataSource": "google-gemini-api",
+		"label": "Google Gemini",
+		"imgUrl": "/Logos/google-gemini.svg",
+		"tags": ["LLM Monitoring"],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"google gemini api monitoring",
+			"google gemini api observability",
+			"google gemini api performance tracking",
+			"google gemini api latency tracing",
+			"google gemini api metrics",
+			"otel google gemini integration",
+			"google gemini api response time",
+			"google gemini api logs",
+			"google gemini api error tracking",
+			"google gemini api debugging",
+			"gemini",
+			"metrics",
+			"logs"
+		],
+		"link": "https://signoz.io/docs/google-gemini-monitoring/"
+	},
+	{
+		"dataSource": "langchain",
+		"label": "LangChain",
+		"imgUrl": "/Logos/langchain.svg",
+		"tags": ["LLM Monitoring"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"langchain monitoring",
+			"langchain observability",
+			"langchain performance tracking",
+			"langchain latency tracing",
+			"langchain metrics",
+			"otel langchain integration",
+			"langchain response time",
+			"langchain logs",
+			"langchain error tracking",
+			"langchain debugging",
+			"traces"
+		],
+		"link": "https://signoz.io/docs/langchain-monitoring/"
+	},
+	{
+		"dataSource": "llamaindex",
+		"label": "LlamaIndex",
+		"imgUrl": "/Logos/llamaindex.svg",
+		"tags": ["LLM Monitoring"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"llamaindex monitoring",
+			"llamaindex observability",
+			"llamaindex performance tracking",
+			"llamaindex latency tracing",
+			"llamaindex metrics",
+			"otel llamaindex integration",
+			"llamaindex response time",
+			"llamaindex logs",
+			"llamaindex error tracking",
+			"llamaindex debugging",
+			"traces"
+		],
+		"link": "https://signoz.io/docs/llamaindex-monitoring/"
+	},
+	{
+		"dataSource": "vercel-ai-sdk",
+		"label": "Vercel AI SDK",
+		"imgUrl": "/Logos/vercel.svg",
+		"tags": ["LLM Monitoring"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"vercel ai sdk monitoring",
+			"vercel ai sdk observability",
+			"vercel ai sdk performance tracking",
+			"vercel ai sdk latency tracing",
+			"vercel ai sdk metrics",
+			"otel vercel ai sdk integration",
+			"vercel ai sdk response time",
+			"vercel ai sdk logs",
+			"vercel ai sdk error tracking",
+			"vercel ai sdk debugging",
+			"traces"
+		],
+		"link": "https://signoz.io/docs/vercel-ai-sdk-monitoring/"
+	},
+	{
+		"dataSource": "mastra-monitoring",
+		"label": "Mastra",
+		"imgUrl": "/Logos/mastra.svg",
+		"tags": ["LLM Monitoring"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"mastra monitoring",
+			"mastra observability",
+			"mastra agent",
+			"traces"
+		],
+		"link": "https://signoz.io/docs/mastra-monitoring/"
+	},
+	{
 		"dataSource": "http-endpoints-monitoring",
 		"label": "HTTP Endpoints Monitoring",
 		"imgUrl": "/Logos/http-monitoring.svg",
@@ -3391,5 +3570,58 @@
 				}
 			]
 		}
+	},
+	{
+		"dataSource": "microsoft-sql-server",
+		"label": "Microsoft SQL Server",
+		"imgUrl": "/Logos/microsoft-sql-server.svg",
+		"tags": ["integrations"],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"sql server metrics",
+			"mssql monitoring",
+			"sql server performance",
+			"sql server observability",
+			"Microsoft",
+			"sql server logs",
+			"metrics",
+			"logs"
+		],
+		"id": "microsoft-sql-server",
+		"link": "https://signoz.io/docs/integrations/sql-server/"
+	},
+	{
+		"dataSource": "supabase",
+		"label": "Supabase",
+		"imgUrl": "/Logos/supabase.svg",
+		"tags": ["integrations"],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"supabase metrics",
+			"supabase monitoring",
+			"supabase performance",
+			"supabase observability",
+			"supabase",
+			"metrics"
+			],
+		"id": "supabase",
+		"link": "https://signoz.io/docs/integrations/supabase/"
+	},
+	{
+		"dataSource": "nomad",
+		"label": "Nomad",
+		"imgUrl": "/Logos/nomad.svg",
+		"tags": ["integrations"],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"nomad metrics",
+			"nomad monitoring",
+			"nomad performance",
+			"nomad observability",
+			"nomad",
+			"metrics"
+			],
+		"id": "nomad",
+		"link": "https://signoz.io/docs/integrations/nomad/"
 	}
 ]

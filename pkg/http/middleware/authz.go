@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
@@ -106,7 +107,7 @@ func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (middleware *AuthZ) Check(next http.HandlerFunc, _ authtypes.Relation, translation authtypes.Relation, _ authtypes.Typeable, _ authtypes.Typeable, _ authtypes.SelectorCallbackFn) http.HandlerFunc {
+func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relation, translation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackFn) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		claims, err := authtypes.ClaimsFromContext(req.Context())
 		if err != nil {
@@ -114,7 +115,19 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, _ authtypes.Relation, tran
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, translation, authtypes.TypeableOrganization, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeOrganization, claims.OrgID)})
+		orgId, err := valuer.NewUUID(claims.OrgID)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		selectors, err := cb(req.Context(), claims)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, relation, translation, typeable, selectors)
 		if err != nil {
 			render.Error(rw, err)
 			return

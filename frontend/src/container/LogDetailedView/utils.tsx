@@ -5,7 +5,7 @@ import dompurify from 'dompurify';
 import { uniqueId } from 'lodash-es';
 import { ILog, ILogAggregateAttributesResources } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
+import { FORBID_DOM_PURIFY_ATTR, FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import BodyTitleRenderer from './BodyTitleRenderer';
 import { typeToArrayTypeMapper } from './config';
@@ -352,6 +352,7 @@ export const getSanitizedLogBody = (
 		return convertInstance.toHtml(
 			dompurify.sanitize(unescapeString(escapedText), {
 				FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				FORBID_ATTR: [...FORBID_DOM_PURIFY_ATTR],
 			}),
 		);
 	} catch (error) {

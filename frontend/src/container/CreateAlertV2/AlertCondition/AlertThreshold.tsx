@@ -18,7 +18,6 @@ import {
 	THRESHOLD_OPERATOR_OPTIONS,
 } from '../context/constants';
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
-import { showCondensedLayout } from '../utils';
 import ThresholdItem from './ThresholdItem';
 import { AnomalyAndThresholdProps, UpdateThreshold } from './types';
 import {
@@ -42,8 +41,6 @@ function AlertThreshold({
 		notificationSettings,
 		setNotificationSettings,
 	} = useCreateAlertState();
-
-	const showCondensedLayoutFlag = showCondensedLayout();
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -163,17 +160,12 @@ function AlertThreshold({
 		}),
 	);
 
-	const evaluationWindowContext = showCondensedLayoutFlag ? (
-		<EvaluationSettings />
-	) : (
-		<strong>Evaluation Window.</strong>
-	);
-
 	return (
 		<div
-			className={classNames('alert-threshold-container', {
-				'condensed-alert-threshold-container': showCondensedLayoutFlag,
-			})}
+			className={classNames(
+				'alert-threshold-container',
+				'condensed-alert-threshold-container',
+			)}
 		>
 			{/* Main condition sentence */}
 			<div className="alert-condition-sentences">
@@ -191,6 +183,7 @@ function AlertThreshold({
 						}}
 						style={{ width: 80 }}
 						options={queryNames}
+						data-testid="alert-threshold-query-select"
 					/>
 					<Typography.Text className="sentence-text">is</Typography.Text>
 					<Select
@@ -203,6 +196,7 @@ function AlertThreshold({
 						}}
 						style={{ width: 180 }}
 						options={THRESHOLD_OPERATOR_OPTIONS}
+						data-testid="alert-threshold-operator-select"
 					/>
 					<Typography.Text className="sentence-text">
 						the threshold(s)
@@ -217,9 +211,10 @@ function AlertThreshold({
 						}}
 						style={{ width: 180 }}
 						options={matchTypeOptionsWithTooltips}
+						data-testid="alert-threshold-match-type-select"
 					/>
 					<Typography.Text className="sentence-text">
-						during the {evaluationWindowContext}
+						during the <EvaluationSettings />
 					</Typography.Text>
 				</div>
 			</div>
@@ -244,6 +239,7 @@ function AlertThreshold({
 					icon={<Plus size={16} />}
 					onClick={addThreshold}
 					className="add-threshold-btn"
+					data-testid="add-threshold-button"
 				>
 					Add Threshold
 				</Button>

@@ -73,7 +73,7 @@ func (c *conditionBuilder) conditionFor(
 			}
 		}
 	} else {
-		tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+		tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
 	}
 
 	// regular operators
@@ -211,7 +211,7 @@ func (c *conditionBuilder) conditionFor(
 				return sb.NE(leftOperand, true), nil
 			}
 		default:
-			return "", fmt.Errorf("exists operator is not supported for column type %s", column.Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
 		}
 	}
 	return "", nil

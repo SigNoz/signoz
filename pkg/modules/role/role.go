@@ -33,6 +33,8 @@ type Module interface {
 
 	// Deletes the role metadata and tuples in authorization server
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
+
+	RegisterTypeable
 }
 
 type RegisterTypeable interface {
@@ -40,27 +42,19 @@ type RegisterTypeable interface {
 }
 
 type Handler interface {
-	// Creates the role metadata and tuples in authorization server
 	Create(http.ResponseWriter, *http.Request)
 
-	// Gets the role metadata
 	Get(http.ResponseWriter, *http.Request)
 
-	// Gets the objects for the given relation and role
 	GetObjects(http.ResponseWriter, *http.Request)
 
-	// Gets all the resources and the relations
 	GetResources(http.ResponseWriter, *http.Request)
 
-	// Lists all the roles metadata for the organization
 	List(http.ResponseWriter, *http.Request)
 
-	// Patches the role metdata
 	Patch(http.ResponseWriter, *http.Request)
 
-	// Patches the objects for the given relation and role
 	PatchObjects(http.ResponseWriter, *http.Request)
 
-	// Deletes the role metadata and tuples in authorization server
 	Delete(http.ResponseWriter, *http.Request)
 }
