@@ -49,7 +49,6 @@ func (b *defaultConditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 	_ uint64,
-	_ uint64,
 ) (string, error) {
 
 	if key.FieldContext != telemetrytypes.FieldContextResource {

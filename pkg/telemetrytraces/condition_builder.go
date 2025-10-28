@@ -224,10 +224,9 @@ func (c *conditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 	startNs uint64,
-	endNs uint64,
 ) (string, error) {
 	if c.isSpanScopeField(key.Name) {
-		return c.buildSpanScopeCondition(key, operator, value, startNs, endNs)
+		return c.buildSpanScopeCondition(key, operator, value, startNs)
 	}
 
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
@@ -259,7 +258,7 @@ func (c *conditionBuilder) isSpanScopeField(name string) bool {
 	return keyName == SpanSearchScopeRoot || keyName == SpanSearchScopeEntryPoint
 }
 
-func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, startNs uint64, endNs uint64) (string, error) {
+func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, startNs uint64) (string, error) {
 	if operator != qbtypes.FilterOperatorEqual {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s only supports '=' operator", key.Name)
 	}
