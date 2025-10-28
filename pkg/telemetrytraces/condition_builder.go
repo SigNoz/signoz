@@ -33,6 +33,8 @@ func (c *conditionBuilder) conditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	startNs uint64,
+	endNs uint64,
 ) (string, error) {
 
 	switch operator {
@@ -223,12 +225,14 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	startNs uint64,
+	endNs uint64,
 ) (string, error) {
 	if c.isSpanScopeField(key.Name) {
-		return c.buildSpanScopeCondition(key, operator, value)
+		return c.buildSpanScopeCondition(key, operator, value, startNs, endNs)
 	}
 
-	condition, err := c.conditionFor(ctx, key, operator, value, sb)
+	condition, err := c.conditionFor(ctx, key, operator, value, sb, startNs, endNs)
 	if err != nil {
 		return "", err
 	}
@@ -243,7 +247,7 @@ func (c *conditionBuilder) ConditionFor(
 			return condition, nil
 		}
 
-		existsCondition, err := c.conditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb)
+		existsCondition, err := c.conditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, startNs, endNs)
 		if err != nil {
 			return "", err
 		}
@@ -257,7 +261,7 @@ func (c *conditionBuilder) isSpanScopeField(name string) bool {
 	return keyName == SpanSearchScopeRoot || keyName == SpanSearchScopeEntryPoint
 }
 
-func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, error) {
+func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, startNs uint64, endNs uint64) (string, error) {
 	if operator != qbtypes.FilterOperatorEqual {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s only supports '=' operator", key.Name)
 	}
@@ -281,8 +285,9 @@ func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.Telemetry
 	case SpanSearchScopeRoot:
 		return "parent_span_id = ''", nil
 	case SpanSearchScopeEntryPoint:
-		return fmt.Sprintf("((name, resource_string_service$$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
-			DBName, TopLevelOperationsTableName), nil
+		startS := int64(startNs / 1_000_000_000)
+		return fmt.Sprintf("((name, resource_string_service$$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s WHERE time >= toDateTime(%d))) AND parent_span_id != ''",
+			DBName, TopLevelOperationsTableName, startS), nil
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid span search scope: %s", key.Name)
 	}

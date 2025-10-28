@@ -31,7 +31,8 @@ type FieldMapper interface {
 // ConditionBuilder builds the condition for the filter.
 type ConditionBuilder interface {
 	// ConditionFor returns the condition for the given key, operator and value.
-	ConditionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+	// startNs and endNs are the request window in nanoseconds; implementations may ignore them if not needed.
+	ConditionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder, startNs uint64, endNs uint64) (string, error)
 }
 
 type AggExprRewriter interface {
