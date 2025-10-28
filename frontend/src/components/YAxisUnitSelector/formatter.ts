@@ -64,7 +64,8 @@ export function formatUniversalUnit(
 	const family = findUnitFamily(unit);
 	if (family) {
 		const scaled = scaleValue(value, unit, family.units, family.scaleFactor);
-		return `${format('short', scaled.value).text} ${scaled.label}`;
+		const formatted = format('none', scaled.value);
+		return `${formatted.text} ${scaled.label}`;
 	}
 
 	// Use Grafana formatting with custom label mappings

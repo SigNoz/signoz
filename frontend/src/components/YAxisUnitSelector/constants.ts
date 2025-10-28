@@ -672,14 +672,14 @@ export const UniversalUnitToGrafanaUnit: Record<UniversalYAxisUnit, string> = {
 
 	// Bit Rate
 	[UniversalYAxisUnit.BITS_SECOND]: 'bps',
-	[UniversalYAxisUnit.KILOBITS_SECOND]: 'Kbits',
-	[UniversalYAxisUnit.MEGABITS_SECOND]: 'Mbits',
-	[UniversalYAxisUnit.GIGABITS_SECOND]: 'Gbits',
-	[UniversalYAxisUnit.TERABITS_SECOND]: 'Tbits',
-	[UniversalYAxisUnit.PETABITS_SECOND]: 'Pbits',
-	[UniversalYAxisUnit.EXABITS_SECOND]: 'Ebits',
-	[UniversalYAxisUnit.ZETTABITS_SECOND]: 'Zbits',
-	[UniversalYAxisUnit.YOTTABITS_SECOND]: 'Ybits',
+	[UniversalYAxisUnit.KILOBITS_SECOND]: 'kbps',
+	[UniversalYAxisUnit.MEGABITS_SECOND]: 'mbps',
+	[UniversalYAxisUnit.GIGABITS_SECOND]: 'gbps',
+	[UniversalYAxisUnit.TERABITS_SECOND]: 'tbps',
+	[UniversalYAxisUnit.PETABITS_SECOND]: 'pbps',
+	[UniversalYAxisUnit.EXABITS_SECOND]: 'ebps',
+	[UniversalYAxisUnit.ZETTABITS_SECOND]: 'zbps',
+	[UniversalYAxisUnit.YOTTABITS_SECOND]: 'ybps',
 
 	// Count
 	[UniversalYAxisUnit.COUNT]: 'short',
@@ -733,9 +733,15 @@ export const AdditionalLabelsMappingForGrafanaUnits: Record<string, string> = {
 	ybits: 'Yb',
 
 	// Bit rate
-	Ebits: 'Eb/s',
-	Zbits: 'Zb/s',
-	Ybits: 'Yb/s',
+	bps: 'b/s',
+	kbps: 'Kb/s',
+	mbps: 'Mb/s',
+	gbps: 'Gb/s',
+	tbps: 'Tb/s',
+	pbps: 'Pb/s',
+	ebps: 'Eb/s',
+	zbps: 'Zb/s',
+	ybps: 'Yb/s',
 };
 
 /**
