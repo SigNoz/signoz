@@ -32,6 +32,7 @@ function ThresholdItem({
 				style={{ width: 150 }}
 				options={units}
 				disabled={units.length === 0}
+				data-testid="threshold-unit-select"
 			/>
 		);
 		if (units.length === 0) {
@@ -47,6 +48,7 @@ function ThresholdItem({
 						style={{ width: 150 }}
 						options={units}
 						disabled={units.length === 0}
+						data-testid="threshold-unit-select"
 					/>
 				</Tooltip>
 			);
@@ -96,6 +98,7 @@ function ThresholdItem({
 							updateThreshold(threshold.id, 'label', e.target.value)
 						}
 						style={{ width: 200 }}
+						data-testid="threshold-name-input"
 					/>
 					<Typography.Text className="sentence-text">on value</Typography.Text>
 					<Typography.Text className="sentence-text highlighted-text">
@@ -109,6 +112,7 @@ function ThresholdItem({
 						}
 						style={{ width: 100 }}
 						type="number"
+						data-testid="threshold-value-input"
 					/>
 					{yAxisUnitSelect}
 					{!notificationSettings.routingPolicies && (
@@ -119,10 +123,12 @@ function ThresholdItem({
 								onChange={(value): void =>
 									updateThreshold(threshold.id, 'channels', value)
 								}
+								data-testid="threshold-notification-channel-select"
 								style={{ width: 350 }}
 								options={channels.map((channel) => ({
 									value: channel.name,
 									label: channel.name,
+									'data-testid': `threshold-notification-channel-option-${threshold.label}`,
 								}))}
 								mode="multiple"
 								placeholder="Select notification channels"
@@ -157,6 +163,7 @@ function ThresholdItem({
 								}
 								style={{ width: 100 }}
 								type="number"
+								data-testid="recovery-threshold-value-input"
 							/>
 							<Tooltip title="Remove recovery threshold">
 								<Button
@@ -164,6 +171,7 @@ function ThresholdItem({
 									icon={<Trash size={16} />}
 									onClick={removeRecoveryThreshold}
 									className="icon-btn"
+									data-testid="remove-recovery-threshold-button"
 								/>
 							</Tooltip>
 						</>
@@ -187,6 +195,7 @@ function ThresholdItem({
 									icon={<CircleX size={16} />}
 									onClick={(): void => removeThreshold(threshold.id)}
 									className="icon-btn"
+									data-testid="remove-threshold-button"
 								/>
 							</Tooltip>
 						)}

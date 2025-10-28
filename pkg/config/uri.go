@@ -1,8 +1,9 @@
 package config
 
 import (
-	"fmt"
 	"regexp"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 var (
@@ -20,8 +21,9 @@ func NewUri(input string) (Uri, error) {
 	submatches := uriRegex.FindStringSubmatch(input)
 
 	if len(submatches) != 3 {
-		return Uri{}, fmt.Errorf("invalid uri: %q", input)
+		return Uri{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid uri: %q", input)
 	}
+
 	return Uri{
 		scheme: submatches[1],
 		value:  submatches[2],
