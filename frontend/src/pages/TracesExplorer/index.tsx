@@ -310,8 +310,6 @@ function TracesExplorer(): JSX.Element {
 
 	const [warning, setWarning] = useState<Warning | undefined>(undefined);
 
-	console.log('currentQuery in traces explorer', currentQuery);
-
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="trace-explorer-page">
