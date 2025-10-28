@@ -19,6 +19,7 @@ import {
 	TablePaginationConfig,
 	TableProps as AntDTableProps,
 	Tag,
+	Tooltip,
 	Typography,
 } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
@@ -1251,14 +1252,25 @@ function MultiIngestionSettings(): JSX.Element {
 																				))}
 																		</div>
 
-																		<Button
-																			icon={<BellPlus size={14} color={Color.BG_CHERRY_400} />}
-																			className="set-alert-btn periscope-btn ghost"
-																			type="text"
-																			onClick={(): void =>
-																				handleCreateAlert(APIKey, limitsDict[signalName])
-																			}
-																		/>
+																		{((signalCfg.usesSize &&
+																			limit?.config?.day?.size !== undefined) ||
+																			(signalCfg.usesCount &&
+																				limit?.config?.day?.count !== undefined)) && (
+																			<Tooltip
+																				title="Set alert on this limit"
+																				placement="top"
+																				arrow={false}
+																			>
+																				<Button
+																					icon={<BellPlus size={14} color={Color.BG_CHERRY_400} />}
+																					className="set-alert-btn periscope-btn ghost"
+																					type="text"
+																					onClick={(): void =>
+																						handleCreateAlert(APIKey, limitsDict[signalName])
+																					}
+																				/>
+																			</Tooltip>
+																		)}
 																	</div>
 
 																	{/* SECOND limit usage/limit */}

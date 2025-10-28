@@ -64,12 +64,8 @@ function EvaluationSettings(): JSX.Element {
 				payload: INITIAL_EVALUATION_WINDOW_STATE,
 			});
 		}
-	}, [
-		currentQuery,
-		thresholdState.selectedQuery,
-		setEvaluationWindow,
-		setThresholdState,
-	]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [thresholdState.selectedQuery]);
 
 	const popoverContent = (
 		<Popover

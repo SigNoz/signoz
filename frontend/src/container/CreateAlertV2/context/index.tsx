@@ -5,6 +5,7 @@ import { useTestAlertRule } from 'hooks/alerts/useTestAlertRule';
 import { useUpdateAlertRule } from 'hooks/alerts/useUpdateAlertRule';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import { cloneDeep } from 'lodash-es';
 import {
 	createContext,
 	useCallback,
@@ -67,6 +68,7 @@ export function CreateAlertProvider(
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
+	const ingestionLimitFromURL = queryParams.get(QueryParams.ingestionLimit);
 
 	const [alertType, setAlertType] = useState<AlertTypes>(() => {
 		if (isEditMode) {
@@ -122,7 +124,17 @@ export function CreateAlertProvider(
 		setThresholdState({
 			type: 'RESET',
 		});
-	}, [alertType]);
+
+		if (ingestionLimitFromURL) {
+			const thresholds = cloneDeep(INITIAL_ALERT_THRESHOLD_STATE.thresholds);
+
+			thresholds[0].thresholdValue = parseInt(ingestionLimitFromURL, 10);
+			setThresholdState({
+				type: 'SET_THRESHOLDS',
+				payload: thresholds,
+			});
+		}
+	}, [alertType, ingestionLimitFromURL]);
 
 	useEffect(() => {
 		if (isEditMode && initialAlertState) {
