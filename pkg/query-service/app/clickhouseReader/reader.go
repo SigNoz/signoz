@@ -307,7 +307,6 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, start, end
 	fmt.Println("query", query)
 
 	rows, err := r.db.Query(ctx, query, clickhouse.Named("start", start), clickhouse.Named("services", services))
-	fmt.Println("----> GetTopLevelOperations query", query)
 
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
@@ -469,14 +468,6 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
 				clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
 			)
-
-			fmt.Println("----> query", query)
-			fmt.Println("----> args", args)
-			fmt.Println("----> start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10))
-			fmt.Println("----> start", strconv.FormatInt(queryParams.Start.UnixNano(), 10))
-			fmt.Println("----> end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10))
-			fmt.Println("----> end", strconv.FormatInt(queryParams.End.UnixNano(), 10))
-			fmt.Println("----> resourceSubQuery", resourceSubQuery)
 
 			err = r.db.QueryRow(
 				ctx,
