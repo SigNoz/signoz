@@ -3,6 +3,7 @@ package implspanpercentile
 import (
 	"context"
 	"fmt"
+	"sort"
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -10,42 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/require"
 )
-
-func TestEscapeSQLString(t *testing.T) {
-	testCases := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "string without quotes",
-			input:    "test-name",
-			expected: "test-name",
-		},
-		{
-			name:     "string with single quote",
-			input:    "test's name",
-			expected: "test''s name",
-		},
-		{
-			name:     "string with multiple quotes",
-			input:    "it's a 'test'",
-			expected: "it''s a ''test''",
-		},
-		{
-			name:     "empty string",
-			input:    "",
-			expected: "",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := escapeSQLString(tc.input)
-			require.Equal(t, tc.expected, result)
-		})
-	}
-}
 
 func TestBuildSpanPercentileQuery(t *testing.T) {
 	req := &spanpercentiletypes.SpanPercentileRequest{
@@ -68,16 +33,29 @@ func TestBuildSpanPercentileQuery(t *testing.T) {
 	query, ok := result.CompositeQuery.Queries[0].Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
 	require.True(t, ok, "Spec should be QueryBuilderQuery type")
 
+	require.Equal(t, "span_percentile", query.Name)
+	require.Equal(t, telemetrytypes.SignalTraces, query.Signal)
+
 	require.Equal(t, 4, len(query.Aggregations))
+	require.Equal(t, "p50(duration_nano)", query.Aggregations[0].Expression)
 	require.Equal(t, "p50_duration_nano", query.Aggregations[0].Alias)
+	require.Equal(t, "p90(duration_nano)", query.Aggregations[1].Expression)
 	require.Equal(t, "p90_duration_nano", query.Aggregations[1].Alias)
+	require.Equal(t, "p99(duration_nano)", query.Aggregations[2].Expression)
 	require.Equal(t, "p99_duration_nano", query.Aggregations[2].Alias)
+	require.Equal(t, "(100.0 * countIf(duration_nano <= 100000)) / count()", query.Aggregations[3].Expression)
 	require.Equal(t, "percentile_position", query.Aggregations[3].Alias)
 
-	require.Contains(t, query.Filter.Expression, "service.name = 'test-service'")
-	require.Contains(t, query.Filter.Expression, "name = 'test'")
+	require.NotNil(t, query.Filter)
+	require.Equal(t, "service.name = 'test-service' AND name = 'test'", query.Filter.Expression)
 
-	require.Equal(t, telemetrytypes.SignalTraces, query.Signal)
+	require.Equal(t, 2, len(query.GroupBy))
+	require.Equal(t, "service.name", query.GroupBy[0].TelemetryFieldKey.Name)
+	require.Equal(t, telemetrytypes.FieldContextResource, query.GroupBy[0].TelemetryFieldKey.FieldContext)
+	require.Equal(t, "name", query.GroupBy[1].TelemetryFieldKey.Name)
+	require.Equal(t, telemetrytypes.FieldContextSpan, query.GroupBy[1].TelemetryFieldKey.FieldContext)
+
+	require.Equal(t, qbtypes.RequestTypeScalar, result.RequestType)
 }
 
 func TestBuildSpanPercentileQueryWithResourceAttributes(t *testing.T) {
@@ -141,8 +119,31 @@ func TestBuildSpanPercentileQueryWithResourceAttributes(t *testing.T) {
 			require.True(t, ok, "Spec should be QueryBuilderQuery type")
 
 			require.Equal(t, tc.expectedFilterExpr, query.Filter.Expression)
+
 			require.Equal(t, 4, len(query.Aggregations))
+			require.Equal(t, "p50(duration_nano)", query.Aggregations[0].Expression)
+			require.Equal(t, "p90(duration_nano)", query.Aggregations[1].Expression)
+			require.Equal(t, "p99(duration_nano)", query.Aggregations[2].Expression)
 			require.Contains(t, query.Aggregations[3].Expression, fmt.Sprintf("countIf(duration_nano <= %d)", tc.request.DurationNano))
+
+			expectedGroupByCount := 2 + len(tc.request.ResourceAttributes)
+			require.Equal(t, expectedGroupByCount, len(query.GroupBy))
+			require.Equal(t, "service.name", query.GroupBy[0].TelemetryFieldKey.Name)
+			require.Equal(t, "name", query.GroupBy[1].TelemetryFieldKey.Name)
+
+			for i, key := range getSortedKeys(tc.request.ResourceAttributes) {
+				require.Equal(t, key, query.GroupBy[2+i].TelemetryFieldKey.Name)
+				require.Equal(t, telemetrytypes.FieldContextResource, query.GroupBy[2+i].TelemetryFieldKey.FieldContext)
+			}
 		})
 	}
+}
+
+func getSortedKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }

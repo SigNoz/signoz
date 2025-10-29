@@ -12,7 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -25,7 +24,6 @@ func NewModule(
 	querier querier.Querier,
 	preferenceModule preference.Module,
 	_ factory.ProviderSettings,
-	_ telemetrytypes.MetadataStore,
 ) spanpercentile.Module {
 	return &module{
 		querier:          querier,

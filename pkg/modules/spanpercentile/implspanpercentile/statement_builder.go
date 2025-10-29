@@ -26,14 +26,14 @@ func buildSpanPercentileQuery(
 	sort.Strings(attrKeys)
 
 	filterConditions := []string{
-		fmt.Sprintf("service.name = '%s'", escapeSQLString(req.ServiceName)),
-		fmt.Sprintf("name = '%s'", escapeSQLString(req.Name)),
+		fmt.Sprintf("service.name = '%s'", strings.ReplaceAll(req.ServiceName, "'", "\\'")),
+		fmt.Sprintf("name = '%s'", strings.ReplaceAll(req.Name, "'", "\\'")),
 	}
 
 	for _, key := range attrKeys {
 		value := req.ResourceAttributes[key]
 		filterConditions = append(filterConditions,
-			fmt.Sprintf("%s = '%s'", key, escapeSQLString(value)))
+			fmt.Sprintf("%s = '%s'", key, strings.ReplaceAll(value, "'", "\\'")))
 	}
 
 	filterExpr := strings.Join(filterConditions, " AND ")
@@ -115,8 +115,4 @@ func buildSpanPercentileQuery(
 			FormatTableResultForUI: true,
 		},
 	}, nil
-}
-
-func escapeSQLString(s string) string {
-	return strings.ReplaceAll(s, "'", "''")
 }
