@@ -106,4 +106,7 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [clickhouselogsexporter, signozmeter]
-
+    metrics/meter:
+      receivers: [signozmeter]
+      processors: [batch/meter]
+      exporters: [signozclickhousemeter]
