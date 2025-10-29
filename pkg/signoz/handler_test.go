@@ -16,8 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/tokenizer/tokenizertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,8 +35,7 @@ func TestNewHandlers(t *testing.T) {
 	require.NoError(t, err)
 	tokenizer := tokenizertest.New()
 	emailing := emailingtest.New()
-	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherEqual)
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, telemetryStore)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil)
 
 	handlers := NewHandlers(modules, providerSettings)
 

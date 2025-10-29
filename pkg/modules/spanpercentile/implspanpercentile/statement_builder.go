@@ -26,14 +26,14 @@ func buildSpanPercentileQuery(
 	sort.Strings(attrKeys)
 
 	filterConditions := []string{
-		fmt.Sprintf("service.name = '%s'", strings.ReplaceAll(req.ServiceName, "'", "\\'")),
-		fmt.Sprintf("name = '%s'", strings.ReplaceAll(req.Name, "'", "\\'")),
+		fmt.Sprintf("resource.service.name:string = '%s'", strings.ReplaceAll(req.ServiceName, "'", `\'`)),
+		fmt.Sprintf("name = '%s'", strings.ReplaceAll(req.Name, "'", `\'`)),
 	}
 
 	for _, key := range attrKeys {
 		value := req.ResourceAttributes[key]
 		filterConditions = append(filterConditions,
-			fmt.Sprintf("%s = '%s'", key, strings.ReplaceAll(value, "'", "\\'")))
+			fmt.Sprintf("resource.%s:string = '%s'", key, strings.ReplaceAll(value, "'", `\'`)))
 	}
 
 	filterExpr := strings.Join(filterConditions, " AND ")

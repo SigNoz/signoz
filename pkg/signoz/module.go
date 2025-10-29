@@ -32,7 +32,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
@@ -65,18 +64,16 @@ func NewModules(
 	analytics analytics.Analytics,
 	querier querier.Querier,
 	authNs map[authtypes.AuthNProvider]authn.AuthN,
-	telemetryStore telemetrystore.TelemetryStore,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
 	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics)
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
-	preference := implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference())
 
 	return Modules{
 		OrgGetter:      orgGetter,
 		OrgSetter:      orgSetter,
-		Preference:     preference,
+		Preference:     implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
 		SavedView:      implsavedview.NewModule(sqlstore),
 		Apdex:          implapdex.NewModule(sqlstore),
 		Dashboard:      impldashboard.NewModule(sqlstore, providerSettings, analytics),

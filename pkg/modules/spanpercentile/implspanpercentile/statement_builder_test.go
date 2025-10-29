@@ -47,7 +47,7 @@ func TestBuildSpanPercentileQuery(t *testing.T) {
 	require.Equal(t, "percentile_position", query.Aggregations[3].Alias)
 
 	require.NotNil(t, query.Filter)
-	require.Equal(t, "service.name = 'test-service' AND name = 'test'", query.Filter.Expression)
+	require.Equal(t, "resource.service.name:string = 'test-service' AND name = 'test'", query.Filter.Expression)
 
 	require.Equal(t, 2, len(query.GroupBy))
 	require.Equal(t, "service.name", query.GroupBy[0].TelemetryFieldKey.Name)
@@ -74,7 +74,7 @@ func TestBuildSpanPercentileQueryWithResourceAttributes(t *testing.T) {
 				Start:              1640995200000,
 				End:                1640995800000,
 			},
-			expectedFilterExpr: "service.name = 'user-service' AND name = 'GET /api/users'",
+			expectedFilterExpr: "resource.service.name:string = 'user-service' AND name = 'GET /api/users'",
 		},
 		{
 			name: "query with service.name and deployment.environment",
@@ -88,7 +88,7 @@ func TestBuildSpanPercentileQueryWithResourceAttributes(t *testing.T) {
 				Start: 1640995200000,
 				End:   1640995800000,
 			},
-			expectedFilterExpr: "service.name = 'order-service' AND name = 'POST /api/orders' AND deployment.environment = 'production'",
+			expectedFilterExpr: "resource.service.name:string = 'order-service' AND name = 'POST /api/orders' AND resource.deployment.environment:string = 'production'",
 		},
 		{
 			name: "query with multiple resource attributes",
@@ -104,7 +104,7 @@ func TestBuildSpanPercentileQueryWithResourceAttributes(t *testing.T) {
 				Start: 1640995200000,
 				End:   1640995800000,
 			},
-			expectedFilterExpr: "service.name = 'inventory-service' AND name = 'DELETE /api/items' AND cloud.platform = 'aws' AND deployment.environment = 'staging' AND k8s.cluster.name = 'staging-cluster'",
+			expectedFilterExpr: "resource.service.name:string = 'inventory-service' AND name = 'DELETE /api/items' AND resource.cloud.platform:string = 'aws' AND resource.deployment.environment:string = 'staging' AND resource.k8s.cluster.name:string = 'staging-cluster'",
 		},
 	}
 
