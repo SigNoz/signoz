@@ -8,7 +8,6 @@ import {
 	AlertThresholdOperator,
 } from 'container/CreateAlertV2/context/types';
 import { getSelectedQueryOptions } from 'container/FormAlertRules/utils';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight } from 'lucide-react';
 import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -398,12 +397,6 @@ export function RoutingPolicyBanner({
 	notificationSettings,
 	setNotificationSettings,
 }: RoutingPolicyBannerProps): JSX.Element {
-	const { safeNavigate } = useSafeNavigate();
-
-	const goToRoutingPolicies = (): void => {
-		safeNavigate(ROUTING_POLICIES_ROUTE);
-	};
-
 	return (
 		<div className="routing-policies-info-banner">
 			<Typography.Text>
@@ -412,7 +405,7 @@ export function RoutingPolicyBanner({
 			<div className="routing-policies-info-banner-right">
 				<Switch
 					checked={notificationSettings.routingPolicies}
-				  data-testid="routing-policies-switch"
+					data-testid="routing-policies-switch"
 					onChange={(value): void => {
 						setNotificationSettings({
 							type: 'SET_ROUTING_POLICIES',
@@ -421,9 +414,10 @@ export function RoutingPolicyBanner({
 					}}
 				/>
 				<Button
-					onClick={goToRoutingPolicies}
-					type="text"
+					href={ROUTING_POLICIES_ROUTE}
+					type="link"
 					className="view-routing-policies-button"
+					data-testid="view-routing-policies-button"
 				>
 					View Routing Policies
 					<ArrowRight size={14} />

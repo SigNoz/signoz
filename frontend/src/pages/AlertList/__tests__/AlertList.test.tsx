@@ -19,16 +19,12 @@ jest.mock('react-router-dom', () => ({
 	useLocation: (): unknown => mockUseLocation(),
 }));
 
-const mockGet = jest.fn();
+let mockUrlQuery: URLSearchParams;
 const mockSet = jest.fn();
 const mockDelete = jest.fn();
 jest.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
-	default: (): unknown => ({
-		get: mockGet,
-		set: mockSet,
-		delete: mockDelete,
-	}),
+	default: (): URLSearchParams => mockUrlQuery,
 }));
 
 const mockSafeNavigate = jest.fn();
@@ -80,9 +76,30 @@ const mockLocation = (pathname: string): void => {
 		pathname,
 	});
 };
+
 const mockQueryParams = (params: Record<string, string | null>): void => {
-	mockGet.mockImplementation((param: string) => params[param] ?? null);
+	const realUrlQuery = new URLSearchParams();
+	Object.entries(params).forEach(([key, value]) => {
+		if (value !== null) {
+			realUrlQuery.set(key, value);
+		}
+	});
+
+	mockSet.mockImplementation((key: string, value: string) => {
+		realUrlQuery.set(key, value);
+	});
+	mockDelete.mockImplementation((key: string) => {
+		realUrlQuery.delete(key);
+	});
+
+	mockUrlQuery = Object.create(URLSearchParams.prototype, {
+		set: { value: mockSet },
+		delete: { value: mockDelete },
+		toString: { value: (): string => realUrlQuery.toString() },
+		get: { value: (key: string): string | null => realUrlQuery.get(key) },
+	});
 };
+
 const clickTab = (tabText: string): void => {
 	const tab = screen.getByText(tabText).closest(TAB_SELECTOR);
 	if (tab) {

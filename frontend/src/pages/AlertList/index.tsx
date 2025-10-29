@@ -29,19 +29,14 @@ function AllAlertList(): JSX.Element {
 	const isAlertHistory = location.pathname === ROUTES.ALERT_HISTORY;
 	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
 
-	const search = urlQuery.get('search');
-
 	const handleConfigurationTabChange = useCallback(
 		(subTab: string): void => {
 			urlQuery.set('tab', 'Configuration');
 			urlQuery.set('subTab', subTab);
-			let params = `tab=Configuration&subTab=${subTab}`;
-			if (search) {
-				params += `&search=${search}`;
-			}
-			safeNavigate(`/alerts?${params}`);
+			urlQuery.delete('search');
+			safeNavigate(`/alerts?${urlQuery.toString()}`);
 		},
-		[search, safeNavigate, urlQuery],
+		[safeNavigate, urlQuery],
 	);
 
 	const configurationTab = useMemo(() => {
@@ -111,22 +106,20 @@ function AllAlertList(): JSX.Element {
 			activeKey={tab || 'AlertRules'}
 			onChange={(tab): void => {
 				urlQuery.set('tab', tab);
-				let params = `tab=${tab}`;
 
 				// If navigating to Configuration tab, set default subTab
 				if (tab === 'Configuration') {
 					const currentSubTab = subTab || PLANNED_DOWNTIME_SUB_TAB;
 					urlQuery.set('subTab', currentSubTab);
-					params += `&subTab=${currentSubTab}`;
 				} else {
 					// Clear subTab when navigating out of Configuration tab
 					urlQuery.delete('subTab');
 				}
 
-				if (search) {
-					params += `&search=${search}`;
-				}
-				safeNavigate(`/alerts?${params}`);
+				// Clear search when navigating to any tab
+				urlQuery.delete('search');
+
+				safeNavigate(`/alerts?${urlQuery.toString()}`);
 			}}
 			className={`alerts-container ${
 				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''
