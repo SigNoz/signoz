@@ -144,11 +144,11 @@ describe('SpanLogs', () => {
 			screen.getByText('No logs found for selected span.'),
 		).toBeInTheDocument();
 		expect(
-			screen.getByText('Try viewing logs for the current trace.'),
+			screen.getByText('View logs for the current trace.'),
 		).toBeInTheDocument();
 		expect(
 			screen.getByRole('button', {
-				name: /log explorer/i,
+				name: /view logs/i,
 			}),
 		).toBeInTheDocument();
 
@@ -205,7 +205,7 @@ describe('SpanLogs', () => {
 		);
 
 		const logExplorerButton = screen.getByRole('button', {
-			name: /log explorer/i,
+			name: /view logs/i,
 		});
 		await user.click(logExplorerButton);
 
