@@ -1,10 +1,15 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { formattedValueToString, getValueFormat } from '@grafana/data';
 import * as Sentry from '@sentry/react';
 import { isNaN } from 'lodash-es';
 
+const DEFAULT_SIGNIFICANT_DIGITS = 5;
+
+export type PrecisionOption = 0 | 1 | 2 | 3 | 4 | 'full';
+
 /**
  * Formats a number for display, preserving leading zeros after the decimal point
- * and showing up to 5 digits after the first non-zero decimal digit.
+ * and showing up to DEFAULT_SIGNIFICANT_DIGITS digits after the first non-zero decimal digit.
  * It avoids scientific notation and removes unnecessary trailing zeros.
  *
  * @example
@@ -15,7 +20,10 @@ import { isNaN } from 'lodash-es';
  * @param value The number to format.
  * @returns The formatted string.
  */
-const formatDecimalWithLeadingZeros = (value: number): string => {
+const formatDecimalWithLeadingZeros = (
+	value: number,
+	precision: PrecisionOption,
+): string => {
 	if (value === 0) {
 		return '0';
 	}
@@ -41,9 +49,16 @@ const formatDecimalWithLeadingZeros = (value: number): string => {
 		return integerPart;
 	}
 
-	// Determine the number of decimals to keep: leading zeros + up to 5 significant digits.
-	const decimalsToKeep = firstNonZeroIndex + 5;
+	// Determine the number of decimals to keep: leading zeros + up to N significant digits.
+	const significantDigits =
+		precision === 'full' ? DEFAULT_SIGNIFICANT_DIGITS : precision;
+	const decimalsToKeep = firstNonZeroIndex + (significantDigits || 0);
 	const trimmedDecimalPart = decimalPart.substring(0, decimalsToKeep);
+
+	// If precision is 0, we drop the decimal part entirely.
+	if (precision === 0) {
+		return integerPart;
+	}
 
 	// Remove any trailing zeros from the result to keep it clean.
 	const finalDecimalPart = trimmedDecimalPart.replace(/0+$/, '');
@@ -62,6 +77,7 @@ const formatDecimalWithLeadingZeros = (value: number): string => {
 export const getYAxisFormattedValue = (
 	value: string,
 	format: string,
+	precision: PrecisionOption = 2, // default precision requested
 ): string => {
 	const numValue = parseFloat(value);
 
@@ -72,25 +88,39 @@ export const getYAxisFormattedValue = (
 
 	const decimalPlaces = value.split('.')[1]?.length || undefined;
 
-	// Use high-precision formatter for the 'none' format.
+	// Use custom formatter for the 'none' format honoring precision
 	if (format === 'none') {
-		return formatDecimalWithLeadingZeros(numValue);
+		return formatDecimalWithLeadingZeros(numValue, precision);
 	}
 
 	// For all other standard formats, delegate to grafana/data's built-in formatter.
+	const computeDecimals = (): number | undefined => {
+		if (precision === 'full') {
+			return decimalPlaces && decimalPlaces >= DEFAULT_SIGNIFICANT_DIGITS
+				? decimalPlaces
+				: DEFAULT_SIGNIFICANT_DIGITS;
+		}
+		return precision;
+	};
+
+	const fallbackFormat = (): string => {
+		if (precision === 'full') return numValue.toString();
+		if (precision === 0) return Math.round(numValue).toString();
+		return numValue
+			.toFixed(precision)
+			.replace(/(\.[0-9]*[1-9])0+$/, '$1') // trimming zeros
+			.replace(/\.$/, '');
+	};
+
 	try {
 		const formatter = getValueFormat(format);
-		const formattedValue = formatter(
-			numValue,
-			decimalPlaces && decimalPlaces >= 5 ? decimalPlaces : 5,
-			undefined,
-		);
+		const formattedValue = formatter(numValue, computeDecimals(), undefined);
 		if (formattedValue.text && formattedValue.text.includes('.')) {
 			formattedValue.text = formatDecimalWithLeadingZeros(
 				parseFloat(formattedValue.text),
+				precision,
 			);
 		}
-
 		return formattedValueToString(formattedValue);
 	} catch (error) {
 		Sentry.captureEvent({
@@ -99,12 +129,13 @@ export const getYAxisFormattedValue = (
 			}`,
 			level: 'error',
 		});
-		// Fallback
-		return numValue.toString();
+		return fallbackFormat();
 	}
 };
 
 export const getToolTipValue = (
 	value: string | number,
 	format?: string,
-): string => getYAxisFormattedValue(value?.toString(), format || 'none');
+	precision?: PrecisionOption,
+): string =>
+	getYAxisFormattedValue(value?.toString(), format || 'none', precision);
