@@ -1,0 +1,58 @@
+.panel-markers-control {
+	padding: 16px;
+	.panel-markers-view-controller {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 16px;
+	}
+
+	.markers-control-skeleton {
+		display: flex;
+		align-items: center;
+		gap: 24px;
+		margin-top: 8px;
+		.ant-skeleton-input{
+			width: 230px;
+		}
+	}
+
+	.panel-markers-inputs-section {
+		display: flex;
+		align-items: center;
+		gap: 24px;
+		margin-top: 8px;
+		.panel-markers-select-container {
+			display: flex;
+			align-items: center;
+			margin-bottom: 8px;
+            .custom-multiselect-wrapper {
+                width: fit-content;
+				min-width: 230px;
+            }
+		}
+	}
+}
+
+.variable-name {
+	display: flex;
+	min-width: 56px;
+	height: 32px;
+	padding: 6px 6px 6px 8px;
+	align-items: center;
+	gap: 4px;
+	border-radius: 2px 0px 0px 2px;
+	border: 1px solid var(--bg-slate-400);
+	background: var(--bg-ink-300);
+	color: var(--bg-robin-300);
+	font-family: Inter;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 16px;
+
+	.info-icon {
+		margin-left: 4px;
+		color: var(--bg-vanilla-400);
+	}
+}

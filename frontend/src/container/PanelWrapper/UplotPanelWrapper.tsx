@@ -1,8 +1,11 @@
+/* eslint-disable sonarjs/no-duplicate-string */
+
 import './UplotPanelWrapper.styles.scss';
 
 import { Alert } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Uplot from 'components/Uplot';
+import { verticalMarkersPlugin } from 'components/Uplot/plugins/verticalMarkersPlugin';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import GraphManager from 'container/GridCardLayout/GridCard/FullView/GraphManager';
 import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
@@ -17,6 +20,7 @@ import { cloneDeep, isEqual, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { ContextMenu, useCoordinates } from 'periscope/components/ContextMenu';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useMarkers } from 'providers/Markers/Markers';
 import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
@@ -55,6 +59,32 @@ function UplotPanelWrapper({
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const { currentQuery } = useQueryBuilder();
+	const { filteredMarkersData, shouldShowMarkers } = useMarkers();
+
+	const markersPlugin: uPlot.Plugin | null = useMemo(() => {
+		if (shouldShowMarkers) {
+			console.log('*** filteredMarkersData', filteredMarkersData);
+			console.log('*** shouldShowMarkers', {
+				markersData: [
+					{ id: 'm1', val: 1760625000, stroke: 'rgba(96, 255, 128, 0.95)' },
+					{ id: 'm2', val: 1760630000, stroke: 'rgba(255, 96, 96, 0.95)' },
+					{ id: 'm3', val: 1760640000, stroke: 'rgba(255, 96, 96, 0.95)' },
+				],
+				lineType: [6, 4],
+				width: 1,
+			});
+			return verticalMarkersPlugin({
+				markersData: [
+					{ id: 'm1', val: 1760625000, stroke: 'rgba(96, 255, 128, 0.95)' },
+					{ id: 'm2', val: 1760630000, stroke: 'rgba(255, 96, 96, 0.95)' },
+					{ id: 'm3', val: 1760640000, stroke: 'rgba(255, 96, 96, 0.95)' },
+				],
+				lineType: [6, 4],
+				width: 1,
+			});
+		}
+		return null;
+	}, [shouldShowMarkers, filteredMarkersData]);
 
 	const [hiddenGraph, setHiddenGraph] = useState<{ [key: string]: boolean }>();
 
@@ -249,6 +279,7 @@ function UplotPanelWrapper({
 				}) => {
 					legendScrollPositionRef.current = position;
 				},
+				customPlugins: [...(markersPlugin ? [markersPlugin] : [])],
 			}),
 		[
 			queryResponse.data?.payload,
@@ -270,6 +301,7 @@ function UplotPanelWrapper({
 			onClickHandler,
 			widget,
 			stackedBarChart,
+			markersPlugin,
 		],
 	);
 

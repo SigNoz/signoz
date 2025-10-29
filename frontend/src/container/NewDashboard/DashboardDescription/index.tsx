@@ -13,6 +13,7 @@ import {
 } from 'antd';
 import logEvent from 'api/common/logEvent';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
+import PanelMarkersControl from 'components/PanelMarkersControl';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -488,6 +489,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					<DashboardVariableSelection />
 				</section>
 			)}
+			<PanelMarkersControl />
 			<DashboardGraphSlider />
 
 			<Modal

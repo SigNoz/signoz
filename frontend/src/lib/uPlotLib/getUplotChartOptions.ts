@@ -87,6 +87,7 @@ export interface GetUPlotChartOptions {
 		scrollTop: number;
 		scrollLeft: number;
 	}) => void;
+	customPlugins?: uPlot.Plugin[];
 }
 
 /** the function converts series A , series B , series C to
@@ -218,6 +219,7 @@ export const getUPlotChartOptions = ({
 	query,
 	legendScrollPosition,
 	setLegendScrollPosition,
+	customPlugins = [],
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -387,6 +389,7 @@ export const getUPlotChartOptions = ({
 					],
 				},
 			},
+			...customPlugins,
 		],
 		hooks: {
 			draw: [
