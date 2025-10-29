@@ -8,7 +8,7 @@ const setRetentionV2 = async ({
 	type,
 	defaultTTLDays,
 	coldStorageVolume,
-	coldStorageDuration,
+	coldStorageDurationDays,
 	ttlConditions,
 }: PropsV2): Promise<SuccessResponseV2<PayloadPropsV2>> => {
 	try {
@@ -16,7 +16,7 @@ const setRetentionV2 = async ({
 			type,
 			defaultTTLDays,
 			coldStorageVolume,
-			coldStorageDuration,
+			coldStorageDurationDays,
 			ttlConditions,
 		});
 
