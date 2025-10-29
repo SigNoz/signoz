@@ -6,28 +6,23 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	querier          querier.Querier
-	preferenceModule preference.Module
+	querier querier.Querier
 }
 
 func NewModule(
 	querier querier.Querier,
-	preferenceModule preference.Module,
 	_ factory.ProviderSettings,
 ) spanpercentile.Module {
 	return &module{
-		querier:          querier,
-		preferenceModule: preferenceModule,
+		querier: querier,
 	}
 }
 
@@ -45,12 +40,6 @@ func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, userI
 	if err != nil {
 		return nil, err
 	}
-
-	attrKeys := make([]any, 0, len(req.ResourceAttributes))
-	for key := range req.ResourceAttributes {
-		attrKeys = append(attrKeys, key)
-	}
-	_ = m.preferenceModule.UpdateByUser(ctx, userID, preferencetypes.NameSpanPercentileResourceAttributes, attrKeys)
 
 	return transformToSpanPercentileResponse(result)
 }
