@@ -252,11 +252,11 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 	it('should detect infra metadata from span attributes', async () => {
 		renderSpanDetailsDrawer();
 
-		// Click on infra tab
-		const infraButton = screen.getByRole('radio', { name: /infra/i });
-		expect(infraButton).toBeInTheDocument();
+		// Click on metrics tab
+		const infraMetricsButton = screen.getByRole('radio', { name: /metrics/i });
+		expect(infraMetricsButton).toBeInTheDocument();
 
-		fireEvent.click(infraButton);
+		fireEvent.click(infraMetricsButton);
 
 		// Wait for infra metrics to load
 		await waitFor(() => {
@@ -301,7 +301,7 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 
 		// Should NOT show infra tab, only logs tab
 		expect(
-			screen.queryByRole('radio', { name: /infra/i }),
+			screen.queryByRole('radio', { name: /metrics/i }),
 		).not.toBeInTheDocument();
 		expect(screen.getByRole('radio', { name: /logs/i })).toBeInTheDocument();
 	});
@@ -310,7 +310,7 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		renderSpanDetailsDrawer();
 
 		// Should show both logs and infra tabs
-		expect(screen.getByRole('radio', { name: /infra/i })).toBeInTheDocument();
+		expect(screen.getByRole('radio', { name: /metrics/i })).toBeInTheDocument();
 		expect(screen.getByRole('radio', { name: /logs/i })).toBeInTheDocument();
 	});
 
@@ -328,8 +328,8 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		);
 
 		// Click on infra tab
-		const infraButton = screen.getByRole('radio', { name: /infra/i });
-		fireEvent.click(infraButton);
+		const infraMetricsButton = screen.getByRole('radio', { name: /metrics/i });
+		fireEvent.click(infraMetricsButton);
 
 		await waitFor(() => {
 			expect(screen.getByTestId('infra-metrics')).toBeInTheDocument();
@@ -364,8 +364,8 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		);
 
 		// Click on infra tab
-		const infraButton = screen.getByRole('radio', { name: /infra/i });
-		fireEvent.click(infraButton);
+		const infraMetricsButton = screen.getByRole('radio', { name: /metrics/i });
+		fireEvent.click(infraMetricsButton);
 
 		await waitFor(() => {
 			expect(screen.getByTestId('infra-metrics')).toBeInTheDocument();
@@ -400,8 +400,8 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		);
 
 		// Click on infra tab
-		const infraButton = screen.getByRole('radio', { name: /infra/i });
-		fireEvent.click(infraButton);
+		const infraMetricsButton = screen.getByRole('radio', { name: /metrics/i });
+		fireEvent.click(infraMetricsButton);
 
 		await waitFor(() => {
 			expect(screen.getByTestId('infra-metrics')).toBeInTheDocument();
@@ -427,10 +427,10 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 
 		// Initially should show logs tab content
 		const logsButton = screen.getByRole('radio', { name: /logs/i });
-		const infraButton = screen.getByRole('radio', { name: /infra/i });
+		const infraMetricsButton = screen.getByRole('radio', { name: /metrics/i });
 
 		expect(logsButton).toBeInTheDocument();
-		expect(infraButton).toBeInTheDocument();
+		expect(infraMetricsButton).toBeInTheDocument();
 
 		// Ensure logs tab is active and wait for content to load
 		fireEvent.click(logsButton);
@@ -441,7 +441,7 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		});
 
 		// Click on infra tab
-		fireEvent.click(infraButton);
+		fireEvent.click(infraMetricsButton);
 
 		await waitFor(() => {
 			expect(screen.getByTestId('infra-metrics')).toBeInTheDocument();
@@ -470,11 +470,11 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		renderSpanDetailsDrawer();
 
 		// Should show infra tab when span has any of: clusterName, podName, nodeName, hostName
-		expect(screen.getByRole('radio', { name: /infra/i })).toBeInTheDocument();
+		expect(screen.getByRole('radio', { name: /metrics/i })).toBeInTheDocument();
 
 		// Click on infra tab
-		const infraButton = screen.getByRole('radio', { name: /infra/i });
-		fireEvent.click(infraButton);
+		const infraMetricsButton = screen.getByRole('radio', { name: /metrics/i });
+		fireEvent.click(infraMetricsButton);
 
 		await waitFor(() => {
 			expect(screen.getByTestId('infra-metrics')).toBeInTheDocument();
