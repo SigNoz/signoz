@@ -191,10 +191,12 @@ func (r *BaseRule) currentAlerts() []*ruletypes.Alert {
 	return alerts
 }
 
-// ActiveAlertsLabelFP returns a map of active alert labels fingerprint to struct{}{}
-// the fingerprint is computed using the QueryResultLables.Hash() method
+// ActiveAlertsLabelFP returns a map of active alert labels fingerprint and
+// the fingerprint is computed using the QueryResultLables.Hash() method.
 // We use the QueryResultLables instead of labels as these labels are raw labels
 // that we get from the sample.
+// This is useful in cases where we want to check if an alert is still active
+// based on the labels we have.
 func (r *BaseRule) ActiveAlertsLabelFP() map[uint64]struct{} {
 	activeAlerts := make(map[uint64]struct{}, len(r.Active))
 	for _, alert := range r.Active {
