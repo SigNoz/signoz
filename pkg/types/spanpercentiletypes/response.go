@@ -6,9 +6,9 @@ type SpanPercentileResponse struct {
 }
 
 type PercentileStats struct {
-	P50 int64 `json:"p50"`
-	P90 int64 `json:"p90"`
-	P99 int64 `json:"p99"`
+	P50 float64 `json:"p50"`
+	P90 float64 `json:"p90"`
+	P99 float64 `json:"p99"`
 }
 
 type PercentilePosition struct {

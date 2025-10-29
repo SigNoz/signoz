@@ -82,15 +82,15 @@ func transformToSpanPercentileResponse(queryResult *qbtypes.QueryRangeResponse) 
 		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing __result_3 column")
 	}
 
-	p50, err := toInt64(row[p50Idx])
+	p50, err := toFloat64(row[p50Idx])
 	if err != nil {
 		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no spans found matching the specified criteria")
 	}
-	p90, err := toInt64(row[p90Idx])
+	p90, err := toFloat64(row[p90Idx])
 	if err != nil {
 		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no spans found matching the specified criteria")
 	}
-	p99, err := toInt64(row[p99Idx])
+	p99, err := toFloat64(row[p99Idx])
 	if err != nil {
 		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no spans found matching the specified criteria")
 	}
@@ -117,48 +117,10 @@ func transformToSpanPercentileResponse(queryResult *qbtypes.QueryRangeResponse) 
 	}, nil
 }
 
-func toInt64(val any) (int64, error) {
-	switch v := val.(type) {
-	case int64:
-		return v, nil
-	case int:
-		return int64(v), nil
-	case uint64:
-		return int64(v), nil
-	case float64:
-		if v != v {
-			return 0, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is NaN")
-		}
-		return int64(v), nil
-	case float32:
-		if v != v {
-			return 0, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is NaN")
-		}
-		return int64(v), nil
-	default:
-		return 0, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert %T to int64", val)
-	}
-}
-
 func toFloat64(val any) (float64, error) {
-	switch v := val.(type) {
-	case float64:
-		if v != v {
-			return 0, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is NaN")
-		}
-		return v, nil
-	case float32:
-		if v != v {
-			return 0, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is NaN")
-		}
-		return float64(v), nil
-	case int:
-		return float64(v), nil
-	case int64:
-		return float64(v), nil
-	case uint64:
-		return float64(v), nil
-	default:
+	result, ok := val.(float64)
+	if !ok {
 		return 0, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert %T to float64", val)
 	}
+	return result, nil
 }
