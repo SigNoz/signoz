@@ -9,11 +9,11 @@ import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	Anvil,
+	BarChart2,
 	Bookmark,
 	Link2,
 	PanelRight,
 	Search,
-	Server,
 } from 'lucide-react';
 import {
 	Dispatch,
@@ -92,8 +92,8 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			baseOptions.push({
 				label: (
 					<div className="view-title">
-						<Server size={14} />
-						Infra
+						<BarChart2 size={14} />
+						Metrics
 					</div>
 				),
 				value: RelatedSignalsViews.INFRA,
