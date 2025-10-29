@@ -500,7 +500,10 @@ function QueryAddOns({
 								}
 								value={addOn}
 							>
-								<div className="add-on-tab-title">
+								<div
+									className="add-on-tab-title"
+									data-testid={`query-add-on-${addOn.key}`}
+								>
 									{addOn.icon}
 									{addOn.label}
 								</div>
