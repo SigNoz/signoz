@@ -405,11 +405,11 @@ type TTLParams struct {
 }
 
 type CustomRetentionTTLParams struct {
-	Type                  string                `json:"type"`
-	DefaultTTLDays        int                   `json:"defaultTTLDays"`
-	TTLConditions         []CustomRetentionRule `json:"ttlConditions"`
-	ColdStorageVolume     string                `json:"coldStorageVolume,omitempty"`
-	ToColdStorageDuration int64                 `json:"coldStorageDuration,omitempty"`
+	Type                      string                `json:"type"`
+	DefaultTTLDays            int                   `json:"defaultTTLDays"`
+	TTLConditions             []CustomRetentionRule `json:"ttlConditions"`
+	ColdStorageVolume         string                `json:"coldStorageVolume,omitempty"`
+	ToColdStorageDurationDays int64                 `json:"coldStorageDurationDays,omitempty"`
 }
 
 type CustomRetentionRule struct {
@@ -427,16 +427,16 @@ type GetCustomRetentionTTLResponse struct {
 	Status  string `json:"status"`
 
 	// V1 fields
-	LogsTime             int `json:"logs_ttl_duration_hrs,omitempty"`
-	LogsMoveTime         int `json:"logs_move_ttl_duration_hrs,omitempty"`
+	// LogsTime             int `json:"logs_ttl_duration_hrs,omitempty"`
+	// LogsMoveTime         int `json:"logs_move_ttl_duration_hrs,omitempty"`
 	ExpectedLogsTime     int `json:"expected_logs_ttl_duration_hrs,omitempty"`
 	ExpectedLogsMoveTime int `json:"expected_logs_move_ttl_duration_hrs,omitempty"`
 
 	// V2 fields
-	DefaultTTLDays        int                   `json:"default_ttl_days,omitempty"`
-	TTLConditions         []CustomRetentionRule `json:"ttl_conditions,omitempty"`
-	ColdStorageVolume     string                `json:"cold_storage_volume,omitempty"`
-	ColdStorageTTLDays    int                   `json:"cold_storage_ttl_days,omitempty"`
+	DefaultTTLDays     int                   `json:"default_ttl_days,omitempty"`
+	TTLConditions      []CustomRetentionRule `json:"ttl_conditions,omitempty"`
+	ColdStorageVolume  string                `json:"cold_storage_volume,omitempty"`
+	ColdStorageTTLDays int                   `json:"cold_storage_ttl_days,omitempty"`
 }
 
 type CustomRetentionTTLResponse struct {
