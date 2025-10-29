@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
@@ -18,37 +17,24 @@ import (
 )
 
 type module struct {
-	querier                   querier.Querier
-	preferenceModule          preference.Module
-	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
-	metadataStore             telemetrytypes.MetadataStore
+	querier          querier.Querier
+	preferenceModule preference.Module
 }
 
 func NewModule(
 	querier querier.Querier,
 	preferenceModule preference.Module,
-	providerSettings factory.ProviderSettings,
-	metadataStore telemetrytypes.MetadataStore,
+	_ factory.ProviderSettings,
+	_ telemetrytypes.MetadataStore,
 ) spanpercentile.Module {
-	resourceFilterFieldMapper := resourcefilter.NewFieldMapper()
-	resourceFilterConditionBuilder := resourcefilter.NewConditionBuilder(resourceFilterFieldMapper)
-	resourceFilterStmtBuilder := resourcefilter.NewTraceResourceFilterStatementBuilder(
-		providerSettings,
-		resourceFilterFieldMapper,
-		resourceFilterConditionBuilder,
-		metadataStore,
-	)
-
 	return &module{
-		querier:                   querier,
-		preferenceModule:          preferenceModule,
-		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
-		metadataStore:             metadataStore,
+		querier:          querier,
+		preferenceModule: preferenceModule,
 	}
 }
 
 func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*spanpercentiletypes.SpanPercentileResponse, error) {
-	queryRangeRequest, err := buildSpanPercentileQuery(ctx, req, m.resourceFilterStmtBuilder)
+	queryRangeRequest, err := buildSpanPercentileQuery(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -92,21 +78,21 @@ func transformToSpanPercentileResponse(queryResult *qbtypes.QueryRangeResponse) 
 		columnMap[col.Name] = i
 	}
 
-	p50Idx, ok := columnMap["p50_duration_nano"]
+	p50Idx, ok := columnMap["__result_0"]
 	if !ok {
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing p50_duration_nano column")
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing __result_0 column")
 	}
-	p90Idx, ok := columnMap["p90_duration_nano"]
+	p90Idx, ok := columnMap["__result_1"]
 	if !ok {
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing p90_duration_nano column")
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing __result_1 column")
 	}
-	p99Idx, ok := columnMap["p99_duration_nano"]
+	p99Idx, ok := columnMap["__result_2"]
 	if !ok {
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing p99_duration_nano column")
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing __result_2 column")
 	}
-	positionIdx, ok := columnMap["percentile_position"]
+	positionIdx, ok := columnMap["__result_3"]
 	if !ok {
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing percentile_position column")
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "missing __result_3 column")
 	}
 
 	p50, err := toInt64(row[p50Idx])
