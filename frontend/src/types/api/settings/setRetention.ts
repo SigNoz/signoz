@@ -11,7 +11,7 @@ export interface PropsV2 {
 	type: TTTLType;
 	defaultTTLDays: number;
 	coldStorageVolume: string;
-	coldStorageDuration: number;
+	coldStorageDurationDays: number;
 	ttlConditions: {
 		conditions: {
 			key: string;
