@@ -144,7 +144,10 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 			continue
 		}
 
-		// Prepare alert hash from series labels and threshold name
+		// Prepare alert hash from series labels and threshold name if recovery target option was provided
+		if threshold.RecoveryTarget == nil {
+			continue
+		}
 		sampleLabels := prepareSampleLabelsForRule(series.Labels, threshold.Name)
 		alertHash := sampleLabels.Hash()
 		// check if alert is active and then check if recovery threshold matches
