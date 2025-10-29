@@ -75,8 +75,7 @@ devenv-up: devenv-clickhouse devenv-signoz-otel-collector ## Start both clickhou
 .PHONY: devenv-clickhouse-clean
 devenv-clickhouse-clean: ## Clean all ClickHouse data from filesystem
 	@echo "Removing ClickHouse data..."
-	@rm -rf .devenv/docker/clickhouse/fs/tmp/var/lib/clickhouse/*
-	@rm -rf .devenv/docker/clickhouse/fs/tmp/zookeeper/*
+	@rm -rf .devenv/docker/clickhouse/fs/tmp/*
 	@echo "ClickHouse data cleaned!"
 
 ##############################################################

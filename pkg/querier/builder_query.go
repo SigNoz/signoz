@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz-otel-collector/exporter/clickhouselogsexporter"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -256,9 +257,17 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 			for _, rr := range typedPayload.Rows {
 				seeder := func() error {
 					body := rr.Data["body_v2"].(map[string]any)
+					// clean body_v2.message if it exists and is false
+					exists, found := body[clickhouselogsexporter.MessageExistsPath]
+					if found {
+						exists := exists.(bool)
+						if !exists {
+							delete(body, "message")
+						}
+					}
+
 					promoted := rr.Data["promoted"].(map[string]any)
 					seed(promoted, body)
-
 					str, err := sonic.MarshalString(body)
 					if err != nil {
 						return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal body")
@@ -266,15 +275,9 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 					rr.Data["body"] = str
 					return nil
 				}
-
-				switch {
-				case rr.Data["body_v2"] == nil || len(rr.Data["body_v2"].(map[string]any)) > 1 || rr.Data["body_v2"].(map[string]any)["message"] != "":
-					fallthrough
-				case rr.Data["promoted"] == nil || len(rr.Data["promoted"].(map[string]any)) > 0:
-					err := seeder()
-					if err != nil {
-						return nil, err
-					}
+				err := seeder()
+				if err != nil {
+					return nil, err
 				}
 
 				delete(rr.Data, "body_v2")

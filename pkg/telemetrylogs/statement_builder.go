@@ -726,7 +726,6 @@ func (b *logQueryStatementBuilder) buildResourceFilterCTE(
 	start, end uint64,
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
-
 	return b.resourceFilterStmtBuilder.Build(
 		ctx,
 		start,
