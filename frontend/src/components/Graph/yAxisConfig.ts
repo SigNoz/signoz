@@ -3,7 +3,9 @@ import { formattedValueToString, getValueFormat } from '@grafana/data';
 import * as Sentry from '@sentry/react';
 import { isNaN } from 'lodash-es';
 
-const DEFAULT_SIGNIFICANT_DIGITS = 5;
+const DEFAULT_SIGNIFICANT_DIGITS = 15;
+// max decimals to keep should not exceed 15 decimal places to avoid floating point precision issues
+const MAX_DECIMALS = 15;
 
 export type PrecisionOption = 0 | 1 | 2 | 3 | 4 | 'full';
 
@@ -53,7 +55,10 @@ const formatDecimalWithLeadingZeros = (
 	const significantDigits =
 		precision === 'full' ? DEFAULT_SIGNIFICANT_DIGITS : precision;
 	const decimalsToKeep = firstNonZeroIndex + (significantDigits || 0);
-	const trimmedDecimalPart = decimalPart.substring(0, decimalsToKeep);
+
+	// max decimals to keep should not exceed 15 decimal places to avoid floating point precision issues
+	const finalDecimalsToKeep = Math.min(decimalsToKeep, MAX_DECIMALS);
+	const trimmedDecimalPart = decimalPart.substring(0, finalDecimalsToKeep);
 
 	// If precision is 0, we drop the decimal part entirely.
 	if (precision === 0) {

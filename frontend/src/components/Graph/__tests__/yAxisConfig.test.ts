@@ -34,7 +34,7 @@ describe('getYAxisFormattedValue - none (full precision legacy assertions)', () 
 	test('trims to three significant decimals and removes trailing zeros', () => {
 		expect(
 			testFullPrecisionGetYAxisFormattedValue('0.000000250034', 'none'),
-		).toBe('0.00000025003');
+		).toBe('0.000000250034');
 		expect(testFullPrecisionGetYAxisFormattedValue('0.00000025', 'none')).toBe(
 			'0.00000025',
 		);
@@ -45,7 +45,7 @@ describe('getYAxisFormattedValue - none (full precision legacy assertions)', () 
 		).toBe('1');
 		expect(
 			testFullPrecisionGetYAxisFormattedValue('1.00555555559595876', 'none'),
-		).toBe('1.0055555');
+		).toBe('1.005555555595958');
 
 		expect(testFullPrecisionGetYAxisFormattedValue('0.000000001', 'none')).toBe(
 			'0.000000001',
@@ -61,7 +61,7 @@ describe('getYAxisFormattedValue - none (full precision legacy assertions)', () 
 			'99.5458',
 		);
 		expect(testFullPrecisionGetYAxisFormattedValue('1.234567', 'none')).toBe(
-			'1.23456',
+			'1.234567',
 		);
 		expect(testFullPrecisionGetYAxisFormattedValue('99.998', 'none')).toBe(
 			'99.998',
@@ -197,7 +197,7 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 			'1.5 Bil',
 		);
 		expect(testFullPrecisionGetYAxisFormattedValue('999999999', 'short')).toBe(
-			'1000 Mil',
+			'999.999999 Mil',
 		);
 	});
 
@@ -209,7 +209,7 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 			'0.1234%',
 		);
 		expect(testFullPrecisionGetYAxisFormattedValue('0.123499', 'percent')).toBe(
-			'0.12349%',
+			'0.123499%',
 		);
 		expect(testFullPrecisionGetYAxisFormattedValue('1.5', 'percent')).toBe(
 			'1.5%',
@@ -222,7 +222,7 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 		).toBe('1e-9%');
 		expect(
 			testFullPrecisionGetYAxisFormattedValue('0.000000250034', 'percent'),
-		).toBe('0.00000025003%');
+		).toBe('0.000000250034%');
 		expect(testFullPrecisionGetYAxisFormattedValue('0.00000025', 'percent')).toBe(
 			'0.00000025%',
 		);
@@ -232,7 +232,7 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 		).toBe('1%');
 		expect(
 			testFullPrecisionGetYAxisFormattedValue('1.00555555559595876', 'percent'),
-		).toBe('1.0055555%');
+		).toBe('1.005555555595958%');
 	});
 
 	test('ratio', () => {
@@ -343,5 +343,17 @@ describe('getYAxisFormattedValue - precision option tests', () => {
 		// Percentages
 		expect(getYAxisFormattedValue('0.123456', 'percent', 2)).toBe('0.12%');
 		expect(getYAxisFormattedValue('0.123456', 'percent', 4)).toBe('0.1235%'); // approximation
+	});
+
+	test('precision full uses up to DEFAULT_SIGNIFICANT_DIGITS significant digits', () => {
+		expect(getYAxisFormattedValue('0.00002625429914148441', 'none', 'full')).toBe(
+			'0.000026254299141',
+		);
+		expect(getYAxisFormattedValue('0.000026254299141484417', 's', 'full')).toBe(
+			'26254299141484417000000 µs',
+		);
+
+		expect(getYAxisFormattedValue('4353.81', 'ms', 'full')).toBe('4.35381 s');
+		expect(getYAxisFormattedValue('500', 'ms', 'full')).toBe('500 ms');
 	});
 });
