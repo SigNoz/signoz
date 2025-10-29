@@ -2,10 +2,10 @@ package telemetrymetadata
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
@@ -28,7 +28,7 @@ func (m *regexMatcher) Match(expectedSQL, actualSQL string) error {
 		return err
 	}
 	if !re.MatchString(actualSQL) {
-		return fmt.Errorf("expected query to contain %s, got %s", expectedSQL, actualSQL)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "expected query to contain %s, got %s", expectedSQL, actualSQL)
 	}
 	return nil
 }
