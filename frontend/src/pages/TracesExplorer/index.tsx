@@ -56,6 +56,7 @@ function TracesExplorer(): JSX.Element {
 		handleRunQuery,
 		stagedQuery,
 		handleSetConfig,
+		updateQueriesData,
 	} = useQueryBuilder();
 
 	const { options } = useOptionsMenu({
@@ -116,6 +117,20 @@ function TracesExplorer(): JSX.Element {
 				set(stagedQuery, 'builder.queryTraceOperator[0].orderBy', []);
 			}
 
+			if (view === ExplorerViews.LIST || view === ExplorerViews.TRACE) {
+				// loop through all the queries and remove the group by
+
+				const updateQuery = updateQueriesData(
+					currentQuery,
+					'queryData',
+					(item) => ({ ...item, groupBy: [], orderBy: [] }),
+				);
+
+				setDefaultQuery(updateQuery);
+
+				setShouldReset(true);
+			}
+
 			setSelectedView(view);
 
 			handleExplorerTabChange(
@@ -123,11 +138,12 @@ function TracesExplorer(): JSX.Element {
 			);
 		},
 		[
-			handleSetConfig,
-			handleExplorerTabChange,
 			selectedView,
-			setSelectedView,
+			currentQuery,
 			stagedQuery,
+			handleExplorerTabChange,
+			handleSetConfig,
+			updateQueriesData,
 		],
 	);
 
@@ -194,11 +210,6 @@ function TracesExplorer(): JSX.Element {
 
 	useShareBuilderUrl({ defaultValue: defaultQuery, forceReset: shouldReset });
 
-	const isGroupByExist = useMemo(() => {
-		const queryData = currentQuery?.builder?.queryData ?? [];
-		return queryData.some((q) => (q?.groupBy?.length ?? 0) > 0);
-	}, [currentQuery]);
-
 	const hasMultipleQueries = useMemo(
 		() => currentQuery?.builder?.queryData?.length > 1,
 		[currentQuery],
@@ -229,19 +240,6 @@ function TracesExplorer(): JSX.Element {
 		const firstQuery = currentQuery.builder.queryData[0];
 		return `Please use a Trace Operator to combine results of multiple span queries. Else you'd only see the results from query "${firstQuery.queryName}"`;
 	}, [currentQuery]);
-
-	useEffect(() => {
-		const shouldChangeView = isGroupByExist;
-
-		if (
-			(selectedView === ExplorerViews.LIST ||
-				selectedView === ExplorerViews.TRACE) &&
-			shouldChangeView
-		) {
-			// Switch to timeseries view automatically
-			handleChangeSelectedView(ExplorerViews.TIMESERIES);
-		}
-	}, [selectedView, isGroupByExist, handleChangeSelectedView]);
 
 	useEffect(() => {
 		if (shouldReset) {
