@@ -19,8 +19,6 @@ function MetricsApplication(): JSX.Element {
 		servicename: string;
 	}>();
 
-	const servicename = decodeURIComponent(encodedServiceName);
-
 	const activeKey = useMetricsApplicationTabKey();
 
 	const urlQuery = useUrlQuery();
@@ -46,7 +44,7 @@ function MetricsApplication(): JSX.Element {
 
 	const onTabChange = (tab: string): void => {
 		urlQuery.set(QueryParams.tab, tab);
-		safeNavigate(`/services/${servicename}?${urlQuery.toString()}`);
+		safeNavigate(`/services/${encodedServiceName}?${urlQuery.toString()}`);
 	};
 
 	return (
