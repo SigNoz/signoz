@@ -37,7 +37,8 @@
 		align-items: center;
 		justify-content: space-between;
 		.open-in-explorer {
-			width: 30px;
+			display: flex;
+			align-items: center;
 			height: 30px;
 			border-radius: 2px;
 			border: 1px solid var(--bg-slate-400);
