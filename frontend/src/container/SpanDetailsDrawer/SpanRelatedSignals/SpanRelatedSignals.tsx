@@ -14,7 +14,7 @@ import ROUTES from 'constants/routes';
 import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Compass, Server, X } from 'lucide-react';
+import { BarChart2, Compass, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -107,8 +107,8 @@ function SpanRelatedSignals({
 			baseOptions.push({
 				label: (
 					<div className="view-title">
-						<Server size={14} />
-						Infra
+						<BarChart2 size={14} />
+						Metrics
 					</div>
 				),
 				value: RelatedSignalsViews.INFRA,
