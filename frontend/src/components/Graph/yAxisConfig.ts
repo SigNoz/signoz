@@ -121,7 +121,7 @@ export const getYAxisFormattedValue = (
 	const fallbackFormat = (): string => {
 		if (precision === PrecisionOptionsEnum.FULL) return numValue.toString();
 		if (precision === 0) return Math.round(numValue).toString();
-		return precision
+		return precision !== undefined
 			? numValue
 					.toFixed(precision)
 					.replace(/(\.[0-9]*[1-9])0+$/, '$1') // trimming zeros

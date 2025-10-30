@@ -433,8 +433,6 @@ function NewWidget({
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: updatedStagedQuery,
 				fillGaps: selectedWidget.fillSpans || false,
-				decimalPrecision:
-					selectedWidget.decimalPrecision || PrecisionOptionsEnum.TWO,
 				isLogScale: selectedWidget.isLogScale || false,
 				formatForWeb:
 					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
@@ -448,7 +446,6 @@ function NewWidget({
 		selectedTime,
 		selectedWidget.fillSpans,
 		selectedWidget.isLogScale,
-		selectedWidget.decimalPrecision,
 		globalSelectedInterval,
 	]);
 
