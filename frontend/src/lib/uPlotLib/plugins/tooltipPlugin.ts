@@ -38,6 +38,31 @@ function getTooltipBaseValue(
 	return data[index][idx];
 }
 
+function sortTooltipContentBasedOnValue(
+	tooltipDataObj: Record<string, UplotTooltipDataProps>,
+): Record<string, UplotTooltipDataProps> {
+	const entries = Object.entries(tooltipDataObj);
+
+	// Separate focused and non-focused entries in a single pass
+	const focusedEntries: [string, UplotTooltipDataProps][] = [];
+	const nonFocusedEntries: [string, UplotTooltipDataProps][] = [];
+
+	for (let i = 0; i < entries.length; i++) {
+		const entry = entries[i];
+		if (entry[1].focus) {
+			focusedEntries.push(entry);
+		} else {
+			nonFocusedEntries.push(entry);
+		}
+	}
+
+	// Sort non-focused entries by value (descending)
+	nonFocusedEntries.sort((a, b) => b[1].value - a[1].value);
+
+	// Combine with focused entries on top
+	return Object.fromEntries(focusedEntries.concat(nonFocusedEntries));
+}
+
 const generateTooltipContent = (
 	seriesList: any[],
 	data: any[],
@@ -62,16 +87,25 @@ const generateTooltipContent = (
 	const formattedData: Record<string, UplotTooltipDataProps> = {};
 	const duplicatedLegendLabels: Record<string, true> = {};
 
-	function sortTooltipContentBasedOnValue(
-		tooltipDataObj: Record<string, UplotTooltipDataProps>,
-	): Record<string, UplotTooltipDataProps> {
-		const entries = Object.entries(tooltipDataObj);
-		entries.sort((a, b) => b[1].value - a[1].value);
-		return Object.fromEntries(entries);
+	// Pre-build a label-to-series map for O(1) lookup instead of O(n) search
+	let seriesColorMap: Map<string, string> | null = null;
+	if (isBillingUsageGraphs && series) {
+		seriesColorMap = new Map();
+		for (let i = 0; i < series.length; i++) {
+			const item = series[i];
+			if (item.label) {
+				const fillColor = get(item, '_fill');
+				if (fillColor) {
+					seriesColorMap.set(item.label, fillColor);
+				}
+			}
+		}
 	}
 
 	if (Array.isArray(series) && series.length > 0) {
-		series.forEach((item, index) => {
+		for (let index = 0; index < series.length; index++) {
+			const item = series[index];
+
 			if (index === 0) {
 				if (isBillingUsageGraphs) {
 					tooltipTitle = dayjs(data[0][idx] * 1000)
@@ -112,15 +146,12 @@ const generateTooltipContent = (
 						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
 					);
 
-				// in case of billing graph pick colors from the series options
-				if (isBillingUsageGraphs) {
-					let clr;
-					series.forEach((item) => {
-						if (item.label === label) {
-							clr = get(item, '_fill');
-						}
-					});
-					color = clr ?? color;
+				// O(1) lookup instead of O(n) search for billing graph colors
+				if (isBillingUsageGraphs && seriesColorMap) {
+					const billingColor = seriesColorMap.get(label);
+					if (billingColor) {
+						color = billingColor;
+					}
 				}
 
 				let tooltipItemLabel = label;
@@ -128,10 +159,7 @@ const generateTooltipContent = (
 				if (Number.isFinite(value)) {
 					const tooltipValue = getToolTipValue(value, yAxisUnit);
 					const dataIngestedFormated = getToolTipValue(dataIngested);
-					if (
-						duplicatedLegendLabels[label] ||
-						Object.prototype.hasOwnProperty.call(formattedData, label)
-					) {
+					if (duplicatedLegendLabels[label] || label in formattedData) {
 						duplicatedLegendLabels[label] = true;
 						const tempDataObj = formattedData[label];
 
@@ -168,7 +196,7 @@ const generateTooltipContent = (
 					formattedData[tooltipItemLabel] = dataObj;
 				}
 			}
-		});
+		}
 	}
 
 	// Early return if no valid data points - avoids unnecessary DOM manipulation
@@ -186,37 +214,39 @@ const generateTooltipContent = (
 	headerDiv.textContent = isHistogramGraphs ? '' : tooltipTitle;
 	container.appendChild(headerDiv);
 
-	const sortedKeys = Object.keys(sortedData);
+	// Use DocumentFragment for better performance when adding multiple elements
+	const fragment = document.createDocumentFragment();
 
-	if (Array.isArray(sortedKeys) && sortedKeys.length > 0) {
-		// Use DocumentFragment for better performance when adding multiple elements
-		const fragment = document.createDocumentFragment();
+	// Use Object.entries to avoid double lookup
+	const sortedEntries = Object.entries(sortedData);
 
-		sortedKeys.forEach((key) => {
-			if (sortedData[key]) {
-				const { textContent, color, focus } = sortedData[key];
-				const div = document.createElement('div');
-				div.classList.add('tooltip-content-row', 'tooltip-content');
+	for (let i = 0; i < sortedEntries.length; i++) {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const [key, data] = sortedEntries[i];
+		const { textContent, color, focus } = data;
 
-				const squareBox = document.createElement('div');
-				squareBox.classList.add('pointSquare');
-				squareBox.style.borderColor = color;
+		const div = document.createElement('div');
+		div.classList.add('tooltip-content-row', 'tooltip-content');
 
-				const text = document.createElement('div');
-				text.classList.add('tooltip-data-point');
-				text.textContent = textContent;
-				text.style.color = color;
+		const squareBox = document.createElement('div');
+		squareBox.classList.add('pointSquare');
+		squareBox.style.borderColor = color;
 
-				if (focus) {
-					text.classList.add('focus');
-				}
+		const text = document.createElement('div');
+		text.classList.add('tooltip-data-point');
+		text.textContent = textContent;
+		text.style.color = color;
 
-				div.appendChild(squareBox);
-				div.appendChild(text);
-				fragment.appendChild(div);
-			}
-		});
+		if (focus) {
+			text.classList.add('focus');
+		}
 
+		div.appendChild(squareBox);
+		div.appendChild(text);
+		fragment.appendChild(div);
+	}
+
+	if (fragment.hasChildNodes()) {
 		container.appendChild(fragment);
 	}
 
@@ -258,6 +288,9 @@ const tooltipPlugin = ({
 	let lastIdx: number | null = null;
 	let overlay: HTMLElement | null = null;
 
+	// Pre-compute apiResult once
+	const apiResult = apiResponse?.data?.result || [];
+
 	// Sync bounds and cache the result
 	const syncBounds = (): void => {
 		if (over) {
@@ -266,31 +299,27 @@ const tooltipPlugin = ({
 	};
 
 	// Create overlay once and reuse it
-	const getOrCreateOverlay = (): HTMLElement => {
+	const initOverlay = (): void => {
 		if (!overlay) {
 			overlay = document.getElementById('overlay');
 			if (!overlay) {
 				overlay = document.createElement('div');
 				overlay.id = 'overlay';
-				overlay.style.display = 'none';
-				overlay.style.position = 'absolute';
+				overlay.style.cssText = 'display: none; position: absolute;';
 				document.body.appendChild(overlay);
 			}
 		}
-		return overlay;
 	};
 
 	const showOverlay = (): void => {
-		const overlayEl = getOrCreateOverlay();
-		if (overlayEl && overlayEl.style.display === 'none') {
-			overlayEl.style.display = 'block';
+		if (overlay && overlay.style.display === 'none') {
+			overlay.style.display = 'block';
 		}
 	};
 
 	const hideOverlay = (): void => {
-		const overlayEl = getOrCreateOverlay();
-		if (overlayEl && overlayEl.style.display === 'block') {
-			overlayEl.style.display = 'none';
+		if (overlay && overlay.style.display === 'block') {
+			overlay.style.display = 'none';
 		}
 	};
 
@@ -305,8 +334,6 @@ const tooltipPlugin = ({
 		hideOverlay();
 	};
 
-	const apiResult = apiResponse?.data?.result || [];
-
 	// Cleanup function to remove event listeners
 	const cleanup = (): void => {
 		if (over) {
@@ -320,6 +347,9 @@ const tooltipPlugin = ({
 			init: (u: any): void => {
 				over = u?.over;
 				bound = over;
+
+				// Initialize overlay once during init
+				initOverlay();
 
 				// Initial bounds sync
 				syncBounds();
@@ -340,8 +370,7 @@ const tooltipPlugin = ({
 				data: any[];
 				series: uPlot.Options['series'];
 			}): void => {
-				const overlayEl = getOrCreateOverlay();
-				if (!overlayEl) {
+				if (!overlay) {
 					return;
 				}
 
@@ -350,8 +379,8 @@ const tooltipPlugin = ({
 				// Early return if not active or no valid index
 				if (!isActive || !Number.isInteger(idx)) {
 					if (isActive && lastIdx !== null) {
-						// Clear tooltip content when hovering outside valid area
-						overlayEl.textContent = '';
+						// Clear tooltip content efficiently using replaceChildren
+						overlay.replaceChildren();
 						lastIdx = null;
 					}
 					return;
@@ -363,9 +392,6 @@ const tooltipPlugin = ({
 				}
 
 				lastIdx = idx;
-
-				// Clear previous content
-				overlayEl.textContent = '';
 
 				// Use cached bounding box if available
 				const bbox = cachedBBox || over.getBoundingClientRect();
@@ -395,8 +421,9 @@ const tooltipPlugin = ({
 					if (customTooltipElement) {
 						content.appendChild(customTooltipElement);
 					}
-					overlayEl.appendChild(content);
-					placement(overlayEl, anchor, 'right', 'start', { bound });
+					// Clear and set new content in one operation
+					overlay.replaceChildren(content);
+					placement(overlay, anchor, 'right', 'start', { bound });
 					showOverlay();
 				} else {
 					hideOverlay();
