@@ -74,7 +74,7 @@ func TestValidateTracesMultipleSteps(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := ValidateTraces(tt.funnel, tt.timeRange)
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("ValidateTraces() expected error but got none")
 			}
@@ -150,7 +150,7 @@ func TestGetFunnelAnalyticsMultipleSteps(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := GetFunnelAnalytics(tt.funnel, tt.timeRange)
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("GetFunnelAnalytics() expected error but got none")
 			}
@@ -177,14 +177,14 @@ func TestGetStepAnalyticsMultipleSteps(t *testing.T) {
 			{ServiceName: "s5", SpanName: "sp5", HasErrors: true, Filters: &v3.FilterSet{}},
 		},
 	}
-	
+
 	timeRange := tracefunneltypes.TimeRange{
 		StartTime: 1000000000,
 		EndTime:   2000000000,
 	}
 
 	result, err := GetStepAnalytics(funnel, timeRange)
-	
+
 	if err != nil {
 		t.Errorf("GetStepAnalytics() unexpected error: %v", err)
 	}
@@ -246,7 +246,7 @@ func TestGetFunnelStepAnalyticsMultipleSteps(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := GetFunnelStepAnalytics(tt.funnel, tt.timeRange, tt.stepStart, tt.stepEnd)
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("GetFunnelStepAnalytics() expected error but got none")
 			}

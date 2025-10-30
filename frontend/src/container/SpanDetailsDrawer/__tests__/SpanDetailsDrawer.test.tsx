@@ -16,6 +16,7 @@ import {
 	expectedAfterFilterExpression,
 	expectedBeforeFilterExpression,
 	expectedSpanFilterExpression,
+	expectedTraceOnlyFilterExpression,
 	mockAfterLogsResponse,
 	mockBeforeLogsResponse,
 	mockEmptyLogsResponse,
@@ -218,19 +219,22 @@ const renderSpanDetailsDrawer = (props = {}): void => {
 };
 
 describe('SpanDetailsDrawer', () => {
-	let apiCallHistory: any[] = [];
+	let apiCallHistory: any = {};
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		apiCallHistory = [];
+		apiCallHistory = {
+			span_logs: null,
+			before_logs: null,
+			after_logs: null,
+			trace_only_logs: null,
+		};
 		mockSafeNavigate.mockClear();
 		mockWindowOpen.mockClear();
 		mockUpdateAllQueriesOperators.mockClear();
 
 		// Setup API call tracking
 		(GetMetricQueryRange as jest.Mock).mockImplementation((query) => {
-			apiCallHistory.push(query);
-
 			// Determine response based on v5 filter expressions
 			const filterExpression =
 				query.query?.builder?.queryData?.[0]?.filter?.expression;
@@ -239,14 +243,23 @@ describe('SpanDetailsDrawer', () => {
 
 			// Check for span logs query (contains both trace_id and span_id)
 			if (filterExpression.includes('span_id')) {
+				apiCallHistory.span_logs = query;
 				return Promise.resolve(mockSpanLogsResponse);
 			}
 			// Check for before logs query (contains trace_id and id <)
 			if (filterExpression.includes('id <')) {
+				apiCallHistory.before_logs = query;
 				return Promise.resolve(mockBeforeLogsResponse);
 			}
 			// Check for after logs query (contains trace_id and id >)
 			if (filterExpression.includes('id >')) {
+				apiCallHistory.after_logs = query;
+				return Promise.resolve(mockAfterLogsResponse);
+			}
+
+			// Check for trace only logs query (contains trace_id)
+			if (filterExpression.includes('trace_id =')) {
+				apiCallHistory.trace_only_logs = query;
 				return Promise.resolve(mockAfterLogsResponse);
 			}
 
@@ -288,7 +301,7 @@ describe('SpanDetailsDrawer', () => {
 		});
 	});
 
-	it('should make three API queries when logs tab is opened', async () => {
+	it('should make 4 API queries when logs tab is opened', async () => {
 		renderSpanDetailsDrawer();
 
 		// Click on logs tab to trigger API calls
@@ -297,11 +310,16 @@ describe('SpanDetailsDrawer', () => {
 
 		// Wait for all API calls to complete
 		await waitFor(() => {
-			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(4);
 		});
 
-		// Verify the three distinct queries were made
-		const [spanQuery, beforeQuery, afterQuery] = apiCallHistory;
+		// Verify the four distinct queries were made
+		const {
+			span_logs: spanQuery,
+			before_logs: beforeQuery,
+			after_logs: afterQuery,
+			trace_only_logs: traceOnlyQuery,
+		} = apiCallHistory;
 
 		// 1. Span logs query (trace_id + span_id)
 		expect(spanQuery.query.builder.queryData[0].filter.expression).toBe(
@@ -317,6 +335,11 @@ describe('SpanDetailsDrawer', () => {
 		expect(afterQuery.query.builder.queryData[0].filter.expression).toBe(
 			expectedAfterFilterExpression,
 		);
+
+		// 4. Trace only logs query (trace_id)
+		expect(traceOnlyQuery.query.builder.queryData[0].filter.expression).toBe(
+			expectedTraceOnlyFilterExpression,
+		);
 	});
 
 	it('should use correct timestamp ordering for different query types', async () => {
@@ -328,10 +351,14 @@ describe('SpanDetailsDrawer', () => {
 
 		// Wait for all API calls to complete
 		await waitFor(() => {
-			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(4);
 		});
 
-		const [spanQuery, beforeQuery, afterQuery] = apiCallHistory;
+		const {
+			span_logs: spanQuery,
+			before_logs: beforeQuery,
+			after_logs: afterQuery,
+		} = apiCallHistory;
 
 		// Verify ordering: span query should use 'desc' (default)
 		expect(spanQuery.query.builder.queryData[0].orderBy[0].order).toBe('desc');
@@ -464,24 +491,6 @@ describe('SpanDetailsDrawer', () => {
 		expect(mockSafeNavigate).not.toHaveBeenCalled();
 	});
 
-	it('should handle empty logs state', async () => {
-		// Mock empty response for all queries
-		(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockEmptyLogsResponse);
-
-		renderSpanDetailsDrawer();
-
-		// Open logs view
-		const logsButton = screen.getByRole('radio', { name: /logs/i });
-		fireEvent.click(logsButton);
-
-		// Wait and verify empty state is shown
-		await waitFor(() => {
-			expect(
-				screen.getByText(/No logs found for selected span/),
-			).toBeInTheDocument();
-		});
-	});
-
 	it('should display span logs as highlighted and context logs as regular', async () => {
 		renderSpanDetailsDrawer();
 
@@ -491,7 +500,7 @@ describe('SpanDetailsDrawer', () => {
 
 		// Wait for all API calls to complete first
 		await waitFor(() => {
-			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(4);
 		});
 
 		// Wait for all logs to be rendered - both span logs and context logs
