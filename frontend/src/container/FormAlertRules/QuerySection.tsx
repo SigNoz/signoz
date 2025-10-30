@@ -69,7 +69,6 @@ function QuerySection({
 			}
 			version={alertDef.version || 'v3'}
 			onSignalSourceChange={handleSignalSourceChange}
-			key={signalSource}
 			signalSourceChangeEnabled
 		/>
 	);

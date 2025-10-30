@@ -52,6 +52,10 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		(query.aggregations?.[0] as MetricAggregation)?.metricName || '',
 	);
 
+	useEffect(() => {
+		setSearchText('');
+	}, [signalSource]);
+
 	const debouncedSearchText = useMemo(() => {
 		// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
 		const [_, value] = getAutocompleteValueAndType(searchText);

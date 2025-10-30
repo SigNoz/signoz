@@ -25,7 +25,11 @@ import {
 	INITIAL_EVALUATION_WINDOW_STATE,
 	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from './constants';
-import { ICreateAlertContextProps, ICreateAlertProviderProps } from './types';
+import {
+	AlertThresholdMatchType,
+	ICreateAlertContextProps,
+	ICreateAlertProviderProps,
+} from './types';
 import {
 	advancedOptionsReducer,
 	alertCreationReducer,
@@ -132,6 +136,15 @@ export function CreateAlertProvider(
 			setThresholdState({
 				type: 'SET_THRESHOLDS',
 				payload: thresholds,
+			});
+
+			setEvaluationWindow({
+				type: 'SET_INITIAL_STATE_FOR_METER',
+			});
+
+			setThresholdState({
+				type: 'SET_MATCH_TYPE',
+				payload: AlertThresholdMatchType.IN_TOTAL,
 			});
 		}
 	}, [alertType, ingestionLimitFromURL]);
