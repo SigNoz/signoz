@@ -282,35 +282,39 @@ function DashboardsList(): JSX.Element {
 			refetchDashboardList,
 		})) || [];
 
-	const onNewDashboardHandler = useCallback(async () => {
-		try {
-			logEvent('Dashboard List: Create dashboard clicked', {});
-			setNewDashboardState({
-				...newDashboardState,
-				loading: true,
-			});
-			const response = await createDashboard({
-				title: t('new_dashboard_title', {
-					ns: 'dashboard',
-				}),
-				uploadedGrafana: false,
-				version: ENTITY_VERSION_V5,
-			});
+	const onNewDashboardHandler = useCallback(
+		async (event: React.MouseEvent) => {
+			try {
+				logEvent('Dashboard List: Create dashboard clicked', {});
+				setNewDashboardState({
+					...newDashboardState,
+					loading: true,
+				});
+				const response = await createDashboard({
+					title: t('new_dashboard_title', {
+						ns: 'dashboard',
+					}),
+					uploadedGrafana: false,
+					version: ENTITY_VERSION_V5,
+				});
 
-			safeNavigate(
-				generatePath(ROUTES.DASHBOARD, {
-					dashboardId: response.data.id,
-				}),
-			);
-		} catch (error) {
-			showErrorModal(error as APIError);
-			setNewDashboardState({
-				...newDashboardState,
-				error: true,
-				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
-			});
-		}
-	}, [newDashboardState, safeNavigate, showErrorModal, t]);
+				safeNavigate(
+					generatePath(ROUTES.DASHBOARD, {
+						dashboardId: response.data.id,
+					}),
+					event,
+				);
+			} catch (error) {
+				showErrorModal(error as APIError);
+				setNewDashboardState({
+					...newDashboardState,
+					error: true,
+					errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
+				});
+			}
+		},
+		[newDashboardState, safeNavigate, showErrorModal, t],
+	);
 
 	const onModalHandler = (uploadedGrafana: boolean): void => {
 		logEvent('Dashboard List: Import JSON clicked', {});
@@ -639,8 +643,8 @@ function DashboardsList(): JSX.Element {
 				label: (
 					<div
 						className="create-dashboard-menu-item"
-						onClick={(): void => {
-							onNewDashboardHandler();
+						onClick={(event: React.MouseEvent): void => {
+							onNewDashboardHandler(event);
 						}}
 					>
 						<LayoutGrid size={14} /> Create dashboard
@@ -927,7 +931,9 @@ function DashboardsList(): JSX.Element {
 
 				<DashboardTemplatesModal
 					showNewDashboardTemplatesModal={showNewDashboardTemplatesModal}
-					onCreateNewDashboard={onNewDashboardHandler}
+					onCreateNewDashboard={(event: React.MouseEvent): Promise<void> =>
+						onNewDashboardHandler(event)
+					}
 					onCancel={(): void => {
 						setShowNewDashboardTemplatesModal(false);
 					}}
