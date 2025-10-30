@@ -90,6 +90,7 @@ type SQLDialect interface {
 }
 
 type SQLFormatter interface {
+
 	// JSONExtractString takes path in sqlite format like "$.labels.severity"
 	JSONExtractString(column, path string) string
 
@@ -112,8 +113,11 @@ type SQLFormatter interface {
 	JSONArrayLiteral(values ...string) string
 
 	// JSONKeys extracts keys from a JSON object as a set of key-value pairs
-	JSONKeys(column, path, alias string) string
+	JSONKeys(column, path, alias string) (string, string)
 
 	// TextToJsonColumn converts a text column to JSON type
 	TextToJsonColumn(column string) string
+
+	//Lower converts string to lower case
+	Lower(path string) string
 }

@@ -12,10 +12,10 @@ const (
 	RuleAttributeKeyUpdatedBy     = "updated_by"
 	RuleAttributeKeyName          = "name"
 	RuleAttributeKeyThresholdName = "threshold.name"
-	RuleAttributeKeyChannel       = "channel"
 	RuleAttributeKeyPolicy        = "policy"
-	RuleAttributeKeyRuleType      = "type"
-	RuleAttributeKeyLabel         = "label"
+	RuleAttributeKeyChannel       = "channel"
+	RuleAttributeKeyState         = "state"
+	//RuleAttributeKeyRuleType      = "type"
 )
 
 var (
@@ -26,6 +26,6 @@ var (
 		{Key: RuleAttributeKeyThresholdName, DataType: telemetrytypes.FieldDataTypeString, Type: RuleAttributeTypeFixed},
 		{Key: RuleAttributeKeyChannel, DataType: telemetrytypes.FieldDataTypeString, Type: RuleAttributeTypeFixed},
 		{Key: RuleAttributeKeyPolicy, DataType: telemetrytypes.FieldDataTypeBool, Type: RuleAttributeTypeFixed},
-		{Key: RuleAttributeKeyRuleType, DataType: telemetrytypes.FieldDataTypeString, Type: RuleAttributeTypeFixed},
+		{Key: RuleAttributeKeyState, DataType: telemetrytypes.FieldDataTypeString, Type: RuleAttributeTypeFixed},
 	}
 )

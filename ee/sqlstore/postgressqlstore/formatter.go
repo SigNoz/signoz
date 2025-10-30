@@ -51,7 +51,7 @@ func (f *formatter) JSONArrayOfStrings(column, path, alias string) (string, stri
 	return b.String(), alias + "::text"
 }
 
-func (f *formatter) JSONKeys(column, path, alias string) string {
+func (f *formatter) JSONKeys(column, path, alias string) (string, string) {
 	var b strings.Builder
 	b.WriteString("jsonb_each(")
 	b.WriteString(column)
@@ -60,7 +60,7 @@ func (f *formatter) JSONKeys(column, path, alias string) string {
 	}
 	b.WriteString(") AS ")
 	b.WriteString(alias)
-	return b.String()
+	return b.String(), alias + ".key"
 }
 
 func (f *formatter) JSONArrayAgg(expression string) string {
@@ -131,5 +131,13 @@ func convertJSONPathToPostgresWithMode(jsonPath string, asText bool) string {
 		}
 	}
 
+	return result.String()
+}
+
+func (f *formatter) Lower(path string) string {
+	var result strings.Builder
+	result.WriteString("lower(")
+	result.WriteString(path)
+	result.WriteString(")")
 	return result.String()
 }

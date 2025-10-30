@@ -1117,6 +1117,26 @@ func (m *Manager) GetSearchValues(ctx context.Context, searchText string, limit 
 		return m.ruleStore.GetUpdatedBy(ctx, searchText, limit, orgId.String())
 	case ruletypes.RuleAttributeKeyName:
 		return m.ruleStore.GetNames(ctx, searchText, limit, orgId.String())
+	case ruletypes.RuleAttributeKeyState:
+		allStates := model.GetAllRuleStates()
+		if searchText == "" {
+			if limit > 0 && limit < len(allStates) {
+				return allStates[:limit], nil
+			}
+			return allStates, nil
+		}
+
+		filtered := make([]string, 0)
+		searchLower := strings.ToLower(searchText)
+		for _, state := range allStates {
+			if strings.Contains(strings.ToLower(state), searchLower) {
+				filtered = append(filtered, state)
+				if limit > 0 && len(filtered) >= limit {
+					break
+				}
+			}
+		}
+		return filtered, nil
 	default:
 		return m.ruleStore.GetRuleLabelValues(ctx, searchText, limit, key, orgId.String())
 	}

@@ -59,7 +59,7 @@ func (f *formatter) JSONArrayOfStrings(column, path, alias string) (string, stri
 	return b.String(), alias + ".value"
 }
 
-func (f *formatter) JSONKeys(column, path, alias string) string {
+func (f *formatter) JSONKeys(column, path, alias string) (string, string) {
 	var b strings.Builder
 	b.WriteString("json_each(")
 	b.WriteString(column)
@@ -70,7 +70,7 @@ func (f *formatter) JSONKeys(column, path, alias string) string {
 	}
 	b.WriteString(") AS ")
 	b.WriteString(alias)
-	return b.String()
+	return b.String(), alias + ".key"
 }
 
 func (f *formatter) JSONArrayAgg(expression string) string {
@@ -100,4 +100,12 @@ func (f *formatter) JSONArrayLiteral(values ...string) string {
 
 func (f *formatter) TextToJsonColumn(column string) string {
 	return column
+}
+
+func (f *formatter) Lower(path string) string {
+	var result strings.Builder
+	result.WriteString("lower(")
+	result.WriteString(path)
+	result.WriteString(")")
+	return result.String()
 }
