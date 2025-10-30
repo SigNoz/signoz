@@ -249,6 +249,7 @@ function UplotPanelWrapper({
 				}) => {
 					legendScrollPositionRef.current = position;
 				},
+				decimalPrecision: widget.decimalPrecision,
 			}),
 		[
 			queryResponse.data?.payload,
