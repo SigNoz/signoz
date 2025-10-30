@@ -21,7 +21,7 @@ import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
 import { SuccessResponse, SuccessResponseV2, Warning } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { prepareQueryRangePayload } from './prepareQueryRangePayload';
@@ -76,14 +76,13 @@ const getQueryDataSource = (
 
 const getLegendForSingleAggregation = (
 	queryData: QueryData,
-	payloadQuery: Query,
+	allQueries: IBuilderQuery[],
 	aggregationAlias: string,
 	aggregationExpression: string,
 	labelName: string,
 	singleAggregation: boolean,
 ) => {
-	// Find the corresponding query in payloadQuery
-	const queryItem = payloadQuery.builder?.queryData.find(
+	const queryItem = allQueries.find(
 		(query) => query.queryName === queryData.queryName,
 	);
 
@@ -108,14 +107,13 @@ const getLegendForSingleAggregation = (
 
 const getLegendForMultipleAggregations = (
 	queryData: QueryData,
-	payloadQuery: Query,
+	allQueries: IBuilderQuery[],
 	aggregationAlias: string,
 	aggregationExpression: string,
 	labelName: string,
 	singleAggregation: boolean,
 ) => {
-	// Find the corresponding query in payloadQuery
-	const queryItem = payloadQuery.builder?.queryData.find(
+	const queryItem = allQueries.find(
 		(query) => query.queryName === queryData.queryName,
 	);
 
@@ -148,15 +146,18 @@ export const getLegend = (
 		return labelName;
 	}
 
-	const aggregationPerQuery = payloadQuery?.builder?.queryData.reduce(
-		(acc, query) => {
-			if (query.queryName === queryData.queryName) {
-				acc[query.queryName] = createAggregation(query);
-			}
-			return acc;
-		},
-		{},
-	);
+	// Combine queryData and queryTraceOperator
+	const allQueries = [
+		...(payloadQuery?.builder?.queryData || []),
+		...(payloadQuery?.builder?.queryTraceOperator || []),
+	];
+
+	const aggregationPerQuery = allQueries.reduce((acc, query) => {
+		if (query.queryName === queryData.queryName) {
+			acc[query.queryName] = createAggregation(query);
+		}
+		return acc;
+	}, {});
 
 	const metaData = queryData?.metaData;
 	const aggregation =
@@ -165,8 +166,8 @@ export const getLegend = (
 	const aggregationAlias = aggregation?.alias || '';
 	const aggregationExpression = aggregation?.expression || '';
 
-	// Check if there's only one total query (queryData)
-	const singleQuery = payloadQuery?.builder?.queryData?.length === 1;
+	// Check if there's only one total query
+	const singleQuery = allQueries.length === 1;
 	const singleAggregation =
 		aggregationPerQuery?.[metaData?.queryName]?.length === 1;
 
@@ -174,7 +175,7 @@ export const getLegend = (
 		return singleQuery
 			? getLegendForSingleAggregation(
 					queryData,
-					payloadQuery,
+					allQueries,
 					aggregationAlias,
 					aggregationExpression,
 					labelName,
@@ -182,7 +183,7 @@ export const getLegend = (
 			  )
 			: getLegendForMultipleAggregations(
 					queryData,
-					payloadQuery,
+					allQueries,
 					aggregationAlias,
 					aggregationExpression,
 					labelName,

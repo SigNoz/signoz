@@ -78,6 +78,7 @@ function EvaluationCadence(): JSX.Element {
 										},
 									})
 								}
+								data-testid="evaluation-cadence-duration-input"
 							/>
 							<Select
 								options={ADVANCED_OPTIONS_TIME_UNIT_OPTIONS}
@@ -96,6 +97,7 @@ function EvaluationCadence(): JSX.Element {
 										},
 									})
 								}
+								data-testid="evaluation-cadence-unit-select"
 							/>
 						</Input.Group>
 						{/* TODO: Add custom schedule back once the functionality is implemented */}

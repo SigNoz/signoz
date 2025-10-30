@@ -2,7 +2,6 @@ package factory
 
 import (
 	"context"
-	"io"
 	"log/slog"
 	"sync"
 	"testing"
@@ -33,7 +32,7 @@ func TestRegistryWith2Services(t *testing.T) {
 	s1 := newTestService(t)
 	s2 := newTestService(t)
 
-	registry, err := NewRegistry(slog.New(slog.NewTextHandler(io.Discard, nil)), NewNamedService(MustNewName("s1"), s1), NewNamedService(MustNewName("s2"), s2))
+	registry, err := NewRegistry(slog.New(slog.DiscardHandler), NewNamedService(MustNewName("s1"), s1), NewNamedService(MustNewName("s2"), s2))
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -54,7 +53,7 @@ func TestRegistryWith2ServicesWithoutWait(t *testing.T) {
 	s1 := newTestService(t)
 	s2 := newTestService(t)
 
-	registry, err := NewRegistry(slog.New(slog.NewTextHandler(io.Discard, nil)), NewNamedService(MustNewName("s1"), s1), NewNamedService(MustNewName("s2"), s2))
+	registry, err := NewRegistry(slog.New(slog.DiscardHandler), NewNamedService(MustNewName("s1"), s1), NewNamedService(MustNewName("s2"), s2))
 	require.NoError(t, err)
 
 	ctx := context.Background()
