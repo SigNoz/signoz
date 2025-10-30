@@ -66,6 +66,7 @@ function PromQLQueryBuilder({
 				defaultValue={queryData?.query}
 				addonBefore="PromQL Query"
 				style={{ marginBottom: '0.5rem' }}
+				data-testid="promql-query-input"
 			/>
 
 			<Input
@@ -75,6 +76,7 @@ function PromQLQueryBuilder({
 				defaultValue={queryData?.legend}
 				addonBefore="Legend Format"
 				style={{ marginBottom: '0.5rem' }}
+				data-testid="promql-legend-input"
 			/>
 		</QueryHeader>
 	);
