@@ -61,7 +61,6 @@ function SpanRelatedSignals({
 			startTime: traceStartTime - FIVE_MINUTES_IN_MS,
 			endTime: traceEndTime + FIVE_MINUTES_IN_MS,
 		},
-		isDrawerOpen: isOpen,
 	});
 
 	const handleTabChange = useCallback((e: RadioChangeEvent): void => {
