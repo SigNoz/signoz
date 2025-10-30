@@ -13,6 +13,7 @@ function AdvancedOptionItem({
 	tooltipText,
 	onToggle,
 	defaultShowInput,
+	'data-testid': dataTestId,
 }: IAdvancedOptionItemProps): JSX.Element {
 	const [showInput, setShowInput] = useState<boolean>(false);
 
@@ -26,7 +27,7 @@ function AdvancedOptionItem({
 	};
 
 	return (
-		<div className="advanced-option-item">
+		<div className="advanced-option-item" data-testid={dataTestId}>
 			<div className="advanced-option-item-left-content">
 				<Typography.Text className="advanced-option-item-title">
 					{title}
