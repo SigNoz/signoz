@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { initialQueriesMap } from 'constants/queryBuilder';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 
@@ -62,6 +63,7 @@ const baseOptions = {
 	legendPosition: LegendPosition.BOTTOM,
 	softMin: null,
 	softMax: null,
+	query: initialQueriesMap.metrics,
 };
 
 describe('Legend Scroll Position Preservation', () => {

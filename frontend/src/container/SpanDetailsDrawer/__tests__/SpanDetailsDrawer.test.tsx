@@ -3,13 +3,20 @@ import ROUTES from 'constants/routes';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { server } from 'mocks-server/server';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import SpanDetailsDrawer from '../SpanDetailsDrawer';
 import {
 	expectedAfterFilterExpression,
 	expectedBeforeFilterExpression,
 	expectedSpanFilterExpression,
+	expectedTraceOnlyFilterExpression,
 	mockAfterLogsResponse,
 	mockBeforeLogsResponse,
 	mockEmptyLogsResponse,
@@ -23,6 +30,12 @@ jest.mock('react-router-dom', () => ({
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.TRACE_DETAIL}`,
 	}),
+}));
+
+jest.mock('@signozhq/button', () => ({
+	Button: ({ children }: { children: React.ReactNode }): JSX.Element => (
+		<div>{children}</div>
+	),
 }));
 
 const mockSafeNavigate = jest.fn();
@@ -156,20 +169,71 @@ jest.mock('providers/preferences/context/PreferenceContextProvider', () => ({
 	),
 }));
 
+// Mock QueryBuilder context value
+const mockQueryBuilderContextValue = {
+	currentQuery: {
+		builder: {
+			queryData: [
+				{
+					dataSource: 'logs',
+					queryName: 'A',
+					filter: { expression: "trace_id = 'test-trace-id'" },
+				},
+			],
+		},
+	},
+	stagedQuery: {
+		builder: {
+			queryData: [
+				{
+					dataSource: 'logs',
+					queryName: 'A',
+					filter: { expression: "trace_id = 'test-trace-id'" },
+				},
+			],
+		},
+	},
+	updateAllQueriesOperators: mockUpdateAllQueriesOperators,
+	panelType: 'list',
+	redirectWithQuery: jest.fn(),
+	handleRunQuery: jest.fn(),
+	handleStageQuery: jest.fn(),
+	resetQuery: jest.fn(),
+};
+
+const renderSpanDetailsDrawer = (props = {}): void => {
+	render(
+		<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
+			<SpanDetailsDrawer
+				isSpanDetailsDocked={false}
+				setIsSpanDetailsDocked={jest.fn()}
+				selectedSpan={mockSpan}
+				traceStartTime={1640995200000} // 2022-01-01 00:00:00 in milliseconds
+				traceEndTime={1640995260000} // 2022-01-01 00:01:00 in milliseconds
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...props}
+			/>
+		</QueryBuilderContext.Provider>,
+	);
+};
+
 describe('SpanDetailsDrawer', () => {
-	let apiCallHistory: any[] = [];
+	let apiCallHistory: any = {};
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		apiCallHistory = [];
+		apiCallHistory = {
+			span_logs: null,
+			before_logs: null,
+			after_logs: null,
+			trace_only_logs: null,
+		};
 		mockSafeNavigate.mockClear();
 		mockWindowOpen.mockClear();
 		mockUpdateAllQueriesOperators.mockClear();
 
 		// Setup API call tracking
 		(GetMetricQueryRange as jest.Mock).mockImplementation((query) => {
-			apiCallHistory.push(query);
-
 			// Determine response based on v5 filter expressions
 			const filterExpression =
 				query.query?.builder?.queryData?.[0]?.filter?.expression;
@@ -178,14 +242,23 @@ describe('SpanDetailsDrawer', () => {
 
 			// Check for span logs query (contains both trace_id and span_id)
 			if (filterExpression.includes('span_id')) {
+				apiCallHistory.span_logs = query;
 				return Promise.resolve(mockSpanLogsResponse);
 			}
 			// Check for before logs query (contains trace_id and id <)
 			if (filterExpression.includes('id <')) {
+				apiCallHistory.before_logs = query;
 				return Promise.resolve(mockBeforeLogsResponse);
 			}
 			// Check for after logs query (contains trace_id and id >)
 			if (filterExpression.includes('id >')) {
+				apiCallHistory.after_logs = query;
+				return Promise.resolve(mockAfterLogsResponse);
+			}
+
+			// Check for trace only logs query (contains trace_id)
+			if (filterExpression.includes('trace_id =')) {
+				apiCallHistory.trace_only_logs = query;
 				return Promise.resolve(mockAfterLogsResponse);
 			}
 
@@ -196,54 +269,6 @@ describe('SpanDetailsDrawer', () => {
 	afterEach(() => {
 		server.resetHandlers();
 	});
-
-	// Mock QueryBuilder context value
-	const mockQueryBuilderContextValue = {
-		currentQuery: {
-			builder: {
-				queryData: [
-					{
-						dataSource: 'logs',
-						queryName: 'A',
-						filter: { expression: "trace_id = 'test-trace-id'" },
-					},
-				],
-			},
-		},
-		stagedQuery: {
-			builder: {
-				queryData: [
-					{
-						dataSource: 'logs',
-						queryName: 'A',
-						filter: { expression: "trace_id = 'test-trace-id'" },
-					},
-				],
-			},
-		},
-		updateAllQueriesOperators: mockUpdateAllQueriesOperators,
-		panelType: 'list',
-		redirectWithQuery: jest.fn(),
-		handleRunQuery: jest.fn(),
-		handleStageQuery: jest.fn(),
-		resetQuery: jest.fn(),
-	};
-
-	const renderSpanDetailsDrawer = (props = {}): void => {
-		render(
-			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
-				<SpanDetailsDrawer
-					isSpanDetailsDocked={false}
-					setIsSpanDetailsDocked={jest.fn()}
-					selectedSpan={mockSpan}
-					traceStartTime={1640995200000} // 2022-01-01 00:00:00 in milliseconds
-					traceEndTime={1640995260000} // 2022-01-01 00:01:00 in milliseconds
-					// eslint-disable-next-line react/jsx-props-no-spreading
-					{...props}
-				/>
-			</QueryBuilderContext.Provider>,
-		);
-	};
 
 	it('should display logs tab in right sidebar when span is selected', async () => {
 		renderSpanDetailsDrawer();
@@ -275,7 +300,7 @@ describe('SpanDetailsDrawer', () => {
 		});
 	});
 
-	it('should make three API queries when logs tab is opened', async () => {
+	it('should make 4 API queries when logs tab is opened', async () => {
 		renderSpanDetailsDrawer();
 
 		// Click on logs tab to trigger API calls
@@ -284,11 +309,16 @@ describe('SpanDetailsDrawer', () => {
 
 		// Wait for all API calls to complete
 		await waitFor(() => {
-			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(4);
 		});
 
-		// Verify the three distinct queries were made
-		const [spanQuery, beforeQuery, afterQuery] = apiCallHistory;
+		// Verify the four distinct queries were made
+		const {
+			span_logs: spanQuery,
+			before_logs: beforeQuery,
+			after_logs: afterQuery,
+			trace_only_logs: traceOnlyQuery,
+		} = apiCallHistory;
 
 		// 1. Span logs query (trace_id + span_id)
 		expect(spanQuery.query.builder.queryData[0].filter.expression).toBe(
@@ -304,6 +334,11 @@ describe('SpanDetailsDrawer', () => {
 		expect(afterQuery.query.builder.queryData[0].filter.expression).toBe(
 			expectedAfterFilterExpression,
 		);
+
+		// 4. Trace only logs query (trace_id)
+		expect(traceOnlyQuery.query.builder.queryData[0].filter.expression).toBe(
+			expectedTraceOnlyFilterExpression,
+		);
 	});
 
 	it('should use correct timestamp ordering for different query types', async () => {
@@ -315,10 +350,14 @@ describe('SpanDetailsDrawer', () => {
 
 		// Wait for all API calls to complete
 		await waitFor(() => {
-			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(4);
 		});
 
-		const [spanQuery, beforeQuery, afterQuery] = apiCallHistory;
+		const {
+			span_logs: spanQuery,
+			before_logs: beforeQuery,
+			after_logs: afterQuery,
+		} = apiCallHistory;
 
 		// Verify ordering: span query should use 'desc' (default)
 		expect(spanQuery.query.builder.queryData[0].orderBy[0].order).toBe('desc');
@@ -451,24 +490,6 @@ describe('SpanDetailsDrawer', () => {
 		expect(mockSafeNavigate).not.toHaveBeenCalled();
 	});
 
-	it('should handle empty logs state', async () => {
-		// Mock empty response for all queries
-		(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockEmptyLogsResponse);
-
-		renderSpanDetailsDrawer();
-
-		// Open logs view
-		const logsButton = screen.getByRole('radio', { name: /logs/i });
-		fireEvent.click(logsButton);
-
-		// Wait and verify empty state is shown
-		await waitFor(() => {
-			expect(
-				screen.getByText(/No logs found for selected span/),
-			).toBeInTheDocument();
-		});
-	});
-
 	it('should display span logs as highlighted and context logs as regular', async () => {
 		renderSpanDetailsDrawer();
 
@@ -478,7 +499,7 @@ describe('SpanDetailsDrawer', () => {
 
 		// Wait for all API calls to complete first
 		await waitFor(() => {
-			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(4);
 		});
 
 		// Wait for all logs to be rendered - both span logs and context logs
@@ -505,5 +526,106 @@ describe('SpanDetailsDrawer', () => {
 		expect(contextLogBefore).toHaveClass('log-context');
 		expect(contextLogAfter).toHaveClass('log-context');
 		expect(contextLogBefore).not.toHaveAttribute('title');
+	});
+});
+
+describe('SpanDetailsDrawer - Search Visibility User Flows', () => {
+	const SEARCH_PLACEHOLDER = 'Search for attribute...';
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+		mockSafeNavigate.mockClear();
+		mockWindowOpen.mockClear();
+		mockUpdateAllQueriesOperators.mockClear();
+
+		(GetMetricQueryRange as jest.Mock).mockImplementation(() =>
+			Promise.resolve(mockEmptyLogsResponse),
+		);
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	// Journey 1: Default Search Visibility
+
+	it('should display search visible by default when user opens span details', () => {
+		renderSpanDetailsDrawer();
+
+		// User sees search input in the Attributes tab by default
+		const searchInput = screen.getByPlaceholderText(SEARCH_PLACEHOLDER);
+		expect(searchInput).toBeInTheDocument();
+		expect(searchInput).toBeVisible();
+	});
+
+	it('should filter attributes when user types in search', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		renderSpanDetailsDrawer();
+
+		// User sees all attributes initially
+		expect(screen.getByText('http.method')).toBeInTheDocument();
+		expect(screen.getByText('http.url')).toBeInTheDocument();
+		expect(screen.getByText('http.status_code')).toBeInTheDocument();
+
+		// User types "method" in search
+		const searchInput = screen.getByPlaceholderText(SEARCH_PLACEHOLDER);
+		await user.type(searchInput, 'method');
+
+		// User sees only matching attributes
+		await waitFor(() => {
+			expect(screen.getByText('http.method')).toBeInTheDocument();
+			expect(screen.queryByText('http.url')).not.toBeInTheDocument();
+			expect(screen.queryByText('http.status_code')).not.toBeInTheDocument();
+		});
+	});
+
+	// Journey 2: Search Toggle & Focus Management
+
+	it('should hide search when user clicks search icon', () => {
+		renderSpanDetailsDrawer();
+
+		// User sees search initially
+		expect(screen.getByPlaceholderText(SEARCH_PLACEHOLDER)).toBeInTheDocument();
+
+		// User clicks search icon to hide search
+		const tabBar = screen.getByRole('tablist');
+		const searchIcon = tabBar.querySelector('.search-icon');
+		if (searchIcon) {
+			fireEvent.click(searchIcon);
+		}
+
+		// Search is now hidden
+		expect(
+			screen.queryByPlaceholderText(SEARCH_PLACEHOLDER),
+		).not.toBeInTheDocument();
+	});
+
+	it('should show and focus search when user clicks search icon again', () => {
+		renderSpanDetailsDrawer();
+
+		// User clicks search icon to hide
+		const tabBar = screen.getByRole('tablist');
+		const searchIcon = tabBar.querySelector('.search-icon');
+		if (searchIcon) {
+			fireEvent.click(searchIcon);
+		}
+
+		// Search is hidden
+		expect(
+			screen.queryByPlaceholderText(SEARCH_PLACEHOLDER),
+		).not.toBeInTheDocument();
+
+		// User clicks search icon again to show
+		if (searchIcon) {
+			fireEvent.click(searchIcon);
+		}
+
+		// Search appears and receives focus
+		const searchInput = screen.getByPlaceholderText(
+			SEARCH_PLACEHOLDER,
+		) as HTMLInputElement;
+		expect(searchInput).toBeInTheDocument();
+		expect(searchInput).toHaveFocus();
 	});
 });

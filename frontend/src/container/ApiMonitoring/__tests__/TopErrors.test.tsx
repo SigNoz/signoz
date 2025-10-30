@@ -37,6 +37,7 @@ jest.mock(
 
 // Mock dependencies
 jest.mock('react-query', () => ({
+	...jest.requireActual('react-query'),
 	useQueries: jest.fn(),
 }));
 
