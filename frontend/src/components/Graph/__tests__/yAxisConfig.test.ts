@@ -1,10 +1,10 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { getYAxisFormattedValue } from '../yAxisConfig';
+import { getYAxisFormattedValue, PrecisionOptionsEnum } from '../yAxisConfig';
 
 const testFullPrecisionGetYAxisFormattedValue = (
 	value: string,
 	format: string,
-): string => getYAxisFormattedValue(value, format, 'full');
+): string => getYAxisFormattedValue(value, format, PrecisionOptionsEnum.FULL);
 
 describe('getYAxisFormattedValue - none (full precision legacy assertions)', () => {
 	test('large integers and decimals', () => {
@@ -346,14 +346,26 @@ describe('getYAxisFormattedValue - precision option tests', () => {
 	});
 
 	test('precision full uses up to DEFAULT_SIGNIFICANT_DIGITS significant digits', () => {
-		expect(getYAxisFormattedValue('0.00002625429914148441', 'none', 'full')).toBe(
-			'0.000026254299141',
-		);
-		expect(getYAxisFormattedValue('0.000026254299141484417', 's', 'full')).toBe(
-			'26254299141484417000000 µs',
-		);
+		expect(
+			getYAxisFormattedValue(
+				'0.00002625429914148441',
+				'none',
+				PrecisionOptionsEnum.FULL,
+			),
+		).toBe('0.000026254299141');
+		expect(
+			getYAxisFormattedValue(
+				'0.000026254299141484417',
+				's',
+				PrecisionOptionsEnum.FULL,
+			),
+		).toBe('26254299141484417000000 µs');
 
-		expect(getYAxisFormattedValue('4353.81', 'ms', 'full')).toBe('4.35381 s');
-		expect(getYAxisFormattedValue('500', 'ms', 'full')).toBe('500 ms');
+		expect(
+			getYAxisFormattedValue('4353.81', 'ms', PrecisionOptionsEnum.FULL),
+		).toBe('4.35381 s');
+		expect(getYAxisFormattedValue('500', 'ms', PrecisionOptionsEnum.FULL)).toBe(
+			'500 ms',
+		);
 	});
 });

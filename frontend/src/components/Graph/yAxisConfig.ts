@@ -7,7 +7,15 @@ const DEFAULT_SIGNIFICANT_DIGITS = 15;
 // max decimals to keep should not exceed 15 decimal places to avoid floating point precision issues
 const MAX_DECIMALS = 15;
 
-export type PrecisionOption = 0 | 1 | 2 | 3 | 4 | 'full';
+export enum PrecisionOptionsEnum {
+	ZERO = 0,
+	ONE = 1,
+	TWO = 2,
+	THREE = 3,
+	FOUR = 4,
+	FULL = 'full',
+}
+export type PrecisionOption = 0 | 1 | 2 | 3 | 4 | PrecisionOptionsEnum.FULL;
 
 /**
  * Formats a number for display, preserving leading zeros after the decimal point
@@ -53,7 +61,9 @@ const formatDecimalWithLeadingZeros = (
 
 	// Determine the number of decimals to keep: leading zeros + up to N significant digits.
 	const significantDigits =
-		precision === 'full' ? DEFAULT_SIGNIFICANT_DIGITS : precision;
+		precision === PrecisionOptionsEnum.FULL
+			? DEFAULT_SIGNIFICANT_DIGITS
+			: precision;
 	const decimalsToKeep = firstNonZeroIndex + (significantDigits || 0);
 
 	// max decimals to keep should not exceed 15 decimal places to avoid floating point precision issues
@@ -100,7 +110,7 @@ export const getYAxisFormattedValue = (
 
 	// For all other standard formats, delegate to grafana/data's built-in formatter.
 	const computeDecimals = (): number | undefined => {
-		if (precision === 'full') {
+		if (precision === PrecisionOptionsEnum.FULL) {
 			return decimalPlaces && decimalPlaces >= DEFAULT_SIGNIFICANT_DIGITS
 				? decimalPlaces
 				: DEFAULT_SIGNIFICANT_DIGITS;
@@ -109,12 +119,14 @@ export const getYAxisFormattedValue = (
 	};
 
 	const fallbackFormat = (): string => {
-		if (precision === 'full') return numValue.toString();
+		if (precision === PrecisionOptionsEnum.FULL) return numValue.toString();
 		if (precision === 0) return Math.round(numValue).toString();
-		return numValue
-			.toFixed(precision)
-			.replace(/(\.[0-9]*[1-9])0+$/, '$1') // trimming zeros
-			.replace(/\.$/, '');
+		return precision
+			? numValue
+					.toFixed(precision)
+					.replace(/(\.[0-9]*[1-9])0+$/, '$1') // trimming zeros
+					.replace(/\.$/, '')
+			: numValue.toString();
 	};
 
 	try {
