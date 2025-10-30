@@ -427,6 +427,9 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
+			// Update the recovering and missing state of existing alert
+			alert.IsRecovering = a.IsRecovering
+			alert.Missing = a.Missing
 			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
 				alert.Receivers = ruleReceiverMap[v]
 			}
@@ -486,13 +489,22 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 			})
 		}
 
-		// convert firing alert to recovering alert
-		if a.State == model.StateFiring && a.IsRecovering {
-			a.State = model.StateRecovering
+		// We need to change firing alert to recovering if the returned sample meets recovery threshold
+		changeFiringToRecovering := a.State == model.StateFiring && a.IsRecovering
+		// We need to change recovering alerts to firing if the returned sample meets target threshold
+		changeRecoveringToFiring := a.State == model.StateRecovering && !a.IsRecovering && !a.Missing
+		// in any of the above case we need to update the status of alert
+		if changeFiringToRecovering || changeRecoveringToFiring {
+			state := model.StateRecovering
+			if changeRecoveringToFiring {
+				state = model.StateFiring
+			}
+			a.State = state
+			r.logger.DebugContext(ctx, "converting alert state", "name", r.Name(), "state", state)
 			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
 				RuleID:       r.ID(),
 				RuleName:     r.Name(),
-				State:        a.State,
+				State:        state,
 				StateChanged: true,
 				UnixMilli:    ts.UnixMilli(),
 				Labels:       model.LabelsString(labelsJSON),
