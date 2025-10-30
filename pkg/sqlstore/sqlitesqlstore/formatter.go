@@ -31,7 +31,35 @@ func (f *formatter) JSONIsArray(column, path string) string {
 	return b.String()
 }
 
-func (f *formatter) JSONArrayElements(column, path, alias string) string {
+func (f *formatter) JSONArrayElements(column, path, alias string) (string, string) {
+	var b strings.Builder
+	b.WriteString("json_each(")
+	b.WriteString(column)
+	if path != "$" && path != "" {
+		b.WriteString(", '")
+		b.WriteString(path)
+		b.WriteString("'")
+	}
+	b.WriteString(") AS ")
+	b.WriteString(alias)
+	return b.String(), alias + ".value"
+}
+
+func (f *formatter) JSONArrayOfStrings(column, path, alias string) (string, string) {
+	var b strings.Builder
+	b.WriteString("json_each(")
+	b.WriteString(column)
+	if path != "$" && path != "" {
+		b.WriteString(", '")
+		b.WriteString(path)
+		b.WriteString("'")
+	}
+	b.WriteString(") AS ")
+	b.WriteString(alias)
+	return b.String(), alias + ".value"
+}
+
+func (f *formatter) JSONKeys(column, path, alias string) string {
 	var b strings.Builder
 	b.WriteString("json_each(")
 	b.WriteString(column)

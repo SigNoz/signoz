@@ -148,34 +148,34 @@ func TestFormatter_JSONArrayElements(t *testing.T) {
 			column: "data",
 			path:   "$",
 			alias:  "elem",
-			want:   "jsonb_array_elements(data) AS elem(value)",
+			want:   "jsonb_array_elements(data) AS elem",
 		},
 		{
 			name:   "root path empty",
 			column: "data",
 			path:   "",
 			alias:  "elem",
-			want:   "jsonb_array_elements(data) AS elem(value)",
+			want:   "jsonb_array_elements(data) AS elem",
 		},
 		{
 			name:   "nested path",
 			column: "metadata",
 			path:   "$.items",
 			alias:  "item",
-			want:   "jsonb_array_elements(metadata->'items') AS item(value)",
+			want:   "jsonb_array_elements(metadata->'items') AS item",
 		},
 		{
 			name:   "deeply nested path",
 			column: "json_col",
 			path:   "$.user.tags",
 			alias:  "tag",
-			want:   "jsonb_array_elements(json_col->'user'->'tags') AS tag(value)",
+			want:   "jsonb_array_elements(json_col->'user'->'tags') AS tag",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := f.JSONArrayElements(tt.column, tt.path, tt.alias)
+			got, _ := f.JSONArrayElements(tt.column, tt.path, tt.alias)
 			if got != tt.want {
 				t.Errorf("JSONArrayElements() = %v, want %v", got, tt.want)
 			}

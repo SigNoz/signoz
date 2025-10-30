@@ -4,14 +4,14 @@ import "strings"
 
 type formatter struct{}
 
-func (formatter formatter) JSONExtractString(column, path string) string {
+func (f *formatter) JSONExtractString(column, path string) string {
 	var b strings.Builder
 	b.WriteString(column)
 	b.WriteString(convertJSONPathToPostgres(path))
 	return b.String()
 }
 
-func (formatter formatter) JSONType(column, path string) string {
+func (f *formatter) JSONType(column, path string) string {
 	var b strings.Builder
 	b.WriteString("jsonb_typeof(")
 	b.WriteString(column)
@@ -20,14 +20,14 @@ func (formatter formatter) JSONType(column, path string) string {
 	return b.String()
 }
 
-func (formatter formatter) JSONIsArray(column, path string) string {
+func (f *formatter) JSONIsArray(column, path string) string {
 	var b strings.Builder
-	b.WriteString(formatter.JSONType(column, path))
+	b.WriteString(f.JSONType(column, path))
 	b.WriteString(" = 'array'")
 	return b.String()
 }
 
-func (formatter formatter) JSONArrayElements(column, path, alias string) string {
+func (f *formatter) JSONArrayElements(column, path, alias string) (string, string) {
 	var b strings.Builder
 	b.WriteString("jsonb_array_elements(")
 	b.WriteString(column)
@@ -36,11 +36,34 @@ func (formatter formatter) JSONArrayElements(column, path, alias string) string 
 	}
 	b.WriteString(") AS ")
 	b.WriteString(alias)
-	b.WriteString("(value)")
+	return b.String(), alias
+}
+
+func (f *formatter) JSONArrayOfStrings(column, path, alias string) (string, string) {
+	var b strings.Builder
+	b.WriteString("jsonb_array_elements_text(")
+	b.WriteString(column)
+	if path != "$" && path != "" {
+		b.WriteString(convertJSONPathToPostgresWithMode(path, false))
+	}
+	b.WriteString(") AS ")
+	b.WriteString(alias)
+	return b.String(), alias + "::text"
+}
+
+func (f *formatter) JSONKeys(column, path, alias string) string {
+	var b strings.Builder
+	b.WriteString("jsonb_each(")
+	b.WriteString(column)
+	if path != "$" && path != "" {
+		b.WriteString(convertJSONPathToPostgresWithMode(path, false))
+	}
+	b.WriteString(") AS ")
+	b.WriteString(alias)
 	return b.String()
 }
 
-func (formatter formatter) JSONArrayAgg(expression string) string {
+func (f *formatter) JSONArrayAgg(expression string) string {
 	var b strings.Builder
 	b.WriteString("jsonb_agg(")
 	b.WriteString(expression)
@@ -48,7 +71,7 @@ func (formatter formatter) JSONArrayAgg(expression string) string {
 	return b.String()
 }
 
-func (formatter formatter) JSONArrayLiteral(values ...string) string {
+func (f *formatter) JSONArrayLiteral(values ...string) string {
 	if len(values) == 0 {
 		return "jsonb_build_array()"
 	}
@@ -66,7 +89,7 @@ func (formatter formatter) JSONArrayLiteral(values ...string) string {
 	return b.String()
 }
 
-func (formatter formatter) TextToJsonColumn(column string) string {
+func (f *formatter) TextToJsonColumn(column string) string {
 	var b strings.Builder
 	b.WriteString(column)
 	b.WriteString("::jsonb")

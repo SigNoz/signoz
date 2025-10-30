@@ -90,12 +90,30 @@ type SQLDialect interface {
 }
 
 type SQLFormatter interface {
-	// JSON operations for cross-database compatibility
+	// JSONExtractString takes path in sqlite format like "$.labels.severity"
 	JSONExtractString(column, path string) string
+
+	// JSONType used to determine the type of the value extracted from the path
 	JSONType(column, path string) string
+
+	// JSONIsArray used to check whether the value is array or not
 	JSONIsArray(column, path string) string
-	JSONArrayElements(column, path, alias string) string
+
+	// JSONArrayElements returns query as well as columns alias to be used for select and where clause
+	JSONArrayElements(column, path, alias string) (string, string)
+
+	// JSONArrayOfStrings returns query as well as columns alias to be used for select and where clause
+	JSONArrayOfStrings(column, path, alias string) (string, string)
+
+	// JSONArrayAgg aggregates values into a JSON array
 	JSONArrayAgg(expression string) string
+
+	// JSONArrayLiteral creates a literal JSON array from the given string values
 	JSONArrayLiteral(values ...string) string
+
+	// JSONKeys extracts keys from a JSON object as a set of key-value pairs
+	JSONKeys(column, path, alias string) string
+
+	// TextToJsonColumn converts a text column to JSON type
 	TextToJsonColumn(column string) string
 }

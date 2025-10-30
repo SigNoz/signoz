@@ -169,7 +169,7 @@ func TestFormatter_JSONArrayElements(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := f.JSONArrayElements(tt.column, tt.path, tt.alias)
+			got, _ := f.JSONArrayElements(tt.column, tt.path, tt.alias)
 			if got != tt.want {
 				t.Errorf("JSONArrayElements() = %v, want %v", got, tt.want)
 			}
