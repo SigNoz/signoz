@@ -25,6 +25,20 @@ var (
 	TypeableResourcesRoles = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("roles"))
 )
 
+var (
+	RoleTypeManaged = valuer.NewString("managed")
+	RoleTypeCustom  = valuer.NewString("custom")
+
+	ManagedRoleSigNozAdminName        = "SigNoz Admin"
+	ManagedRoleSigNozAdminDescription = "Default SigNoz Admin with all the permissions"
+
+	ManagedRoleSigNozEditorName        = "SigNoz Editor"
+	ManagedRoleSigNozEditorDescription = "Default SigNoz Editor with certain write permission"
+
+	ManagedRoleSigNozViewerName        = "SigNoz Viewer"
+	ManagedRoleSigNozViewerDescription = "Org member role with permissions to view and collaborate"
+)
+
 type StorableRole struct {
 	bun.BaseModel `bun:"table:role"`
 
@@ -32,6 +46,7 @@ type StorableRole struct {
 	types.TimeAuditable
 	DisplayName string `bun:"display_name,type:string"`
 	Description string `bun:"description,type:string"`
+	Type        string `bun:"type,type:boolean"`
 	OrgID       string `bun:"org_id,type:string"`
 }
 
@@ -40,6 +55,7 @@ type Role struct {
 	types.TimeAuditable
 	DisplayName string      `json:"displayName"`
 	Description string      `json:"description"`
+	Type        string      `json:"type"`
 	OrgID       valuer.UUID `json:"org_id"`
 }
 
@@ -58,12 +74,29 @@ type PatchableObjects struct {
 	Deletions []*authtypes.Object `json:"deletions"`
 }
 
+func MustNewStorableRole(displayName, description string, roleType valuer.String, orgID valuer.UUID) *StorableRole {
+	return &StorableRole{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		DisplayName: displayName,
+		Description: description,
+		Type:        roleType.StringValue(),
+		OrgID:       orgID.StringValue(),
+	}
+}
+
 func NewStorableRoleFromRole(role *Role) (*StorableRole, error) {
 	return &StorableRole{
 		Identifiable:  role.Identifiable,
 		TimeAuditable: role.TimeAuditable,
 		DisplayName:   role.DisplayName,
 		Description:   role.Description,
+		Type:          role.Type,
 		OrgID:         role.OrgID.StringValue(),
 	}, nil
 }
@@ -74,11 +107,12 @@ func NewRoleFromStorableRole(storableRole *StorableRole) (*Role, error) {
 		TimeAuditable: storableRole.TimeAuditable,
 		DisplayName:   storableRole.DisplayName,
 		Description:   storableRole.Description,
+		Type:          storableRole.Type,
 		OrgID:         valuer.MustNewUUID(storableRole.OrgID),
 	}, nil
 }
 
-func NewRole(displayName, description string, orgID valuer.UUID) *Role {
+func NewRole(displayName, description string, roleType valuer.String, orgID valuer.UUID) *Role {
 	return &Role{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -89,6 +123,7 @@ func NewRole(displayName, description string, orgID valuer.UUID) *Role {
 		},
 		DisplayName: displayName,
 		Description: description,
+		Type:        roleType.StringValue(),
 		OrgID:       orgID,
 	}
 }
@@ -113,7 +148,11 @@ func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.O
 	return &PatchableObjects{Additions: additions, Deletions: deletions}, nil
 }
 
-func (role *Role) PatchMetadata(displayName, description *string) {
+func (role *Role) PatchMetadata(displayName, description *string) error {
+	if !role.CanEditOrDelete() {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "cannot patch managed roles")
+	}
+
 	if displayName != nil {
 		role.DisplayName = *displayName
 	}
@@ -121,6 +160,12 @@ func (role *Role) PatchMetadata(displayName, description *string) {
 		role.Description = *description
 	}
 	role.UpdatedAt = time.Now()
+
+	return nil
+}
+
+func (role *Role) CanEditOrDelete() bool {
+	return role.Type == RoleTypeCustom.StringValue()
 }
 
 func (role *PostableRole) UnmarshalJSON(data []byte) error {

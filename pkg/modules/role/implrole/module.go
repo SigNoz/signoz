@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
@@ -26,7 +27,7 @@ func NewModule(store roletypes.Store, authz authz.AuthZ, registry []role.Registe
 }
 
 func (module *module) Create(ctx context.Context, orgID valuer.UUID, displayName, description string) (*roletypes.Role, error) {
-	role := roletypes.NewRole(displayName, description, orgID)
+	role := roletypes.NewRole(displayName, description, roletypes.RoleTypeCustom, orgID)
 	storableRole, err := roletypes.NewStorableRoleFromRole(role)
 	if err != nil {
 		return nil, err
@@ -127,7 +128,11 @@ func (module *module) Patch(ctx context.Context, orgID valuer.UUID, id valuer.UU
 		return err
 	}
 
-	role.PatchMetadata(displayName, description)
+	err = role.PatchMetadata(displayName, description)
+	if err != nil {
+		return err
+	}
+
 	updatedRole, err := roletypes.NewStorableRoleFromRole(role)
 	if err != nil {
 		return err
@@ -161,8 +166,64 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 }
 
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
-	// todo(@vikrantgupta25): this doesn't delete the tuples for this role yet!
+	storableRole, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	role, err := roletypes.NewRoleFromStorableRole(storableRole)
+	if err != nil {
+		return err
+	}
+
+	if !role.CanEditOrDelete() {
+		return errors.Newf(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "cannot delete managed role")
+	}
+
 	return module.store.Delete(ctx, orgID, id)
+}
+
+func (module *module) SetManagedRoles(ctx context.Context, orgID valuer.UUID) error {
+	storableManagedRoleAdmin := roletypes.MustNewStorableRole(
+		roletypes.ManagedRoleSigNozAdminName,
+		roletypes.ManagedRoleSigNozAdminDescription,
+		roletypes.RoleTypeManaged,
+		orgID,
+	)
+
+	storableManagedRoleViewer := roletypes.MustNewStorableRole(
+		roletypes.ManagedRoleSigNozViewerName,
+		roletypes.ManagedRoleSigNozViewerDescription,
+		roletypes.RoleTypeManaged,
+		orgID,
+	)
+
+	storableManagedRoleEditor := roletypes.MustNewStorableRole(
+		roletypes.ManagedRoleSigNozEditorName,
+		roletypes.ManagedRoleSigNozEditorDescription,
+		roletypes.RoleTypeManaged,
+		orgID,
+	)
+
+	module.store.RunInTx(ctx, func(ctx context.Context) error {
+		err := module.store.Create(ctx, storableManagedRoleAdmin)
+		if err != nil {
+			return err
+		}
+
+		err = module.store.Create(ctx, storableManagedRoleViewer)
+		if err != nil {
+			return err
+		}
+
+		err = module.store.Create(ctx, storableManagedRoleEditor)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	return nil
 }
 
 func (module *module) MustGetTypeables() []authtypes.Typeable {

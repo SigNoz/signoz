@@ -71,10 +71,11 @@ func NewModules(
 	authz authz.AuthZ,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
-	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
+	dashboard := impldashboard.NewModule(sqlstore, providerSettings, analytics)
+	role := implrole.NewModule(implrole.NewStore(sqlstore), authz, []role.RegisterTypeable{dashboard})
+	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter, role)
 	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics)
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
-	dashboard := impldashboard.NewModule(sqlstore, providerSettings, analytics)
 	return Modules{
 		OrgGetter:      orgGetter,
 		OrgSetter:      orgSetter,
@@ -90,6 +91,6 @@ func NewModules(
 		AuthDomain:     implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)),
 		Session:        implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
 		SpanPercentile: implspanpercentile.NewModule(querier, providerSettings),
-		Role:           implrole.NewModule(implrole.NewStore(sqlstore), authz, []role.RegisterTypeable{dashboard}),
+		Role:           role,
 	}
 }

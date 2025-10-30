@@ -2,10 +2,14 @@ package sqlmigration
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 )
@@ -54,6 +58,7 @@ func (migration *addRole) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "display_name", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "description", DataType: sqlschema.DataTypeText, Nullable: true},
+			{Name: "type", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
@@ -69,11 +74,81 @@ func (migration *addRole) Up(ctx context.Context, db *bun.DB) error {
 	})
 	sqls = append(sqls, tableSQLs...)
 
-	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "role", ColumnNames: []sqlschema.ColumnName{"display_name"}})
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "role", ColumnNames: []sqlschema.ColumnName{"display_name", "org_id"}})
 	sqls = append(sqls, indexSQLs...)
 
 	for _, sqlStmt := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sqlStmt)); err != nil {
+			return err
+		}
+	}
+
+	var orgIDs []string
+	err = tx.NewSelect().
+		Table("organizations").
+		Column("id").
+		Scan(ctx, &orgIDs)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	type storableRole struct {
+		bun.BaseModel `bun:"table:role"`
+
+		types.Identifiable
+		types.TimeAuditable
+		DisplayName string `bun:"display_name,type:string"`
+		Description string `bun:"description,type:string"`
+		Type        string `bun:"type,type:string"`
+		OrgID       string `bun:"org_id,type:string"`
+	}
+
+	for _, orgID := range orgIDs {
+		roles := []storableRole{
+			{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				DisplayName: "SigNoz Admin",
+				Description: "Default SigNoz Admin with all the permissions",
+				Type:        "managed",
+				OrgID:       orgID,
+			},
+			{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				DisplayName: "SigNoz Editor",
+				Description: "Default SigNoz Editor with certain write permission",
+				Type:        "managed",
+				OrgID:       orgID,
+			},
+			{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				DisplayName: "SigNoz Viewer",
+				Description: "Org member role with permissions to view and collaborate",
+				Type:        "managed",
+				OrgID:       orgID,
+			},
+		}
+
+		if _, err := tx.NewInsert().
+			Model(&roles).
+			Exec(ctx); err != nil {
 			return err
 		}
 	}
