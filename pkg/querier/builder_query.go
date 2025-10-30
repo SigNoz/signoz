@@ -266,6 +266,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 						}
 					}
 
+					delete(body, clickhouselogsexporter.MessageExistsPath)
 					promoted := rr.Data["promoted"].(map[string]any)
 					seed(promoted, body)
 					str, err := sonic.MarshalString(body)
