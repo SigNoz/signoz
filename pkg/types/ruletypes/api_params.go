@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"slices"
 	"time"
 	"unicode/utf8"
@@ -451,4 +453,19 @@ func (g *GettableRule) MarshalJSON() ([]byte, error) {
 		aux := Alias(copyStruct)
 		return json.Marshal(aux)
 	}
+}
+
+type RuleAttributeKeyType struct {
+	valuer.String
+}
+
+var (
+	RuleAttributeTypeFixed = RuleAttributeKeyType{valuer.NewString("fixed")}
+	RuleAttributeTypeLabel = RuleAttributeKeyType{valuer.NewString("label")}
+)
+
+type GetRuleAttributeKeys struct {
+	Key      string                       `json:"key"`
+	DataType telemetrytypes.FieldDataType `json:"dataType"`
+	Type     RuleAttributeKeyType         `json:"type"`
 }
