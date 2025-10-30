@@ -27,7 +27,6 @@ func NewModule(store roletypes.Store, authz authz.AuthZ, registry []role.Registe
 
 func (module *module) Create(ctx context.Context, orgID valuer.UUID, displayName, description string) (*roletypes.Role, error) {
 	role := roletypes.NewRole(displayName, description, orgID)
-
 	storableRole, err := roletypes.NewStorableRoleFromRole(role)
 	if err != nil {
 		return nil, err
@@ -46,7 +45,7 @@ func (module *module) GetResources(_ context.Context) []*authtypes.Resource {
 	for _, register := range module.registry {
 		typeables = append(typeables, register.MustGetTypeables()...)
 	}
-	// role module cannot self register itself!
+	// role module cannot self register itself hence extracting here.
 	typeables = append(typeables, module.MustGetTypeables()...)
 
 	resources := make([]*authtypes.Resource, 0)
@@ -72,7 +71,7 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 }
 
 func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*authtypes.Object, error) {
-	storableRole, err := module.store.Get(ctx, orgID, id)
+	_, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +83,7 @@ func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valu
 				authz.
 				ListObjects(
 					ctx,
-					authtypes.MustNewSubject(authtypes.TypeRole, storableRole.ID.String(), authtypes.RelationAssignee),
+					authtypes.MustNewSubject(authtypes.TypeRole, id.String(), authtypes.RelationAssignee),
 					relation,
 					authtypes.MustNewTypeableFromType(resource.Type, resource.Name),
 				)
@@ -162,6 +161,7 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 }
 
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	// todo(@vikrantgupta25): this doesn't delete the tuples for this role yet!
 	return module.store.Delete(ctx, orgID, id)
 }
 

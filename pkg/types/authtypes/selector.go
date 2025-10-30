@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrCodeAuthZInvalidSelectorRegex = errors.MustNewCode("authz_invalid_selector_regex")
+	ErrCodeAuthZInvalidSelector = errors.MustNewCode("authz_invalid_selector")
 )
 
 var (
@@ -21,9 +21,9 @@ var (
 	typeUserSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeRoleSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeOrganizationSelectorRegex = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
-	typeResourceSelectorRegex     = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
-	// resources selectors are used to select either all or none
-	typeResourcesSelectorRegex = regexp.MustCompile(`^\*$`)
+	typeMetaResourceSelectorRegex = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
+	// metaresources selectors are used to select either all or none
+	typeMetaResourcesSelectorRegex = regexp.MustCompile(`^\*$`)
 )
 
 type SelectorCallbackFn func(context.Context, Claims) ([]Selector, error)
@@ -39,33 +39,6 @@ func NewSelector(typed Type, selector string) (Selector, error) {
 	}
 
 	return Selector{val: selector}, nil
-}
-
-func IsValidSelector(typed Type, selector string) error {
-	switch typed {
-	case TypeUser:
-		if !typeUserSelectorRegex.MatchString(selector) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeUserSelectorRegex.String())
-		}
-	case TypeRole:
-		if !typeRoleSelectorRegex.MatchString(selector) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeRoleSelectorRegex.String())
-		}
-	case TypeOrganization:
-		if !typeOrganizationSelectorRegex.MatchString(selector) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeOrganizationSelectorRegex.String())
-		}
-	case TypeMetaResource:
-		if !typeResourceSelectorRegex.MatchString(selector) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourceSelectorRegex.String())
-		}
-	case TypeMetaResources:
-		if !typeResourcesSelectorRegex.MatchString(selector) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelectorRegex, "selector must conform to regex %s", typeResourcesSelectorRegex.String())
-		}
-	}
-
-	return nil
 }
 
 func MustNewSelector(typed Type, input string) Selector {
@@ -92,8 +65,35 @@ func (typed *Selector) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	shadow := Selector{val: str}
-	*typed = shadow
+	alias := Selector{val: str}
+	*typed = alias
 
 	return nil
+}
+
+func IsValidSelector(typed Type, selector string) error {
+	switch typed {
+	case TypeUser:
+		if !typeUserSelectorRegex.MatchString(selector) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeUserSelectorRegex.String())
+		}
+	case TypeRole:
+		if !typeRoleSelectorRegex.MatchString(selector) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeRoleSelectorRegex.String())
+		}
+	case TypeOrganization:
+		if !typeOrganizationSelectorRegex.MatchString(selector) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeOrganizationSelectorRegex.String())
+		}
+	case TypeMetaResource:
+		if !typeMetaResourceSelectorRegex.MatchString(selector) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeMetaResourceSelectorRegex.String())
+		}
+	case TypeMetaResources:
+		if !typeMetaResourcesSelectorRegex.MatchString(selector) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeMetaResourcesSelectorRegex.String())
+		}
+	}
+
+	return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidType, "invalid type: %s", typed)
 }

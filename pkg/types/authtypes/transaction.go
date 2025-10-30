@@ -61,6 +61,14 @@ func MustNewObjectsFromStringSlice(input []string) []*Object {
 	return objects
 }
 
+func NewTransaction(relation Relation, object Object) (*Transaction, error) {
+	if !slices.Contains(TypeableRelations[object.Resource.Type], relation) {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "invalid relation %s for type %s", relation.StringValue(), object.Resource.Type.StringValue())
+	}
+
+	return &Transaction{Relation: relation, Object: object}, nil
+}
+
 func (object *Object) UnmarshalJSON(data []byte) error {
 	var shadow = struct {
 		Resource Resource
@@ -79,14 +87,6 @@ func (object *Object) UnmarshalJSON(data []byte) error {
 
 	*object = *obj
 	return nil
-}
-
-func NewTransaction(relation Relation, object Object) (*Transaction, error) {
-	if !slices.Contains(TypeableRelations[object.Resource.Type], relation) {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "invalid relation %s for type %s", relation.StringValue(), object.Resource.Type.StringValue())
-	}
-
-	return &Transaction{Relation: relation, Object: object}, nil
 }
 
 func (transaction *Transaction) UnmarshalJSON(data []byte) error {

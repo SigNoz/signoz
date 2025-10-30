@@ -69,17 +69,12 @@ func NewStorableRoleFromRole(role *Role) (*StorableRole, error) {
 }
 
 func NewRoleFromStorableRole(storableRole *StorableRole) (*Role, error) {
-	orgID, err := valuer.NewUUID(storableRole.OrgID)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Role{
 		Identifiable:  storableRole.Identifiable,
 		TimeAuditable: storableRole.TimeAuditable,
 		DisplayName:   storableRole.DisplayName,
 		Description:   storableRole.Description,
-		OrgID:         orgID,
+		OrgID:         valuer.MustNewUUID(storableRole.OrgID),
 	}, nil
 }
 
@@ -100,7 +95,7 @@ func NewRole(displayName, description string, orgID valuer.UUID) *Role {
 
 func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.Object, relation authtypes.Relation) (*PatchableObjects, error) {
 	if len(additions) == 0 && len(deletions) == 0 {
-		return nil, errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty object patch request received, at least one of additions or deletions must be present")
+		return nil, errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty patch objects request received, at least one of additions or deletions must be present")
 	}
 
 	for _, object := range additions {
@@ -161,7 +156,7 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	}
 
 	if shadowRole.DisplayName == nil && shadowRole.Description == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request received, at least one of displayName or description must be present")
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty patch role request received, at least one of displayName or description must be present")
 	}
 
 	if shadowRole.DisplayName != nil && *shadowRole.DisplayName == "" {

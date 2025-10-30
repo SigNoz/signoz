@@ -11,6 +11,7 @@ import (
 var (
 	ErrCodeAuthZUnavailable = errors.MustNewCode("authz_unavailable")
 	ErrCodeAuthZForbidden   = errors.MustNewCode("authz_forbidden")
+	ErrCodeAuthZInvalidType = errors.MustNewCode("authz_invalid_type")
 )
 
 var (
@@ -58,7 +59,7 @@ func NewType(input string) (Type, error) {
 	case "metaresources":
 		return TypeMetaResources, nil
 	default:
-		return Type{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type: %s", input)
+		return Type{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidType, "invalid type: %s", input)
 	}
 }
 
@@ -69,12 +70,12 @@ func (typed *Type) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	shadow, err := NewType(str)
+	alias, err := NewType(str)
 	if err != nil {
 		return err
 	}
 
-	*typed = shadow
+	*typed = alias
 	return nil
 }
 
@@ -100,7 +101,7 @@ func NewTypeableFromType(typed Type, name Name) (Typeable, error) {
 		return resources, nil
 	}
 
-	return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type")
+	return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidType, "invalid type %s", typed)
 }
 
 func MustNewTypeableFromType(typed Type, name Name) Typeable {
