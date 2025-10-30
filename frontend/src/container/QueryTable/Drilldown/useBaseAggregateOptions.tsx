@@ -137,7 +137,7 @@ const useBaseAggregateOptions = ({
 			);
 
 			let queryParams = {
-				[QueryParams.compositeQuery]: JSON.stringify(viewQuery),
+				[QueryParams.compositeQuery]: encodeURIComponent(JSON.stringify(viewQuery)),
 				...(timeRange && {
 					[QueryParams.startTime]: timeRange?.startTime.toString(),
 					[QueryParams.endTime]: timeRange?.endTime.toString(),
