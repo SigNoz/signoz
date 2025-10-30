@@ -205,7 +205,7 @@ func (module *module) SetManagedRoles(ctx context.Context, orgID valuer.UUID) er
 		orgID,
 	)
 
-	module.store.RunInTx(ctx, func(ctx context.Context) error {
+	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		err := module.store.Create(ctx, storableManagedRoleAdmin)
 		if err != nil {
 			return err
@@ -223,6 +223,10 @@ func (module *module) SetManagedRoles(ctx context.Context, orgID valuer.UUID) er
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
