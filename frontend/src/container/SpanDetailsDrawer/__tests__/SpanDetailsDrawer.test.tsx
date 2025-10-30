@@ -760,10 +760,10 @@ describe('SpanDetailsDrawer', () => {
 					expect.objectContaining({
 						start: expect.any(Number),
 						end: expect.any(Number),
-						span_duration: mockSpan.durationNano,
-						service_name: mockSpan.serviceName,
+						spanDuration: mockSpan.durationNano,
+						serviceName: mockSpan.serviceName,
 						name: mockSpan.name,
-						resource_attributes: expect.any(Object),
+						resourceAttributes: expect.any(Object),
 					}),
 				);
 			});
@@ -878,7 +878,7 @@ describe('SpanDetailsDrawer', () => {
 			await waitFor(() => {
 				expect(mockGetSpanPercentiles).toHaveBeenCalledWith(
 					expect.objectContaining({
-						resource_attributes: expect.objectContaining({
+						resourceAttributes: expect.objectContaining({
 							'http.method': 'GET',
 						}),
 					}),
@@ -994,10 +994,10 @@ describe('SpanDetailsDrawer', () => {
 			expect(mockGetSpanPercentiles).toHaveBeenCalledWith({
 				start: expect.any(Number),
 				end: expect.any(Number),
-				span_duration: mockSpan.durationNano,
-				service_name: mockSpan.serviceName,
+				spanDuration: mockSpan.durationNano,
+				serviceName: mockSpan.serviceName,
 				name: mockSpan.name,
-				resource_attributes: expect.any(Object),
+				resourceAttributes: expect.any(Object),
 			});
 		});
 

@@ -13,6 +13,7 @@ import {
 import { RadioChangeEvent } from 'antd/lib';
 import getSpanPercentiles from 'api/trace/getSpanPercentiles';
 import getUserPreference from 'api/v1/user/preferences/name/get';
+import updateUserPreference from 'api/v1/user/preferences/name/update';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
@@ -44,7 +45,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useQuery } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
@@ -282,6 +283,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		[selectedSpan?.timestamp, selectedTimeRange],
 	);
 
+	// TODO: Span percentile should be eventually moved to context and not fetched on every span change
 	const { data: userSelectedResourceAttributes } = useQuery({
 		queryFn: () =>
 			getUserPreference({
@@ -304,10 +306,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			getSpanPercentiles({
 				start: startTime || 0,
 				end: endTime || 0,
-				span_duration: selectedSpan?.durationNano || 0,
-				service_name: selectedSpan?.serviceName || '',
+				spanDuration: selectedSpan?.durationNano || 0,
+				serviceName: selectedSpan?.serviceName || '',
 				name: selectedSpan?.name || '',
-				resource_attributes: selectedResourceAttributes,
+				resourceAttributes: selectedResourceAttributes,
 			}),
 		queryKey: [
 			REACT_QUERY_KEY.GET_SPAN_PERCENTILES,
@@ -432,6 +434,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		[selectedResourceAttributes],
 	);
 
+	const { mutate: updateUserPreferenceMutation } = useMutation(
+		updateUserPreference,
+	);
+
 	useEffect(() => {
 		if (
 			shouldFetchSpanPercentilesData &&
@@ -439,6 +445,12 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			initialWaitCompleted
 		) {
 			refetchSpanPercentilesData();
+
+			// we are not handling error scenarios or raise conditions here because we are not showing any error to the user
+			updateUserPreferenceMutation({
+				name: USER_PREFERENCES.SPAN_PERCENTILE_RESOURCE_ATTRIBUTES,
+				value: [...Object.keys(selectedResourceAttributes)],
+			});
 			setShouldFetchSpanPercentilesData(false);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps

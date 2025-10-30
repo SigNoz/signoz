@@ -13,7 +13,7 @@ const getSpanPercentiles = async (
 	SuccessResponse<GetSpanPercentilesResponsePayloadProps> | ErrorResponse
 > => {
 	try {
-		const response = await ApiBaseInstance.post('/span-percentile/', {
+		const response = await ApiBaseInstance.post('/span_percentile', {
 			...props,
 		});
 

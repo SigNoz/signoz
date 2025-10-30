@@ -1,10 +1,10 @@
 export interface GetSpanPercentilesProps {
 	start: number;
 	end: number;
-	span_duration: number;
-	service_name: string;
+	spanDuration: number;
+	serviceName: string;
 	name: string;
-	resource_attributes: Record<string, string>;
+	resourceAttributes: Record<string, string>;
 }
 
 export interface GetSpanPercentilesResponseDataProps {
