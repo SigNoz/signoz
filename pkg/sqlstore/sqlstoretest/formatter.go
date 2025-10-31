@@ -1,103 +1,116 @@
 package sqlstoretest
 
-import "strings"
+import (
+	"github.com/uptrace/bun/schema"
+)
 
-type formatter struct{}
-
-func (f *formatter) JSONExtractString(column, path string) string {
-	var b strings.Builder
-	b.WriteString("json_extract(")
-	b.WriteString(column)
-	b.WriteString(", '")
-	b.WriteString(path)
-	b.WriteString("')")
-	return b.String()
+type formatter struct {
+	bunf schema.Formatter
 }
 
-func (f *formatter) JSONType(column, path string) string {
-	var b strings.Builder
-	b.WriteString("json_type(")
-	b.WriteString(column)
-	b.WriteString(", '")
-	b.WriteString(path)
-	b.WriteString("')")
-	return b.String()
+func (f *formatter) JSONExtractString(column, path string) []byte {
+	sql := []byte{}
+	sql = append(sql, "json_extract("...)
+	sql = f.bunf.AppendIdent(sql, column)
+	sql = append(sql, ", '"...)
+	sql = append(sql, path...)
+	sql = append(sql, "')"...)
+	return sql
 }
 
-func (f *formatter) JSONIsArray(column, path string) string {
-	var b strings.Builder
-	b.WriteString(f.JSONType(column, path))
-	b.WriteString(" = 'array'")
-	return b.String()
+func (f *formatter) JSONType(column, path string) []byte {
+	sql := []byte{}
+	sql = append(sql, "json_type("...)
+	sql = f.bunf.AppendIdent(sql, column)
+	sql = append(sql, ", '"...)
+	sql = append(sql, path...)
+	sql = append(sql, "')"...)
+	return sql
 }
 
-func (f *formatter) JSONArrayElements(column, path, alias string) (string, string) {
-	var b strings.Builder
-	b.WriteString("json_each(")
-	b.WriteString(column)
+func (f *formatter) JSONIsArray(column, path string) []byte {
+	sql := []byte{}
+	sql = append(sql, f.JSONType(column, path)...)
+	sql = append(sql, " = 'array'"...)
+	return sql
+}
+
+func (f *formatter) JSONArrayElements(column, path, alias string) ([]byte, []byte) {
+	sql := []byte{}
+	sql = append(sql, "json_each("...)
+	sql = f.bunf.AppendIdent(sql, column)
 	if path != "$" && path != "" {
-		b.WriteString(", '")
-		b.WriteString(path)
-		b.WriteString("'")
+		sql = append(sql, ", '"...)
+		sql = append(sql, path...)
+		sql = append(sql, "'"...)
 	}
-	b.WriteString(") AS ")
-	b.WriteString(alias)
-	return b.String(), alias + ".value"
+	sql = append(sql, ") AS "...)
+	sql = f.bunf.AppendIdent(sql, alias)
+
+	valuePath := []byte{}
+	valuePath = f.bunf.AppendIdent(valuePath, alias+".value")
+	return sql, valuePath
 }
 
-func (f *formatter) JSONArrayOfStrings(column, path, alias string) (string, string) {
-	var b strings.Builder
-	b.WriteString("json_each(")
-	b.WriteString(column)
+func (f *formatter) JSONArrayOfStrings(column, path, alias string) ([]byte, []byte) {
+	sql := []byte{}
+	sql = append(sql, "json_each("...)
+	sql = f.bunf.AppendIdent(sql, column)
 	if path != "$" && path != "" {
-		b.WriteString(", '")
-		b.WriteString(path)
-		b.WriteString("'")
+		sql = append(sql, ", '"...)
+		sql = append(sql, path...)
+		sql = append(sql, "'"...)
 	}
-	b.WriteString(") AS ")
-	b.WriteString(alias)
-	return b.String(), alias + ".value"
+	sql = append(sql, ") AS "...)
+	sql = f.bunf.AppendIdent(sql, alias)
+
+	valuePath := []byte{}
+	valuePath = f.bunf.AppendIdent(valuePath, alias+".value")
+	return sql, valuePath
 }
 
-func (f *formatter) JSONKeys(column, path, alias string) string {
-	var b strings.Builder
-	b.WriteString("json_each(")
-	b.WriteString(column)
+func (f *formatter) JSONKeys(column, path, alias string) []byte {
+	sql := []byte{}
+	sql = append(sql, "json_each("...)
+	sql = f.bunf.AppendIdent(sql, column)
 	if path != "$" && path != "" {
-		b.WriteString(", '")
-		b.WriteString(path)
-		b.WriteString("'")
+		sql = append(sql, ", '"...)
+		sql = append(sql, path...)
+		sql = append(sql, "'"...)
 	}
-	b.WriteString(") AS ")
-	b.WriteString(alias)
-	return b.String()
+	sql = append(sql, ") AS "...)
+	sql = f.bunf.AppendIdent(sql, alias)
+	return sql
 }
 
-func (f *formatter) JSONArrayAgg(expression string) string {
-	var b strings.Builder
-	b.WriteString("json_group_array(")
-	b.WriteString(expression)
-	b.WriteString(")")
-	return b.String()
+func (f *formatter) JSONArrayAgg(expression string) []byte {
+	sql := []byte{}
+	sql = append(sql, "json_group_array("...)
+	sql = append(sql, expression...)
+	sql = append(sql, ')')
+	return sql
 }
-func (f *formatter) JSONArrayLiteral(values ...string) string {
+
+func (f *formatter) JSONArrayLiteral(values ...string) []byte {
 	if len(values) == 0 {
-		return "json_array()"
+		return []byte("json_array()")
 	}
-	var b strings.Builder
-	b.WriteString("json_array(")
+	sql := []byte{}
+	sql = append(sql, "json_array("...)
 	for i, v := range values {
 		if i > 0 {
-			b.WriteString(", ")
+			sql = append(sql, ", "...)
 		}
-		b.WriteString("'")
-		b.WriteString(v)
-		b.WriteString("'")
+		sql = append(sql, '\'')
+		sql = append(sql, v...)
+		sql = append(sql, '\'')
 	}
-	b.WriteString(")")
-	return b.String()
+	sql = append(sql, ')')
+	return sql
 }
 
-func (f *formatter) TextToJsonColumn(column string) string {
-	return column
+func (f *formatter) TextToJsonColumn(column string) []byte {
+	sql := []byte{}
+	sql = f.bunf.AppendIdent(sql, column)
+	return sql
 }

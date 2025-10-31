@@ -91,29 +91,29 @@ type SQLDialect interface {
 
 type SQLFormatter interface {
 	// JSONExtractString takes path in sqlite format like "$.labels.severity"
-	JSONExtractString(column, path string) string
+	JSONExtractString(column, path string) []byte
 
 	// JSONType used to determine the type of the value extracted from the path
-	JSONType(column, path string) string
+	JSONType(column, path string) []byte
 
 	// JSONIsArray used to check whether the value is array or not
-	JSONIsArray(column, path string) string
+	JSONIsArray(column, path string) []byte
 
 	// JSONArrayElements returns query as well as columns alias to be used for select and where clause
-	JSONArrayElements(column, path, alias string) (string, string)
+	JSONArrayElements(column, path, alias string) ([]byte, []byte)
 
 	// JSONArrayOfStrings returns query as well as columns alias to be used for select and where clause
-	JSONArrayOfStrings(column, path, alias string) (string, string)
+	JSONArrayOfStrings(column, path, alias string) ([]byte, []byte)
 
 	// JSONArrayAgg aggregates values into a JSON array
-	JSONArrayAgg(expression string) string
+	JSONArrayAgg(expression string) []byte
 
 	// JSONArrayLiteral creates a literal JSON array from the given string values
-	JSONArrayLiteral(values ...string) string
+	JSONArrayLiteral(values ...string) []byte
 
 	// JSONKeys extracts keys from a JSON object as a set of key-value pairs
-	JSONKeys(column, path, alias string) string
+	JSONKeys(column, path, alias string) []byte
 
 	// TextToJsonColumn converts a text column to JSON type
-	TextToJsonColumn(column string) string
+	TextToJsonColumn(column string) []byte
 }

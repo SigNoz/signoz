@@ -1,99 +1,116 @@
 package postgressqlstore
 
-import "strings"
+import (
+	"strings"
 
-type formatter struct{}
+	"github.com/uptrace/bun/schema"
+)
 
-func (f *formatter) JSONExtractString(column, path string) string {
-	var b strings.Builder
-	b.WriteString(column)
-	b.WriteString(convertJSONPathToPostgres(path))
-	return b.String()
+type Formatter struct {
+	bunf schema.Formatter
 }
 
-func (f *formatter) JSONType(column, path string) string {
-	var b strings.Builder
-	b.WriteString("jsonb_typeof(")
-	b.WriteString(column)
-	b.WriteString(convertJSONPathToPostgresWithMode(path, false))
-	b.WriteString(")")
-	return b.String()
+func NewFormatter(dialect schema.Dialect) *Formatter {
+	return &Formatter{bunf: schema.NewFormatter(dialect)}
 }
 
-func (f *formatter) JSONIsArray(column, path string) string {
-	var b strings.Builder
-	b.WriteString(f.JSONType(column, path))
-	b.WriteString(" = 'array'")
-	return b.String()
+func (f *Formatter) JSONExtractString(column, path string) []byte {
+	sql := []byte{}
+	sql = f.bunf.AppendIdent(sql, column)
+	sql = append(sql, convertJSONPathToPostgres(path)...)
+	return sql
 }
 
-func (f *formatter) JSONArrayElements(column, path, alias string) (string, string) {
-	var b strings.Builder
-	b.WriteString("jsonb_array_elements(")
-	b.WriteString(column)
+func (f *Formatter) JSONType(column, path string) []byte {
+	sql := []byte{}
+	sql = append(sql, "jsonb_typeof("...)
+	sql = f.bunf.AppendIdent(sql, column)
+	sql = append(sql, convertJSONPathToPostgresWithMode(path, false)...)
+	sql = append(sql, ')')
+	return sql
+}
+
+func (f *Formatter) JSONIsArray(column, path string) []byte {
+	sql := []byte{}
+	sql = append(sql, f.JSONType(column, path)...)
+	sql = append(sql, " = 'array'"...)
+	return sql
+}
+
+func (f *Formatter) JSONArrayElements(column, path, alias string) ([]byte, []byte) {
+	sql := []byte{}
+	sql = append(sql, "jsonb_array_elements("...)
+	sql = f.bunf.AppendIdent(sql, column)
 	if path != "$" && path != "" {
-		b.WriteString(convertJSONPathToPostgresWithMode(path, false))
+		sql = append(sql, convertJSONPathToPostgresWithMode(path, false)...)
 	}
-	b.WriteString(") AS ")
-	b.WriteString(alias)
-	return b.String(), alias
+	sql = append(sql, ") AS "...)
+	sql = f.bunf.AppendIdent(sql, alias)
+
+	aliasBytes := []byte{}
+	aliasBytes = f.bunf.AppendIdent(aliasBytes, alias)
+	return sql, aliasBytes
 }
 
-func (f *formatter) JSONArrayOfStrings(column, path, alias string) (string, string) {
-	var b strings.Builder
-	b.WriteString("jsonb_array_elements_text(")
-	b.WriteString(column)
+func (f *Formatter) JSONArrayOfStrings(column, path, alias string) ([]byte, []byte) {
+	sql := []byte{}
+	sql = append(sql, "jsonb_array_elements_text("...)
+	sql = f.bunf.AppendIdent(sql, column)
 	if path != "$" && path != "" {
-		b.WriteString(convertJSONPathToPostgresWithMode(path, false))
+		sql = append(sql, convertJSONPathToPostgresWithMode(path, false)...)
 	}
-	b.WriteString(") AS ")
-	b.WriteString(alias)
-	return b.String(), alias + "::text"
+	sql = append(sql, ") AS "...)
+	sql = f.bunf.AppendIdent(sql, alias)
+
+	aliasBytes := []byte{}
+	aliasBytes = f.bunf.AppendIdent(aliasBytes, alias)
+	aliasBytes = append(aliasBytes, "::text"...)
+	return sql, aliasBytes
 }
 
-func (f *formatter) JSONKeys(column, path, alias string) string {
-	var b strings.Builder
-	b.WriteString("jsonb_each(")
-	b.WriteString(column)
+func (f *Formatter) JSONKeys(column, path, alias string) []byte {
+	sql := []byte{}
+	sql = append(sql, "jsonb_each("...)
+	sql = f.bunf.AppendIdent(sql, column)
 	if path != "$" && path != "" {
-		b.WriteString(convertJSONPathToPostgresWithMode(path, false))
+		sql = append(sql, convertJSONPathToPostgresWithMode(path, false)...)
 	}
-	b.WriteString(") AS ")
-	b.WriteString(alias)
-	return b.String()
+	sql = append(sql, ") AS "...)
+	sql = f.bunf.AppendIdent(sql, alias)
+	return sql
 }
 
-func (f *formatter) JSONArrayAgg(expression string) string {
-	var b strings.Builder
-	b.WriteString("jsonb_agg(")
-	b.WriteString(expression)
-	b.WriteString(")")
-	return b.String()
+func (f *Formatter) JSONArrayAgg(expression string) []byte {
+	sql := []byte{}
+	sql = append(sql, "jsonb_agg("...)
+	sql = append(sql, expression...)
+	sql = append(sql, ')')
+	return sql
 }
 
-func (f *formatter) JSONArrayLiteral(values ...string) string {
+func (f *Formatter) JSONArrayLiteral(values ...string) []byte {
 	if len(values) == 0 {
-		return "jsonb_build_array()"
+		return []byte("jsonb_build_array()")
 	}
-	var b strings.Builder
-	b.WriteString("jsonb_build_array(")
+	sql := []byte{}
+	sql = append(sql, "jsonb_build_array("...)
 	for i, v := range values {
 		if i > 0 {
-			b.WriteString(", ")
+			sql = append(sql, ", "...)
 		}
-		b.WriteString("'")
-		b.WriteString(v)
-		b.WriteString("'")
+		sql = append(sql, '\'')
+		sql = append(sql, v...)
+		sql = append(sql, '\'')
 	}
-	b.WriteString(")")
-	return b.String()
+	sql = append(sql, ')')
+	return sql
 }
 
-func (f *formatter) TextToJsonColumn(column string) string {
-	var b strings.Builder
-	b.WriteString(column)
-	b.WriteString("::jsonb")
-	return b.String()
+func (f *Formatter) TextToJsonColumn(column string) []byte {
+	sql := []byte{}
+	sql = f.bunf.AppendIdent(sql, column)
+	sql = append(sql, "::jsonb"...)
+	return sql
 }
 
 func convertJSONPathToPostgres(jsonPath string) string {
