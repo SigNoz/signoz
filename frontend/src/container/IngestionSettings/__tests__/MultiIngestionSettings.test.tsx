@@ -138,8 +138,9 @@ describe('MultiIngestionSettings Page', () => {
 		// Parse query parameters
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);
 
-		// Verify ingestionLimit parameter
-		expect(urlParams.get(QueryParams.ingestionLimit)).toBe('1000');
+		const thresholds = JSON.parse(urlParams.get(QueryParams.thresholds) || '{}');
+		expect(thresholds).toBeDefined();
+		expect(thresholds[0].thresholdValue).toBe(1000);
 
 		// Verify compositeQuery parameter exists and contains correct data
 		const compositeQuery = JSON.parse(
@@ -221,8 +222,10 @@ describe('MultiIngestionSettings Page', () => {
 		// Parse query parameters
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);
 
-		// Verify ingestionLimit parameter
-		expect(urlParams.get(QueryParams.ingestionLimit)).toBe('2048');
+		// Verify thresholds parameter
+		const thresholds = JSON.parse(urlParams.get(QueryParams.thresholds) || '{}');
+		expect(thresholds).toBeDefined();
+		expect(thresholds[0].thresholdValue).toBe(2048);
 
 		// Verify compositeQuery parameter exists and contains correct data
 		const compositeQuery = JSON.parse(

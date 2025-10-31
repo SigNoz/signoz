@@ -38,13 +38,14 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { QueryParams } from 'constants/query';
 import { initialQueryMeterWithType } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { INITIAL_ALERT_THRESHOLD_STATE } from 'container/CreateAlertV2/context/constants';
 import dayjs from 'dayjs';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
-import { isNil, isUndefined } from 'lodash-es';
+import { cloneDeep, isNil, isUndefined } from 'lodash-es';
 import {
 	ArrowUpRight,
 	BellPlus,
@@ -753,13 +754,16 @@ function MultiIngestionSettings(): JSX.Element {
 
 		const stringifiedQuery = JSON.stringify(query);
 
-		history.push(
-			`${ROUTES.ALERTS_NEW}?showNewCreateAlertsPage=true&${
-				QueryParams.compositeQuery
-			}=${encodeURIComponent(stringifiedQuery)}&${
-				QueryParams.ingestionLimit
-			}=${threshold}`,
-		);
+		const thresholds = cloneDeep(INITIAL_ALERT_THRESHOLD_STATE.thresholds);
+		thresholds[0].thresholdValue = threshold;
+
+		const URL = `${ROUTES.ALERTS_NEW}?showNewCreateAlertsPage=true&${
+			QueryParams.compositeQuery
+		}=${encodeURIComponent(stringifiedQuery)}&${
+			QueryParams.thresholds
+		}=${encodeURIComponent(JSON.stringify(thresholds))}`;
+
+		history.push(URL);
 	};
 
 	const columns: AntDTableProps<IngestionKeyProps>['columns'] = [
