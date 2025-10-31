@@ -218,13 +218,10 @@ const generateTooltipContent = (
 	// Use DocumentFragment for better performance when adding multiple elements
 	const fragment = document.createDocumentFragment();
 
-	// Use Object.entries to avoid double lookup
-	const sortedEntries = Object.entries(sortedData);
+	const sortedValues = Object.values(sortedData);
 
-	for (let i = 0; i < sortedEntries.length; i++) {
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const [key, data] = sortedEntries[i];
-		const { textContent, color, focus } = data;
+	for (let i = 0; i < sortedValues.length; i++) {
+		const { textContent, color, focus } = sortedValues[i];
 
 		const div = document.createElement('div');
 		div.classList.add('tooltip-content-row', 'tooltip-content');

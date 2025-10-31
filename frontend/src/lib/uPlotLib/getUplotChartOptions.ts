@@ -573,9 +573,8 @@ export const getUPlotChartOptions = ({
 								textSpan.textContent = legendText;
 								fragment.appendChild(textSpan);
 
-								// Clear and append in a single operation
-								thElement.innerHTML = '';
-								thElement.appendChild(fragment);
+								// Replace the children in a single operation
+								thElement.replaceChildren(fragment);
 
 								// Setup tooltip functionality - check truncation on hover
 								let tooltipElement: HTMLElement | null = null;
