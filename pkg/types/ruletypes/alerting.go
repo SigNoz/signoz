@@ -59,7 +59,8 @@ type Alert struct {
 	LastSentAt time.Time
 	ValidUntil time.Time
 
-	Missing bool
+	Missing      bool
+	IsRecovering bool
 }
 
 func (a *Alert) NeedsSending(ts time.Time, resendDelay time.Duration) bool {
