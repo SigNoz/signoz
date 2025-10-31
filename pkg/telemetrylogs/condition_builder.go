@@ -230,7 +230,7 @@ func (c *conditionBuilder) ConditionFor(
 		return "", err
 	}
 
-	if operator.AddDefaultExistsFilter() {
+	if !(strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) && constants.BodyV2QueryEnabled) && operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
 		field, _ := c.fm.FieldFor(ctx, key)

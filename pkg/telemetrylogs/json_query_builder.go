@@ -189,7 +189,9 @@ func (b *JSONQueryBuilder) syncStringIndexedColumns(ctx context.Context) error {
 		if err != nil {
 			return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("failed to unfold JSON sub column index expression for %s", expr))
 		}
-		next[subColumn] = expr
+		// adding only assumeNotNull to the expression because
+		// 	"github.com/huandu/go-sqlbuilder" uses LOWER to simulate string matching cases
+		next[subColumn] = assumeNotNull(subColumn)
 	}
 
 	b.stringIndexedColumns.Store(next)
@@ -420,12 +422,14 @@ type Node struct {
 
 func (n *Node) Alias() string {
 	if n.Parent == nil {
-		return fmt.Sprintf("`%s`", n.Name)
+		return n.Name
+		// return fmt.Sprintf("`%s`", n.Name)
 	}
 
-	return fmt.Sprintf("`%s:%s`",
-		strings.TrimRight(strings.TrimLeft(n.Parent.Alias(), "`"), "`"),
-		n.Name)
+	parentAlias := strings.TrimLeft(n.Parent.Alias(), "`")
+	parentAlias = strings.TrimRight(parentAlias, "`")
+
+	return fmt.Sprintf("%s:%s", parentAlias, n.Name)
 }
 
 func (n *Node) FieldPath() string {
@@ -988,4 +992,8 @@ func (b *JSONQueryBuilder) buildArrayMap(currentNode *Node, branchType BranchTyp
 	}
 
 	return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), nestedExpr, arrayExpr), nil
+}
+
+func assumeNotNull(column string) string {
+	return fmt.Sprintf("assumeNotNull(dynamicElement(%s, 'String'))", column)
 }
