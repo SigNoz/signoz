@@ -104,6 +104,7 @@ function PiePanelWrapper({
 	const formattedTotal = getYAxisFormattedValue(
 		totalValue.toString(),
 		widget?.yAxisUnit || 'none',
+		widget?.decimalPrecision,
 	);
 
 	// Extract numeric part and unit separately for styling
@@ -219,6 +220,7 @@ function PiePanelWrapper({
 												const displayValue = getYAxisFormattedValue(
 													arc.data.value,
 													widget?.yAxisUnit || 'none',
+													widget?.decimalPrecision,
 												);
 
 												// Determine text anchor based on position in the circle
