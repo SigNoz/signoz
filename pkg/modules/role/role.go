@@ -34,6 +34,9 @@ type Module interface {
 	// Deletes the role metadata and tuples in authorization server
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
+	// Initializes the managed roles on creation of the organization
+	SetManagedRoles(context.Context, valuer.UUID) error
+
 	RegisterTypeable
 }
 

@@ -8,6 +8,8 @@ import (
 	"github.com/SigNoz/signoz/cmd"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/samlcallbackauthn"
+	"github.com/SigNoz/signoz/ee/authz/openfgaauthz"
+	"github.com/SigNoz/signoz/ee/authz/openfgaschema"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
@@ -17,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authn"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -70,6 +73,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		enterpriselicensing.Config(24*time.Hour, 3),
 		func(sqlstore sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
 			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter, analytics)
+		},
+		func(sqlstore sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx))
 		},
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),

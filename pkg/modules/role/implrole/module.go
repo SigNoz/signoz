@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
@@ -17,17 +18,16 @@ type module struct {
 	authz    authz.AuthZ
 }
 
-func NewModule(ctx context.Context, store roletypes.Store, authz authz.AuthZ, registry []role.RegisterTypeable) (role.Module, error) {
+func NewModule(store roletypes.Store, authz authz.AuthZ, registry []role.RegisterTypeable) role.Module {
 	return &module{
 		store:    store,
 		authz:    authz,
 		registry: registry,
-	}, nil
+	}
 }
 
 func (module *module) Create(ctx context.Context, orgID valuer.UUID, displayName, description string) (*roletypes.Role, error) {
-	role := roletypes.NewRole(displayName, description, orgID)
-
+	role := roletypes.NewRole(displayName, description, roletypes.RoleTypeCustom, orgID)
 	storableRole, err := roletypes.NewStorableRoleFromRole(role)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (module *module) GetResources(_ context.Context) []*authtypes.Resource {
 	for _, register := range module.registry {
 		typeables = append(typeables, register.MustGetTypeables()...)
 	}
-	// role module cannot self register itself!
+	// role module cannot self register itself hence extracting here.
 	typeables = append(typeables, module.MustGetTypeables()...)
 
 	resources := make([]*authtypes.Resource, 0)
@@ -72,7 +72,7 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 }
 
 func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*authtypes.Object, error) {
-	storableRole, err := module.store.Get(ctx, orgID, id)
+	_, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valu
 				authz.
 				ListObjects(
 					ctx,
-					authtypes.MustNewSubject(authtypes.TypeRole, storableRole.ID.String(), authtypes.RelationAssignee),
+					authtypes.MustNewSubject(authtypes.TypeRole, id.String(), authtypes.RelationAssignee),
 					relation,
 					authtypes.MustNewTypeableFromType(resource.Type, resource.Name),
 				)
@@ -128,7 +128,11 @@ func (module *module) Patch(ctx context.Context, orgID valuer.UUID, id valuer.UU
 		return err
 	}
 
-	role.PatchMetadata(displayName, description)
+	err = role.PatchMetadata(displayName, description)
+	if err != nil {
+		return err
+	}
+
 	updatedRole, err := roletypes.NewStorableRoleFromRole(role)
 	if err != nil {
 		return err
@@ -162,7 +166,68 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 }
 
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	storableRole, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	role, err := roletypes.NewRoleFromStorableRole(storableRole)
+	if err != nil {
+		return err
+	}
+
+	if !role.CanEditOrDelete() {
+		return errors.Newf(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "cannot delete managed role")
+	}
+
 	return module.store.Delete(ctx, orgID, id)
+}
+
+func (module *module) SetManagedRoles(ctx context.Context, orgID valuer.UUID) error {
+	storableManagedRoleAdmin := roletypes.MustNewStorableRole(
+		roletypes.ManagedRoleSigNozAdminName,
+		roletypes.ManagedRoleSigNozAdminDescription,
+		roletypes.RoleTypeManaged,
+		orgID,
+	)
+
+	storableManagedRoleViewer := roletypes.MustNewStorableRole(
+		roletypes.ManagedRoleSigNozViewerName,
+		roletypes.ManagedRoleSigNozViewerDescription,
+		roletypes.RoleTypeManaged,
+		orgID,
+	)
+
+	storableManagedRoleEditor := roletypes.MustNewStorableRole(
+		roletypes.ManagedRoleSigNozEditorName,
+		roletypes.ManagedRoleSigNozEditorDescription,
+		roletypes.RoleTypeManaged,
+		orgID,
+	)
+
+	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		err := module.store.Create(ctx, storableManagedRoleAdmin)
+		if err != nil {
+			return err
+		}
+
+		err = module.store.Create(ctx, storableManagedRoleViewer)
+		if err != nil {
+			return err
+		}
+
+		err = module.store.Create(ctx, storableManagedRoleEditor)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (module *module) MustGetTypeables() []authtypes.Typeable {
