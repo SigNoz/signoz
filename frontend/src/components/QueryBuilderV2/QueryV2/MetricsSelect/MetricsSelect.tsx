@@ -9,7 +9,7 @@ import {
 import { AggregatorFilter } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -52,11 +52,10 @@ export const MetricsSelect = memo(function MetricsSelect({
 
 	const { updateAllQueriesOperators, handleSetQueryData } = useQueryBuilder();
 
-	const [source, setSource] = useState<string>('');
-
-	useEffect(() => {
-		setSource(signalSource === 'meter' ? 'meter' : 'metrics');
-	}, [signalSource]);
+	const source = useMemo(
+		() => (signalSource === 'meter' ? 'meter' : 'metrics'),
+		[signalSource],
+	);
 
 	const defaultMeterQuery = useMemo(
 		() =>
@@ -81,7 +80,6 @@ export const MetricsSelect = memo(function MetricsSelect({
 	);
 
 	const handleSignalSourceChange = (value: string): void => {
-		setSource(value);
 		onSignalSourceChange(value);
 		handleSetQueryData(
 			index,
