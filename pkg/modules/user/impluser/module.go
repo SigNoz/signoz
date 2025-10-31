@@ -374,18 +374,12 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 		return existingUser, nil
 	}
 
-	newUser, err := types.NewUser(user.DisplayName, user.Email, user.Role, user.OrgID)
+	err = module.CreateUser(ctx, user, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	err = module.CreateUser(ctx, newUser, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	return newUser, nil
-
+	return user, nil
 }
 
 func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
