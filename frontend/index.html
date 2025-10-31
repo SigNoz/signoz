@@ -78,8 +78,8 @@
 		<noscript>You need to enable JavaScript to run this app.</noscript>
 		<div id="root"></div>
 
-		<script>
-			const PYLON_APP_ID = '<%= htmlWebpackPlugin.options.PYLON_APP_ID %>';
+		<script type="module">
+			const PYLON_APP_ID = import.meta.env.VITE_PYLON_APP_ID;
 			(function () {
 				var e = window;
 				var t = document;
@@ -87,20 +87,23 @@
 					n.e(arguments);
 				};
 				n.q = [];
-				n.e = function (e) {
-					n.q.push(e);
+				n.e = function (a) {
+					n.q.push(a);
 				};
 				e.Pylon = n;
+				if (!PYLON_APP_ID) {
+					return;
+				}
 				var r = function () {
-					var e = t.createElement('script');
-					e.setAttribute('type', 'text/javascript');
-					e.setAttribute('async', 'true');
-					e.setAttribute(
+					var s = t.createElement('script');
+					s.setAttribute('type', 'text/javascript');
+					s.setAttribute('async', 'true');
+					s.setAttribute(
 						'src',
 						'https://widget.usepylon.com/widget/' + PYLON_APP_ID,
 					);
-					var n = t.getElementsByTagName('script')[0];
-					n.parentNode.insertBefore(e, n);
+					var f = t.getElementsByTagName('script')[0];
+					f.parentNode.insertBefore(s, f);
 				};
 				if (t.readyState === 'complete') {
 					r();
@@ -109,19 +112,23 @@
 				}
 			})();
 		</script>
-		<script type="text/javascript">
-			window.AppcuesSettings = { enableURLDetection: true };
+
+		<script type="module">
+			const APPCUES_APP_ID = import.meta.env.VITE_APPCUES_APP_ID;
+			if (APPCUES_APP_ID) {
+				// Appcues settings must be defined before the script loads
+				window.AppcuesSettings = { enableURLDetection: true };
+				(function (d, t) {
+					var a = d.createElement(t);
+					a.async = 1;
+					a.src = '//fast.appcues.com/' + APPCUES_APP_ID + '.js';
+					var s = d.getElementsByTagName(t)[0];
+					s.parentNode.insertBefore(a, s);
+				})(document, 'script');
+			}
 		</script>
-		<script>
-			const APPCUES_APP_ID = '<%= htmlWebpackPlugin.options.APPCUES_APP_ID %>';
-			(function (d, t) {
-				var a = d.createElement(t);
-				a.async = 1;
-				a.src = '//fast.appcues.com/' + APPCUES_APP_ID + '.js';
-				var s = d.getElementsByTagName(t)[0];
-				s.parentNode.insertBefore(a, s);
-			})(document, 'script');
-		</script>
+
 		<link rel="stylesheet" href="/css/uPlot.min.css" />
+		<script type="module" src="/src/index.tsx"></script>
 	</body>
 </html>
