@@ -637,6 +637,12 @@ func (b *JSONQueryBuilder) buildTerminalCondition(node *Node, operator qbtypes.F
 		}
 		elemType := node.TerminalConfig.ElemType
 		fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, elemType.StringValue())
+
+		// if elemType is string and this field path is string indexed, use the string indexing expression
+		if expr, found := b.stringIndexedColumns.Load().(map[string]string)[fieldPath]; found && elemType == telemetrytypes.String {
+			fieldExpr = expr
+		}
+
 		return b.applyOperator(sb, fieldExpr, operator, effVal)
 	default:
 		valueType := node.TerminalConfig.ValueType
