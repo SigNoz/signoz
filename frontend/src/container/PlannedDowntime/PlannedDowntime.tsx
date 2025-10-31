@@ -11,7 +11,10 @@ import {
 	useGetAllDowntimeSchedules,
 } from 'api/plannedDowntime/getAllDowntimeSchedules';
 import dayjs from 'dayjs';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import React, { ChangeEvent, useEffect, useState } from 'react';
@@ -36,6 +39,8 @@ export function PlannedDowntime(): JSX.Element {
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [form] = Form.useForm();
 	const { user } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
+	const urlQuery = useUrlQuery();
 
 	const [initialValues, setInitialValues] = useState<
 		Partial<DowntimeSchedules & { editMode: boolean }>
@@ -57,16 +62,32 @@ export function PlannedDowntime(): JSX.Element {
 		}
 	}, [form, isOpen]);
 
-	const [searchValue, setSearchValue] = React.useState<string | number>('');
+	const [searchValue, setSearchValue] = React.useState<string | number>(
+		urlQuery.get('search') || '',
+	);
 	const [deleteData, setDeleteData] = useState<{ id: number; name: string }>();
 	const [isEditMode, setEditMode] = useState<boolean>(false);
 
+	const updateUrlWithSearch = useDebouncedFn((value) => {
+		const searchValue = value as string;
+		const params = new URLSearchParams(urlQuery.toString());
+		if (searchValue) {
+			params.set('search', searchValue);
+		} else {
+			params.delete('search');
+		}
+		const generatedUrl = `/alerts?${params.toString()}`;
+		safeNavigate(generatedUrl);
+	}, 300);
+
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setSearchValue(e.target.value);
+		updateUrlWithSearch(e.target.value);
 	};
 
 	const clearSearch = (): void => {
 		setSearchValue('');
+		updateUrlWithSearch('');
 	};
 
 	// Delete Downtime Schedule

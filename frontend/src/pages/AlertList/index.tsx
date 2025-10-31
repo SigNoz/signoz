@@ -13,8 +13,11 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
 import AlertDetails from 'pages/AlertDetails';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
+
+const PLANNED_DOWNTIME_SUB_TAB = 'planned-downtime';
+const ROUTING_POLICIES_SUB_TAB = 'routing-policies';
 
 function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();
@@ -22,32 +25,42 @@ function AllAlertList(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 
 	const tab = urlQuery.get('tab');
+	const subTab = urlQuery.get('subTab');
 	const isAlertHistory = location.pathname === ROUTES.ALERT_HISTORY;
 	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
 
-	const search = urlQuery.get('search');
+	const handleConfigurationTabChange = useCallback(
+		(subTab: string): void => {
+			urlQuery.set('tab', 'Configuration');
+			urlQuery.set('subTab', subTab);
+			urlQuery.delete('search');
+			safeNavigate(`/alerts?${urlQuery.toString()}`);
+		},
+		[safeNavigate, urlQuery],
+	);
 
 	const configurationTab = useMemo(() => {
 		const tabs = [
 			{
 				label: 'Planned Downtime',
-				key: 'planned-downtime',
+				key: PLANNED_DOWNTIME_SUB_TAB,
 				children: <PlannedDowntime />,
 			},
 			{
 				label: 'Routing Policies',
-				key: 'routing-policies',
+				key: ROUTING_POLICIES_SUB_TAB,
 				children: <RoutingPolicies />,
 			},
 		];
 		return (
 			<Tabs
 				className="configuration-tabs"
-				defaultActiveKey="planned-downtime"
+				activeKey={subTab || PLANNED_DOWNTIME_SUB_TAB}
 				items={tabs}
+				onChange={handleConfigurationTabChange}
 			/>
 		);
-	}, []);
+	}, [subTab, handleConfigurationTabChange]);
 
 	const items: TabsProps['items'] = [
 		{
@@ -93,12 +106,20 @@ function AllAlertList(): JSX.Element {
 			activeKey={tab || 'AlertRules'}
 			onChange={(tab): void => {
 				urlQuery.set('tab', tab);
-				let params = `tab=${tab}`;
 
-				if (search) {
-					params += `&search=${search}`;
+				// If navigating to Configuration tab, set default subTab
+				if (tab === 'Configuration') {
+					const currentSubTab = subTab || PLANNED_DOWNTIME_SUB_TAB;
+					urlQuery.set('subTab', currentSubTab);
+				} else {
+					// Clear subTab when navigating out of Configuration tab
+					urlQuery.delete('subTab');
 				}
-				safeNavigate(`/alerts?${params}`);
+
+				// Clear search when navigating to any tab
+				urlQuery.delete('search');
+
+				safeNavigate(`/alerts?${urlQuery.toString()}`);
 			}}
 			className={`alerts-container ${
 				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''

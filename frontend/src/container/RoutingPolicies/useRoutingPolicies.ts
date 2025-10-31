@@ -8,6 +8,9 @@ import { useCreateRoutingPolicy } from 'hooks/routingPolicies/useCreateRoutingPo
 import { useDeleteRoutingPolicy } from 'hooks/routingPolicies/useDeleteRoutingPolicy';
 import { useGetRoutingPolicies } from 'hooks/routingPolicies/useGetRoutingPolicies';
 import { useUpdateRoutingPolicy } from 'hooks/routingPolicies/useUpdateRoutingPolicy';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
@@ -28,9 +31,11 @@ import {
 
 function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	const queryClient = useQueryClient();
+	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
 
 	// Local state
-	const [searchTerm, setSearchTerm] = useState('');
+	const [searchTerm, setSearchTerm] = useState(urlQuery.get('search') || '');
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [
 		policyDetailsModalState,
@@ -44,9 +49,28 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		setSelectedRoutingPolicy,
 	] = useState<RoutingPolicy | null>(null);
 
+	const updateUrlWithSearch = useDebouncedFn((value) => {
+		const searchValue = value as string;
+		const params = new URLSearchParams(urlQuery.toString());
+		if (searchValue) {
+			params.set('search', searchValue);
+		} else {
+			params.delete('search');
+		}
+		const generatedUrl = `/alerts?${params.toString()}`;
+		safeNavigate(generatedUrl);
+	}, 300);
+
+	const handleSearch = (value: string): void => {
+		setSearchTerm(value);
+		updateUrlWithSearch(value);
+	};
+
 	// Routing Policies list
 	const {
 		data: routingPolicies,
+		refetch: refetchRoutingPolicies,
+		isFetching: isFetchingRoutingPolicies,
 		isLoading: isLoadingRoutingPolicies,
 		isError: isErrorRoutingPolicies,
 	} = useGetRoutingPolicies();
@@ -213,7 +237,9 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		selectedRoutingPolicy,
 		routingPoliciesData,
 		isLoadingRoutingPolicies,
+		isFetchingRoutingPolicies,
 		isErrorRoutingPolicies,
+		refetchRoutingPolicies,
 		// Channels
 		channels,
 		isLoadingChannels,
@@ -221,7 +247,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		refreshChannels,
 		// Search
 		searchTerm,
-		setSearchTerm,
+		setSearchTerm: handleSearch,
 		// Delete Modal
 		isDeleteModalOpen,
 		handleDeleteModalOpen,

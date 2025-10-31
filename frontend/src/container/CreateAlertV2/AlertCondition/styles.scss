@@ -289,6 +289,21 @@
 		border: 1px solid var(--bg-robin-500);
 		padding: 8px 16px;
 
+		.routing-policies-info-banner-right {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.view-routing-policies-button {
+				color: var(--bg-robin-500);
+				font-size: 12px;
+				font-weight: 500;
+				display: flex;
+				align-items: center;
+				gap: 4px;
+			}
+		}
+
 		.ant-typography {
 			color: var(--bg-robin-500);
 		}

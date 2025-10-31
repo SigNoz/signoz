@@ -8,11 +8,13 @@ import {
 	AlertThresholdOperator,
 } from 'container/CreateAlertV2/context/types';
 import { getSelectedQueryOptions } from 'container/FormAlertRules/utils';
+import { ArrowRight } from 'lucide-react';
 import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { USER_ROLES } from 'types/roles';
 
+import { ROUTING_POLICIES_ROUTE } from './constants';
 import { RoutingPolicyBannerProps } from './types';
 
 export function getQueryNames(currentQuery: Query): BaseOptionType[] {
@@ -400,16 +402,27 @@ export function RoutingPolicyBanner({
 			<Typography.Text>
 				Use <strong>Routing Policies</strong> for dynamic routing
 			</Typography.Text>
-			<Switch
-				checked={notificationSettings.routingPolicies}
-				data-testid="routing-policies-switch"
-				onChange={(value): void => {
-					setNotificationSettings({
-						type: 'SET_ROUTING_POLICIES',
-						payload: value,
-					});
-				}}
-			/>
+			<div className="routing-policies-info-banner-right">
+				<Switch
+					checked={notificationSettings.routingPolicies}
+					data-testid="routing-policies-switch"
+					onChange={(value): void => {
+						setNotificationSettings({
+							type: 'SET_ROUTING_POLICIES',
+							payload: value,
+						});
+					}}
+				/>
+				<Button
+					href={ROUTING_POLICIES_ROUTE}
+					type="link"
+					className="view-routing-policies-button"
+					data-testid="view-routing-policies-button"
+				>
+					View Routing Policies
+					<ArrowRight size={14} />
+				</Button>
+			</div>
 		</div>
 	);
 }
