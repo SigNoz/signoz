@@ -3,11 +3,14 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -41,17 +44,28 @@ type PathType struct {
 }
 
 type JSONQueryBuilder struct {
-	telemetryStore telemetrystore.TelemetryStore
-	cache          sync.Map // map[string]*utils.ConcurrentSet[telemetrytypes.JSONDataType]
-	lastSeen       uint64
-	promotedPaths  sync.Map // map[string]struct{} of promoted JSON paths
+	telemetryStore       telemetrystore.TelemetryStore
+	cache                sync.Map // map[string]*utils.ConcurrentSet[telemetrytypes.JSONDataType]
+	lastSeen             uint64
+	promotedPaths        sync.Map     // map[string]struct{} of promoted JSON paths
+	stringIndexedColumns atomic.Value // map[string]string of string indexed columns
+
+	logger *slog.Logger
 }
 
-func NewJSONQueryBuilder(ctx context.Context, telemetryStore telemetrystore.TelemetryStore) (*JSONQueryBuilder, error) {
+func NewJSONQueryBuilder(ctx context.Context,
+	telemetryStore telemetrystore.TelemetryStore, logger *slog.Logger) (*JSONQueryBuilder, error) {
 	metadata := &JSONQueryBuilder{telemetryStore: telemetryStore, cache: sync.Map{}}
 
 	metadata.init()
-	return metadata, metadata.sync(ctx, true)
+	metadata.stringIndexedColumns.Store(make(map[string]string))
+
+	// load promoted paths initially
+	if err := metadata.syncPromoted(context.Background()); err != nil {
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to load promoted paths")
+	}
+
+	return metadata, metadata.syncPathTypes(ctx, true)
 }
 
 func (b *JSONQueryBuilder) init() {
@@ -61,44 +75,51 @@ func (b *JSONQueryBuilder) init() {
 		defer ticker.Stop()
 
 		for range ticker.C {
-			err := b.sync(context.Background(), true)
+			err := b.syncPathTypes(context.Background(), true)
 			if err != nil {
-				// TODO: add logger
-				fmt.Println("error full loading path metadata", err)
+				b.logger.Error("error full loading path metadata", slog.Any("error", err))
 			}
 		}
 	}()
 
+	// incremental sync every minute
 	go func() {
 		ticker := time.NewTicker(time.Minute)
 		defer ticker.Stop()
 
 		for range ticker.C {
-			err := b.sync(context.Background(), false)
+			err := b.syncPathTypes(context.Background(), false)
 			if err != nil {
-				// TODO: add logger
-				fmt.Println("error fetching updates for path metadata", err)
+				b.logger.Error("error fetching updates for path metadata", slog.Any("error", err))
 			}
 		}
 	}()
 
-	// refresh promoted paths every 10 seconds
+	// refresh promoted paths every minute
 	go func() {
-		// load once initially
-		if err := b.syncPromoted(context.Background()); err != nil {
-			fmt.Println("error loading promoted paths", err)
-		}
-		ticker := time.NewTicker(10 * time.Second)
+		ticker := time.NewTicker(time.Minute)
 		defer ticker.Stop()
+
 		for range ticker.C {
 			if err := b.syncPromoted(context.Background()); err != nil {
-				fmt.Println("error refreshing promoted paths", err)
+				b.logger.Error("error refreshing promoted paths", slog.Any("error", err))
+			}
+		}
+	}()
+
+	// sync string indexed columns every 30 minutes
+	go func() {
+		ticker := time.NewTicker(30 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			if err := b.syncStringIndexedColumns(context.Background()); err != nil {
+				b.logger.Error("error syncing string indexed columns", slog.Any("error", err))
 			}
 		}
 	}()
 }
 
-func (b *JSONQueryBuilder) sync(ctx context.Context, fullLoad bool) error {
+func (b *JSONQueryBuilder) syncPathTypes(ctx context.Context, fullLoad bool) error {
 	var lastSeen uint64
 	if !fullLoad {
 		lastSeen = b.lastSeen
@@ -142,6 +163,36 @@ func (b *JSONQueryBuilder) sync(ctx context.Context, fullLoad bool) error {
 	if highestLastSeen > 0 {
 		b.lastSeen = highestLastSeen
 	}
+	return nil
+}
+
+func (b *JSONQueryBuilder) syncStringIndexedColumns(ctx context.Context) error {
+	query := fmt.Sprintf(`SELECT type, expr FROM 
+	clusterAllReplicas('%s' %s) 
+	WHERE database = '%s' AND table = '%s' AND type = 'ngrambf_v1'
+	AND (expr LIKE '%%body_v2.%%' OR expr LIKE '%%promoted.%%')`,
+		b.telemetryStore.Cluster(), SkipIndexTableName, DBName, LogsV2LocalTableName)
+	rows, err := b.telemetryStore.ClickhouseDB().Query(ctx, query)
+	if err != nil {
+		return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to load string indexed columns")
+	}
+	defer rows.Close()
+
+	next := make(map[string]string)
+	for rows.Next() {
+		var typ string
+		var expr string
+		if err := rows.Scan(&typ, &expr); err != nil {
+			return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to scan string indexed column")
+		}
+		subColumn, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(expr)
+		if err != nil {
+			return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("failed to unfold JSON sub column index expression for %s", expr))
+		}
+		next[subColumn] = expr
+	}
+
+	b.stringIndexedColumns.Store(next)
 	return nil
 }
 

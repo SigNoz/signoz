@@ -10,4 +10,5 @@ const (
 	LogResourceKeysTblName        = "distributed_logs_resource_keys"
 	PathTypesTableName            = "distributed_path_types"
 	PromotedPathsTableName        = "distributed_promoted_paths"
+	SkipIndexTableName            = "system.data_skipping_indices"
 )

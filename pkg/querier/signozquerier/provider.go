@@ -101,7 +101,7 @@ func newProvider(
 	)
 
 	// Create log statement builder
-	jqb, err := telemetrylogs.NewJSONQueryBuilder(ctx, telemetryStore)
+	jqb, err := telemetrylogs.NewJSONQueryBuilder(ctx, telemetryStore, settings.Logger)
 	if err != nil {
 		return nil, err
 	}
