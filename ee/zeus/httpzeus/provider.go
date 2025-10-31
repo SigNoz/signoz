@@ -104,6 +104,11 @@ func (provider *Provider) GetDeployment(ctx context.Context, key string) ([]byte
 		return nil, err
 	}
 
+	if gjson.GetBytes(response, "status").String() != "success" {
+		errMsg := gjson.GetBytes(response, "error").String()
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get deployment: %s", errMsg)
+	}
+
 	return []byte(gjson.GetBytes(response, "data").String()), nil
 }
 
