@@ -56,6 +56,8 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
                 "SIGNOZ_WEB_DIRECTORY": "/root/web",
                 "SIGNOZ_INSTRUMENTATION_LOGS_LEVEL": "debug",
                 "SIGNOZ_PROMETHEUS_ACTIVE__QUERY__TRACKER_ENABLED": False,
+                # get more clarity on what is the difference between gateway and zeus
+                "SIGNOZ_GATEWAY_URL": zeus.container_configs["8080"].base(),
             }
             | sqlstore.env
             | clickhouse.env
