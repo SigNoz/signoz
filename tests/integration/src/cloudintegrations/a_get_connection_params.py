@@ -131,7 +131,7 @@ def test_generate_connection_params(
     assert "data" in response_data, "Response should contain 'data' field"
 
     # Assert required fields in the response data
-    expected_fields = ["ingestion_url", "ingestion_url", "ingestion_url", "ingestion_url"]
+    expected_fields = ["ingestion_url", "ingestion_key", "signoz_api_url", "signoz_api_key"]
 
     for field in expected_fields:
         assert field in response_data["data"], f"Response data should contain '{field}' field"
