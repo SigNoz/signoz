@@ -1,9 +1,9 @@
 import { Page } from '@playwright/test';
 
 // Read credentials from environment variables
-const username = process.env.LOGIN_USERNAME;
-const password = process.env.LOGIN_PASSWORD;
-const baseURL = process.env.BASE_URL;
+const username = import.meta.env.VITE_LOGIN_USERNAME;
+const password = import.meta.env.VITE_LOGIN_PASSWORD;
+const baseURL = import.meta.env.VITE_BASE_URL;
 
 /**
  * Ensures the user is logged in. If not, performs the login steps.
