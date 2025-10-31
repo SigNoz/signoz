@@ -31,3 +31,9 @@ export const getUniversalNameFromMetricUnit = (
 
 	return universalName || unit || '-';
 };
+
+export function isUniversalUnit(format: string): boolean {
+	return Object.values(UniversalYAxisUnit).includes(
+		format as UniversalYAxisUnit,
+	);
+}
