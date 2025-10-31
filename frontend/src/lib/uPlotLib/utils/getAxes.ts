@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
-import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import { getToolTipValue, PrecisionOption } from 'components/Graph/yAxisConfig';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
 import { uPlotXAxisValuesFormat } from './constants';
@@ -18,11 +18,13 @@ const getAxes = ({
 	yAxisUnit,
 	panelType,
 	isLogScale,
+	decimalPrecision,
 }: {
 	isDarkMode: boolean;
 	yAxisUnit?: string;
 	panelType?: PANEL_TYPES;
 	isLogScale?: boolean;
+	decimalPrecision?: PrecisionOption;
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 }): any => [
 	{
@@ -61,7 +63,7 @@ const getAxes = ({
 				if (v === null || v === undefined || Number.isNaN(v)) {
 					return '';
 				}
-				const value = getToolTipValue(v.toString(), yAxisUnit);
+				const value = getToolTipValue(v.toString(), yAxisUnit, decimalPrecision);
 				return `${value}`;
 			}),
 		gap: 5,
