@@ -2,7 +2,6 @@ package alertmanagerbatcher
 
 import (
 	"context"
-	"io"
 	"log/slog"
 	"testing"
 
@@ -11,7 +10,7 @@ import (
 )
 
 func TestBatcherWithOneAlertAndDefaultConfigs(t *testing.T) {
-	batcher := New(slog.New(slog.NewTextHandler(io.Discard, nil)), NewConfig())
+	batcher := New(slog.New(slog.DiscardHandler), NewConfig())
 	_ = batcher.Start(context.Background())
 
 	batcher.Add(context.Background(), &alertmanagertypes.PostableAlert{Alert: alertmanagertypes.AlertModel{
@@ -25,7 +24,7 @@ func TestBatcherWithOneAlertAndDefaultConfigs(t *testing.T) {
 }
 
 func TestBatcherWithBatchSize(t *testing.T) {
-	batcher := New(slog.New(slog.NewTextHandler(io.Discard, nil)), Config{Size: 2, Capacity: 4})
+	batcher := New(slog.New(slog.DiscardHandler), Config{Size: 2, Capacity: 4})
 	_ = batcher.Start(context.Background())
 
 	var alerts alertmanagertypes.PostableAlerts
@@ -45,7 +44,7 @@ func TestBatcherWithBatchSize(t *testing.T) {
 }
 
 func TestBatcherWithCClosed(t *testing.T) {
-	batcher := New(slog.New(slog.NewTextHandler(io.Discard, nil)), Config{Size: 2, Capacity: 4})
+	batcher := New(slog.New(slog.DiscardHandler), Config{Size: 2, Capacity: 4})
 	_ = batcher.Start(context.Background())
 
 	var alerts alertmanagertypes.PostableAlerts
