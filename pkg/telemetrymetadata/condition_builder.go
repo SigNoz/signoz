@@ -25,6 +25,7 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	_ uint64,
 ) (string, error) {
 
 	switch operator {

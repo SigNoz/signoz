@@ -21,26 +21,37 @@ func TestSpanScopeFilterExpression(t *testing.T) {
 		expression        string
 		expectedCondition string
 		expectError       bool
+		startNs           uint64
 	}{
 		{
 			name:              "simple isroot filter",
 			expression:        "isroot = true",
 			expectedCondition: "parent_span_id = ''",
+			startNs:           1761437108000000000,
 		},
 		{
-			name:              "simple isentrypoint filter",
+			name:              "simple isentrypoint filter (unbounded)",
 			expression:        "isentrypoint = true",
 			expectedCondition: "((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations)) AND parent_span_id != ''",
+			startNs:           0,
+		},
+		{
+			name:              "simple isentrypoint filter (bounded)",
+			expression:        "isentrypoint = true",
+			expectedCondition: "((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations WHERE time >= toDateTime(1761437108))) AND parent_span_id != ''",
+			startNs:           1761437108000000000,
 		},
 		{
 			name:              "combined filter with AND",
 			expression:        "isroot = true AND has_error = true",
 			expectedCondition: "parent_span_id = ''",
+			startNs:           1761437108000000000,
 		},
 		{
 			name:              "combined filter with OR",
 			expression:        "isentrypoint = true OR has_error = true",
-			expectedCondition: "((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations)) AND parent_span_id != ''",
+			expectedCondition: "((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations WHERE time >= toDateTime(1761437108))) AND parent_span_id != ''",
+			startNs:           1761437108000000000,
 		},
 	}
 
@@ -70,7 +81,7 @@ func TestSpanScopeFilterExpression(t *testing.T) {
 				ConditionBuilder: cb,
 				FieldKeys:        fieldKeys,
 				Builder:          sb,
-			})
+			}, tt.startNs)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -137,7 +148,7 @@ func TestSpanScopeWithResourceFilter(t *testing.T) {
 				ConditionBuilder:   cb,
 				FieldKeys:          fieldKeys,
 				SkipResourceFilter: false, // This would be set by the statement builder
-			})
+			}, 1761437108000000000)
 
 			assert.NoError(t, err)
 		})
