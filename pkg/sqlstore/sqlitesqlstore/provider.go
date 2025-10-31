@@ -21,7 +21,7 @@ type provider struct {
 	sqldb     *sql.DB
 	bundb     *sqlstore.BunDB
 	dialect   *dialect
-	formatter *formatter
+	formatter sqlstore.SQLFormatter
 }
 
 func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore.Config]) factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config] {
@@ -55,12 +55,14 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	settings.Logger().InfoContext(ctx, "connected to sqlite", "path", config.Sqlite.Path)
 	sqldb.SetMaxOpenConns(config.Connection.MaxOpenConns)
 
+	sqliteDialect := sqlitedialect.New()
+	bunDB := sqlstore.NewBunDB(settings, sqldb, sqliteDialect, hooks)
 	return &provider{
 		settings:  settings,
 		sqldb:     sqldb,
-		bundb:     sqlstore.NewBunDB(settings, sqldb, sqlitedialect.New(), hooks),
+		bundb:     bunDB,
 		dialect:   new(dialect),
-		formatter: new(formatter),
+		formatter: NewFormatter(bunDB.Dialect()),
 	}, nil
 }
 

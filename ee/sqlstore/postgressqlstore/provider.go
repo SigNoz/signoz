@@ -19,7 +19,7 @@ type provider struct {
 	sqldb     *sql.DB
 	bundb     *sqlstore.BunDB
 	dialect   *dialect
-	formatter *formatter
+	formatter *Formatter
 }
 
 func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore.Config]) factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config] {
@@ -56,12 +56,14 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	sqldb := stdlib.OpenDBFromPool(pool)
 
+	pgDialect := pgdialect.New()
+	bunDB := sqlstore.NewBunDB(settings, sqldb, pgDialect, hooks)
 	return &provider{
 		settings:  settings,
 		sqldb:     sqldb,
-		bundb:     sqlstore.NewBunDB(settings, sqldb, pgdialect.New(), hooks),
+		bundb:     sqlstore.NewBunDB(settings, sqldb, pgDialect, hooks),
 		dialect:   new(dialect),
-		formatter: new(formatter),
+		formatter: NewFormatter(bunDB.Dialect()),
 	}, nil
 }
 

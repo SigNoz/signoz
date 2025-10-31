@@ -10,6 +10,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"github.com/uptrace/bun/schema"
 )
 
 var _ sqlstore.SQLStore = (*Provider)(nil)
@@ -19,7 +20,7 @@ type Provider struct {
 	mock      sqlmock.Sqlmock
 	bunDB     *bun.DB
 	dialect   *dialect
-	formatter *formatter
+	formatter sqlstore.SQLFormatter
 }
 
 func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
@@ -39,11 +40,13 @@ func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
 	}
 
 	return &Provider{
-		db:        db,
-		mock:      mock,
-		bunDB:     bunDB,
-		dialect:   new(dialect),
-		formatter: new(formatter),
+		db:      db,
+		mock:    mock,
+		bunDB:   bunDB,
+		dialect: new(dialect),
+		formatter: &formatter{
+			bunf: schema.NewFormatter(bunDB.Dialect()),
+		},
 	}
 }
 
