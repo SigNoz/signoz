@@ -219,6 +219,12 @@
 }
 
 .lightMode {
+	.ant-tabs-content-holder {
+		.bg-border {
+			background: var(--bg-vanilla-300);
+			border-color: var(--bg-vanilla-300);
+		}
+	}
 	.span-details-drawer {
 		border-left: 1px solid var(--bg-vanilla-300);
 

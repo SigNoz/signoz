@@ -194,6 +194,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								showOnlyWhereClause={showOnlyWhereClause}
 								isListViewPanel={isListViewPanel}
 								signalSource={config?.signalSource || ''}
+								queriesCount={currentQuery.builder.queryData.length}
 							/>
 						))
 					)}
