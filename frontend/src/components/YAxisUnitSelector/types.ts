@@ -14,7 +14,7 @@ export enum UniversalYAxisUnit {
 	HOURS = 'h',
 	MINUTES = 'min',
 	SECONDS = 's',
-	MICROSECONDS = 'us',
+	MICROSECONDS = 'µs',
 	MILLISECONDS = 'ms',
 	NANOSECONDS = 'ns',
 

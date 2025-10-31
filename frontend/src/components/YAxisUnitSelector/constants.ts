@@ -626,9 +626,11 @@ export const Y_AXIS_CATEGORIES = [
 	},
 ];
 
-export const UniversalUnitToGrafanaUnit: Record<UniversalYAxisUnit, string> = {
+export const UniversalUnitToGrafanaUnit: Partial<
+	Record<UniversalYAxisUnit, string>
+> = {
 	// Time
-	[UniversalYAxisUnit.WEEKS]: 'w',
+	[UniversalYAxisUnit.WEEKS]: 'wk',
 	[UniversalYAxisUnit.DAYS]: 'd',
 	[UniversalYAxisUnit.HOURS]: 'h',
 	[UniversalYAxisUnit.MINUTES]: 'm',
@@ -644,9 +646,6 @@ export const UniversalUnitToGrafanaUnit: Record<UniversalYAxisUnit, string> = {
 	[UniversalYAxisUnit.GIGABYTES]: 'decgbytes',
 	[UniversalYAxisUnit.TERABYTES]: 'dectbytes',
 	[UniversalYAxisUnit.PETABYTES]: 'decpbytes',
-	[UniversalYAxisUnit.EXABYTES]: 'decebytes',
-	[UniversalYAxisUnit.ZETTABYTES]: 'deczbytes',
-	[UniversalYAxisUnit.YOTTABYTES]: 'decybytes',
 
 	// Data Rate
 	[UniversalYAxisUnit.BYTES_SECOND]: 'Bps',
@@ -655,31 +654,17 @@ export const UniversalUnitToGrafanaUnit: Record<UniversalYAxisUnit, string> = {
 	[UniversalYAxisUnit.GIGABYTES_SECOND]: 'GBs',
 	[UniversalYAxisUnit.TERABYTES_SECOND]: 'TBs',
 	[UniversalYAxisUnit.PETABYTES_SECOND]: 'PBs',
-	[UniversalYAxisUnit.EXABYTES_SECOND]: 'EBs',
-	[UniversalYAxisUnit.ZETTABYTES_SECOND]: 'ZBs',
-	[UniversalYAxisUnit.YOTTABYTES_SECOND]: 'YBs',
 
 	// Bits
 	[UniversalYAxisUnit.BITS]: 'bits',
-	[UniversalYAxisUnit.KILOBITS]: 'kbits',
-	[UniversalYAxisUnit.MEGABITS]: 'mbits',
-	[UniversalYAxisUnit.GIGABITS]: 'gbits',
-	[UniversalYAxisUnit.TERABITS]: 'tbits',
-	[UniversalYAxisUnit.PETABITS]: 'pbits',
-	[UniversalYAxisUnit.EXABITS]: 'ebits',
-	[UniversalYAxisUnit.ZETTABITS]: 'zbits',
-	[UniversalYAxisUnit.YOTTABITS]: 'ybits',
 
 	// Bit Rate
 	[UniversalYAxisUnit.BITS_SECOND]: 'bps',
-	[UniversalYAxisUnit.KILOBITS_SECOND]: 'kbps',
-	[UniversalYAxisUnit.MEGABITS_SECOND]: 'mbps',
-	[UniversalYAxisUnit.GIGABITS_SECOND]: 'gbps',
-	[UniversalYAxisUnit.TERABITS_SECOND]: 'tbps',
-	[UniversalYAxisUnit.PETABITS_SECOND]: 'pbps',
-	[UniversalYAxisUnit.EXABITS_SECOND]: 'ebps',
-	[UniversalYAxisUnit.ZETTABITS_SECOND]: 'zbps',
-	[UniversalYAxisUnit.YOTTABITS_SECOND]: 'ybps',
+	[UniversalYAxisUnit.KILOBITS_SECOND]: 'Kbits',
+	[UniversalYAxisUnit.MEGABITS_SECOND]: 'Mbits',
+	[UniversalYAxisUnit.GIGABITS_SECOND]: 'Gbits',
+	[UniversalYAxisUnit.TERABITS_SECOND]: 'Tbits',
+	[UniversalYAxisUnit.PETABITS_SECOND]: 'Pbits',
 
 	// Count
 	[UniversalYAxisUnit.COUNT]: 'short',
@@ -711,37 +696,34 @@ export const UniversalUnitToGrafanaUnit: Record<UniversalYAxisUnit, string> = {
 	[UniversalYAxisUnit.NONE]: 'none',
 };
 
-export const AdditionalLabelsMappingForGrafanaUnits: Record<string, string> = {
+export const AdditionalLabelsMappingForGrafanaUnits: Partial<
+	Record<UniversalYAxisUnit, string>
+> = {
 	// Data
-	decebytes: 'EB',
-	deczbytes: 'ZB',
-	decybytes: 'YB',
+	[UniversalYAxisUnit.EXABYTES]: 'EB',
+	[UniversalYAxisUnit.ZETTABYTES]: 'ZB',
+	[UniversalYAxisUnit.YOTTABYTES]: 'YB',
 
 	// Data Rate
-	EBs: 'EB/s',
-	ZBs: 'ZB/s',
-	YBs: 'YB/s',
+	[UniversalYAxisUnit.EXABYTES_SECOND]: 'EB/s',
+	[UniversalYAxisUnit.ZETTABYTES_SECOND]: 'ZB/s',
+	[UniversalYAxisUnit.YOTTABYTES_SECOND]: 'YB/s',
 
 	// Bits
-	kbits: 'Kb',
-	mbits: 'Mb',
-	gbits: 'Gb',
-	tbits: 'Tb',
-	pbits: 'Pb',
-	ebits: 'Eb',
-	zbits: 'Zb',
-	ybits: 'Yb',
+	[UniversalYAxisUnit.BITS]: 'b',
+	[UniversalYAxisUnit.KILOBITS]: 'kb',
+	[UniversalYAxisUnit.MEGABITS]: 'Mb',
+	[UniversalYAxisUnit.GIGABITS]: 'Gb',
+	[UniversalYAxisUnit.TERABITS]: 'Tb',
+	[UniversalYAxisUnit.PETABITS]: 'Pb',
+	[UniversalYAxisUnit.EXABITS]: 'Eb',
+	[UniversalYAxisUnit.ZETTABITS]: 'Zb',
+	[UniversalYAxisUnit.YOTTABITS]: 'Yb',
 
-	// Bit rate
-	bps: 'b/s',
-	kbps: 'Kb/s',
-	mbps: 'Mb/s',
-	gbps: 'Gb/s',
-	tbps: 'Tb/s',
-	pbps: 'Pb/s',
-	ebps: 'Eb/s',
-	zbps: 'Zb/s',
-	ybps: 'Yb/s',
+	// Bit Rate
+	[UniversalYAxisUnit.EXABITS_SECOND]: 'Eb/s',
+	[UniversalYAxisUnit.ZETTABITS_SECOND]: 'Zb/s',
+	[UniversalYAxisUnit.YOTTABITS_SECOND]: 'Yb/s',
 };
 
 /**
@@ -749,7 +731,7 @@ export const AdditionalLabelsMappingForGrafanaUnits: Record<string, string> = {
  * These are units where Grafana doesn't auto-scale between levels
  */
 export const CUSTOM_SCALING_FAMILIES: UnitFamilyConfig[] = [
-	// Bits (b → Kb → Mb → Gb → Tb → Pb → Eb → Zb → Yb)
+	// Bits (b → kb → Mb → Gb → Tb → Pb → Eb → Zb → Yb)
 	{
 		units: [
 			UniversalYAxisUnit.BITS,
@@ -764,15 +746,9 @@ export const CUSTOM_SCALING_FAMILIES: UnitFamilyConfig[] = [
 		],
 		scaleFactor: 1000,
 	},
-	// Bit rates (b/s → Kb/s → Mb/s → ... → Yb/s)
+	// High-order bit rates (Eb/s → Zb/s → Yb/s)
 	{
 		units: [
-			UniversalYAxisUnit.BITS_SECOND,
-			UniversalYAxisUnit.KILOBITS_SECOND,
-			UniversalYAxisUnit.MEGABITS_SECOND,
-			UniversalYAxisUnit.GIGABITS_SECOND,
-			UniversalYAxisUnit.TERABITS_SECOND,
-			UniversalYAxisUnit.PETABITS_SECOND,
 			UniversalYAxisUnit.EXABITS_SECOND,
 			UniversalYAxisUnit.ZETTABITS_SECOND,
 			UniversalYAxisUnit.YOTTABITS_SECOND,

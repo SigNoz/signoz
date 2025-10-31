@@ -1,10 +1,36 @@
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 
+import {
+	AdditionalLabelsMappingForGrafanaUnits,
+	UniversalUnitToGrafanaUnit,
+} from '../constants';
 import { formatUniversalUnit } from '../formatter';
 
 const VALUE_BELOW_THRESHOLD = 900;
 
 describe('formatUniversalUnit', () => {
+	describe('Time', () => {
+		it('formats time values below conversion threshold', () => {
+			expect(formatUniversalUnit(31, UniversalYAxisUnit.DAYS)).toBe('4.43 weeks');
+			expect(formatUniversalUnit(25, UniversalYAxisUnit.HOURS)).toBe('1.04 days');
+			expect(formatUniversalUnit(61, UniversalYAxisUnit.MINUTES)).toBe(
+				'1.02 hours',
+			);
+			expect(formatUniversalUnit(61, UniversalYAxisUnit.SECONDS)).toBe(
+				'1.02 mins',
+			);
+			expect(formatUniversalUnit(1006, UniversalYAxisUnit.MILLISECONDS)).toBe(
+				'1.01 s',
+			);
+			expect(formatUniversalUnit(100006, UniversalYAxisUnit.MICROSECONDS)).toBe(
+				'100 ms',
+			);
+			expect(formatUniversalUnit(1006, UniversalYAxisUnit.NANOSECONDS)).toBe(
+				'1.01 µs',
+			);
+		});
+	});
+
 	describe('Data', () => {
 		it('formats data values below conversion threshold', () => {
 			expect(
@@ -126,7 +152,7 @@ describe('formatUniversalUnit', () => {
 	describe('Bit', () => {
 		it('formats bit values below conversion threshold', () => {
 			expect(formatUniversalUnit(900, UniversalYAxisUnit.BITS)).toBe('900 b');
-			expect(formatUniversalUnit(900, UniversalYAxisUnit.KILOBITS)).toBe('900 Kb');
+			expect(formatUniversalUnit(900, UniversalYAxisUnit.KILOBITS)).toBe('900 kb');
 			expect(formatUniversalUnit(900, UniversalYAxisUnit.MEGABITS)).toBe('900 Mb');
 			expect(formatUniversalUnit(900, UniversalYAxisUnit.GIGABITS)).toBe('900 Gb');
 			expect(formatUniversalUnit(900, UniversalYAxisUnit.TERABITS)).toBe('900 Tb');
@@ -141,7 +167,7 @@ describe('formatUniversalUnit', () => {
 		});
 
 		it('formats bit values above conversion threshold with scaling (1000)', () => {
-			expect(formatUniversalUnit(1000, UniversalYAxisUnit.BITS)).toBe('1 Kb');
+			expect(formatUniversalUnit(1000, UniversalYAxisUnit.BITS)).toBe('1 kb');
 			expect(formatUniversalUnit(1000, UniversalYAxisUnit.KILOBITS)).toBe('1 Mb');
 			expect(formatUniversalUnit(1000, UniversalYAxisUnit.MEGABITS)).toBe('1 Gb');
 			expect(formatUniversalUnit(1000, UniversalYAxisUnit.GIGABITS)).toBe('1 Tb');
@@ -153,7 +179,7 @@ describe('formatUniversalUnit', () => {
 
 		it('formats bit values below conversion threshold with decimals (0.5)', () => {
 			expect(formatUniversalUnit(0.5, UniversalYAxisUnit.KILOBITS)).toBe('500 b');
-			expect(formatUniversalUnit(0.001, UniversalYAxisUnit.MEGABITS)).toBe('1 Kb');
+			expect(formatUniversalUnit(0.001, UniversalYAxisUnit.MEGABITS)).toBe('1 kb');
 		});
 	});
 
@@ -166,7 +192,7 @@ describe('formatUniversalUnit', () => {
 
 		it('formats bit rate values above conversion threshold with scaling (1000)', () => {
 			expect(formatUniversalUnit(1000, UniversalYAxisUnit.BITS_SECOND)).toBe(
-				'1 Kb/s',
+				'1 kb/s',
 			);
 			expect(formatUniversalUnit(1000, UniversalYAxisUnit.KILOBITS_SECOND)).toBe(
 				'1 Mb/s',
@@ -279,5 +305,23 @@ describe('formatUniversalUnit', () => {
 				'1 YB',
 			);
 		});
+	});
+});
+
+describe('Mapping Validator', () => {
+	it('validates that all units have a mapping', () => {
+		// Each universal unit should have a mapping to a 1:1 Grafana unit in UniversalUnitToGrafanaUnit or an additional mapping in AdditionalLabelsMappingForGrafanaUnits
+		const units = Object.values(UniversalYAxisUnit);
+		expect(
+			units.every((unit) => {
+				const hasBaseMapping = unit in UniversalUnitToGrafanaUnit;
+				const hasAdditionalMapping = unit in AdditionalLabelsMappingForGrafanaUnits;
+				const hasMapping = hasBaseMapping || hasAdditionalMapping;
+				if (!hasMapping) {
+					console.error(`Unit ${unit} does not have a mapping`);
+				}
+				return hasMapping;
+			}),
+		).toBe(true);
 	});
 });
