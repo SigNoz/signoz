@@ -1,7 +1,11 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { formattedValueToString, getValueFormat } from '@grafana/data';
 import * as Sentry from '@sentry/react';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
+import { isUniversalUnit } from 'components/YAxisUnitSelector/utils';
 import { isNaN } from 'lodash-es';
+
+import { formatUniversalUnit } from '../YAxisUnitSelector/formatter';
 
 const DEFAULT_SIGNIFICANT_DIGITS = 15;
 // max decimals to keep should not exceed 15 decimal places to avoid floating point precision issues
@@ -138,6 +142,12 @@ export const getYAxisFormattedValue = (
 				precision,
 			);
 		}
+
+		// Separate logic for universal units
+		if (format && isUniversalUnit(format)) {
+			return formatUniversalUnit(parseFloat(value), format as UniversalYAxisUnit);
+		}
+
 		return formattedValueToString(formattedValue);
 	} catch (error) {
 		Sentry.captureEvent({
