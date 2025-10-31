@@ -45,6 +45,14 @@ function PodMetrics({
 		};
 	}, [timestamp]);
 
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
+
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
@@ -91,6 +99,13 @@ function PodMetrics({
 						uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 					timezone: timezone.value,
 					query: currentQuery,
+					legendScrollPosition: legendScrollPositionRef.current,
+					setLegendScrollPosition: (position: {
+						scrollTop: number;
+						scrollLeft: number;
+					}) => {
+						legendScrollPositionRef.current = position;
+					},
 				}),
 			),
 		[
