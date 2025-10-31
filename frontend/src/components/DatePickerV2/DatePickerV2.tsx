@@ -49,6 +49,13 @@ function DatePickerV2({
 
 	const handleNext = (): void => {
 		if (selectedDateTimeFor === 'to') {
+			console.log(
+				'handleNext selectedFromDateTime',
+				selectedFromDateTime,
+				'selectedToDateTime',
+				selectedToDateTime,
+			);
+
 			onCustomDateHandler([selectedFromDateTime, selectedToDateTime]);
 
 			addCustomTimeRange([selectedFromDateTime, selectedToDateTime]);
