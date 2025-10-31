@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	"github.com/SigNoz/signoz-otel-collector/exporter/clickhouselogsexporter"
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -65,13 +64,7 @@ func (c *conditionBuilder) conditionFor(
 	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
 
 	// make use of case insensitive index for body
-	if tblFieldName == "body" || tblFieldName == "body_v2.message" {
-		if tblFieldName == BodyV2MessageColumn {
-			if operator == qbtypes.FilterOperatorExists || operator == qbtypes.FilterOperatorNotExists {
-				tblFieldName = BodyV2Column + "." + clickhouselogsexporter.MessageExistsPath
-			}
-		}
-		
+	if tblFieldName == "body" {
 		switch operator {
 		case qbtypes.FilterOperatorLike:
 			return sb.ILike(tblFieldName, value), nil

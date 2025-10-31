@@ -43,7 +43,6 @@ var (
 	}
 	BodyJSONStringSearchPrefix = `body.`
 	BodyV2Column               = `body_v2`
-	BodyV2MessageColumn        = `body_v2.message`
 	IntrinsicFields            = map[string]telemetrytypes.TelemetryFieldKey{
 		"body": {
 			Name:          "body",

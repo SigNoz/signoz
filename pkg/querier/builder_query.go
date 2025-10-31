@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/SigNoz/signoz-otel-collector/exporter/clickhouselogsexporter"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -257,16 +256,6 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 			for _, rr := range typedPayload.Rows {
 				seeder := func() error {
 					body := rr.Data["body_v2"].(map[string]any)
-					// clean body_v2.message if it exists and is false
-					exists, found := body[clickhouselogsexporter.MessageExistsPath]
-					if found {
-						exists := exists.(bool)
-						if !exists {
-							delete(body, "message")
-						}
-					}
-
-					delete(body, clickhouselogsexporter.MessageExistsPath)
 					promoted := rr.Data["promoted"].(map[string]any)
 					seed(promoted, body)
 					str, err := sonic.MarshalString(body)
