@@ -237,6 +237,7 @@ export type EvaluationWindowAction =
 	  }
 	| { type: 'SET_EVALUATION_CADENCE_MODE'; payload: EvaluationCadenceMode }
 	| { type: 'SET_INITIAL_STATE'; payload: EvaluationWindowState }
+	| { type: 'SET_INITIAL_STATE_FOR_METER' }
 	| { type: 'RESET' };
 
 export type EvaluationCadenceMode = 'default' | 'custom' | 'rrule';

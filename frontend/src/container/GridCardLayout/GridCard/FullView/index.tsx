@@ -324,6 +324,7 @@ function FullView({
 									panelType={selectedPanelType}
 									version={selectedDashboard?.data?.version || 'v3'}
 									isListViewPanel={selectedPanelType === PANEL_TYPES.LIST}
+									signalSourceChangeEnabled
 									// filterConfigs={filterConfigs}
 									// queryComponents={queryComponents}
 								/>
