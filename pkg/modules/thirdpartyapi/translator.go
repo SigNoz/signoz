@@ -2,11 +2,12 @@ package thirdpartyapi
 
 import (
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 	"net"
 	"regexp"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
+	
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -129,9 +130,10 @@ func MergeSemconvColumns(result *qbtypes.QueryRangeResponse) *qbtypes.QueryRange
 		serverAddressKeyLegacyIdx := -1
 
 		for i, col := range scalarData.Columns {
-			if col.Name == serverAddressKey {
+			switch col.Name {
+			case serverAddressKey:
 				serverAddressKeyIdx = i
-			} else if col.Name == serverAddressKeyLegacy {
+			case serverAddressKeyLegacy:
 				serverAddressKeyLegacyIdx = i
 			}
 		}

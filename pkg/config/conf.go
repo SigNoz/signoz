@@ -27,7 +27,7 @@ func NewConf() *Conf {
 // NewConfFromMap creates a new Conf instance from a map.
 func NewConfFromMap(m map[string]any) (*Conf, error) {
 	conf := NewConf()
-	if err := conf.Koanf.Load(confmap.Provider(m, KoanfDelimiter), nil); err != nil {
+	if err := conf.Load(confmap.Provider(m, KoanfDelimiter), nil); err != nil {
 		return nil, err
 	}
 
@@ -74,7 +74,7 @@ func (conf *Conf) Unmarshal(path string, input any, tags ...string) error {
 			Result: input,
 		}
 
-		err := conf.Koanf.UnmarshalWithConf(path, input, koanf.UnmarshalConf{Tag: tag, DecoderConfig: dc})
+		err := conf.UnmarshalWithConf(path, input, koanf.UnmarshalConf{Tag: tag, DecoderConfig: dc})
 		if err != nil {
 			return err
 		}
@@ -93,7 +93,7 @@ func (conf *Conf) Set(key string, input any) error {
 	}
 
 	newConf := NewConf()
-	if err := newConf.Koanf.Load(confmap.Provider(m, KoanfDelimiter), nil); err != nil {
+	if err := newConf.Load(confmap.Provider(m, KoanfDelimiter), nil); err != nil {
 		return err
 	}
 

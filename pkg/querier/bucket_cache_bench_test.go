@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// BenchmarkBucketCache_GetMissRanges benchmarks the GetMissRanges operation
+// BenchmarkBucketCache_GetMissRanges benchmarks the GetMissRanges operation.
 func BenchmarkBucketCache_GetMissRanges(b *testing.B) {
 	bc := createBenchmarkBucketCache(b)
 	ctx := context.Background()
@@ -76,7 +76,7 @@ func BenchmarkBucketCache_GetMissRanges(b *testing.B) {
 	}
 }
 
-// BenchmarkBucketCache_Put benchmarks the Put operation
+// BenchmarkBucketCache_Put benchmarks the Put operation.
 func BenchmarkBucketCache_Put(b *testing.B) {
 	bc := createBenchmarkBucketCache(b)
 	ctx := context.Background()
@@ -128,7 +128,7 @@ func BenchmarkBucketCache_Put(b *testing.B) {
 	}
 }
 
-// BenchmarkBucketCache_MergeTimeSeriesValues benchmarks merging of time series data
+// BenchmarkBucketCache_MergeTimeSeriesValues benchmarks merging of time series data.
 func BenchmarkBucketCache_MergeTimeSeriesValues(b *testing.B) {
 	bc := createBenchmarkBucketCache(b).(*bucketCache)
 
@@ -174,7 +174,7 @@ func BenchmarkBucketCache_MergeTimeSeriesValues(b *testing.B) {
 	}
 }
 
-// BenchmarkBucketCache_FindMissingRangesWithStep benchmarks finding missing ranges
+// BenchmarkBucketCache_FindMissingRangesWithStep benchmarks finding missing ranges.
 func BenchmarkBucketCache_FindMissingRangesWithStep(b *testing.B) {
 	bc := createBenchmarkBucketCache(b).(*bucketCache)
 
@@ -208,7 +208,7 @@ func BenchmarkBucketCache_FindMissingRangesWithStep(b *testing.B) {
 	}
 }
 
-// BenchmarkGetUniqueSeriesKey benchmarks the series key generation
+// BenchmarkGetUniqueSeriesKey benchmarks the series key generation.
 func BenchmarkGetUniqueSeriesKey(b *testing.B) {
 	testCases := []struct {
 		name      string
@@ -245,7 +245,7 @@ func BenchmarkGetUniqueSeriesKey(b *testing.B) {
 	}
 }
 
-// BenchmarkBucketCache_ConcurrentOperations benchmarks concurrent cache operations
+// BenchmarkBucketCache_ConcurrentOperations benchmarks concurrent cache operations.
 func BenchmarkBucketCache_ConcurrentOperations(b *testing.B) {
 	bc := createBenchmarkBucketCache(b)
 	ctx := context.Background()
@@ -300,7 +300,7 @@ func BenchmarkBucketCache_ConcurrentOperations(b *testing.B) {
 	})
 }
 
-// BenchmarkBucketCache_FilterResultToTimeRange benchmarks filtering results to time range
+// BenchmarkBucketCache_FilterResultToTimeRange benchmarks filtering results to time range.
 func BenchmarkBucketCache_FilterResultToTimeRange(b *testing.B) {
 	bc := createBenchmarkBucketCache(b).(*bucketCache)
 
@@ -334,7 +334,7 @@ func BenchmarkBucketCache_FilterResultToTimeRange(b *testing.B) {
 	}
 }
 
-// Helper function to create benchmark bucket cache
+// Helper function to create benchmark bucket cache.
 func createBenchmarkBucketCache(tb testing.TB) BucketCache {
 	config := cache.Config{
 		Provider: "memory",
@@ -348,12 +348,12 @@ func createBenchmarkBucketCache(tb testing.TB) BucketCache {
 	return NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, time.Hour, 5*time.Minute)
 }
 
-// Helper function to create benchmark result
+// Helper function to create benchmark result.
 func createBenchmarkResult(startMs, endMs uint64, step uint64) *qbtypes.Result {
 	return createBenchmarkResultWithSeries(startMs, endMs, step, 10, 100)
 }
 
-// Helper function to create benchmark result with specific series and values
+// Helper function to create benchmark result with specific series and values.
 func createBenchmarkResultWithSeries(startMs, endMs uint64, _ uint64, numSeries, numValuesPerSeries int) *qbtypes.Result {
 	series := make([]*qbtypes.TimeSeries, numSeries)
 
@@ -416,7 +416,7 @@ func createBenchmarkResultWithSeries(startMs, endMs uint64, _ uint64, numSeries,
 	}
 }
 
-// Helper function to create buckets with specific gap patterns
+// Helper function to create buckets with specific gap patterns.
 func createBucketsWithPattern(numBuckets int, pattern string) []*cachedBucket {
 	buckets := make([]*cachedBucket, 0, numBuckets)
 

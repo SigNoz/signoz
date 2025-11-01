@@ -19,7 +19,7 @@ func NewModule(store quickfiltertypes.QuickFilterStore) quickfilter.Module {
 	return &module{store: store}
 }
 
-// GetQuickFilters returns all quick filters for an organization
+// GetQuickFilters returns all quick filters for an organization.
 func (module *module) GetQuickFilters(ctx context.Context, orgID valuer.UUID) ([]*quickfiltertypes.SignalFilters, error) {
 	storedFilters, err := module.store.Get(ctx, orgID)
 	if err != nil {
@@ -38,7 +38,7 @@ func (module *module) GetQuickFilters(ctx context.Context, orgID valuer.UUID) ([
 	return result, nil
 }
 
-// GetSignalFilters returns quick filters for a specific signal in an organization
+// GetSignalFilters returns quick filters for a specific signal in an organization.
 func (m *module) GetSignalFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal) (*quickfiltertypes.SignalFilters, error) {
 	storedFilter, err := m.store.GetBySignal(ctx, orgID, signal.StringValue())
 	if err != nil {
@@ -62,7 +62,7 @@ func (m *module) GetSignalFilters(ctx context.Context, orgID valuer.UUID, signal
 	return signalFilter, nil
 }
 
-// UpdateQuickFilters updates quick filters for a specific signal in an organization
+// UpdateQuickFilters updates quick filters for a specific signal in an organization.
 func (module *module) UpdateQuickFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal, filters []v3.AttributeKey) error {
 	// Validate each filter
 	for _, filter := range filters {

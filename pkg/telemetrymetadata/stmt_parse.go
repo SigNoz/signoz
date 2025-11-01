@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// TelemetryFieldVisitor is an AST visitor for extracting telemetry fields
+// TelemetryFieldVisitor is an AST visitor for extracting telemetry fields.
 type TelemetryFieldVisitor struct {
 	parser.DefaultASTVisitor
 	Fields []*telemetrytypes.TelemetryFieldKey
@@ -19,7 +19,7 @@ func NewTelemetryFieldVisitor() *TelemetryFieldVisitor {
 	}
 }
 
-// VisitColumnDef is called when visiting a column definition
+// VisitColumnDef is called when visiting a column definition.
 func (v *TelemetryFieldVisitor) VisitColumnDef(expr *parser.ColumnDef) error {
 	// Check if this is a materialized column with DEFAULT expression
 	if expr.DefaultExpr == nil {

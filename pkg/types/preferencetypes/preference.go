@@ -11,25 +11,25 @@ import (
 )
 
 type Preference struct {
-	// name of the preference
+	// Name of the preference.
 	Name Name `json:"name"`
 
-	// description of the preference, will be shown to the user
+	// Description of the preference, will be shown to the user.
 	Description string `json:"description"`
 
-	// type of the preference value
+	// Type of the preference value.
 	ValueType ValueType `json:"valueType"`
 
-	// default value of the preference
+	// Default value of the preference.
 	DefaultValue Value `json:"defaultValue"`
 
-	// Allowed scopes of the preference, can be scoped to org or user
+	// Allowed scopes of the preference, can be scoped to org or user.
 	AllowedScopes []Scope `json:"allowedScopes"`
 
-	// allowed values of the preference, applicable only to string value type
+	// Allowed values of the preference, applicable only to string value type.
 	AllowedValues []string `json:"allowedValues"`
 
-	// actual value of the preference, equal to the default value initially
+	// Actual value of the preference, equal to the default value initially.
 	Value Value `json:"value"`
 }
 

@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// MockNotificationManager is a simple mock implementation of NotificationManager
+// MockNotificationManager is a simple mock implementation of NotificationManager.
 type MockNotificationManager struct {
 	configs      map[string]*alertmanagertypes.NotificationConfig
 	routes       map[string]*alertmanagertypes.RoutePolicy
@@ -17,7 +17,7 @@ type MockNotificationManager struct {
 	errors       map[string]error
 }
 
-// NewMock creates a new mock notification manager
+// NewMock creates a new mock notification manager.
 func NewMock() *MockNotificationManager {
 	return &MockNotificationManager{
 		configs:      make(map[string]*alertmanagertypes.NotificationConfig),
@@ -85,7 +85,7 @@ func (m *MockNotificationManager) HasConfig(orgID, ruleID string) bool {
 	return exists
 }
 
-// Route Policy CRUD
+// Route Policy CRUD.
 
 func (m *MockNotificationManager) CreateRoutePolicy(ctx context.Context, orgID string, route *alertmanagertypes.RoutePolicy) error {
 	key := getKey(orgID, "create_route")
@@ -293,7 +293,7 @@ func (m *MockNotificationManager) evaluateExpr(expression string, labelSet model
 	return false
 }
 
-// Helper methods for testing
+// Helper methods for testing.
 
 func (m *MockNotificationManager) SetMockRoute(orgID string, route *alertmanagertypes.RoutePolicy) {
 	routeKey := getKey(orgID, route.ID.StringValue())

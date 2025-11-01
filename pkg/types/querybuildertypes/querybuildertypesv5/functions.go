@@ -33,7 +33,7 @@ var (
 	FunctionNameFillZero      = FunctionName{valuer.NewString("fillZero")}
 )
 
-// ApplyFunction applies the given function to the result data
+// ApplyFunction applies the given function to the result data.
 func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
 	// Extract the function name and arguments
 	name := fn.Name
@@ -112,7 +112,7 @@ func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
 	return result
 }
 
-// parseFloat64Arg parses an argument to float64
+// parseFloat64Arg parses an argument to float64.
 func parseFloat64Arg(value any) (float64, error) {
 	switch v := value.(type) {
 	case float64:
@@ -128,7 +128,7 @@ func parseFloat64Arg(value any) (float64, error) {
 	}
 }
 
-// getEWMAAlpha calculates the alpha value for EWMA functions
+// getEWMAAlpha calculates the alpha value for EWMA functions.
 func getEWMAAlpha(name FunctionName, args []FunctionArg) float64 {
 	// Try to get alpha from arguments first
 	if len(args) > 0 {
@@ -149,7 +149,7 @@ func getEWMAAlpha(name FunctionName, args []FunctionArg) float64 {
 	return 0.5 // default
 }
 
-// funcCutOffMin cuts off values below the threshold and replaces them with NaN
+// funcCutOffMin cuts off values below the threshold and replaces them with NaN.
 func funcCutOffMin(result *TimeSeries, threshold float64) *TimeSeries {
 	for idx, point := range result.Values {
 		if point.Value < threshold {
@@ -160,7 +160,7 @@ func funcCutOffMin(result *TimeSeries, threshold float64) *TimeSeries {
 	return result
 }
 
-// funcCutOffMax cuts off values above the threshold and replaces them with NaN
+// funcCutOffMax cuts off values above the threshold and replaces them with NaN.
 func funcCutOffMax(result *TimeSeries, threshold float64) *TimeSeries {
 	for idx, point := range result.Values {
 		if point.Value > threshold {
@@ -171,7 +171,7 @@ func funcCutOffMax(result *TimeSeries, threshold float64) *TimeSeries {
 	return result
 }
 
-// funcClampMin cuts off values below the threshold and replaces them with the threshold
+// funcClampMin cuts off values below the threshold and replaces them with the threshold.
 func funcClampMin(result *TimeSeries, threshold float64) *TimeSeries {
 	for idx, point := range result.Values {
 		if point.Value < threshold {
@@ -182,7 +182,7 @@ func funcClampMin(result *TimeSeries, threshold float64) *TimeSeries {
 	return result
 }
 
-// funcClampMax cuts off values above the threshold and replaces them with the threshold
+// funcClampMax cuts off values above the threshold and replaces them with the threshold.
 func funcClampMax(result *TimeSeries, threshold float64) *TimeSeries {
 	for idx, point := range result.Values {
 		if point.Value > threshold {
@@ -193,7 +193,7 @@ func funcClampMax(result *TimeSeries, threshold float64) *TimeSeries {
 	return result
 }
 
-// funcAbsolute returns the absolute value of each point
+// funcAbsolute returns the absolute value of each point.
 func funcAbsolute(result *TimeSeries) *TimeSeries {
 	for idx, point := range result.Values {
 		point.Value = math.Abs(point.Value)
@@ -202,7 +202,7 @@ func funcAbsolute(result *TimeSeries) *TimeSeries {
 	return result
 }
 
-// funcRunningDiff returns the running difference of each point
+// funcRunningDiff returns the running difference of each point.
 func funcRunningDiff(result *TimeSeries) *TimeSeries {
 	// iterate over the points in reverse order
 	for idx := len(result.Values) - 1; idx >= 0; idx-- {
@@ -215,7 +215,7 @@ func funcRunningDiff(result *TimeSeries) *TimeSeries {
 	return result
 }
 
-// funcLog2 returns the log2 of each point
+// funcLog2 returns the log2 of each point.
 func funcLog2(result *TimeSeries) *TimeSeries {
 	for idx, point := range result.Values {
 		point.Value = math.Log2(point.Value)
@@ -224,7 +224,7 @@ func funcLog2(result *TimeSeries) *TimeSeries {
 	return result
 }
 
-// funcLog10 returns the log10 of each point
+// funcLog10 returns the log10 of each point.
 func funcLog10(result *TimeSeries) *TimeSeries {
 	for idx, point := range result.Values {
 		point.Value = math.Log10(point.Value)
@@ -233,7 +233,7 @@ func funcLog10(result *TimeSeries) *TimeSeries {
 	return result
 }
 
-// funcCumulativeSum returns the cumulative sum for each point in a series
+// funcCumulativeSum returns the cumulative sum for each point in a series.
 func funcCumulativeSum(result *TimeSeries) *TimeSeries {
 	var sum float64
 	for idx, point := range result.Values {
@@ -247,7 +247,7 @@ func funcCumulativeSum(result *TimeSeries) *TimeSeries {
 	return result
 }
 
-// funcEWMA calculates the Exponentially Weighted Moving Average
+// funcEWMA calculates the Exponentially Weighted Moving Average.
 func funcEWMA(result *TimeSeries, alpha float64) *TimeSeries {
 	var ewma float64
 	var initialized bool
@@ -273,22 +273,22 @@ func funcEWMA(result *TimeSeries, alpha float64) *TimeSeries {
 	return result
 }
 
-// funcMedian3 returns the median of 3 points for each point in a series
+// funcMedian3 returns the median of 3 points for each point in a series.
 func funcMedian3(result *TimeSeries) *TimeSeries {
 	return funcMedianN(result, 3)
 }
 
-// funcMedian5 returns the median of 5 points for each point in a series
+// funcMedian5 returns the median of 5 points for each point in a series.
 func funcMedian5(result *TimeSeries) *TimeSeries {
 	return funcMedianN(result, 5)
 }
 
-// funcMedian7 returns the median of 7 points for each point in a series
+// funcMedian7 returns the median of 7 points for each point in a series.
 func funcMedian7(result *TimeSeries) *TimeSeries {
 	return funcMedianN(result, 7)
 }
 
-// funcMedianN returns the median of N points for each point in a series
+// funcMedianN returns the median of N points for each point in a series.
 func funcMedianN(result *TimeSeries, n int) *TimeSeries {
 	if len(result.Values) == 0 {
 		return result
@@ -343,7 +343,7 @@ func funcMedianN(result *TimeSeries, n int) *TimeSeries {
 	return result
 }
 
-// median calculates the median of a slice of float64 values
+// median calculates the median of a slice of float64 values.
 func median(values []float64) float64 {
 	if len(values) == 0 {
 		return math.NaN()
@@ -357,7 +357,7 @@ func median(values []float64) float64 {
 	return values[medianIndex]
 }
 
-// funcTimeShift shifts all timestamps by the given amount (in seconds)
+// funcTimeShift shifts all timestamps by the given amount (in seconds).
 func funcTimeShift(result *TimeSeries, shift float64) *TimeSeries {
 	shiftMs := int64(shift * 1000) // Convert seconds to milliseconds
 
@@ -370,7 +370,7 @@ func funcTimeShift(result *TimeSeries, shift float64) *TimeSeries {
 }
 
 // funcFillZero fills gaps in time series with zeros at regular step intervals
-// It takes start, end, and step parameters (all in milliseconds) to ensure consistent filling
+// It takes start, end, and step parameters (all in milliseconds) to ensure consistent filling.
 func funcFillZero(result *TimeSeries, start, end, step int64) *TimeSeries {
 	if step <= 0 {
 		return result
@@ -402,7 +402,7 @@ func funcFillZero(result *TimeSeries, start, end, step int64) *TimeSeries {
 	return result
 }
 
-// ApplyFunctions applies a list of functions sequentially to the result
+// ApplyFunctions applies a list of functions sequentially to the result.
 func ApplyFunctions(functions []Function, result *TimeSeries) *TimeSeries {
 	for _, fn := range functions {
 		result = ApplyFunction(fn, result)

@@ -122,7 +122,7 @@ var (
 		"attribute_string_peer$$service_exists":        {Name: "attribute_string_peer$$service_exists", Type: schema.ColumnTypeBool},
 	}
 
-	// TODO(srikanthccv): remove this mapping
+	// TODO(srikanthccv): remove this mapping.
 	oldToNew = map[string]string{
 		// deprecated intrinsic -> new intrinsic
 		"traceID":          "trace_id",
@@ -219,7 +219,7 @@ func (m *defaultFieldMapper) ColumnFor(
 }
 
 // FieldFor returns the table field name for the given key if it exists
-// otherwise it returns qbtypes.ErrColumnNotFound
+// otherwise it returns qbtypes.ErrColumnNotFound.
 func (m *defaultFieldMapper) FieldFor(
 	ctx context.Context,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -297,7 +297,7 @@ func (m *defaultFieldMapper) FieldFor(
 }
 
 // ColumnExpressionFor returns the column expression for the given field
-// if it exists otherwise it returns qbtypes.ErrColumnNotFound
+// if it exists otherwise it returns qbtypes.ErrColumnNotFound.
 func (m *defaultFieldMapper) ColumnExpressionFor(
 	ctx context.Context,
 	field *telemetrytypes.TelemetryFieldKey,

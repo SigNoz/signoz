@@ -124,7 +124,7 @@ func NewStorableAPIKey(name string, userID valuer.UUID, role Role, expiresAt int
 
 func NewGettableAPIKeyFromStorableAPIKey(storableAPIKey *StorableAPIKeyUser) *GettableAPIKey {
 	lastUsed := storableAPIKey.LastUsed.Unix()
-	if storableAPIKey.LastUsed == storableAPIKey.CreatedAt {
+	if storableAPIKey.LastUsed.Equal(storableAPIKey.CreatedAt) {
 		lastUsed = 0
 	}
 	return &GettableAPIKey{

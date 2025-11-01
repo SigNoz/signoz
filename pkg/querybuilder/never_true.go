@@ -11,7 +11,7 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 )
 
-// FieldConstraint represents a constraint on a field
+// FieldConstraint represents a constraint on a field.
 type FieldConstraint struct {
 	Field    string
 	Operator qbtypes.FilterOperator
@@ -19,12 +19,12 @@ type FieldConstraint struct {
 	Values   []interface{} // For IN, NOT IN operations
 }
 
-// ConstraintSet represents a set of constraints that must all be true (AND)
+// ConstraintSet represents a set of constraints that must all be true (AND).
 type ConstraintSet struct {
 	Constraints map[string][]FieldConstraint // field -> constraints
 }
 
-// LogicalContradictionDetector implements the visitor pattern to detect logical contradictions
+// LogicalContradictionDetector implements the visitor pattern to detect logical contradictions.
 type LogicalContradictionDetector struct {
 	grammar.BaseFilterQueryVisitor
 	constraintStack []*ConstraintSet // Stack of constraint sets for nested expressions
@@ -32,7 +32,7 @@ type LogicalContradictionDetector struct {
 	notContextStack []bool // Stack to track NOT contexts
 }
 
-// DetectContradictions analyzes a query string and returns any contradictions found
+// DetectContradictions analyzes a query string and returns any contradictions found.
 func DetectContradictions(query string) ([]string, error) {
 	// Setup ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
@@ -82,12 +82,12 @@ func DetectContradictions(query string) ([]string, error) {
 	return unique, nil
 }
 
-// Helper methods for constraint stack
+// Helper methods for constraint stack.
 func (d *LogicalContradictionDetector) currentConstraints() *ConstraintSet {
 	return d.constraintStack[len(d.constraintStack)-1]
 }
 
-// Helper methods for NOT context
+// Helper methods for NOT context.
 func (d *LogicalContradictionDetector) inNotContext() bool {
 	return d.notContextStack[len(d.notContextStack)-1]
 }
@@ -102,7 +102,7 @@ func (d *LogicalContradictionDetector) popNotContext() {
 	}
 }
 
-// Visit dispatches to the appropriate visit method
+// Visit dispatches to the appropriate visit method.
 func (d *LogicalContradictionDetector) Visit(tree antlr.ParseTree) interface{} {
 	if tree == nil {
 		return nil
@@ -110,7 +110,7 @@ func (d *LogicalContradictionDetector) Visit(tree antlr.ParseTree) interface{} {
 	return tree.Accept(d)
 }
 
-// VisitQuery is the entry point
+// VisitQuery is the entry point.
 func (d *LogicalContradictionDetector) VisitQuery(ctx *grammar.QueryContext) interface{} {
 	d.Visit(ctx.Expression())
 	// Check final constraints
@@ -118,12 +118,12 @@ func (d *LogicalContradictionDetector) VisitQuery(ctx *grammar.QueryContext) int
 	return nil
 }
 
-// VisitExpression just passes through to OrExpression
+// VisitExpression just passes through to OrExpression.
 func (d *LogicalContradictionDetector) VisitExpression(ctx *grammar.ExpressionContext) interface{} {
 	return d.Visit(ctx.OrExpression())
 }
 
-// VisitOrExpression handles OR logic
+// VisitOrExpression handles OR logic.
 func (d *LogicalContradictionDetector) VisitOrExpression(ctx *grammar.OrExpressionContext) interface{} {
 	andExpressions := ctx.AllAndExpression()
 
@@ -148,7 +148,7 @@ func (d *LogicalContradictionDetector) VisitOrExpression(ctx *grammar.OrExpressi
 	return nil
 }
 
-// VisitAndExpression handles AND logic (including implicit AND)
+// VisitAndExpression handles AND logic (including implicit AND).
 func (d *LogicalContradictionDetector) VisitAndExpression(ctx *grammar.AndExpressionContext) interface{} {
 	unaryExpressions := ctx.AllUnaryExpression()
 
@@ -160,7 +160,7 @@ func (d *LogicalContradictionDetector) VisitAndExpression(ctx *grammar.AndExpres
 	return nil
 }
 
-// VisitUnaryExpression handles NOT operator
+// VisitUnaryExpression handles NOT operator.
 func (d *LogicalContradictionDetector) VisitUnaryExpression(ctx *grammar.UnaryExpressionContext) interface{} {
 	hasNot := ctx.NOT() != nil
 
@@ -179,7 +179,7 @@ func (d *LogicalContradictionDetector) VisitUnaryExpression(ctx *grammar.UnaryEx
 	return result
 }
 
-// VisitPrimary handles different primary expressions
+// VisitPrimary handles different primary expressions.
 func (d *LogicalContradictionDetector) VisitPrimary(ctx *grammar.PrimaryContext) interface{} {
 	if ctx.OrExpression() != nil {
 		// Parenthesized expression
@@ -199,7 +199,7 @@ func (d *LogicalContradictionDetector) VisitPrimary(ctx *grammar.PrimaryContext)
 	return nil
 }
 
-// VisitComparison extracts constraints from comparisons
+// VisitComparison extracts constraints from comparisons.
 func (d *LogicalContradictionDetector) VisitComparison(ctx *grammar.ComparisonContext) interface{} {
 	if ctx.Key() == nil {
 		return nil
@@ -342,7 +342,7 @@ func (d *LogicalContradictionDetector) VisitComparison(ctx *grammar.ComparisonCo
 	return nil
 }
 
-// extractValue extracts the actual value from a ValueContext
+// extractValue extracts the actual value from a ValueContext.
 func (d *LogicalContradictionDetector) extractValue(ctx grammar.IValueContext) interface{} {
 	if ctx.QUOTED_TEXT() != nil {
 		text := ctx.QUOTED_TEXT().GetText()
@@ -361,7 +361,7 @@ func (d *LogicalContradictionDetector) extractValue(ctx grammar.IValueContext) i
 	return ""
 }
 
-// extractValueList extracts values from a ValueListContext
+// extractValueList extracts values from a ValueListContext.
 func (d *LogicalContradictionDetector) extractValueList(ctx grammar.IValueListContext) []interface{} {
 	if ctx == nil {
 		return nil
@@ -374,7 +374,7 @@ func (d *LogicalContradictionDetector) extractValueList(ctx grammar.IValueListCo
 	return values
 }
 
-// addConstraint adds a constraint to the current set
+// addConstraint adds a constraint to the current set.
 func (d *LogicalContradictionDetector) addConstraint(constraint FieldConstraint) {
 	constraints := d.currentConstraints()
 
@@ -399,7 +399,7 @@ func (d *LogicalContradictionDetector) addConstraint(constraint FieldConstraint)
 	)
 }
 
-// checkContradictions checks the given constraint set for contradictions
+// checkContradictions checks the given constraint set for contradictions.
 func (d *LogicalContradictionDetector) checkContradictions(constraintSet *ConstraintSet) {
 	for field, constraints := range constraintSet.Constraints {
 		if len(constraints) < 2 {
@@ -412,7 +412,7 @@ func (d *LogicalContradictionDetector) checkContradictions(constraintSet *Constr
 	}
 }
 
-// findContradictionsInConstraints checks if a set of constraints on the same field contradict
+// findContradictionsInConstraints checks if a set of constraints on the same field contradict.
 func (d *LogicalContradictionDetector) findContradictionsInConstraints(field string, constraints []FieldConstraint) []string {
 	contradictions := []string{}
 
@@ -644,7 +644,7 @@ func (d *LogicalContradictionDetector) findContradictionsInConstraints(field str
 	return contradictions
 }
 
-// hasCommonIntersection checks if all BETWEEN ranges have a common intersection
+// hasCommonIntersection checks if all BETWEEN ranges have a common intersection.
 func (d *LogicalContradictionDetector) hasCommonIntersection(betweens []FieldConstraint) bool {
 	if len(betweens) == 0 {
 		return true
@@ -684,7 +684,7 @@ func (d *LogicalContradictionDetector) hasCommonIntersection(betweens []FieldCon
 	return !initialized || intersectionMin <= intersectionMax
 }
 
-// checkRangeContradictions checks if range constraints are satisfiable
+// checkRangeContradictions checks if range constraints are satisfiable.
 func (d *LogicalContradictionDetector) checkRangeContradictions(constraints []FieldConstraint) bool {
 	// We need to find if there's any value that satisfies all constraints
 
@@ -762,7 +762,7 @@ func (d *LogicalContradictionDetector) checkRangeContradictions(constraints []Fi
 	return false
 }
 
-// valuesSatisfyRanges checks if a value satisfies all range constraints
+// valuesSatisfyRanges checks if a value satisfies all range constraints.
 func (d *LogicalContradictionDetector) valuesSatisfyRanges(value interface{}, constraints []FieldConstraint) bool {
 	val, err := parseNumericValue(value)
 	if err != nil {
@@ -798,7 +798,7 @@ func (d *LogicalContradictionDetector) valuesSatisfyRanges(value interface{}, co
 	return true
 }
 
-// valueSatisfiesBetween checks if a value is within a BETWEEN range
+// valueSatisfiesBetween checks if a value is within a BETWEEN range.
 func (d *LogicalContradictionDetector) valueSatisfiesBetween(value interface{}, between FieldConstraint) bool {
 	if len(between.Values) != 2 {
 		return false
@@ -819,7 +819,7 @@ func (d *LogicalContradictionDetector) valueSatisfiesBetween(value interface{}, 
 	return val >= min && val <= max
 }
 
-// matchesLikePattern is a simple pattern matcher for LIKE
+// matchesLikePattern is a simple pattern matcher for LIKE.
 func (d *LogicalContradictionDetector) matchesLikePattern(value, pattern string) bool {
 	// Simple implementation - just check prefix/suffix with %
 	if strings.HasPrefix(pattern, "%") && strings.HasSuffix(pattern, "%") {
@@ -832,7 +832,7 @@ func (d *LogicalContradictionDetector) matchesLikePattern(value, pattern string)
 	return value == pattern
 }
 
-// cloneConstraintSet creates a deep copy of a constraint set
+// cloneConstraintSet creates a deep copy of a constraint set.
 func (d *LogicalContradictionDetector) cloneConstraintSet(set *ConstraintSet) *ConstraintSet {
 	newSet := &ConstraintSet{
 		Constraints: make(map[string][]FieldConstraint),
@@ -847,7 +847,7 @@ func (d *LogicalContradictionDetector) cloneConstraintSet(set *ConstraintSet) *C
 	return newSet
 }
 
-// parseNumericValue attempts to parse a value as a number
+// parseNumericValue attempts to parse a value as a number.
 func parseNumericValue(value interface{}) (float64, error) {
 	switch v := value.(type) {
 	case float64:
@@ -861,7 +861,7 @@ func parseNumericValue(value interface{}) (float64, error) {
 	}
 }
 
-// negateOperator returns the negated version of an operator
+// negateOperator returns the negated version of an operator.
 func negateOperator(op qbtypes.FilterOperator) qbtypes.FilterOperator {
 	switch op {
 	case qbtypes.FilterOperatorEqual:
@@ -909,7 +909,7 @@ func negateOperator(op qbtypes.FilterOperator) qbtypes.FilterOperator {
 	}
 }
 
-// isRangeOperator returns true if the operator is a range comparison operator
+// isRangeOperator returns true if the operator is a range comparison operator.
 func isRangeOperator(op qbtypes.FilterOperator) bool {
 	switch op {
 	case qbtypes.FilterOperatorLessThan,
@@ -922,7 +922,7 @@ func isRangeOperator(op qbtypes.FilterOperator) bool {
 	}
 }
 
-// isNegativeOperator returns true if the operator is a negative/exclusion operator
+// isNegativeOperator returns true if the operator is a negative/exclusion operator.
 func isNegativeOperator(op qbtypes.FilterOperator) bool {
 	switch op {
 	case qbtypes.FilterOperatorNotEqual,

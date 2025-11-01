@@ -19,7 +19,7 @@ var (
 )
 
 var (
-	// Regular expression to match anything before "_configs"
+	// Regular expression to match anything before "_configs".
 	receiverTypeRegex = regexp.MustCompile(`^(.+)_configs`)
 )
 

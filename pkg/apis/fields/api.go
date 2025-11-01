@@ -21,7 +21,7 @@ type API struct {
 	telemetryMetadataStore telemetrytypes.MetadataStore
 }
 
-// TODO: move this to module and remove metastore init
+// TODO: move this to module and remove metastore init.
 func NewAPI(
 	settings factory.ProviderSettings,
 	telemetryStore telemetrystore.TelemetryStore,

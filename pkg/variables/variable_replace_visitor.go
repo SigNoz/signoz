@@ -11,13 +11,13 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 )
 
-// ErrorListener collects syntax errors during parsing
+// ErrorListener collects syntax errors during parsing.
 type ErrorListener struct {
 	*antlr.DefaultErrorListener
 	SyntaxErrors []error
 }
 
-// NewErrorListener creates a new error listener
+// NewErrorListener creates a new error listener.
 func NewErrorListener() *ErrorListener {
 	return &ErrorListener{
 		DefaultErrorListener: antlr.NewDefaultErrorListener(),
@@ -25,22 +25,22 @@ func NewErrorListener() *ErrorListener {
 	}
 }
 
-// SyntaxError is called when a syntax error is encountered
+// SyntaxError is called when a syntax error is encountered.
 func (e *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol any, line, column int, msg string, ex antlr.RecognitionException) {
 	e.SyntaxErrors = append(e.SyntaxErrors, errors.NewInvalidInputf(errors.CodeInvalidInput, "line %d:%d %s", line, column, msg))
 }
 
 // variableReplacementVisitor implements the visitor interface
-// to replace variables in filter expressions with their actual values
+// to replace variables in filter expressions with their actual values.
 type variableReplacementVisitor struct {
 	variables map[string]qbtypes.VariableItem
 	errors    []string
 }
 
-// specialSkipMarker is used to indicate that a condition should be removed
+// specialSkipMarker is used to indicate that a condition should be removed.
 const specialSkipMarker = "__SKIP_CONDITION__"
 
-// ReplaceVariablesInExpression takes a filter expression and returns it with variables replaced
+// ReplaceVariablesInExpression takes a filter expression and returns it with variables replaced.
 func ReplaceVariablesInExpression(expression string, variables map[string]qbtypes.VariableItem) (string, error) {
 	input := antlr.NewInputStream(expression)
 	lexer := grammar.NewFilterQueryLexer(input)
@@ -80,7 +80,7 @@ func ReplaceVariablesInExpression(expression string, variables map[string]qbtype
 	return result, nil
 }
 
-// Visit dispatches to the specific visit method based on node type
+// Visit dispatches to the specific visit method based on node type.
 func (v *variableReplacementVisitor) Visit(tree antlr.ParseTree) any {
 	if tree == nil {
 		return ""
@@ -517,7 +517,7 @@ func (v *variableReplacementVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	return keyText
 }
 
-// formatVariableValue formats a variable value for inclusion in the expression
+// formatVariableValue formats a variable value for inclusion in the expression.
 func (v *variableReplacementVisitor) formatVariableValue(value any) string {
 	switch val := value.(type) {
 	case string:

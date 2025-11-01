@@ -6,7 +6,7 @@ const hourNanos = int64(3_600_000_000_000) // 1 h in ns
 
 type tsRange struct{ fromNS, toNS uint64 }
 
-// slice the timerange into exponentially growing buckets
+// Slice the timerange into exponentially growing buckets.
 func makeBuckets(start, end uint64) []tsRange {
 	startNS := querybuilder.ToNanoSecs(start)
 	endNS := querybuilder.ToNanoSecs(end)

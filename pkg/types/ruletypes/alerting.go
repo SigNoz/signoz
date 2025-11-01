@@ -14,11 +14,10 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-// this file contains common structs and methods used by
-// rule engine
+// This file contains common structs and methods used by rule engine.
 
 const (
-	// how long before re-sending the alert
+	// How long before re-sending the alert.
 	ResolvedRetention = 15 * time.Minute
 	TestAlertPostFix  = "_TEST_ALERT"
 )
@@ -49,7 +48,7 @@ type Alert struct {
 
 	GeneratorURL string
 
-	// list of preferred receivers, e.g. slack
+	// List of preferred receivers, e.g. slack.
 	Receivers []string
 
 	Value      float64
@@ -201,7 +200,7 @@ func (rc *RuleCondition) IsValid() bool {
 	return true
 }
 
-// QueryType is a short hand method to get query type
+// QueryType is a short hand method to get query type.
 func (rc *RuleCondition) QueryType() v3.QueryType {
 	if rc.CompositeQuery != nil {
 		return rc.CompositeQuery.QueryType
@@ -209,7 +208,7 @@ func (rc *RuleCondition) QueryType() v3.QueryType {
 	return v3.QueryTypeUnknown
 }
 
-// String is useful in printing rule condition in logs
+// String is useful in printing rule condition in logs.
 func (rc *RuleCondition) String() string {
 	if rc == nil {
 		return ""
@@ -218,8 +217,8 @@ func (rc *RuleCondition) String() string {
 	return string(data)
 }
 
-// prepareRuleGeneratorURL creates an appropriate url
-// for the rule. the URL is sent in slack messages as well as
+// prepareRuleGeneratorURL creates an appropriate url.
+// For the rule the URL is sent in slack messages as well as
 // to other systems and allows backtracking to the rule definition
 // from the third party systems.
 func PrepareRuleGeneratorURL(ruleId string, source string) string {

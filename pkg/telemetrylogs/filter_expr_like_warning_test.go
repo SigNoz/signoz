@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestLikeAndILikeWithoutWildcards_Warns Tests that LIKE/ILIKE without wildcards add warnings and include docs URL
+// TestLikeAndILikeWithoutWildcards_Warns Tests that LIKE/ILIKE without wildcards add warnings and include docs URL.
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
@@ -45,7 +45,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 	}
 }
 
-// TestLikeAndILikeWithWildcards_NoWarn Tests that LIKE/ILIKE with wildcards do not add warnings
+// TestLikeAndILikeWithWildcards_NoWarn Tests that LIKE/ILIKE with wildcards do not add warnings.
 func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)

@@ -35,7 +35,7 @@ func NewOrganization(displayName string) *Organization {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		// Name: "default/main", TODO: take the call and uncomment this later
+		// Name: "default/main", TODO: take the call and uncomment this later.
 		DisplayName: displayName,
 		Key:         NewOrganizationKey(id),
 	}

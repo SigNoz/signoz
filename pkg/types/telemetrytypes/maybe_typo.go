@@ -9,7 +9,7 @@ const (
 	typoSuggestionThreshold = 0.75
 )
 
-// levenshteinDistance calculates the edit distance between two strings
+// levenshteinDistance calculates the edit distance between two strings.
 func levenshteinDistance(s1, s2 string) int {
 	s1 = strings.ToLower(s1)
 	s2 = strings.ToLower(s2)
@@ -57,7 +57,7 @@ func levenshteinDistance(s1, s2 string) int {
 	return v1[len(s2)]
 }
 
-// similarity returns a value between 0 and 1, where 1 means perfect match
+// similarity returns a value between 0 and 1, where 1 means perfect match.
 func similarity(s1, s2 string) float64 {
 	maxLen := max(len(s1), len(s2))
 	if maxLen == 0 {
@@ -89,7 +89,7 @@ func max(a, b int) int {
 }
 
 // SuggestCorrection checks if there are any column names similar to the input
-// and returns a suggestion if there's at least 75% similarity
+// and returns a suggestion if there's at least 75% similarity.
 func SuggestCorrection(input string, knownFieldKeys []string) (string, bool) {
 
 	var bestMatch string

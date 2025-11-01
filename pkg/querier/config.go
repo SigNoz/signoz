@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
-// Config represents the configuration for the querier
+// Config represents the configuration for the querier.
 type Config struct {
 	// CacheTTL is the TTL for cached query results
 	CacheTTL time.Duration `yaml:"cache_ttl" mapstructure:"cache_ttl"`
@@ -17,7 +17,7 @@ type Config struct {
 	MaxConcurrentQueries int `yaml:"max_concurrent_queries" mapstructure:"max_concurrent_queries"`
 }
 
-// NewConfigFactory creates a new config factory for querier
+// NewConfigFactory creates a new config factory for querier.
 func NewConfigFactory() factory.ConfigFactory {
 	return factory.NewConfigFactory(factory.MustNewName("querier"), newConfig)
 }
@@ -31,7 +31,7 @@ func newConfig() factory.Config {
 	}
 }
 
-// Validate validates the configuration
+// Validate validates the configuration.
 func (c Config) Validate() error {
 	if c.CacheTTL <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "cache_ttl must be positive, got %v", c.CacheTTL)

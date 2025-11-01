@@ -95,11 +95,11 @@ func NewCallbackIdentity(name string, email valuer.Email, orgID valuer.UUID, sta
 }
 
 func newDomainIDForState(domainID valuer.UUID) string {
-	return strings.Replace(domainID.String(), "-", ":", -1)
+	return strings.ReplaceAll(domainID.String(), "-", ":")
 }
 
 func newDomainIDFromState(state string) (valuer.UUID, error) {
-	return valuer.NewUUID(strings.Replace(state, ":", "-", -1))
+	return valuer.NewUUID(strings.ReplaceAll(state, ":", "-"))
 }
 
 func (typ Identity) MarshalBinary() ([]byte, error) {

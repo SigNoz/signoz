@@ -18,7 +18,7 @@ const (
 	MaxAllowedSeries          = 3000
 )
 
-// ToNanoSecs takes epoch and returns it in ns
+// ToNanoSecs takes epoch and returns it in ns.
 func ToNanoSecs(epoch uint64) uint64 {
 	temp := epoch
 	count := 0
@@ -34,7 +34,7 @@ func ToNanoSecs(epoch uint64) uint64 {
 }
 
 // TODO(srikanthccv): should these be rounded to nearest multiple of 60 instead of 5 if step > 60?
-// That would make graph look nice but "nice" but should be less important than the usefulness
+// That would make graph look nice but "nice" but should be less important than the usefulness.
 func RecommendedStepInterval(start, end uint64) uint64 {
 	start = ToNanoSecs(start)
 	end = ToNanoSecs(end)

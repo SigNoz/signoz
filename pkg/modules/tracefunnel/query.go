@@ -9,7 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 )
 
-// sanitizeClause adds AND prefix to non-empty clauses if not already present
+// sanitizeClause adds AND prefix to non-empty clauses if not already present.
 func sanitizeClause(clause string) string {
 	if clause == "" {
 		return ""
@@ -267,7 +267,7 @@ func GetSlowestTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	return &v3.ClickHouseQuery{Query: query}, nil
 }
 
-// TODO: Showing traces with error which are slow makes little sense as a product. We should show the error spans directly in the funnel chart. Rather showing traces which has drop between steps will be more relevant
+// TODO: Showing traces with error which are slow makes little sense as a product. We should show the error spans directly in the funnel chart. Rather showing traces which has drop between steps will be more relevant.
 func GetErroredTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunneltypes.TimeRange, stepStart, stepEnd int64) (*v3.ClickHouseQuery, error) {
 	funnelSteps := funnel.Steps
 	containsErrorT1 := 0

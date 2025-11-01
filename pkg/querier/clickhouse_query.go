@@ -59,7 +59,7 @@ func (q *chSQLQuery) Fingerprint() string {
 
 func (q *chSQLQuery) Window() (uint64, uint64) { return q.fromMS, q.toMS }
 
-// TODO(srikanthccv): cleanup the templating logic
+// TODO(srikanthccv): cleanup the templating logic.
 func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableItem, start, end uint64) (string, error) {
 	varsData := map[string]any{}
 	for k, v := range vars {
@@ -77,9 +77,9 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 	})
 
 	for _, k := range keys {
-		query = strings.Replace(query, fmt.Sprintf("{{%s}}", k), fmt.Sprint(varsData[k]), -1)
-		query = strings.Replace(query, fmt.Sprintf("[[%s]]", k), fmt.Sprint(varsData[k]), -1)
-		query = strings.Replace(query, fmt.Sprintf("$%s", k), fmt.Sprint(varsData[k]), -1)
+		query = strings.ReplaceAll(query, fmt.Sprintf("{{%s}}", k), fmt.Sprint(varsData[k]))
+		query = strings.ReplaceAll(query, fmt.Sprintf("[[%s]]", k), fmt.Sprint(varsData[k]))
+		query = strings.ReplaceAll(query, fmt.Sprintf("$%s", k), fmt.Sprint(varsData[k]))
 	}
 
 	tmpl := template.New("clickhouse-query")

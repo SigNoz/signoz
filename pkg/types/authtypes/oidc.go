@@ -12,7 +12,7 @@ type OIDCConfig struct {
 
 	// Some offspec providers like Azure, Oracle IDCS have oidc discovery url different from issuer url which causes issuerValidation to fail
 	// This provides a way to override the Issuer url from the .well-known/openid-configuration issuer
-	// from the .well-known/openid-configuration issuer
+	// from the .well-known/openid-configuration issuer.
 	IssuerAlias string `json:"issuerAlias"`
 
 	// It is the application's ID.
@@ -27,12 +27,12 @@ type OIDCConfig struct {
 	// Whether to skip email verification. Defaults to "false"
 	InsecureSkipEmailVerified bool `json:"insecureSkipEmailVerified"`
 
-	// Uses the userinfo endpoint to get additional claims for the token. This is especially useful where upstreams return "thin" id tokens
+	// Uses the userinfo endpoint to get additional claims for the token. This is especially useful where upstreams return "thin" id tokens.
 	GetUserInfo bool `json:"getUserInfo"`
 }
 
 type ClaimMapping struct {
-	// Configurable key which contains the email claims. Defaults to "email"
+	// Configurable key which contains the email claims. Defaults to "email".
 	Email string `json:"email"`
 }
 

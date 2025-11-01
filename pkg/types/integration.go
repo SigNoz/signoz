@@ -20,7 +20,7 @@ var AllIntegrationUserEmails = []IntegrationUserEmail{
 }
 
 // --------------------------------------------------------------------------
-// Normal integration uses just the installed_integration table
+// Normal integration uses just the installed_integration table.
 // --------------------------------------------------------------------------
 
 type InstalledIntegration struct {
@@ -35,7 +35,7 @@ type InstalledIntegration struct {
 
 type InstalledIntegrationConfig map[string]interface{}
 
-// For serializing from db
+// For serializing from db.
 func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
 	var data []byte
 	switch v := src.(type) {
@@ -50,7 +50,7 @@ func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
 	return json.Unmarshal(data, c)
 }
 
-// For serializing to db
+// For serializing to db.
 func (c *InstalledIntegrationConfig) Value() (driver.Value, error) {
 	filterSetJson, err := json.Marshal(c)
 	if err != nil {
@@ -61,7 +61,7 @@ func (c *InstalledIntegrationConfig) Value() (driver.Value, error) {
 
 // --------------------------------------------------------------------------
 // Cloud integration uses the cloud_integration table
-// and cloud_integrations_service table
+// and cloud_integrations_service table.
 // --------------------------------------------------------------------------
 
 type CloudIntegration struct {
@@ -126,7 +126,7 @@ type AccountConfig struct {
 	EnabledRegions []string `json:"regions"`
 }
 
-// For serializing from db
+// For serializing from db.
 func (c *AccountConfig) Scan(src any) error {
 	var data []byte
 	switch v := src.(type) {
@@ -141,7 +141,7 @@ func (c *AccountConfig) Scan(src any) error {
 	return json.Unmarshal(data, c)
 }
 
-// For serializing to db
+// For serializing to db.
 func (c *AccountConfig) Value() (driver.Value, error) {
 	if c == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "cloud account config is nil")
@@ -159,7 +159,7 @@ type AgentReport struct {
 	Data            map[string]any `json:"data"`
 }
 
-// For serializing from db
+// For serializing from db.
 func (r *AgentReport) Scan(src any) error {
 	var data []byte
 	switch v := src.(type) {
@@ -174,7 +174,7 @@ func (r *AgentReport) Scan(src any) error {
 	return json.Unmarshal(data, r)
 }
 
-// For serializing to db
+// For serializing to db.
 func (r *AgentReport) Value() (driver.Value, error) {
 	if r == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "agent report is nil")
@@ -213,7 +213,7 @@ type CloudServiceConfig struct {
 	Metrics *CloudServiceMetricsConfig `json:"metrics,omitempty"`
 }
 
-// For serializing from db
+// For serializing from db.
 func (c *CloudServiceConfig) Scan(src any) error {
 	var data []byte
 	switch src := src.(type) {
@@ -228,7 +228,7 @@ func (c *CloudServiceConfig) Scan(src any) error {
 	return json.Unmarshal(data, c)
 }
 
-// For serializing to db
+// For serializing to db.
 func (c *CloudServiceConfig) Value() (driver.Value, error) {
 	if c == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "cloud service config is nil")

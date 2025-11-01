@@ -211,11 +211,11 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 }
 
 // convertLabelSetToEnv converts a flat label set with dotted keys into a nested map structure for expr env.
-// when both a leaf and a deeper nested path exist (e.g. "foo" and "foo.bar"),
+// When both a leaf and a deeper nested path exist (e.g. "foo" and "foo.bar"),
 // the nested structure takes precedence. That means we will replace an existing leaf at any
 // intermediate path with a map so we can materialize the deeper structure.
 // TODO(srikanthccv): we need a better solution to handle this, remove the following
-// when we update the expr to support dotted keys
+// when we update the expr to support dotted keys.
 func (r *provider) convertLabelSetToEnv(ctx context.Context, labelSet model.LabelSet) map[string]interface{} {
 	env := make(map[string]interface{})
 

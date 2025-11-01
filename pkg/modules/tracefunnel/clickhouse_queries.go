@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// BuildFunnelValidationQuery builds a validation query for n-step funnels
+// BuildFunnelValidationQuery builds a validation query for n-step funnels.
 func BuildFunnelValidationQuery(
 	steps []struct {
 		ServiceName   string
@@ -73,7 +73,7 @@ LIMIT 5;`
 	)
 }
 
-// BuildFunnelOverviewQuery builds an overview query for n-step funnels
+// BuildFunnelOverviewQuery builds an overview query for n-step funnels.
 func BuildFunnelOverviewQuery(
 	steps []struct {
 		ServiceName    string
@@ -216,7 +216,7 @@ FROM totals;
 	)
 }
 
-// BuildFunnelCountQuery builds a count query for n-step funnels
+// BuildFunnelCountQuery builds a count query for n-step funnels.
 func BuildFunnelCountQuery(
 	steps []struct {
 		ServiceName   string
@@ -313,7 +313,7 @@ FROM (
 	)
 }
 
-// BuildFunnelStepOverviewQuery builds a step overview query for transitions between any specified steps
+// BuildFunnelStepOverviewQuery builds a step overview query for transitions between any specified steps.
 func BuildFunnelStepOverviewQuery(
 	steps []struct {
 		ServiceName    string
@@ -460,7 +460,7 @@ FROM (
 	)
 }
 
-// BuildFunnelTopSlowTracesQuery builds a query to find the slowest traces between two funnel steps
+// BuildFunnelTopSlowTracesQuery builds a query to find the slowest traces between two funnel steps.
 func BuildFunnelTopSlowTracesQuery(
 	containsErrorT1 int,
 	containsErrorT2 int,
@@ -536,7 +536,7 @@ LIMIT 5;
 	)
 }
 
-// BuildFunnelTopSlowErrorTracesQuery builds a query to find the slowest error traces between two funnel steps
+// BuildFunnelTopSlowErrorTracesQuery builds a query to find the slowest error traces between two funnel steps.
 func BuildFunnelTopSlowErrorTracesQuery(
 	containsErrorT1 int,
 	containsErrorT2 int,

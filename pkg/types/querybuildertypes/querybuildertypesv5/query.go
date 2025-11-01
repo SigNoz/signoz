@@ -16,7 +16,7 @@ type Query interface {
 
 type Result struct {
 	Type           RequestType
-	Value          any // concrete Go value (to be type asserted based on the RequestType)
+	Value          any // concrete Go value (to be type asserted based on the RequestType).
 	Stats          ExecStats
 	Warnings       []string
 	WarningsDocURL string
@@ -28,4 +28,4 @@ type ExecStats struct {
 	DurationMS   uint64 `json:"durationMs"`
 }
 
-type TimeRange struct{ From, To uint64 } // ms since epoch
+type TimeRange struct{ From, To uint64 } // ms since epoch.

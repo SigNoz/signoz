@@ -46,7 +46,7 @@ type nonFlushingBadResponseLoggingWriter struct {
 	writeError    error // The error returned when downstream Write() fails.
 }
 
-// Extends nonFlushingBadResponseLoggingWriter that implements http.Flusher
+// Extends nonFlushingBadResponseLoggingWriter that implements http.Flusher.
 type flushingBadResponseLoggingWriter struct {
 	nonFlushingBadResponseLoggingWriter
 	f http.Flusher

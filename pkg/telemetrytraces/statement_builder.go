@@ -54,7 +54,7 @@ func NewTraceQueryStatementBuilder(
 	}
 }
 
-// Build builds a SQL query for traces based on the given parameters
+// Build builds a SQL query for traces based on the given parameters.
 func (b *traceQueryStatementBuilder) Build(
 	ctx context.Context,
 	start uint64,
@@ -126,7 +126,7 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 
 	for idx := range query.GroupBy {
 		groupBy := query.GroupBy[idx]
-		selectors := querybuilder.QueryStringToKeysSelectors(groupBy.TelemetryFieldKey.Name)
+		selectors := querybuilder.QueryStringToKeysSelectors(groupBy.Name)
 		keySelectors = append(keySelectors, selectors...)
 	}
 
@@ -248,7 +248,7 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 	}
 }
 
-// buildListQuery builds a query for list panel type
+// buildListQuery builds a query for list panel type.
 func (b *traceQueryStatementBuilder) buildListQuery(
 	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
@@ -499,10 +499,10 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		if err != nil {
 			return nil, err
 		}
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
+		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.Name))
 	}
 
 	// Aggregations
@@ -609,7 +609,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	return stmt, nil
 }
 
-// buildScalarQuery builds a query for scalar panel type
+// buildScalarQuery builds a query for scalar panel type.
 func (b *traceQueryStatementBuilder) buildScalarQuery(
 	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
@@ -641,7 +641,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		if err != nil {
 			return nil, err
 		}
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
 	}
@@ -724,7 +724,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	return stmt, nil
 }
 
-// buildFilterCondition builds SQL condition from filter expression
+// buildFilterCondition builds SQL condition from filter expression.
 func (b *traceQueryStatementBuilder) addFilterCondition(
 	_ context.Context,
 	sb *sqlbuilder.SelectBuilder,

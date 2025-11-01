@@ -38,7 +38,7 @@ var (
 	SignalMeter         = Signal{valuer.NewString("meter")}
 )
 
-// NewSignal creates a Signal from a string
+// NewSignal creates a Signal from a string.
 func NewSignal(s string) (Signal, error) {
 	switch s {
 	case "traces":
@@ -75,7 +75,7 @@ type UpdatableQuickFilters struct {
 	Filters []v3.AttributeKey `json:"filters"`
 }
 
-// NewStorableQuickFilter creates a new StorableQuickFilter after validation
+// NewStorableQuickFilter creates a new StorableQuickFilter after validation.
 func NewStorableQuickFilter(orgID valuer.UUID, signal Signal, filterJSON []byte) (*StorableQuickFilter, error) {
 	if orgID.StringValue() == "" {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is required")
@@ -105,7 +105,7 @@ func NewStorableQuickFilter(orgID valuer.UUID, signal Signal, filterJSON []byte)
 	}, nil
 }
 
-// Update updates an existing StorableQuickFilter with new filter data after validation
+// Update updates an existing StorableQuickFilter with new filter data after validation.
 func (quickfilter *StorableQuickFilter) Update(filterJSON []byte) error {
 	var filters []v3.AttributeKey
 	if err := json.Unmarshal(filterJSON, &filters); err != nil {
@@ -117,7 +117,7 @@ func (quickfilter *StorableQuickFilter) Update(filterJSON []byte) error {
 	return nil
 }
 
-// NewSignalFilterFromStorableQuickFilter converts a StorableQuickFilter to a SignalFilters object
+// NewSignalFilterFromStorableQuickFilter converts a StorableQuickFilter to a SignalFilters object.
 func NewSignalFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFilter) (*SignalFilters, error) {
 	if storableQuickFilter == nil {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "storableQuickFilter cannot be nil")
@@ -137,7 +137,7 @@ func NewSignalFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFi
 	}, nil
 }
 
-// NewDefaultQuickFilter generates default filters for all supported signals
+// NewDefaultQuickFilter generates default filters for all supported signals.
 func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 	tracesFilters := []map[string]interface{}{
 		{"key": "duration_nano", "dataType": "float64", "type": "tag"},

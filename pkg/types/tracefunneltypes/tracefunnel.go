@@ -12,7 +12,7 @@ var (
 	ErrFunnelAlreadyExists = errors.MustNewCode("funnel_already_exists")
 )
 
-// StorableFunnel Core Data Structure (StorableFunnel and FunnelStep)
+// StorableFunnel Core Data Structure (StorableFunnel and FunnelStep).
 type StorableFunnel struct {
 	types.Identifiable
 	types.TimeAuditable
@@ -28,8 +28,8 @@ type StorableFunnel struct {
 
 type FunnelStep struct {
 	ID             valuer.UUID   `json:"id,omitempty"`
-	Name           string        `json:"name,omitempty"`        // step name
-	Description    string        `json:"description,omitempty"` // step description
+	Name           string        `json:"name,omitempty"`        // Step name.
+	Description    string        `json:"description,omitempty"` // Step description.
 	Order          int64         `json:"step_order"`
 	ServiceName    string        `json:"service_name"`
 	SpanName       string        `json:"span_name"`
@@ -39,7 +39,7 @@ type FunnelStep struct {
 	HasErrors      bool          `json:"has_errors"`
 }
 
-// PostableFunnel represents all possible funnel-related requests
+// PostableFunnel represents all possible funnel-related requests.
 type PostableFunnel struct {
 	FunnelID    valuer.UUID   `json:"funnel_id,omitempty"`
 	Name        string        `json:"funnel_name,omitempty"`
@@ -48,14 +48,14 @@ type PostableFunnel struct {
 	Steps       []*FunnelStep `json:"steps,omitempty"`
 	UserID      string        `json:"user_id,omitempty"`
 
-	// Analytics specific fields
+	// Analytics specific fields.
 	StartTime int64 `json:"start_time,omitempty"`
 	EndTime   int64 `json:"end_time,omitempty"`
 	StepStart int64 `json:"step_start,omitempty"`
 	StepEnd   int64 `json:"step_end,omitempty"`
 }
 
-// GettableFunnel represents all possible funnel-related responses
+// GettableFunnel represents all possible funnel-related responses.
 type GettableFunnel struct {
 	FunnelID    string          `json:"funnel_id,omitempty"`
 	FunnelName  string          `json:"funnel_name,omitempty"`
@@ -70,20 +70,20 @@ type GettableFunnel struct {
 	Steps       []*FunnelStep   `json:"steps,omitempty"`
 }
 
-// TimeRange represents a time range for analytics
+// TimeRange represents a time range for analytics.
 type TimeRange struct {
 	StartTime int64 `json:"start_time"`
 	EndTime   int64 `json:"end_time"`
 }
 
-// StepTransitionRequest represents a request for step transition analytics
+// StepTransitionRequest represents a request for step transition analytics.
 type StepTransitionRequest struct {
 	TimeRange
 	StepStart int64 `json:"step_start,omitempty"`
 	StepEnd   int64 `json:"step_end,omitempty"`
 }
 
-// UserInfo represents basic user information
+// UserInfo represents basic user information.
 type UserInfo struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
@@ -93,6 +93,6 @@ type FunnelStepFilter struct {
 	StepNumber     int
 	ServiceName    string
 	SpanName       string
-	LatencyPointer string // "start" or "end"
+	LatencyPointer string // "start" or "end".
 	CustomFilters  *v3.FilterSet
 }

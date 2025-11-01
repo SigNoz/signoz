@@ -22,7 +22,7 @@ import (
 )
 
 // readerWithServer wraps a metric reader with an HTTP server for proper shutdown
-// This mirrors the upstream contrib/config implementation
+// This mirrors the upstream contrib/config implementation.
 type readerWithServer struct {
 	sdkmetric.Reader
 	server *http.Server
@@ -36,7 +36,7 @@ func (rws readerWithServer) Shutdown(ctx context.Context) error {
 }
 
 // prometheusReaderWithCustomRegistry creates a Prometheus metric reader using a custom registry
-// This is based on the upstream contrib/config implementation but allows passing a custom registry
+// This is based on the upstream contrib/config implementation but allows passing a custom registry.
 func prometheusReaderWithCustomRegistry(ctx context.Context, prometheusConfig *contribsdkconfig.Prometheus, customRegistry *prometheus.Registry) (sdkmetric.Reader, error) {
 	var opts []otelprom.Option
 	if prometheusConfig.Host == nil {
@@ -109,11 +109,11 @@ func prometheusReaderWithCustomRegistry(ctx context.Context, prometheusConfig *c
 
 type shutdownFunc func(context.Context) error
 
-// noopShutdown is a no-op shutdown function
+// noopShutdown is a no-op shutdown function.
 func noopShutdown(context.Context) error { return nil }
 
 // meterProviderWithCustomRegistry creates a meter provider using contrib config approach
-// but with custom Prometheus registry injection
+// but with custom Prometheus registry injection.
 func meterProviderWithCustomRegistry(ctx context.Context, meterProviderConfig *contribsdkconfig.MeterProvider, res *resource.Resource, customRegistry *prometheus.Registry) (metric.MeterProvider, shutdownFunc, error) {
 	if meterProviderConfig == nil {
 		return noop.NewMeterProvider(), noopShutdown, nil
@@ -140,7 +140,7 @@ func meterProviderWithCustomRegistry(ctx context.Context, meterProviderConfig *c
 	return mp, mp.Shutdown, nil
 }
 
-// metricReaderWithCustomRegistry creates metric readers with custom Prometheus registry support
+// metricReaderWithCustomRegistry creates metric readers with custom Prometheus registry support.
 func metricReaderWithCustomRegistry(ctx context.Context, r contribsdkconfig.MetricReader, customRegistry *prometheus.Registry) (sdkmetric.Reader, error) {
 	if r.Periodic != nil && r.Pull != nil {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "must not specify multiple metric reader type")
@@ -152,7 +152,7 @@ func metricReaderWithCustomRegistry(ctx context.Context, r contribsdkconfig.Metr
 	return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no valid metric reader")
 }
 
-// pullReaderWithCustomRegistry creates pull readers with custom Prometheus registry support
+// pullReaderWithCustomRegistry creates pull readers with custom Prometheus registry support.
 func pullReaderWithCustomRegistry(ctx context.Context, exporter contribsdkconfig.MetricExporter, customRegistry *prometheus.Registry) (sdkmetric.Reader, error) {
 	if exporter.Prometheus != nil {
 		return prometheusReaderWithCustomRegistry(ctx, exporter.Prometheus, customRegistry)

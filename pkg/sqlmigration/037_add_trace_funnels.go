@@ -2,6 +2,7 @@ package sqlmigration
 
 import (
 	"context"
+
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -10,7 +11,7 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-// funnel Core Data Structure (funnel and funnelStep)
+// Funnel Core Data Structure (funnel and funnelStep).
 type funnel struct {
 	bun.BaseModel      `bun:"table:trace_funnel"`
 	types.Identifiable // funnel id

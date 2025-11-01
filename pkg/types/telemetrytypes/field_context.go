@@ -74,7 +74,7 @@ var (
 	}
 )
 
-// UnmarshalJSON implements the json.Unmarshaler interface
+// UnmarshalJSON implements the json.Unmarshaler interface.
 func (f *FieldContext) UnmarshalJSON(data []byte) error {
 	var str string
 	if err := json.Unmarshal(data, &str); err != nil {
@@ -95,7 +95,7 @@ func (f *FieldContext) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Scan implements the sql.Scanner interface
+// Scan implements the sql.Scanner interface.
 func (f *FieldContext) Scan(value interface{}) error {
 	if f == nil {
 		return errors.NewInternalf(errors.CodeInternal, "fieldcontext: nil receiver")

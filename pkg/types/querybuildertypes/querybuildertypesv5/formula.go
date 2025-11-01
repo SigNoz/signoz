@@ -37,7 +37,7 @@ type QueryBuilderFormula struct {
 	Legend string `json:"legend,omitempty"`
 }
 
-// Copy creates a deep copy of the QueryBuilderFormula
+// Copy creates a deep copy of the QueryBuilderFormula.
 func (f QueryBuilderFormula) Copy() QueryBuilderFormula {
 	c := f
 
@@ -62,7 +62,7 @@ func (f QueryBuilderFormula) Copy() QueryBuilderFormula {
 	return c
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields.
 func (f *QueryBuilderFormula) UnmarshalJSON(data []byte) error {
 	type Alias QueryBuilderFormula
 	var temp Alias
@@ -75,14 +75,14 @@ func (f *QueryBuilderFormula) UnmarshalJSON(data []byte) error {
 
 // small container to store the query name and index or alias reference
 // for a variable in the formula expression
-// read below for more details on aggregation references
+// read below for more details on aggregation references.
 type aggregationRef struct {
 	QueryName string
-	Index     *int    // Index-based reference (e.g., A.0)
-	Alias     *string // Alias-based reference (e.g., A.my_alias)
+	Index     *int    // Index-based reference (e.g., A.0).
+	Alias     *string // Alias-based reference (e.g., A.my_alias).
 }
 
-// seriesLookup provides lookup for series data
+// seriesLookup provides lookup for series data.
 type seriesLookup struct {
 	// seriesKey -> timestamp -> value
 	data map[string]map[int64]float64
@@ -105,7 +105,7 @@ type seriesLookup struct {
 // To address this, we now evaluate the formula expression in query-service.
 // The queries are run in parallel to fetch the results and then on the
 // result series, we evaluate the formula expression.
-// This also makes use of any application caching to avoid recomputing on same data
+// This also makes use of any application caching to avoid recomputing on same data.
 type FormulaEvaluator struct {
 	// expression to evaluate, prepared from the expression string with list of
 	// supported functions https://github.com/SigNoz/govaluate?tab=readme-ov-file#what-operators-and-types-does-this-support
@@ -145,7 +145,7 @@ type FormulaEvaluator struct {
 	valuesPool    sync.Pool
 }
 
-// NewFormulaEvaluator creates a formula evaluator
+// NewFormulaEvaluator creates a formula evaluator.
 func NewFormulaEvaluator(expressionStr string, canDefaultZero map[string]bool) (*FormulaEvaluator, error) {
 	functions := EvalFuncs()
 	expression, err := govaluate.NewEvaluableExpressionWithFunctions(expressionStr, functions)
@@ -183,7 +183,7 @@ func NewFormulaEvaluator(expressionStr string, canDefaultZero map[string]bool) (
 }
 
 // parseAggregationReference parses variable names like "A", "A.0", "A.my_alias"
-// into a aggregationRef container for later use
+// into a aggregationRef container for later use.
 func parseAggregationReference(variable string) (aggregationRef, error) {
 	parts := strings.Split(variable, ".")
 
@@ -218,7 +218,7 @@ func parseAggregationReference(variable string) (aggregationRef, error) {
 	return aggregationRef{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid aggregation reference %q", variable)
 }
 
-// EvaluateFormula processes multiple time series with proper aggregation handling
+// EvaluateFormula processes multiple time series with proper aggregation handling.
 func (fe *FormulaEvaluator) EvaluateFormula(timeSeriesData map[string]*TimeSeriesData) ([]*TimeSeries, error) {
 	// Build lookup structures for all referenced aggregations
 	lookup := fe.buildSeriesLookup(timeSeriesData)
@@ -261,7 +261,7 @@ func (fe *FormulaEvaluator) EvaluateFormula(timeSeriesData map[string]*TimeSerie
 	return resultSeries, nil
 }
 
-// buildSeriesLookup creates lookup structure for all referenced aggregations
+// buildSeriesLookup creates lookup structure for all referenced aggregations.
 func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSeriesData) *seriesLookup {
 	lookup := &seriesLookup{
 		// data is a map of series key to timestamp to value
@@ -328,7 +328,7 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 	return lookup
 }
 
-// buildSeriesKey creates a unique key for a series within a specific aggregation
+// buildSeriesKey creates a unique key for a series within a specific aggregation.
 func (fe *FormulaEvaluator) buildSeriesKey(variable string, seriesIndex int, labels []*Label) string {
 	// Create a deterministic key that includes variable and label information
 	// Why is variable name needed?
@@ -373,7 +373,7 @@ func (fe *FormulaEvaluator) buildSeriesKey(variable string, seriesIndex int, lab
 // [{"service": "frontend", "operation": "GET /api"}, {"service": "frontend"}]
 // then the function should return the following label sets:
 // [{"service": "frontend", "operation": "GET /api"}]
-// Why? because `{"service": "frontend"}` is a subset of `{"service": "frontend", "operation": "GET /api"}`
+// Why? Because `{"service": "frontend"}` is a subset of `{"service": "frontend", "operation": "GET /api"}`.
 // The result of any expression that uses the series with `{"service": "frontend", "operation": "GET /api"}`
 // and `{"service": "frontend"}` would be the series with `{"service": "frontend", "operation": "GET /api"}`
 // So, we create a set of labels sets that can be termed as candidates for the final result.
@@ -433,14 +433,14 @@ func (fe *FormulaEvaluator) isSubset(labels1, labels2 []*Label) bool {
 	return true
 }
 
-// evaluateForLabelSet performs formula evaluation for a specific label set
+// evaluateForLabelSet performs formula evaluation for a specific label set.
 func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *seriesLookup) *TimeSeries {
 	// Find matching series for each variable
 	variableData := make(map[string]map[int64]float64)
 	// not every series would have a value for every timestamp
 	// so we need to collect all timestamps from the series that have a value
 	// for the variable
-	var allTimestamps map[int64]struct{} = make(map[int64]struct{})
+	allTimestamps := make(map[int64]struct{})
 
 	for variable := range fe.aggRefs {
 		// Find series with matching labels for this variable
@@ -537,7 +537,7 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 	}
 }
 
-// EvalFuncs returns mathematical functions
+// EvalFuncs returns mathematical functions.
 func EvalFuncs() map[string]govaluate.ExpressionFunction {
 	funcs := make(map[string]govaluate.ExpressionFunction)
 
@@ -623,7 +623,7 @@ func EvalFuncs() map[string]govaluate.ExpressionFunction {
 	return funcs
 }
 
-// GetSupportedFunctions returns the list of supported function names
+// GetSupportedFunctions returns the list of supported function names.
 func GetSupportedFunctions() []string {
 	return []string{
 		"abs", "exp", "log", "ln", "exp2", "log2", "exp10", "log10",

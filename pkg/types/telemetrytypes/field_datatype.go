@@ -18,7 +18,7 @@ var (
 	FieldDataTypeString  = FieldDataType{valuer.NewString("string")}
 	FieldDataTypeBool    = FieldDataType{valuer.NewString("bool")}
 	FieldDataTypeFloat64 = FieldDataType{valuer.NewString("float64")}
-	// int64 and number are synonyms for float64
+	// int64 and number are synonyms for float64.
 	FieldDataTypeInt64       = FieldDataType{valuer.NewString("int64")}
 	FieldDataTypeNumber      = FieldDataType{valuer.NewString("number")}
 	FieldDataTypeUnspecified = FieldDataType{valuer.NewString("")}
@@ -27,7 +27,7 @@ var (
 	FieldDataTypeArrayFloat64 = FieldDataType{valuer.NewString("[]float64")}
 	FieldDataTypeArrayBool    = FieldDataType{valuer.NewString("[]bool")}
 
-	// int64 and number are synonyms for float64
+	// int64 and number are synonyms for float64.
 	FieldDataTypeArrayInt64  = FieldDataType{valuer.NewString("[]int64")}
 	FieldDataTypeArrayNumber = FieldDataType{valuer.NewString("[]number")}
 
@@ -99,7 +99,7 @@ func (f FieldDataType) CHDataType() string {
 	return "String"
 }
 
-// UnmarshalJSON implements the json.Unmarshaler interface
+// UnmarshalJSON implements the json.Unmarshaler interface.
 func (f *FieldDataType) UnmarshalJSON(data []byte) error {
 	var str string
 	if err := json.Unmarshal(data, &str); err != nil {
@@ -120,7 +120,7 @@ func (f *FieldDataType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Scan implements the sql.Scanner interface
+// Scan implements the sql.Scanner interface.
 func (f *FieldDataType) Scan(value interface{}) error {
 	if f == nil {
 		return errors.NewInternalf(errors.CodeInternal, "fielddatatype: nil receiver")

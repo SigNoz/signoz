@@ -21,7 +21,7 @@ var searchTroubleshootingGuideURL = "https://signoz.io/docs/userguide/search-tro
 const stringMatchingOperatorDocURL = "https://signoz.io/docs/userguide/operators-reference/#string-matching-operators"
 
 // filterExpressionVisitor implements the FilterQueryVisitor interface
-// to convert the parsed filter expressions into ClickHouse WHERE clause
+// to convert the parsed filter expressions into ClickHouse WHERE clause.
 type filterExpressionVisitor struct {
 	logger             *slog.Logger
 	fieldMapper        qbtypes.FieldMapper
@@ -60,7 +60,7 @@ type FilterExprVisitorOpts struct {
 	Variables          map[string]qbtypes.VariableItem
 }
 
-// newFilterExpressionVisitor creates a new filterExpressionVisitor
+// newFilterExpressionVisitor creates a new filterExpressionVisitor.
 func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVisitor {
 	return &filterExpressionVisitor{
 		logger:             opts.Logger,
@@ -86,7 +86,7 @@ type PreparedWhereClause struct {
 	WarningsDocURL string
 }
 
-// PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
+// PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query.
 func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWhereClause, error) {
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
@@ -167,7 +167,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 	return &PreparedWhereClause{whereClause, visitor.warnings, visitor.mainWarnURL}, nil
 }
 
-// Visit dispatches to the specific visit method based on node type
+// Visit dispatches to the specific visit method based on node type.
 func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 	// Handle nil nodes to prevent panic
 	if tree == nil {
@@ -219,12 +219,12 @@ func (v *filterExpressionVisitor) VisitQuery(ctx *grammar.QueryContext) any {
 	return v.Visit(ctx.Expression())
 }
 
-// VisitExpression passes through to the orExpression
+// VisitExpression passes through to the orExpression.
 func (v *filterExpressionVisitor) VisitExpression(ctx *grammar.ExpressionContext) any {
 	return v.Visit(ctx.OrExpression())
 }
 
-// VisitOrExpression handles OR expressions
+// VisitOrExpression handles OR expressions.
 func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionContext) any {
 	andExpressions := ctx.AllAndExpression()
 
@@ -246,7 +246,7 @@ func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionCon
 	return v.builder.Or(andExpressionConditions...)
 }
 
-// VisitAndExpression handles AND expressions
+// VisitAndExpression handles AND expressions.
 func (v *filterExpressionVisitor) VisitAndExpression(ctx *grammar.AndExpressionContext) any {
 	unaryExpressions := ctx.AllUnaryExpression()
 
@@ -268,7 +268,7 @@ func (v *filterExpressionVisitor) VisitAndExpression(ctx *grammar.AndExpressionC
 	return v.builder.And(unaryExpressionConditions...)
 }
 
-// VisitUnaryExpression handles NOT expressions
+// VisitUnaryExpression handles NOT expressions.
 func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpressionContext) any {
 	result := v.Visit(ctx.Primary()).(string)
 
@@ -280,7 +280,7 @@ func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpress
 	return result
 }
 
-// VisitPrimary handles grouped expressions, comparisons, function calls, and full-text search
+// VisitPrimary handles grouped expressions, comparisons, function calls, and full-text search.
 func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.OrExpression() != nil {
 		// This is a parenthesized expression
@@ -343,7 +343,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 	return "" // Should not happen with valid input
 }
 
-// VisitComparison handles all comparison operators
+// VisitComparison handles all comparison operators.
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	keys := v.Visit(ctx.Key()).([]*telemetrytypes.TelemetryFieldKey)
 
@@ -575,7 +575,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	return "" // Should not happen with valid input
 }
 
-// warnIfLikeWithoutWildcards adds a guidance warning when LIKE/ILIKE is used without wildcards
+// warnIfLikeWithoutWildcards adds a guidance warning when LIKE/ILIKE is used without wildcards.
 func (v *filterExpressionVisitor) warnIfLikeWithoutWildcards(op string, value any) {
 	if hasLikeWildcards(value) {
 		return
@@ -588,7 +588,7 @@ func (v *filterExpressionVisitor) warnIfLikeWithoutWildcards(op string, value an
 	}
 }
 
-// VisitInClause handles IN expressions
+// VisitInClause handles IN expressions.
 func (v *filterExpressionVisitor) VisitInClause(ctx *grammar.InClauseContext) any {
 	if ctx.ValueList() != nil {
 		return v.Visit(ctx.ValueList())
@@ -596,7 +596,7 @@ func (v *filterExpressionVisitor) VisitInClause(ctx *grammar.InClauseContext) an
 	return v.Visit(ctx.Value())
 }
 
-// VisitNotInClause handles NOT IN expressions
+// VisitNotInClause handles NOT IN expressions.
 func (v *filterExpressionVisitor) VisitNotInClause(ctx *grammar.NotInClauseContext) any {
 	if ctx.ValueList() != nil {
 		return v.Visit(ctx.ValueList())
@@ -604,7 +604,7 @@ func (v *filterExpressionVisitor) VisitNotInClause(ctx *grammar.NotInClauseConte
 	return v.Visit(ctx.Value())
 }
 
-// VisitValueList handles comma-separated value lists
+// VisitValueList handles comma-separated value lists.
 func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) any {
 	values := ctx.AllValue()
 
@@ -616,7 +616,7 @@ func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) 
 	return parts
 }
 
-// VisitFullText handles standalone quoted strings for full-text search
+// VisitFullText handles standalone quoted strings for full-text search.
 func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
 
 	if v.skipFullTextFilter {
@@ -732,7 +732,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 	return v.builder.Or(conds...)
 }
 
-// VisitFunctionParamList handles the parameter list for function calls
+// VisitFunctionParamList handles the parameter list for function calls.
 func (v *filterExpressionVisitor) VisitFunctionParamList(ctx *grammar.FunctionParamListContext) any {
 	params := ctx.AllFunctionParam()
 	parts := make([]any, len(params))
@@ -744,7 +744,7 @@ func (v *filterExpressionVisitor) VisitFunctionParamList(ctx *grammar.FunctionPa
 	return parts
 }
 
-// VisitFunctionParam handles individual parameters in function calls
+// VisitFunctionParam handles individual parameters in function calls.
 func (v *filterExpressionVisitor) VisitFunctionParam(ctx *grammar.FunctionParamContext) any {
 	if ctx.Key() != nil {
 		return v.Visit(ctx.Key())
@@ -757,12 +757,12 @@ func (v *filterExpressionVisitor) VisitFunctionParam(ctx *grammar.FunctionParamC
 	return "" // Should not happen with valid input
 }
 
-// VisitArray handles array literals
+// VisitArray handles array literals.
 func (v *filterExpressionVisitor) VisitArray(ctx *grammar.ArrayContext) any {
 	return v.Visit(ctx.ValueList())
 }
 
-// VisitValue handles literal values: strings, numbers, booleans
+// VisitValue handles literal values: strings, numbers, booleans.
 func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 	if ctx.QUOTED_TEXT() != nil {
 		txt := ctx.QUOTED_TEXT().GetText()
@@ -790,7 +790,7 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 	return "" // Should not happen with valid input
 }
 
-// VisitKey handles field/column references
+// VisitKey handles field/column references.
 func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 
 	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(ctx.GetText())
@@ -892,7 +892,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	return fieldKeysForName
 }
 
-// hasLikeWildcards checks if a value contains LIKE wildcards (% or _)
+// hasLikeWildcards checks if a value contains LIKE wildcards (% or _).
 func hasLikeWildcards(value any) bool {
 	str, ok := value.(string)
 	if !ok {

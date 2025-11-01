@@ -25,7 +25,7 @@ type Instrumentation interface {
 	ToProviderSettings() factory.ProviderSettings
 }
 
-// conversion functions required for using zap interface with underlying slog provider
+// conversion functions required for using zap interface with underlying slog provider.
 type ZapToSlogConverter interface {
 	FieldsToAttributes(fields []zap.Field) []any
 }

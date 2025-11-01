@@ -19,7 +19,7 @@ var (
 	once   sync.Once
 )
 
-// initializes the Zeus configuration
+// Config initializes the Zeus configuration.
 func Config() zeus.Config {
 	once.Do(func() {
 		parsedURL, err := neturl.Parse(url)

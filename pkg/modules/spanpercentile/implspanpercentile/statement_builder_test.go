@@ -50,10 +50,10 @@ func TestBuildSpanPercentileQuery(t *testing.T) {
 	require.Equal(t, "service.name = 'test-service' AND name = 'test'", query.Filter.Expression)
 
 	require.Equal(t, 2, len(query.GroupBy))
-	require.Equal(t, "service.name", query.GroupBy[0].TelemetryFieldKey.Name)
-	require.Equal(t, telemetrytypes.FieldContextResource, query.GroupBy[0].TelemetryFieldKey.FieldContext)
-	require.Equal(t, "name", query.GroupBy[1].TelemetryFieldKey.Name)
-	require.Equal(t, telemetrytypes.FieldContextSpan, query.GroupBy[1].TelemetryFieldKey.FieldContext)
+	require.Equal(t, "service.name", query.GroupBy[0].Name)
+	require.Equal(t, telemetrytypes.FieldContextResource, query.GroupBy[0].FieldContext)
+	require.Equal(t, "name", query.GroupBy[1].Name)
+	require.Equal(t, telemetrytypes.FieldContextSpan, query.GroupBy[1].FieldContext)
 
 	require.Equal(t, qbtypes.RequestTypeScalar, result.RequestType)
 }
@@ -128,12 +128,12 @@ func TestBuildSpanPercentileQueryWithResourceAttributes(t *testing.T) {
 
 			expectedGroupByCount := 2 + len(tc.request.ResourceAttributes)
 			require.Equal(t, expectedGroupByCount, len(query.GroupBy))
-			require.Equal(t, "service.name", query.GroupBy[0].TelemetryFieldKey.Name)
-			require.Equal(t, "name", query.GroupBy[1].TelemetryFieldKey.Name)
+			require.Equal(t, "service.name", query.GroupBy[0].Name)
+			require.Equal(t, "name", query.GroupBy[1].Name)
 
 			for i, key := range getSortedKeys(tc.request.ResourceAttributes) {
-				require.Equal(t, key, query.GroupBy[2+i].TelemetryFieldKey.Name)
-				require.Equal(t, telemetrytypes.FieldContextResource, query.GroupBy[2+i].TelemetryFieldKey.FieldContext)
+				require.Equal(t, key, query.GroupBy[2+i].Name)
+				require.Equal(t, telemetrytypes.FieldContextResource, query.GroupBy[2+i].FieldContext)
 			}
 		})
 	}

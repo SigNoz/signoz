@@ -5,10 +5,10 @@ import (
 	"log/slog"
 )
 
-// LogHandlerFunc is to LogHandler as http.HandlerFunc is to http.Handler
+// LogHandlerFunc is to LogHandler as http.HandlerFunc is to http.Handler .
 type LogHandlerFunc func(ctx context.Context, r slog.Record) error
 
-// LogHandlerFunc implements LogHandler
+// LogHandlerFunc implements LogHandler.
 func (m LogHandlerFunc) Handle(ctx context.Context, r slog.Record) error {
 	return m(ctx, r)
 }
@@ -17,7 +17,7 @@ type LogHandler interface {
 	Handle(ctx context.Context, r slog.Record) error
 }
 
-// Wrapper is an interface implemented by all log handlers
+// Wrapper is an interface implemented by all log handlers.
 type Wrapper interface {
 	Wrap(LogHandler) LogHandler
 }

@@ -85,7 +85,8 @@ func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 //
 //	Export with filter and ordering:
 //	  GET /api/v1/export_raw_data?start=1693612800000000000&end=1693699199000000000
-//	      &filter=severity="error"&order_by=timestamp:desc&limit=1000
+//	      &filter=severity="error"&order_by=timestamp:desc&limit=1000 .
+
 func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	source, err := getExportQuerySource(r.URL.Query())
 	if err != nil {
@@ -372,7 +373,7 @@ func constructCSVHeaderFromQueryResponse(data map[string]any) []string {
 
 // sanitizeForCSV sanitizes a string for CSV by prefixing a single quote if the first non-whitespace rune is '=', '+', '-', or '@'.
 // Excel and sheets remove these leading single quote when displaying the cell content.
-// TODO: will revisit this in a future PR
+// TODO: will revisit this in a future PR.
 func sanitizeForCSV(s string) string {
 	// Find first non-whitespace rune
 	i := 0
@@ -439,7 +440,7 @@ func constructCSVRecordFromQueryResponse(data map[string]any, headerToIndexMappi
 }
 
 // getExportQueryColumns parses the "columns" query parameters and returns a slice of TelemetryFieldKey structs.
-// Each column should be a valid telemetry field key in the format "context.field:type" or "context.field" or "field"
+// Each column should be a valid telemetry field key in the format "context.field:type" or "context.field" or "field".
 func getExportQueryColumns(queryParams url.Values) []telemetrytypes.TelemetryFieldKey {
 	columnParams := queryParams["columns"]
 
@@ -468,7 +469,7 @@ func getsizeOfStringSlice(slice []string) uint64 {
 
 // getExportQueryOrderBy parses the "order_by" query parameters and returns a slice of OrderBy structs.
 // Each "order_by" parameter should be in the format "column:direction"
-// Each "column" should be a valid telemetry field key in the format "context.field:type" or "context.field" or "field"
+// Each "column" should be a valid telemetry field key in the format "context.field:type" or "context.field" or "field".
 func getExportQueryOrderBy(queryParams url.Values) ([]qbtypes.OrderBy, error) {
 	orderByParam := queryParams.Get("order_by")
 

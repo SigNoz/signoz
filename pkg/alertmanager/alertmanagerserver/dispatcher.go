@@ -47,7 +47,7 @@ type Dispatcher struct {
 	receiverRoutes      map[string]*dispatch.Route
 }
 
-// We use the upstream Limits interface from Prometheus
+// We use the upstream Limits interface from Prometheus.
 type Limits = dispatch.Limits
 
 // NewDispatcher returns a new Dispatcher.
@@ -270,9 +270,8 @@ func (d *Dispatcher) Stop() {
 // Returns false iff notifying failed.
 type notifyFunc func(context.Context, ...*types.Alert) bool
 
-// processAlert determines in which aggregation group the alert falls
-// and inserts it.
-// no data alert will only have ruleId and no data label
+// processAlert determines in which aggregation group the alert falls and inserts it.
+// no data alert will only have ruleId and no data label.
 func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	ruleId := getRuleIDFromAlert(alert)
 	config, err := d.notificationManager.GetNotificationConfig(d.orgID, ruleId)
@@ -509,7 +508,7 @@ func (ag *aggrGroup) flush(notify func(...*types.Alert) bool) {
 	}
 }
 
-// unlimitedLimits provides unlimited aggregation groups for SigNoz
+// unlimitedLimits provides unlimited aggregation groups for SigNoz.
 type unlimitedLimits struct{}
 
 func (u *unlimitedLimits) MaxNumberOfAggregationGroups() int { return 0 }

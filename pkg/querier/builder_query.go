@@ -159,7 +159,7 @@ func (q *builderQuery[T]) Window() (uint64, uint64) {
 	return q.fromMS, q.toMS
 }
 
-// must be a single query, ordered by timestamp (logs need an id tie-break).
+// Must be a single query, ordered by timestamp (logs need an id tie-break).
 func (q *builderQuery[T]) isWindowList() bool {
 	if len(q.spec.Order) == 0 {
 		return false
@@ -203,7 +203,7 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	return result, nil
 }
 
-// executeWithContext executes the query with query window and step context for partial value detection
+// executeWithContext executes the query with query window and step context for partial value detection.
 func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
 	totalRows := uint64(0)
 	totalBytes := uint64(0)

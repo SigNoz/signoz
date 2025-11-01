@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Helper function to create a time pointer
+// Helper function to create a time pointer.
 func timePtr(t time.Time) *time.Time {
 	return &t
 }

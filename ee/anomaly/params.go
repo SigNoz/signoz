@@ -47,7 +47,7 @@ type AnomaliesResponse struct {
 //		              |                                  |
 //			(rounded value for past peiod)    +      (seasonal growth)
 //
-// score = abs(value - prediction) / stddev (current_season_query)
+// score = abs(value - prediction) / stddev (current_season_query).
 type anomalyQueryParams struct {
 	// CurrentPeriodQuery is the query range params for period user is looking at or eval window
 	// Example: (now-5m, now), (now-30m, now), (now-1h, now)

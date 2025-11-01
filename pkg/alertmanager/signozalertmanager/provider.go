@@ -206,7 +206,7 @@ func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertma
 }
 
 func (provider *provider) SetDefaultConfig(ctx context.Context, orgID string) error {
-	config, err := alertmanagertypes.NewDefaultConfig(provider.config.Signoz.Config.Global, provider.config.Signoz.Config.Route, orgID)
+	config, err := alertmanagertypes.NewDefaultConfig(provider.config.Signoz.Global, provider.config.Signoz.Route, orgID)
 	if err != nil {
 		return err
 	}
