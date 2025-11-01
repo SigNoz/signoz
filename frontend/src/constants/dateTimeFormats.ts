@@ -24,6 +24,7 @@ export const DATE_TIME_FORMATS = {
 	TIME_SECONDS: 'HH:mm:ss',
 	TIME_UTC: 'HH:mm:ss (UTC Z)',
 	TIME_UTC_MS: 'HH:mm:ss.SSS (UTC Z)',
+	TIME_SPAN_PERCENTILE: 'HH:mm:ss MMM DD',
 
 	// Short date formats
 	DATE_SHORT: 'MM/DD',
