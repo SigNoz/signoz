@@ -48,12 +48,52 @@
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
-		padding: 10px 12px;
+		padding-block: 12px;
 
 		.item {
 			display: flex;
 			flex-direction: column;
 			gap: 8px;
+			position: relative;
+			padding: 2px 12px;
+
+			&--interactive {
+				&:hover {
+					background-color: var(--bg-slate-500);
+					.action-btn {
+						display: flex;
+					}
+				}
+			}
+
+			.action-btn {
+				display: none;
+				&--is-open {
+					display: flex;
+				}
+				position: absolute;
+				right: 8px;
+				top: 50%;
+				transform: translateY(-50%);
+				gap: 4px;
+
+				.filter-btn {
+					display: flex;
+					align-items: center;
+					border-color: var(--bg-slate-400);
+					box-shadow: none;
+					border-radius: 2px;
+					background: var(--bg-slate-500);
+					padding: 4px;
+					gap: 3px;
+					height: 24px;
+					width: 24px;
+
+					&:hover {
+						background: var(--bg-slate-300);
+					}
+				}
+			}
 
 			.attribute-key {
 				color: var(--bg-vanilla-400);
@@ -236,6 +276,18 @@
 			.item {
 				.attribute-key {
 					color: var(--bg-ink-400);
+				}
+
+				.action-btn {
+					background: rgba(255, 255, 255, 0.9);
+
+					.filter-btn {
+						background: var(--bg-vanilla-200);
+
+						&:hover {
+							background: var(--bg-vanilla-100);
+						}
+					}
 				}
 
 				.value-wrapper {

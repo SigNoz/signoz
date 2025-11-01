@@ -1,5 +1,6 @@
 import { Button, Popover, Spin, Tooltip } from 'antd';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
+import cx from 'classnames';
 import { OPERATORS } from 'constants/antlrQueryConstants';
 import { useTraceActions } from 'hooks/trace/useTraceActions';
 import {
@@ -124,7 +125,7 @@ export default function AttributeActions({
 	);
 
 	return (
-		<div className="action-btn">
+		<div className={cx('action-btn', { 'action-btn--is-open': isOpen })}>
 			<Tooltip title={isPinned ? 'Unpin attribute' : 'Pin attribute'}>
 				<Button
 					className={`filter-btn periscope-btn ${isPinned ? 'pinned' : ''}`}
