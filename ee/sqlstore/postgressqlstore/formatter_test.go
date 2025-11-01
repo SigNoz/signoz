@@ -48,7 +48,7 @@ func TestFormatter_JSONExtractString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewFormatter(pgdialect.New())
+			f := newFormatter(pgdialect.New())
 			got := string(f.JSONExtractString(tt.column, tt.path))
 			assert.Equal(t, tt.expected, got)
 		})
@@ -84,7 +84,7 @@ func TestFormatter_JSONType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewFormatter(pgdialect.New())
+			f := newFormatter(pgdialect.New())
 			got := string(f.JSONType(tt.column, tt.path))
 			assert.Equal(t, tt.expected, got)
 		})
@@ -121,7 +121,7 @@ func TestFormatter_JSONIsArray(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewFormatter(pgdialect.New())
+			f := newFormatter(pgdialect.New())
 			got := string(f.JSONIsArray(tt.column, tt.path))
 			assert.Equal(t, tt.expected, got)
 		})
@@ -169,7 +169,7 @@ func TestFormatter_JSONArrayElements(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewFormatter(pgdialect.New())
+			f := newFormatter(pgdialect.New())
 			got, _ := f.JSONArrayElements(tt.column, tt.path, tt.alias)
 			assert.Equal(t, tt.expected, string(got))
 		})
@@ -202,7 +202,7 @@ func TestFormatter_JSONArrayAgg(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewFormatter(pgdialect.New())
+			f := newFormatter(pgdialect.New())
 			got := string(f.JSONArrayAgg(tt.expression))
 			assert.Equal(t, tt.expected, got)
 		})
@@ -240,7 +240,7 @@ func TestFormatter_JSONArrayLiteral(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewFormatter(pgdialect.New())
+			f := newFormatter(pgdialect.New())
 			got := string(f.JSONArrayLiteral(tt.values...))
 			assert.Equal(t, tt.expected, got)
 		})
@@ -300,7 +300,7 @@ func TestFormatter_convertJSONPathToPostgresWithMode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewFormatter(pgdialect.New()).(*formatter)
+			f := newFormatter(pgdialect.New()).(*formatter)
 			got := f.convertJSONPathToPostgresWithMode(tt.jsonPath, tt.asText)
 			assert.Equal(t, tt.expected, got)
 		})

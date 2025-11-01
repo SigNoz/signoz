@@ -43,7 +43,7 @@ func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
 		mock:      mock,
 		bunDB:     bunDB,
 		dialect:   new(dialect),
-		formatter: NewFormatter(bunDB.Dialect()),
+		formatter: newFormatter(bunDB.Dialect()),
 	}
 }
 

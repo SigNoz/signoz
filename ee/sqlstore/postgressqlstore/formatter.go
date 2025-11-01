@@ -11,7 +11,7 @@ type formatter struct {
 	bunf schema.Formatter
 }
 
-func NewFormatter(dialect schema.Dialect) sqlstore.SQLFormatter {
+func newFormatter(dialect schema.Dialect) sqlstore.SQLFormatter {
 	return &formatter{bunf: schema.NewFormatter(dialect)}
 }
 
