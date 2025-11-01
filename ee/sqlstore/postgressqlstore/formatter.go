@@ -148,10 +148,10 @@ func (f *formatter) convertJSONPathToPostgresWithMode(jsonPath string, asText bo
 	return result.String()
 }
 
-func (f *formatter) JSONLowerPath(path string) []byte {
+func (f *formatter) LowerExpression(expression string) []byte {
 	var sql []byte
 	sql = append(sql, "lower("...)
-	sql = append(sql, path...)
+	sql = append(sql, expression...)
 	sql = append(sql, ')')
 	return sql
 }

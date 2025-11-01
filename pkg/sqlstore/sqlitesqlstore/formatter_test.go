@@ -349,33 +349,48 @@ func TestFormatterTextToJsonColumn(t *testing.T) {
 	}
 }
 
-func TestFormatterJSONLowerPath(t *testing.T) {
+func TestFormatterLowerExpression(t *testing.T) {
 	tests := []struct {
 		name     string
-		path     string
+		expr     string
 		expected string
 	}{
 		{
-			name:     "simple column",
-			path:     "name",
-			expected: "lower(name)",
-		},
-		{
-			name:     "json extract expression",
-			path:     "json_extract(data, '$.field')",
+			name:     "json_extract expression",
+			expr:     "json_extract(data, '$.field')",
 			expected: "lower(json_extract(data, '$.field'))",
 		},
 		{
-			name:     "quoted column",
-			path:     `"column_name"`,
-			expected: `lower("column_name")`,
+			name:     "nested json_extract",
+			expr:     "json_extract(metadata, '$.user.name')",
+			expected: "lower(json_extract(metadata, '$.user.name'))",
+		},
+		{
+			name:     "json_type expression",
+			expr:     "json_type(data, '$.field')",
+			expected: "lower(json_type(data, '$.field'))",
+		},
+		{
+			name:     "string concatenation",
+			expr:     "first_name || ' ' || last_name",
+			expected: "lower(first_name || ' ' || last_name)",
+		},
+		{
+			name:     "CAST expression",
+			expr:     "CAST(value AS TEXT)",
+			expected: "lower(CAST(value AS TEXT))",
+		},
+		{
+			name:     "COALESCE expression",
+			expr:     "COALESCE(name, 'default')",
+			expected: "lower(COALESCE(name, 'default'))",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := newFormatter(sqlitedialect.New())
-			got := string(f.JSONLowerPath(tt.path))
+			got := string(f.LowerExpression(tt.expr))
 			assert.Equal(t, tt.expected, got)
 		})
 	}

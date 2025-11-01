@@ -104,10 +104,10 @@ func (f *formatter) TextToJsonColumn(column string) []byte {
 	return f.bunf.AppendIdent([]byte{}, column)
 }
 
-func (f *formatter) JSONLowerPath(path string) []byte {
+func (f *formatter) LowerExpression(expression string) []byte {
 	var sql []byte
 	sql = append(sql, "lower("...)
-	sql = append(sql, path...)
+	sql = append(sql, expression...)
 	sql = append(sql, ')')
 	return sql
 }

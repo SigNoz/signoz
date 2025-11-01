@@ -117,6 +117,6 @@ type SQLFormatter interface {
 	// TextToJsonColumn converts a text column to JSON type
 	TextToJsonColumn(column string) []byte
 
-	//JSONLowerPath converts string to lower case
-	JSONLowerPath(path string) []byte
+	// LowerExpression wraps any SQL expression with lower() function for case-insensitive operations
+	LowerExpression(expression string) []byte
 }

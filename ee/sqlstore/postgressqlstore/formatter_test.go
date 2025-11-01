@@ -415,33 +415,73 @@ func TestFormatterTextToJsonColumn(t *testing.T) {
 	}
 }
 
-func TestFormatterJSONLowerPath(t *testing.T) {
+func TestFormatterLowerExpression(t *testing.T) {
 	tests := []struct {
 		name     string
-		path     string
+		expr     string
 		expected string
 	}{
 		{
-			name:     "simple column",
-			path:     "name",
+			name:     "simple column name",
+			expr:     "name",
 			expected: "lower(name)",
 		},
 		{
-			name:     "json extract expression",
-			path:     "data->>'field'",
+			name:     "quoted column identifier",
+			expr:     `"column_name"`,
+			expected: `lower("column_name")`,
+		},
+		{
+			name:     "jsonb text extraction",
+			expr:     "data->>'field'",
 			expected: "lower(data->>'field')",
 		},
 		{
-			name:     "quoted column",
-			path:     `"column_name"`,
-			expected: `lower("column_name")`,
+			name:     "nested jsonb extraction",
+			expr:     "metadata->'user'->>'name'",
+			expected: "lower(metadata->'user'->>'name')",
+		},
+		{
+			name:     "jsonb_typeof expression",
+			expr:     "jsonb_typeof(data->'field')",
+			expected: "lower(jsonb_typeof(data->'field'))",
+		},
+		{
+			name:     "string concatenation",
+			expr:     "first_name || ' ' || last_name",
+			expected: "lower(first_name || ' ' || last_name)",
+		},
+		{
+			name:     "CAST expression",
+			expr:     "CAST(value AS TEXT)",
+			expected: "lower(CAST(value AS TEXT))",
+		},
+		{
+			name:     "COALESCE expression",
+			expr:     "COALESCE(name, 'default')",
+			expected: "lower(COALESCE(name, 'default'))",
+		},
+		{
+			name:     "subquery column",
+			expr:     "users.email",
+			expected: "lower(users.email)",
+		},
+		{
+			name:     "quoted identifier with special chars",
+			expr:     `"user-name"`,
+			expected: `lower("user-name")`,
+		},
+		{
+			name:     "jsonb to text cast",
+			expr:     "data::text",
+			expected: "lower(data::text)",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := newFormatter(pgdialect.New())
-			got := string(f.JSONLowerPath(tt.path))
+			got := string(f.LowerExpression(tt.expr))
 			assert.Equal(t, tt.expected, got)
 		})
 	}
