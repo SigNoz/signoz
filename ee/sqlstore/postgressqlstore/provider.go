@@ -3,7 +3,6 @@ package postgressqlstore
 import (
 	"context"
 	"database/sql"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -19,7 +18,7 @@ type provider struct {
 	sqldb     *sql.DB
 	bundb     *sqlstore.BunDB
 	dialect   *dialect
-	formatter *Formatter
+	formatter sqlstore.SQLFormatter
 }
 
 func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore.Config]) factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config] {
@@ -63,7 +62,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		sqldb:     sqldb,
 		bundb:     sqlstore.NewBunDB(settings, sqldb, pgDialect, hooks),
 		dialect:   new(dialect),
-		formatter: NewFormatter(bunDB.Dialect()),
+		formatter: newFormatter(bunDB.Dialect()),
 	}, nil
 }
 

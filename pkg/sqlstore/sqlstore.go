@@ -116,8 +116,8 @@ type SQLFormatter interface {
 	JSONKeys(column, path, alias string) ([]byte, []byte)
 
 	// TextToJsonColumn converts a text column to JSON type
-	TextToJsonColumn(column string) string
+	TextToJsonColumn(column string) []byte
 
 	//Lower converts string to lower case
-	Lower(path string) string
+	Lower(path string) []byte
 }

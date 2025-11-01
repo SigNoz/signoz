@@ -62,7 +62,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		sqldb:     sqldb,
 		bundb:     bunDB,
 		dialect:   new(dialect),
-		formatter: NewFormatter(bunDB.Dialect()),
+		formatter: newFormatter(bunDB.Dialect()),
 	}, nil
 }
 
