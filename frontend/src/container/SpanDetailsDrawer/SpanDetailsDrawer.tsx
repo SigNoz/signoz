@@ -97,6 +97,11 @@ interface IResourceAttribute {
 	isSelected: boolean;
 }
 
+const DEFAULT_RESOURCE_ATTRIBUTES = {
+	serviceName: 'service.name',
+	name: 'name',
+};
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	const {
@@ -153,6 +158,11 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	const [
 		shouldFetchSpanPercentilesData,
 		setShouldFetchSpanPercentilesData,
+	] = useState<boolean>(false);
+
+	const [
+		shouldUpdateUserPreference,
+		setShouldUpdateUserPreference,
 	] = useState<boolean>(false);
 
 	const handleTimeRangeChange = useCallback((value: number): void => {
@@ -289,7 +299,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	);
 
 	// TODO: Span percentile should be eventually moved to context and not fetched on every span change
-	const { data: userSelectedResourceAttributes } = useQuery({
+	const {
+		data: userSelectedResourceAttributes,
+		isError: isErrorUserSelectedResourceAttributes,
+	} = useQuery({
 		queryFn: () =>
 			getUserPreference({
 				name: USER_PREFERENCES.SPAN_PERCENTILE_RESOURCE_ATTRIBUTES,
@@ -334,10 +347,14 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 				return;
 			}
 
-			updateUserPreferenceMutation({
-				name: USER_PREFERENCES.SPAN_PERCENTILE_RESOURCE_ATTRIBUTES,
-				value: [...Object.keys(selectedResourceAttributes)],
-			});
+			if (shouldUpdateUserPreference) {
+				updateUserPreferenceMutation({
+					name: USER_PREFERENCES.SPAN_PERCENTILE_RESOURCE_ATTRIBUTES,
+					value: [...Object.keys(selectedResourceAttributes)],
+				});
+
+				setShouldUpdateUserPreference(false);
+			}
 		},
 	});
 
@@ -394,8 +411,8 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					key,
 					value,
 					isSelected:
-						key === 'service.name' ||
-						key === 'name' ||
+						key === DEFAULT_RESOURCE_ATTRIBUTES.serviceName ||
+						key === DEFAULT_RESOURCE_ATTRIBUTES.name ||
 						(key in selectedResourceAttributesMap &&
 							selectedResourceAttributesMap[key] !== '' &&
 							selectedResourceAttributesMap[key] !== undefined),
@@ -424,7 +441,27 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 			setShouldFetchSpanPercentilesData(true);
 		}
-	}, [userSelectedResourceAttributes, selectedSpan?.tagMap]);
+
+		if (isErrorUserSelectedResourceAttributes) {
+			const resourceAttributes = Object.entries(selectedSpan?.tagMap || {}).map(
+				([key, value]) => ({
+					key,
+					value,
+					isSelected:
+						key === DEFAULT_RESOURCE_ATTRIBUTES.serviceName ||
+						key === DEFAULT_RESOURCE_ATTRIBUTES.name,
+				}),
+			);
+
+			updateSpanResourceAttributes(resourceAttributes);
+
+			setShouldFetchSpanPercentilesData(true);
+		}
+	}, [
+		userSelectedResourceAttributes,
+		isErrorUserSelectedResourceAttributes,
+		selectedSpan?.tagMap,
+	]);
 
 	const handleResourceAttributeChange = useCallback(
 		(key: string, value: string, isSelected: boolean): void => {
@@ -447,6 +484,8 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			setSelectedResourceAttributes(newSelectedResourceAttributes);
 
 			setShouldFetchSpanPercentilesData(true);
+
+			setShouldUpdateUserPreference(true);
 		},
 		[selectedResourceAttributes],
 	);

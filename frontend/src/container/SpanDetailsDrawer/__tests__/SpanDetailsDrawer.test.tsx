@@ -15,6 +15,8 @@ import {
 	userEvent,
 	waitFor,
 } from 'tests/test-utils';
+import { SuccessResponseV2 } from 'types/api';
+import { GetSpanPercentilesResponseDataProps } from 'types/api/trace/getSpanPercentiles';
 
 import SpanDetailsDrawer from '../SpanDetailsDrawer';
 import {
@@ -263,22 +265,17 @@ const SPAN_PERCENTILE_TEXT = 'Span Percentile';
 
 // Mock data for span percentiles
 const mockSpanPercentileResponse = {
-	statusCode: 200 as const,
-	error: null,
-	message: 'Success',
-	payload: {
-		status: 'success',
-		data: {
-			percentiles: {
-				p50: 500000000, // 500ms in nanoseconds
-				p90: 1000000000, // 1s in nanoseconds
-				p95: 1500000000, // 1.5s in nanoseconds
-				p99: 2000000000, // 2s in nanoseconds
-			},
-			position: {
-				percentile: 75.5,
-				description: 'This span is in the 75th percentile',
-			},
+	httpStatusCode: 200 as const,
+	data: {
+		percentiles: {
+			p50: 500000000, // 500ms in nanoseconds
+			p90: 1000000000, // 1s in nanoseconds
+			p95: 1500000000, // 1.5s in nanoseconds
+			p99: 2000000000, // 2s in nanoseconds
+		},
+		position: {
+			percentile: 75.5,
+			description: 'This span is in the 75th percentile',
 		},
 	},
 };
@@ -301,12 +298,10 @@ const mockUserPreferenceResponse = {
 	},
 };
 
-const mockSpanPercentileErrorResponse = {
-	statusCode: 500 as const,
-	error: 'Internal Server Error',
-	message: 'Failed to fetch span percentiles',
-	payload: null,
-};
+const mockSpanPercentileErrorResponse = ({
+	httpStatusCode: 500,
+	data: null,
+} as unknown) as SuccessResponseV2<GetSpanPercentilesResponseDataProps>;
 
 describe('SpanDetailsDrawer', () => {
 	let apiCallHistory: any = {};
@@ -913,12 +908,10 @@ describe('SpanDetailsDrawer', () => {
 
 		it('should not display percentile value when API returns non-200 status', async () => {
 			// Mock API response with non-200 status
-			mockGetSpanPercentiles.mockResolvedValue({
-				statusCode: 500 as const,
-				error: 'Internal Server Error',
-				message: 'Failed to fetch span percentiles',
-				payload: null,
-			});
+			mockGetSpanPercentiles.mockResolvedValue(({
+				httpStatusCode: 500 as const,
+				data: null,
+			} as unknown) as Awaited<ReturnType<typeof getSpanPercentiles>>);
 
 			renderSpanDetailsDrawer();
 
@@ -961,17 +954,12 @@ describe('SpanDetailsDrawer', () => {
 		it('should handle empty percentile data gracefully', async () => {
 			// Mock empty percentile response
 			mockGetSpanPercentiles.mockResolvedValue({
-				statusCode: 200,
-				error: null,
-				message: 'Success',
-				payload: {
-					status: 'success',
-					data: {
-						percentiles: {},
-						position: {
-							percentile: 0,
-							description: '',
-						},
+				httpStatusCode: 200,
+				data: {
+					percentiles: {},
+					position: {
+						percentile: 0,
+						description: '',
 					},
 				},
 			});
@@ -1022,6 +1010,7 @@ describe('SpanDetailsDrawer', () => {
 		});
 
 		it('should close resource attributes selector when check icon is clicked', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			renderSpanDetailsDrawer();
 
 			// Wait for percentile data to load and expand
@@ -1033,7 +1022,7 @@ describe('SpanDetailsDrawer', () => {
 			);
 
 			const percentileValue = screen.getByText(P75_TEXT);
-			fireEvent.click(percentileValue);
+			await user.click(percentileValue);
 
 			// Wait for percentile details to expand and show resource attributes
 			await waitFor(() => {
@@ -1041,7 +1030,7 @@ describe('SpanDetailsDrawer', () => {
 			});
 
 			const plusIcon = screen.getByTestId('plus-icon');
-			fireEvent.click(plusIcon);
+			await user.click(plusIcon);
 
 			await waitFor(() => {
 				expect(
@@ -1051,7 +1040,7 @@ describe('SpanDetailsDrawer', () => {
 
 			// Click the check icon to close the selector
 			const checkIcon = screen.getByTestId('check-icon');
-			fireEvent.click(checkIcon);
+			await user.click(checkIcon);
 
 			// Verify resource attributes selector is hidden
 			await waitFor(() => {
