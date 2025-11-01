@@ -202,11 +202,7 @@ export function DashboardProvider({
 		updateLocalStorageDashboardVariables,
 	} = useDashboardVariablesFromLocalStorage(dashboardId);
 
-	const {
-		getUrlVariables,
-		updateUrlVariable,
-		clearUrlVariables,
-	} = useVariablesFromUrl();
+	const { getUrlVariables, updateUrlVariable } = useVariablesFromUrl();
 
 	const updatedTimeRef = useRef<Dayjs | null>(null); // Using ref to store the updated time
 	const modalRef = useRef<any>(null);
@@ -217,14 +213,6 @@ export function DashboardProvider({
 	const dashboardRef = useRef<Dashboard>();
 
 	const [isDashboardFetching, setIsDashboardFetching] = useState<boolean>(false);
-
-	// Clear variable configs when not on dashboard pages
-	useEffect(() => {
-		const isOnDashboardPage = !!isDashboardPage || !!isDashboardWidgetPage;
-		if (!isOnDashboardPage) {
-			clearUrlVariables();
-		}
-	}, [isDashboardPage, isDashboardWidgetPage, clearUrlVariables]);
 
 	const mergeDBWithLocalStorage = (
 		data: Dashboard,
