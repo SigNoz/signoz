@@ -1,9 +1,9 @@
 package postgressqlstore
 
 import (
-	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/uptrace/bun/schema"
 )
 

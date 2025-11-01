@@ -1,13 +1,13 @@
 package sqlitesqlstore
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 )
 
-func TestFormatterJSONExtractString(t *testing.T) {
+func TestJSONExtractString(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -49,7 +49,7 @@ func TestFormatterJSONExtractString(t *testing.T) {
 	}
 }
 
-func TestFormatterJSONType(t *testing.T) {
+func TestJSONType(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -85,7 +85,7 @@ func TestFormatterJSONType(t *testing.T) {
 	}
 }
 
-func TestFormatterJSONIsArray(t *testing.T) {
+func TestJSONIsArray(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -121,7 +121,7 @@ func TestFormatterJSONIsArray(t *testing.T) {
 	}
 }
 
-func TestFormatterJSONArrayElements(t *testing.T) {
+func TestJSONArrayElements(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -168,7 +168,7 @@ func TestFormatterJSONArrayElements(t *testing.T) {
 	}
 }
 
-func TestFormatterJSONArrayOfStrings(t *testing.T) {
+func TestJSONArrayOfStrings(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -208,7 +208,7 @@ func TestFormatterJSONArrayOfStrings(t *testing.T) {
 	}
 }
 
-func TestFormatterJSONKeys(t *testing.T) {
+func TestJSONKeys(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -248,7 +248,7 @@ func TestFormatterJSONKeys(t *testing.T) {
 	}
 }
 
-func TestFormatterJSONArrayAgg(t *testing.T) {
+func TestJSONArrayAgg(t *testing.T) {
 	tests := []struct {
 		name       string
 		expression string
@@ -280,7 +280,7 @@ func TestFormatterJSONArrayAgg(t *testing.T) {
 	}
 }
 
-func TestFormatterJSONArrayLiteral(t *testing.T) {
+func TestJSONArrayLiteral(t *testing.T) {
 	tests := []struct {
 		name     string
 		values   []string
@@ -317,7 +317,7 @@ func TestFormatterJSONArrayLiteral(t *testing.T) {
 	}
 }
 
-func TestFormatterTextToJsonColumn(t *testing.T) {
+func TestTextToJsonColumn(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -349,7 +349,7 @@ func TestFormatterTextToJsonColumn(t *testing.T) {
 	}
 }
 
-func TestFormatterLowerExpression(t *testing.T) {
+func TestLowerExpression(t *testing.T) {
 	tests := []struct {
 		name     string
 		expr     string
