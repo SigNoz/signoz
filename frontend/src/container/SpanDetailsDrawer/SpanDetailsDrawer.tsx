@@ -27,6 +27,7 @@ import useClickOutside from 'hooks/useClickOutside';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	Anvil,
+	BarChart2,
 	Bookmark,
 	Check,
 	ChevronDown,
@@ -55,6 +56,7 @@ import { RelatedSignalsViews } from './constants';
 import Events from './Events/Events';
 import LinkedSpans from './LinkedSpans/LinkedSpans';
 import SpanRelatedSignals from './SpanRelatedSignals/SpanRelatedSignals';
+import { hasInfraMetadata } from './utils';
 
 interface ISpanDetailsDrawerProps {
 	isSpanDetailsDocked: boolean;
@@ -184,6 +186,35 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	const handleRelatedSignalsClose = useCallback((): void => {
 		setIsRelatedSignalsOpen(false);
 	}, []);
+
+	const relatedSignalsOptions = useMemo(() => {
+		const baseOptions = [
+			{
+				label: (
+					<div className="view-title">
+						<LogsIcon width={14} height={14} />
+						Logs
+					</div>
+				),
+				value: RelatedSignalsViews.LOGS,
+			},
+		];
+
+		// Only show Infra option if span has infrastructure metadata
+		if (hasInfraMetadata(selectedSpan)) {
+			baseOptions.push({
+				label: (
+					<div className="view-title">
+						<BarChart2 size={14} />
+						Metrics
+					</div>
+				),
+				value: RelatedSignalsViews.INFRA,
+			});
+		}
+
+		return baseOptions;
+	}, [selectedSpan]);
 
 	function getItems(span: Span, startTime: number): TabsProps['items'] {
 		return [
@@ -823,17 +854,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 							<div className="related-signals-section">
 								<SignozRadioGroup
 									value=""
-									options={[
-										{
-											label: (
-												<div className="view-title">
-													<LogsIcon width={14} height={14} />
-													Logs
-												</div>
-											),
-											value: RelatedSignalsViews.LOGS,
-										},
-									]}
+									options={relatedSignalsOptions}
 									onChange={handleRelatedSignalsChange}
 									className="related-signals-radio"
 								/>
