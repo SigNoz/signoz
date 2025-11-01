@@ -112,12 +112,12 @@ type SQLFormatter interface {
 	// JSONArrayLiteral creates a literal JSON array from the given string values
 	JSONArrayLiteral(values ...string) []byte
 
-	// JSONKeys extracts keys from a JSON object as a set of key-value pairs
+	// JSONKeys return extracted key from json as well as alias to be used for select and where clause
 	JSONKeys(column, path, alias string) ([]byte, []byte)
 
 	// TextToJsonColumn converts a text column to JSON type
 	TextToJsonColumn(column string) []byte
 
-	//Lower converts string to lower case
-	Lower(path string) []byte
+	//LowerPath converts string to lower case
+	LowerPath(path string) []byte
 }
