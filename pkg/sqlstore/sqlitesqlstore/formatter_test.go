@@ -7,8 +7,7 @@ import (
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 )
 
-func TestFormatter_JSONExtractString(t *testing.T) {
-
+func TestFormatterJSONExtractString(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -50,8 +49,7 @@ func TestFormatter_JSONExtractString(t *testing.T) {
 	}
 }
 
-func TestFormatter_JSONType(t *testing.T) {
-
+func TestFormatterJSONType(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -87,31 +85,30 @@ func TestFormatter_JSONType(t *testing.T) {
 	}
 }
 
-func TestFormatter_JSONIsArray(t *testing.T) {
-
+func TestFormatterJSONIsArray(t *testing.T) {
 	tests := []struct {
-		name   string
-		column string
-		path   string
-		want   string
+		name     string
+		column   string
+		path     string
+		expected string
 	}{
 		{
-			name:   "simple path",
-			column: "data",
-			path:   "$.items",
-			want:   `json_type("data", '$.items') = 'array'`,
+			name:     "simple path",
+			column:   "data",
+			path:     "$.items",
+			expected: `json_type("data", '$.items') = 'array'`,
 		},
 		{
-			name:   "nested path",
-			column: "metadata",
-			path:   "$.user.tags",
-			want:   `json_type("metadata", '$.user.tags') = 'array'`,
+			name:     "nested path",
+			column:   "metadata",
+			path:     "$.user.tags",
+			expected: `json_type("metadata", '$.user.tags') = 'array'`,
 		},
 		{
-			name:   "root path",
-			column: "json_col",
-			path:   "$",
-			want:   `json_type("json_col", '$') = 'array'`,
+			name:     "root path",
+			column:   "json_col",
+			path:     "$",
+			expected: `json_type("json_col", '$') = 'array'`,
 		},
 	}
 
@@ -119,13 +116,12 @@ func TestFormatter_JSONIsArray(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f := newFormatter(sqlitedialect.New())
 			got := string(f.JSONIsArray(tt.column, tt.path))
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }
 
-func TestFormatter_JSONArrayElements(t *testing.T) {
-
+func TestFormatterJSONArrayElements(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -172,8 +168,87 @@ func TestFormatter_JSONArrayElements(t *testing.T) {
 	}
 }
 
-func TestFormatter_JSONArrayAgg(t *testing.T) {
+func TestFormatterJSONArrayOfStrings(t *testing.T) {
+	tests := []struct {
+		name     string
+		column   string
+		path     string
+		alias    string
+		expected string
+	}{
+		{
+			name:     "root path with dollar sign",
+			column:   "data",
+			path:     "$",
+			alias:    "str",
+			expected: `json_each("data") AS "str"`,
+		},
+		{
+			name:     "root path empty",
+			column:   "data",
+			path:     "",
+			alias:    "str",
+			expected: `json_each("data") AS "str"`,
+		},
+		{
+			name:     "nested path",
+			column:   "metadata",
+			path:     "$.strings",
+			alias:    "s",
+			expected: `json_each("metadata", '$.strings') AS "s"`,
+		},
+	}
 
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newFormatter(sqlitedialect.New())
+			got, _ := f.JSONArrayOfStrings(tt.column, tt.path, tt.alias)
+			assert.Equal(t, tt.expected, string(got))
+		})
+	}
+}
+
+func TestFormatterJSONKeys(t *testing.T) {
+	tests := []struct {
+		name     string
+		column   string
+		path     string
+		alias    string
+		expected string
+	}{
+		{
+			name:     "root path with dollar sign",
+			column:   "data",
+			path:     "$",
+			alias:    "k",
+			expected: `json_each("data") AS "k"`,
+		},
+		{
+			name:     "root path empty",
+			column:   "data",
+			path:     "",
+			alias:    "k",
+			expected: `json_each("data") AS "k"`,
+		},
+		{
+			name:     "nested path",
+			column:   "metadata",
+			path:     "$.object",
+			alias:    "key",
+			expected: `json_each("metadata", '$.object') AS "key"`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newFormatter(sqlitedialect.New())
+			got, _ := f.JSONKeys(tt.column, tt.path, tt.alias)
+			assert.Equal(t, tt.expected, string(got))
+		})
+	}
+}
+
+func TestFormatterJSONArrayAgg(t *testing.T) {
 	tests := []struct {
 		name       string
 		expression string
@@ -206,7 +281,6 @@ func TestFormatter_JSONArrayAgg(t *testing.T) {
 }
 
 func TestFormatter_JSONArrayLiteral(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		values   []string
@@ -238,6 +312,70 @@ func TestFormatter_JSONArrayLiteral(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f := newFormatter(sqlitedialect.New())
 			got := string(f.JSONArrayLiteral(tt.values...))
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestFormatterTextToJsonColumn(t *testing.T) {
+	tests := []struct {
+		name     string
+		column   string
+		expected string
+	}{
+		{
+			name:     "simple column name",
+			column:   "data",
+			expected: `"data"`,
+		},
+		{
+			name:     "column with underscore",
+			column:   "user_data",
+			expected: `"user_data"`,
+		},
+		{
+			name:     "column with special characters",
+			column:   "json-col",
+			expected: `"json-col"`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newFormatter(sqlitedialect.New())
+			got := string(f.TextToJsonColumn(tt.column))
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestFormatterJSONLowerPath(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected string
+	}{
+		{
+			name:     "simple column",
+			path:     "name",
+			expected: "lower(name)",
+		},
+		{
+			name:     "json extract expression",
+			path:     "json_extract(data, '$.field')",
+			expected: "lower(json_extract(data, '$.field'))",
+		},
+		{
+			name:     "quoted column",
+			path:     `"column_name"`,
+			expected: `lower("column_name")`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newFormatter(sqlitedialect.New())
+			got := string(f.JSONLowerPath(tt.path))
 			assert.Equal(t, tt.expected, got)
 		})
 	}

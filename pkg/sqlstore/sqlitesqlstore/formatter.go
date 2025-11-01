@@ -81,6 +81,7 @@ func (f *formatter) JSONArrayAgg(expression string) []byte {
 	sql = append(sql, ')')
 	return sql
 }
+
 func (f *formatter) JSONArrayLiteral(values ...string) []byte {
 	if len(values) == 0 {
 		return []byte("json_array()")
@@ -103,7 +104,7 @@ func (f *formatter) TextToJsonColumn(column string) []byte {
 	return f.bunf.AppendIdent([]byte{}, column)
 }
 
-func (f *formatter) LowerPath(path string) []byte {
+func (f *formatter) JSONLowerPath(path string) []byte {
 	var sql []byte
 	sql = append(sql, "lower("...)
 	sql = append(sql, path...)
