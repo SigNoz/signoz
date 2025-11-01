@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"log/slog"
 	"sort"
 	"strings"
@@ -1082,4 +1083,61 @@ func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames
 	}
 
 	return result, nil
+}
+
+func (m *Manager) GetSearchKeys(ctx context.Context, searchText string, limit int, orgId valuer.UUID) ([]ruletypes.GetRuleAttributeKeys, error) {
+	keys, err := m.ruleStore.GetRuleLabelKeys(ctx, searchText, limit, orgId.String())
+	if err != nil {
+		return nil, errors.NewInternalf(errors.CodeInternal, "failed to get rule label keys: %v", err)
+	}
+
+	result := make([]ruletypes.GetRuleAttributeKeys, len(ruletypes.FixedRuleAttributeKeys))
+	copy(result, ruletypes.FixedRuleAttributeKeys)
+
+	for _, key := range keys {
+		result = append(result, ruletypes.GetRuleAttributeKeys{
+			Key:      key,
+			Type:     ruletypes.RuleAttributeTypeLabel,
+			DataType: telemetrytypes.FieldDataTypeString,
+		})
+	}
+
+	return result, nil
+}
+
+func (m *Manager) GetSearchValues(ctx context.Context, searchText string, limit int, key string, orgId valuer.UUID) ([]string, error) {
+	switch key {
+	case ruletypes.RuleAttributeKeyChannel:
+		return m.ruleStore.GetChannel(ctx, searchText, limit, orgId.String())
+	case ruletypes.RuleAttributeKeyThresholdName:
+		return m.ruleStore.GetThresholdNames(ctx, searchText, limit, orgId.String())
+	case ruletypes.RuleAttributeKeyCreatedBy:
+		return m.ruleStore.GetCreatedBy(ctx, searchText, limit, orgId.String())
+	case ruletypes.RuleAttributeKeyUpdatedBy:
+		return m.ruleStore.GetUpdatedBy(ctx, searchText, limit, orgId.String())
+	case ruletypes.RuleAttributeKeyName:
+		return m.ruleStore.GetNames(ctx, searchText, limit, orgId.String())
+	case ruletypes.RuleAttributeKeyState:
+		allStates := model.GetAllRuleStates()
+		if searchText == "" {
+			if limit > 0 && limit < len(allStates) {
+				return allStates[:limit], nil
+			}
+			return allStates, nil
+		}
+
+		filtered := make([]string, 0)
+		searchLower := strings.ToLower(searchText)
+		for _, state := range allStates {
+			if strings.Contains(strings.ToLower(state), searchLower) {
+				filtered = append(filtered, state)
+				if limit > 0 && len(filtered) >= limit {
+					break
+				}
+			}
+		}
+		return filtered, nil
+	default:
+		return m.ruleStore.GetRuleLabelValues(ctx, searchText, limit, key, orgId.String())
+	}
 }

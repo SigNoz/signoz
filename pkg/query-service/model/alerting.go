@@ -36,6 +36,16 @@ func (s AlertState) String() string {
 	panic(errors.Errorf("unknown alert state: %d", s))
 }
 
+func GetAllRuleStates() []string {
+	return []string{
+		StateInactive.String(),
+		StatePending.String(),
+		StateFiring.String(),
+		StateNoData.String(),
+		StateDisabled.String(),
+	}
+}
+
 func (s AlertState) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String())
 }
