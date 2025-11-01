@@ -107,15 +107,17 @@ func (r *rule) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.Ru
 
 func (r *rule) GetRuleLabelKeys(ctx context.Context, searchText string, limit int, orgId string) ([]string, error) {
 	labelKeys := make([]string, 0)
-	elements, elementsAlias := r.sqlstore.Formatter().JSONKeys("data", "$.labels", "keys")
-	searchText = searchText + "%"
-	elementsAlias = r.sqlstore.Formatter().Lower(elementsAlias)
+	searchText = strings.ToLower(searchText) + "%"
+	fmter := r.sqlstore.Formatter()
+
+	elements, elementsAlias := fmter.JSONKeys("data", "$.labels", "keys")
+	elementsAliasStr := string(fmter.Lower(string(elementsAlias)))
 	query := r.sqlstore.BunDB().
 		NewSelect().
 		Distinct().
-		ColumnExpr("keys.key").
-		TableExpr("rule, ?", bun.SafeQuery(elements)).
-		Where("? LIKE ?", bun.SafeQuery(elementsAlias), strings.ToLower(searchText)).
+		ColumnExpr("?", bun.SafeQuery(elementsAliasStr)).
+		TableExpr("rule, ?", bun.SafeQuery(string(elements))).
+		Where("? LIKE ?", bun.SafeQuery(elementsAliasStr), searchText).
 		Where("org_id = ?", orgId).
 		Limit(limit)
 	err := query.Scan(ctx, &labelKeys)
@@ -128,18 +130,23 @@ func (r *rule) GetRuleLabelKeys(ctx context.Context, searchText string, limit in
 
 func (r *rule) GetThresholdNames(ctx context.Context, searchText string, limit int, orgId string) ([]string, error) {
 	names := make([]string, 0)
-	searchText = searchText + "%"
-	specQuery, specCol := r.sqlstore.Formatter().JSONArrayElements("data",
-		"$.condition.thresholds.spec", "spec")
-	nameQuery := r.sqlstore.Formatter().JSONExtractString(specCol, "$.name")
+	searchText = strings.ToLower(searchText) + "%"
+	fmter := r.sqlstore.Formatter()
+
+	// Query threshold spec names
+	specQuery, specCol := fmter.JSONArrayElements("data", "$.condition.thresholds.spec", "spec")
+	nameQuery := string(fmter.JSONExtractString(string(specCol), "$.name"))
+	lowerNameQuery := string(fmter.Lower(nameQuery))
+
 	query := r.sqlstore.BunDB().
 		NewSelect().
 		Distinct().
 		ColumnExpr("?", bun.SafeQuery(nameQuery)).
-		TableExpr("rule, ?",
-			bun.Safe(specQuery)).
-		Where("? LIKE ?", bun.SafeQuery(r.sqlstore.Formatter().Lower(nameQuery)), searchText).
-		Where("org_id = ?", orgId).Limit(limit)
+		TableExpr("rule, ?", bun.SafeQuery(string(specQuery))).
+		Where("? LIKE ?", bun.SafeQuery(lowerNameQuery), searchText).
+		Where("org_id = ?", orgId).
+		Limit(limit)
+
 	err := query.Scan(ctx, &names)
 	if err != nil {
 		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "threshold names for rule with orgId %s not found", orgId)
@@ -149,41 +156,49 @@ func (r *rule) GetThresholdNames(ctx context.Context, searchText string, limit i
 		return names[:limit], nil
 	}
 
-	extractString := r.sqlstore.Formatter().JSONExtractString("data", "$.labels.severity")
+	severityQuery := string(fmter.JSONExtractString("data", "$.labels.severity"))
+	lowerSeverityQuery := string(fmter.Lower(severityQuery))
 
 	thresholds := make([]string, 0)
 	query = r.sqlstore.BunDB().
 		NewSelect().
 		Distinct().
-		ColumnExpr("?", bun.SafeQuery(extractString)).
+		ColumnExpr("?", bun.SafeQuery(severityQuery)).
 		TableExpr("rule").
 		Where("org_id = ?", orgId).
-		Where("? LIKE ?", bun.SafeQuery(extractString), searchText).
+		Where("? LIKE ?", bun.SafeQuery(lowerSeverityQuery), searchText).
 		Limit(limit - len(names))
+
 	err = query.Scan(ctx, &thresholds)
 	if err != nil {
 		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "threshold names for rule with orgId %s not found", orgId)
 	}
+
 	names = append(names, thresholds...)
 	return names, nil
 }
 
 func (r *rule) GetChannel(ctx context.Context, searchText string, limit int, orgId string) ([]string, error) {
 	names := make([]string, 0)
-	specSQL, specCol := r.sqlstore.Formatter().JSONArrayElements("data", "$.condition.thresholds.spec", "spec")
-	channelSql, channelCol := r.sqlstore.Formatter().JSONArrayOfStrings(specCol, "$.channels", "channels")
+	searchText = strings.ToLower(searchText) + "%"
+	fmter := r.sqlstore.Formatter()
 
-	searchText = searchText + "%"
+	// Query v2 threshold channels
+	specSQL, specCol := fmter.JSONArrayElements("data", "$.condition.thresholds.spec", "spec")
+	channelSQL, channelCol := fmter.JSONArrayOfStrings(string(specCol), "$.channels", "channels")
+	lowerChannelCol := string(fmter.Lower(string(channelCol)))
+
 	query := r.sqlstore.BunDB().
 		NewSelect().
 		Distinct().
-		ColumnExpr("?", bun.SafeQuery(channelCol)).
+		ColumnExpr("?", bun.SafeQuery(string(channelCol))).
 		TableExpr("rule, ?, ?",
-			bun.Safe(specSQL),
-			bun.Safe(channelSql)).
-		Where("? LIKE ?",
-			bun.SafeQuery(r.sqlstore.Formatter().Lower(channelCol)), searchText).
-		Where("org_id = ?", orgId).Limit(limit)
+			bun.SafeQuery(string(specSQL)),
+			bun.SafeQuery(string(channelSQL))).
+		Where("? LIKE ?", bun.SafeQuery(lowerChannelCol), searchText).
+		Where("org_id = ?", orgId).
+		Limit(limit)
+
 	err := query.Scan(ctx, &names)
 	if err != nil {
 		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "channel for rule with orgId %s not found", orgId)
@@ -193,52 +208,63 @@ func (r *rule) GetChannel(ctx context.Context, searchText string, limit int, org
 		return names[:limit], nil
 	}
 
-	//v1 queries
-	channelsSQL, channelsCol := r.sqlstore.Formatter().JSONArrayOfStrings("data", "$.preferredChannels", "channels")
+	// Query v1 preferred channels
+	channelsSQL, channelsCol := fmter.JSONArrayOfStrings("data", "$.preferredChannels", "channels")
+	lowerChannelsCol := fmter.Lower(string(channelsCol))
+
 	channels := make([]string, 0)
 	query = r.sqlstore.BunDB().
 		NewSelect().
 		Distinct().
-		ColumnExpr("?", bun.Safe(channelsCol)).
-		TableExpr("rule, ?", bun.Safe(channelsSQL)).
-		Where("? LIKE ?", bun.Safe(channelsCol), searchText).
-		Where("org_id = ?", orgId).Limit(limit - len(names))
+		ColumnExpr("?", bun.SafeQuery(string(channelsCol))).
+		TableExpr("rule, ?", bun.SafeQuery(string(channelsSQL))).
+		Where("? LIKE ?", bun.SafeQuery(string(lowerChannelsCol)), searchText).
+		Where("org_id = ?", orgId).
+		Limit(limit - len(names))
+
 	err = query.Scan(ctx, &channels)
 	if err != nil {
 		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "channel for rule with orgId %s not found", orgId)
 	}
+
 	names = append(names, channels...)
 	return names, nil
 }
 
 func (r *rule) GetNames(ctx context.Context, searchText string, limit int, orgId string) ([]string, error) {
 	names := make([]string, 0)
-	namePath := r.sqlstore.Formatter().JSONExtractString("data", "$.alert")
-	searchText = searchText + "%"
+	searchText = strings.ToLower(searchText) + "%"
+	fmter := r.sqlstore.Formatter()
+
+	namePath := fmter.JSONExtractString("data", "$.alert")
+	lowerNamePath := fmter.Lower(string(namePath))
+
 	query := r.sqlstore.BunDB().
 		NewSelect().
 		Distinct().
-		ColumnExpr("?", bun.SafeQuery(namePath)).
-		Table("rule").
-		Where("? LIKE ?", bun.SafeQuery(r.sqlstore.Formatter().Lower(namePath)), searchText).
+		ColumnExpr("?", bun.SafeQuery(string(namePath))).
+		TableExpr("?", bun.SafeQuery("rule")).
+		Where("? LIKE ?", bun.SafeQuery(string(lowerNamePath)), searchText).
 		Where("org_id = ?", orgId).
 		Limit(limit)
+
 	err := query.Scan(ctx, &names)
 	if err != nil {
 		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "names for rule with orgId %s not found", orgId)
 	}
+
 	return names, nil
 }
 
 func (r *rule) GetCreatedBy(ctx context.Context, searchText string, limit int, orgId string) ([]string, error) {
 	names := make([]string, 0)
-	searchText = searchText + "%"
+	searchText = strings.ToLower(searchText) + "%"
 	query := r.sqlstore.BunDB().NewSelect().
 		Distinct().
 		Column("created_by").
-		Table("rule").
+		TableExpr("?", bun.SafeQuery("rule")).
 		Where("org_id = ?", orgId).
-		Where("? LIKE ?", bun.SafeQuery("created_by"), searchText).
+		Where("? LIKE ?", bun.SafeQuery(string(r.sqlstore.Formatter().Lower("created_by"))), searchText).
 		Limit(limit)
 	err := query.Scan(ctx, &names)
 	if err != nil {
@@ -249,13 +275,13 @@ func (r *rule) GetCreatedBy(ctx context.Context, searchText string, limit int, o
 
 func (r *rule) GetUpdatedBy(ctx context.Context, searchText string, limit int, orgId string) ([]string, error) {
 	names := make([]string, 0)
-	searchText = searchText + "%"
+	searchText = strings.ToLower(searchText) + "%"
 	query := r.sqlstore.BunDB().NewSelect().
 		Distinct().
 		Column("updated_by").
-		Table("rule").
+		TableExpr("?", bun.SafeQuery("rule")).
 		Where("org_id = ?", orgId).
-		Where("? LIKE ?", bun.SafeQuery("updated_by"), searchText).
+		Where("? LIKE ?", bun.SafeQuery(string(r.sqlstore.Formatter().Lower("updated_by"))), searchText).
 		Limit(limit)
 	err := query.Scan(ctx, &names)
 	if err != nil {
@@ -267,13 +293,13 @@ func (r *rule) GetUpdatedBy(ctx context.Context, searchText string, limit int, o
 func (r *rule) GetRuleLabelValues(ctx context.Context, searchText string, limit int, labelKey string, orgId string) ([]string, error) {
 	names := make([]string, 0)
 	labelPath := r.sqlstore.Formatter().JSONExtractString("data", "$.labels."+labelKey)
-	searchText = searchText + "%"
+	searchText = strings.ToLower(searchText) + "%"
 	query := r.sqlstore.BunDB().NewSelect().
 		Distinct().
-		ColumnExpr("?", bun.SafeQuery(labelPath)).
-		TableExpr("rule").
+		ColumnExpr("?", bun.SafeQuery(string(labelPath))).
+		TableExpr("?", bun.SafeQuery("rule")).
 		Where("org_id = ?", orgId).
-		Where("? LIKE ?", bun.SafeQuery(r.sqlstore.Formatter().Lower(labelPath)), searchText).Limit(limit)
+		Where("? LIKE ?", bun.SafeQuery(string(r.sqlstore.Formatter().Lower(string(labelPath)))), searchText).Limit(limit)
 	err := query.Scan(ctx, &names)
 	if err != nil {
 		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "search values for rule with orgId %s not found", orgId)

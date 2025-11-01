@@ -499,8 +499,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.AlertmanagerAPI.GetAlerts)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/rules/keys", am.ViewAccess(aH.getKeys)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules/values", am.ViewAccess(aH.getValues)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules/keys", am.ViewAccess(aH.getRuleAttributeKeys)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules/values", am.ViewAccess(aH.getRuleAttributeValues)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
@@ -1155,7 +1155,7 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 	aH.Respond(w, res)
 }
 
-func (aH *APIHandler) getKeys(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getRuleAttributeKeys(w http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to get claims from context: %v", err))
@@ -1182,7 +1182,7 @@ func (aH *APIHandler) getKeys(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, keys)
 }
 
-func (aH *APIHandler) getValues(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getRuleAttributeValues(w http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to get claims from context: %v", err))
@@ -1197,6 +1197,7 @@ func (aH *APIHandler) getValues(w http.ResponseWriter, r *http.Request) {
 	attributeKey := r.URL.Query().Get("attributeKey")
 	if attributeKey == "" {
 		render.Error(w, errorsV2.NewInternalf(errorsV2.CodeInvalidInput, "attributeKey is required"))
+		return
 	}
 	searchText := r.URL.Query().Get("searchText")
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
@@ -1205,7 +1206,8 @@ func (aH *APIHandler) getValues(w http.ResponseWriter, r *http.Request) {
 	}
 	keys, err := aH.ruleManager.GetSearchValues(r.Context(), searchText, limit, attributeKey, orgID)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to get rule search values: %v", err))
+		return
 	}
 	render.Success(w, http.StatusOK, keys)
 }
