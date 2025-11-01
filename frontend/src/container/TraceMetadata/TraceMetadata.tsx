@@ -11,7 +11,6 @@ import {
 	DraftingCompass,
 	Timer,
 } from 'lucide-react';
-import { useCallback } from 'react';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
 export interface ITraceMetadataProps {
@@ -37,13 +36,13 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 		notFound,
 	} = props;
 
-	const handlePreviousBtnClick = useCallback(() => {
+	const handlePreviousBtnClick = (): void => {
 		if (window.history.length > 1) {
 			history.goBack();
 		} else {
 			history.push(ROUTES.TRACES_EXPLORER);
 		}
-	}, []);
+	};
 
 	return (
 		<div className="trace-metadata">

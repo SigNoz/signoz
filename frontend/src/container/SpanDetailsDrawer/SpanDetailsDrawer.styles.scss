@@ -135,6 +135,15 @@
 								slashed-zero;
 							font-feature-settings: 'dlig' on, 'salt' on;
 						}
+
+						.span-percentile-value-loader {
+							display: inline-flex;
+							align-items: flex-end;
+							justify-content: flex-end;
+							margin-right: 4px;
+							margin-left: 4px;
+							line-height: 18px;
+						}
 					}
 
 					.span-percentile-timerange {
@@ -186,6 +195,26 @@
 							display: flex;
 							flex-direction: column;
 							gap: 4px;
+
+							.span-percentile-values-table-data-rows-skeleton {
+								display: flex;
+								flex-direction: column;
+								gap: 4px;
+
+								.ant-skeleton-title {
+									width: 100% !important;
+									margin-top: 0px !important;
+								}
+
+								.ant-skeleton-paragraph {
+									margin-top: 8px;
+
+									& > li + li {
+										margin-top: 10px;
+										width: 100% !important;
+									}
+								}
+							}
 						}
 
 						.span-percentile-values-table-data-row {

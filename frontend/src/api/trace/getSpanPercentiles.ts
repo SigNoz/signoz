@@ -1,30 +1,27 @@
 import { ApiBaseInstance } from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import {
 	GetSpanPercentilesProps,
-	GetSpanPercentilesResponsePayloadProps,
+	GetSpanPercentilesResponseDataProps,
 } from 'types/api/trace/getSpanPercentiles';
 
 const getSpanPercentiles = async (
 	props: GetSpanPercentilesProps,
-): Promise<
-	SuccessResponse<GetSpanPercentilesResponsePayloadProps> | ErrorResponse
-> => {
+): Promise<SuccessResponseV2<GetSpanPercentilesResponseDataProps>> => {
 	try {
 		const response = await ApiBaseInstance.post('/span_percentile', {
 			...props,
 		});
 
 		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data,
+			httpStatusCode: response.status,
+			data: response.data.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+		throw error;
 	}
 };
 

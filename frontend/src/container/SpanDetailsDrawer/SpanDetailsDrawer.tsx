@@ -5,6 +5,7 @@ import {
 	Checkbox,
 	Input,
 	Select,
+	Skeleton,
 	Tabs,
 	TabsProps,
 	Tooltip,
@@ -283,6 +284,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		[selectedSpan?.timestamp, selectedTimeRange],
 	);
 
+	const { mutate: updateUserPreferenceMutation } = useMutation(
+		updateUserPreference,
+	);
+
 	// TODO: Span percentile should be eventually moved to context and not fetched on every span change
 	const { data: userSelectedResourceAttributes } = useQuery({
 		queryFn: () =>
@@ -299,8 +304,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 	const {
 		isLoading: isLoadingSpanPercentilesData,
+		isFetching: isFetchingSpanPercentilesData,
 		data,
 		refetch: refetchSpanPercentilesData,
+		isError: isErrorSpanPercentilesData,
 	} = useQuery({
 		queryFn: () =>
 			getSpanPercentiles({
@@ -322,6 +329,16 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			shouldFetchSpanPercentilesData &&
 			!showResourceAttributesSelector &&
 			initialWaitCompleted,
+		onSuccess: (response) => {
+			if (response.httpStatusCode !== 200) {
+				return;
+			}
+
+			updateUserPreferenceMutation({
+				name: USER_PREFERENCES.SPAN_PERCENTILE_RESOURCE_ATTRIBUTES,
+				value: [...Object.keys(selectedResourceAttributes)],
+			});
+		},
 	});
 
 	// Prod Req - Wait for 2 seconds before fetching span percentile data on initial load
@@ -336,7 +353,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	}, [selectedSpan?.spanId]);
 
 	useEffect(() => {
-		if (data?.statusCode !== 200) {
+		if (data?.httpStatusCode !== 200) {
 			setSpanPercentileData(null);
 
 			return;
@@ -344,9 +361,9 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 		if (data) {
 			const percentileData = {
-				percentile: data.payload?.data?.position?.percentile || 0,
-				description: data.payload?.data?.position?.description || '',
-				percentiles: data.payload?.data?.percentiles || {},
+				percentile: data?.data?.position?.percentile || 0,
+				description: data?.data?.position?.description || '',
+				percentiles: data?.data?.percentiles || {},
 			};
 
 			setSpanPercentileData(percentileData);
@@ -434,10 +451,6 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		[selectedResourceAttributes],
 	);
 
-	const { mutate: updateUserPreferenceMutation } = useMutation(
-		updateUserPreference,
-	);
-
 	useEffect(() => {
 		if (
 			shouldFetchSpanPercentilesData &&
@@ -446,15 +459,14 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		) {
 			refetchSpanPercentilesData();
 
-			// we are not handling error scenarios or raise conditions here because we are not showing any error to the user
-			updateUserPreferenceMutation({
-				name: USER_PREFERENCES.SPAN_PERCENTILE_RESOURCE_ATTRIBUTES,
-				value: [...Object.keys(selectedResourceAttributes)],
-			});
 			setShouldFetchSpanPercentilesData(false);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [shouldFetchSpanPercentilesData, showResourceAttributesSelector]);
+	}, [
+		shouldFetchSpanPercentilesData,
+		showResourceAttributesSelector,
+		initialWaitCompleted,
+	]);
 
 	return (
 		<>
@@ -508,7 +520,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 							</div>
 
 							<AnimatePresence initial={false}>
-								{isSpanPercentilesOpen && spanPercentileData && (
+								{isSpanPercentilesOpen && !isErrorSpanPercentilesData && (
 									<motion.div
 										initial={{ height: 0, opacity: 0 }}
 										animate={{ height: 'auto', opacity: 1 }}
@@ -598,11 +610,19 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 											<div className="span-percentile-content">
 												<Typography.Text className="span-percentile-content-title">
 													This span duration is{' '}
-													<span className="span-percentile-value">
-														p{Math.floor(spanPercentileData?.percentile || 0)}
-													</span>{' '}
+													{!isLoadingSpanPercentilesData &&
+													!isFetchingSpanPercentilesData &&
+													spanPercentileData ? (
+														<span className="span-percentile-value">
+															p{Math.floor(spanPercentileData?.percentile || 0)}
+														</span>
+													) : (
+														<span className="span-percentile-value-loader">
+															<Loader2 size={12} className="animate-spin" />
+														</span>
+													)}{' '}
 													out of the distribution for this resource evaluated for{' '}
-													{selectedTimeRange} hour(s) since the span start time.{' '}
+													{selectedTimeRange} hour(s) since the span start time.
 												</Typography.Text>
 
 												<div className="span-percentile-timerange">
@@ -637,40 +657,50 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 													</div>
 
 													<div className="span-percentile-values-table-data-rows">
-														{Object.entries(spanPercentileData?.percentiles || {}).map(
-															([percentile, duration]) => (
-																<div
-																	className="span-percentile-values-table-data-row"
-																	key={percentile}
-																>
+														{isLoadingSpanPercentilesData || isFetchingSpanPercentilesData ? (
+															<Skeleton
+																active
+																paragraph={{ rows: 3 }}
+																className="span-percentile-values-table-data-rows-skeleton"
+															/>
+														) : (
+															<>
+																{Object.entries(spanPercentileData?.percentiles || {}).map(
+																	([percentile, duration]) => (
+																		<div
+																			className="span-percentile-values-table-data-row"
+																			key={percentile}
+																		>
+																			<Typography.Text className="span-percentile-values-table-data-row-key">
+																				{percentile}
+																			</Typography.Text>
+
+																			<div className="dashed-line" />
+
+																			<Typography.Text className="span-percentile-values-table-data-row-value">
+																				{getYAxisFormattedValue(`${duration / 1000000}`, 'ms')}
+																			</Typography.Text>
+																		</div>
+																	),
+																)}
+
+																<div className="span-percentile-values-table-data-row current-span-percentile-row">
 																	<Typography.Text className="span-percentile-values-table-data-row-key">
-																		{percentile}
+																		p{Math.floor(spanPercentileData?.percentile || 0)}
 																	</Typography.Text>
 
 																	<div className="dashed-line" />
 
 																	<Typography.Text className="span-percentile-values-table-data-row-value">
-																		{getYAxisFormattedValue(`${duration / 1000000}`, 'ms')}
+																		(this span){' '}
+																		{getYAxisFormattedValue(
+																			`${selectedSpan.durationNano / 1000000}`,
+																			'ms',
+																		)}
 																	</Typography.Text>
 																</div>
-															),
+															</>
 														)}
-
-														<div className="span-percentile-values-table-data-row current-span-percentile-row">
-															<Typography.Text className="span-percentile-values-table-data-row-key">
-																p{Math.floor(spanPercentileData?.percentile || 0)}
-															</Typography.Text>
-
-															<div className="dashed-line" />
-
-															<Typography.Text className="span-percentile-values-table-data-row-value">
-																(this span){' '}
-																{getYAxisFormattedValue(
-																	`${selectedSpan.durationNano / 1000000}`,
-																	'ms',
-																)}
-															</Typography.Text>
-														</div>
 													</div>
 												</div>
 											</div>
