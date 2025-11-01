@@ -280,7 +280,7 @@ func TestFormatterJSONArrayAgg(t *testing.T) {
 	}
 }
 
-func TestFormatter_JSONArrayLiteral(t *testing.T) {
+func TestFormatterJSONArrayLiteral(t *testing.T) {
 	tests := []struct {
 		name     string
 		values   []string
