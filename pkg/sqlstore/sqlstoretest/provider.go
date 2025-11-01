@@ -29,11 +29,12 @@ func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
 
 	var bunDB *bun.DB
 
-	if config.Provider == "sqlite" {
+	switch config.Provider {
+	case "sqlite":
 		bunDB = bun.NewDB(db, sqlitedialect.New())
-	} else if config.Provider == "postgres" {
+	case "postgres":
 		bunDB = bun.NewDB(db, pgdialect.New())
-	} else {
+	default:
 		panic(errors.NewInvalidInputf(errors.CodeInvalidInput, "provider %q is not supported", config.Provider))
 	}
 

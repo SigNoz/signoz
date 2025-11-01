@@ -4,8 +4,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// Temporality is the temporality of the metric specified in OTLP data model
-// Read more here https://opentelemetry.io/docs/specs/otel/metrics/data-model/#temporality
+// Temporality is the temporality of the metric specified in OTLP data model.
+// Read more here https://opentelemetry.io/docs/specs/otel/metrics/data-model/#temporality.
 type Temporality struct {
 	valuer.String
 }
@@ -17,8 +17,8 @@ var (
 	Unknown     = Temporality{valuer.NewString("")}
 )
 
-// Type is the type of the metric in OTLP data model
-// Read more here https://opentelemetry.io/docs/specs/otel/metrics/data-model/#metric-points
+// Type is the type of the metric in OTLP data model.
+// Read more here https://opentelemetry.io/docs/specs/otel/metrics/data-model/#metric-points.
 type Type struct {
 	valuer.String
 }
@@ -93,7 +93,7 @@ func (s SpaceAggregation) Percentile() float64 {
 }
 
 // MetricTableHints is a struct that contains tables to use instead of the derived tables
-// from the start and end time, for internal use only when we need to override the derived tables
+// from the start and end time, for internal use only when we need to override the derived tables.
 type MetricTableHints struct {
 	TimeSeriesTableName string
 	SamplesTableName    string

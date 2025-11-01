@@ -50,11 +50,11 @@ type existingPersonalAccessToken33 struct {
 	UpdatedByUserID string `json:"updatedByUserId" bun:"updated_by_user_id,type:text,notnull,default:''"`
 }
 
-// we are removing the connection with org,
+// We are removing the connection with org,
 // the reason we are doing this is the api keys should just have
 // one foreign key, we don't want a dangling state where, an API key
 // belongs to one org and some user which doesn't belong to that org.
-// so going ahead with directly attaching it to user will help dangling states.
+// So going ahead with directly attaching it to user will help dangling states.
 type newFactorAPIKey33 struct {
 	bun.BaseModel `bun:"table:factor_api_key"`
 

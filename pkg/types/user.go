@@ -98,7 +98,7 @@ func (request *PostableRegisterOrgAndAdmin) UnmarshalJSON(data []byte) error {
 }
 
 type UserStore interface {
-	// invite
+	// Invite.
 	CreateBulkInvite(ctx context.Context, invites []*Invite) error
 	ListInvite(ctx context.Context, orgID string) ([]*Invite, error)
 	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
@@ -145,7 +145,7 @@ type UserStore interface {
 	GetResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) (*ResetPasswordToken, error)
 	UpdatePassword(ctx context.Context, password *FactorPassword) error
 
-	// API KEY
+	// API KEY.
 	CreateAPIKey(ctx context.Context, apiKey *StorableAPIKey) error
 	UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *StorableAPIKey, updaterID valuer.UUID) error
 	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*StorableAPIKeyUser, error)
@@ -155,6 +155,6 @@ type UserStore interface {
 
 	CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
 
-	// Transaction
+	// Transaction.
 	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error
 }

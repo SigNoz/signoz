@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
@@ -85,7 +84,7 @@ func TestConditionBuilder(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextResource,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
-			op:           qbtypes.FilterOperatorContains,
+			op:           querybuildertypesv5.FilterOperatorContains,
 			value:        521509198310,
 			expected:     "LOWER(simpleJSONExtractString(labels, 'company.id')) LIKE LOWER(?) AND labels LIKE ? AND LOWER(labels) LIKE LOWER(?)",
 			expectedArgs: []any{"%521509198310%", "%company.id%", `%company.id%521509198310%`},

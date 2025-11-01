@@ -15,7 +15,7 @@ var (
 	TypeLicenseUnavailable     = typ{"license-unavailable"}
 )
 
-// Defines custom error types
+// Defines custom error types.
 type typ struct{ s string }
 
 func (t typ) String() string {

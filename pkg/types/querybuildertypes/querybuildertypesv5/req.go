@@ -13,12 +13,12 @@ import (
 
 type QueryEnvelope struct {
 	// Type is the type of the query.
-	Type QueryType `json:"type"` // "builder_query" | "builder_formula" | "builder_sub_query" | "builder_join" | "promql" | "clickhouse_sql"
+	Type QueryType `json:"type"` // "builder_query" | "builder_formula" | "builder_sub_query" | "builder_join" | "promql" | "clickhouse_sql".
 	// Spec is the deferred decoding of the query if any.
 	Spec any `json:"spec"`
 }
 
-// implement custom json unmarshaler for the QueryEnvelope
+// Implement custom json unmarshaler for the QueryEnvelope.
 func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 	var shadow struct {
 		Type QueryType       `json:"type"`
@@ -126,7 +126,7 @@ type CompositeQuery struct {
 	Queries []QueryEnvelope `json:"queries"`
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling to provide better error messages
+// UnmarshalJSON implements custom JSON unmarshaling to provide better error messages.
 func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 	type Alias CompositeQuery
 
@@ -337,7 +337,7 @@ func (r *QueryRangeRequest) SkipFillGaps(name string) bool {
 	return false
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields.
 func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 	// Define a type alias to avoid infinite recursion
 	type Alias QueryRangeRequest

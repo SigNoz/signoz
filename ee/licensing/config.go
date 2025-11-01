@@ -13,7 +13,7 @@ var (
 	once   sync.Once
 )
 
-// initializes the licensing configuration
+// initializes the licensing configuration.
 func Config(pollInterval time.Duration, failureThreshold int) licensing.Config {
 	once.Do(func() {
 		config = licensing.Config{PollInterval: pollInterval, FailureThreshold: failureThreshold}

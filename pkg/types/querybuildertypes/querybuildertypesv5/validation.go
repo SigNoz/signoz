@@ -10,7 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// getQueryIdentifier returns a friendly identifier for a query based on its type and name/content
+// getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
 func getQueryIdentifier(envelope QueryEnvelope, index int) string {
 	switch envelope.Type {
 	case QueryTypeBuilder, QueryTypeSubQuery:
@@ -61,11 +61,11 @@ func getQueryIdentifier(envelope QueryEnvelope, index int) string {
 }
 
 const (
-	// Maximum limit for query results
+	// Maximum limit for query results.
 	MaxQueryLimit = 10000
 )
 
-// ValidateFunctionName checks if the function name is valid
+// ValidateFunctionName checks if the function name is valid.
 func ValidateFunctionName(name FunctionName) error {
 	validFunctions := []FunctionName{
 		FunctionNameCutOffMin,
@@ -105,7 +105,7 @@ func ValidateFunctionName(name FunctionName) error {
 	).WithAdditional(fmt.Sprintf("valid functions are: %s", strings.Join(validFunctionNames, ", ")))
 }
 
-// Validate performs preliminary validation on QueryBuilderQuery
+// Validate performs preliminary validation on QueryBuilderQuery.
 func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 	// Validate signal
 	if err := q.validateSignal(); err != nil {
@@ -366,7 +366,7 @@ func (q *QueryBuilderQuery[T]) validateOrderBy() error {
 // For aggregation queries, order by can only reference:
 // 1. Group by keys
 // 2. Aggregation expressions or aliases
-// 3. Aggregation index (0, 1, 2, etc.)
+// 3. Aggregation index (0, 1, 2, etc.).
 func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 	// First validate basic order by constraints
 	if err := q.validateOrderBy(); err != nil {
@@ -376,7 +376,7 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 	validOrderKeys := make(map[string]bool)
 
 	for _, gb := range q.GroupBy {
-		validOrderKeys[gb.TelemetryFieldKey.Name] = true
+		validOrderKeys[gb.Name] = true
 	}
 
 	for i, agg := range q.Aggregations {
@@ -452,7 +452,7 @@ func (q *QueryBuilderQuery[T]) validateHaving() error {
 	return nil
 }
 
-// ValidateQueryRangeRequest validates the entire query range request
+// ValidateQueryRangeRequest validates the entire query range request.
 func (r *QueryRangeRequest) Validate() error {
 	// Validate time range
 	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
@@ -489,7 +489,7 @@ func (r *QueryRangeRequest) Validate() error {
 	return nil
 }
 
-// validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled
+// validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled.
 func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
 	allDisabled := true
 	for _, envelope := range r.CompositeQuery.Queries {
@@ -723,7 +723,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 	return nil
 }
 
-// Validate performs validation on CompositeQuery
+// Validate performs validation on CompositeQuery.
 func (c *CompositeQuery) Validate(requestType RequestType) error {
 	if len(c.Queries) == 0 {
 		return errors.NewInvalidInputf(
@@ -839,7 +839,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, requestType RequestType) erro
 	}
 }
 
-// validateMetricAggregation validates metric-specific aggregation parameters
+// validateMetricAggregation validates metric-specific aggregation parameters.
 func validateMetricAggregation(agg MetricAggregation) error {
 	// we can't decide anything here without known temporality
 	if agg.Temporality == metrictypes.Unknown {

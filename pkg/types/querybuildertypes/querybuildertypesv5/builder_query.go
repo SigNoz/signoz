@@ -5,68 +5,68 @@ import (
 )
 
 type QueryBuilderQuery[T any] struct {
-	// name of the query, mainly used when query is used in formula
+	// Name of the query, mainly used when query is used in formula.
 	Name string `json:"name"`
 
-	// stepInterval of the query
+	// StepInterval of the query.
 	StepInterval Step `json:"stepInterval,omitempty"`
 
-	// signal to query
+	// Signal to query.
 	Signal telemetrytypes.Signal `json:"signal,omitempty"`
 
-	// source for query
+	// Source for query.
 	Source telemetrytypes.Source `json:"source,omitempty"`
 
-	// we want to support multiple aggregations
-	// currently supported: []Aggregation, []MetricAggregation
+	// We want to support multiple aggregations
+	// currently supported: []Aggregation, []MetricAggregation.
 	Aggregations []T `json:"aggregations,omitempty"`
 
-	// disabled if true, the query will not be executed
+	// Disabled if true, the query will not be executed.
 	Disabled bool `json:"disabled,omitempty"`
 
-	// search query is simple string
+	// Search query is simple string.
 	Filter *Filter `json:"filter,omitempty"`
 
-	// group by keys to group by
+	// Group by keys to group by.
 	GroupBy []GroupByKey `json:"groupBy,omitempty"`
 
-	// order by keys and directions
+	// Order by keys and directions.
 	Order []OrderBy `json:"order,omitempty"`
 
-	// select columns to select
+	// Select columns to select.
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
 
-	// limit the maximum number of rows to return
+	// Limit the maximum number of rows to return.
 	Limit int `json:"limit,omitempty"`
 
-	// limitBy fields to limit by
+	// LimitBy fields to limit by.
 	LimitBy *LimitBy `json:"limitBy,omitempty"`
 
-	// offset the number of rows to skip
+	// Offset the number of rows to skip.
 	// TODO: remove this once we have cursor-based pagination everywhere?
 	Offset int `json:"offset,omitempty"`
 
-	// cursor to paginate the query
+	// Cursor to paginate the query.
 	Cursor string `json:"cursor,omitempty"`
 
-	// having clause to apply to the query
+	// Having clause to apply to the query.
 	Having *Having `json:"having,omitempty"`
 
-	// secondary aggregation to apply to the query
-	// on top of the primary aggregation
+	// Secondary aggregation to apply to the query
+	// on top of the primary aggregation.
 	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitempty"`
 
-	// functions to apply to the query
+	// Functions to apply to the query.
 	Functions []Function `json:"functions,omitempty"`
 
 	Legend string `json:"legend,omitempty"`
 
 	// ShiftBy is extracted from timeShift function for internal use
-	// This field is not serialized to JSON
+	// This field is not serialized to JSON.
 	ShiftBy int64 `json:"-"`
 }
 
-// Copy creates a deep copy of the QueryBuilderQuery
+// Copy creates a deep copy of the QueryBuilderQuery.
 func (q QueryBuilderQuery[T]) Copy() QueryBuilderQuery[T] {
 	// start with a shallow copy
 	c := q
@@ -124,7 +124,7 @@ func (q QueryBuilderQuery[T]) Copy() QueryBuilderQuery[T] {
 	return c
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields.
 func (q *QueryBuilderQuery[T]) UnmarshalJSON(data []byte) error {
 	// Define a type alias to avoid infinite recursion
 	type Alias QueryBuilderQuery[T]

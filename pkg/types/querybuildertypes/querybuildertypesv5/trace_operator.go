@@ -30,7 +30,7 @@ var (
 )
 
 const (
-	// MaxTraceOperators defines the maximum number of operators allowed in a trace expression
+	// MaxTraceOperators defines the maximum number of operators allowed in a trace expression.
 	MaxTraceOperators = 10
 )
 
@@ -42,17 +42,17 @@ type QueryBuilderTraceOperator struct {
 
 	Filter *Filter `json:"filter,omitempty"`
 
-	// User-configurable span return strategy - which query's spans to return
+	// User-configurable span return strategy - which query's spans to return.
 	ReturnSpansFrom string `json:"returnSpansFrom,omitempty"`
 
-	// Trace-specific ordering (only span_count and trace_duration allowed)
+	// Trace-specific ordering (only span_count and trace_duration allowed).
 	Order []OrderBy `json:"order,omitempty"`
 
 	Aggregations []TraceAggregation `json:"aggregations,omitempty"`
 	StepInterval Step               `json:"stepInterval,omitempty"`
 	GroupBy      []GroupByKey       `json:"groupBy,omitempty"`
 
-	// having clause to apply to the aggregated query results
+	// having clause to apply to the aggregated query results.
 	Having *Having `json:"having,omitempty"`
 
 	Limit  int    `json:"limit,omitempty"`
@@ -61,31 +61,31 @@ type QueryBuilderTraceOperator struct {
 
 	Legend string `json:"legend,omitempty"`
 
-	// Other post-processing options
+	// Other post-processing options.
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
 	Functions    []Function                         `json:"functions,omitempty"`
 
-	// Internal parsed representation (not exposed in JSON)
+	// Internal parsed representation (not exposed in JSON).
 	ParsedExpression *TraceOperand `json:"-"`
 }
 
-// TraceOperand represents the internal parsed tree structure
+// TraceOperand represents the internal parsed tree structure.
 type TraceOperand struct {
-	// For leaf nodes - reference to a query
+	// For leaf nodes - reference to a query.
 	QueryRef *TraceOperatorQueryRef `json:"-"`
 
-	// For nested operations
+	// For nested operations.
 	Operator *TraceOperatorType `json:"-"`
 	Left     *TraceOperand      `json:"-"`
 	Right    *TraceOperand      `json:"-"`
 }
 
-// TraceOperatorQueryRef represents a reference to another query
+// TraceOperatorQueryRef represents a reference to another query.
 type TraceOperatorQueryRef struct {
 	Name string `json:"name"`
 }
 
-// ParseExpression parses the expression string into a tree structure
+// ParseExpression parses the expression string into a tree structure.
 func (q *QueryBuilderTraceOperator) ParseExpression() error {
 	if q.Expression == "" {
 		return errors.WrapInvalidInputf(
@@ -105,7 +105,7 @@ func (q *QueryBuilderTraceOperator) ParseExpression() error {
 		)
 	}
 
-	// Validate operator count immediately during parsing
+	// Validate operator count immediately during parsing.
 	if operatorCount > MaxTraceOperators {
 		return errors.WrapInvalidInputf(
 			nil,
@@ -120,7 +120,7 @@ func (q *QueryBuilderTraceOperator) ParseExpression() error {
 	return nil
 }
 
-// ValidateTraceOperator validates that all referenced queries exist and are trace queries
+// ValidateTraceOperator validates that all referenced queries exist and are trace queries.
 func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelope) error {
 	// Parse the expression - this now includes operator count validation
 	if err := q.ParseExpression(); err != nil {
@@ -222,7 +222,7 @@ func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelop
 	return nil
 }
 
-// ValidateOrderBy validates the orderBy field
+// ValidateOrderBy validates the orderBy field.
 func (q *QueryBuilderTraceOperator) ValidateOrderBy() error {
 	if len(q.Order) == 0 {
 		return nil
@@ -254,7 +254,7 @@ func (q *QueryBuilderTraceOperator) ValidateOrderBy() error {
 	return nil
 }
 
-// ValidatePagination validates pagination parameters (AIP-158 compliance)
+// ValidatePagination validates pagination parameters (AIP-158 compliance).
 func (q *QueryBuilderTraceOperator) ValidatePagination() error {
 	if q.Limit < 0 {
 		return errors.WrapInvalidInputf(
@@ -287,7 +287,7 @@ func (q *QueryBuilderTraceOperator) ValidatePagination() error {
 	return nil
 }
 
-// CollectReferencedQueries collects all query names referenced in the expression tree
+// CollectReferencedQueries collects all query names referenced in the expression tree.
 func (q *QueryBuilderTraceOperator) CollectReferencedQueries(operand *TraceOperand) []string {
 	if operand == nil {
 		return nil
@@ -316,7 +316,7 @@ func (q *QueryBuilderTraceOperator) CollectReferencedQueries(operand *TraceOpera
 	return unique
 }
 
-// Copy creates a deep copy of QueryBuilderTraceOperator
+// Copy creates a deep copy of QueryBuilderTraceOperator.
 func (q QueryBuilderTraceOperator) Copy() QueryBuilderTraceOperator {
 	// Start with a shallow copy
 	c := q
@@ -366,7 +366,7 @@ func (q QueryBuilderTraceOperator) Copy() QueryBuilderTraceOperator {
 	return c
 }
 
-// ValidateUniqueTraceOperator ensures only one trace operator exists in queries
+// ValidateUniqueTraceOperator ensures only one trace operator exists in queries.
 func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 	traceOperatorCount := 0
 	var traceOperatorNames []string
@@ -394,7 +394,7 @@ func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 	return nil
 }
 
-// Handles precedence: NOT (highest) > || > && > => (lowest)
+// Handles precedence: NOT (highest) > || > && > => (lowest).
 func parseTraceExpression(expr string) (*TraceOperand, int, error) {
 	expr = strings.TrimSpace(expr)
 
@@ -476,13 +476,14 @@ func parseTraceExpression(expr string) (*TraceOperand, int, error) {
 	}, 0, nil
 }
 
-// isBalancedParentheses checks if parentheses are balanced in the expression
+// isBalancedParentheses checks if parentheses are balanced in the expression.
 func isBalancedParentheses(expr string) bool {
 	depth := 0
 	for _, char := range expr {
-		if char == '(' {
+		switch char {
+		case '(':
 			depth++
-		} else if char == ')' {
+		case ')':
 			depth--
 			if depth < 0 {
 				return false
@@ -492,7 +493,7 @@ func isBalancedParentheses(expr string) bool {
 	return depth == 0
 }
 
-// findOperatorPosition finds the position of an operator, respecting parentheses
+// findOperatorPosition finds the position of an operator, respecting parentheses.
 func findOperatorPosition(expr, op string) int {
 	depth := 0
 	opLen := len(op)
@@ -502,9 +503,10 @@ func findOperatorPosition(expr, op string) int {
 		char := expr[i]
 
 		// Update depth based on parentheses (scanning right to left)
-		if char == ')' {
+		switch char {
+		case ')':
 			depth++
-		} else if char == '(' {
+		case '(':
 			depth--
 		}
 

@@ -7,7 +7,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-// ConvertV5TimeSeriesDataToV4Result converts v5 TimeSeriesData to v4 Result
+// ConvertV5TimeSeriesDataToV4Result converts v5 TimeSeriesData to v4 Result.
 func ConvertV5TimeSeriesDataToV4Result(v5Data *qbtypes.TimeSeriesData) *v3.Result {
 	if v5Data == nil {
 		return nil
@@ -85,7 +85,7 @@ func ConvertV5TimeSeriesDataToV4Result(v5Data *qbtypes.TimeSeriesData) *v3.Resul
 	return result
 }
 
-// ConvertV5TimeSeriesDataSliceToV4Results converts a slice of v5 TimeSeriesData to v4 QueryRangeResponse
+// ConvertV5TimeSeriesDataSliceToV4Results converts a slice of v5 TimeSeriesData to v4 QueryRangeResponse.
 func ConvertV5TimeSeriesDataSliceToV4Results(v5DataSlice []*qbtypes.TimeSeriesData) *v3.QueryRangeResponse {
 	response := &v3.QueryRangeResponse{
 		ResultType: "matrix", // Time series data is typically "matrix" type
