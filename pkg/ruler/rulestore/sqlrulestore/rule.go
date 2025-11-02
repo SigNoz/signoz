@@ -111,7 +111,7 @@ func (r *rule) GetRuleLabelKeys(ctx context.Context, searchText string, limit in
 	fmter := r.sqlstore.Formatter()
 
 	elements, elementsAlias := fmter.JSONKeys("data", "$.labels", "keys")
-	elementsAliasStr := string(fmter.Lower(string(elementsAlias)))
+	elementsAliasStr := string(fmter.LowerExpression(string(elementsAlias)))
 	query := r.sqlstore.BunDB().
 		NewSelect().
 		Distinct().
@@ -136,7 +136,7 @@ func (r *rule) GetThresholdNames(ctx context.Context, searchText string, limit i
 	// Query threshold spec names
 	specQuery, specCol := fmter.JSONArrayElements("data", "$.condition.thresholds.spec", "spec")
 	nameQuery := string(fmter.JSONExtractString(string(specCol), "$.name"))
-	lowerNameQuery := string(fmter.Lower(nameQuery))
+	lowerNameQuery := string(fmter.LowerExpression(nameQuery))
 
 	query := r.sqlstore.BunDB().
 		NewSelect().
@@ -157,7 +157,7 @@ func (r *rule) GetThresholdNames(ctx context.Context, searchText string, limit i
 	}
 
 	severityQuery := string(fmter.JSONExtractString("data", "$.labels.severity"))
-	lowerSeverityQuery := string(fmter.Lower(severityQuery))
+	lowerSeverityQuery := string(fmter.LowerExpression(severityQuery))
 
 	thresholds := make([]string, 0)
 	query = r.sqlstore.BunDB().
@@ -186,7 +186,7 @@ func (r *rule) GetChannel(ctx context.Context, searchText string, limit int, org
 	// Query v2 threshold channels
 	specSQL, specCol := fmter.JSONArrayElements("data", "$.condition.thresholds.spec", "spec")
 	channelSQL, channelCol := fmter.JSONArrayOfStrings(string(specCol), "$.channels", "channels")
-	lowerChannelCol := string(fmter.Lower(string(channelCol)))
+	lowerChannelCol := string(fmter.LowerExpression(string(channelCol)))
 
 	query := r.sqlstore.BunDB().
 		NewSelect().
@@ -210,7 +210,7 @@ func (r *rule) GetChannel(ctx context.Context, searchText string, limit int, org
 
 	// Query v1 preferred channels
 	channelsSQL, channelsCol := fmter.JSONArrayOfStrings("data", "$.preferredChannels", "channels")
-	lowerChannelsCol := fmter.Lower(string(channelsCol))
+	lowerChannelsCol := fmter.LowerExpression(string(channelsCol))
 
 	channels := make([]string, 0)
 	query = r.sqlstore.BunDB().
@@ -237,7 +237,7 @@ func (r *rule) GetNames(ctx context.Context, searchText string, limit int, orgId
 	fmter := r.sqlstore.Formatter()
 
 	namePath := fmter.JSONExtractString("data", "$.alert")
-	lowerNamePath := fmter.Lower(string(namePath))
+	lowerNamePath := fmter.LowerExpression(string(namePath))
 
 	query := r.sqlstore.BunDB().
 		NewSelect().
@@ -264,7 +264,7 @@ func (r *rule) GetCreatedBy(ctx context.Context, searchText string, limit int, o
 		Column("created_by").
 		TableExpr("?", bun.SafeQuery("rule")).
 		Where("org_id = ?", orgId).
-		Where("? LIKE ?", bun.SafeQuery(string(r.sqlstore.Formatter().Lower("created_by"))), searchText).
+		Where("? LIKE ?", bun.SafeQuery(string(r.sqlstore.Formatter().LowerExpression("created_by"))), searchText).
 		Limit(limit)
 	err := query.Scan(ctx, &names)
 	if err != nil {
@@ -281,7 +281,7 @@ func (r *rule) GetUpdatedBy(ctx context.Context, searchText string, limit int, o
 		Column("updated_by").
 		TableExpr("?", bun.SafeQuery("rule")).
 		Where("org_id = ?", orgId).
-		Where("? LIKE ?", bun.SafeQuery(string(r.sqlstore.Formatter().Lower("updated_by"))), searchText).
+		Where("? LIKE ?", bun.SafeQuery(string(r.sqlstore.Formatter().LowerExpression("updated_by"))), searchText).
 		Limit(limit)
 	err := query.Scan(ctx, &names)
 	if err != nil {
@@ -299,7 +299,7 @@ func (r *rule) GetRuleLabelValues(ctx context.Context, searchText string, limit 
 		ColumnExpr("?", bun.SafeQuery(string(labelPath))).
 		TableExpr("?", bun.SafeQuery("rule")).
 		Where("org_id = ?", orgId).
-		Where("? LIKE ?", bun.SafeQuery(string(r.sqlstore.Formatter().Lower(string(labelPath)))), searchText).Limit(limit)
+		Where("? LIKE ?", bun.SafeQuery(string(r.sqlstore.Formatter().LowerExpression(string(labelPath)))), searchText).Limit(limit)
 	err := query.Scan(ctx, &names)
 	if err != nil {
 		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "search values for rule with orgId %s not found", orgId)
