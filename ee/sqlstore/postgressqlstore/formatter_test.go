@@ -1,13 +1,13 @@
 package postgressqlstore
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
-
+	
+	"github.com/stretchr/testify/assert"
 	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-func TestFormatter_JSONExtractString(t *testing.T) {
+func TestJSONExtractString(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -55,7 +55,7 @@ func TestFormatter_JSONExtractString(t *testing.T) {
 	}
 }
 
-func TestFormatter_JSONType(t *testing.T) {
+func TestJSONType(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -91,8 +91,7 @@ func TestFormatter_JSONType(t *testing.T) {
 	}
 }
 
-func TestFormatter_JSONIsArray(t *testing.T) {
-
+func TestJSONIsArray(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -128,8 +127,7 @@ func TestFormatter_JSONIsArray(t *testing.T) {
 	}
 }
 
-func TestFormatter_JSONArrayElements(t *testing.T) {
-
+func TestJSONArrayElements(t *testing.T) {
 	tests := []struct {
 		name     string
 		column   string
@@ -176,8 +174,87 @@ func TestFormatter_JSONArrayElements(t *testing.T) {
 	}
 }
 
-func TestFormatter_JSONArrayAgg(t *testing.T) {
+func TestJSONArrayOfStrings(t *testing.T) {
+	tests := []struct {
+		name     string
+		column   string
+		path     string
+		alias    string
+		expected string
+	}{
+		{
+			name:     "root path with dollar sign",
+			column:   "data",
+			path:     "$",
+			alias:    "str",
+			expected: `jsonb_array_elements_text("data") AS "str"`,
+		},
+		{
+			name:     "root path empty",
+			column:   "data",
+			path:     "",
+			alias:    "str",
+			expected: `jsonb_array_elements_text("data") AS "str"`,
+		},
+		{
+			name:     "nested path",
+			column:   "metadata",
+			path:     "$.strings",
+			alias:    "s",
+			expected: `jsonb_array_elements_text("metadata"->'strings') AS "s"`,
+		},
+	}
 
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newFormatter(pgdialect.New())
+			got, _ := f.JSONArrayOfStrings(tt.column, tt.path, tt.alias)
+			assert.Equal(t, tt.expected, string(got))
+		})
+	}
+}
+
+func TestJSONKeys(t *testing.T) {
+	tests := []struct {
+		name     string
+		column   string
+		path     string
+		alias    string
+		expected string
+	}{
+		{
+			name:     "root path with dollar sign",
+			column:   "data",
+			path:     "$",
+			alias:    "k",
+			expected: `jsonb_each("data") AS "k"`,
+		},
+		{
+			name:     "root path empty",
+			column:   "data",
+			path:     "",
+			alias:    "k",
+			expected: `jsonb_each("data") AS "k"`,
+		},
+		{
+			name:     "nested path",
+			column:   "metadata",
+			path:     "$.object",
+			alias:    "key",
+			expected: `jsonb_each("metadata"->'object') AS "key"`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newFormatter(pgdialect.New())
+			got, _ := f.JSONKeys(tt.column, tt.path, tt.alias)
+			assert.Equal(t, tt.expected, string(got))
+		})
+	}
+}
+
+func TestJSONArrayAgg(t *testing.T) {
 	tests := []struct {
 		name       string
 		expression string
@@ -209,8 +286,7 @@ func TestFormatter_JSONArrayAgg(t *testing.T) {
 	}
 }
 
-func TestFormatter_JSONArrayLiteral(t *testing.T) {
-
+func TestJSONArrayLiteral(t *testing.T) {
 	tests := []struct {
 		name     string
 		values   []string
@@ -247,7 +323,7 @@ func TestFormatter_JSONArrayLiteral(t *testing.T) {
 	}
 }
 
-func TestFormatter_convertJSONPathToPostgresWithMode(t *testing.T) {
+func TestConvertJSONPathToPostgresWithMode(t *testing.T) {
 	tests := []struct {
 		name     string
 		jsonPath string
@@ -302,6 +378,110 @@ func TestFormatter_convertJSONPathToPostgresWithMode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f := newFormatter(pgdialect.New()).(*formatter)
 			got := f.convertJSONPathToPostgresWithMode(tt.jsonPath, tt.asText)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestTextToJsonColumn(t *testing.T) {
+	tests := []struct {
+		name     string
+		column   string
+		expected string
+	}{
+		{
+			name:     "simple column name",
+			column:   "data",
+			expected: `"data"::jsonb`,
+		},
+		{
+			name:     "column with underscore",
+			column:   "user_data",
+			expected: `"user_data"::jsonb`,
+		},
+		{
+			name:     "column with special characters",
+			column:   "json-col",
+			expected: `"json-col"::jsonb`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newFormatter(pgdialect.New())
+			got := string(f.TextToJsonColumn(tt.column))
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestLowerExpression(t *testing.T) {
+	tests := []struct {
+		name     string
+		expr     string
+		expected string
+	}{
+		{
+			name:     "simple column name",
+			expr:     "name",
+			expected: "lower(name)",
+		},
+		{
+			name:     "quoted column identifier",
+			expr:     `"column_name"`,
+			expected: `lower("column_name")`,
+		},
+		{
+			name:     "jsonb text extraction",
+			expr:     "data->>'field'",
+			expected: "lower(data->>'field')",
+		},
+		{
+			name:     "nested jsonb extraction",
+			expr:     "metadata->'user'->>'name'",
+			expected: "lower(metadata->'user'->>'name')",
+		},
+		{
+			name:     "jsonb_typeof expression",
+			expr:     "jsonb_typeof(data->'field')",
+			expected: "lower(jsonb_typeof(data->'field'))",
+		},
+		{
+			name:     "string concatenation",
+			expr:     "first_name || ' ' || last_name",
+			expected: "lower(first_name || ' ' || last_name)",
+		},
+		{
+			name:     "CAST expression",
+			expr:     "CAST(value AS TEXT)",
+			expected: "lower(CAST(value AS TEXT))",
+		},
+		{
+			name:     "COALESCE expression",
+			expr:     "COALESCE(name, 'default')",
+			expected: "lower(COALESCE(name, 'default'))",
+		},
+		{
+			name:     "subquery column",
+			expr:     "users.email",
+			expected: "lower(users.email)",
+		},
+		{
+			name:     "quoted identifier with special chars",
+			expr:     `"user-name"`,
+			expected: `lower("user-name")`,
+		},
+		{
+			name:     "jsonb to text cast",
+			expr:     "data::text",
+			expected: "lower(data::text)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newFormatter(pgdialect.New())
+			got := string(f.LowerExpression(tt.expr))
 			assert.Equal(t, tt.expected, got)
 		})
 	}
