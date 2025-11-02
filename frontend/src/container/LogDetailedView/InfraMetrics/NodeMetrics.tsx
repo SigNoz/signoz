@@ -29,15 +29,15 @@ function NodeMetrics({
 	nodeName,
 	clusterName,
 	hostName,
-	logLineTimestamp,
+	timestamp,
 }: {
 	nodeName: string;
 	clusterName: string;
 	hostName: string;
-	logLineTimestamp: string;
+	timestamp: string;
 }): JSX.Element {
 	const { start, end, verticalLineTimestamp } = useMemo(() => {
-		const logTimestamp = dayjs(logLineTimestamp);
+		const logTimestamp = dayjs(timestamp);
 		const now = dayjs();
 		const startTime = logTimestamp.subtract(3, 'hour');
 
@@ -50,7 +50,7 @@ function NodeMetrics({
 			end: endTime.unix(),
 			verticalLineTimestamp: logTimestamp.unix(),
 		};
-	}, [logLineTimestamp]);
+	}, [timestamp]);
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -83,6 +83,13 @@ function NodeMetrics({
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
 
 	const chartData = useMemo(
 		() => queries.map(({ data }) => getUPlotChartData(data?.payload)),
@@ -109,6 +116,13 @@ function NodeMetrics({
 						uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 					timezone: timezone.value,
 					query: currentQuery,
+					legendScrollPosition: legendScrollPositionRef.current,
+					setLegendScrollPosition: (position: {
+						scrollTop: number;
+						scrollLeft: number;
+					}) => {
+						legendScrollPositionRef.current = position;
+					},
 				}),
 			),
 		[
