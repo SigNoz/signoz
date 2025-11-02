@@ -23,14 +23,14 @@ import { getPodQueryPayload, podWidgetInfo } from './constants';
 function PodMetrics({
 	podName,
 	clusterName,
-	logLineTimestamp,
+	timestamp,
 }: {
 	podName: string;
 	clusterName: string;
-	logLineTimestamp: string;
+	timestamp: string;
 }): JSX.Element {
 	const { start, end, verticalLineTimestamp } = useMemo(() => {
-		const logTimestamp = dayjs(logLineTimestamp);
+		const logTimestamp = dayjs(timestamp);
 		const now = dayjs();
 		const startTime = logTimestamp.subtract(3, 'hour');
 
@@ -43,7 +43,15 @@ function PodMetrics({
 			end: endTime.unix(),
 			verticalLineTimestamp: logTimestamp.unix(),
 		};
-	}, [logLineTimestamp]);
+	}, [timestamp]);
+
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -91,6 +99,13 @@ function PodMetrics({
 						uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 					timezone: timezone.value,
 					query: currentQuery,
+					legendScrollPosition: legendScrollPositionRef.current,
+					setLegendScrollPosition: (position: {
+						scrollTop: number;
+						scrollLeft: number;
+					}) => {
+						legendScrollPositionRef.current = position;
+					},
 				}),
 			),
 		[

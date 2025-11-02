@@ -40,6 +40,7 @@ function TablePanelWrapper({
 			enableDrillDown={enableDrillDown}
 			panelType={widget.panelTypes}
 			queryRangeRequest={queryRangeRequest}
+			decimalPrecision={widget.decimalPrecision}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}
 		/>

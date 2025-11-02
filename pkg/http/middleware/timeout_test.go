@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"io"
 	"log/slog"
 	"net"
 	"net/http"
@@ -17,7 +16,7 @@ func TestTimeout(t *testing.T) {
 	writeTimeout := 6 * time.Second
 	defaultTimeout := 2 * time.Second
 	maxTimeout := 4 * time.Second
-	m := NewTimeout(slog.New(slog.NewTextHandler(io.Discard, nil)), []string{"/excluded"}, defaultTimeout, maxTimeout)
+	m := NewTimeout(slog.New(slog.DiscardHandler), []string{"/excluded"}, defaultTimeout, maxTimeout)
 
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)

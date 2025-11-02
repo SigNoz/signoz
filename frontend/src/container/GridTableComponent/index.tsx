@@ -48,6 +48,7 @@ function GridTableComponent({
 	widgetId,
 	panelType,
 	queryRangeRequest,
+	decimalPrecision,
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
@@ -87,10 +88,19 @@ function GridTableComponent({
 					const newValue = { ...val };
 					Object.keys(val).forEach((k) => {
 						const unit = getColumnUnit(k, columnUnits);
-						if (unit) {
+						// Apply formatting if:
+						// 1. Column has a unit defined, OR
+						// 2. decimalPrecision is specified (format all values)
+						const shouldFormat = unit || decimalPrecision !== undefined;
+
+						if (shouldFormat) {
 							// the check below takes care of not adding units for rows that have n/a or null values
 							if (val[k] !== 'n/a' && val[k] !== null) {
-								newValue[k] = getYAxisFormattedValue(String(val[k]), unit);
+								newValue[k] = getYAxisFormattedValue(
+									String(val[k]),
+									unit || 'none',
+									decimalPrecision,
+								);
 							} else if (val[k] === null) {
 								newValue[k] = 'n/a';
 							}
@@ -103,7 +113,7 @@ function GridTableComponent({
 
 			return mutateDataSource;
 		},
-		[columnUnits],
+		[columnUnits, decimalPrecision],
 	);
 
 	const dataSource = useMemo(() => applyColumnUnits(originalDataSource), [

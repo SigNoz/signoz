@@ -1,5 +1,6 @@
 import { DefaultOptionType } from 'antd/es/select';
 import { omitIdFromQuery } from 'components/ExplorerCard/utils';
+import { PrecisionOptionsEnum } from 'components/Graph/yAxisConfig';
 import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
@@ -554,6 +555,7 @@ export const getDefaultWidgetData = (
 	softMax: null,
 	softMin: null,
 	stackedBarChart: name === PANEL_TYPES.BAR,
+	decimalPrecision: PrecisionOptionsEnum.TWO, // default decimal precision
 	selectedLogFields: defaultLogsSelectedColumns.map((field) => ({
 		...field,
 		type: field.fieldContext ?? '',

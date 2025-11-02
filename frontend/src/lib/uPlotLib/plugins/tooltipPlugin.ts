@@ -1,4 +1,4 @@
-import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import { getToolTipValue, PrecisionOption } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { themeColors } from 'constants/theme';
 import dayjs from 'dayjs';
@@ -44,6 +44,7 @@ const generateTooltipContent = (
 	idx: number,
 	isDarkMode: boolean,
 	yAxisUnit?: string,
+	decimalPrecision?: PrecisionOption,
 	series?: uPlot.Options['series'],
 	isBillingUsageGraphs?: boolean,
 	isHistogramGraphs?: boolean,
@@ -127,7 +128,7 @@ const generateTooltipContent = (
 				let tooltipItemLabel = label;
 
 				if (Number.isFinite(value)) {
-					const tooltipValue = getToolTipValue(value, yAxisUnit);
+					const tooltipValue = getToolTipValue(value, yAxisUnit, decimalPrecision);
 					const dataIngestedFormated = getToolTipValue(dataIngested);
 					if (
 						duplicatedLegendLabels[label] ||
@@ -239,6 +240,7 @@ type ToolTipPluginProps = {
 	isBillingUsageGraphs?: boolean;
 	isHistogramGraphs?: boolean;
 	isMergedSeries?: boolean;
+	decimalPrecision?: PrecisionOption;
 	stackBarChart?: boolean;
 	isDarkMode: boolean;
 	customTooltipElement?: HTMLDivElement;
@@ -259,6 +261,7 @@ const tooltipPlugin = ({
 	timezone,
 	colorMapping,
 	query,
+	decimalPrecision,
 }: // eslint-disable-next-line sonarjs/cognitive-complexity
 ToolTipPluginProps): any => {
 	let over: HTMLElement;
@@ -320,6 +323,7 @@ ToolTipPluginProps): any => {
 							idx,
 							isDarkMode,
 							yAxisUnit,
+							decimalPrecision,
 							u.series,
 							isBillingUsageGraphs,
 							isHistogramGraphs,

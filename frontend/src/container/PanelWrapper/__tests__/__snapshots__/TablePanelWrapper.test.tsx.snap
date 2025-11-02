@@ -330,7 +330,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                               <div
                                 class="line-clamped-wrapper__text"
                               >
-                                431 ms
+                                431.25 ms
                               </div>
                             </div>
                           </div>
@@ -368,7 +368,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                               <div
                                 class="line-clamped-wrapper__text"
                               >
-                                431 ms
+                                431.25 ms
                               </div>
                             </div>
                           </div>
@@ -406,7 +406,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                               <div
                                 class="line-clamped-wrapper__text"
                               >
-                                287 ms
+                                287.11 ms
                               </div>
                             </div>
                           </div>
@@ -444,7 +444,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                               <div
                                 class="line-clamped-wrapper__text"
                               >
-                                230 ms
+                                230.02 ms
                               </div>
                             </div>
                           </div>
@@ -482,7 +482,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                               <div
                                 class="line-clamped-wrapper__text"
                               >
-                                66.4 ms
+                                66.37 ms
                               </div>
                             </div>
                           </div>

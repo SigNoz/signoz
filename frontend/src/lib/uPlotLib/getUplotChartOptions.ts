@@ -47,6 +47,7 @@ export interface GetUPlotChartOptions {
 	panelType?: PANEL_TYPES;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	graphsVisibilityStates?: boolean[];
 	setGraphsVisibilityStates?: FullViewProps['setGraphsVisibilityStates'];
@@ -192,6 +193,7 @@ export const getUPlotChartOptions = ({
 	apiResponse,
 	onDragSelect,
 	yAxisUnit,
+	decimalPrecision,
 	minTimeScale,
 	maxTimeScale,
 	onClickHandler = _noop,
@@ -359,6 +361,7 @@ export const getUPlotChartOptions = ({
 				colorMapping,
 				customTooltipElement,
 				query: query || currentQuery,
+				decimalPrecision,
 			}),
 			onClickPlugin({
 				onClick: onClickHandler,

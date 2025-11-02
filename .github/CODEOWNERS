@@ -2,7 +2,7 @@
 # Owners are automatically requested for review for PRs that changes code
 # that they own.
 
-/frontend/ @SigNoz/frontend @YounixM
+/frontend/ @YounixM @aks07
 /frontend/src/container/MetricsApplication @srikanthccv
 /frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
 

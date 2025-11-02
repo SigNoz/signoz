@@ -2,13 +2,13 @@ package alertmanagerserver
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes/alertmanagertypestest"
-	"github.com/prometheus/alertmanager/dispatch"
-	"io"
 	"log/slog"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes/alertmanagertypestest"
+	"github.com/prometheus/alertmanager/dispatch"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/nfroutingstoretest"
@@ -89,7 +89,7 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 	srvCfg := NewConfig()
 	stateStore := alertmanagertypestest.NewStateStore()
 	registry := prometheus.NewRegistry()
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	logger := slog.New(slog.DiscardHandler)
 	server, err := New(context.Background(), logger, registry, srvCfg, orgID, stateStore, notificationManager)
 	require.NoError(t, err)
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, orgID)

@@ -1,7 +1,6 @@
 package instrumentationtest
 
 import (
-	"io"
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -21,7 +20,7 @@ type noopInstrumentation struct {
 
 func New() instrumentation.Instrumentation {
 	return &noopInstrumentation{
-		logger:         slog.New(slog.NewTextHandler(io.Discard, nil)),
+		logger:         slog.New(slog.DiscardHandler),
 		meterProvider:  noopmetric.NewMeterProvider(),
 		tracerProvider: nooptrace.NewTracerProvider(),
 	}
