@@ -1215,7 +1215,7 @@ export interface TopErrorsTableRowData {
 	endpointName: string;
 	statusCode: string;
 	statusMessage: string;
-	count: number | string;
+	count: string;
 }
 
 /**
@@ -1244,16 +1244,7 @@ export const formatTopErrorsDataForTable = (
 			endpointName: getDisplayValue(rowObj[SPAN_ATTRIBUTES.URL_PATH]),
 			statusCode: getDisplayValue(rowObj[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]),
 			statusMessage: getDisplayValue(rowObj.status_message),
-			count: ((): number | string => {
-				const countValue = rowObj['count()'];
-				if (isEmptyFilterValue(countValue)) {
-					return '-';
-				}
-				if (typeof countValue === 'number') {
-					return countValue;
-				}
-				return Number(countValue) || '-';
-			})(),
+			count: getDisplayValue(rowObj.__result_0),
 		};
 	});
 };
