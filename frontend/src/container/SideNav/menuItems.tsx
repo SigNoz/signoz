@@ -271,7 +271,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		icon: <ChartArea size={16} />,
 		isNew: false,
 		isEnabled: true,
-		isBeta: true,
+		isBeta: false,
 		itemKey: 'meter-explorer',
 	},
 	{

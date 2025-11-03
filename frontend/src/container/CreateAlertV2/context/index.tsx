@@ -24,7 +24,11 @@ import {
 	INITIAL_EVALUATION_WINDOW_STATE,
 	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from './constants';
-import { ICreateAlertContextProps, ICreateAlertProviderProps } from './types';
+import {
+	AlertThresholdMatchType,
+	ICreateAlertContextProps,
+	ICreateAlertProviderProps,
+} from './types';
 import {
 	advancedOptionsReducer,
 	alertCreationReducer,
@@ -67,6 +71,7 @@ export function CreateAlertProvider(
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
+	const thresholdsFromURL = queryParams.get(QueryParams.thresholds);
 
 	const [alertType, setAlertType] = useState<AlertTypes>(() => {
 		if (isEditMode) {
@@ -122,7 +127,28 @@ export function CreateAlertProvider(
 		setThresholdState({
 			type: 'RESET',
 		});
-	}, [alertType]);
+
+		if (thresholdsFromURL) {
+			try {
+				const thresholds = JSON.parse(thresholdsFromURL);
+				setThresholdState({
+					type: 'SET_THRESHOLDS',
+					payload: thresholds,
+				});
+			} catch (error) {
+				console.error('Error parsing thresholds from URL:', error);
+			}
+
+			setEvaluationWindow({
+				type: 'SET_INITIAL_STATE_FOR_METER',
+			});
+
+			setThresholdState({
+				type: 'SET_MATCH_TYPE',
+				payload: AlertThresholdMatchType.IN_TOTAL,
+			});
+		}
+	}, [alertType, thresholdsFromURL]);
 
 	useEffect(() => {
 		if (isEditMode && initialAlertState) {

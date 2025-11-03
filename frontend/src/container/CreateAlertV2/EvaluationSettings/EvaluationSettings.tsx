@@ -10,6 +10,7 @@ import { getEvaluationWindowTypeText, getTimeframeText } from './utils';
 
 function EvaluationSettings(): JSX.Element {
 	const { evaluationWindow, setEvaluationWindow } = useCreateAlertState();
+
 	const [
 		isEvaluationWindowPopoverOpen,
 		setIsEvaluationWindowPopoverOpen,
