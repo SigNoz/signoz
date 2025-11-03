@@ -2,7 +2,13 @@ from http import HTTPStatus
 from typing import Callable
 
 import requests
-from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse, WireMockMatchers
+from wiremock.client import (
+    HttpMethods,
+    Mapping,
+    MappingRequest,
+    MappingResponse,
+    WireMockMatchers,
+)
 
 from fixtures import types
 from fixtures.auth import add_license
@@ -16,7 +22,6 @@ def test_generate_connection_params(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    
 ) -> None:
     """Test to generate connection parameters for AWS SigNoz cloud integration."""
     # Get authentication token for admin user
@@ -46,28 +51,27 @@ def test_generate_connection_params(
                         "status": "success",
                         "data": {
                             "name": "test-deployment",
-                            "cluster": {
-                                "region": {
-                                    "dns": "test.signoz.cloud"
-                                }
-                            }
-                        }
+                            "cluster": {"region": {"dns": "test.signoz.cloud"}},
+                        },
                     },
                 ),
                 persistent=False,
-            ),
+            )
+        ],
+    )
+
+    make_http_mocks(
+        signoz.gateway,
+        [
             # Mock the ingestion keys search endpoint
             Mapping(
                 request=MappingRequest(
                     method=HttpMethods.GET,
-                    url="/v1/workspaces/me/keys/search?name=aws-integration"
+                    url="/v1/workspaces/me/keys/search?name=aws-integration",
                 ),
                 response=MappingResponse(
                     status=200,
-                    json_body={
-                        "status": "success",
-                        "data": []
-                    },
+                    json_body={"status": "success", "data": []},
                 ),
                 persistent=False,
             ),
@@ -78,7 +82,7 @@ def test_generate_connection_params(
                     url="/v1/workspaces/me/keys",
                     json_body={
                         "name": "aws-integration",
-                        "tags": ["integration", "aws"]
+                        "tags": ["integration", "aws"],
                     },
                     headers={
                         "X-Signoz-Cloud-Api-Key": {
@@ -87,9 +91,7 @@ def test_generate_connection_params(
                         "X-Consumer-Username": {
                             WireMockMatchers.EQUAL_TO: "lid:00000000-0000-0000-0000-000000000000"
                         },
-                        "X-Consumer-Groups": {
-                            WireMockMatchers.EQUAL_TO: "ns:default"
-                        }
+                        "X-Consumer-Groups": {WireMockMatchers.EQUAL_TO: "ns:default"},
                     },
                 ),
                 response=MappingResponse(
@@ -98,14 +100,14 @@ def test_generate_connection_params(
                         "status": "success",
                         "data": {
                             "name": "aws-integration",
-                            "value": "test-ingestion-key-123456"
+                            "value": "test-ingestion-key-123456",
                         },
-                        "error": ""
+                        "error": "",
                     },
                 ),
                 persistent=False,
-            )
-        ]
+            ),
+        ],
     )
 
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-params"
@@ -117,7 +119,9 @@ def test_generate_connection_params(
     )
 
     # Assert successful response
-    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200, got {response.status_code}: {response.text}"
 
     # Parse response JSON
     response_data = response.json()
@@ -126,9 +130,32 @@ def test_generate_connection_params(
     assert "data" in response_data, "Response should contain 'data' field"
 
     # Assert required fields in the response data
-    expected_fields = ["ingestion_url", "ingestion_key", "signoz_api_url", "signoz_api_key"]
+    expected_fields = [
+        "ingestion_url",
+        "ingestion_key",
+        "signoz_api_url",
+        "signoz_api_key",
+    ]
 
     for field in expected_fields:
-        assert field in response_data["data"], f"Response data should contain '{field}' field"
+        assert (
+            field in response_data["data"]
+        ), f"Response data should contain '{field}' field"
 
+    # Assert values for the returned fields
+    data = response_data["data"]
 
+    # ingestion_key is created by the mocked gateway and should match
+    assert data["ingestion_key"] == "test-ingestion-key-123456", (
+        "ingestion_key should match the mocked ingestion key"
+    )
+
+    # ingestion_url should be https://ingest.test.signoz.cloud based on the mocked deployment DNS
+    assert data["ingestion_url"] == "https://ingest.test.signoz.cloud", (
+        "ingestion_url should be https://ingest.test.signoz.cloud"
+    )
+
+    # signoz_api_url should be https://test-deployment.test.signoz.cloud based on the mocked deployment name and DNS
+    assert data["signoz_api_url"] == "https://test-deployment.test.signoz.cloud", (
+        "signoz_api_url should be https://test-deployment.test.signoz.cloud"
+    )
