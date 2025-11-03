@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import {
 	mockLocation,
 	mockQueryParams,
@@ -9,6 +10,37 @@ import { USER_ROLES } from 'types/roles';
 import { PlannedDowntime } from '../PlannedDowntime';
 
 const SEARCH_PLACEHOLDER = 'Search for a planned downtime...';
+
+const MOCK_DOWNTIME_1_NAME = 'Mock Downtime 1';
+const MOCK_DOWNTIME_2_NAME = 'Mock Downtime 2';
+const MOCK_DOWNTIME_3_NAME = 'Mock Downtime 3';
+const MOCK_DATE_1 = '2024-01-01';
+const MOCK_DATE_2 = '2024-01-02';
+const MOCK_DATE_3 = '2024-01-03';
+const MOCK_DOWNTIME_1 = {
+	id: 1,
+	name: MOCK_DOWNTIME_1_NAME,
+	createdAt: MOCK_DATE_1,
+	updatedAt: MOCK_DATE_1,
+	schedule: { startTime: MOCK_DATE_1, timezone: 'UTC' },
+	alertIds: [],
+};
+const MOCK_DOWNTIME_2 = {
+	id: 2,
+	name: MOCK_DOWNTIME_2_NAME,
+	createdAt: MOCK_DATE_2,
+	updatedAt: MOCK_DATE_2,
+	schedule: { startTime: MOCK_DATE_2, timezone: 'UTC' },
+	alertIds: [],
+};
+const MOCK_DOWNTIME_3 = {
+	id: 3,
+	name: MOCK_DOWNTIME_3_NAME,
+	createdAt: MOCK_DATE_3,
+	updatedAt: MOCK_DATE_3,
+	schedule: { startTime: MOCK_DATE_3, timezone: 'UTC' },
+	alertIds: [],
+};
 
 const mockUseLocation = jest.fn().mockReturnValue({
 	pathname: '/alerts',
@@ -30,6 +62,24 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): { safeNavigate: jest.MockedFunction<() => void> } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
+}));
+
+jest.mock('api/plannedDowntime/getAllDowntimeSchedules', () => ({
+	useGetAllDowntimeSchedules: (): any => ({
+		data: {
+			data: {
+				data: [MOCK_DOWNTIME_1, MOCK_DOWNTIME_2, MOCK_DOWNTIME_3],
+			},
+		},
+		isLoading: false,
+		isFetching: false,
+		isError: false,
+		refetch: jest.fn(),
+	}),
+}));
+jest.mock('api/alerts/getAll', () => ({
+	__esModule: true,
+	default: (): any => Promise.resolve({ payload: [] }),
 }));
 
 describe('PlannedDowntime Component', () => {
@@ -78,7 +128,7 @@ describe('PlannedDowntime Component', () => {
 		const searchTerm = 'existing search';
 		mockUrlQuery = mockQueryParams({ search: searchTerm });
 
-		render(<PlannedDowntime />, {}, { role: 'ADMIN' });
+		render(<PlannedDowntime />, {}, { role: USER_ROLES.ADMIN });
 
 		const searchInput = screen.getByPlaceholderText(
 			SEARCH_PLACEHOLDER,
@@ -89,11 +139,63 @@ describe('PlannedDowntime Component', () => {
 	it('should initialize with empty search when no search param is in URL', () => {
 		mockUrlQuery = mockQueryParams({});
 
-		render(<PlannedDowntime />, {}, { role: 'ADMIN' });
+		render(<PlannedDowntime />, {}, { role: USER_ROLES.ADMIN });
 
 		const searchInput = screen.getByPlaceholderText(
 			SEARCH_PLACEHOLDER,
 		) as HTMLInputElement;
 		expect(searchInput.value).toBe('');
+	});
+
+	it('should display all downtime schedules when no search term is entered', async () => {
+		render(<PlannedDowntime />, {}, { role: USER_ROLES.ADMIN });
+
+		await waitFor(() => {
+			expect(screen.getByText(MOCK_DOWNTIME_1_NAME)).toBeInTheDocument();
+		});
+		expect(screen.getByText(MOCK_DOWNTIME_2_NAME)).toBeInTheDocument();
+		expect(screen.getByText(MOCK_DOWNTIME_3_NAME)).toBeInTheDocument();
+	});
+
+	it('should filter downtime schedules by name when searching', async () => {
+		render(<PlannedDowntime />, {}, { role: USER_ROLES.ADMIN });
+
+		await waitFor(() => {
+			expect(screen.getByText(MOCK_DOWNTIME_1_NAME)).toBeInTheDocument();
+		});
+
+		const searchInput = screen.getByPlaceholderText(SEARCH_PLACEHOLDER);
+
+		fireEvent.change(searchInput, { target: { value: MOCK_DOWNTIME_1_NAME } });
+
+		expect(screen.getByText(MOCK_DOWNTIME_1_NAME)).toBeInTheDocument();
+		expect(screen.queryByText(MOCK_DOWNTIME_2_NAME)).not.toBeInTheDocument();
+		expect(screen.queryByText(MOCK_DOWNTIME_3_NAME)).not.toBeInTheDocument();
+	});
+
+	it('should filter downtime schedules with partial name match', async () => {
+		render(<PlannedDowntime />, {}, { role: USER_ROLES.ADMIN });
+
+		expect(screen.getByText(MOCK_DOWNTIME_1_NAME)).toBeInTheDocument();
+
+		const searchInput = screen.getByPlaceholderText(SEARCH_PLACEHOLDER);
+
+		fireEvent.change(searchInput, { target: { value: '2' } });
+
+		expect(screen.getByText(MOCK_DOWNTIME_2_NAME)).toBeInTheDocument();
+		expect(screen.queryByText(MOCK_DOWNTIME_1_NAME)).not.toBeInTheDocument();
+		expect(screen.queryByText(MOCK_DOWNTIME_3_NAME)).not.toBeInTheDocument();
+	});
+
+	it('should show no results when search term matches nothing', async () => {
+		render(<PlannedDowntime />, {}, { role: USER_ROLES.ADMIN });
+
+		const searchInput = screen.getByPlaceholderText(SEARCH_PLACEHOLDER);
+
+		fireEvent.change(searchInput, { target: { value: 'NonExistentDowntime' } });
+
+		expect(screen.queryByText(MOCK_DOWNTIME_1_NAME)).not.toBeInTheDocument();
+		expect(screen.queryByText(MOCK_DOWNTIME_2_NAME)).not.toBeInTheDocument();
+		expect(screen.queryByText(MOCK_DOWNTIME_3_NAME)).not.toBeInTheDocument();
 	});
 });

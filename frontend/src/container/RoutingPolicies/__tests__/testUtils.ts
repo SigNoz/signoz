@@ -1,3 +1,4 @@
+import { ApiRoutingPolicy } from 'api/routingPolicies/getRoutingPolicies';
 import { IAppContext, IUser } from 'providers/App/types';
 import { Channels } from 'types/api/channels/getAll';
 
@@ -142,4 +143,20 @@ export function mockQueryParams(
 		toString: { value: (): string => realUrlQuery.toString() },
 		get: { value: (key: string): string | null => realUrlQuery.get(key) },
 	});
+}
+
+export function convertRoutingPolicyToApiResponse(
+	routingPolicy: RoutingPolicy,
+): ApiRoutingPolicy {
+	return {
+		id: routingPolicy.id,
+		name: routingPolicy.name,
+		expression: routingPolicy.expression,
+		channels: routingPolicy.channels,
+		description: routingPolicy.description || '',
+		createdAt: routingPolicy.createdAt || '',
+		updatedAt: routingPolicy.updatedAt || '',
+		createdBy: routingPolicy.createdBy || '',
+		updatedBy: routingPolicy.updatedBy || '',
+	};
 }

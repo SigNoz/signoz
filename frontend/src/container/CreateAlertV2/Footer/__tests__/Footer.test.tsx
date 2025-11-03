@@ -269,7 +269,7 @@ describe('Footer', () => {
 		expect(loaderIconForTestNotificationButton).toBeInTheDocument();
 	});
 
-	it('should show check icon on save alert rule button when updating alert rule', () => {
+	it('should not show check icon on save alert rule button when updating alert rule', () => {
 		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isUpdatingAlertRule: true,
@@ -288,7 +288,7 @@ describe('Footer', () => {
 		expect(loaderIconForSaveAlertRuleButton).toBeInTheDocument();
 	});
 
-	it('should show check icon on save alert rule button when creating alert rule', () => {
+	it('should not show check icon on save alert rule button when creating alert rule', () => {
 		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isCreatingAlertRule: true,
