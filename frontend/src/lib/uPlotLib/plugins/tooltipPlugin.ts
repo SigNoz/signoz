@@ -286,7 +286,6 @@ ToolTipPluginProps): any => {
 	// Cache bounding box to avoid recalculating on every cursor move
 	let cachedBBox: DOMRect | null = null;
 	let isActive = false;
-	let lastIdx: number | null = null;
 	let overlay: HTMLElement | null = null;
 
 	// Pre-compute apiResult once
@@ -331,7 +330,6 @@ ToolTipPluginProps): any => {
 
 	const plotLeave = (): void => {
 		isActive = false;
-		lastIdx = null;
 		hideOverlay();
 	};
 
@@ -379,20 +377,12 @@ ToolTipPluginProps): any => {
 
 				// Early return if not active or no valid index
 				if (!isActive || !Number.isInteger(idx)) {
-					if (isActive && lastIdx !== null) {
+					if (isActive) {
 						// Clear tooltip content efficiently using replaceChildren
 						overlay.replaceChildren();
-						lastIdx = null;
 					}
 					return;
 				}
-
-				// Only regenerate tooltip if index changed (performance optimization)
-				if (lastIdx === idx) {
-					return;
-				}
-
-				lastIdx = idx;
 
 				// Use cached bounding box if available
 				const bbox = cachedBBox || over.getBoundingClientRect();
