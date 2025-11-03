@@ -110,16 +110,11 @@ def test_generate_connection_params(
 
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-params"
 
-    logger.info(f"Testing endpoint: {endpoint}")
-
     response = requests.get(
         signoz.self.host_configs["8080"].get(endpoint),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
-
-    logger.info(f"Response status: {response.status_code}")
-    logger.info(f"Response body: {response.text}")
 
     # Assert successful response
     assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
@@ -135,7 +130,5 @@ def test_generate_connection_params(
 
     for field in expected_fields:
         assert field in response_data["data"], f"Response data should contain '{field}' field"
-
-    logger.info("All expected fields are present in the response data.")
 
 
