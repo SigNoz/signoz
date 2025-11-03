@@ -1,6 +1,6 @@
 import { QueryParams } from 'constants/query';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { LimitProps } from 'types/api/ingestionKeys/limits/types';
 import {
 	AllIngestionKeyProps,
@@ -50,10 +50,11 @@ jest.mock(
 const TEST_CREATED_UPDATED = '2024-01-01T00:00:00Z';
 const TEST_EXPIRES_AT = '2030-01-01T00:00:00Z';
 const TEST_WORKSPACE_ID = 'w1';
+const INGESTION_SETTINGS_ROUTE = '/ingestion-settings';
 
 describe('MultiIngestionSettings Page', () => {
 	beforeEach(() => {
-		render(<MultiIngestionSettings />);
+		mockPush.mockClear();
 	});
 
 	afterEach(() => {
@@ -61,6 +62,10 @@ describe('MultiIngestionSettings Page', () => {
 	});
 
 	it('renders MultiIngestionSettings page without crashing', () => {
+		render(<MultiIngestionSettings />, undefined, {
+			initialRoute: INGESTION_SETTINGS_ROUTE,
+		});
+
 		expect(screen.getByText('Ingestion Keys')).toBeInTheDocument();
 
 		expect(
@@ -113,7 +118,7 @@ describe('MultiIngestionSettings Page', () => {
 
 		// Render with initial route to test navigation
 		render(<MultiIngestionSettings />, undefined, {
-			initialRoute: '/ingestion-settings',
+			initialRoute: INGESTION_SETTINGS_ROUTE,
 		});
 		// Wait for ingestion key to load and expand the row to show limits
 		await screen.findByText('Key One');
@@ -127,8 +132,12 @@ describe('MultiIngestionSettings Page', () => {
 		)) as HTMLButtonElement;
 		await user.click(metricsAlertBtn);
 
+		// Wait for navigation to occur
+		await waitFor(() => {
+			expect(mockPush).toHaveBeenCalledTimes(1);
+		});
+
 		// Assert: navigation occurred with correct query parameters
-		expect(mockPush).toHaveBeenCalledTimes(1);
 		const navigationCall = mockPush.mock.calls[0][0] as string;
 
 		// Check URL contains alerts/new route
@@ -196,7 +205,7 @@ describe('MultiIngestionSettings Page', () => {
 		);
 
 		render(<MultiIngestionSettings />, undefined, {
-			initialRoute: '/ingestion-settings',
+			initialRoute: INGESTION_SETTINGS_ROUTE,
 		});
 
 		// Wait for ingestion key to load and expand the row to show limits
@@ -211,8 +220,12 @@ describe('MultiIngestionSettings Page', () => {
 		)) as HTMLButtonElement;
 		await user.click(logsAlertBtn);
 
+		// Wait for navigation to occur
+		await waitFor(() => {
+			expect(mockPush).toHaveBeenCalledTimes(1);
+		});
+
 		// Assert: navigation occurred with correct query parameters
-		expect(mockPush).toHaveBeenCalledTimes(1);
 		const navigationCall = mockPush.mock.calls[0][0] as string;
 
 		// Check URL contains alerts/new route
