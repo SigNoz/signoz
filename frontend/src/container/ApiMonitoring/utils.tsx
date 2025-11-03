@@ -831,13 +831,8 @@ function buildFilterExpression(
 	const baseFilterParts = [
 		`kind_string = 'Client'`,
 		`(http.url EXISTS OR url.full EXISTS)`,
-		`status_message EXISTS`,
 		`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
 	];
-	// const baseFilterParts = [
-	// 	`kind_string = 'Client'`,
-	// 	`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
-	// ];
 	if (showStatusCodeErrors) {
 		baseFilterParts.push('status_message EXISTS');
 	}
