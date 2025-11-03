@@ -131,8 +131,6 @@ def gateway(
     )
 
 
-# this mock is specific to zeus http interactions
-# lets rename it accordingly in the future
 @pytest.fixture(name="make_http_mocks", scope="function")
 def make_http_mocks() -> Callable[[types.TestContainerDocker, List[Mapping]], None]:
     def _make_http_mocks(
