@@ -16,20 +16,22 @@ const SEARCH_PLACEHOLDER = 'Search for a routing policy...';
 
 jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: mockLocation('/alerts'),
-}));
-
 jest.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
 	default: (): URLSearchParams => mockQueryParams({}),
 }));
 
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.MockedFunction<() => void> } => ({
-		safeNavigate: mockSafeNavigate,
+const mockHistoryReplace = jest.fn();
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useHistory: (): any => ({
+		replace: mockHistoryReplace,
+	}),
+	useLocation: (): any => ({
+		pathname: '/alerts',
+		search: '',
+		hash: '',
+		state: null,
 	}),
 }));
 

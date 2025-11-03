@@ -21,10 +21,13 @@ import {
 	MOCK_ROUTING_POLICY_2,
 } from './testUtils';
 
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.MockedFunction<() => void> } => ({
-		safeNavigate: mockSafeNavigate,
+const mockHistoryReplace = jest.fn();
+// eslint-disable-next-line sonarjs/no-duplicate-string
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useHistory: (): any => ({
+		...jest.requireActual('react-router-dom').useHistory(),
+		replace: mockHistoryReplace,
 	}),
 }));
 
@@ -198,10 +201,10 @@ describe('useRoutingPolicies', () => {
 		});
 
 		await waitFor(() => {
-			expect(mockSafeNavigate).toHaveBeenCalled();
+			expect(mockHistoryReplace).toHaveBeenCalled();
 		});
 
-		const callArg = mockSafeNavigate.mock.calls[0][0];
+		const callArg = mockHistoryReplace.mock.calls[0][0];
 		expect(callArg).toContain('search=test+search');
 	});
 
@@ -213,10 +216,10 @@ describe('useRoutingPolicies', () => {
 		});
 
 		await waitFor(() => {
-			expect(mockSafeNavigate).toHaveBeenCalled();
+			expect(mockHistoryReplace).toHaveBeenCalled();
 		});
 
-		const callArg = mockSafeNavigate.mock.calls[0][0];
+		const callArg = mockHistoryReplace.mock.calls[0][0];
 		expect(callArg).toBe('/alerts?');
 	});
 });
