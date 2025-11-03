@@ -31,6 +31,7 @@ import {
 	Bookmark,
 	Check,
 	ChevronDown,
+	ChevronUp,
 	Link2,
 	Loader2,
 	PanelRight,
@@ -538,6 +539,16 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		initialWaitCompleted,
 	]);
 
+	const loadingSpanPercentilesData = useMemo(
+		() => isLoadingSpanPercentilesData || isFetchingSpanPercentilesData,
+		[isLoadingSpanPercentilesData, isFetchingSpanPercentilesData],
+	);
+
+	const spanPercentileValue = useMemo(
+		() => Math.floor(spanPercentileData?.percentile || 0),
+		[spanPercentileData?.percentile],
+	);
+
 	return (
 		<>
 			<section className="header">
@@ -566,25 +577,43 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 									</Typography.Text>
 								</Tooltip>
 
-								{isLoadingSpanPercentilesData && (
+								{loadingSpanPercentilesData && (
 									<div className="loading-spinner-container">
 										<Loader2 size={16} className="animate-spin" />
 									</div>
 								)}
 
-								{!isLoadingSpanPercentilesData && spanPercentileData && (
+								{!loadingSpanPercentilesData && spanPercentileData && (
 									<Tooltip
 										title={isSpanPercentilesOpen ? '' : spanPercentileTooltipText}
 										placement="bottomRight"
 										overlayClassName="span-percentile-tooltip"
 										arrow={false}
 									>
-										<Typography.Text
-											className="span-percentile-value"
-											onClick={(): void => setIsSpanPercentilesOpen((prev) => !prev)}
+										<div
+											className={`span-percentile-value-container ${
+												isSpanPercentilesOpen
+													? 'span-percentile-value-container-open'
+													: 'span-percentile-value-container-closed'
+											}`}
 										>
-											p{Math.floor(spanPercentileData?.percentile || 0)}
-										</Typography.Text>
+											<Typography.Text
+												className="span-percentile-value"
+												onClick={(): void => setIsSpanPercentilesOpen((prev) => !prev)}
+												disabled={loadingSpanPercentilesData}
+											>
+												<span className="span-percentile-value-text">
+													p{spanPercentileValue}
+												</span>
+
+												{!isSpanPercentilesOpen && (
+													<ChevronDown size={16} className="span-percentile-value-icon" />
+												)}
+												{isSpanPercentilesOpen && (
+													<ChevronUp size={16} className="span-percentile-value-icon" />
+												)}
+											</Typography.Text>
+										</div>
 									</Tooltip>
 								)}
 							</div>
