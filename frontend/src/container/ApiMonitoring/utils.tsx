@@ -832,6 +832,7 @@ function buildFilterExpression(
 		`kind_string = 'Client'`,
 		`(http.url EXISTS OR url.full EXISTS)`,
 		`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
+		`has_error = true`,
 	];
 	if (showStatusCodeErrors) {
 		baseFilterParts.push('status_message EXISTS');
