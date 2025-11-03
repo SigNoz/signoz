@@ -31,7 +31,7 @@ type FieldMapper interface {
 // ConditionBuilder builds the condition for the filter.
 type ConditionBuilder interface {
 	// ConditionFor returns the condition for the given key, operator and value.
-	// startNs is the request window start in nanoseconds; implementations may ignore it if not needed.
+	// TODO(srikanthccv,nikhilmantri0902): remove startNs when top_level_operations can be replaced with `is_remote`
 	ConditionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder, startNs uint64) (string, error)
 }
 
