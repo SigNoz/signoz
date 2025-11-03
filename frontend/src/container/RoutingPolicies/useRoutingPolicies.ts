@@ -51,14 +51,12 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 
 	const updateUrlWithSearch = useDebouncedFn((value) => {
 		const searchValue = value as string;
-		const params = new URLSearchParams(urlQuery.toString());
 		if (searchValue) {
-			params.set('search', searchValue);
+			urlQuery.set('search', searchValue);
 		} else {
-			params.delete('search');
+			urlQuery.delete('search');
 		}
-		const generatedUrl = `/alerts?${params.toString()}`;
-		safeNavigate(generatedUrl);
+		safeNavigate(`/alerts?${urlQuery.toString()}`);
 	}, 300);
 
 	const handleSearch = (value: string): void => {
