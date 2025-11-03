@@ -13,12 +13,12 @@ import {
 import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
+import { useHistory } from 'react-router-dom';
 import { USER_ROLES } from 'types/roles';
 
 import { PlannedDowntimeDeleteModal } from './PlannedDowntimeDeleteModal';
@@ -39,7 +39,7 @@ export function PlannedDowntime(): JSX.Element {
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [form] = Form.useForm();
 	const { user } = useAppContext();
-	const { safeNavigate } = useSafeNavigate();
+	const history = useHistory();
 	const urlQuery = useUrlQuery();
 
 	const [initialValues, setInitialValues] = useState<
@@ -75,7 +75,8 @@ export function PlannedDowntime(): JSX.Element {
 		} else {
 			urlQuery.delete('search');
 		}
-		safeNavigate(`/alerts?${urlQuery.toString()}`);
+		const url = `/alerts?${urlQuery.toString()}`;
+		history.replace(url);
 	}, 300);
 
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {

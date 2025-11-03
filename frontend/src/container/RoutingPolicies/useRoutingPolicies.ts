@@ -9,10 +9,10 @@ import { useDeleteRoutingPolicy } from 'hooks/routingPolicies/useDeleteRoutingPo
 import { useGetRoutingPolicies } from 'hooks/routingPolicies/useGetRoutingPolicies';
 import { useUpdateRoutingPolicy } from 'hooks/routingPolicies/useUpdateRoutingPolicy';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
+import { useHistory } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
@@ -32,7 +32,7 @@ import {
 function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	const queryClient = useQueryClient();
 	const urlQuery = useUrlQuery();
-	const { safeNavigate } = useSafeNavigate();
+	const history = useHistory();
 
 	// Local state
 	const [searchTerm, setSearchTerm] = useState(urlQuery.get('search') || '');
@@ -56,7 +56,8 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		} else {
 			urlQuery.delete('search');
 		}
-		safeNavigate(`/alerts?${urlQuery.toString()}`);
+		const url = `/alerts?${urlQuery.toString()}`;
+		history.replace(url);
 	}, 300);
 
 	const handleSearch = (value: string): void => {
