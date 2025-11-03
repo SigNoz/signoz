@@ -285,10 +285,11 @@ export const getUPlotChartOptions = ({
 		cursor: {
 			lock: false,
 			focus: {
-				prox: 1e6,
+				prox: 25,
 				bias: 1,
 			},
 			points: {
+				one: true,
 				size: (u, seriesIdx): number => u.series[seriesIdx].points.size * 3,
 				width: (u, seriesIdx, size): number => size / 4,
 				stroke: (u, seriesIdx): string =>
