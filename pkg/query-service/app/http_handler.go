@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 
 	//qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -539,6 +540,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/settings/ttl", am.AdminAccess(aH.setCustomRetentionTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v2/settings/ttl", am.ViewAccess(aH.getCustomRetentionTTL)).Methods(http.MethodGet)
+
+	// Admin: Promote JSON paths used in logs to the promoted paths table
+	router.HandleFunc("/api/v1/admin/promote_paths", am.AdminAccess(aH.promotePaths)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.Signoz.Handlers.Apdex.Set)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.Signoz.Handlers.Apdex.Get)).Methods(http.MethodGet)
 
@@ -1970,6 +1974,31 @@ func (aH *APIHandler) getCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 	}
 
 	aH.WriteJSON(w, r, result)
+}
+
+// promotePaths inserts provided JSON paths into the promoted paths table in ClickHouse.
+func (aH *APIHandler) promotePaths(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get org id from context"))
+		return
+	}
+
+	var req model.PromotePathsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "Invalid data"))
+		return
+	}
+
+	// Delegate all processing to the reader
+	apiErr := aH.reader.PromoteAndIndexPaths(ctx, claims.OrgID, req.Paths...)
+	if apiErr != nil {
+		render.Error(w, apiErr)
+		return
+	}
+
+	render.Success(w, http.StatusOK, nil)
 }
 
 func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {

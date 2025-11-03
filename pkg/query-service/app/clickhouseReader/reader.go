@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -229,6 +230,139 @@ func NewReaderFromClickhouseConnection(
 		pathTypesLocalTable:        options.primary.PathTypesLocalTable,
 		pathTypesTable:             options.primary.PathTypesTable,
 	}
+}
+
+// PromotePaths inserts provided JSON paths into the promoted paths table for logs queries.
+func (r *ClickHouseReader) PromotePaths(ctx context.Context, paths []string) error {
+	if len(paths) == 0 {
+		return errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "paths cannot be empty")
+	}
+
+	// Table: signoz_logs.distributed_promoted_paths with columns: path, created_at (UInt64 epoch ms)
+	batch, err := r.db.PrepareBatch(ctx, "INSERT INTO signoz_logs.distributed_promoted_paths (path, created_at) VALUES")
+	if err != nil {
+		return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to prepare batch: %w", err)
+	}
+
+	nowMs := uint64(time.Now().UnixMilli())
+	for _, p := range paths {
+		trimmed := strings.TrimSpace(p)
+		if trimmed == "" {
+			continue
+		}
+		if err := batch.Append(trimmed, nowMs); err != nil {
+			_ = batch.Abort()
+			return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to append path: %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to send batch: %w", err)
+	}
+	return nil
+}
+
+// CreateJSONPathIndexes creates string ngram + token filter indexes on JSON path subcolumns for LIKE queries.
+func (r *ClickHouseReader) CreateJSONPathIndexes(ctx context.Context, columns []string) error {
+	if len(columns) == 0 {
+		return nil
+	}
+	// We'll add indexes on the local logs table across cluster
+	// Index expression: lower(assumeNotNull(dynamicElement(promoted.<path>, 'String')))
+	for _, column := range columns {
+		ngramIndex := schemamigrator.Index{
+			Name:        schemamigrator.JSONSubColumnIndexName(column, schemamigrator.IndexTypeNGramBF),
+			Expression:  schemamigrator.JSONSubColumnIndexExpr(column),
+			Type:        "ngrambf_v1(4, 5000, 2, 0)",
+			Granularity: 1,
+		}
+		tokenIndex := schemamigrator.Index{
+			Name:        schemamigrator.JSONSubColumnIndexName(column, schemamigrator.IndexTypeTokenBF),
+			Expression:  schemamigrator.JSONSubColumnIndexExpr(column),
+			Type:        "tokenbf_v1(1024, 2, 0)",
+			Granularity: 1,
+		}
+		indexes := []schemamigrator.Index{ngramIndex, tokenIndex}
+		for _, index := range indexes {
+			query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD %s",
+				r.logsDB, r.logsLocalTableV2, r.cluster, index.ToSQL())
+			if err := r.db.Exec(ctx, query); err != nil {
+				return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to create index: %s", err)
+			}
+		}
+	}
+	return nil
+}
+
+// PromoteAndIndexPaths handles promoting paths and creating indexes in one call.
+func (r *ClickHouseReader) PromoteAndIndexPaths(
+	ctx context.Context,
+	_ string,
+	paths ...model.PromotePathItem,
+) error {
+	if len(paths) == 0 {
+		return errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "paths cannot be empty")
+	}
+
+	// Load existing promoted paths once
+	existing := make(map[string]struct{})
+	rows, qerr := r.db.Query(ctx, "SELECT path FROM signoz_logs.distributed_promoted_paths")
+	if qerr == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var p string
+			if err := rows.Scan(&p); err == nil {
+				existing[p] = struct{}{}
+			}
+		}
+	}
+
+	indexPath := func(promoted bool, path string) string {
+		parentColumn := "body_v2"
+		if promoted {
+			parentColumn = "promoted"
+		}
+		return parentColumn + "." + path
+	}
+
+	var toInsert []string
+	var indexes []string
+	for _, it := range paths {
+		if err := it.Validate(); err != nil {
+			return err
+		}
+		if it.Promote {
+			toInsert = append(toInsert, it.Path)
+		}
+		if it.Indexed {
+			// path is being promoted as well as indexed
+			if it.Promote {
+				indexes = append(indexes, indexPath(true, it.Path))
+				continue
+			}
+			// path is being indexed and is already promoted
+			if _, ok := existing[it.Path]; ok {
+				indexes = append(indexes, indexPath(true, it.Path))
+			} else { // path is being indexed and is not promoted
+				indexes = append(indexes, indexPath(false, it.Path))
+			}
+		}
+	}
+
+	if len(toInsert) > 0 {
+		err := r.PromotePaths(ctx, toInsert)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(indexes) > 0 {
+		if err := r.CreateJSONPathIndexes(ctx, indexes); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {

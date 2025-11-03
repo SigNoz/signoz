@@ -133,6 +133,8 @@ type Reader interface {
 
 	CheckForLabelsInMetric(ctx context.Context, metricName string, labels []string) (bool, *model.ApiError)
 	GetNormalizedStatus(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]bool, error)
+
+	PromoteAndIndexPaths(ctx context.Context, orgID string, paths ...model.PromotePathItem) error
 }
 
 type Querier interface {
