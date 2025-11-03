@@ -388,17 +388,24 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 				setShouldUpdateUserPreference(false);
 			}
 		},
+		keepPreviousData: false,
+		cacheTime: 0, // no cache
 	});
 
 	// Prod Req - Wait for 2 seconds before fetching span percentile data on initial load
 	useEffect(() => {
+		setSpanPercentileData(null);
+		setIsSpanPercentilesOpen(false);
 		setInitialWaitCompleted(false);
 
 		const timer = setTimeout(() => {
 			setInitialWaitCompleted(true);
 		}, 2000); // 2-second delay
 
-		return (): void => clearTimeout(timer); // Cleanup on re-run or unmount
+		return (): void => {
+			// clean the old state around span percentile data
+			clearTimeout(timer); // Cleanup on re-run or unmount
+		};
 	}, [selectedSpan?.spanId]);
 
 	useEffect(() => {
@@ -539,15 +546,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		initialWaitCompleted,
 	]);
 
-	const loadingSpanPercentilesData = useMemo(
-		() => isLoadingSpanPercentilesData || isFetchingSpanPercentilesData,
-		[isLoadingSpanPercentilesData, isFetchingSpanPercentilesData],
-	);
+	const loadingSpanPercentilesData =
+		isLoadingSpanPercentilesData || isFetchingSpanPercentilesData;
 
-	const spanPercentileValue = useMemo(
-		() => Math.floor(spanPercentileData?.percentile || 0),
-		[spanPercentileData?.percentile],
-	);
+	const spanPercentileValue = Math.floor(spanPercentileData?.percentile || 0);
 
 	return (
 		<>
