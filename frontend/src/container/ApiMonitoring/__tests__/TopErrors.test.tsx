@@ -8,7 +8,7 @@ import {
 	getTopErrorsCoRelationQueryFilters,
 	getTopErrorsQueryPayload,
 } from 'container/ApiMonitoring/utils';
-import { useQueries } from 'react-query';
+import { useQueries, useQuery } from 'react-query';
 import { DataSource } from 'types/common/queryBuilder';
 
 import TopErrors from '../Explorer/Domains/DomainDetails/TopErrors';
@@ -38,6 +38,7 @@ jest.mock(
 // Mock dependencies
 jest.mock('react-query', () => ({
 	...jest.requireActual('react-query'),
+	useQuery: jest.fn(),
 	useQueries: jest.fn(),
 }));
 
@@ -96,72 +97,72 @@ describe('TopErrors', () => {
 			},
 		]);
 
-		// Mock useQueries
-		(useQueries as jest.Mock).mockImplementation((queryConfigs) => {
-			// For topErrorsDataQueries
-			if (
-				queryConfigs.length === 1 &&
-				queryConfigs[0].queryKey &&
-				queryConfigs[0].queryKey[0] === REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN
-			) {
-				return [
-					{
-						data: {
-							payload: {
-								data: {
-									result: [
-										{
-											metric: {
-												'http.url': '/api/test',
-												status_code: '500',
-												// eslint-disable-next-line sonarjs/no-duplicate-string
-												status_message: 'Internal Server Error',
-											},
-											values: [[1000000100, '10']],
-											queryName: 'A',
-											legend: 'Test Legend',
-										},
-									],
-								},
-							},
-						},
-						isLoading: false,
-						isRefetching: false,
-						isError: false,
-						refetch: jest.fn(),
-					},
-				];
-			}
-
-			// For endPointDropDownDataQueries
-			return [
-				{
+		// Mock useQuery for top errors data (V5 API)
+		(useQuery as jest.Mock).mockReturnValue({
+			data: {
+				data: {
 					data: {
-						payload: {
-							data: {
-								result: [
+						results: [
+							{
+								columns: [
 									{
-										table: {
-											rows: [
-												{
-													'http.url': '/api/test',
-													A: 100,
-												},
-											],
-										},
+										name: 'http.url',
+										fieldDataType: 'string',
+										fieldContext: 'attribute',
 									},
+									{
+										name: 'response_status_code',
+										fieldDataType: 'string',
+										fieldContext: 'span',
+									},
+									{
+										name: 'status_message',
+										fieldDataType: 'string',
+										fieldContext: 'span',
+									},
+									{ name: 'count()', fieldDataType: 'int64', fieldContext: '' },
 								],
+								// eslint-disable-next-line sonarjs/no-duplicate-string
+								data: [['/api/test', '500', 'Internal Server Error', 10]],
 							},
-						},
+						],
 					},
-					isLoading: false,
-					isRefetching: false,
-					isError: false,
 				},
-			];
+			},
+			isLoading: false,
+			isRefetching: false,
+			isError: false,
+			refetch: jest.fn(),
 		});
 
-		// Mock formatTopErrorsDataForTable
+		// Mock useQueries for endPointDropDownDataQueries
+		(useQueries as jest.Mock).mockReturnValue([
+			{
+				data: {
+					payload: {
+						data: {
+							result: [
+								{
+									table: {
+										rows: [
+											{
+												'http.url': '/api/test',
+												A: 100,
+											},
+										],
+									},
+								},
+							],
+						},
+					},
+				},
+				isLoading: false,
+				isRefetching: false,
+				isError: false,
+			},
+		]);
+
+		// Mock formatTopErrorsDataForTable (no longer used, but kept for compatibility)
 		(formatTopErrorsDataForTable as jest.Mock).mockReturnValue([
 			{
 				key: '1',
@@ -172,15 +173,48 @@ describe('TopErrors', () => {
 			},
 		]);
 
-		// Mock getTopErrorsQueryPayload
-		(getTopErrorsQueryPayload as jest.Mock).mockReturnValue([
-			{
-				queryName: 'TopErrorsQuery',
-				start: mockProps.timeRange.startTime,
-				end: mockProps.timeRange.endTime,
-				step: 60,
+		// Mock getTopErrorsQueryPayload - returns new payload structure
+		(getTopErrorsQueryPayload as jest.Mock).mockReturnValue({
+			schemaVersion: 'v1',
+			start: mockProps.timeRange.startTime,
+			end: mockProps.timeRange.endTime,
+			requestType: 'scalar',
+			compositeQuery: {
+				queries: [
+					{
+						type: 'builder_query',
+						spec: {
+							name: 'A',
+							signal: 'traces',
+							stepInterval: 60,
+							disabled: false,
+							filter: {
+								expression: `(net.peer.name = '${mockProps.domainName}' OR server.address = '${mockProps.domainName}') AND kind_string = 'Client'`,
+							},
+							groupBy: [
+								{
+									name: 'http.url',
+									fieldDataType: 'string',
+									fieldContext: 'attribute',
+								},
+								{
+									name: 'url.full',
+									fieldDataType: 'string',
+									fieldContext: 'attribute',
+								},
+							],
+							aggregations: [
+								{
+									expression: 'count()',
+								},
+							],
+						},
+					},
+				],
 			},
-		]);
+			formatOptions: { formatTableResultForUI: true, fillGaps: false },
+			variables: {},
+		});
 
 		// Mock getEndPointDetailsQueryPayload
 		(getEndPointDetailsQueryPayload as jest.Mock).mockReturnValue([
@@ -229,13 +263,11 @@ describe('TopErrors', () => {
 	});
 
 	it('renders error state when isError is true', () => {
-		// Mock useQueries to return isError: true
-		(useQueries as jest.Mock).mockImplementationOnce(() => [
-			{
-				isError: true,
-				refetch: jest.fn(),
-			},
-		]);
+		// Mock useQuery to return isError: true
+		(useQuery as jest.Mock).mockReturnValueOnce({
+			isError: true,
+			refetch: jest.fn(),
+		});
 
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<TopErrors {...mockProps} />);
@@ -342,34 +374,30 @@ describe('TopErrors', () => {
 		const toggle = screen.getByRole('switch');
 
 		// Initial query should include showStatusCodeErrors=true
-		expect(useQueries).toHaveBeenCalledWith(
-			expect.arrayContaining([
-				expect.objectContaining({
-					queryKey: expect.arrayContaining([
-						REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN,
-						expect.any(Object),
-						expect.any(String),
-						true,
-					]),
-				}),
-			]),
+		expect(useQuery).toHaveBeenCalledWith(
+			expect.objectContaining({
+				queryKey: expect.arrayContaining([
+					REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN,
+					expect.any(Object),
+					expect.any(String),
+					true,
+				]),
+			}),
 		);
 
 		// Click toggle
 		fireEvent.click(toggle);
 
 		// Query should be called with showStatusCodeErrors=false in key
-		expect(useQueries).toHaveBeenCalledWith(
-			expect.arrayContaining([
-				expect.objectContaining({
-					queryKey: expect.arrayContaining([
-						REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN,
-						expect.any(Object),
-						expect.any(String),
-						false,
-					]),
-				}),
-			]),
+		expect(useQuery).toHaveBeenCalledWith(
+			expect.objectContaining({
+				queryKey: expect.arrayContaining([
+					REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN,
+					expect.any(Object),
+					expect.any(String),
+					false,
+				]),
+			}),
 		);
 	});
 });

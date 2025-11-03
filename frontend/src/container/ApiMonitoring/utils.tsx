@@ -10,6 +10,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GraphClickMetaData } from 'container/GridCardLayout/useNavigateToExplorerPages';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
+import { isEmptyFilterValue } from 'container/QueryTable/Drilldown/tableDrilldownUtils';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
@@ -27,6 +28,11 @@ import {
 	OrderByPayload,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	ColumnDescriptor,
+	QueryRangePayloadV5,
+	ScalarData,
+} from 'types/api/v5/queryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -816,153 +822,118 @@ export const getEndPointsQueryPayload = (
 	];
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
+function buildFilterExpression(
+	domainName: string,
+	filters: IBuilderQuery['filters'],
+	showStatusCodeErrors: boolean,
+): string {
+	const baseFilterParts = [
+		`kind_string = 'Client'`,
+		`(http.url EXISTS OR url.full EXISTS)`,
+		`status_message EXISTS`,
+		`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
+	];
+	// const baseFilterParts = [
+	// 	`kind_string = 'Client'`,
+	// 	`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
+	// ];
+	if (showStatusCodeErrors) {
+		baseFilterParts.push('status_message EXISTS');
+	}
+	let filterExpression = baseFilterParts.join(' AND ');
+	if (filters?.items && filters.items.length > 0) {
+		const additionalFilters = filters.items
+			.map((item: TagFilterItem) => {
+				if (!item.key?.key) return '';
+				if (item.op === 'exists') {
+					return `${item.key.key} EXISTS`;
+				}
+				if (item.op === '!=') {
+					return `${item.key.key} != '${item.value}'`;
+				}
+				if (item.op === '=') {
+					return `${item.key.key} = '${item.value}'`;
+				}
+				return '';
+			})
+			.filter(Boolean)
+			.join(' AND ');
+		if (additionalFilters) {
+			filterExpression += ` AND ${additionalFilters}`;
+		}
+	}
+	return filterExpression;
+}
+
 export const getTopErrorsQueryPayload = (
 	domainName: string,
 	start: number,
 	end: number,
 	filters: IBuilderQuery['filters'],
 	showStatusCodeErrors = true,
-): GetQueryResultsProps[] => [
-	{
-		selectedTime: 'GLOBAL_TIME',
-		graphType: PANEL_TYPES.TABLE,
-		query: {
-			builder: {
-				queryData: [
-					{
-						dataSource: DataSource.TRACES,
-						queryName: 'A',
-						aggregateOperator: 'count',
-						aggregateAttribute: {
-							id: '------false',
-							dataType: DataTypes.String,
-							key: '',
-							type: '',
-						},
-						timeAggregation: 'rate',
-						spaceAggregation: 'sum',
-						functions: [],
-						filters: {
-							op: 'AND',
-							items: [
-								{
-									id: '04da97bd',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								{
-									id: 'b1af6bdb',
-									key: {
-										key: SPAN_ATTRIBUTES.URL_PATH,
-										dataType: DataTypes.String,
-										type: 'tag',
-									},
-									op: 'exists',
-									value: '',
-								},
-								...(showStatusCodeErrors
-									? [
-											{
-												id: '75d65388',
-												key: {
-													key: 'status_message',
-													dataType: DataTypes.String,
-													type: '',
-												},
-												op: 'exists',
-												value: '',
-											},
-									  ]
-									: []),
-								{
-									id: '4872bf91',
-									key: {
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										dataType: DataTypes.String,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: 'ab4c885d',
-									key: {
-										key: 'has_error',
-										dataType: DataTypes.bool,
-										type: '',
-									},
-									op: '=',
-									value: true,
-								},
-								...(filters?.items || []),
-							],
-						},
-						expression: 'A',
-						disabled: false,
-						stepInterval: 60,
-						having: [],
-						limit: 10,
-						orderBy: [
-							{
-								columnName: 'timestamp',
-								order: 'desc',
-							},
-						],
-						groupBy: [
-							{
-								key: SPAN_ATTRIBUTES.URL_PATH,
-								dataType: DataTypes.String,
-								type: 'tag',
-							},
-							{
-								dataType: DataTypes.String,
-								key: 'response_status_code',
-								type: '',
-								id: 'response_status_code--string----true',
-							},
-							{
-								key: 'status_message',
-								dataType: DataTypes.String,
-								type: '',
-							},
-						],
-						legend: '',
-						reduceTo: 'avg',
-					},
-				],
-				queryFormulas: [],
-				queryTraceOperator: [],
-			},
-			clickhouse_sql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
-			promql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			queryType: EQueryType.QUERY_BUILDER,
-		},
-		variables: {},
+): QueryRangePayloadV5 => {
+	const filterExpression = buildFilterExpression(
+		domainName,
+		filters,
+		showStatusCodeErrors,
+	);
+
+	return {
+		schemaVersion: 'v1',
 		start,
 		end,
-		step: 240,
-	},
-];
+		requestType: 'scalar',
+		compositeQuery: {
+			queries: [
+				{
+					type: 'builder_query',
+					spec: {
+						name: 'A',
+						signal: 'traces',
+						stepInterval: 60,
+						disabled: false,
+						aggregations: [{ expression: 'count()' }],
+						filter: { expression: filterExpression },
+						groupBy: [
+							{
+								name: 'http.url',
+								fieldDataType: 'string',
+								fieldContext: 'attribute',
+							},
+							{
+								name: 'url.full',
+								fieldDataType: 'string',
+								fieldContext: 'attribute',
+							},
+							{
+								name: 'response_status_code',
+								fieldDataType: 'string',
+								fieldContext: 'span',
+							},
+							{
+								name: 'status_message',
+								fieldDataType: 'string',
+								fieldContext: 'span',
+							},
+						],
+						limit: 10,
+						order: [
+							{
+								key: {
+									name: 'count()',
+								},
+								direction: 'desc',
+							},
+						],
+					},
+				},
+			],
+		},
+		formatOptions: { formatTableResultForUI: true, fillGaps: false },
+		variables: {},
+	};
+};
 
 export interface EndPointsTableRowData {
 	key: string;
@@ -1242,16 +1213,7 @@ export const formatEndPointsDataForTable = (
 	return formattedData;
 };
 
-export interface TopErrorsResponseRow {
-	metric: {
-		[SPAN_ATTRIBUTES.URL_PATH]: string;
-		[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]: string;
-		status_message: string;
-	};
-	values: [number, string][];
-	queryName: string;
-	legend: string;
-}
+export type TopErrorsResponseRow = ScalarData;
 
 export interface TopErrorsTableRowData {
 	key: string;
@@ -1261,44 +1223,52 @@ export interface TopErrorsTableRowData {
 	count: number | string;
 }
 
-export const formatTopErrorsDataForTable = (
-	data: TopErrorsResponseRow[] | undefined,
-): TopErrorsTableRowData[] => {
-	if (!data) return [];
+/**
+ * Returns '-' if value is empty, otherwise returns value as string
+ */
+export function getDisplayValue(value: unknown): string {
+	return isEmptyFilterValue(value) ? '-' : String(value);
+}
 
-	return data.map((row) => ({
-		key: v4(),
-		endpointName:
-			row.metric[SPAN_ATTRIBUTES.URL_PATH] === 'n/a' ||
-			row.metric[SPAN_ATTRIBUTES.URL_PATH] === undefined
-				? '-'
-				: row.metric[SPAN_ATTRIBUTES.URL_PATH],
-		statusCode:
-			row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE] === 'n/a' ||
-			row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE] === undefined
-				? '-'
-				: row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE],
-		statusMessage:
-			row.metric.status_message === 'n/a' ||
-			row.metric.status_message === undefined
-				? '-'
-				: row.metric.status_message,
-		count:
-			row.values &&
-			row.values[0] &&
-			row.values[0][1] !== undefined &&
-			row.values[0][1] !== 'n/a'
-				? row.values[0][1]
-				: '-',
-	}));
+export const formatTopErrorsDataForTable = (
+	scalarResult: TopErrorsResponseRow | undefined,
+): TopErrorsTableRowData[] => {
+	if (!scalarResult?.data) return [];
+
+	const columns = scalarResult.columns || [];
+	const rows = scalarResult.data || [];
+
+	return rows.map((rowData: unknown[]) => {
+		const rowObj: Record<string, unknown> = {};
+		columns.forEach((col: ColumnDescriptor, index: number) => {
+			rowObj[col.name] = rowData[index];
+		});
+
+		return {
+			key: v4(),
+			endpointName: getDisplayValue(rowObj[SPAN_ATTRIBUTES.URL_PATH]),
+			statusCode: getDisplayValue(rowObj[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]),
+			statusMessage: getDisplayValue(rowObj.status_message),
+			count: ((): number | string => {
+				const countValue = rowObj['count()'];
+				if (isEmptyFilterValue(countValue)) {
+					return '-';
+				}
+				if (typeof countValue === 'number') {
+					return countValue;
+				}
+				return Number(countValue) || '-';
+			})(),
+		};
+	});
 };
 
 export const getTopErrorsCoRelationQueryFilters = (
 	domainName: string,
 	endPointName: string,
 	statusCode: string,
-): IBuilderQuery['filters'] => ({
-	items: [
+): IBuilderQuery['filters'] => {
+	const items: TagFilterItem[] = [
 		{
 			id: 'ea16470b',
 			key: {
@@ -1330,7 +1300,10 @@ export const getTopErrorsCoRelationQueryFilters = (
 			op: '=',
 			value: domainName,
 		},
-		{
+	];
+
+	if (statusCode !== '-') {
+		items.push({
 			id: 'f6891e27',
 			key: {
 				key: 'response_status_code',
@@ -1340,10 +1313,14 @@ export const getTopErrorsCoRelationQueryFilters = (
 			},
 			op: '=',
 			value: statusCode,
-		},
-	],
-	op: 'AND',
-});
+		});
+	}
+
+	return {
+		items,
+		op: 'AND',
+	};
+};
 
 export const getTopErrorsColumnsConfig = (): ColumnType<TopErrorsTableRowData>[] => [
 	{
