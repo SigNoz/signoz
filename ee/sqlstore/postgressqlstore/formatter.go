@@ -126,8 +126,8 @@ func (f *formatter) convertJSONPathToPostgresWithMode(jsonPath string, asText bo
 
 	var result []byte
 
-	for i, part := range validParts {
-		if i == len(validParts)-1 {
+	for idx, part := range validParts {
+		if idx == len(validParts)-1 {
 			if asText {
 				result = append(result, "->>"...)
 			} else {
