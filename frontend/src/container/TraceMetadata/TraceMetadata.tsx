@@ -35,21 +35,21 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 		totalSpans,
 		notFound,
 	} = props;
+
+	const handlePreviousBtnClick = (): void => {
+		if (window.history.length > 1) {
+			history.goBack();
+		} else {
+			history.push(ROUTES.TRACES_EXPLORER);
+		}
+	};
+
 	return (
 		<div className="trace-metadata">
 			<section className="metadata-info">
 				<div className="first-row">
-					<Button className="previous-btn">
-						<ArrowLeft
-							size={14}
-							onClick={(): void => {
-								if (window.history.length > 1) {
-									history.goBack();
-								} else {
-									history.push(ROUTES.TRACES_EXPLORER);
-								}
-							}}
-						/>
+					<Button className="previous-btn" onClick={handlePreviousBtnClick}>
+						<ArrowLeft size={14} />
 					</Button>
 					<div className="trace-name">
 						<DraftingCompass size={14} className="drafting" />
