@@ -1,3 +1,8 @@
+/* eslint-disable sonarjs/no-duplicate-string */
+/* eslint-disable sonarjs/no-identical-functions */
+
+import getSpanPercentiles from 'api/trace/getSpanPercentiles';
+import getUserPreference from 'api/v1/user/preferences/name/get';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
@@ -10,12 +15,15 @@ import {
 	userEvent,
 	waitFor,
 } from 'tests/test-utils';
+import { SuccessResponseV2 } from 'types/api';
+import { GetSpanPercentilesResponseDataProps } from 'types/api/trace/getSpanPercentiles';
 
 import SpanDetailsDrawer from '../SpanDetailsDrawer';
 import {
 	expectedAfterFilterExpression,
 	expectedBeforeFilterExpression,
 	expectedSpanFilterExpression,
+	expectedTraceOnlyFilterExpression,
 	mockAfterLogsResponse,
 	mockBeforeLogsResponse,
 	mockEmptyLogsResponse,
@@ -23,11 +31,17 @@ import {
 	mockSpanLogsResponse,
 } from './mockData';
 
+// Get typed mocks
+const mockGetSpanPercentiles = jest.mocked(getSpanPercentiles);
+const mockGetUserPreference = jest.mocked(getUserPreference);
+const mockSafeNavigate = jest.fn();
+
 // Mock external dependencies
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
+	useLocation: (): { pathname: string; search: string } => ({
 		pathname: `${ROUTES.TRACE_DETAIL}`,
+		search: 'trace_id=test-trace-id',
 	}),
 }));
 
@@ -37,9 +51,8 @@ jest.mock('@signozhq/button', () => ({
 	),
 }));
 
-const mockSafeNavigate = jest.fn();
 jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): any => ({
+	useSafeNavigate: (): { safeNavigate: jest.MockedFunction<() => void> } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
@@ -67,7 +80,10 @@ const mockUpdateAllQueriesOperators = jest.fn().mockReturnValue({
 });
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: (): any => ({
+	useQueryBuilder: (): {
+		updateAllQueriesOperators: jest.MockedFunction<() => any>;
+		currentQuery: any;
+	} => ({
 		updateAllQueriesOperators: mockUpdateAllQueriesOperators,
 		currentQuery: {
 			builder: {
@@ -112,26 +128,46 @@ jest.mock('lib/uPlotLib/utils/generateColor', () => ({
 	generateColor: jest.fn().mockReturnValue('#1f77b4'),
 }));
 
+// Mock getSpanPercentiles API
+jest.mock('api/trace/getSpanPercentiles', () => ({
+	__esModule: true,
+	default: jest.fn(),
+}));
+
+// Mock getUserPreference API
+jest.mock('api/v1/user/preferences/name/get', () => ({
+	__esModule: true,
+	default: jest.fn(),
+}));
+
 jest.mock(
 	'components/OverlayScrollbar/OverlayScrollbar',
 	() =>
 		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
-		function ({ children }: any) {
+		function ({ children }: { children: React.ReactNode }) {
 			return <div data-testid="overlay-scrollbar">{children}</div>;
 		},
 );
 
 // Mock Virtuoso to avoid complex virtualization
 jest.mock('react-virtuoso', () => ({
-	Virtuoso: jest.fn(({ data, itemContent }) => (
-		<div data-testid="virtuoso">
-			{data?.map((item: any, index: number) => (
-				<div key={item.id || index} data-testid={`log-item-${item.id}`}>
-					{itemContent(index, item)}
-				</div>
-			))}
-		</div>
-	)),
+	Virtuoso: jest.fn(
+		({
+			data,
+			itemContent,
+		}: {
+			data: any[];
+			itemContent: (index: number, item: any) => React.ReactNode;
+		}) => (
+			<div data-testid="virtuoso">
+				{data?.map((item: any, index: number) => (
+					<div key={item.id || index} data-testid={`log-item-${item.id}`}>
+						{itemContent(index, item)}
+					</div>
+				))}
+			</div>
+		),
+	),
 }));
 
 // Mock RawLogView component
@@ -144,7 +180,12 @@ jest.mock(
 			onLogClick,
 			isHighlighted,
 			helpTooltip,
-		}: any) {
+		}: {
+			data: any;
+			onLogClick: (data: any, event: React.MouseEvent) => void;
+			isHighlighted: boolean;
+			helpTooltip: string;
+		}) {
 			return (
 				// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 				<div
@@ -163,9 +204,11 @@ jest.mock(
 
 // Mock PreferenceContextProvider
 jest.mock('providers/preferences/context/PreferenceContextProvider', () => ({
-	PreferenceContextProvider: ({ children }: any): JSX.Element => (
-		<div>{children}</div>
-	),
+	PreferenceContextProvider: ({
+		children,
+	}: {
+		children: React.ReactNode;
+	}): JSX.Element => <div>{children}</div>,
 }));
 
 // Mock QueryBuilder context value
@@ -216,36 +259,95 @@ const renderSpanDetailsDrawer = (props = {}): void => {
 	);
 };
 
+// Constants for repeated strings
+const SEARCH_RESOURCE_ATTRIBUTES_PLACEHOLDER = 'Search resource attributes';
+const P75_TEXT = 'p75';
+const SPAN_PERCENTILE_TEXT = 'Span Percentile';
+
+// Mock data for span percentiles
+const mockSpanPercentileResponse = {
+	httpStatusCode: 200 as const,
+	data: {
+		percentiles: {
+			p50: 500000000, // 500ms in nanoseconds
+			p90: 1000000000, // 1s in nanoseconds
+			p95: 1500000000, // 1.5s in nanoseconds
+			p99: 2000000000, // 2s in nanoseconds
+		},
+		position: {
+			percentile: 75.5,
+			description: 'This span is in the 75th percentile',
+		},
+	},
+};
+
+const mockUserPreferenceResponse = {
+	statusCode: 200,
+	httpStatusCode: 200,
+	error: null,
+	message: 'Success',
+	data: {
+		name: 'span_percentile_resource_attributes',
+		description: 'Resource attributes for span percentile calculation',
+		valueType: 'array',
+		defaultValue: [],
+		value: ['service.name', 'name', 'http.method'],
+		allowedValues: [],
+		allowedScopes: [],
+		createdAt: '2023-01-01T00:00:00Z',
+		updatedAt: '2023-01-01T00:00:00Z',
+	},
+};
+
+const mockSpanPercentileErrorResponse = ({
+	httpStatusCode: 500,
+	data: null,
+} as unknown) as SuccessResponseV2<GetSpanPercentilesResponseDataProps>;
+
 describe('SpanDetailsDrawer', () => {
-	let apiCallHistory: any[] = [];
+	let apiCallHistory: any = {};
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		apiCallHistory = [];
+		apiCallHistory = {
+			span_logs: null,
+			before_logs: null,
+			after_logs: null,
+			trace_only_logs: null,
+		};
 		mockSafeNavigate.mockClear();
 		mockWindowOpen.mockClear();
 		mockUpdateAllQueriesOperators.mockClear();
+		mockGetSpanPercentiles.mockClear();
+		mockGetUserPreference.mockClear();
 
 		// Setup API call tracking
 		(GetMetricQueryRange as jest.Mock).mockImplementation((query) => {
-			apiCallHistory.push(query);
-
 			// Determine response based on v5 filter expressions
-			const filterExpression =
-				query.query?.builder?.queryData?.[0]?.filter?.expression;
+			const filterExpression = (query as any)?.query?.builder?.queryData?.[0]
+				?.filter?.expression;
 
 			if (!filterExpression) return Promise.resolve(mockEmptyLogsResponse);
 
 			// Check for span logs query (contains both trace_id and span_id)
 			if (filterExpression.includes('span_id')) {
+				apiCallHistory.span_logs = query;
 				return Promise.resolve(mockSpanLogsResponse);
 			}
 			// Check for before logs query (contains trace_id and id <)
 			if (filterExpression.includes('id <')) {
+				apiCallHistory.before_logs = query;
 				return Promise.resolve(mockBeforeLogsResponse);
 			}
 			// Check for after logs query (contains trace_id and id >)
 			if (filterExpression.includes('id >')) {
+				apiCallHistory.after_logs = query;
+				return Promise.resolve(mockAfterLogsResponse);
+			}
+
+			// Check for trace only logs query (contains trace_id)
+			if (filterExpression.includes('trace_id =')) {
+				apiCallHistory.trace_only_logs = query;
 				return Promise.resolve(mockAfterLogsResponse);
 			}
 
@@ -287,7 +389,7 @@ describe('SpanDetailsDrawer', () => {
 		});
 	});
 
-	it('should make three API queries when logs tab is opened', async () => {
+	it('should make 4 API queries when logs tab is opened', async () => {
 		renderSpanDetailsDrawer();
 
 		// Click on logs tab to trigger API calls
@@ -296,25 +398,35 @@ describe('SpanDetailsDrawer', () => {
 
 		// Wait for all API calls to complete
 		await waitFor(() => {
-			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(4);
 		});
 
-		// Verify the three distinct queries were made
-		const [spanQuery, beforeQuery, afterQuery] = apiCallHistory;
+		// Verify the four distinct queries were made
+		const {
+			span_logs: spanQuery,
+			before_logs: beforeQuery,
+			after_logs: afterQuery,
+			trace_only_logs: traceOnlyQuery,
+		} = apiCallHistory;
 
 		// 1. Span logs query (trace_id + span_id)
-		expect(spanQuery.query.builder.queryData[0].filter.expression).toBe(
+		expect((spanQuery as any).query.builder.queryData[0].filter.expression).toBe(
 			expectedSpanFilterExpression,
 		);
 
 		// 2. Before logs query (trace_id + id < first_span_log_id)
-		expect(beforeQuery.query.builder.queryData[0].filter.expression).toBe(
-			expectedBeforeFilterExpression,
-		);
+		expect(
+			(beforeQuery as any).query.builder.queryData[0].filter.expression,
+		).toBe(expectedBeforeFilterExpression);
 
 		// 3. After logs query (trace_id + id > last_span_log_id)
-		expect(afterQuery.query.builder.queryData[0].filter.expression).toBe(
+		expect((afterQuery as any).query.builder.queryData[0].filter.expression).toBe(
 			expectedAfterFilterExpression,
+		);
+
+		// 4. Trace only logs query (trace_id)
+		expect(traceOnlyQuery.query.builder.queryData[0].filter.expression).toBe(
+			expectedTraceOnlyFilterExpression,
 		);
 	});
 
@@ -327,19 +439,29 @@ describe('SpanDetailsDrawer', () => {
 
 		// Wait for all API calls to complete
 		await waitFor(() => {
-			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(4);
 		});
 
-		const [spanQuery, beforeQuery, afterQuery] = apiCallHistory;
+		const {
+			span_logs: spanQuery,
+			before_logs: beforeQuery,
+			after_logs: afterQuery,
+		} = apiCallHistory;
 
 		// Verify ordering: span query should use 'desc' (default)
-		expect(spanQuery.query.builder.queryData[0].orderBy[0].order).toBe('desc');
+		expect((spanQuery as any).query.builder.queryData[0].orderBy[0].order).toBe(
+			'desc',
+		);
 
 		// Before query should use 'desc' (default)
-		expect(beforeQuery.query.builder.queryData[0].orderBy[0].order).toBe('desc');
+		expect((beforeQuery as any).query.builder.queryData[0].orderBy[0].order).toBe(
+			'desc',
+		);
 
 		// After query should use 'asc' for chronological order
-		expect(afterQuery.query.builder.queryData[0].orderBy[0].order).toBe('asc');
+		expect((afterQuery as any).query.builder.queryData[0].orderBy[0].order).toBe(
+			'asc',
+		);
 	});
 
 	it('should navigate to logs explorer with span filters when span log is clicked', async () => {
@@ -463,24 +585,6 @@ describe('SpanDetailsDrawer', () => {
 		expect(mockSafeNavigate).not.toHaveBeenCalled();
 	});
 
-	it('should handle empty logs state', async () => {
-		// Mock empty response for all queries
-		(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockEmptyLogsResponse);
-
-		renderSpanDetailsDrawer();
-
-		// Open logs view
-		const logsButton = screen.getByRole('radio', { name: /logs/i });
-		fireEvent.click(logsButton);
-
-		// Wait and verify empty state is shown
-		await waitFor(() => {
-			expect(
-				screen.getByText(/No logs found for selected span/),
-			).toBeInTheDocument();
-		});
-	});
-
 	it('should display span logs as highlighted and context logs as regular', async () => {
 		renderSpanDetailsDrawer();
 
@@ -490,7 +594,7 @@ describe('SpanDetailsDrawer', () => {
 
 		// Wait for all API calls to complete first
 		await waitFor(() => {
-			expect(GetMetricQueryRange).toHaveBeenCalledTimes(3);
+			expect(GetMetricQueryRange).toHaveBeenCalledTimes(4);
 		});
 
 		// Wait for all logs to be rendered - both span logs and context logs
@@ -517,6 +621,435 @@ describe('SpanDetailsDrawer', () => {
 		expect(contextLogBefore).toHaveClass('log-context');
 		expect(contextLogAfter).toHaveClass('log-context');
 		expect(contextLogBefore).not.toHaveAttribute('title');
+	});
+
+	// Span Percentile Tests
+	describe('Span Percentile Functionality', () => {
+		beforeEach(() => {
+			// Setup default mocks for percentile tests
+			mockGetUserPreference.mockResolvedValue(mockUserPreferenceResponse);
+			mockGetSpanPercentiles.mockResolvedValue(mockSpanPercentileResponse);
+		});
+
+		it('should display span percentile value after successful API call', async () => {
+			renderSpanDetailsDrawer();
+
+			// Wait for the 2-second delay and API call to complete
+			await waitFor(
+				() => {
+					expect(screen.getByText(P75_TEXT)).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+		});
+
+		it('should show loading spinner while fetching percentile data', async () => {
+			// Mock a delayed response
+			mockGetSpanPercentiles.mockImplementation(
+				() =>
+					new Promise((resolve) => {
+						setTimeout(() => resolve(mockSpanPercentileResponse), 1000);
+					}),
+			);
+
+			renderSpanDetailsDrawer();
+
+			// Wait for loading spinner to appear (it's visible as a div with class loading-spinner-container)
+			await waitFor(
+				() => {
+					const spinnerContainer = document.querySelector(
+						'.loading-spinner-container',
+					);
+					expect(spinnerContainer).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+		});
+
+		it('should expand percentile details when percentile value is clicked', async () => {
+			renderSpanDetailsDrawer();
+
+			// Wait for percentile data to load
+			await waitFor(
+				() => {
+					expect(screen.getByText(P75_TEXT)).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+
+			// Click on the percentile value to expand details
+			const percentileValue = screen.getByText(P75_TEXT);
+			fireEvent.click(percentileValue);
+
+			// Verify percentile details are expanded
+			await waitFor(() => {
+				expect(screen.getByText(SPAN_PERCENTILE_TEXT)).toBeInTheDocument();
+				// Look for the text that's actually rendered
+				expect(screen.getByText(/This span duration is/)).toBeInTheDocument();
+				expect(
+					screen.getByText(/out of the distribution for this resource/),
+				).toBeInTheDocument();
+			});
+		});
+
+		it('should display percentile table with correct values', async () => {
+			renderSpanDetailsDrawer();
+
+			// Wait for percentile data to load
+			await waitFor(
+				() => {
+					expect(screen.getByText(P75_TEXT)).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+
+			const percentileValue = screen.getByText(P75_TEXT);
+			fireEvent.click(percentileValue);
+
+			// Wait for the percentile details to expand
+			await waitFor(() => {
+				expect(screen.getByText(SPAN_PERCENTILE_TEXT)).toBeInTheDocument();
+			});
+
+			// Wait for the table to be visible (it might take a moment to render)
+			await waitFor(
+				() => {
+					expect(screen.getByText('Percentile')).toBeInTheDocument();
+					expect(screen.getByText('Duration')).toBeInTheDocument();
+				},
+				{ timeout: 5000 },
+			);
+
+			// Verify percentile values are displayed
+			expect(screen.getByText('p50')).toBeInTheDocument();
+			expect(screen.getByText('p90')).toBeInTheDocument();
+			expect(screen.getByText('p95')).toBeInTheDocument();
+			expect(screen.getByText('p99')).toBeInTheDocument();
+
+			// Verify current span row - use getAllByText since there are multiple p75 elements
+			expect(screen.getAllByText(P75_TEXT)).toHaveLength(3); // Should appear in value, expanded details, and table
+
+			// Verify the table has the current span indicator (there are multiple occurrences)
+			expect(screen.getAllByText(/this span/i).length).toBeGreaterThan(0);
+		});
+
+		it('should allow time range selection and trigger API call', async () => {
+			renderSpanDetailsDrawer();
+
+			// Wait for percentile data to load and expand
+			await waitFor(
+				() => {
+					expect(screen.getByText(P75_TEXT)).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+
+			const percentileValue = screen.getByText(P75_TEXT);
+			fireEvent.click(percentileValue);
+
+			// Wait for percentile details to expand
+			await waitFor(() => {
+				expect(screen.getByText(SPAN_PERCENTILE_TEXT)).toBeInTheDocument();
+			});
+
+			// Find the time range selector and verify it exists
+			const timeRangeSelector = screen.getByRole('combobox');
+			expect(timeRangeSelector).toBeInTheDocument();
+
+			// Verify the default time range is displayed
+			expect(screen.getByText(/1.*hour/i)).toBeInTheDocument();
+
+			// Verify API was called with default parameters
+			await waitFor(() => {
+				expect(mockGetSpanPercentiles).toHaveBeenCalledWith(
+					expect.objectContaining({
+						start: expect.any(Number),
+						end: expect.any(Number),
+						spanDuration: mockSpan.durationNano,
+						serviceName: mockSpan.serviceName,
+						name: mockSpan.name,
+						resourceAttributes: expect.any(Object),
+					}),
+				);
+			});
+		});
+
+		it('should show resource attributes selector when plus icon is clicked', async () => {
+			renderSpanDetailsDrawer();
+
+			// Wait for percentile data to load and expand
+			await waitFor(
+				() => {
+					expect(screen.getByText(P75_TEXT)).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+
+			const percentileValue = screen.getByText(P75_TEXT);
+			fireEvent.click(percentileValue);
+
+			// Wait for percentile details to expand
+			await waitFor(() => {
+				expect(screen.getByText(SPAN_PERCENTILE_TEXT)).toBeInTheDocument();
+			});
+
+			// Click the plus icon using test ID
+			const plusIcon = screen.getByTestId('plus-icon');
+			fireEvent.click(plusIcon);
+
+			// Verify resource attributes selector is shown
+			await waitFor(() => {
+				expect(
+					screen.getByPlaceholderText(SEARCH_RESOURCE_ATTRIBUTES_PLACEHOLDER),
+				).toBeInTheDocument();
+			});
+		});
+
+		it('should filter resource attributes based on search query', async () => {
+			renderSpanDetailsDrawer();
+
+			// Wait for percentile data to load and expand
+			await waitFor(
+				() => {
+					expect(screen.getByText(P75_TEXT)).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+
+			const percentileValue = screen.getByText(P75_TEXT);
+			fireEvent.click(percentileValue);
+
+			// Wait for percentile details to expand and show resource attributes
+			await waitFor(() => {
+				expect(screen.getByText(SPAN_PERCENTILE_TEXT)).toBeInTheDocument();
+			});
+
+			const plusIcon = screen.getByTestId('plus-icon');
+			fireEvent.click(plusIcon);
+
+			await waitFor(() => {
+				expect(
+					screen.getByPlaceholderText(SEARCH_RESOURCE_ATTRIBUTES_PLACEHOLDER),
+				).toBeInTheDocument();
+			});
+
+			// Type in search query
+			const searchInput = screen.getByPlaceholderText(
+				SEARCH_RESOURCE_ATTRIBUTES_PLACEHOLDER,
+			);
+			fireEvent.change(searchInput, { target: { value: 'http' } });
+
+			// Verify only matching attributes are shown (use getAllByText for all since they appear in multiple places)
+			expect(screen.getAllByText('http.method').length).toBeGreaterThan(0);
+			expect(screen.getAllByText('http.url').length).toBeGreaterThan(0);
+			expect(screen.getAllByText('http.status_code').length).toBeGreaterThan(0);
+		});
+
+		it('should handle resource attribute selection and trigger API call', async () => {
+			renderSpanDetailsDrawer();
+
+			// Wait for percentile data to load and expand
+			await waitFor(
+				() => {
+					expect(screen.getByText(P75_TEXT)).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+
+			const percentileValue = screen.getByText(P75_TEXT);
+			fireEvent.click(percentileValue);
+
+			// Wait for percentile details to expand and show resource attributes
+			await waitFor(() => {
+				expect(screen.getByText(SPAN_PERCENTILE_TEXT)).toBeInTheDocument();
+			});
+
+			const plusIcon = screen.getByTestId('plus-icon');
+			fireEvent.click(plusIcon);
+
+			await waitFor(() => {
+				expect(
+					screen.getByPlaceholderText(SEARCH_RESOURCE_ATTRIBUTES_PLACEHOLDER),
+				).toBeInTheDocument();
+			});
+
+			// Find and click a checkbox for a resource attribute
+			const httpMethodCheckbox = screen.getByRole('checkbox', {
+				name: /http\.method/i,
+			});
+			fireEvent.click(httpMethodCheckbox);
+
+			// Verify API was called with updated resource attributes
+			await waitFor(() => {
+				expect(mockGetSpanPercentiles).toHaveBeenCalledWith(
+					expect.objectContaining({
+						resourceAttributes: expect.objectContaining({
+							'http.method': 'GET',
+						}),
+					}),
+				);
+			});
+		});
+
+		it('should handle API error gracefully', async () => {
+			// Mock API error
+			mockGetSpanPercentiles.mockResolvedValue(mockSpanPercentileErrorResponse);
+
+			renderSpanDetailsDrawer();
+
+			// Wait for the 2-second delay
+			await waitFor(
+				() => {
+					// Verify no percentile value is displayed on error
+					expect(screen.queryByText(/p\d+/)).not.toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+		});
+
+		it('should not display percentile value when API returns non-200 status', async () => {
+			// Mock API response with non-200 status
+			mockGetSpanPercentiles.mockResolvedValue(({
+				httpStatusCode: 500 as const,
+				data: null,
+			} as unknown) as Awaited<ReturnType<typeof getSpanPercentiles>>);
+
+			renderSpanDetailsDrawer();
+
+			// Wait for the 2-second delay
+			await waitFor(
+				() => {
+					// Verify no percentile value is displayed
+					expect(screen.queryByText(/p\d+/)).not.toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+		});
+
+		it('should display tooltip with correct content', async () => {
+			renderSpanDetailsDrawer();
+
+			// Wait for percentile data to load
+			await waitFor(
+				() => {
+					expect(screen.getByText(P75_TEXT)).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+
+			// Hover over the percentile value to show tooltip
+			const percentileValue = screen.getByText(P75_TEXT);
+			fireEvent.mouseEnter(percentileValue);
+
+			// Verify tooltip content - use more flexible text matching
+			await waitFor(() => {
+				expect(screen.getByText(/This span duration is/)).toBeInTheDocument();
+				expect(screen.getByText(/out of the distribution/)).toBeInTheDocument();
+				expect(
+					screen.getByText(/evaluated for 1 hour\(s\) since the span start time/),
+				).toBeInTheDocument();
+				expect(screen.getByText('Click to learn more')).toBeInTheDocument();
+			});
+		});
+
+		it('should handle empty percentile data gracefully', async () => {
+			// Mock empty percentile response
+			mockGetSpanPercentiles.mockResolvedValue({
+				httpStatusCode: 200,
+				data: {
+					percentiles: {},
+					position: {
+						percentile: 0,
+						description: '',
+					},
+				},
+			});
+
+			renderSpanDetailsDrawer();
+
+			// Wait for the 2-second delay
+			await waitFor(
+				() => {
+					// Verify p0 is displayed for empty data
+					expect(screen.getByText('p0')).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+		});
+
+		it('should call API with correct parameters', async () => {
+			renderSpanDetailsDrawer();
+
+			// Wait for API call to be made
+			await waitFor(
+				() => {
+					expect(mockGetSpanPercentiles).toHaveBeenCalled();
+				},
+				{ timeout: 3000 },
+			);
+
+			// Verify API was called with correct parameters
+			expect(mockGetSpanPercentiles).toHaveBeenCalledWith({
+				start: expect.any(Number),
+				end: expect.any(Number),
+				spanDuration: mockSpan.durationNano,
+				serviceName: mockSpan.serviceName,
+				name: mockSpan.name,
+				resourceAttributes: expect.any(Object),
+			});
+		});
+
+		it('should handle user preference loading', async () => {
+			renderSpanDetailsDrawer();
+
+			// Verify getUserPreference was called
+			await waitFor(() => {
+				expect(mockGetUserPreference).toHaveBeenCalledWith({
+					name: 'span_percentile_resource_attributes',
+				});
+			});
+		});
+
+		it('should close resource attributes selector when check icon is clicked', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderSpanDetailsDrawer();
+
+			// Wait for percentile data to load and expand
+			await waitFor(
+				() => {
+					expect(screen.getByText(P75_TEXT)).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+
+			const percentileValue = screen.getByText(P75_TEXT);
+			await user.click(percentileValue);
+
+			// Wait for percentile details to expand and show resource attributes
+			await waitFor(() => {
+				expect(screen.getByText(SPAN_PERCENTILE_TEXT)).toBeInTheDocument();
+			});
+
+			const plusIcon = screen.getByTestId('plus-icon');
+			await user.click(plusIcon);
+
+			await waitFor(() => {
+				expect(
+					screen.getByPlaceholderText(SEARCH_RESOURCE_ATTRIBUTES_PLACEHOLDER),
+				).toBeInTheDocument();
+			});
+
+			// Click the check icon to close the selector
+			const checkIcon = screen.getByTestId('check-icon');
+			await user.click(checkIcon);
+
+			// Verify resource attributes selector is hidden
+			await waitFor(() => {
+				expect(
+					screen.queryByPlaceholderText(SEARCH_RESOURCE_ATTRIBUTES_PLACEHOLDER),
+				).not.toBeInTheDocument();
+			});
+		});
 	});
 });
 

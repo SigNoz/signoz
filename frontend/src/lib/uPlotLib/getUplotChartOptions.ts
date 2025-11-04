@@ -36,6 +36,7 @@ import { getYAxisScale } from './utils/getYAxisScale';
 interface ExtendedUPlot extends uPlot {
 	_legendScrollCleanup?: () => void;
 	_tooltipCleanup?: () => void;
+	_legendElementCleanup?: Array<() => void>;
 }
 
 export interface GetUPlotChartOptions {
@@ -46,6 +47,7 @@ export interface GetUPlotChartOptions {
 	panelType?: PANEL_TYPES;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	graphsVisibilityStates?: boolean[];
 	setGraphsVisibilityStates?: FullViewProps['setGraphsVisibilityStates'];
@@ -191,6 +193,7 @@ export const getUPlotChartOptions = ({
 	apiResponse,
 	onDragSelect,
 	yAxisUnit,
+	decimalPrecision,
 	minTimeScale,
 	maxTimeScale,
 	onClickHandler = _noop,
@@ -358,6 +361,7 @@ export const getUPlotChartOptions = ({
 				colorMapping,
 				customTooltipElement,
 				query: query || currentQuery,
+				decimalPrecision,
 			}),
 			onClickPlugin({
 				onClick: onClickHandler,
@@ -472,6 +476,9 @@ export const getUPlotChartOptions = ({
 					const legend = self.root.querySelector('.u-legend');
 					if (legend) {
 						const legendElement = legend as HTMLElement;
+
+						// Initialize cleanup array for legend element listeners
+						(self as ExtendedUPlot)._legendElementCleanup = [];
 
 						// Apply enhanced legend styling
 						if (enhancedLegend) {
@@ -639,6 +646,17 @@ export const getUPlotChartOptions = ({
 								thElement.addEventListener('mouseenter', showTooltip);
 								thElement.addEventListener('mouseleave', hideTooltip);
 
+								// Store cleanup function for tooltip listeners
+								(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
+									thElement.removeEventListener('mouseenter', showTooltip);
+									thElement.removeEventListener('mouseleave', hideTooltip);
+									// Cleanup any lingering tooltip
+									if (tooltipElement) {
+										tooltipElement.remove();
+										tooltipElement = null;
+									}
+								});
+
 								// Add click handlers for marker and text separately
 								const currentMarker = thElement.querySelector('.u-marker');
 								const textElement = thElement.querySelector('.legend-text');
@@ -702,12 +720,17 @@ export const getUPlotChartOptions = ({
 											);
 										}
 									});
+
+									// Store cleanup function for marker click listener
+									(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
+										currentMarker.removeEventListener('click', markerClickHandler);
+									});
 								}
 
 								// Text click handler - show only/show all behavior (existing behavior)
 								if (textElement) {
 									// Create the click handler function
-									const clickHandler = (): void => {
+									const textClickHandler = (): void => {
 										if (stackChart) {
 											handleStackChart();
 										}
@@ -751,12 +774,16 @@ export const getUPlotChartOptions = ({
 											currentTextElement.style.pointerEvents = 'auto';
 
 											// Add multiple event listeners to ensure we catch the click
-											currentTextElement.addEventListener('click', clickHandler, false);
+											currentTextElement.addEventListener(
+												'click',
+												textClickHandler,
+												false,
+											);
 											currentTextElement.addEventListener(
 												'mousedown',
 												(e) => {
 													e.preventDefault();
-													clickHandler();
+													textClickHandler();
 												},
 												false,
 											);
@@ -766,17 +793,49 @@ export const getUPlotChartOptions = ({
 												'click',
 												(e) => {
 													if (e.target === currentTextElement) {
-														clickHandler();
+														textClickHandler();
 													}
 												},
 												false,
 											);
 										}
 									});
+
+									// Store cleanup function for text click listener
+									(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
+										textElement.removeEventListener('click', textClickHandler);
+									});
 								}
 							}
 						});
 					}
+				},
+			],
+			destroy: [
+				(self): void => {
+					// Clean up legend scroll listener
+					if ((self as ExtendedUPlot)._legendScrollCleanup) {
+						(self as ExtendedUPlot)._legendScrollCleanup?.();
+						(self as ExtendedUPlot)._legendScrollCleanup = undefined;
+					}
+
+					// Clean up tooltip global listener
+					if ((self as ExtendedUPlot)._tooltipCleanup) {
+						(self as ExtendedUPlot)._tooltipCleanup?.();
+						(self as ExtendedUPlot)._tooltipCleanup = undefined;
+					}
+
+					// Clean up all legend element listeners
+					if ((self as ExtendedUPlot)._legendElementCleanup) {
+						(self as ExtendedUPlot)._legendElementCleanup?.forEach((cleanup) => {
+							cleanup();
+						});
+						(self as ExtendedUPlot)._legendElementCleanup = [];
+					}
+
+					// Clean up any remaining tooltips in DOM
+					const existingTooltips = document.querySelectorAll('.legend-tooltip');
+					existingTooltips.forEach((tooltip) => tooltip.remove());
 				},
 			],
 		},

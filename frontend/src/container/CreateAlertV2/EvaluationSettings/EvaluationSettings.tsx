@@ -10,6 +10,7 @@ import { getEvaluationWindowTypeText, getTimeframeText } from './utils';
 
 function EvaluationSettings(): JSX.Element {
 	const { evaluationWindow, setEvaluationWindow } = useCreateAlertState();
+
 	const [
 		isEvaluationWindowPopoverOpen,
 		setIsEvaluationWindowPopoverOpen,
@@ -30,7 +31,7 @@ function EvaluationSettings(): JSX.Element {
 			trigger="click"
 			showArrow={false}
 		>
-			<Button>
+			<Button data-testid="evaluation-settings-button">
 				<div className="evaluate-alert-conditions-button-left">
 					{getTimeframeText(evaluationWindow)}
 				</div>

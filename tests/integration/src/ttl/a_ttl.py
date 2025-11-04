@@ -229,7 +229,7 @@ def test_set_custom_retention_ttl_basic(
         "defaultTTLDays": 100,
         "ttlConditions": [],
         "coldStorageVolume": "",
-        "coldStorageDuration": 0,
+        "coldStorageDurationDays": 0,
     }
 
     headers = {
@@ -305,7 +305,7 @@ def test_set_custom_retention_ttl_basic_fallback(
         "defaultTTLDays": 100,
         "ttlConditions": [],
         "coldStorageVolume": "",
-        "coldStorageDuration": 0,
+        "coldStorageDurationDays": 0,
     }
 
     headers = {
@@ -360,7 +360,7 @@ def test_set_custom_retention_ttl_basic_101_times(signoz: types.SigNoz, get_toke
             "defaultTTLDays": 100,
             "ttlConditions": [],
             "coldStorageVolume": "",
-            "coldStorageDuration": 0,
+            "coldStorageDurationDays": 0,
         }
 
         headers = {
@@ -436,7 +436,7 @@ def test_set_custom_retention_ttl_with_conditions(
             }
         ],
         "coldStorageVolume": "",
-        "coldStorageDuration": 0,
+        "coldStorageDurationDays": 0,
     }
 
     headers = {
@@ -484,7 +484,7 @@ def test_set_custom_retention_ttl_with_cold_storage(
             }
         ],
         "coldStorageVolume": "logs_cold_storage",
-        "coldStorageDuration": 30,  # 30 days to cold storage
+        "coldStorageDurationDays": 30,  # 30 days to cold storage
     }
     # Insert some logs with these attribute keys
 
@@ -534,7 +534,7 @@ def test_set_custom_retention_ttl_duplicate_conditions(
             },
         ],
         "coldStorageVolume": "",
-        "coldStorageDuration": 0,
+        "coldStorageDurationDays": 0,
     }
 
     headers = {
@@ -571,7 +571,7 @@ def test_set_custom_retention_ttl_invalid_condition(
             }
         ],
         "coldStorageVolume": "",
-        "coldStorageDuration": 0,
+        "coldStorageDurationDays": 0,
     }
 
     headers = {
@@ -604,7 +604,7 @@ def test_get_custom_retention_ttl(
             }
         ],
         "coldStorageVolume": "",
-        "coldStorageDuration": 0,
+        "coldStorageDurationDays": 0,
     }
 
     # Insert some logs with these attribute keys
@@ -782,7 +782,7 @@ def test_large_ttl_conditions_list(
         "defaultTTLDays": 30,
         "ttlConditions": conditions,
         "coldStorageVolume": "",
-        "coldStorageDuration": 0,
+        "coldStorageDurationDays": 0,
     }
 
     headers = {
