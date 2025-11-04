@@ -1,6 +1,8 @@
 package sqlitesqlstore
 
 import (
+	"reflect"
+
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/uptrace/bun/schema"
 )
@@ -89,9 +91,7 @@ func (f *formatter) JSONArrayLiteral(values ...string) []byte {
 		if idx > 0 {
 			sql = append(sql, ", "...)
 		}
-		sql = append(sql, '\'')
-		sql = append(sql, value...)
-		sql = append(sql, '\'')
+		sql = f.bunf.AppendValue(sql, reflect.ValueOf(value))
 	}
 	sql = append(sql, ')')
 	return sql

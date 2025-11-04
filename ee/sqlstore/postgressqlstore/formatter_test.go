@@ -389,7 +389,7 @@ func TestConvertJSONPathToPostgresWithMode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := newFormatter(pgdialect.New()).(*formatter)
-			got := f.convertJSONPathToPostgresWithMode(tt.jsonPath, tt.asText)
+			got := string(f.convertJSONPathToPostgresWithMode(tt.jsonPath, tt.asText))
 			assert.Equal(t, tt.expected, got)
 		})
 	}

@@ -1,6 +1,7 @@
 package postgressqlstore
 
 import (
+	"reflect"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -93,9 +94,7 @@ func (f *formatter) JSONArrayLiteral(values ...string) []byte {
 		if i > 0 {
 			sql = append(sql, ", "...)
 		}
-		sql = append(sql, '\'')
-		sql = append(sql, v...)
-		sql = append(sql, '\'')
+		sql = f.bunf.AppendValue(sql, reflect.ValueOf(v))
 	}
 	sql = append(sql, ')')
 	return sql
@@ -108,44 +107,44 @@ func (f *formatter) TextToJsonColumn(column string) []byte {
 	return sql
 }
 
-func (f *formatter) convertJSONPathToPostgres(jsonPath string) string {
+func (f *formatter) convertJSONPathToPostgres(jsonPath string) []byte {
 	return f.convertJSONPathToPostgresWithMode(jsonPath, true)
 }
 
-func (f *formatter) convertJSONPathToPostgresWithMode(jsonPath string, asText bool) string {
+func (f *formatter) convertJSONPathToPostgresWithMode(jsonPath string, asText bool) []byte {
 	path := strings.TrimPrefix(strings.TrimPrefix(jsonPath, "$"), ".")
 
 	if path == "" {
-		return ""
+		return nil
 	}
 
 	parts := strings.Split(path, ".")
 	if len(parts) == 0 {
-		return ""
+		return nil
 	}
 
-	var result strings.Builder
+	var result []byte
 
 	for i, part := range parts {
 		if i == len(parts)-1 {
 			if asText {
-				result.WriteString("->>")
+				result = append(result, "->>"...)
 			} else {
-				result.WriteString("->")
+				result = append(result, "->"...)
 			}
-			result.WriteString("'")
-			result.WriteString(part)
-			result.WriteString("'")
-			return result.String()
+			result = append(result, '\'')
+			result = append(result, part...)
+			result = append(result, '\'')
+			return result
 		}
 
-		result.WriteString("->")
-		result.WriteString("'")
-		result.WriteString(part)
-		result.WriteString("'")
+		result = append(result, "->"...)
+		result = append(result, '\'')
+		result = append(result, part...)
+		result = append(result, '\'')
 	}
 
-	return result.String()
+	return result
 }
 
 func (f *formatter) LowerExpression(expression string) []byte {
