@@ -1,7 +1,6 @@
 package postgressqlstore
 
 import (
-	"reflect"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -94,7 +93,7 @@ func (f *formatter) JSONArrayLiteral(values ...string) []byte {
 		if i > 0 {
 			sql = append(sql, ", "...)
 		}
-		sql = f.bunf.AppendValue(sql, reflect.ValueOf(v))
+		sql = schema.Append(f.bunf, sql, v)
 	}
 	sql = append(sql, ')')
 	return sql
