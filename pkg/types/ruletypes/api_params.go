@@ -350,7 +350,7 @@ func (r *PostableRule) validate() error {
 		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "rule condition is required")
 	}
 	if r.RuleCondition.CompositeQuery == nil {
-		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite metric query is required"))
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite query is required"))
 	}
 
 	if isAllQueriesDisabled(r.RuleCondition.CompositeQuery) {
