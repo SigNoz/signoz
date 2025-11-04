@@ -127,12 +127,13 @@ class SigNoz:
     sqlstore: TestContainerSQL
     telemetrystore: TestContainerClickhouse
     zeus: TestContainerDocker
+    gateway: TestContainerDocker
 
     def __cache__(self) -> dict:
         return self.self.__cache__()
 
     def __log__(self) -> str:
-        return f"SigNoz(self={self.self.__log__()}, sqlstore={self.sqlstore.__log__()}, telemetrystore={self.telemetrystore.__log__()}, zeus={self.zeus.__log__()})"
+        return f"SigNoz(self={self.self.__log__()}, sqlstore={self.sqlstore.__log__()}, telemetrystore={self.telemetrystore.__log__()}, zeus={self.zeus.__log__()}, gateway={self.gateway.__log__()})"
 
 
 @dataclass
