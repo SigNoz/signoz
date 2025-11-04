@@ -746,7 +746,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
 			Variables:          variables,
-		}, start)
+        }, start, end)
 
 		if err != nil {
 			return nil, err

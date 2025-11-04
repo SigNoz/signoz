@@ -45,7 +45,7 @@ func CollisionHandledFinalExpr(
 
 	addCondition := func(key *telemetrytypes.TelemetryFieldKey) error {
 		sb := sqlbuilder.NewSelectBuilder()
-		condition, err := cb.ConditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, 0)
+        condition, err := cb.ConditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, 0, 0)
 		if err != nil {
 			return err
 		}

@@ -592,7 +592,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			JsonBodyPrefix:     b.jsonBodyPrefix,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
-		}, start)
+        }, start, end)
 
 		if err != nil {
 			return nil, err

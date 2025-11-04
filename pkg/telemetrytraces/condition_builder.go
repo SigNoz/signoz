@@ -223,7 +223,8 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	startNs uint64,
+    startNs uint64,
+    _ uint64,
 ) (string, error) {
 	if c.isSpanScopeField(key.Name) {
 		return c.buildSpanScopeCondition(key, operator, value, startNs)
