@@ -1,6 +1,10 @@
 package rules
 
-import "time"
+import (
+	"time"
+
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+)
 
 var (
 	testCases = []struct {
@@ -106,6 +110,749 @@ var (
 			compareOp:          "1", // Above
 			matchType:          "1", // Once
 			target:             200, // 200 GB
+		},
+	}
+
+	tcThresholdRuleShouldAlert = []struct {
+		values              v3.Series
+		expectAlert         bool
+		compareOp           string
+		matchType           string
+		target              float64
+		expectedAlertSample v3.Point
+	}{
+		// Test cases for Equals Always
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "2", // Always
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 0.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 1.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "3", // Equals
+			matchType:   "2", // Always
+			target:      0.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "3", // Equals
+			matchType:   "2", // Always
+			target:      0.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "3", // Equals
+			matchType:   "2", // Always
+			target:      0.0,
+		},
+		// Test cases for Equals Once
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 0.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 1.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 0.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 0.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "3", // Equals
+			matchType:   "1", // Once
+			target:      0.0,
+		},
+		// Test cases for Greater Than Always
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "2", // Always
+			target:              1.5,
+			expectedAlertSample: v3.Point{Value: 2.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "1", // Greater Than
+			matchType:   "2", // Always
+			target:      4.5,
+		},
+		// Test cases for Greater Than Once
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "1", // Once
+			target:              4.5,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 4.0},
+					{Value: 4.0},
+					{Value: 4.0},
+					{Value: 4.0},
+					{Value: 4.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "1", // Greater Than
+			matchType:   "1", // Once
+			target:      4.5,
+		},
+		// Test cases for Not Equals Always
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "4", // Not Equals
+			matchType:   "2", // Always
+			target:      0.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 0.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "4", // Not Equals
+			matchType:   "2", // Always
+			target:      0.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "2", // Always
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 1.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.0},
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "4", // Not Equals
+			matchType:   "2", // Always
+			target:      0.0,
+		},
+		// Test cases for Not Equals Once
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 1.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "4", // Not Equals
+			matchType:   "1", // Once
+			target:      0.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+					{Value: 1.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 1.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 1.0},
+		},
+		// Test cases for Less Than Always
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.5},
+					{Value: 1.5},
+					{Value: 1.5},
+					{Value: 1.5},
+					{Value: 1.5},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "2", // Always
+			target:              4,
+			expectedAlertSample: v3.Point{Value: 1.5},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.5},
+					{Value: 2.5},
+					{Value: 1.5},
+					{Value: 3.5},
+					{Value: 1.5},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "2", // Always
+			target:              4,
+			expectedAlertSample: v3.Point{Value: 3.5},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "2", // Less Than
+			matchType:   "2", // Always
+			target:      4,
+		},
+		// Test cases for Less Than Once
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 2.5},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "1", // Once
+			target:              4,
+			expectedAlertSample: v3.Point{Value: 2.5},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "2", // Less Than
+			matchType:   "1", // Once
+			target:      4,
+		},
+		// Test cases for OnAverage
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "3", // OnAverage
+			target:              6.0,
+			expectedAlertSample: v3.Point{Value: 6.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "3", // Equals
+			matchType:   "3", // OnAverage
+			target:      4.5,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "3", // OnAverage
+			target:              4.5,
+			expectedAlertSample: v3.Point{Value: 6.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "4", // Not Equals
+			matchType:   "3", // OnAverage
+			target:      6.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "3", // OnAverage
+			target:              4.5,
+			expectedAlertSample: v3.Point{Value: 6.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 11.0},
+					{Value: 4.0},
+					{Value: 3.0},
+					{Value: 7.0},
+					{Value: 12.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "1", // Above
+			matchType:           "2", // Always
+			target:              2.0,
+			expectedAlertSample: v3.Point{Value: 3.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 11.0},
+					{Value: 4.0},
+					{Value: 3.0},
+					{Value: 7.0},
+					{Value: 12.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Below
+			matchType:           "2", // Always
+			target:              13.0,
+			expectedAlertSample: v3.Point{Value: 12.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "3", // OnAverage
+			target:              12.0,
+			expectedAlertSample: v3.Point{Value: 6.0},
+		},
+		// Test cases for InTotal
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "4", // InTotal
+			target:              30.0,
+			expectedAlertSample: v3.Point{Value: 30.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "3", // Equals
+			matchType:   "4", // InTotal
+			target:      20.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "4", // InTotal
+			target:              9.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "4", // Not Equals
+			matchType:   "4", // InTotal
+			target:      10.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "4", // InTotal
+			target:              10.0,
+			expectedAlertSample: v3.Point{Value: 20.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "1", // Greater Than
+			matchType:   "4", // InTotal
+			target:      20.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "4", // InTotal
+			target:              30.0,
+			expectedAlertSample: v3.Point{Value: 20.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "2", // Less Than
+			matchType:   "4", // InTotal
+			target:      20.0,
+		},
+		// Test cases for Last
+		// greater than last
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "5", // Last
+			target:              5.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "1", // Greater Than
+			matchType:   "5", // Last
+			target:      20.0,
+		},
+		// less than last
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "5", // Last
+			target:              15.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "2", // Less Than
+			matchType:   "5", // Last
+			target:      5.0,
+		},
+		// equals last
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "5", // Last
+			target:              10.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "3", // Equals
+			matchType:   "5", // Last
+			target:      5.0,
+		},
+		// not equals last
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "5", // Last
+			target:              5.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "4", // Not Equals
+			matchType:   "5", // Last
+			target:      10.0,
 		},
 	}
 )

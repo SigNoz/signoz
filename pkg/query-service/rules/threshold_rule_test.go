@@ -59,750 +59,7 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 
 	logger := instrumentationtest.New().Logger()
 
-	cases := []struct {
-		values              v3.Series
-		expectAlert         bool
-		compareOp           string
-		matchType           string
-		target              float64
-		expectedAlertSample v3.Point
-	}{
-		// Test cases for Equals Always
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "2", // Always
-			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 0.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 1.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "2", // Always
-			target:      0.0,
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 0.0},
-					{Value: 1.0},
-					{Value: 0.0},
-					{Value: 1.0},
-					{Value: 1.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "2", // Always
-			target:      0.0,
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "2", // Always
-			target:      0.0,
-		},
-		// Test cases for Equals Once
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "1", // Once
-			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 0.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 1.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "1", // Once
-			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 0.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 0.0},
-					{Value: 1.0},
-					{Value: 0.0},
-					{Value: 1.0},
-					{Value: 1.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "1", // Once
-			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 0.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "1", // Once
-			target:      0.0,
-		},
-		// Test cases for Greater Than Always
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 4.0},
-					{Value: 6.0},
-					{Value: 8.0},
-					{Value: 2.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "1", // Greater Than
-			matchType:           "2", // Always
-			target:              1.5,
-			expectedAlertSample: v3.Point{Value: 2.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 4.0},
-					{Value: 6.0},
-					{Value: 8.0},
-					{Value: 2.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "1", // Greater Than
-			matchType:   "2", // Always
-			target:      4.5,
-		},
-		// Test cases for Greater Than Once
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 4.0},
-					{Value: 6.0},
-					{Value: 8.0},
-					{Value: 2.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "1", // Greater Than
-			matchType:           "1", // Once
-			target:              4.5,
-			expectedAlertSample: v3.Point{Value: 10.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 4.0},
-					{Value: 4.0},
-					{Value: 4.0},
-					{Value: 4.0},
-					{Value: 4.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "1", // Greater Than
-			matchType:   "1", // Once
-			target:      4.5,
-		},
-		// Test cases for Not Equals Always
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 0.0},
-					{Value: 1.0},
-					{Value: 0.0},
-					{Value: 1.0},
-					{Value: 0.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "2", // Always
-			target:      0.0,
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 0.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "2", // Always
-			target:      0.0,
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "2", // Always
-			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 1.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 1.0},
-					{Value: 0.0},
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "2", // Always
-			target:      0.0,
-		},
-		// Test cases for Not Equals Once
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 0.0},
-					{Value: 1.0},
-					{Value: 0.0},
-					{Value: 1.0},
-					{Value: 0.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "1", // Once
-			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 1.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 0.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "1", // Once
-			target:      0.0,
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 0.0},
-					{Value: 0.0},
-					{Value: 1.0},
-					{Value: 0.0},
-					{Value: 1.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "1", // Once
-			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 1.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "1", // Once
-			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 1.0},
-		},
-		// Test cases for Less Than Always
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 1.5},
-					{Value: 1.5},
-					{Value: 1.5},
-					{Value: 1.5},
-					{Value: 1.5},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "2", // Less Than
-			matchType:           "2", // Always
-			target:              4,
-			expectedAlertSample: v3.Point{Value: 1.5},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 1.5},
-					{Value: 2.5},
-					{Value: 1.5},
-					{Value: 3.5},
-					{Value: 1.5},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "2", // Less Than
-			matchType:           "2", // Always
-			target:              4,
-			expectedAlertSample: v3.Point{Value: 3.5},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 4.5},
-					{Value: 4.5},
-					{Value: 4.5},
-					{Value: 4.5},
-					{Value: 4.5},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "2", // Less Than
-			matchType:   "2", // Always
-			target:      4,
-		},
-		// Test cases for Less Than Once
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 4.5},
-					{Value: 4.5},
-					{Value: 4.5},
-					{Value: 4.5},
-					{Value: 2.5},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "2", // Less Than
-			matchType:           "1", // Once
-			target:              4,
-			expectedAlertSample: v3.Point{Value: 2.5},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 4.5},
-					{Value: 4.5},
-					{Value: 4.5},
-					{Value: 4.5},
-					{Value: 4.5},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "2", // Less Than
-			matchType:   "1", // Once
-			target:      4,
-		},
-		// Test cases for OnAverage
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 4.0},
-					{Value: 6.0},
-					{Value: 8.0},
-					{Value: 2.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "3", // OnAverage
-			target:              6.0,
-			expectedAlertSample: v3.Point{Value: 6.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 4.0},
-					{Value: 6.0},
-					{Value: 8.0},
-					{Value: 2.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "3", // OnAverage
-			target:      4.5,
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 4.0},
-					{Value: 6.0},
-					{Value: 8.0},
-					{Value: 2.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "3", // OnAverage
-			target:              4.5,
-			expectedAlertSample: v3.Point{Value: 6.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 4.0},
-					{Value: 6.0},
-					{Value: 8.0},
-					{Value: 2.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "3", // OnAverage
-			target:      6.0,
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 4.0},
-					{Value: 6.0},
-					{Value: 8.0},
-					{Value: 2.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "1", // Greater Than
-			matchType:           "3", // OnAverage
-			target:              4.5,
-			expectedAlertSample: v3.Point{Value: 6.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 11.0},
-					{Value: 4.0},
-					{Value: 3.0},
-					{Value: 7.0},
-					{Value: 12.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "1", // Above
-			matchType:           "2", // Always
-			target:              2.0,
-			expectedAlertSample: v3.Point{Value: 3.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 11.0},
-					{Value: 4.0},
-					{Value: 3.0},
-					{Value: 7.0},
-					{Value: 12.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "2", // Below
-			matchType:           "2", // Always
-			target:              13.0,
-			expectedAlertSample: v3.Point{Value: 12.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 4.0},
-					{Value: 6.0},
-					{Value: 8.0},
-					{Value: 2.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "2", // Less Than
-			matchType:           "3", // OnAverage
-			target:              12.0,
-			expectedAlertSample: v3.Point{Value: 6.0},
-		},
-		// Test cases for InTotal
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 4.0},
-					{Value: 6.0},
-					{Value: 8.0},
-					{Value: 2.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "4", // InTotal
-			target:              30.0,
-			expectedAlertSample: v3.Point{Value: 30.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 4.0},
-					{Value: 6.0},
-					{Value: 8.0},
-					{Value: 2.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "4", // InTotal
-			target:      20.0,
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "4", // InTotal
-			target:              9.0,
-			expectedAlertSample: v3.Point{Value: 10.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "4", // InTotal
-			target:      10.0,
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 10.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "1", // Greater Than
-			matchType:           "4", // InTotal
-			target:              10.0,
-			expectedAlertSample: v3.Point{Value: 20.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 10.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "1", // Greater Than
-			matchType:   "4", // InTotal
-			target:      20.0,
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 10.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "2", // Less Than
-			matchType:           "4", // InTotal
-			target:              30.0,
-			expectedAlertSample: v3.Point{Value: 20.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 10.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "2", // Less Than
-			matchType:   "4", // InTotal
-			target:      20.0,
-		},
-		// Test cases for Last
-		// greater than last
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 10.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "1", // Greater Than
-			matchType:           "5", // Last
-			target:              5.0,
-			expectedAlertSample: v3.Point{Value: 10.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 10.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "1", // Greater Than
-			matchType:   "5", // Last
-			target:      20.0,
-		},
-		// less than last
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 10.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "2", // Less Than
-			matchType:           "5", // Last
-			target:              15.0,
-			expectedAlertSample: v3.Point{Value: 10.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 10.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "2", // Less Than
-			matchType:   "5", // Last
-			target:      5.0,
-		},
-		// equals last
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 10.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "5", // Last
-			target:              10.0,
-			expectedAlertSample: v3.Point{Value: 10.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 10.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "5", // Last
-			target:      5.0,
-		},
-		// not equals last
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 10.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "5", // Last
-			target:              5.0,
-			expectedAlertSample: v3.Point{Value: 10.0},
-		},
-		{
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 10.0},
-					{Value: 10.0},
-				},
-			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "5", // Last
-			target:      10.0,
-		},
-	}
-
-	for idx, c := range cases {
+	for idx, c := range tcThresholdRuleShouldAlert {
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
@@ -825,6 +82,82 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 		}
 
 		resultVectors, err := rule.Threshold.ShouldAlert(c.values, rule.Unit())
+		assert.NoError(t, err, "Test case %d", idx)
+
+		// Compare result vectors with expected behavior
+		if c.expectAlert {
+			assert.NotEmpty(t, resultVectors, "Expected alert but got no result vectors for case %d", idx)
+			if len(resultVectors) > 0 {
+				found := false
+				for _, sample := range resultVectors {
+					if sample.V == c.expectedAlertSample.Value {
+						found = true
+						break
+					}
+				}
+				assert.True(t, found, "Expected alert sample value %.2f not found in result vectors for case %d. Got values: %v", c.expectedAlertSample.Value, idx, getVectorValues(resultVectors))
+			}
+		} else {
+			assert.Empty(t, resultVectors, "Expected no alert but got result vectors for case %d", idx)
+		}
+	}
+}
+
+func TestThresholdRuleEvalBackwardCompat(t *testing.T) {
+	postableRule := ruletypes.PostableRule{
+		AlertName: "Eval Backward Compatibility Test without recovery target",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeThreshold,
+		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "probe_success",
+						},
+						AggregateOperator: v3.AggregateOperatorNoOp,
+						DataSource:        v3.DataSourceMetrics,
+						Expression:        "A",
+					},
+				},
+			},
+		},
+	}
+
+	logger := instrumentationtest.New().Logger()
+
+	for idx, c := range tcThresholdRuleShouldAlert {
+		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					TargetValue: &c.target,
+					MatchType:   ruletypes.MatchType(c.matchType),
+					CompareOp:   ruletypes.CompareOp(c.compareOp),
+				},
+			},
+		}
+
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+		if err != nil {
+			assert.NoError(t, err)
+		}
+
+		values := c.values
+		for i := range values.Points {
+			values.Points[i].Timestamp = time.Now().UnixMilli()
+		}
+
+		resultVectors, err := rule.Threshold.Eval(c.values, rule.Unit(), ruletypes.EvalData{
+			ActiveAlerts: map[uint64]struct{}{},
+		})
 		assert.NoError(t, err, "Test case %d", idx)
 
 		// Compare result vectors with expected behavior
