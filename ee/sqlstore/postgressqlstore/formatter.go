@@ -83,11 +83,11 @@ func (f *formatter) JSONArrayAgg(expression string) []byte {
 func (f *formatter) JSONArrayLiteral(values ...string) []byte {
 	var sql []byte
 	sql = append(sql, "jsonb_build_array("...)
-	for i, v := range values {
-		if i > 0 {
+	for idx, value := range values {
+		if idx > 0 {
 			sql = append(sql, ", "...)
 		}
-		sql = schema.Append(f.bunf, sql, v)
+		sql = schema.Append(f.bunf, sql, value)
 	}
 	sql = append(sql, ')')
 	return sql
@@ -112,14 +112,22 @@ func (f *formatter) convertJSONPathToPostgresWithMode(jsonPath string, asText bo
 	}
 
 	parts := strings.Split(path, ".")
-	if len(parts) == 0 {
+
+	var validParts []string
+	for _, part := range parts {
+		if part != "" {
+			validParts = append(validParts, part)
+		}
+	}
+
+	if len(validParts) == 0 {
 		return nil
 	}
 
 	var result []byte
 
-	for i, part := range parts {
-		if i == len(parts)-1 {
+	for i, part := range validParts {
+		if i == len(validParts)-1 {
 			if asText {
 				result = append(result, "->>"...)
 			} else {
