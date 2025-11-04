@@ -36,7 +36,8 @@ func (f *formatter) JSONType(column, path string) []byte {
 func (f *formatter) JSONIsArray(column, path string) []byte {
 	var sql []byte
 	sql = append(sql, f.JSONType(column, path)...)
-	sql = append(sql, " = 'array'"...)
+	sql = append(sql, " = "...)
+	sql = schema.Append(f.bunf, sql, "array")
 	return sql
 }
 
