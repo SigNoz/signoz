@@ -131,16 +131,12 @@ func (f *formatter) convertJSONPathToPostgresWithMode(jsonPath string, asText bo
 			} else {
 				result = append(result, "->"...)
 			}
-			result = append(result, '\'')
-			result = append(result, part...)
-			result = append(result, '\'')
+			result = schema.Append(f.bunf, result, part)
 			return result
 		}
 
 		result = append(result, "->"...)
-		result = append(result, '\'')
-		result = append(result, part...)
-		result = append(result, '\'')
+		result = schema.Append(f.bunf, result, part)
 	}
 
 	return result

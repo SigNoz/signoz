@@ -45,9 +45,8 @@ func (f *formatter) JSONArrayElements(column, path, alias string) ([]byte, []byt
 	sql = append(sql, "json_each("...)
 	sql = f.bunf.AppendIdent(sql, column)
 	if path != "$" && path != "" {
-		sql = append(sql, ", '"...)
-		sql = append(sql, path...)
-		sql = append(sql, "'"...)
+		sql = append(sql, ", "...)
+		sql = schema.Append(f.bunf, sql, path)
 	}
 	sql = append(sql, ") AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
@@ -64,9 +63,8 @@ func (f *formatter) JSONKeys(column, path, alias string) ([]byte, []byte) {
 	sql = append(sql, "json_each("...)
 	sql = f.bunf.AppendIdent(sql, column)
 	if path != "$" && path != "" {
-		sql = append(sql, ", '"...)
-		sql = append(sql, path...)
-		sql = append(sql, "'"...)
+		sql = append(sql, ", "...)
+		sql = schema.Append(f.bunf, sql, path)
 	}
 	sql = append(sql, ") AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
