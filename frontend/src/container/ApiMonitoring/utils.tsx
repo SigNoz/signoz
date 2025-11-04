@@ -1242,7 +1242,9 @@ export const formatTopErrorsDataForTable = (
 
 		return {
 			key: v4(),
-			endpointName: getDisplayValue(rowObj[SPAN_ATTRIBUTES.URL_PATH]),
+			endpointName: getDisplayValue(
+				rowObj[SPAN_ATTRIBUTES.URL_PATH] || rowObj['url.full'],
+			),
 			statusCode: getDisplayValue(rowObj[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]),
 			statusMessage: getDisplayValue(rowObj.status_message),
 			count: getDisplayValue(rowObj.__result_0),
