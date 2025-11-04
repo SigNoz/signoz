@@ -285,10 +285,11 @@ export const getUPlotChartOptions = ({
 		cursor: {
 			lock: false,
 			focus: {
-				prox: 1e6,
+				prox: 25,
 				bias: 1,
 			},
 			points: {
+				one: true,
 				size: (u, seriesIdx): number => u.series[seriesIdx].points.size * 3,
 				width: (u, seriesIdx, size): number => size / 4,
 				stroke: (u, seriesIdx): string =>
@@ -394,14 +395,25 @@ export const getUPlotChartOptions = ({
 		hooks: {
 			draw: [
 				(u): void => {
-					if (isAnomalyRule) {
+					if (isAnomalyRule || !thresholds?.length) {
 						return;
 					}
 
-					thresholds?.forEach((threshold) => {
+					const { ctx } = u;
+					const { left: plotLeft, width: plotWidth } = u.bbox;
+					const plotRight = plotLeft + plotWidth;
+					const canvasHeight = ctx.canvas.height;
+					const threshold90Percent = canvasHeight * 0.9;
+
+					// Single save/restore for all thresholds
+					ctx.save();
+					ctx.lineWidth = 2;
+					ctx.setLineDash([10, 5]);
+
+					for (let i = 0; i < thresholds.length; i++) {
+						const threshold = thresholds[i];
 						if (threshold.thresholdValue !== undefined) {
-							const { ctx } = u;
-							ctx.save();
+							const color = threshold.thresholdColor || 'red';
 							const yPos = u.valToPos(
 								convertValue(
 									threshold.thresholdValue,
@@ -411,35 +423,28 @@ export const getUPlotChartOptions = ({
 								'y',
 								true,
 							);
-							ctx.strokeStyle = threshold.thresholdColor || 'red';
-							ctx.lineWidth = 2;
-							ctx.setLineDash([10, 5]);
+
+							// Draw threshold line
+							ctx.strokeStyle = color;
 							ctx.beginPath();
-							const plotLeft = u.bbox.left; // left edge of the plot area
-							const plotRight = plotLeft + u.bbox.width; // right edge of the plot area
 							ctx.moveTo(plotLeft, yPos);
 							ctx.lineTo(plotRight, yPos);
 							ctx.stroke();
-							// Text configuration
+
+							// Draw threshold label if present
 							if (threshold.thresholdLabel) {
-								const text = threshold.thresholdLabel;
-								const textX = plotRight - ctx.measureText(text).width - 20;
-								const canvasHeight = ctx.canvas.height;
+								const textWidth = ctx.measureText(threshold.thresholdLabel).width;
+								const textX = plotRight - textWidth - 20;
 								const yposHeight = canvasHeight - yPos;
-								const isHeightGreaterThan90Percent = canvasHeight * 0.9 < yposHeight;
-								// Adjust textY based on the condition
-								let textY;
-								if (isHeightGreaterThan90Percent) {
-									textY = yPos + 15; // Below the threshold line
-								} else {
-									textY = yPos - 15; // Above the threshold line
-								}
-								ctx.fillStyle = threshold.thresholdColor || 'red';
-								ctx.fillText(text, textX, textY);
+								const textY = yposHeight > threshold90Percent ? yPos + 15 : yPos - 15;
+
+								ctx.fillStyle = color;
+								ctx.fillText(threshold.thresholdLabel, textX, textY);
 							}
-							ctx.restore();
 						}
-					});
+					}
+
+					ctx.restore();
 				},
 			],
 			setSelect: [
@@ -555,19 +560,22 @@ export const getUPlotChartOptions = ({
 								// Get the current text content
 								const legendText = seriesLabels[index];
 
-								// Clear the th content and rebuild it
-								thElement.innerHTML = '';
+								// Use DocumentFragment to batch DOM operations
+								const fragment = document.createDocumentFragment();
 
 								// Add back the marker
 								if (markerClone) {
-									thElement.appendChild(markerClone);
+									fragment.appendChild(markerClone);
 								}
 
 								// Create text wrapper
 								const textSpan = document.createElement('span');
 								textSpan.className = 'legend-text';
 								textSpan.textContent = legendText;
-								thElement.appendChild(textSpan);
+								fragment.appendChild(textSpan);
+
+								// Replace the children in a single operation
+								thElement.replaceChildren(fragment);
 
 								// Setup tooltip functionality - check truncation on hover
 								let tooltipElement: HTMLElement | null = null;
