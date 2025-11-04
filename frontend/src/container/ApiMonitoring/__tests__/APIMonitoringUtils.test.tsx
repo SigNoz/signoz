@@ -8,7 +8,6 @@ import {
 	endPointStatusCodeColumns,
 	extractPortAndEndpoint,
 	formatDataForTable,
-	formatTopErrorsDataForTable,
 	getAllEndpointsWidgetData,
 	getCustomFiltersForBarChart,
 	getEndPointDetailsQueryPayload,
@@ -23,8 +22,6 @@ import {
 	getStatusCodeBarChartWidgetData,
 	getTopErrorsColumnsConfig,
 	getTopErrorsCoRelationQueryFilters,
-	getTopErrorsQueryPayload,
-	TopErrorsResponseRow,
 } from '../utils';
 import { APIMonitoringColumnsMock } from './mock';
 
@@ -344,49 +341,6 @@ describe('API Monitoring Utils', () => {
 		});
 	});
 
-	describe('formatTopErrorsDataForTable', () => {
-		it('should format top errors data correctly', () => {
-			// Arrange
-			const inputData = [
-				{
-					metric: {
-						[SPAN_ATTRIBUTES.URL_PATH]: '/api/test',
-						[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]: '500',
-						status_message: 'Internal Server Error',
-					},
-					values: [[1000000100, '10']],
-					queryName: 'A',
-					legend: 'Test Legend',
-				},
-			];
-
-			// Act
-			const result = formatTopErrorsDataForTable(
-				inputData as TopErrorsResponseRow[],
-			);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result.length).toBe(1);
-
-			// Check first item is formatted correctly
-			expect(result[0].endpointName).toBe('/api/test');
-			expect(result[0].statusCode).toBe('500');
-			expect(result[0].statusMessage).toBe('Internal Server Error');
-			expect(result[0].count).toBe('10');
-			expect(result[0].key).toBeDefined();
-		});
-
-		it('should handle empty input', () => {
-			// Act
-			const result = formatTopErrorsDataForTable(undefined);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result).toEqual([]);
-		});
-	});
-
 	describe('getTopErrorsColumnsConfig', () => {
 		it('should return column configuration with expected fields', () => {
 			// Act
@@ -450,72 +404,6 @@ describe('API Monitoring Utils', () => {
 					item.value === statusCode,
 			);
 			expect(statusFilter).toBeDefined();
-		});
-	});
-
-	describe('getTopErrorsQueryPayload', () => {
-		it('should create correct query payload with filters', () => {
-			// Arrange
-			const domainName = 'test-domain';
-			const start = 1000000000;
-			const end = 1000010000;
-			const filters = {
-				items: [
-					{
-						id: 'test-filter',
-						key: {
-							dataType: DataTypes.String,
-							key: 'test-key',
-							type: '',
-						},
-						op: '=',
-						value: 'test-value',
-					},
-				],
-				op: 'AND',
-			};
-
-			// Act
-			const result = getTopErrorsQueryPayload(
-				domainName,
-				start,
-				end,
-				filters as IBuilderQuery['filters'],
-			);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result.length).toBeGreaterThan(0);
-
-			// Verify query params
-			expect(result[0].start).toBe(start);
-			expect(result[0].end).toBe(end);
-
-			// Verify correct structure
-			expect(result[0].graphType).toBeDefined();
-			expect(result[0].query).toBeDefined();
-			expect(result[0].query.builder).toBeDefined();
-			expect(result[0].query.builder.queryData).toBeDefined();
-
-			// Verify domain filter is included
-			const queryData = result[0].query.builder.queryData[0];
-			expect(queryData.filters).toBeDefined();
-
-			// Check for domain filter
-			const domainFilter = queryData.filters?.items?.find(
-				// eslint-disable-next-line sonarjs/no-identical-functions
-				(item) =>
-					item.key &&
-					item.key.key === SPAN_ATTRIBUTES.SERVER_NAME &&
-					item.value === domainName,
-			);
-			expect(domainFilter).toBeDefined();
-
-			// Check that custom filters were included
-			const testFilter = queryData.filters?.items?.find(
-				(item) => item.id === 'test-filter',
-			);
-			expect(testFilter).toBeDefined();
 		});
 	});
 

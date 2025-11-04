@@ -17,6 +17,11 @@ import { drawStyles } from './utils/constants';
 import { generateColor } from './utils/generateColor';
 import getAxes from './utils/getAxes';
 
+// Extended uPlot interface with custom properties
+interface ExtendedUPlot extends uPlot {
+	_legendScrollCleanup?: () => void;
+}
+
 type GetUplotHistogramChartOptionsProps = {
 	id?: string;
 	apiResponse?: MetricRangePayloadProps;
@@ -30,6 +35,8 @@ type GetUplotHistogramChartOptionsProps = {
 	setGraphsVisibilityStates?: Dispatch<SetStateAction<boolean[]>>;
 	mergeAllQueries?: boolean;
 	onClickHandler?: OnClickPluginOpts['onClick'];
+	legendScrollPosition?: number;
+	setLegendScrollPosition?: (position: number) => void;
 };
 
 type GetHistogramSeriesProps = {
@@ -124,6 +131,8 @@ export const getUplotHistogramChartOptions = ({
 	mergeAllQueries,
 	onClickHandler = _noop,
 	panelType,
+	legendScrollPosition,
+	setLegendScrollPosition,
 }: GetUplotHistogramChartOptionsProps): uPlot.Options =>
 	({
 		id,
@@ -179,33 +188,94 @@ export const getUplotHistogramChartOptions = ({
 				(self): void => {
 					const legend = self.root.querySelector('.u-legend');
 					if (legend) {
+						const legendElement = legend as HTMLElement;
+
+						// Enhanced legend scroll position preservation
+						if (setLegendScrollPosition && typeof legendScrollPosition === 'number') {
+							const handleScroll = (): void => {
+								setLegendScrollPosition(legendElement.scrollTop);
+							};
+
+							// Add scroll event listener to save position
+							legendElement.addEventListener('scroll', handleScroll);
+
+							// Restore scroll position
+							requestAnimationFrame(() => {
+								legendElement.scrollTop = legendScrollPosition;
+							});
+
+							// Store cleanup function
+							const extSelf = self as ExtendedUPlot;
+							extSelf._legendScrollCleanup = (): void => {
+								legendElement.removeEventListener('scroll', handleScroll);
+							};
+						}
+
 						const seriesEls = legend.querySelectorAll('.u-series');
 						const seriesArray = Array.from(seriesEls);
 						seriesArray.forEach((seriesEl, index) => {
-							seriesEl.addEventListener('click', () => {
-								if (graphsVisibilityStates) {
-									setGraphsVisibilityStates?.((prev) => {
-										const newGraphVisibilityStates = [...prev];
-										if (
-											newGraphVisibilityStates[index + 1] &&
-											newGraphVisibilityStates.every((value, i) =>
-												i === index + 1 ? value : !value,
-											)
-										) {
-											newGraphVisibilityStates.fill(true);
-										} else {
-											newGraphVisibilityStates.fill(false);
-											newGraphVisibilityStates[index + 1] = true;
+							// Add click handlers for marker and text separately
+							const thElement = seriesEl.querySelector('th');
+							if (thElement) {
+								const currentMarker = thElement.querySelector('.u-marker');
+								const textElement =
+									thElement.querySelector('.legend-text') || thElement;
+
+								// Marker click handler - checkbox behavior (toggle individual series)
+								if (currentMarker) {
+									currentMarker.addEventListener('click', (e) => {
+										e.stopPropagation?.(); // Prevent event bubbling to text handler
+
+										if (graphsVisibilityStates) {
+											setGraphsVisibilityStates?.((prev) => {
+												const newGraphVisibilityStates = [...prev];
+												// Toggle the specific series visibility (checkbox behavior)
+												newGraphVisibilityStates[index + 1] = !newGraphVisibilityStates[
+													index + 1
+												];
+
+												saveLegendEntriesToLocalStorage({
+													options: self,
+													graphVisibilityState: newGraphVisibilityStates,
+													name: id || '',
+												});
+												return newGraphVisibilityStates;
+											});
 										}
-										saveLegendEntriesToLocalStorage({
-											options: self,
-											graphVisibilityState: newGraphVisibilityStates,
-											name: id || '',
-										});
-										return newGraphVisibilityStates;
 									});
 								}
-							});
+
+								// Text click handler - show only/show all behavior (existing behavior)
+								textElement.addEventListener('click', (e) => {
+									e.stopPropagation?.(); // Prevent event bubbling
+
+									if (graphsVisibilityStates) {
+										setGraphsVisibilityStates?.((prev) => {
+											const newGraphVisibilityStates = [...prev];
+											// Show only this series / show all behavior
+											if (
+												newGraphVisibilityStates[index + 1] &&
+												newGraphVisibilityStates.every((value, i) =>
+													i === index + 1 ? value : !value,
+												)
+											) {
+												// If only this series is visible, show all
+												newGraphVisibilityStates.fill(true);
+											} else {
+												// Otherwise, show only this series
+												newGraphVisibilityStates.fill(false);
+												newGraphVisibilityStates[index + 1] = true;
+											}
+											saveLegendEntriesToLocalStorage({
+												options: self,
+												graphVisibilityState: newGraphVisibilityStates,
+												name: id || '',
+											});
+											return newGraphVisibilityStates;
+										});
+									}
+								});
+							}
 						});
 					}
 				},
