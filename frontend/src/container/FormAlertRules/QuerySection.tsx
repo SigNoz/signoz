@@ -36,6 +36,7 @@ function QuerySection({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 	const [currentTab, setCurrentTab] = useState(queryCategory);
+	const [signalSource, setSignalSource] = useState<string>('metrics');
 
 	const handleQueryCategoryChange = (queryType: string): void => {
 		setQueryCategory(queryType as EQueryType);
@@ -48,12 +49,17 @@ function QuerySection({
 
 	const isDarkMode = useIsDarkMode();
 
+	const handleSignalSourceChange = (value: string): void => {
+		setSignalSource(value);
+	};
+
 	const renderMetricUI = (): JSX.Element => (
 		<QueryBuilderV2
 			panelType={panelType}
 			config={{
 				queryVariant: 'static',
 				initialDataSource: ALERTS_DATA_SOURCE_MAP[alertType],
+				signalSource: signalSource === 'meter' ? 'meter' : '',
 			}}
 			showTraceOperator={alertType === AlertTypes.TRACES_BASED_ALERT}
 			showFunctions={
@@ -62,6 +68,8 @@ function QuerySection({
 				alertType === AlertTypes.LOGS_BASED_ALERT
 			}
 			version={alertDef.version || 'v3'}
+			onSignalSourceChange={handleSignalSourceChange}
+			signalSourceChangeEnabled
 		/>
 	);
 

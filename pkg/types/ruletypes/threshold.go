@@ -103,7 +103,7 @@ func (r BasicRuleThresholds) ShouldAlert(series v3.Series, unit string) (Vector,
 	for _, threshold := range thresholds {
 		smpl, shouldAlert := threshold.shouldAlert(series, unit)
 		if shouldAlert {
-			smpl.Target = threshold.target(unit)
+			smpl.Target = *threshold.TargetValue
 			smpl.TargetUnit = threshold.TargetUnit
 			resultVector = append(resultVector, smpl)
 		}

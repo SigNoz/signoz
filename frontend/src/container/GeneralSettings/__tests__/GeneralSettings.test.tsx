@@ -94,6 +94,9 @@ const mockDisksWithoutS3: IDiskType[] = [
 ];
 
 describe('GeneralSettings - S3 Logs Retention', () => {
+	const BUTTON_SELECTOR = 'button[type="button"]';
+	const PRIMARY_BUTTON_CLASS = 'ant-btn-primary';
+
 	beforeEach(() => {
 		jest.clearAllMocks();
 		(setRetentionApiV2 as jest.Mock).mockResolvedValue({
@@ -155,10 +158,10 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			await user.type(s3Input, '5');
 
 			// Find the save button in the Logs card
-			const buttons = logsCard?.querySelectorAll('button[type="button"]');
+			const buttons = logsCard?.querySelectorAll(BUTTON_SELECTOR);
 			// The primary button should be the save button
 			const saveButton = Array.from(buttons || []).find((btn) =>
-				btn.className.includes('ant-btn-primary'),
+				btn.className.includes(PRIMARY_BUTTON_CLASS),
 			) as HTMLButtonElement;
 
 			expect(saveButton).toBeInTheDocument();
@@ -262,9 +265,9 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			await user.type(totalInput, '60');
 
 			// Find the save button
-			const buttons = logsCard?.querySelectorAll('button[type="button"]');
+			const buttons = logsCard?.querySelectorAll(BUTTON_SELECTOR);
 			const saveButton = Array.from(buttons || []).find((btn) =>
-				btn.className.includes('ant-btn-primary'),
+				btn.className.includes(PRIMARY_BUTTON_CLASS),
 			) as HTMLButtonElement;
 
 			expect(saveButton).toBeInTheDocument();
@@ -327,6 +330,61 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			const dropdowns = logsCard?.querySelectorAll('.ant-select-selection-item');
 			expect(dropdowns?.[0]).toHaveTextContent('Months');
 			expect(dropdowns?.[1]).toHaveTextContent('Days');
+		});
+	});
+
+	describe('Test 4: Save Button State with S3 Disabled', () => {
+		it('should disable save button when cold_storage_ttl_days is -1 and no changes made', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(
+				<GeneralSettings
+					metricsTtlValuesPayload={mockMetricsRetention}
+					tracesTtlValuesPayload={mockTracesRetention}
+					logsTtlValuesPayload={mockLogsRetentionWithoutS3}
+					getAvailableDiskPayload={mockDisksWithS3}
+					metricsTtlValuesRefetch={jest.fn()}
+					tracesTtlValuesRefetch={jest.fn()}
+					logsTtlValuesRefetch={jest.fn()}
+				/>,
+			);
+
+			// Find the Logs card
+			const logsCard = screen.getByText('Logs').closest('.ant-card');
+			expect(logsCard).toBeInTheDocument();
+
+			// Find the save button
+			const buttons = logsCard?.querySelectorAll(BUTTON_SELECTOR);
+			const saveButton = Array.from(buttons || []).find((btn) =>
+				btn.className.includes(PRIMARY_BUTTON_CLASS),
+			) as HTMLButtonElement;
+
+			expect(saveButton).toBeInTheDocument();
+
+			// Verify save button is disabled on initial load (no changes, S3 disabled with -1)
+			expect(saveButton).toBeDisabled();
+
+			// Find the total retention input
+			const inputs = logsCard?.querySelectorAll('input[type="text"]');
+			const totalInput = inputs?.[0] as HTMLInputElement;
+
+			// Change total retention value to trigger button enable
+			await user.clear(totalInput);
+			await user.type(totalInput, '60');
+
+			// Button should now be enabled after change
+			await waitFor(() => {
+				expect(saveButton).not.toBeDisabled();
+			});
+
+			// Revert to original value (30 days displays as 1 Month)
+			await user.clear(totalInput);
+			await user.type(totalInput, '1');
+
+			// Button should be disabled again (back to original state)
+			await waitFor(() => {
+				expect(saveButton).toBeDisabled();
+			});
 		});
 	});
 });
