@@ -676,7 +676,9 @@ export const getUPlotChartOptions = ({
 
 								// Marker click handler - checkbox behavior (toggle individual series)
 								if (currentMarker) {
-									const markerClickHandler = (): void => {
+									const markerClickHandler = (e: Event): void => {
+										e.stopPropagation?.(); // Prevent event bubbling to text handler
+
 										if (stackChart) {
 											handleStackChart();
 										}
@@ -730,7 +732,9 @@ export const getUPlotChartOptions = ({
 								// Text click handler - show only/show all behavior (existing behavior)
 								if (textElement) {
 									// Create the click handler function
-									const textClickHandler = (): void => {
+									const textClickHandler = (e: Event): void => {
+										e.stopPropagation?.(); // Prevent event bubbling
+
 										if (stackChart) {
 											handleStackChart();
 										}
