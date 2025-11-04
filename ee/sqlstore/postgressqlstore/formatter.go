@@ -42,7 +42,9 @@ func (f *formatter) JSONArrayElements(column, path, alias string) ([]byte, []byt
 	var sql []byte
 	sql = append(sql, "jsonb_array_elements("...)
 	sql = f.bunf.AppendIdent(sql, column)
-	sql = append(sql, f.convertJSONPathToPostgresWithMode(path, false)...)
+	if path != "$" && path != "" {
+		sql = append(sql, f.convertJSONPathToPostgresWithMode(path, false)...)
+	}
 	sql = append(sql, ") AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
 
