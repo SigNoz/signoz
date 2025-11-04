@@ -53,4 +53,11 @@ type RuleStore interface {
 	DeleteRule(context.Context, valuer.UUID, func(context.Context) error) error
 	GetStoredRules(context.Context, string) ([]*Rule, error)
 	GetStoredRule(context.Context, valuer.UUID) (*Rule, error)
+	GetRuleLabelKeys(ctx context.Context, searchText string, limit int, orgId string) ([]string, error)
+	GetThresholdNames(ctx context.Context, searchText string, limit int, orgId string) ([]string, error)
+	GetChannel(ctx context.Context, searchText string, limit int, orgId string) ([]string, error)
+	GetNames(ctx context.Context, searchText string, limit int, orgId string) ([]string, error)
+	GetCreatedBy(ctx context.Context, searchText string, limit int, orgId string) ([]string, error)
+	GetUpdatedBy(ctx context.Context, searchText string, limit int, orgId string) ([]string, error)
+	GetRuleLabelValues(ctx context.Context, searchText string, limit int, labelKey string, orgId string) ([]string, error)
 }
