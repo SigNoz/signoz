@@ -2,6 +2,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
+import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import {
 	FiltersType,
 	IQuickFiltersConfig,
@@ -10,7 +11,6 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GraphClickMetaData } from 'container/GridCardLayout/useNavigateToExplorerPages';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
-import { isEmptyFilterValue } from 'container/QueryTable/Drilldown/tableDrilldownUtils';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
@@ -45,6 +45,9 @@ import {
 	APIMonitoringResponseColumn,
 	EndPointsResponseRow,
 } from './types';
+
+export const isEmptyFilterValue = (value: unknown): boolean =>
+	value === '' || value === null || value === undefined || value === 'n/a';
 
 export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
@@ -837,29 +840,15 @@ function buildFilterExpression(
 	if (showStatusCodeErrors) {
 		baseFilterParts.push('status_message EXISTS');
 	}
-	let filterExpression = baseFilterParts.join(' AND ');
-	if (filters?.items && filters.items.length > 0) {
-		const additionalFilters = filters.items
-			.map((item: TagFilterItem) => {
-				if (!item.key?.key) return '';
-				if (item.op === 'exists') {
-					return `${item.key.key} EXISTS`;
-				}
-				if (item.op === '!=') {
-					return `${item.key.key} != '${item.value}'`;
-				}
-				if (item.op === '=') {
-					return `${item.key.key} = '${item.value}'`;
-				}
-				return '';
-			})
-			.filter(Boolean)
-			.join(' AND ');
-		if (additionalFilters) {
-			filterExpression += ` AND ${additionalFilters}`;
-		}
+	const filterExpression = baseFilterParts.join(' AND ');
+	if (!filters) {
+		return filterExpression;
 	}
-	return filterExpression;
+	const { filter } = convertFiltersToExpressionWithExistingQuery(
+		filters,
+		filterExpression,
+	);
+	return filter.expression;
 }
 
 export const getTopErrorsQueryPayload = (
