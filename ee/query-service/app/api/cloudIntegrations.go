@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -77,7 +76,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	ingestionUrl, signozApiUrl, apiErr := getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
+	ingestionUrl, signozApiUrl, apiErr := ah.getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
 	if apiErr != nil {
 		RespondError(w, basemodel.WrapApiError(
 			apiErr, "couldn't deduce ingestion url and signoz api url",
@@ -186,48 +185,37 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	return cloudIntegrationUser, nil
 }
 
-func getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (
+func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (
 	string, string, *basemodel.ApiError,
 ) {
-	url := fmt.Sprintf(
-		"%s%s",
-		strings.TrimSuffix(constants.ZeusURL, "/"),
-		"/v2/deployments/me",
-	)
-
+	// TODO: remove this struct from here
 	type deploymentResponse struct {
-		Status string `json:"status"`
-		Error  string `json:"error"`
-		Data   struct {
-			Name string `json:"name"`
-
-			ClusterInfo struct {
-				Region struct {
-					DNS string `json:"dns"`
-				} `json:"region"`
-			} `json:"cluster"`
-		} `json:"data"`
+		Name        string `json:"name"`
+		ClusterInfo struct {
+			Region struct {
+				DNS string `json:"dns"`
+			} `json:"region"`
+		} `json:"cluster"`
 	}
 
-	resp, apiErr := requestAndParseResponse[deploymentResponse](
-		ctx, url, map[string]string{"X-Signoz-Cloud-Api-Key": licenseKey}, nil,
-	)
-
-	if apiErr != nil {
-		return "", "", basemodel.WrapApiError(
-			apiErr, "couldn't query for deployment info",
-		)
-	}
-
-	if resp.Status != "success" {
+	respBytes, err := ah.Signoz.Zeus.GetDeployment(ctx, licenseKey)
+	if err != nil {
 		return "", "", basemodel.InternalError(fmt.Errorf(
-			"couldn't query for deployment info: status: %s, error: %s",
-			resp.Status, resp.Error,
+			"couldn't query for deployment info: error: %w", err,
 		))
 	}
 
-	regionDns := resp.Data.ClusterInfo.Region.DNS
-	deploymentName := resp.Data.Name
+	resp := new(deploymentResponse)
+
+	err = json.Unmarshal(respBytes, resp)
+	if err != nil {
+		return "", "", basemodel.InternalError(fmt.Errorf(
+			"couldn't unmarshal deployment info response: error: %w", err,
+		))
+	}
+
+	regionDns := resp.ClusterInfo.Region.DNS
+	deploymentName := resp.Name
 
 	if len(regionDns) < 1 || len(deploymentName) < 1 {
 		// Fail early if actual response structure and expectation here ever diverge

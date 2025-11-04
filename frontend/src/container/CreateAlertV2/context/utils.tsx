@@ -1,3 +1,5 @@
+import { UTC_TIMEZONE } from 'components/CustomTimePicker/timezoneUtils';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { QueryParams } from 'constants/query';
 import {
 	alertDefaults,
@@ -11,6 +13,7 @@ import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { CumulativeWindowTimeframes } from '../EvaluationSettings/types';
 import {
 	INITIAL_ADVANCED_OPTIONS_STATE,
 	INITIAL_ALERT_STATE,
@@ -210,6 +213,18 @@ export const evaluationWindowReducer = (
 			return INITIAL_EVALUATION_WINDOW_STATE;
 		case 'SET_INITIAL_STATE':
 			return action.payload;
+		case 'SET_INITIAL_STATE_FOR_METER':
+			return {
+				...state,
+				windowType: 'cumulative',
+				timeframe: CumulativeWindowTimeframes.CURRENT_DAY,
+				startingAt: {
+					time: '00:00:00',
+					number: '0',
+					timezone: UTC_TIMEZONE.value,
+					unit: UniversalYAxisUnit.MINUTES,
+				},
+			};
 		default:
 			return state;
 	}
