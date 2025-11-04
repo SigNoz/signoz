@@ -52,7 +52,7 @@ func (f *formatter) JSONArrayElements(column, path, alias string) ([]byte, []byt
 	sql = append(sql, ") AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
 
-	return sql, []byte(alias + ".value")
+	return sql, append([]byte(alias), ".value"...)
 }
 
 func (f *formatter) JSONArrayOfStrings(column, path, alias string) ([]byte, []byte) {
@@ -71,7 +71,7 @@ func (f *formatter) JSONKeys(column, path, alias string) ([]byte, []byte) {
 	sql = append(sql, ") AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
 
-	return sql, []byte(alias + ".key")
+	return sql, append([]byte(alias), ".key"...)
 }
 
 func (f *formatter) JSONArrayAgg(expression string) []byte {
@@ -83,17 +83,14 @@ func (f *formatter) JSONArrayAgg(expression string) []byte {
 }
 
 func (f *formatter) JSONArrayLiteral(values ...string) []byte {
-	if len(values) == 0 {
-		return []byte("json_array()")
-	}
 	var sql []byte
 	sql = append(sql, "json_array("...)
-	for i, v := range values {
-		if i > 0 {
+	for idx, value := range values {
+		if idx > 0 {
 			sql = append(sql, ", "...)
 		}
 		sql = append(sql, '\'')
-		sql = append(sql, v...)
+		sql = append(sql, value...)
 		sql = append(sql, '\'')
 	}
 	sql = append(sql, ')')

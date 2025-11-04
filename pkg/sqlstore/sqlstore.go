@@ -90,7 +90,7 @@ type SQLDialect interface {
 }
 
 type SQLFormatter interface {
-	// JSONExtractString takes path in sqlite format like "$.labels.severity"
+	// JSONExtractString takes a JSON path (e.g., "$.labels.severity")
 	JSONExtractString(column, path string) []byte
 
 	// JSONType used to determine the type of the value extracted from the path

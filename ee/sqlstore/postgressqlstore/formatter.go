@@ -42,9 +42,7 @@ func (f *formatter) JSONArrayElements(column, path, alias string) ([]byte, []byt
 	var sql []byte
 	sql = append(sql, "jsonb_array_elements("...)
 	sql = f.bunf.AppendIdent(sql, column)
-	if path != "$" && path != "" {
-		sql = append(sql, f.convertJSONPathToPostgresWithMode(path, false)...)
-	}
+	sql = append(sql, f.convertJSONPathToPostgresWithMode(path, false)...)
 	sql = append(sql, ") AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
 
@@ -61,7 +59,7 @@ func (f *formatter) JSONArrayOfStrings(column, path, alias string) ([]byte, []by
 	sql = append(sql, ") AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
 
-	return sql, []byte(alias + "::text")
+	return sql, append([]byte(alias), "::text"...)
 }
 
 func (f *formatter) JSONKeys(column, path, alias string) ([]byte, []byte) {
@@ -74,7 +72,7 @@ func (f *formatter) JSONKeys(column, path, alias string) ([]byte, []byte) {
 	sql = append(sql, ") AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
 
-	return sql, []byte(alias + ".key")
+	return sql, append([]byte(alias), ".key"...)
 }
 
 func (f *formatter) JSONArrayAgg(expression string) []byte {
@@ -115,12 +113,13 @@ func (f *formatter) convertJSONPathToPostgres(jsonPath string) string {
 }
 
 func (f *formatter) convertJSONPathToPostgresWithMode(jsonPath string, asText bool) string {
-	path := strings.TrimPrefix(jsonPath, "$")
-	if path == "" || path == "." {
+	path := strings.TrimPrefix(strings.TrimPrefix(jsonPath, "$"), ".")
+
+	if path == "" {
 		return ""
 	}
 
-	parts := strings.Split(strings.TrimPrefix(path, "."), ".")
+	parts := strings.Split(path, ".")
 	if len(parts) == 0 {
 		return ""
 	}
@@ -128,12 +127,7 @@ func (f *formatter) convertJSONPathToPostgresWithMode(jsonPath string, asText bo
 	var result strings.Builder
 
 	for i, part := range parts {
-		if i < len(parts)-1 {
-			result.WriteString("->")
-			result.WriteString("'")
-			result.WriteString(part)
-			result.WriteString("'")
-		} else {
+		if i == len(parts)-1 {
 			if asText {
 				result.WriteString("->>")
 			} else {
@@ -142,7 +136,13 @@ func (f *formatter) convertJSONPathToPostgresWithMode(jsonPath string, asText bo
 			result.WriteString("'")
 			result.WriteString(part)
 			result.WriteString("'")
+			return result.String()
 		}
+
+		result.WriteString("->")
+		result.WriteString("'")
+		result.WriteString(part)
+		result.WriteString("'")
 	}
 
 	return result.String()

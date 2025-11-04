@@ -33,6 +33,12 @@ func TestJSONExtractString(t *testing.T) {
 			expected: `json_extract("json_col", '$')`,
 		},
 		{
+			name:     "root path",
+			column:   "json_col",
+			path:     "",
+			expected: `json_extract("json_col", '')`,
+		},
+		{
 			name:     "array index path",
 			column:   "items",
 			path:     "$.list[0]",
@@ -74,6 +80,12 @@ func TestJSONType(t *testing.T) {
 			path:     "$",
 			expected: `json_type("json_col", '$')`,
 		},
+		{
+			name:     "root path",
+			column:   "json_col",
+			path:     "",
+			expected: `json_type("json_col", '')`,
+		},
 	}
 
 	for _, tt := range tests {
@@ -109,6 +121,12 @@ func TestJSONIsArray(t *testing.T) {
 			column:   "json_col",
 			path:     "$",
 			expected: `json_type("json_col", '$') = 'array'`,
+		},
+		{
+			name:     "root path",
+			column:   "json_col",
+			path:     "",
+			expected: `json_type("json_col", '') = 'array'`,
 		},
 	}
 
@@ -156,6 +174,13 @@ func TestJSONArrayElements(t *testing.T) {
 			path:     "$.user.tags",
 			alias:    "tag",
 			expected: `json_each("json_col", '$.user.tags') AS "tag"`,
+		},
+		{
+			name:     "nested path",
+			column:   "metadata",
+			path:     "",
+			alias:    "item",
+			expected: `json_each("metadata") AS "item"`,
 		},
 	}
 

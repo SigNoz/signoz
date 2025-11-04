@@ -2,7 +2,7 @@ package postgressqlstore
 
 import (
 	"testing"
-	
+
 	"github.com/stretchr/testify/assert"
 	"github.com/uptrace/bun/dialect/pgdialect"
 )
@@ -80,6 +80,12 @@ func TestJSONType(t *testing.T) {
 			path:     "$",
 			expected: `jsonb_typeof("json_col")`,
 		},
+		{
+			name:     "empty path",
+			column:   "data",
+			path:     "",
+			expected: `jsonb_typeof("data")`,
+		},
 	}
 
 	for _, tt := range tests {
@@ -115,6 +121,12 @@ func TestJSONIsArray(t *testing.T) {
 			column:   "json_col",
 			path:     "$",
 			expected: `jsonb_typeof("json_col") = 'array'`,
+		},
+		{
+			name:     "empty path",
+			column:   "data",
+			path:     "",
+			expected: `jsonb_typeof("data") = 'array'`,
 		},
 	}
 
