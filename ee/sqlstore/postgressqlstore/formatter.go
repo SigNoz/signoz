@@ -42,9 +42,7 @@ func (f *formatter) JSONArrayElements(column, path, alias string) ([]byte, []byt
 	var sql []byte
 	sql = append(sql, "jsonb_array_elements("...)
 	sql = f.bunf.AppendIdent(sql, column)
-	if path != "$" && path != "" {
-		sql = append(sql, f.convertJSONPathToPostgresWithMode(path, false)...)
-	}
+	sql = append(sql, f.convertJSONPathToPostgresWithMode(path, false)...)
 	sql = append(sql, ") AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
 
@@ -55,9 +53,7 @@ func (f *formatter) JSONArrayOfStrings(column, path, alias string) ([]byte, []by
 	var sql []byte
 	sql = append(sql, "jsonb_array_elements_text("...)
 	sql = f.bunf.AppendIdent(sql, column)
-	if path != "$" && path != "" {
-		sql = append(sql, f.convertJSONPathToPostgresWithMode(path, false)...)
-	}
+	sql = append(sql, f.convertJSONPathToPostgresWithMode(path, false)...)
 	sql = append(sql, ") AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
 
@@ -68,9 +64,7 @@ func (f *formatter) JSONKeys(column, path, alias string) ([]byte, []byte) {
 	var sql []byte
 	sql = append(sql, "jsonb_each("...)
 	sql = f.bunf.AppendIdent(sql, column)
-	if path != "$" && path != "" {
-		sql = append(sql, f.convertJSONPathToPostgresWithMode(path, false)...)
-	}
+	sql = append(sql, f.convertJSONPathToPostgresWithMode(path, false)...)
 	sql = append(sql, ") AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
 
@@ -86,9 +80,6 @@ func (f *formatter) JSONArrayAgg(expression string) []byte {
 }
 
 func (f *formatter) JSONArrayLiteral(values ...string) []byte {
-	if len(values) == 0 {
-		return []byte("jsonb_build_array()")
-	}
 	var sql []byte
 	sql = append(sql, "jsonb_build_array("...)
 	for i, v := range values {

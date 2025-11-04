@@ -17,9 +17,9 @@ func (f *formatter) JSONExtractString(column, path string) []byte {
 	var sql []byte
 	sql = append(sql, "json_extract("...)
 	sql = f.bunf.AppendIdent(sql, column)
-	sql = append(sql, ", '"...)
-	sql = append(sql, path...)
-	sql = append(sql, "')"...)
+	sql = append(sql, ", "...)
+	sql = schema.Append(f.bunf, sql, path)
+	sql = append(sql, ")"...)
 	return sql
 }
 
@@ -27,9 +27,9 @@ func (f *formatter) JSONType(column, path string) []byte {
 	var sql []byte
 	sql = append(sql, "json_type("...)
 	sql = f.bunf.AppendIdent(sql, column)
-	sql = append(sql, ", '"...)
-	sql = append(sql, path...)
-	sql = append(sql, "')"...)
+	sql = append(sql, ", "...)
+	sql = schema.Append(f.bunf, sql, path)
+	sql = append(sql, ")"...)
 	return sql
 }
 
