@@ -1,6 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { themeColors } from 'constants/theme';
-// import { getFocusedSeriesAtPosition } from 'lib/uPlotLib/utils/getFocusedSeries';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
@@ -164,8 +163,6 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					queryName: '',
 					inFocusOrNot: false,
 				};
-
-				// if (!outputMetric.queryName) {
 
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
