@@ -52,6 +52,10 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		(query.aggregations?.[0] as MetricAggregation)?.metricName || '',
 	);
 
+	useEffect(() => {
+		setSearchText('');
+	}, [signalSource]);
+
 	const debouncedSearchText = useMemo(() => {
 		// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
 		const [_, value] = getAutocompleteValueAndType(searchText);
@@ -67,6 +71,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			queryAggregation.timeAggregation,
 			query.dataSource,
 			index,
+			signalSource,
 		],
 		async () =>
 			getAggregateAttribute({
@@ -100,6 +105,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				setOptionsData(options);
 				setAttributeKeys?.(data?.payload?.attributeKeys || []);
 			},
+			keepPreviousData: false,
 		},
 	);
 
@@ -164,8 +170,11 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				queryAggregation.timeAggregation,
 				query.dataSource,
 				index,
+				signalSource,
 			])?.payload?.attributeKeys || [];
+
 		setAttributeKeys?.(attributeKeys);
+
 		return attributeKeys;
 	}, [
 		debouncedValue,
@@ -173,6 +182,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		query.dataSource,
 		queryClient,
 		index,
+		signalSource,
 		setAttributeKeys,
 	]);
 

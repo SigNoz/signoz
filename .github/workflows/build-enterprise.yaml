@@ -107,7 +107,6 @@ jobs:
         -X github.com/SigNoz/signoz/pkg/version.branch=${{ needs.prepare.outputs.branch }}
         -X github.com/SigNoz/signoz/ee/zeus.url=https://api.signoz.cloud
         -X github.com/SigNoz/signoz/ee/zeus.deprecatedURL=https://license.signoz.io
-        -X github.com/SigNoz/signoz/ee/query-service/constants.ZeusURL=https://api.signoz.cloud
         -X github.com/SigNoz/signoz/ee/query-service/constants.LicenseSignozIo=https://license.signoz.io/api/v1
         -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr'
       DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'

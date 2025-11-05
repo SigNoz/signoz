@@ -1,5 +1,14 @@
-.metrics-select-container {
+.metrics-source-select-container {
 	margin-bottom: 8px;
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 8px;
+	width: 100%;
+
+	.source-selector {
+		width: 120px;
+	}
 
 	.ant-select-selector {
 		width: 100%;
@@ -42,7 +51,7 @@
 }
 
 .lightMode {
-	.metrics-select-container {
+	.metrics-source-select-container {
 		.ant-select-selector {
 			border: 1px solid var(--bg-vanilla-300) !important;
 			background: var(--bg-vanilla-100);
