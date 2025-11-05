@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, memo } from 'react';
 
 import { PanelTypeVsPanelWrapper } from './constants';
 import { PanelWrapperProps } from './panelWrapper.types';
@@ -55,4 +55,4 @@ function PanelWrapper({
 	);
 }
 
-export default PanelWrapper;
+export default memo(PanelWrapper);
