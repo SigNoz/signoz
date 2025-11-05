@@ -18,7 +18,7 @@ import _noop from 'lodash-es/noop';
 import { ContextMenu, useCoordinates } from 'periscope/components/ContextMenu';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 import uPlot from 'uplot';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
@@ -26,6 +26,49 @@ import { getTimeRange } from 'utils/getTimeRange';
 
 import { PanelWrapperProps } from './panelWrapper.types';
 import { getTimeRangeFromStepInterval, isApmMetric } from './utils';
+
+// Custom comparison function to prevent unnecessary re-renders
+function arePropsEqual(
+	prevProps: Readonly<PanelWrapperProps>,
+	nextProps: Readonly<PanelWrapperProps>,
+): boolean {
+	// Check if actual query data payload changed (not just the response object)
+	const isQueryDataSame =
+		prevProps.queryResponse?.data?.payload ===
+		nextProps.queryResponse?.data?.payload;
+
+	// Check loading/error states
+	const isLoadingSame =
+		prevProps.queryResponse?.isLoading === nextProps.queryResponse?.isLoading;
+	const isErrorSame =
+		prevProps.queryResponse?.isError === nextProps.queryResponse?.isError;
+
+	// Check if widget config actually changed (compare by ID and query)
+	const isWidgetIdSame = prevProps.widget?.id === nextProps.widget?.id;
+	const isWidgetQuerySame = prevProps.widget?.query === nextProps.widget?.query;
+	const isWidgetPanelTypeSame =
+		prevProps.widget?.panelTypes === nextProps.widget?.panelTypes;
+
+	// Check visibility state
+	const isGraphVisibilitySame = isEqual(
+		prevProps.graphVisibility,
+		nextProps.graphVisibility,
+	);
+	const isSelectedGraphSame =
+		prevProps.selectedGraph === nextProps.selectedGraph;
+
+	// Only re-render if something meaningful changed
+	return (
+		isQueryDataSame &&
+		isLoadingSame &&
+		isErrorSame &&
+		isWidgetIdSame &&
+		isWidgetQuerySame &&
+		isWidgetPanelTypeSame &&
+		isGraphVisibilitySame &&
+		isSelectedGraphSame
+	);
+}
 
 function UplotPanelWrapper({
 	queryResponse,
@@ -132,11 +175,21 @@ function UplotPanelWrapper({
 		[selectedGraph, widget?.panelTypes, widget?.stackedBarChart],
 	);
 
-	const chartData = getUPlotChartData(
-		queryResponse?.data?.payload,
-		widget.fillSpans,
-		stackedBarChart,
-		hiddenGraph,
+	// Memoize chartData to prevent unnecessary recalculations
+	const chartData = useMemo(
+		() =>
+			getUPlotChartData(
+				queryResponse?.data?.payload,
+				widget.fillSpans,
+				stackedBarChart,
+				hiddenGraph,
+			),
+		[
+			queryResponse?.data?.payload,
+			widget.fillSpans,
+			stackedBarChart,
+			hiddenGraph,
+		],
 	);
 
 	useEffect(() => {
@@ -252,6 +305,17 @@ function UplotPanelWrapper({
 				decimalPrecision: widget.decimalPrecision,
 			}),
 		[
+			widget?.id,
+			widget?.yAxisUnit,
+			widget.thresholds,
+			widget.softMax,
+			widget.softMin,
+			widget.panelTypes,
+			widget?.isLogScale,
+			widget?.customLegendColors,
+			widget?.legendPosition,
+			widget?.query,
+			widget.decimalPrecision,
 			queryResponse.data?.payload,
 			containerDimensions,
 			isDarkMode,
@@ -269,7 +333,6 @@ function UplotPanelWrapper({
 			customSeries,
 			enableDrillDown,
 			onClickHandler,
-			widget,
 			stackedBarChart,
 		],
 	);
@@ -307,4 +370,4 @@ function UplotPanelWrapper({
 	);
 }
 
-export default UplotPanelWrapper;
+export default memo(UplotPanelWrapper, arePropsEqual);
