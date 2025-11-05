@@ -1504,3 +1504,122 @@ func TestMultipleThresholdRule(t *testing.T) {
 		}
 	}
 }
+
+func TestThresholdRuleEval(t *testing.T) {
+	postableRule := ruletypes.PostableRule{
+		AlertName: "Eval Recovery Threshold Test",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeThreshold,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "probe_success",
+						},
+						AggregateOperator: v3.AggregateOperatorNoOp,
+						DataSource:        v3.DataSourceMetrics,
+						Expression:        "A",
+					},
+				},
+			},
+		},
+	}
+
+	logger := instrumentationtest.New().Logger()
+
+	for _, c := range tcThresholdRuleEval {
+		t.Run(c.description, func(t *testing.T) {
+			// Prepare threshold with recovery target
+			threshold := ruletypes.BasicRuleThreshold{
+				Name:           c.thresholdName,
+				TargetValue:    &c.target,
+				RecoveryTarget: c.recoveryTarget,
+				MatchType:      ruletypes.MatchType(c.matchType),
+				CompareOp:      ruletypes.CompareOp(c.compareOp),
+			}
+
+			// Build thresholds list
+			thresholds := ruletypes.BasicRuleThresholds{threshold}
+
+			// Add additional thresholds if specified
+			for _, addThreshold := range c.additionalThresholds {
+				thresholds = append(thresholds, ruletypes.BasicRuleThreshold{
+					Name:           addThreshold.name,
+					TargetValue:    &addThreshold.target,
+					RecoveryTarget: addThreshold.recoveryTarget,
+					MatchType:      ruletypes.MatchType(addThreshold.matchType),
+					CompareOp:      ruletypes.CompareOp(addThreshold.compareOp),
+				})
+			}
+
+			postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+				Kind: ruletypes.BasicThresholdKind,
+				Spec: thresholds,
+			}
+
+			rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+			if err != nil {
+				assert.NoError(t, err)
+				return
+			}
+
+			values := c.values
+			for i := range values.Points {
+				values.Points[i].Timestamp = time.Now().UnixMilli()
+			}
+
+			// Prepare activeAlerts: if nil, auto-calculate from labels + thresholdName
+			activeAlerts := c.activeAlerts
+			if activeAlerts == nil {
+				sampleLabels := ruletypes.PrepareSampleLabelsForRule(values.Labels, c.thresholdName)
+				alertHash := sampleLabels.Hash()
+				activeAlerts = map[uint64]struct{}{alertHash: {}}
+				// Handle other thresholds
+				for _, addThreshold := range c.additionalThresholds {
+					sampleLabels := ruletypes.PrepareSampleLabelsForRule(values.Labels, addThreshold.name)
+					alertHash := sampleLabels.Hash()
+					activeAlerts[alertHash] = struct{}{}
+				}
+			}
+
+			evalData := ruletypes.EvalData{
+				ActiveAlerts: activeAlerts,
+			}
+
+			resultVectors, err := rule.Threshold.Eval(values, rule.Unit(), evalData)
+			assert.NoError(t, err)
+
+			// Verify results
+			if c.expectAlert {
+				assert.NotEmpty(t, resultVectors, "Expected alert but got no result vectors")
+				if len(resultVectors) > 0 {
+					found := false
+					for _, sample := range resultVectors {
+						// Check if this is the expected sample
+						if sample.V == c.expectedAlertSample.Value {
+							found = true
+							// Verify IsRecovering flag
+							assert.Equal(t, c.expectRecovery, sample.IsRecovering, "IsRecovering flag mismatch")
+							// Verify target value
+							if c.expectedTarget != 0 || sample.Target != 0 {
+								assert.InDelta(t, c.expectedTarget, sample.Target, 0.01, "Target value mismatch")
+							}
+							break
+						}
+					}
+					assert.True(t, found, "Expected alert sample value %.2f not found in result vectors. Got values: %v", c.expectedAlertSample.Value, getVectorValues(resultVectors))
+				}
+			} else {
+				assert.Empty(t, resultVectors, "Expected no alert but got result vectors: %v", resultVectors)
+			}
+		})
+	}
+}

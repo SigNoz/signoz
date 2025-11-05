@@ -148,7 +148,7 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 		if threshold.RecoveryTarget == nil {
 			continue
 		}
-		sampleLabels := prepareSampleLabelsForRule(series.Labels, threshold.Name)
+		sampleLabels := PrepareSampleLabelsForRule(series.Labels, threshold.Name)
 		alertHash := sampleLabels.Hash()
 		// check if alert is active and then check if recovery threshold matches
 		if evalData.HasActiveAlert(alertHash) {
@@ -259,9 +259,9 @@ func removeGroupinSetPoints(series v3.Series) []v3.Point {
 	return result
 }
 
-// prepareSampleLabelsForRule prepares the labels for the sample to be used in the alerting.
+// PrepareSampleLabelsForRule prepares the labels for the sample to be used in the alerting.
 // It accepts seriesLabels and thresholdName as input and returns the labels with the threshold name label added.
-func prepareSampleLabelsForRule(seriesLabels map[string]string, thresholdName string) (lbls labels.Labels) {
+func PrepareSampleLabelsForRule(seriesLabels map[string]string, thresholdName string) (lbls labels.Labels) {
 	for name, value := range seriesLabels {
 		lbls = append(lbls, labels.Label{Name: name, Value: value})
 	}
@@ -272,7 +272,7 @@ func prepareSampleLabelsForRule(seriesLabels map[string]string, thresholdName st
 func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float64) (Sample, bool) {
 	var shouldAlert bool
 	var alertSmpl Sample
-	lbls := prepareSampleLabelsForRule(series.Labels, b.Name)
+	lbls := PrepareSampleLabelsForRule(series.Labels, b.Name)
 
 	series.Points = removeGroupinSetPoints(series)
 
