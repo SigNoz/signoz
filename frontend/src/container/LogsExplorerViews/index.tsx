@@ -59,7 +59,6 @@ import { v4 } from 'uuid';
 
 import LogsActionsContainer from './LogsActionsContainer';
 
-// use hooks for chart and list queries
 function LogsExplorerViewsContainer({
 	setIsLoadingQueries,
 	listQueryKeyRef,
@@ -220,7 +219,6 @@ function LogsExplorerViewsContainer({
 		[activeLogId, orderBy, listQuery, selectedPanelType],
 	);
 
-	// combine useEffects with data
 	useEffect(() => {
 		if (data?.payload) {
 			setWarning(data?.warning);
@@ -255,13 +253,11 @@ function LogsExplorerViewsContainer({
 		setRequestData(newRequestData);
 	}, [isLimit, logs, listQuery, pageSize, stagedQuery, getRequestData, page]);
 
-	// combine useEffects with data
 	useEffect(() => {
 		setQueryId(v4());
 	}, [data]);
 
 	const logEventCalledRef = useRef(false);
-	// combine useEffects with data
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(data?.payload)) {
 			const currentData = data?.payload?.data?.newResult?.data?.result || [];
@@ -322,7 +318,6 @@ function LogsExplorerViewsContainer({
 		],
 	);
 
-	// combine useEffects with data
 	useEffect(() => {
 		const currentData = data?.payload?.data?.newResult?.data?.result || [];
 		if (currentData.length > 0 && currentData[0].list) {
