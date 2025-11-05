@@ -5,7 +5,6 @@ import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQuery
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { VirtuosoMockContext } from 'react-virtuoso';
@@ -152,7 +151,6 @@ const renderer = (): RenderResult =>
 		>
 			<PreferenceContextProvider>
 				<LogsExplorerViews
-					selectedView={ExplorerViews.LIST}
 					setIsLoadingQueries={(): void => {}}
 					listQueryKeyRef={{ current: {} }}
 					chartQueryKeyRef={{ current: {} }}
@@ -218,7 +216,6 @@ describe('LogsExplorerViews -', () => {
 			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue}>
 				<PreferenceContextProvider>
 					<LogsExplorerViews
-						selectedView={ExplorerViews.LIST}
 						setIsLoadingQueries={(): void => {}}
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
@@ -295,7 +292,6 @@ describe('LogsExplorerViews -', () => {
 			<QueryBuilderContext.Provider value={customContext as any}>
 				<PreferenceContextProvider>
 					<LogsExplorerViews
-						selectedView={ExplorerViews.LIST}
 						setIsLoadingQueries={(): void => {}}
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
