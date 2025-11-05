@@ -17,6 +17,7 @@ jobs:
           - bootstrap
           - passwordauthn
           - callbackauthn
+          - cloudintegrations
           - querier
           - ttl
         sqlstore-provider:
