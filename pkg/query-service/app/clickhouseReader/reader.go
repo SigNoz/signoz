@@ -1609,8 +1609,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			ttlParams.ColdStorageVolume = ""
 		}
 
-		if params.ToColdStorageDuration > 0 {
-			ttlParams.ToColdStorageDuration = params.ToColdStorageDuration
+		if params.ToColdStorageDurationDays > 0 {
+			ttlParams.ToColdStorageDuration = params.ToColdStorageDurationDays * 24 * 3600
 		} else {
 			ttlParams.ToColdStorageDuration = 0
 		}
@@ -1642,8 +1642,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 
 	// Calculate cold storage duration
 	coldStorageDuration := -1
-	if len(params.ColdStorageVolume) > 0 && params.ToColdStorageDuration > 0 {
-		coldStorageDuration = int(params.ToColdStorageDuration) // Already in days
+	if len(params.ColdStorageVolume) > 0 && params.ToColdStorageDurationDays > 0 {
+		coldStorageDuration = int(params.ToColdStorageDurationDays) // Already in days
 	}
 
 	tableNames := []string{
@@ -1860,6 +1860,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 			response.DefaultTTLDays = 15
 			response.TTLConditions = []model.CustomRetentionRule{}
 			response.Status = constants.StatusFailed
+			response.ColdStorageTTLDays = -1
 			return response, nil
 		}
 
@@ -1891,13 +1892,16 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error getting V1 TTL: %s", apiErr.Error())
 		}
 
-		// Map V1 fields to response
-		response.LogsTime = ttlResult.LogsTime
-		response.LogsMoveTime = ttlResult.LogsMoveTime
 		response.ExpectedLogsTime = ttlResult.ExpectedLogsTime
 		response.ExpectedLogsMoveTime = ttlResult.ExpectedLogsMoveTime
 		response.Status = ttlResult.Status
-		response.DefaultTTLDays = ttlResult.LogsTime / 24
+		response.ColdStorageTTLDays = -1
+		if ttlResult.LogsTime > 0 {
+			response.DefaultTTLDays = ttlResult.LogsTime / 24
+		}
+		if ttlResult.LogsMoveTime > 0 {
+			response.ColdStorageTTLDays = ttlResult.LogsMoveTime / 24
+		}
 
 		// For V1, we don't have TTL conditions
 		response.TTLConditions = []model.CustomRetentionRule{}

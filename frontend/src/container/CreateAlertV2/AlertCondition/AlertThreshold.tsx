@@ -11,12 +11,14 @@ import { v4 } from 'uuid';
 
 import { useCreateAlertState } from '../context';
 import {
+	INITIAL_EVALUATION_WINDOW_STATE,
 	INITIAL_INFO_THRESHOLD,
 	INITIAL_RANDOM_THRESHOLD,
 	INITIAL_WARNING_THRESHOLD,
 	THRESHOLD_MATCH_TYPE_OPTIONS,
 	THRESHOLD_OPERATOR_OPTIONS,
 } from '../context/constants';
+import { AlertThresholdMatchType } from '../context/types';
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
 import ThresholdItem from './ThresholdItem';
 import { AnomalyAndThresholdProps, UpdateThreshold } from './types';
@@ -38,12 +40,12 @@ function AlertThreshold({
 		alertState,
 		thresholdState,
 		setThresholdState,
+		setEvaluationWindow,
 		notificationSettings,
 		setNotificationSettings,
 	} = useCreateAlertState();
 
 	const { currentQuery } = useQueryBuilder();
-
 	const queryNames = getQueryNames(currentQuery);
 
 	useEffect(() => {
@@ -160,6 +162,54 @@ function AlertThreshold({
 		}),
 	);
 
+	const handleSetEvaluationDetailsForMeter = (): void => {
+		setEvaluationWindow({
+			type: 'SET_INITIAL_STATE_FOR_METER',
+		});
+
+		setThresholdState({
+			type: 'SET_MATCH_TYPE',
+			payload: AlertThresholdMatchType.IN_TOTAL,
+		});
+	};
+
+	const handleSelectedQueryChange = (value: string): void => {
+		// loop through currenttQuery and find the query that matches the selected query
+		const query = currentQuery?.builder?.queryData.find(
+			(query) => query.queryName === value,
+		);
+
+		const currentSelectedQuery = currentQuery?.builder?.queryData.find(
+			(query) => query.queryName === thresholdState.selectedQuery,
+		);
+
+		const newSelectedQuerySource = query?.source || '';
+		const currentSelectedQuerySource = currentSelectedQuery?.source || '';
+
+		if (newSelectedQuerySource === currentSelectedQuerySource) {
+			setThresholdState({
+				type: 'SET_SELECTED_QUERY',
+				payload: value,
+			});
+
+			return;
+		}
+
+		if (newSelectedQuerySource === 'meter') {
+			handleSetEvaluationDetailsForMeter();
+		} else {
+			setEvaluationWindow({
+				type: 'SET_INITIAL_STATE',
+				payload: INITIAL_EVALUATION_WINDOW_STATE,
+			});
+		}
+
+		setThresholdState({
+			type: 'SET_SELECTED_QUERY',
+			payload: value,
+		});
+	};
+
 	return (
 		<div
 			className={classNames(
@@ -175,14 +225,10 @@ function AlertThreshold({
 					</Typography.Text>
 					<Select
 						value={thresholdState.selectedQuery}
-						onChange={(value): void => {
-							setThresholdState({
-								type: 'SET_SELECTED_QUERY',
-								payload: value,
-							});
-						}}
+						onChange={handleSelectedQueryChange}
 						style={{ width: 80 }}
 						options={queryNames}
+						data-testid="alert-threshold-query-select"
 					/>
 					<Typography.Text className="sentence-text">is</Typography.Text>
 					<Select
@@ -195,6 +241,7 @@ function AlertThreshold({
 						}}
 						style={{ width: 180 }}
 						options={THRESHOLD_OPERATOR_OPTIONS}
+						data-testid="alert-threshold-operator-select"
 					/>
 					<Typography.Text className="sentence-text">
 						the threshold(s)
@@ -209,6 +256,7 @@ function AlertThreshold({
 						}}
 						style={{ width: 180 }}
 						options={matchTypeOptionsWithTooltips}
+						data-testid="alert-threshold-match-type-select"
 					/>
 					<Typography.Text className="sentence-text">
 						during the <EvaluationSettings />
@@ -236,6 +284,7 @@ function AlertThreshold({
 					icon={<Plus size={16} />}
 					onClick={addThreshold}
 					className="add-threshold-btn"
+					data-testid="add-threshold-button"
 				>
 					Add Threshold
 				</Button>
