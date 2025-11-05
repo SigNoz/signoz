@@ -22,10 +22,12 @@ import {
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
+	memo,
 	RefObject,
 	SetStateAction,
 	useCallback,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from 'react';
@@ -76,8 +78,16 @@ function WidgetGraphComponent({
 	const isFullViewOpen = params.get(QueryParams.expandedWidgetId) === widget.id;
 
 	const lineChartRef = useRef<ToggleGraphProps>();
+
+	// Memoize initial graph visibility to prevent unnecessary state initialization
+	const initialGraphVisibility = useMemo(
+		() =>
+			Array(queryResponse.data?.payload?.data?.result?.length || 0).fill(true),
+		[queryResponse.data?.payload?.data?.result?.length],
+	);
+
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
-		Array(queryResponse.data?.payload?.data?.result?.length || 0).fill(true),
+		initialGraphVisibility,
 	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -110,7 +120,7 @@ function WidgetGraphComponent({
 
 	const updateDashboardMutation = useUpdateDashboard();
 
-	const onDeleteHandler = (): void => {
+	const onDeleteHandler = useCallback((): void => {
 		if (!selectedDashboard) return;
 
 		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
@@ -138,9 +148,15 @@ function WidgetGraphComponent({
 				setDeleteModal(false);
 			},
 		});
-	};
+	}, [
+		selectedDashboard,
+		widget.id,
+		updateDashboardMutation,
+		setLayouts,
+		setSelectedDashboard,
+	]);
 
-	const onCloneHandler = async (): Promise<void> => {
+	const onCloneHandler = useCallback(async (): Promise<void> => {
 		if (!selectedDashboard) return;
 
 		const uuid = v4();
@@ -204,9 +220,18 @@ function WidgetGraphComponent({
 				},
 			},
 		);
-	};
+	}, [
+		selectedDashboard,
+		widget,
+		updateDashboardMutation,
+		setLayouts,
+		setSelectedDashboard,
+		notifications,
+		safeNavigate,
+		pathname,
+	]);
 
-	const handleOnView = (): void => {
+	const handleOnView = useCallback((): void => {
 		const queryParams = {
 			[QueryParams.expandedWidgetId]: widget.id,
 		};
@@ -225,17 +250,17 @@ function WidgetGraphComponent({
 			pathname,
 			search: newSearch,
 		});
-	};
+	}, [widget.id, search, pathname, safeNavigate]);
 
-	const handleOnDelete = (): void => {
+	const handleOnDelete = useCallback((): void => {
 		onToggleModal(setDeleteModal);
-	};
+	}, [onToggleModal]);
 
-	const onDeleteModelHandler = (): void => {
+	const onDeleteModelHandler = useCallback((): void => {
 		onToggleModal(setDeleteModal);
-	};
+	}, [onToggleModal]);
 
-	const onToggleModelHandler = (): void => {
+	const onToggleModelHandler = useCallback((): void => {
 		const existingSearchParams = new URLSearchParams(search);
 		existingSearchParams.delete(QueryParams.expandedWidgetId);
 		existingSearchParams.delete(QueryParams.compositeQuery);
@@ -254,62 +279,85 @@ function WidgetGraphComponent({
 			pathname,
 			search: createQueryParams(updatedQueryParams),
 		});
-	};
+	}, [search, queryResponse.data?.payload, widget.id, pathname, safeNavigate]);
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
 
+	// Memoize the isButtonEnabled value to prevent recalculation
+	const isGraphClickButtonEnabled = useMemo(
+		() =>
+			(widget?.query?.builder?.queryData &&
+			Array.isArray(widget.query.builder.queryData)
+				? widget.query.builder.queryData
+				: []
+			).some(
+				(q) =>
+					q.dataSource === DataSource.TRACES || q.dataSource === DataSource.LOGS,
+			),
+		[widget?.query?.builder?.queryData],
+	);
+
 	const graphClick = useGraphClickToShowButton({
 		graphRef: currentGraphRef?.current ? currentGraphRef : graphRef,
-		isButtonEnabled: (widget?.query?.builder?.queryData &&
-		Array.isArray(widget.query.builder.queryData)
-			? widget.query.builder.queryData
-			: []
-		).some(
-			(q) =>
-				q.dataSource === DataSource.TRACES || q.dataSource === DataSource.LOGS,
-		),
+		isButtonEnabled: isGraphClickButtonEnabled,
 		buttonClassName: 'view-onclick-show-button',
 	});
 
 	const navigateToExplorer = useNavigateToExplorer();
 
-	const graphClickHandler = (
-		xValue: number,
-		yValue: number,
-		mouseX: number,
-		mouseY: number,
-		metric?: { [key: string]: string },
-		queryData?: { queryName: string; inFocusOrNot: boolean },
-	): void => {
-		const customTracesTimeRange = getCustomTimeRangeWindowSweepInMS(
+	const graphClickHandler = useCallback(
+		(
+			xValue: number,
+			yValue: number,
+			mouseX: number,
+			mouseY: number,
+			metric?: { [key: string]: string },
+			queryData?: { queryName: string; inFocusOrNot: boolean },
+		): void => {
+			const customTracesTimeRange = getCustomTimeRangeWindowSweepInMS(
+				customTimeRangeWindowForCoRelation,
+			);
+			const { start, end } = getStartAndEndTimesInMilliseconds(
+				xValue,
+				customTracesTimeRange,
+			);
+			handleGraphClick({
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				metric,
+				queryData,
+				widget,
+				navigateToExplorerPages,
+				navigateToExplorer,
+				notifications,
+				graphClick,
+				...(customTimeRangeWindowForCoRelation
+					? { customTracesTimeRange: { start, end } }
+					: {}),
+			});
+		},
+		[
 			customTimeRangeWindowForCoRelation,
-		);
-		const { start, end } = getStartAndEndTimesInMilliseconds(
-			xValue,
-			customTracesTimeRange,
-		);
-		handleGraphClick({
-			xValue,
-			yValue,
-			mouseX,
-			mouseY,
-			metric,
-			queryData,
 			widget,
 			navigateToExplorerPages,
 			navigateToExplorer,
 			notifications,
 			graphClick,
-			...(customTimeRangeWindowForCoRelation
-				? { customTracesTimeRange: { start, end } }
-				: {}),
-		});
-	};
+		],
+	);
 
 	const { truncatedText, fullText } = useGetResolvedText({
 		text: widget.title as string,
 		maxLength: 100,
 	});
+
+	// Memoize the click handler to prevent PanelWrapper from re-rendering
+	const memoizedClickHandler = useMemo(
+		() => onClickHandler ?? graphClickHandler,
+		[onClickHandler, graphClickHandler],
+	);
 
 	return (
 		<div
@@ -366,7 +414,7 @@ function WidgetGraphComponent({
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
 					tableProcessedDataRef={tableProcessedDataRef}
-					onClickHandler={onClickHandler ?? graphClickHandler}
+					onClickHandler={memoizedClickHandler}
 					customOnDragSelect={customOnDragSelect}
 					setCurrentGraphRef={setCurrentGraphRef}
 					enableDrillDown={
@@ -416,7 +464,7 @@ function WidgetGraphComponent({
 						setRequestData={setRequestData}
 						setGraphVisibility={setGraphVisibility}
 						graphVisibility={graphVisibility}
-						onClickHandler={onClickHandler ?? graphClickHandler}
+						onClickHandler={memoizedClickHandler}
 						onDragSelect={onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
 						customTooltipElement={customTooltipElement}
@@ -441,4 +489,4 @@ WidgetGraphComponent.defaultProps = {
 	enableDrillDown: false,
 };
 
-export default WidgetGraphComponent;
+export default memo(WidgetGraphComponent);
