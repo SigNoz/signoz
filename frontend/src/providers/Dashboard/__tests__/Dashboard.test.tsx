@@ -121,7 +121,6 @@ function renderWithDashboardProvider(
 // Mock URL variables hook
 const mockGetUrlVariables = jest.fn();
 const mockUpdateUrlVariable = jest.fn();
-const mockClearUrlVariables = jest.fn();
 const mockSetUrlVariables = jest.fn();
 
 jest.mock('hooks/dashboard/useVariablesFromUrl', () => ({
@@ -129,7 +128,6 @@ jest.mock('hooks/dashboard/useVariablesFromUrl', () => ({
 	default: jest.fn(() => ({
 		getUrlVariables: mockGetUrlVariables,
 		updateUrlVariable: mockUpdateUrlVariable,
-		clearUrlVariables: mockClearUrlVariables,
 		setUrlVariables: mockSetUrlVariables,
 	})),
 }));
@@ -522,16 +520,6 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 				expect(parsedVariables.services.allSelected).toBe(true);
 				// Environment should remain unaffected
 				expect(parsedVariables.environment.allSelected).toBe(false);
-			});
-		});
-
-		it('should clear URL variables when not on dashboard page', async () => {
-			mockUseRouteMatch.mockReturnValue(null); // Not on dashboard page
-
-			renderWithDashboardProvider('/other-page', null);
-
-			await waitFor(() => {
-				expect(mockClearUrlVariables).toHaveBeenCalled();
 			});
 		});
 	});
