@@ -1,4 +1,5 @@
-import { FC } from 'react';
+import isEqual from 'lodash-es/isEqual';
+import { FC, memo } from 'react';
 
 import { PanelTypeVsPanelWrapper } from './constants';
 import { PanelWrapperProps } from './panelWrapper.types';
@@ -55,4 +56,14 @@ function PanelWrapper({
 	);
 }
 
-export default PanelWrapper;
+function arePropsEqual(
+	prevProps: PanelWrapperProps,
+	nextProps: PanelWrapperProps,
+): boolean {
+	// TODO: Figure out why onClickHandler is causing re-render of the component
+	const { onClickHandler: prevOnClickHandler, ...restPrevProps } = prevProps;
+	const { onClickHandler: nextOnClickHandler, ...restNextProps } = nextProps;
+	return isEqual(restPrevProps, restNextProps);
+}
+
+export default memo(PanelWrapper, arePropsEqual);
