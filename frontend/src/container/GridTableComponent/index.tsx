@@ -88,17 +88,13 @@ function GridTableComponent({
 					const newValue = { ...val };
 					Object.keys(val).forEach((k) => {
 						const unit = getColumnUnit(k, columnUnits);
-						// Apply formatting if:
-						// 1. Column has a unit defined, OR
-						// 2. decimalPrecision is specified (format all values)
-						const shouldFormat = unit || decimalPrecision !== undefined;
 
-						if (shouldFormat) {
+						if (unit) {
 							// the check below takes care of not adding units for rows that have n/a or null values
 							if (val[k] !== 'n/a' && val[k] !== null) {
 								newValue[k] = getYAxisFormattedValue(
 									String(val[k]),
-									unit || 'none',
+									unit,
 									decimalPrecision,
 								);
 							} else if (val[k] === null) {
