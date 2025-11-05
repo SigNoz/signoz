@@ -28,7 +28,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { isEmpty, isEqual, isNull } from 'lodash-es';
+import { defaultTo, isEmpty, isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { EventSourceProvider } from 'providers/EventSource';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
@@ -42,7 +42,7 @@ import {
 	getExplorerViewFromUrl,
 } from 'utils/explorerUtils';
 
-import { ExplorerViews } from './utils';
+import { ExplorerViews, VIEW_TO_PANEL_TYPE } from './utils';
 
 function LogsExplorer(): JSX.Element {
 	const [searchParams] = useSearchParams();
@@ -114,9 +114,10 @@ function LogsExplorer(): JSX.Element {
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews): void => {
-			if (selectedView === ExplorerViews.LIST) {
-				handleSetConfig(PANEL_TYPES.LIST, DataSource.LOGS);
-			}
+			handleSetConfig(
+				defaultTo(VIEW_TO_PANEL_TYPE[view], PANEL_TYPES.LIST),
+				DataSource.LOGS,
+			);
 
 			if (view === ExplorerViews.LIST) {
 				if (
@@ -399,7 +400,6 @@ function LogsExplorer(): JSX.Element {
 							</div>
 							<div className="logs-explorer-views">
 								<LogsExplorerViewsContainer
-									selectedView={selectedView}
 									listQueryKeyRef={listQueryKeyRef}
 									chartQueryKeyRef={chartQueryKeyRef}
 									setIsLoadingQueries={setIsLoadingQueries}
