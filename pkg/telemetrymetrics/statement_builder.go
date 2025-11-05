@@ -348,7 +348,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-		})
+        }, start, end)
 		if err != nil {
 			return "", nil, err
 		}

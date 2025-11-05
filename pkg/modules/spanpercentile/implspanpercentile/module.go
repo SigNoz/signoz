@@ -99,9 +99,9 @@ func transformToSpanPercentileResponse(queryResult *qbtypes.QueryRangeResponse) 
 		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no spans found matching the specified criteria")
 	}
 
-	description := fmt.Sprintf("faster than %.1f%% of spans", position)
+	description := fmt.Sprintf("slower than %.1f%% of spans", position)
 	if position < 50 {
-		description = fmt.Sprintf("slower than %.1f%% of spans", 100-position)
+		description = fmt.Sprintf("faster than %.1f%% of spans", 100-position)
 	}
 
 	return &spanpercentiletypes.SpanPercentileResponse{

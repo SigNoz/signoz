@@ -168,6 +168,7 @@ function QuerySection({
 							version={selectedDashboard?.data?.version || 'v3'}
 							isListViewPanel={selectedGraph === PANEL_TYPES.LIST}
 							queryComponents={queryComponents}
+							signalSourceChangeEnabled
 						/>
 					</div>
 				),
