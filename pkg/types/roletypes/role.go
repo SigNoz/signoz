@@ -114,6 +114,11 @@ type PatchableObjects struct {
 	Deletions []*authtypes.Object `json:"deletions"`
 }
 
+type PatchableMembership struct {
+	Additions []*UpdatableMembership `json:"additions"`
+	Deletions []*UpdatableMembership `json:"deletions"`
+}
+
 func NewStorableRole(displayName, description string, roleType valuer.String, orgID valuer.UUID) *StorableRole {
 	return &StorableRole{
 		Identifiable: types.Identifiable{

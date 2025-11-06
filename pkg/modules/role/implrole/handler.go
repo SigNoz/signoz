@@ -287,7 +287,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusAccepted, nil)
 }
 
-func (handler *handler) UpdateMembership(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) PatchMembership(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -306,13 +306,13 @@ func (handler *handler) UpdateMembership(rw http.ResponseWriter, r *http.Request
 		return
 	}
 
-	req := new([]*roletypes.UpdatableMembership)
+	req := new(roletypes.PatchableMembership)
 	if err := binding.JSON.BindBody(r.Body, req, binding.WithDisallowUnknownFields(true)); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.module.UpdateMembership(ctx, valuer.MustNewUUID(claims.OrgID), roleID, *req)
+	err = handler.module.PatchMembership(ctx, valuer.MustNewUUID(claims.OrgID), roleID, req.Additions, req.Deletions)
 	if err != nil {
 		render.Error(rw, err)
 		return

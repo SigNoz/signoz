@@ -98,7 +98,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/roles/{id}/membership", am.OpenAccess(ah.Signoz.Handlers.Role.GetMembership)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/roles/{id}", am.OpenAccess(ah.Signoz.Handlers.Role.Patch)).Methods(http.MethodPatch)
 	router.HandleFunc("/api/v1/roles/{id}/relation/{relation}/objects", am.OpenAccess(ah.Signoz.Handlers.Role.PatchObjects)).Methods(http.MethodPatch)
-	router.HandleFunc("/api/v1/roles/{id}/membership", am.OpenAccess(ah.Signoz.Handlers.Role.UpdateMembership)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/roles/{id}/membership", am.OpenAccess(ah.Signoz.Handlers.Role.PatchMembership)).Methods(http.MethodPatch)
 	router.HandleFunc("/api/v1/roles/{id}", am.OpenAccess(ah.Signoz.Handlers.Role.Delete)).Methods(http.MethodDelete)
 
 	// base overrides

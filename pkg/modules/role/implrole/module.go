@@ -184,10 +184,47 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 	return nil
 }
 
-func (module *module) UpdateMembership(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatableMemberships []*roletypes.UpdatableMembership) error {
+func (module *module) PatchMembership(ctx context.Context, orgID valuer.UUID, id valuer.UUID, additions, deletions []*roletypes.UpdatableMembership) error {
 	_, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return err
+	}
+
+	memberships, err := module.store.GetMembership(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	updatableMemberships := make([]*roletypes.UpdatableMembership, 0)
+	membershipTypeAndIDs := make(map[string]bool)
+	for _, userRole := range memberships.Users {
+		membershipTypeAndIDs[roletypes.MembershipTypeUser.StringValue()+userRole.UserID] = true
+	}
+
+	deletionMap := make(map[string]bool)
+	for _, del := range deletions {
+		switch del.Type {
+		case roletypes.MembershipTypeUser:
+			deletionMap[del.Type.StringValue()+del.UserID.StringValue()] = true
+		}
+	}
+
+	for _, userRole := range memberships.Users {
+		if !deletionMap[roletypes.MembershipTypeUser.StringValue()+userRole.UserID] {
+			updatableMemberships = append(updatableMemberships, &roletypes.UpdatableMembership{
+				Type:   roletypes.MembershipTypeUser,
+				UserID: valuer.MustNewUUID(userRole.UserID),
+			})
+		}
+	}
+
+	for _, add := range additions {
+		switch add.Type {
+		case roletypes.MembershipTypeUser:
+			if !membershipTypeAndIDs[add.Type.StringValue()+add.UserID.StringValue()] {
+				updatableMemberships = append(updatableMemberships, add)
+			}
+		}
 	}
 
 	storableMemberships := roletypes.NewStorableMembershipFromUpdatableMemberships(id, updatableMemberships)

@@ -36,8 +36,8 @@ type Module interface {
 	// Patches the objects in authorization server associated with the given role and relation
 	PatchObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation, []*authtypes.Object, []*authtypes.Object) error
 
-	// Update the membership for the given role
-	UpdateMembership(context.Context, valuer.UUID, valuer.UUID, []*roletypes.UpdatableMembership) error
+	// Patches the membership for the given role
+	PatchMembership(context.Context, valuer.UUID, valuer.UUID, []*roletypes.UpdatableMembership, []*roletypes.UpdatableMembership) error
 
 	// Deletes the role metadata and tuples in authorization server
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
@@ -69,7 +69,7 @@ type Handler interface {
 
 	PatchObjects(http.ResponseWriter, *http.Request)
 
-	UpdateMembership(http.ResponseWriter, *http.Request)
+	PatchMembership(http.ResponseWriter, *http.Request)
 
 	Delete(http.ResponseWriter, *http.Request)
 }
