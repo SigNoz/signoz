@@ -352,11 +352,9 @@ function WidgetGraphComponent({
 		maxLength: 100,
 	});
 
-	// Memoize the click handler to prevent PanelWrapper from re-rendering
-	const memoizedClickHandler = useMemo(
-		() => onClickHandler ?? graphClickHandler,
-		[onClickHandler, graphClickHandler],
-	);
+	// Use the provided onClickHandler if available, otherwise use the default graphClickHandler
+	// Both should be stable references due to useCallback
+	const clickHandler = onClickHandler ?? graphClickHandler;
 
 	return (
 		<div
@@ -413,7 +411,7 @@ function WidgetGraphComponent({
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
 					tableProcessedDataRef={tableProcessedDataRef}
-					onClickHandler={memoizedClickHandler}
+					onClickHandler={clickHandler}
 					customOnDragSelect={customOnDragSelect}
 					setCurrentGraphRef={setCurrentGraphRef}
 					enableDrillDown={
@@ -463,7 +461,7 @@ function WidgetGraphComponent({
 						setRequestData={setRequestData}
 						setGraphVisibility={setGraphVisibility}
 						graphVisibility={graphVisibility}
-						onClickHandler={memoizedClickHandler}
+						onClickHandler={clickHandler}
 						onDragSelect={onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
 						customTooltipElement={customTooltipElement}
