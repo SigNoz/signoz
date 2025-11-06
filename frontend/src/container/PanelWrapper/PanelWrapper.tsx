@@ -60,10 +60,10 @@ function arePropsEqual(
 	prevProps: PanelWrapperProps,
 	nextProps: PanelWrapperProps,
 ): boolean {
-	// TODO: Figure out why onClickHandler is causing re-render of the component
-	const { onClickHandler: prevOnClickHandler, ...restPrevProps } = prevProps;
-	const { onClickHandler: nextOnClickHandler, ...restNextProps } = nextProps;
-	return isEqual(restPrevProps, restNextProps);
+	// Use deep equality check for complex props like widget and queryResponse
+	// This prevents unnecessary re-renders when these objects have the same content
+	// but different references
+	return isEqual(prevProps, nextProps);
 }
 
 export default memo(PanelWrapper, arePropsEqual);
