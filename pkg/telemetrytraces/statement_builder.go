@@ -512,6 +512,8 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			ctx, agg.Expression,
 			uint64(query.StepInterval.Seconds()),
 			keys,
+			start,
+			end,
 		)
 		if err != nil {
 			return nil, err
@@ -657,6 +659,8 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 				ctx, aggExpr.Expression,
 				rateInterval,
 				keys,
+				start,
+				end,
 			)
 			if err != nil {
 				return nil, err
@@ -746,7 +750,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
 			Variables:          variables,
-        }, start, end)
+		}, start, end)
 
 		if err != nil {
 			return nil, err

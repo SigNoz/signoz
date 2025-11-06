@@ -350,6 +350,8 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 			ctx, agg.Expression,
 			uint64(query.StepInterval.Seconds()),
 			keys,
+			start,
+			end,
 		)
 		if err != nil {
 			return nil, err
@@ -499,6 +501,8 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 				ctx, aggExpr.Expression,
 				rateInterval,
 				keys,
+				start,
+				end,
 			)
 			if err != nil {
 				return nil, err
@@ -592,7 +596,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			JsonBodyPrefix:     b.jsonBodyPrefix,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
-        }, start, end)
+		}, start, end)
 
 		if err != nil {
 			return nil, err

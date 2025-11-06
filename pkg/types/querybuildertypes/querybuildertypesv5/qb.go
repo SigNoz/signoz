@@ -37,8 +37,8 @@ type ConditionBuilder interface {
 
 type AggExprRewriter interface {
 	// Rewrite rewrites the aggregation expression to be used in the query.
-	Rewrite(ctx context.Context, expr string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, []any, error)
-	RewriteMulti(ctx context.Context, exprs []string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]string, [][]any, error)
+	Rewrite(ctx context.Context, expr string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey, startNs uint64, endNs uint64) (string, []any, error)
+	RewriteMulti(ctx context.Context, exprs []string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey, startNs uint64, endNs uint64) ([]string, [][]any, error)
 }
 
 type Statement struct {

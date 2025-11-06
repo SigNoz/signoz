@@ -237,7 +237,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 				ConditionBuilder:   b.stmtBuilder.cb,
 				FieldKeys:          keys,
 				SkipResourceFilter: true,
-            }, b.start, b.end,
+			}, b.start, b.end,
 		)
 		if err != nil {
 			b.stmtBuilder.logger.ErrorContext(ctx, "Failed to prepare where clause", "error", err, "filter", query.Filter.Expression)
@@ -575,6 +575,8 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 			agg.Expression,
 			uint64(b.operator.StepInterval.Seconds()),
 			keys,
+			b.start,
+			b.end,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
@@ -687,6 +689,8 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 			agg.Expression,
 			rateInterval,
 			keys,
+			b.start,
+			b.end,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
@@ -825,6 +829,8 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 			agg.Expression,
 			uint64((b.end-b.start)/querybuilder.NsToSeconds),
 			keys,
+			b.start,
+			b.end,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
