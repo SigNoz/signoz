@@ -104,7 +104,6 @@ export const getListViewData = (
 	activeLogId: string | null,
 	orderBy: string,
 	selectedPanelType: string,
-	listQuery: IBuilderQuery | null,
 ): Query | null => {
 	if (!query) return null;
 
@@ -151,7 +150,7 @@ export const getListViewData = (
 
 		queryData = [
 			{
-				...(listQuery || initialQueryBuilderFormValues),
+				...(getSingleBaseQuery(query) || initialQueryBuilderFormValues),
 				...paginateData,
 				...(updatedFilters ? { filters: updatedFilters } : {}),
 				filter: { expression: updatedFilterExpression || '' },

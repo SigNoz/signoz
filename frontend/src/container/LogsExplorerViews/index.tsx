@@ -208,15 +208,8 @@ function LogsExplorerViewsContainer({
 				filter: Filter;
 			},
 		): Query | null =>
-			getListViewData(
-				query,
-				params,
-				activeLogId,
-				orderBy,
-				selectedPanelType,
-				listQuery,
-			),
-		[activeLogId, orderBy, listQuery, selectedPanelType],
+			getListViewData(query, params, activeLogId, orderBy, selectedPanelType),
+		[activeLogId, orderBy, selectedPanelType],
 	);
 
 	useEffect(() => {
