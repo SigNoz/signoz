@@ -176,7 +176,6 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					outputMetric.queryName = queryName;
 					outputMetric.inFocusOrNot = true;
 				}
-				// }
 
 				// Get the actual data point timestamp from the focused series
 				let actualDataTimestamp = xValue; // fallback to click position timestamp
