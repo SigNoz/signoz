@@ -171,7 +171,7 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					focusedSeriesData.seriesIndex <= apiResult.length
 				) {
 					const { metric: focusedMetric, queryName } =
-						apiResult[focusedSeriesData.seriesIndex - 1] || [];
+						apiResult[focusedSeriesData.seriesIndex - 1] || {};
 					metric = focusedMetric;
 					outputMetric.queryName = queryName;
 					outputMetric.inFocusOrNot = true;
