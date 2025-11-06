@@ -51,7 +51,7 @@ function getPreferredSeriesIndex(
 	// Fallback: choose series with Y closest to mouse position
 	let focusedSeriesIndex = -1;
 	let closestPixelDiff = Infinity;
-	for (let i = 1; i < u.data.length; i++) {
+	for (let i = 1; i < u.series.length; i++) {
 		const series = u.data[i];
 		const seriesValue = series?.[timestampIndex];
 
