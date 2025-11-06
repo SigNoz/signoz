@@ -39,7 +39,7 @@ x-clickhouse-defaults: &clickhouse-defaults
     - CLICKHOUSE_SKIP_USER_SETUP=1
 x-zookeeper-defaults: &zookeeper-defaults
   !!merge <<: *common
-  image: signoz/zookeeper:3.7.1
+  image: signoz/zookeeper:3.9.3
   user: root
   labels:
     signoz.io/scrape: "true"
