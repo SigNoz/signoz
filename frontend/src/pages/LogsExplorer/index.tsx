@@ -10,8 +10,7 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViewsContainer from 'container/LogsExplorerViews';
 import {
@@ -25,7 +24,6 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { defaultTo, isEmpty, isEqual, isNull } from 'lodash-es';
@@ -33,26 +31,23 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { EventSourceProvider } from 'providers/EventSource';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Warning } from 'types/api';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import {
-	getExplorerViewForPanelType,
-	getExplorerViewFromUrl,
+	explorerViewToPanelType,
+	panelTypeToExplorerView,
 } from 'utils/explorerUtils';
 
-import { ExplorerViews, VIEW_TO_PANEL_TYPE } from './utils';
+import { ExplorerViews } from './utils';
 
 function LogsExplorer(): JSX.Element {
-	const [searchParams] = useSearchParams();
 	const [showLiveLogs, setShowLiveLogs] = useState<boolean>(false);
 
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
-		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+	const [selectedView, setSelectedView] = useState<ExplorerViews>(
+		() => panelTypeToExplorerView[panelTypesFromUrl],
 	);
 	const { logs } = usePreferenceContext();
 	const { preferences } = logs;
@@ -67,30 +62,7 @@ function LogsExplorer(): JSX.Element {
 		return true;
 	});
 
-	// Update selected view when panel type from URL changes
-	useEffect(() => {
-		if (panelTypesFromUrl) {
-			const newView = getExplorerViewForPanelType(panelTypesFromUrl);
-			if (newView && newView !== selectedView) {
-				setSelectedView(newView);
-			}
-		}
-	}, [panelTypesFromUrl, selectedView]);
-
-	// Update URL when selectedView changes (without triggering re-renders)
-	useEffect(() => {
-		const url = new URL(window.location.href);
-		url.searchParams.set(QueryParams.selectedExplorerView, selectedView);
-		window.history.replaceState({}, '', url.toString());
-	}, [selectedView]);
-
-	const {
-		handleRunQuery,
-		handleSetConfig,
-		updateAllQueriesOperators,
-		currentQuery,
-		updateQueriesData,
-	} = useQueryBuilder();
+	const { handleRunQuery, handleSetConfig } = useQueryBuilder();
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
@@ -102,50 +74,12 @@ function LogsExplorer(): JSX.Element {
 
 	const [warning, setWarning] = useState<Warning | undefined>(undefined);
 
-	const [shouldReset, setShouldReset] = useState(false);
-
-	const [defaultQuery, setDefaultQuery] = useState<Query>(() =>
-		updateAllQueriesOperators(
-			initialQueriesMap.logs,
-			PANEL_TYPES.LIST,
-			DataSource.LOGS,
-		),
-	);
-
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews): void => {
 			handleSetConfig(
-				defaultTo(VIEW_TO_PANEL_TYPE[view], PANEL_TYPES.LIST),
+				defaultTo(explorerViewToPanelType[view], PANEL_TYPES.LIST),
 				DataSource.LOGS,
 			);
-
-			if (view === ExplorerViews.LIST) {
-				if (
-					selectedView !== ExplorerViews.LIST &&
-					currentQuery?.builder?.queryData?.[0]
-				) {
-					const filterToRetain = currentQuery.builder.queryData[0].filter;
-
-					const newDefaultQuery = updateAllQueriesOperators(
-						initialQueriesMap.logs,
-						PANEL_TYPES.LIST,
-						DataSource.LOGS,
-					);
-
-					const newListQuery = updateQueriesData(
-						newDefaultQuery,
-						'queryData',
-						(item, index) => {
-							if (index === 0) {
-								return { ...item, filter: filterToRetain };
-							}
-							return item;
-						},
-					);
-					setDefaultQuery(newListQuery);
-				}
-				setShouldReset(true);
-			}
 
 			setSelectedView(view);
 
@@ -153,38 +87,10 @@ function LogsExplorer(): JSX.Element {
 				setShowLiveLogs(false);
 			}
 
-			handleExplorerTabChange(
-				view === ExplorerViews.TIMESERIES ? PANEL_TYPES.TIME_SERIES : view,
-			);
+			handleExplorerTabChange(explorerViewToPanelType[view]);
 		},
-		[
-			handleSetConfig,
-			handleExplorerTabChange,
-			selectedView,
-			currentQuery,
-			updateAllQueriesOperators,
-			updateQueriesData,
-			setSelectedView,
-		],
+		[handleSetConfig, handleExplorerTabChange, setSelectedView],
 	);
-
-	useShareBuilderUrl({
-		defaultValue: defaultQuery,
-		forceReset: shouldReset,
-	});
-
-	useEffect(() => {
-		if (shouldReset) {
-			setShouldReset(false);
-			setDefaultQuery(
-				updateAllQueriesOperators(
-					initialQueriesMap.logs,
-					PANEL_TYPES.LIST,
-					DataSource.LOGS,
-				),
-			);
-		}
-	}, [shouldReset, updateAllQueriesOperators]);
 
 	const handleFilterVisibilityChange = (): void => {
 		setLocalStorageApi(

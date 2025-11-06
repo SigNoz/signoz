@@ -2,7 +2,6 @@ import {
 	FiltersType,
 	IQuickFiltersConfig,
 } from 'components/QuickFilters/types';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -25,13 +24,6 @@ export enum ExplorerViews {
 	TABLE = 'table',
 	CLICKHOUSE = 'clickhouse',
 }
-
-export const VIEW_TO_PANEL_TYPE = {
-	[ExplorerViews.LIST]: PANEL_TYPES.LIST,
-	[ExplorerViews.TIMESERIES]: PANEL_TYPES.TIME_SERIES,
-	[ExplorerViews.TRACE]: PANEL_TYPES.TRACE,
-	[ExplorerViews.TABLE]: PANEL_TYPES.TABLE,
-} as Record<ExplorerViews, PANEL_TYPES>;
 
 export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
