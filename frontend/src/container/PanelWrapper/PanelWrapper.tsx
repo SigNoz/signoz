@@ -60,10 +60,32 @@ function arePropsEqual(
 	prevProps: PanelWrapperProps,
 	nextProps: PanelWrapperProps,
 ): boolean {
-	// Use deep equality check for complex props like widget and queryResponse
-	// This prevents unnecessary re-renders when these objects have the same content
-	// but different references
-	return isEqual(prevProps, nextProps);
+	// Destructure to separate props that need deep comparison from the rest
+	const {
+		widget: prevWidget,
+		queryResponse: prevQueryResponse,
+		...prevRest
+	} = prevProps;
+	const {
+		widget: nextWidget,
+		queryResponse: nextQueryResponse,
+		...nextRest
+	} = nextProps;
+
+	// Shallow equality check for all other props (primitives, functions, refs, arrays)
+	const restKeys = Object.keys(prevRest) as Array<
+		keyof Omit<PanelWrapperProps, 'widget' | 'queryResponse'>
+	>;
+
+	if (restKeys.some((key) => prevRest[key] !== nextRest[key])) {
+		return false;
+	}
+
+	// Deep equality only for widget config and query response data payload
+	return (
+		isEqual(prevWidget, nextWidget) &&
+		isEqual(prevQueryResponse.data?.payload, nextQueryResponse.data?.payload)
+	);
 }
 
 export default memo(PanelWrapper, arePropsEqual);
