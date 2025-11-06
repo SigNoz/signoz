@@ -77,6 +77,34 @@ func (migration *addRole) Up(ctx context.Context, db *bun.DB) error {
 	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "role", ColumnNames: []sqlschema.ColumnName{"display_name", "org_id"}})
 	sqls = append(sqls, indexSQLs...)
 
+	tableSQLs = migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
+		Name: "user_role",
+		Columns: []*sqlschema.Column{
+			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "role_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "user_id", DataType: sqlschema.DataTypeText, Nullable: false},
+		},
+		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
+			ColumnNames: []sqlschema.ColumnName{"id"},
+		},
+		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+			{
+				ReferencingColumnName: sqlschema.ColumnName("role_id"),
+				ReferencedTableName:   sqlschema.TableName("role"),
+				ReferencedColumnName:  sqlschema.ColumnName("id"),
+			},
+			{
+				ReferencingColumnName: sqlschema.ColumnName("user_id"),
+				ReferencedTableName:   sqlschema.TableName("users"),
+				ReferencedColumnName:  sqlschema.ColumnName("id"),
+			},
+		},
+	})
+	sqls = append(sqls, tableSQLs...)
+
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "user_role", ColumnNames: []sqlschema.ColumnName{"role_id", "user_id"}})
+	sqls = append(sqls, indexSQLs...)
+
 	for _, sqlStmt := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sqlStmt)); err != nil {
 			return err

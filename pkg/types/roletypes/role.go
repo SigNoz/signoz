@@ -19,6 +19,11 @@ var (
 	ErrCodeInvalidTypeRelation              = errors.MustNewCode("role_invalid_type_relation")
 	ErrCodeRoleNotFound                     = errors.MustNewCode("role_not_found")
 	ErrCodeRoleFailedTransactionsFromString = errors.MustNewCode("role_failed_transactions_from_string")
+	ErrCodeRoleInvalidMembershipType        = errors.MustNewCode("role_invalid_membership_type")
+)
+
+var (
+	MembershipTypeUser = valuer.NewString("user")
 )
 
 var (
@@ -50,13 +55,48 @@ type StorableRole struct {
 	OrgID       string `bun:"org_id,type:string"`
 }
 
+type StorableUserRole struct {
+	bun.BaseModel `bun:"table:user_role"`
+
+	types.Identifiable
+	RoleID string `bun:"role_id,type:text"`
+	UserID string `bun:"user_id,type:text"`
+}
+
+type StorableMembership struct {
+	Users []*StorableUserRole
+}
+
 type Role struct {
 	types.Identifiable
 	types.TimeAuditable
 	DisplayName string      `json:"displayName"`
 	Description string      `json:"description"`
 	Type        string      `json:"type"`
-	OrgID       valuer.UUID `json:"org_id"`
+	OrgID       valuer.UUID `json:"orgId"`
+}
+
+type GettableRole struct {
+	types.Identifiable
+	types.TimeAuditable
+	DisplayName string      `json:"displayName"`
+	Description string      `json:"description"`
+	Type        string      `json:"type"`
+	OrgID       valuer.UUID `json:"orgId"`
+	Attributes  *Attributes `json:"attributes"`
+}
+
+type Attributes struct {
+	UserCount int64 `json:"user_count"`
+}
+
+type Membership struct {
+	Type valuer.String `json:"type"`
+	User *types.User   `json:"user"`
+}
+type UpdatableMembership struct {
+	Type   valuer.String `json:"type"`
+	UserID valuer.UUID   `json:"userId"`
 }
 
 type PostableRole struct {
@@ -72,6 +112,22 @@ type PatchableRole struct {
 type PatchableObjects struct {
 	Additions []*authtypes.Object `json:"additions"`
 	Deletions []*authtypes.Object `json:"deletions"`
+}
+
+func NewStorableRole(displayName, description string, roleType valuer.String, orgID valuer.UUID) *StorableRole {
+	return &StorableRole{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		DisplayName: displayName,
+		Description: description,
+		Type:        roleType.StringValue(),
+		OrgID:       orgID.StringValue(),
+	}
 }
 
 func MustNewStorableRole(displayName, description string, roleType valuer.String, orgID valuer.UUID) *StorableRole {
@@ -128,6 +184,19 @@ func NewRole(displayName, description string, roleType valuer.String, orgID valu
 	}
 }
 
+func NewGettableRoleFromRole(role *Role, attributes *Attributes) *GettableRole {
+
+	return &GettableRole{
+		Identifiable:  role.Identifiable,
+		TimeAuditable: role.TimeAuditable,
+		DisplayName:   role.DisplayName,
+		Description:   role.Description,
+		Type:          role.Type,
+		OrgID:         role.OrgID,
+		Attributes:    attributes,
+	}
+}
+
 func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.Object, relation authtypes.Relation) (*PatchableObjects, error) {
 	if len(additions) == 0 && len(deletions) == 0 {
 		return nil, errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty patch objects request received, at least one of additions or deletions must be present")
@@ -146,6 +215,48 @@ func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.O
 	}
 
 	return &PatchableObjects{Additions: additions, Deletions: deletions}, nil
+}
+
+func NewMembershipFromStorableMembership(storableMembership *StorableMembership, users []*types.User) []*Membership {
+	usersMap := make(map[string]*types.User)
+	for _, user := range users {
+		usersMap[user.ID.String()] = user
+	}
+
+	membership := make([]*Membership, 0)
+	for _, userRole := range storableMembership.Users {
+		membership = append(membership, &Membership{
+			Type: MembershipTypeUser,
+			User: usersMap[userRole.UserID],
+		})
+	}
+
+	return membership
+}
+
+func NewStorableMembershipFromUpdatableMemberships(id valuer.UUID, updatableMemberships []*UpdatableMembership) *StorableMembership {
+	userMemberships := make([]*StorableUserRole, 0)
+	for _, membership := range updatableMemberships {
+		switch membership.Type {
+		case MembershipTypeUser:
+			userMemberships = append(userMemberships, &StorableUserRole{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				UserID: membership.UserID.StringValue(),
+				RoleID: id.StringValue(),
+			})
+		}
+	}
+
+	return &StorableMembership{Users: userMemberships}
+}
+
+func MakeStorableMembership(users []*StorableUserRole) (*StorableMembership, error) {
+	storableMembership := new(StorableMembership)
+	storableMembership.Users = users
+
+	return storableMembership, nil
 }
 
 func (role *Role) PatchMetadata(displayName, description *string) error {
@@ -211,6 +322,22 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	role.DisplayName = shadowRole.DisplayName
 	role.Description = shadowRole.Description
 
+	return nil
+}
+
+func (request *UpdatableMembership) UnmarshalJSON(data []byte) error {
+	type Alias UpdatableMembership
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.Type != MembershipTypeUser {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidMembershipType, "invalid membership type, accepted values are :%s", MembershipTypeUser)
+	}
+
+	*request = UpdatableMembership(temp)
 	return nil
 }
 

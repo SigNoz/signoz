@@ -26,19 +26,14 @@ func NewModule(store roletypes.Store, authz authz.AuthZ, registry []role.Registe
 	}
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, displayName, description string) (*roletypes.Role, error) {
-	role := roletypes.NewRole(displayName, description, roletypes.RoleTypeCustom, orgID)
-	storableRole, err := roletypes.NewStorableRoleFromRole(role)
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, displayName, description string) error {
+	storableRole := roletypes.NewStorableRole(displayName, description, roletypes.RoleTypeCustom, orgID)
+	err := module.store.Create(ctx, storableRole)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	err = module.store.Create(ctx, storableRole)
-	if err != nil {
-		return nil, err
-	}
-
-	return role, nil
+	return nil
 }
 
 func (module *module) GetResources(_ context.Context) []*authtypes.Resource {
@@ -99,6 +94,26 @@ func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valu
 	return objects, nil
 }
 
+func (module *module) GetMembership(ctx context.Context, orgID valuer.UUID, id valuer.UUID) ([]*roletypes.Membership, error) {
+	_, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	storableMembership, err := module.store.GetMembership(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	users, err := module.store.ListUserByRole(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	membership := roletypes.NewMembershipFromStorableMembership(storableMembership, users)
+	return membership, nil
+}
+
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.Role, error) {
 	storableRoles, err := module.store.List(ctx, orgID)
 	if err != nil {
@@ -115,6 +130,10 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes
 	}
 
 	return roles, nil
+}
+
+func (module *module) ListMembershipAttributes(ctx context.Context, orgID valuer.UUID) (map[string]*roletypes.Attributes, error) {
+	return module.store.ListMembershipAttributes(ctx, orgID)
 }
 
 func (module *module) Patch(ctx context.Context, orgID valuer.UUID, id valuer.UUID, displayName, description *string) error {
@@ -158,6 +177,21 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 	}
 
 	err = module.authz.Write(ctx, additionTuples, deletionTuples)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (module *module) UpdateMembership(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatableMemberships []*roletypes.UpdatableMembership) error {
+	_, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	storableMemberships := roletypes.NewStorableMembershipFromUpdatableMemberships(id, updatableMemberships)
+	err = module.store.UpdateMembership(ctx, id, storableMemberships)
 	if err != nil {
 		return err
 	}

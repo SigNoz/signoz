@@ -11,7 +11,7 @@ import (
 
 type Module interface {
 	// Creates the role metadata
-	Create(context.Context, valuer.UUID, string, string) (*roletypes.Role, error)
+	Create(context.Context, valuer.UUID, string, string) error
 
 	// Gets the role metadata
 	Get(context.Context, valuer.UUID, valuer.UUID) (*roletypes.Role, error)
@@ -19,8 +19,13 @@ type Module interface {
 	// Gets the objects associated with the given role and relation
 	GetObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation) ([]*authtypes.Object, error)
 
+	// Gets the membership for the given role
+	GetMembership(context.Context, valuer.UUID, valuer.UUID) ([]*roletypes.Membership, error)
+
 	// Lists all the roles metadata for the organization
 	List(context.Context, valuer.UUID) ([]*roletypes.Role, error)
+
+	ListMembershipAttributes(context.Context, valuer.UUID) (map[string]*roletypes.Attributes, error)
 
 	// Gets all the typeable resources registered from role registry
 	GetResources(context.Context) []*authtypes.Resource
@@ -30,6 +35,9 @@ type Module interface {
 
 	// Patches the objects in authorization server associated with the given role and relation
 	PatchObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation, []*authtypes.Object, []*authtypes.Object) error
+
+	// Update the membership for the given role
+	UpdateMembership(context.Context, valuer.UUID, valuer.UUID, []*roletypes.UpdatableMembership) error
 
 	// Deletes the role metadata and tuples in authorization server
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
@@ -53,11 +61,15 @@ type Handler interface {
 
 	GetResources(http.ResponseWriter, *http.Request)
 
+	GetMembership(http.ResponseWriter, *http.Request)
+
 	List(http.ResponseWriter, *http.Request)
 
 	Patch(http.ResponseWriter, *http.Request)
 
 	PatchObjects(http.ResponseWriter, *http.Request)
+
+	UpdateMembership(http.ResponseWriter, *http.Request)
 
 	Delete(http.ResponseWriter, *http.Request)
 }
