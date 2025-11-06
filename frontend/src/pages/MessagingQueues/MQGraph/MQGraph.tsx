@@ -77,6 +77,20 @@ function MessagingQueuesGraph(): JSX.Element {
 			});
 		}
 	};
+
+	const onClickHandler = useCallback(
+		(
+			xValue: number,
+			_yValue: number,
+			_mouseX: number,
+			_mouseY: number,
+			data?: any,
+		): void => {
+			setSelectedTimelineQuery(urlQuery, xValue, location, history, data);
+		},
+		[urlQuery, location, history],
+	);
+
 	return (
 		<Card
 			isDarkMode={isDarkMode}
@@ -86,9 +100,7 @@ function MessagingQueuesGraph(): JSX.Element {
 			<GridCard
 				widget={widgetData}
 				headerMenuList={[...ViewMenuAction]}
-				onClickHandler={(xValue, _yValue, _mouseX, _mouseY, data): void => {
-					setSelectedTimelineQuery(urlQuery, xValue, location, history, data);
-				}}
+				onClickHandler={onClickHandler}
 				onDragSelect={onDragSelect}
 				customTooltipElement={messagingQueueCustomTooltipText()}
 				dataAvailable={checkIfDataExists}
