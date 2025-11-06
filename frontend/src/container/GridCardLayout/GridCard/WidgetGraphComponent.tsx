@@ -78,15 +78,8 @@ function WidgetGraphComponent({
 
 	const lineChartRef = useRef<ToggleGraphProps>();
 
-	// Memoize initial graph visibility to prevent unnecessary state initialization
-	const initialGraphVisibility = useMemo(
-		() =>
-			Array(queryResponse.data?.payload?.data?.result?.length || 0).fill(true),
-		[queryResponse.data?.payload?.data?.result?.length],
-	);
-
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
-		initialGraphVisibility,
+		Array(queryResponse.data?.payload?.data?.result?.length || 0).fill(true),
 	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
