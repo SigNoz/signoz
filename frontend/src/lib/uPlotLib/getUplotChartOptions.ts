@@ -705,8 +705,7 @@ export const getUPlotChartOptions = ({
 											'.u-marker',
 										) as HTMLElement;
 										if (currentMarkerElement) {
-											currentMarkerElement.style.cursor = 'pointer';
-											currentMarkerElement.style.pointerEvents = 'auto';
+											currentMarkerElement.classList.add('u-marker-clickable');
 											currentMarkerElement.addEventListener(
 												'click',
 												markerClickHandler,
@@ -716,7 +715,7 @@ export const getUPlotChartOptions = ({
 												'mousedown',
 												(e) => {
 													e.preventDefault();
-													markerClickHandler();
+													markerClickHandler(e);
 												},
 												false,
 											);
@@ -787,7 +786,7 @@ export const getUPlotChartOptions = ({
 												'mousedown',
 												(e) => {
 													e.preventDefault();
-													textClickHandler();
+													textClickHandler(e);
 												},
 												false,
 											);

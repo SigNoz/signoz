@@ -74,6 +74,12 @@ body {
 
 			.u-marker {
 				border-radius: 50%;
+
+				// Clickable marker styles
+				&.u-marker-clickable {
+					cursor: pointer;
+					pointer-events: auto;
+				}
 			}
 		}
 

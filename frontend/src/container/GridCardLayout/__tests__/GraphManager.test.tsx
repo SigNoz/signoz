@@ -136,7 +136,7 @@ describe('GraphManager', () => {
 		]);
 	});
 
-	it('should render graphmanager with correcting formating using y-axis', () => {
+	it('should render graphmanager with correct formatting using y-axis', () => {
 		const testProps: GraphManagerProps = {
 			data: [
 				[1759729380, 1759729440, 1759729500], // timestamps

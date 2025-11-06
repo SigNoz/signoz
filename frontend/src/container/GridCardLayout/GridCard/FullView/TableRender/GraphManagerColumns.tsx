@@ -9,7 +9,13 @@ import CustomCheckBox from './CustomCheckBox';
 import { getLabel } from './GetLabel';
 
 // Helper function to format numeric values based on yAxisUnit
-const formatMetricValue = (value: number, yAxisUnit?: string): string => {
+const formatMetricValue = (
+	value: number | null | undefined,
+	yAxisUnit?: string,
+): string => {
+	if (value == null || value === undefined || Number.isNaN(value)) {
+		return '';
+	}
 	if (yAxisUnit) {
 		return getYAxisFormattedValue(value.toString(), yAxisUnit);
 	}
