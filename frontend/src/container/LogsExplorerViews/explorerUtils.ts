@@ -110,14 +110,13 @@ export const getListViewData = (
 
 	let queryData: IBuilderQuery[] = query.builder.queryData.map((item) => ({
 		...item,
-		...(selectedPanelType !== PANEL_TYPES.LIST ? { order: [] } : {}), // why is this needed?
 	}));
 
 	if (selectedPanelType === PANEL_TYPES.LIST) {
 		const paginateData = getPaginationQueryDataV2({
 			page: params.page,
 			pageSize: params.pageSize,
-		}); // only in list view?
+		});
 
 		let updatedFilters = params.filters;
 		let updatedFilterExpression = params.filter?.expression || '';
@@ -160,7 +159,6 @@ export const getListViewData = (
 				having: {
 					expression: '',
 				},
-				// order: newOrderBy,
 				orderBy: newOrderBy,
 				disabled: false,
 			},
@@ -177,16 +175,3 @@ export const getListViewData = (
 
 	return data;
 };
-
-// on/off frequency chart
-// data correctness check:
-// freq chart:
-// 1. disabled
-// 2. aggregate operator is count
-// 3. group by is severity_text
-// 4. legend is {{severity_text}}
-// 5. order by is empty
-// 6. having is empty
-// 7. activeLogId added if present
-
-// list query change

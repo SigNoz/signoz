@@ -133,7 +133,7 @@ function LogsExplorerViewsContainer({
 	useEffect(() => {
 		const modifiedQuery = getFrequencyChartData(stagedQuery, activeLogId);
 		setListChartQuery(modifiedQuery);
-	}, [stagedQuery, listQuery, activeLogId]);
+	}, [stagedQuery, activeLogId]);
 
 	const exportDefaultQuery = useMemo(
 		() =>
