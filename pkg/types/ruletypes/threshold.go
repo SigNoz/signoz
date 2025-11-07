@@ -138,7 +138,7 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 	for _, threshold := range thresholds {
 		smpl, shouldAlert := threshold.shouldAlert(series, unit)
 		if shouldAlert {
-			smpl.Target = threshold.target(unit)
+			smpl.Target = *threshold.TargetValue
 			smpl.TargetUnit = threshold.TargetUnit
 			resultVector = append(resultVector, smpl)
 			continue
@@ -154,7 +154,7 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 		if evalData.HasActiveAlert(alertHash) {
 			smpl, matchesRecoveryThrehold := threshold.matchesRecoveryThreshold(series, unit)
 			if matchesRecoveryThrehold {
-				smpl.Target = threshold.recoveryTarget(unit)
+				smpl.Target = *threshold.RecoveryTarget
 				smpl.TargetUnit = threshold.TargetUnit
 				// IsRecovering to notify that metrics is in recovery stage
 				smpl.IsRecovering = true
@@ -262,11 +262,12 @@ func removeGroupinSetPoints(series v3.Series) []v3.Point {
 // PrepareSampleLabelsForRule prepares the labels for the sample to be used in the alerting.
 // It accepts seriesLabels and thresholdName as input and returns the labels with the threshold name label added.
 func PrepareSampleLabelsForRule(seriesLabels map[string]string, thresholdName string) (lbls labels.Labels) {
+	lb := labels.NewBuilder(labels.Labels{})
 	for name, value := range seriesLabels {
-		lbls = append(lbls, labels.Label{Name: name, Value: value})
+		lb.Set(name, value)
 	}
-	lbls = append(lbls, labels.Label{Name: LabelThresholdName, Value: thresholdName})
-	return lbls
+	lb.Set(LabelThresholdName, thresholdName)
+	return lb.Labels()
 }
 
 func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float64) (Sample, bool) {
