@@ -1,7 +1,7 @@
 import { apiV3 } from 'api/apiV1';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import { Logout } from 'api/utils';
-import loginApi from 'api/v1/login/login';
+import post from 'api/v2/sessions/rotate/post';
 import afterLogin from 'AppRoutes/utils';
 import { ENVIRONMENT } from 'constants/env';
 import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
@@ -18,6 +18,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { useQueryClient } from 'react-query';
 import APIError from 'types/api/error';
 
 interface IEventSourceContext {
@@ -58,6 +59,7 @@ export function EventSourceProvider({
 	const eventSourceRef = useRef<EventSourcePolyfill | null>(null);
 
 	const { notifications } = useNotifications();
+	const queryClient = useQueryClient();
 
 	const handleSetInitialLoading = useCallback((value: boolean) => {
 		setInitialLoading(value);
@@ -75,15 +77,15 @@ export function EventSourceProvider({
 		setInitialLoading(false);
 
 		try {
-			const response = await loginApi({
-				refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
+			const accessToken = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN);
+			const refreshToken = getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN);
+
+			const response = await queryClient.fetchQuery({
+				queryFn: () => post({ refreshToken: refreshToken || '' }),
+				queryKey: ['/api/v2/sessions/rotate', accessToken, refreshToken],
 			});
-			afterLogin(
-				response.data.userId,
-				response.data.accessJwt,
-				response.data.refreshJwt,
-				true,
-			);
+			afterLogin(response.data.accessToken, response.data.refreshToken, true);
+
 			// If token refresh was successful, we'll let the component
 			// handle reconnection through the reconnectDueToError state
 			setReconnectDueToError(true);
@@ -101,7 +103,7 @@ export function EventSourceProvider({
 			eventSourceRef.current.close();
 			Logout();
 		}
-	}, [notifications]);
+	}, [notifications, queryClient]);
 
 	const destroyEventSourceSession = useCallback(() => {
 		if (!eventSourceRef.current) return;

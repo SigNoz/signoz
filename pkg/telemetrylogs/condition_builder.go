@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -55,7 +56,7 @@ func (c *conditionBuilder) conditionFor(
 		tblFieldName, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
-	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+	tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
 
 	// make use of case insensitive index for body
 	if tblFieldName == "body" {
@@ -205,10 +206,10 @@ func (c *conditionBuilder) conditionFor(
 				return sb.NE(leftOperand, true), nil
 			}
 		default:
-			return "", fmt.Errorf("exists operator is not supported for column type %s", column.Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
 		}
 	}
-	return "", fmt.Errorf("unsupported operator: %v", operator)
+	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
 
 func (c *conditionBuilder) ConditionFor(
@@ -217,6 +218,8 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+    _ uint64,
+    _ uint64,
 ) (string, error) {
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
 	if err != nil {

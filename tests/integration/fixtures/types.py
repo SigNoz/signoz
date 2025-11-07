@@ -7,7 +7,6 @@ import clickhouse_connect.driver
 import clickhouse_connect.driver.client
 import py
 from sqlalchemy import Engine
-from testcontainers.core.container import Network
 
 LegacyPath = py.path.local
 
@@ -108,18 +107,33 @@ class TestContainerClickhouse:
 
 
 @dataclass
+class TestContainerIDP:
+    __test__ = False
+    container: TestContainerDocker
+
+    def __cache__(self) -> dict:
+        return {
+            "container": self.container.__cache__(),
+        }
+
+    def __log__(self) -> str:
+        return f"TestContainerIDP(container={self.container.__log__()})"
+
+
+@dataclass
 class SigNoz:
     __test__ = False
     self: TestContainerDocker
     sqlstore: TestContainerSQL
     telemetrystore: TestContainerClickhouse
     zeus: TestContainerDocker
+    gateway: TestContainerDocker
 
     def __cache__(self) -> dict:
         return self.self.__cache__()
 
     def __log__(self) -> str:
-        return f"SigNoz(self={self.self.__log__()}, sqlstore={self.sqlstore.__log__()}, telemetrystore={self.telemetrystore.__log__()}, zeus={self.zeus.__log__()})"
+        return f"SigNoz(self={self.self.__log__()}, sqlstore={self.sqlstore.__log__()}, telemetrystore={self.telemetrystore.__log__()}, zeus={self.zeus.__log__()}, gateway={self.gateway.__log__()})"
 
 
 @dataclass
@@ -134,7 +148,12 @@ class Operation:
         return f"Operation(name={self.name})"
 
 
-class Network(Network):  # pylint: disable=function-redefined
+@dataclass
+class Network:
+    __test__ = False
+    id: str
+    name: str
+
     def __cache__(self) -> dict:
         return {
             "id": self.id,

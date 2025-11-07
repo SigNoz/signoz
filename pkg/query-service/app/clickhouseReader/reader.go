@@ -1609,8 +1609,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			ttlParams.ColdStorageVolume = ""
 		}
 
-		if params.ToColdStorageDuration > 0 {
-			ttlParams.ToColdStorageDuration = params.ToColdStorageDuration
+		if params.ToColdStorageDurationDays > 0 {
+			ttlParams.ToColdStorageDuration = params.ToColdStorageDurationDays * 24 * 3600
 		} else {
 			ttlParams.ToColdStorageDuration = 0
 		}
@@ -1642,8 +1642,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 
 	// Calculate cold storage duration
 	coldStorageDuration := -1
-	if len(params.ColdStorageVolume) > 0 && params.ToColdStorageDuration > 0 {
-		coldStorageDuration = int(params.ToColdStorageDuration) // Already in days
+	if len(params.ColdStorageVolume) > 0 && params.ToColdStorageDurationDays > 0 {
+		coldStorageDuration = int(params.ToColdStorageDurationDays) // Already in days
 	}
 
 	tableNames := []string{
@@ -1860,6 +1860,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 			response.DefaultTTLDays = 15
 			response.TTLConditions = []model.CustomRetentionRule{}
 			response.Status = constants.StatusFailed
+			response.ColdStorageTTLDays = -1
 			return response, nil
 		}
 
@@ -1891,13 +1892,16 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error getting V1 TTL: %s", apiErr.Error())
 		}
 
-		// Map V1 fields to response
-		response.LogsTime = ttlResult.LogsTime
-		response.LogsMoveTime = ttlResult.LogsMoveTime
 		response.ExpectedLogsTime = ttlResult.ExpectedLogsTime
 		response.ExpectedLogsMoveTime = ttlResult.ExpectedLogsMoveTime
 		response.Status = ttlResult.Status
-		response.DefaultTTLDays = ttlResult.LogsTime / 24
+		response.ColdStorageTTLDays = -1
+		if ttlResult.LogsTime > 0 {
+			response.DefaultTTLDays = ttlResult.LogsTime / 24
+		}
+		if ttlResult.LogsMoveTime > 0 {
+			response.ColdStorageTTLDays = ttlResult.LogsMoveTime / 24
+		}
 
 		// For V1, we don't have TTL conditions
 		response.TTLConditions = []model.CustomRetentionRule{}
@@ -2043,6 +2047,21 @@ func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditi
 func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	// Keep only latest 100 transactions/requests
 	r.deleteTtlTransactions(ctx, orgID, 100)
+
+	switch params.Type {
+	case constants.TraceTTL:
+		return r.setTTLTraces(ctx, orgID, params)
+	case constants.MetricsTTL:
+		return r.setTTLMetrics(ctx, orgID, params)
+	case constants.LogsTTL:
+		return r.setTTLLogs(ctx, orgID, params)
+	default:
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v", params.Type)}
+	}
+
+}
+
+func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
 	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
@@ -2051,95 +2070,69 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, params *mod
 	if len(params.ColdStorageVolume) > 0 {
 		coldStorageDuration = int(params.ToColdStorageDuration)
 	}
-
-	switch params.Type {
-	case constants.TraceTTL:
-		return r.setTTLTraces(ctx, orgID, params)
-	case constants.MetricsTTL:
-		tableNames := []string{
-			signozMetricDBName + "." + signozSampleLocalTableName,
-			signozMetricDBName + "." + signozSamplesAgg5mLocalTableName,
-			signozMetricDBName + "." + signozSamplesAgg30mLocalTableName,
-			signozMetricDBName + "." + signozExpHistLocalTableName,
-			signozMetricDBName + "." + signozTSLocalTableNameV4,
-			signozMetricDBName + "." + signozTSLocalTableNameV46Hrs,
-			signozMetricDBName + "." + signozTSLocalTableNameV41Day,
-			signozMetricDBName + "." + signozTSLocalTableNameV41Week,
+	tableNames := []string{
+		signozMetricDBName + "." + signozSampleLocalTableName,
+		signozMetricDBName + "." + signozSamplesAgg5mLocalTableName,
+		signozMetricDBName + "." + signozSamplesAgg30mLocalTableName,
+		signozMetricDBName + "." + signozExpHistLocalTableName,
+		signozMetricDBName + "." + signozTSLocalTableNameV4,
+		signozMetricDBName + "." + signozTSLocalTableNameV46Hrs,
+		signozMetricDBName + "." + signozTSLocalTableNameV41Day,
+		signozMetricDBName + "." + signozTSLocalTableNameV41Week,
+	}
+	for _, tableName := range tableNames {
+		statusItem, err := r.checkTTLStatusItem(ctx, orgID, tableName)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 		}
-		for _, tableName := range tableNames {
+		if statusItem.Status == constants.StatusPending {
+			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
+		}
+	}
+	metricTTL := func(tableName string) {
+		ttl := types.TTLSetting{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+			TransactionID:  uuid,
+			TableName:      tableName,
+			TTL:            int(params.DelDuration),
+			Status:         constants.StatusPending,
+			ColdStorageTTL: coldStorageDuration,
+			OrgID:          orgID,
+		}
+		_, dbErr := r.
+			sqlDB.
+			BunDB().
+			NewInsert().
+			Model(&ttl).
+			Exec(ctx)
+		if dbErr != nil {
+			zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr))
+			return
+		}
+		timeColumn := "timestamp_ms"
+		if strings.Contains(tableName, "v4") || strings.Contains(tableName, "exp_hist") {
+			timeColumn = "unix_milli"
+		}
+
+		req := fmt.Sprintf(
+			"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(%s / 1000), 'UTC') + "+
+				"INTERVAL %v SECOND DELETE", tableName, r.cluster, timeColumn, params.DelDuration)
+		if len(params.ColdStorageVolume) > 0 {
+			req += fmt.Sprintf(", toDateTime(toUInt32(%s / 1000), 'UTC')"+
+				" + INTERVAL %v SECOND TO VOLUME '%s'",
+				timeColumn, params.ToColdStorageDuration, params.ColdStorageVolume)
+		}
+		err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
+		if err != nil {
+			zap.L().Error("Error in setting cold storage", zap.Error(err))
 			statusItem, err := r.checkTTLStatusItem(ctx, orgID, tableName)
-			if err != nil {
-				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
-			}
-			if statusItem.Status == constants.StatusPending {
-				return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
-			}
-		}
-		metricTTL := func(tableName string) {
-			ttl := types.TTLSetting{
-				Identifiable: types.Identifiable{
-					ID: valuer.GenerateUUID(),
-				},
-				TimeAuditable: types.TimeAuditable{
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				},
-				TransactionID:  uuid,
-				TableName:      tableName,
-				TTL:            int(params.DelDuration),
-				Status:         constants.StatusPending,
-				ColdStorageTTL: coldStorageDuration,
-				OrgID:          orgID,
-			}
-			_, dbErr := r.
-				sqlDB.
-				BunDB().
-				NewInsert().
-				Model(&ttl).
-				Exec(ctx)
-			if dbErr != nil {
-				zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr))
-				return
-			}
-			timeColumn := "timestamp_ms"
-			if strings.Contains(tableName, "v4") || strings.Contains(tableName, "exp_hist") {
-				timeColumn = "unix_milli"
-			}
-
-			req := fmt.Sprintf(
-				"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(%s / 1000), 'UTC') + "+
-					"INTERVAL %v SECOND DELETE", tableName, r.cluster, timeColumn, params.DelDuration)
-			if len(params.ColdStorageVolume) > 0 {
-				req += fmt.Sprintf(", toDateTime(toUInt32(%s / 1000), 'UTC')"+
-					" + INTERVAL %v SECOND TO VOLUME '%s'",
-					timeColumn, params.ToColdStorageDuration, params.ColdStorageVolume)
-			}
-			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
-			if err != nil {
-				zap.L().Error("Error in setting cold storage", zap.Error(err))
-				statusItem, err := r.checkTTLStatusItem(ctx, orgID, tableName)
-				if err == nil {
-					_, dbErr := r.
-						sqlDB.
-						BunDB().
-						NewUpdate().
-						Model(new(types.TTLSetting)).
-						Set("updated_at = ?", time.Now()).
-						Set("status = ?", constants.StatusFailed).
-						Where("id = ?", statusItem.ID.StringValue()).
-						Exec(ctx)
-					if dbErr != nil {
-						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
-						return
-					}
-				}
-				return
-			}
-			req += " SETTINGS materialize_ttl_after_modify=0"
-			zap.L().Info("Executing TTL request: ", zap.String("request", req))
-			statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
-			if err := r.db.Exec(ctx, req); err != nil {
-				zap.L().Error("error while setting ttl.", zap.Error(err))
+			if err == nil {
 				_, dbErr := r.
 					sqlDB.
 					BunDB().
@@ -2153,32 +2146,46 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, params *mod
 					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 					return
 				}
-				return
 			}
-			_, dbErr = r.
+			return
+		}
+		req += " SETTINGS materialize_ttl_after_modify=0"
+		zap.L().Info("Executing TTL request: ", zap.String("request", req))
+		statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
+		if err := r.db.Exec(ctx, req); err != nil {
+			zap.L().Error("error while setting ttl.", zap.Error(err))
+			_, dbErr := r.
 				sqlDB.
 				BunDB().
 				NewUpdate().
 				Model(new(types.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
-				Set("status = ?", constants.StatusSuccess).
+				Set("status = ?", constants.StatusFailed).
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 				return
 			}
+			return
 		}
-		for _, tableName := range tableNames {
-			go metricTTL(tableName)
+		_, dbErr = r.
+			sqlDB.
+			BunDB().
+			NewUpdate().
+			Model(new(types.TTLSetting)).
+			Set("updated_at = ?", time.Now()).
+			Set("status = ?", constants.StatusSuccess).
+			Where("id = ?", statusItem.ID.StringValue()).
+			Exec(ctx)
+		if dbErr != nil {
+			zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
+			return
 		}
-	case constants.LogsTTL:
-		return r.setTTLLogs(ctx, orgID, params)
-
-	default:
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v", params.Type)}
 	}
-
+	for _, tableName := range tableNames {
+		go metricTTL(tableName)
+	}
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
@@ -2188,10 +2195,11 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 		sqlDB.
 		BunDB().
 		NewSelect().
-		ColumnExpr("distinct(transaction_id)").
+		Column("transaction_id").
 		Model(new(types.TTLSetting)).
 		Where("org_id = ?", orgID).
-		OrderExpr("created_at DESC").
+		Group("transaction_id").
+		OrderExpr("MAX(created_at) DESC").
 		Limit(numberOfTransactionsStore).
 		Scan(ctx, &limitTransactions)
 

@@ -24,7 +24,7 @@ type Transaction struct {
 }
 
 func NewObject(resource Resource, selector Selector) (*Object, error) {
-	err := IsValidSelector(resource.Type, selector)
+	err := IsValidSelector(resource.Type, selector.val)
 	if err != nil {
 		return nil, err
 	}

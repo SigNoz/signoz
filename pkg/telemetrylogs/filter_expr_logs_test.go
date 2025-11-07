@@ -425,6 +425,16 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedErrorContains: "",
 		},
 		{
+			// this will result in failure from the DB side.
+			// user will have to use attribute.status:string > open
+			category:              "FREETEXT with conditions",
+			query:                 "critical NOT resolved status > open",
+			shouldPass:            true,
+			expectedQuery:         "WHERE (match(LOWER(body), LOWER(?)) AND NOT (match(LOWER(body), LOWER(?))) AND (toString(attributes_number['status']) > ? AND mapContains(attributes_number, 'status') = ?))",
+			expectedArgs:          []any{"critical", "resolved", "open", true},
+			expectedErrorContains: "",
+		},
+		{
 			category:              "FREETEXT with conditions",
 			query:                 "database error type=mysql",
 			shouldPass:            true,
@@ -2377,7 +2387,7 @@ func TestFilterExprLogs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
+            clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
 
 			if tc.shouldPass {
 				if err != nil {
@@ -2496,7 +2506,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
+            clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
 
 			if tc.shouldPass {
 				if err != nil {

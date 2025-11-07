@@ -60,6 +60,14 @@ function Metrics({
 		setElement,
 	} = useMultiIntersectionObserver(hostWidgetInfo.length, { threshold: 0.1 });
 
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
+
 	const queryPayloads = useMemo(
 		() =>
 			getHostQueryPayload(
@@ -147,6 +155,13 @@ function Metrics({
 					maxTimeScale: graphTimeIntervals[idx].end,
 					onDragSelect: (start, end) => onDragSelect(start, end, idx),
 					query: currentQuery,
+					legendScrollPosition: legendScrollPositionRef.current,
+					setLegendScrollPosition: (position: {
+						scrollTop: number;
+						scrollLeft: number;
+					}) => {
+						legendScrollPositionRef.current = position;
+					},
 				}),
 			),
 		[

@@ -25,6 +25,8 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+    _ uint64,
+    _ uint64,
 ) (string, error) {
 
 	switch operator {
@@ -55,7 +57,7 @@ func (c *conditionBuilder) ConditionFor(
 		return "", nil
 	}
 
-	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+	tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
 
 	// key must exists to apply main filter
 	expr := `if(mapContains(%s, %s), %s, true)`

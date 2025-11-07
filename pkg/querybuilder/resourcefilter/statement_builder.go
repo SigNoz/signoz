@@ -119,7 +119,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 ) (*qbtypes.Statement, error) {
 	config, exists := signalConfigs[b.signal]
 	if !exists {
-		return nil, fmt.Errorf("%w: %s", ErrUnsupportedSignal, b.signal)
+		return nil, errors.WrapInvalidInputf(ErrUnsupportedSignal, errors.CodeInvalidInput, "unsupported signal: %s", b.signal)
 	}
 
 	q := sqlbuilder.NewSelectBuilder()
@@ -169,7 +169,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			// there is no need for "key" not found error for resource filtering
 			IgnoreNotFoundKeys: true,
 			Variables:          variables,
-		})
+        }, start, end)
 
 		if err != nil {
 			return err

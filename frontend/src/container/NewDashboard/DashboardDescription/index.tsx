@@ -13,7 +13,6 @@ import {
 } from 'antd';
 import logEvent from 'api/common/logEvent';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
-import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
@@ -22,7 +21,6 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
 import {
 	Check,
@@ -115,8 +113,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const [sectionName, setSectionName] = useState<string>(DEFAULT_ROW_NAME);
 
 	const updateDashboardMutation = useUpdateDashboard();
-
-	const urlQuery = useUrlQuery();
 
 	const { user } = useAppContext();
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], user.role);
@@ -291,13 +287,13 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	}
 
 	function goToListPage(): void {
-		urlQuery.set('columnKey', listSortOrder.columnKey as string);
-		urlQuery.set('order', listSortOrder.order as string);
-		urlQuery.set('page', listSortOrder.pagination as string);
-		urlQuery.set('search', listSortOrder.search as string);
-		urlQuery.delete(QueryParams.relativeTime);
+		const urlParams = new URLSearchParams();
+		urlParams.set('columnKey', listSortOrder.columnKey as string);
+		urlParams.set('order', listSortOrder.order as string);
+		urlParams.set('page', listSortOrder.pagination as string);
+		urlParams.set('search', listSortOrder.search as string);
 
-		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlQuery.toString()}`;
+		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlParams.toString()}`;
 		safeNavigate(generatedUrl);
 	}
 
