@@ -1,5 +1,14 @@
-name: build-community
 
+# ??? GitHub Actions Workflow: Build Community Edition
+# ----------------------------------------------------
+# This workflow runs automatically when a new version tag is pushed (like v1.2.3 or v1.2.3-rc.1).
+# It performs three main steps:
+#   1) Prepare: Checks out code, fetches version info, and sets environment variables.
+#   2) js-build: Builds the frontend using Signoz Primus workflows.
+#   3) go-build: Builds the Go backend (community variant), bundles frontend artifacts,
+#       and creates multi-arch Docker images.
+# The workflow uses shared Signoz Primus workflows and GitHub App tokens for secure automation.
+name: build-community
 on:
   push:
     tags:
