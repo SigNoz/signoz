@@ -12,6 +12,10 @@ import {
 	Switch,
 	Typography,
 } from 'antd';
+import {
+	PrecisionOption,
+	PrecisionOptionsEnum,
+} from 'components/Graph/yAxisConfig';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import GraphTypes, {
@@ -48,6 +52,7 @@ import {
 	panelTypeVsColumnUnitPreferences,
 	panelTypeVsContextLinks,
 	panelTypeVsCreateAlert,
+	panelTypeVsDecimalPrecision,
 	panelTypeVsFillSpan,
 	panelTypeVsLegendColors,
 	panelTypeVsLegendPosition,
@@ -95,6 +100,8 @@ function RightContainer({
 	selectedTime,
 	yAxisUnit,
 	setYAxisUnit,
+	decimalPrecision,
+	setDecimalPrecision,
 	setGraphHandler,
 	thresholds,
 	combineHistogram,
@@ -160,6 +167,7 @@ function RightContainer({
 		panelTypeVsColumnUnitPreferences[selectedGraph];
 	const allowContextLinks =
 		panelTypeVsContextLinks[selectedGraph] && enableDrillDown;
+	const allowDecimalPrecision = panelTypeVsDecimalPrecision[selectedGraph];
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -356,6 +364,30 @@ function RightContainer({
 						}
 					/>
 				)}
+
+				{allowDecimalPrecision && (
+					<section className="decimal-precision-selector">
+						<Typography.Text className="typography">
+							Decimal Precision
+						</Typography.Text>
+						<Select
+							options={[
+								{ label: '0 decimals', value: PrecisionOptionsEnum.ZERO },
+								{ label: '1 decimal', value: PrecisionOptionsEnum.ONE },
+								{ label: '2 decimals', value: PrecisionOptionsEnum.TWO },
+								{ label: '3 decimals', value: PrecisionOptionsEnum.THREE },
+								{ label: '4 decimals', value: PrecisionOptionsEnum.FOUR },
+								{ label: 'Full Precision', value: PrecisionOptionsEnum.FULL },
+							]}
+							value={decimalPrecision}
+							style={{ width: '100%' }}
+							className="panel-type-select"
+							defaultValue={PrecisionOptionsEnum.TWO}
+							onChange={(val: PrecisionOption): void => setDecimalPrecision(val)}
+						/>
+					</section>
+				)}
+
 				{allowSoftMinMax && (
 					<section className="soft-min-max">
 						<section className="container">
@@ -553,6 +585,8 @@ interface RightContainerProps {
 	setBucketWidth: Dispatch<SetStateAction<number>>;
 	setBucketCount: Dispatch<SetStateAction<number>>;
 	setYAxisUnit: Dispatch<SetStateAction<string>>;
+	decimalPrecision: PrecisionOption;
+	setDecimalPrecision: Dispatch<SetStateAction<PrecisionOption>>;
 	setGraphHandler: (type: PANEL_TYPES) => void;
 	thresholds: ThresholdProps[];
 	setThresholds: Dispatch<SetStateAction<ThresholdProps[]>>;

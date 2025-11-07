@@ -3,7 +3,71 @@ import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
+function isSeriesValueValid(seriesValue: number | undefined | null): boolean {
+	return (
+		seriesValue !== undefined &&
+		seriesValue !== null &&
+		!Number.isNaN(seriesValue)
+	);
+}
+
 // Helper function to get the focused/highlighted series at a specific position
+function resolveSeriesColor(series: uPlot.Series, index: number): string {
+	let color = '#000000';
+	if (typeof series.stroke === 'string') {
+		color = series.stroke;
+	} else if (typeof series.fill === 'string') {
+		color = series.fill;
+	} else {
+		const seriesLabel = series.label || `Series ${index}`;
+		const isDarkMode = !document.body.classList.contains('lightMode');
+		color = generateColor(
+			seriesLabel,
+			isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+		);
+	}
+	return color;
+}
+
+function getPreferredSeriesIndex(
+	u: uPlot,
+	timestampIndex: number,
+	e: MouseEvent,
+): number {
+	const bbox = u.over.getBoundingClientRect();
+	const top = e.clientY - bbox.top;
+	// Prefer series explicitly marked as focused
+	for (let i = 1; i < u.series.length; i++) {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		const isSeriesFocused = u.series[i]?._focus === true;
+		const isSeriesShown = u.series[i].show !== false;
+		const seriesValue = u.data[i]?.[timestampIndex];
+		if (isSeriesFocused && isSeriesShown && isSeriesValueValid(seriesValue)) {
+			return i;
+		}
+	}
+
+	// Fallback: choose series with Y closest to mouse position
+	let focusedSeriesIndex = -1;
+	let closestPixelDiff = Infinity;
+	for (let i = 1; i < u.series.length; i++) {
+		const series = u.data[i];
+		const seriesValue = series?.[timestampIndex];
+
+		if (isSeriesValueValid(seriesValue) && u.series[i].show !== false) {
+			const yPx = u.valToPos(seriesValue as number, 'y');
+			const diff = Math.abs(yPx - top);
+			if (diff < closestPixelDiff) {
+				closestPixelDiff = diff;
+				focusedSeriesIndex = i;
+			}
+		}
+	}
+
+	return focusedSeriesIndex;
+}
+
 export const getFocusedSeriesAtPosition = (
 	e: MouseEvent,
 	u: uPlot,
@@ -17,74 +81,28 @@ export const getFocusedSeriesAtPosition = (
 } | null => {
 	const bbox = u.over.getBoundingClientRect();
 	const left = e.clientX - bbox.left;
-	const top = e.clientY - bbox.top;
 
 	const timestampIndex = u.posToIdx(left);
-	let focusedSeriesIndex = -1;
-	let closestPixelDiff = Infinity;
+	const preferredIndex = getPreferredSeriesIndex(u, timestampIndex, e);
 
-	// Check all series (skip index 0 which is the x-axis)
-	for (let i = 1; i < u.data.length; i++) {
-		const series = u.data[i];
-		const seriesValue = series[timestampIndex];
-
-		if (
-			seriesValue !== undefined &&
-			seriesValue !== null &&
-			!Number.isNaN(seriesValue)
-		) {
-			const seriesYPx = u.valToPos(seriesValue, 'y');
-			const pixelDiff = Math.abs(seriesYPx - top);
-
-			if (pixelDiff < closestPixelDiff) {
-				closestPixelDiff = pixelDiff;
-				focusedSeriesIndex = i;
-			}
-		}
-	}
-
-	// If we found a focused series, return its data
-	if (focusedSeriesIndex > 0) {
-		const series = u.series[focusedSeriesIndex];
-		const seriesValue = u.data[focusedSeriesIndex][timestampIndex];
-
-		// Ensure we have a valid value
-		if (
-			seriesValue !== undefined &&
-			seriesValue !== null &&
-			!Number.isNaN(seriesValue)
-		) {
-			// Get color - try series stroke first, then generate based on label
-			let color = '#000000';
-			if (typeof series.stroke === 'string') {
-				color = series.stroke;
-			} else if (typeof series.fill === 'string') {
-				color = series.fill;
-			} else {
-				// Generate color based on series label (like the tooltip plugin does)
-				const seriesLabel = series.label || `Series ${focusedSeriesIndex}`;
-				// Detect theme mode by checking body class
-				const isDarkMode = !document.body.classList.contains('lightMode');
-				color = generateColor(
-					seriesLabel,
-					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-				);
-			}
-
+	if (preferredIndex > 0) {
+		const series = u.series[preferredIndex];
+		const seriesValue = u.data[preferredIndex][timestampIndex];
+		if (isSeriesValueValid(seriesValue)) {
+			const color = resolveSeriesColor(series, preferredIndex);
 			return {
-				seriesIndex: focusedSeriesIndex,
-				seriesName: series.label || `Series ${focusedSeriesIndex}`,
+				seriesIndex: preferredIndex,
+				seriesName: series.label || `Series ${preferredIndex}`,
 				value: seriesValue as number,
 				color,
 				show: series.show !== false,
-				isFocused: true, // This indicates it's the highlighted/bold one
+				isFocused: true,
 			};
 		}
 	}
 
 	return null;
 };
-
 export interface OnClickPluginOpts {
 	onClick: (
 		xValue: number,
@@ -137,50 +155,31 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 				const yValue = u.posToVal(event.offsetY, 'y');
 
 				// Get the focused/highlighted series (the one that would be bold in hover)
-				const focusedSeries = getFocusedSeriesAtPosition(event, u);
+				const focusedSeriesData = getFocusedSeriesAtPosition(event, u);
 
 				let metric = {};
-				const { series } = u;
 				const apiResult = opts.apiResponse?.data?.result || [];
 				const outputMetric = {
 					queryName: '',
 					inFocusOrNot: false,
 				};
 
-				// this is to get the metric value of the focused series
-				if (Array.isArray(series) && series.length > 0) {
-					series.forEach((item, index) => {
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-						// @ts-ignore
-						if (item?.show && item?._focus) {
-							const { metric: focusedMetric, queryName } = apiResult[index - 1] || [];
-							metric = focusedMetric;
-							outputMetric.queryName = queryName;
-							outputMetric.inFocusOrNot = true;
-						}
-					});
-				}
-
-				if (!outputMetric.queryName) {
-					// Get the focused series data
-					const focusedSeriesData = getFocusedSeriesAtPosition(event, u);
-
-					// If we found a valid focused series, get its data
-					if (
-						focusedSeriesData &&
-						focusedSeriesData.seriesIndex <= apiResult.length
-					) {
-						const { metric: focusedMetric, queryName } =
-							apiResult[focusedSeriesData.seriesIndex - 1] || [];
-						metric = focusedMetric;
-						outputMetric.queryName = queryName;
-						outputMetric.inFocusOrNot = true;
-					}
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				if (
+					focusedSeriesData &&
+					focusedSeriesData.seriesIndex <= apiResult.length
+				) {
+					const { metric: focusedMetric, queryName } =
+						apiResult[focusedSeriesData.seriesIndex - 1] || {};
+					metric = focusedMetric;
+					outputMetric.queryName = queryName;
+					outputMetric.inFocusOrNot = true;
 				}
 
 				// Get the actual data point timestamp from the focused series
 				let actualDataTimestamp = xValue; // fallback to click position timestamp
-				if (focusedSeries) {
+				if (focusedSeriesData) {
 					// Get the data index from the focused series
 					const dataIndex = u.posToIdx(event.offsetX);
 					// Get the actual timestamp from the x-axis data (u.data[0])
@@ -209,7 +208,7 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					absoluteMouseX,
 					absoluteMouseY,
 					axesData,
-					focusedSeries,
+					focusedSeriesData,
 				);
 			};
 			u.over.addEventListener('click', handleClick);
