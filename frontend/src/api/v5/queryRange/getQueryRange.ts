@@ -11,7 +11,7 @@ import {
 export const getQueryRangeV5 = async (
 	props: QueryRangePayloadV5,
 	version: string,
-	signal: AbortSignal,
+	signal?: AbortSignal,
 	headers?: Record<string, string>,
 ): Promise<SuccessResponseV2<MetricRangePayloadV5>> => {
 	try {
