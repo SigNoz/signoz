@@ -3523,21 +3523,11 @@ export const getRateOverTimeWidgetData = (
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
-					filters: {
-						items: [
-							{
-								id: '3c76fe0b',
-								key: {
-									dataType: DataTypes.String,
-									key: SPAN_ATTRIBUTES.SERVER_NAME,
-									type: 'tag',
-								},
-								op: '=',
-								value: domainName,
-							},
-							...(filters?.items || []),
-						],
-						op: 'AND',
+					filter: {
+						expression: convertFiltersToExpressionWithExistingQuery(
+							filters || { items: [], op: 'AND' },
+							`(net.peer.name = '${domainName}' OR url.full = '${domainName}')`,
+						).filter.expression,
 					},
 					functions: [],
 					groupBy: [],
@@ -3548,7 +3538,7 @@ export const getRateOverTimeWidgetData = (
 					queryName: 'A',
 					reduceTo: 'avg',
 					spaceAggregation: 'sum',
-					stepInterval: 60,
+					stepInterval: null,
 					timeAggregation: 'rate',
 				},
 			],
@@ -3584,21 +3574,11 @@ export const getLatencyOverTimeWidgetData = (
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
-					filters: {
-						items: [
-							{
-								id: '63adb3ff',
-								key: {
-									dataType: DataTypes.String,
-									key: SPAN_ATTRIBUTES.SERVER_NAME,
-									type: 'tag',
-								},
-								op: '=',
-								value: domainName,
-							},
-							...(filters?.items || []),
-						],
-						op: 'AND',
+					filter: {
+						expression: convertFiltersToExpressionWithExistingQuery(
+							filters || { items: [], op: 'AND' },
+							`(net.peer.name = '${domainName}' OR url.full = '${domainName}')`,
+						).filter.expression,
 					},
 					functions: [],
 					groupBy: [],
@@ -3609,7 +3589,7 @@ export const getLatencyOverTimeWidgetData = (
 					queryName: 'A',
 					reduceTo: 'avg',
 					spaceAggregation: 'sum',
-					stepInterval: 60,
+					stepInterval: null,
 					timeAggregation: 'p99',
 				},
 			],
