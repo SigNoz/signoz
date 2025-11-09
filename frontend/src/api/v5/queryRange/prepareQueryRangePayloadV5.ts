@@ -297,6 +297,19 @@ export function createAggregation(
 		);
 	}
 
+	// Handle legacy V4 format (aggregateOperator + aggregateAttribute) for TRACES/LOGS
+	// This provides backward compatibility similar to METRICS data source handling above
+	if (queryData.aggregateOperator) {
+		const operator = queryData.aggregateOperator;
+		const attribute = queryData.aggregateAttribute?.key;
+
+		// If there's an attribute (e.g., p99(duration_nano)), include it
+		// If no attribute (e.g., rate()), use empty parentheses
+		const expression = attribute ? `${operator}(${attribute})` : `${operator}()`;
+
+		return [{ expression }];
+	}
+
 	return [{ expression: 'count()' }];
 }
 
