@@ -1,5 +1,6 @@
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
@@ -178,7 +179,7 @@ function EndPointDetails({
 		[domainName, filters, minTime, maxTime],
 	);
 
-	const V5_QUERIES = [] as const;
+	const V5_QUERIES = [REACT_QUERY_KEY.GET_ENDPOINT_METRICS_DATA] as const;
 
 	const endPointDetailsDataQueries = useQueries(
 		endPointDetailsQueryPayload.map((payload, index) => {

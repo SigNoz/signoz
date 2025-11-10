@@ -11,6 +11,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GraphClickMetaData } from 'container/GridCardLayout/useNavigateToExplorerPages';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
+import { convertNanoToMilliseconds } from 'container/MetricsExplorer/Summary/utils';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
@@ -1408,31 +1409,13 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'A',
-						filters: {
-							items: [
-								{
-									id: '874562e1',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersToExpressionWithExistingQuery(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							).filter.expression,
 						},
 						functions: [],
 						groupBy: [],
@@ -1456,31 +1439,13 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'B',
-						filters: {
-							items: [
-								{
-									id: '0c5564e0',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersToExpressionWithExistingQuery(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							).filter.expression,
 						},
 						functions: [],
 						groupBy: [],
@@ -1504,41 +1469,13 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						disabled: true,
 						expression: 'C',
-						filters: {
-							items: [
-								{
-									id: '0d656701',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '83ef9a1b',
-									key: {
-										dataType: DataTypes.bool,
-										key: 'has_error',
-										type: '',
-									},
-									op: '=',
-									value: 'true',
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersToExpressionWithExistingQuery(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression} AND has_error = true`,
+							).filter.expression,
 						},
 						functions: [],
 						groupBy: [],
@@ -1563,31 +1500,13 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'D',
-						filters: {
-							items: [
-								{
-									id: '918f5b99',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersToExpressionWithExistingQuery(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							).filter.expression,
 						},
 						functions: [],
 						groupBy: [],
@@ -1611,31 +1530,13 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						disabled: true,
 						expression: 'E',
-						filters: {
-							items: [
-								{
-									id: 'b355d1aa',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersToExpressionWithExistingQuery(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							).filter.expression,
 						},
 						functions: [],
 						groupBy: [],
@@ -2570,19 +2471,24 @@ export const getFormattedEndPointMetricsData = (
 		};
 	}
 
+	const dataMap = data[0].data;
+
+	// Convert nanoseconds to milliseconds for latency (only if valid)
+	const latencyInMs = !isEmptyFilterValue(dataMap.B)
+		? convertNanoToMilliseconds(Number(dataMap.B))
+		: undefined;
+
+	// Convert timestamp to relative time (only if valid)
+	const lastUsedFormatted = !isEmptyFilterValue(data[0].data.D)
+		? getLastUsedRelativeTime(new Date(data[0].data.D as string).getTime())
+		: undefined;
+
 	return {
 		key: v4(),
-		rate: data[0].data.A === 'n/a' || !data[0].data.A ? '-' : data[0].data.A,
-		latency:
-			data[0].data.B === 'n/a' || data[0].data.B === undefined
-				? '-'
-				: Math.round(Number(data[0].data.B) / 1000000),
-		errorRate:
-			data[0].data.F1 === 'n/a' || !data[0].data.F1 ? 0 : Number(data[0].data.F1),
-		lastUsed:
-			data[0].data.D === 'n/a' || !data[0].data.D
-				? '-'
-				: getLastUsedRelativeTime(Math.floor(Number(data[0].data.D) / 1000000)),
+		rate: getDisplayValue(dataMap.A),
+		latency: getDisplayValue(latencyInMs),
+		errorRate: Number(getDisplayValue(dataMap.F1)) || 0,
+		lastUsed: getDisplayValue(lastUsedFormatted),
 	};
 };
 
