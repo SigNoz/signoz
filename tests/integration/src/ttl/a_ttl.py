@@ -353,7 +353,7 @@ def test_set_custom_retention_ttl_basic_fallback(
     tables_to_check = [
         "logs_v2",
         "logs_v2_resource",
-        "logs_attributes_keys",
+        "logs_attribute_keys",
         "logs_resource_keys"
     ]
 
