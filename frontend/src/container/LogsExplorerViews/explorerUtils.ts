@@ -14,12 +14,12 @@ import { Filter } from 'types/api/v5/queryRange';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
-const getSingleBaseQuery = (
+export const getListQuery = (
 	stagedQuery: Query | null,
 ): IBuilderQuery | null => {
-	const baseFirstQuery: IBuilderQuery | undefined =
-		stagedQuery?.builder.queryData[0];
-	return baseFirstQuery ?? null;
+	if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+
+	return stagedQuery.builder.queryData[0] ?? null;
 };
 
 export const getFrequencyChartData = (
@@ -29,7 +29,7 @@ export const getFrequencyChartData = (
 	if (!stagedQuery) {
 		return null;
 	}
-	const baseFirstQuery = getSingleBaseQuery(stagedQuery);
+	const baseFirstQuery = getListQuery(stagedQuery);
 
 	if (!baseFirstQuery) {
 		return null;
@@ -93,17 +93,17 @@ export const getFrequencyChartData = (
 	return modifiedQuery;
 };
 
-export const getListViewData = (
+export const getQueryByPanelType = (
 	query: Query | null,
+	selectedPanelType: PANEL_TYPES,
 	params: {
-		page: number;
-		pageSize: number;
-		filters: TagFilter;
-		filter: Filter;
+		page?: number;
+		pageSize?: number;
+		filters?: TagFilter;
+		filter?: Filter;
+		activeLogId?: string | null;
+		orderBy?: string;
 	},
-	activeLogId: string | null,
-	orderBy: string,
-	selectedPanelType: string,
 ): Query | null => {
 	if (!query) return null;
 
@@ -112,9 +112,11 @@ export const getListViewData = (
 	}));
 
 	if (selectedPanelType === PANEL_TYPES.LIST) {
+		const { activeLogId = null, orderBy = 'timestamp:desc' } = params;
+
 		const paginateData = getPaginationQueryDataV2({
-			page: params.page,
-			pageSize: params.pageSize,
+			page: params.page ?? 1,
+			pageSize: params.pageSize ?? 10,
 		});
 
 		let updatedFilters = params.filters;
@@ -150,7 +152,7 @@ export const getListViewData = (
 
 		queryData = [
 			{
-				...(getSingleBaseQuery(query) || initialQueryBuilderFormValues),
+				...(getListQuery(query) || initialQueryBuilderFormValues),
 				...paginateData,
 				...(updatedFilters ? { filters: updatedFilters } : {}),
 				filter: { expression: updatedFilterExpression || '' },
@@ -173,4 +175,42 @@ export const getListViewData = (
 	};
 
 	return data;
+};
+
+export const getExportQueryData = (
+	query: Query | null,
+	panelType: PANEL_TYPES,
+): Query | null => {
+	if (!query) return null;
+
+	if (panelType === PANEL_TYPES.LIST) {
+		const paginateData = getPaginationQueryDataV2({
+			page: 1,
+			pageSize: 100,
+		});
+
+		const listQuery = getListQuery(query);
+		if (!listQuery) return null;
+
+		return {
+			...query,
+			builder: {
+				...query.builder,
+				queryData: [
+					{
+						...listQuery,
+						...paginateData,
+						orderBy: [
+							{
+								columnName: 'timestamp',
+								order: 'desc',
+							},
+						],
+						limit: 100,
+					},
+				],
+			},
+		};
+	}
+	return query;
 };

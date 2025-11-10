@@ -15,13 +15,16 @@ import {
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import {
+	getExportQueryData,
 	getFrequencyChartData,
-	getListViewData,
+	getListQuery,
+	getQueryByPanelType,
 } from 'container/LogsExplorerViews/explorerUtils';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
@@ -29,7 +32,7 @@ import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQuery
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { cloneDeep, isEmpty, isUndefined, set } from 'lodash-es';
+import { isEmpty, isUndefined } from 'lodash-es';
 import LiveLogs from 'pages/LiveLogs';
 import {
 	Dispatch,
@@ -65,6 +68,7 @@ function LogsExplorerViewsContainer({
 	chartQueryKeyRef,
 	setWarning,
 	showLiveLogs,
+	handleChangeSelectedView,
 }: {
 	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,6 +77,7 @@ function LogsExplorerViewsContainer({
 	chartQueryKeyRef: MutableRefObject<any>;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	showLiveLogs: boolean;
+	handleChangeSelectedView: ChangeViewFunctionType;
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const dispatch = useDispatch();
@@ -114,10 +119,9 @@ function LogsExplorerViewsContainer({
 
 	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
 
-	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
-		return stagedQuery.builder.queryData[0] || null;
-	}, [stagedQuery]);
+	const listQuery = useMemo(() => getListQuery(stagedQuery) || null, [
+		stagedQuery,
+	]);
 
 	const isLimit: boolean = useMemo(() => {
 		if (!listQuery) return false;
@@ -204,7 +208,11 @@ function LogsExplorerViewsContainer({
 				filter: Filter;
 			},
 		): Query | null =>
-			getListViewData(query, params, activeLogId, orderBy, selectedPanelType),
+			getQueryByPanelType(query, selectedPanelType, {
+				...params,
+				activeLogId,
+				orderBy,
+			}),
 		[activeLogId, orderBy, selectedPanelType],
 	);
 
@@ -259,14 +267,6 @@ function LogsExplorerViewsContainer({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data?.payload]);
 
-	const getUpdatedQueryForExport = useCallback((): Query => {
-		const updatedQuery = cloneDeep(currentQuery);
-
-		set(updatedQuery, 'builder.queryData[0].pageSize', 10);
-
-		return updatedQuery;
-	}, [currentQuery]);
-
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
 			if (!dashboard || !selectedPanelType) return;
@@ -279,10 +279,9 @@ function LogsExplorerViewsContainer({
 
 			const widgetId = v4();
 
-			const query =
-				selectedPanelType === PANEL_TYPES.LIST
-					? getUpdatedQueryForExport()
-					: exportDefaultQuery;
+			const query = getExportQueryData(requestData, selectedPanelType);
+
+			if (!query) return;
 
 			logEvent('Logs Explorer: Add to dashboard successful', {
 				panelType: selectedPanelType,
@@ -299,12 +298,7 @@ function LogsExplorerViewsContainer({
 
 			safeNavigate(dashboardEditView);
 		},
-		[
-			getUpdatedQueryForExport,
-			exportDefaultQuery,
-			safeNavigate,
-			selectedPanelType,
-		],
+		[safeNavigate, requestData, selectedPanelType],
 	);
 
 	useEffect(() => {
@@ -512,6 +506,7 @@ function LogsExplorerViewsContainer({
 				query={exportDefaultQuery}
 				onExport={handleExport}
 				sourcepage={DataSource.LOGS}
+				handleChangeSelectedView={handleChangeSelectedView}
 			/>
 		</div>
 	);
