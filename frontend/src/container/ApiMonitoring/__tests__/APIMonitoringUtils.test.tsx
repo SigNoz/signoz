@@ -511,13 +511,17 @@ describe('API Monitoring Utils', () => {
 						if (serverNameFilter) {
 							expect(typeof serverNameFilter.value).toBe('string');
 						}
-					}
 
-					// Should include our custom filter
-					const customFilter = qd.filters?.items?.find(
-						(item) => item.id === 'test-filter',
-					);
-					expect(customFilter).toBeDefined();
+						// Should include our custom filter
+						const customFilter = qd.filters?.items?.find(
+							(item) => item.id === 'test-filter',
+						);
+						expect(customFilter).toBeDefined();
+					} else if (qd.filter && qd.filter.expression) {
+						// V5 format uses filter.expression instead of filters.items
+						// The custom filter should be included in the expression
+						expect(qd.filter.expression).toContain('test.key');
+					}
 				});
 			});
 		});

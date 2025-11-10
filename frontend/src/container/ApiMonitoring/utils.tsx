@@ -834,7 +834,55 @@ export const getEndPointsQueryPayload = (
 	];
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
+/**
+ * Converts filters to expression, handling http.url specially by creating (http.url OR url.full) condition
+ * @param filters Filters to convert
+ * @param baseExpression Base expression to combine with filters
+ * @returns Filter expression string
+ */
+function convertFiltersWithUrlHandling(
+	filters: IBuilderQuery['filters'],
+	baseExpression: string,
+): string {
+	if (!filters) {
+		return baseExpression;
+	}
+
+	// Check if filters contain http.url (SPAN_ATTRIBUTES.URL_PATH)
+	const httpUrlFilter = filters.items?.find(
+		(item) => item.key?.key === SPAN_ATTRIBUTES.URL_PATH,
+	);
+
+	// If http.url filter exists, create modified filters with (http.url OR url.full)
+	if (httpUrlFilter && httpUrlFilter.value) {
+		// Remove ALL http.url filters from items (guards against duplicates)
+		const otherFilters = filters.items?.filter(
+			(item) => item.key?.key !== SPAN_ATTRIBUTES.URL_PATH,
+		);
+
+		// Convert to expression first with other filters
+		const {
+			filter: intermediateFilter,
+		} = convertFiltersToExpressionWithExistingQuery(
+			{ ...filters, items: otherFilters || [] },
+			baseExpression,
+		);
+
+		// Add the OR condition for http.url and url.full
+		const urlValue = httpUrlFilter.value;
+		const urlCondition = `(http.url = '${urlValue}' OR url.full = '${urlValue}')`;
+		return intermediateFilter.expression.trim()
+			? `${intermediateFilter.expression} AND ${urlCondition}`
+			: urlCondition;
+	}
+
+	const { filter } = convertFiltersToExpressionWithExistingQuery(
+		filters,
+		baseExpression,
+	);
+	return filter.expression;
+}
+
 function buildFilterExpression(
 	domainName: string,
 	filters: IBuilderQuery['filters'],
@@ -850,14 +898,8 @@ function buildFilterExpression(
 		baseFilterParts.push('status_message EXISTS');
 	}
 	const filterExpression = baseFilterParts.join(' AND ');
-	if (!filters) {
-		return filterExpression;
-	}
-	const { filter } = convertFiltersToExpressionWithExistingQuery(
-		filters,
-		filterExpression,
-	);
-	return filter.expression;
+
+	return convertFiltersWithUrlHandling(filters, filterExpression);
 }
 
 export const getTopErrorsQueryPayload = (
@@ -1904,12 +1946,12 @@ export const getEndPointDetailsQueryPayload = (
 						spaceAggregation: 'sum',
 						functions: [],
 						filter: {
-							expression: convertFiltersToExpressionWithExistingQuery(
+							expression: convertFiltersWithUrlHandling(
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
 								)} AND ${clientKindExpression}`,
-							).filter.expression,
+							),
 						},
 						expression: 'A',
 						disabled: false,
