@@ -1293,7 +1293,12 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 		coldStorageDuration = int(params.ToColdStorageDuration)
 	}
 
-	tableNameArray := []string{r.logsDB + "." + r.logsLocalTableV2, r.logsDB + "." + r.logsResourceLocalTableV2}
+	tableNameArray := []string{
+		r.logsDB + "." + r.logsLocalTableV2,
+		r.logsDB + "." + r.logsResourceLocalTableV2,
+		r.logsDB + "." + getLocalTableName(r.logsAttributeKeys),
+		r.logsDB + "." + getLocalTableName(r.logsResourceKeys),
+	}
 
 	// check if there is existing things to be done
 	for _, tableName := range tableNameArray {
@@ -1327,9 +1332,19 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 			params.ToColdStorageDuration, params.ColdStorageVolume)
 	}
 
+	ttlLogsV2AttributeKeys := fmt.Sprintf(
+		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + "+
+			"INTERVAL %v SECOND DELETE", tableNameArray[2], r.cluster, params.DelDuration)
+
+	ttlLogsV2ResourceKeys := fmt.Sprintf(
+		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + "+
+			"INTERVAL %v SECOND DELETE", tableNameArray[3], r.cluster, params.DelDuration)
+
 	ttlPayload := map[string]string{
 		tableNameArray[0]: ttlLogsV2,
 		tableNameArray[1]: ttlLogsV2Resource,
+		tableNameArray[2]: ttlLogsV2AttributeKeys,
+		tableNameArray[3]: ttlLogsV2ResourceKeys,
 	}
 
 	// set the ttl if nothing is pending/ no errors
@@ -1435,6 +1450,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 		r.TraceDB + "." + signozUsageExplorerTable,
 		r.TraceDB + "." + defaultDependencyGraphTable,
 		r.TraceDB + "." + r.traceSummaryTable,
+		r.TraceDB + "." + r.spanAttributesKeysTable,
 	}
 
 	coldStorageDuration := -1
@@ -1649,6 +1665,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	tableNames := []string{
 		r.logsDB + "." + r.logsLocalTableV2,
 		r.logsDB + "." + r.logsResourceLocalTableV2,
+		r.logsDB + "." + r.logsAttributeKeys,
+		r.logsDB + "." + r.logsResourceKeys,
 	}
 
 	for _, tableName := range tableNames {
@@ -1695,6 +1713,23 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	}
 
 	ttlPayload[tableNames[1]] = resourceQueries
+
+	// NOTE: Since logs support custom rule based retention, that makes it difficult to identify which attributes, resource keys
+	// we need to keep, hence chosing MAX for safe side and not to create any complex solution for this.
+	maxRetentionTTL := params.DefaultTTLDays
+	for _, rule := range params.TTLConditions {
+		maxRetentionTTL = max(maxRetentionTTL, rule.TTLDays)
+	}
+
+	ttlPayload[tableNames[2]] = []string{
+		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
+			tableNames[2], r.cluster, maxRetentionTTL),
+	}
+
+	ttlPayload[tableNames[3]] = []string{
+		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
+			tableNames[3], r.cluster, maxRetentionTTL),
+	}
 
 	ttlConditionsJSON, err := json.Marshal(params.TTLConditions)
 	if err != nil {
