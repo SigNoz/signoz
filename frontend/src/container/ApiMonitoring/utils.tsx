@@ -48,7 +48,16 @@ import {
 
 export const isEmptyFilterValue = (value: unknown): boolean =>
 	value === '' || value === null || value === undefined || value === 'n/a';
+/**
+ * Returns '-' if value is empty, otherwise returns value as string
+ */
+export const getDisplayValue = (value: unknown): string =>
+	isEmptyFilterValue(value) ? '-' : String(value);
 
+export const getDomainNameFilterExpression = (domainName: string): string =>
+	`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`;
+
+export const clientKindExpression = `kind_string = 'Client'`;
 export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
@@ -1206,13 +1215,6 @@ export interface TopErrorsTableRowData {
 	statusCode: string;
 	statusMessage: string;
 	count: string;
-}
-
-/**
- * Returns '-' if value is empty, otherwise returns value as string
- */
-export function getDisplayValue(value: unknown): string {
-	return isEmptyFilterValue(value) ? '-' : String(value);
 }
 
 export const formatTopErrorsDataForTable = (
