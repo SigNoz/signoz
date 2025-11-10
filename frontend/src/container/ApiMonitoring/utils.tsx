@@ -11,6 +11,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GraphClickMetaData } from 'container/GridCardLayout/useNavigateToExplorerPages';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
+import { convertNanoToMilliseconds } from 'container/MetricsExplorer/Summary/utils';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
@@ -309,6 +310,8 @@ export const formatDataForTable = (
 	});
 };
 
+const urlExpression = `(url.full EXISTS OR http.url EXISTS)`;
+
 export const getDomainMetricsQueryPayload = (
 	domainName: string,
 	start: number,
@@ -325,29 +328,14 @@ export const getDomainMetricsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						queryName: 'A',
 						aggregateOperator: 'count',
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							key: SPAN_ATTRIBUTES.URL_PATH,
-							type: 'tag',
-						},
 						timeAggregation: 'rate',
 						spaceAggregation: 'sum',
 						functions: [],
-						filters: {
-							items: [
-								{
-									id: '4c57937c',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersToExpressionWithExistingQuery(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(domainName)} AND ${urlExpression}`,
+							).filter.expression,
 						},
 						expression: 'A',
 						disabled: false,
@@ -371,21 +359,11 @@ export const getDomainMetricsQueryPayload = (
 						timeAggregation: 'p99',
 						spaceAggregation: 'sum',
 						functions: [],
-						filters: {
-							items: [
-								{
-									id: '2cf675cd',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersToExpressionWithExistingQuery(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(domainName)}`,
+							).filter.expression,
 						},
 						expression: 'B',
 						disabled: false,
@@ -410,31 +388,11 @@ export const getDomainMetricsQueryPayload = (
 						timeAggregation: 'count',
 						spaceAggregation: 'sum',
 						functions: [],
-						filters: {
-							items: [
-								{
-									id: '3db0f605',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '6096f745',
-									key: {
-										dataType: DataTypes.bool,
-										key: 'has_error',
-										type: '',
-									},
-									op: '=',
-									value: 'true',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersToExpressionWithExistingQuery(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(domainName)} AND has_error = true`,
+							).filter.expression,
 						},
 						expression: 'C',
 						disabled: true,
@@ -459,21 +417,11 @@ export const getDomainMetricsQueryPayload = (
 						timeAggregation: 'max',
 						spaceAggregation: 'sum',
 						functions: [],
-						filters: {
-							items: [
-								{
-									id: '8ff8dea1',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersToExpressionWithExistingQuery(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(domainName)}`,
+							).filter.expression,
 						},
 						expression: 'D',
 						disabled: false,
@@ -546,21 +494,27 @@ export const formatDomainMetricsDataForTable = (
 		return {
 			endpointCount: '-',
 			latency: '-',
-			errorRate: 0,
+			errorRate: '-',
 			lastUsed: '-',
 		};
 	}
+
+	const dataMap = row.data;
+	// Convert nanoseconds to milliseconds for latency (only if valid)
+	const latencyInMs = !isEmptyFilterValue(dataMap.B)
+		? convertNanoToMilliseconds(Number(dataMap.B))
+		: undefined;
+
+	// Convert nanoseconds to milliseconds for timestamp, then format (only if valid)
+	const lastUsedFormatted = !isEmptyFilterValue(dataMap.D)
+		? getLastUsedRelativeTime(new Date(dataMap.D as string).getTime())
+		: undefined;
+
 	return {
-		endpointCount: row.data.A === 'n/a' || !row.data.A ? '-' : Number(row.data.A),
-		latency:
-			row.data.B === 'n/a' || row.data.B === undefined
-				? '-'
-				: Math.round(Number(row.data.B) / 1000000),
-		errorRate: row.data.F1 === 'n/a' || !row.data.F1 ? 0 : Number(row.data.F1),
-		lastUsed:
-			row.data.D === 'n/a' || !row.data.D
-				? '-'
-				: getLastUsedRelativeTime(Math.floor(Number(row.data.D) / 1000000)),
+		endpointCount: getDisplayValue(dataMap.A),
+		latency: getDisplayValue(latencyInMs),
+		errorRate: getDisplayValue(dataMap.F1),
+		lastUsed: getDisplayValue(lastUsedFormatted),
 	};
 };
 
