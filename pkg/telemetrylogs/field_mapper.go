@@ -31,11 +31,8 @@ var (
 		"severity_number":    {Name: "severity_number", Type: schema.ColumnTypeUInt8},
 		"body":               {Name: "body", Type: schema.ColumnTypeString},
 		"body_v2": {Name: "body_v2", Type: schema.JSONColumnType{
-			MaxDynamicTypes: utils.ToPtr(uint(32)),
-			MaxDynamicPaths: utils.ToPtr(uint(0)),
-			Columns: []schema.Column{
-				{Name: "message", Type: schema.ColumnTypeString},
-			},
+			MaxDynamicTypes: utils.ToPointer(uint(32)),
+			MaxDynamicPaths: utils.ToPointer(uint(0)),
 		}},
 		"promoted": {Name: "promoted", Type: schema.JSONColumnType{}},
 		"attributes_string": {Name: "attributes_string", Type: schema.MapColumnType{

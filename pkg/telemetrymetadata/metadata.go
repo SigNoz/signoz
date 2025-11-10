@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -594,7 +595,8 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		for path, types := range bodyJSONPaths {
 			types.Iter(func(dataType telemetrytypes.JSONDataType) bool {
 				keys = append(keys, &telemetrytypes.TelemetryFieldKey{
-					Name:          telemetrylogs.BodyJSONStringSearchPrefix + path,
+					// clean backticks from the path
+					Name:          telemetrylogs.BodyJSONStringSearchPrefix + keycheck.CleanBackticks(path),
 					Signal:        telemetrytypes.SignalLogs,
 					FieldContext:  telemetrytypes.FieldContextLog,
 					FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[dataType],
@@ -602,14 +604,6 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 				return true
 			})
 		}
-
-		// default message key
-		keys = append(keys, &telemetrytypes.TelemetryFieldKey{
-			Name:          telemetrylogs.BodyJSONStringSearchPrefix + "message",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		})
 
 		// Update completeness - if body JSON extraction was incomplete, overall result is incomplete
 		complete = complete && bodyJSONComplete
