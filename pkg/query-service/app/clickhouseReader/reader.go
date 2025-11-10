@@ -1715,7 +1715,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	ttlPayload[tableNames[1]] = resourceQueries
 
 	// NOTE: Since logs support custom rule based retention, that makes it difficult to identify which attributes, resource keys
-	// we need to keep, hence chosing MAX for safe side and not to create any complex solution for this.
+	// we need to keep, hence choosing MAX for safe side and not to create any complex solution for this.
 	maxRetentionTTL := params.DefaultTTLDays
 	for _, rule := range params.TTLConditions {
 		maxRetentionTTL = max(maxRetentionTTL, rule.TTLDays)
