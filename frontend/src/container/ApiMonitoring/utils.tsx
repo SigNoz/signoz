@@ -2487,7 +2487,7 @@ export const getFormattedEndPointMetricsData = (
 		key: v4(),
 		rate: getDisplayValue(dataMap.A),
 		latency: getDisplayValue(latencyInMs),
-		errorRate: Number(getDisplayValue(dataMap.F1)) || 0,
+		errorRate: getDisplayValue(dataMap.F1),
 		lastUsed: getDisplayValue(lastUsedFormatted),
 	};
 };

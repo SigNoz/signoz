@@ -3,7 +3,6 @@ import { Progress, Skeleton, Tooltip, Typography } from 'antd';
 import {
 	getDisplayValue,
 	getFormattedEndPointMetricsData,
-	isEmptyFilterValue,
 } from 'container/ApiMonitoring/utils';
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
@@ -76,9 +75,7 @@ function EndPointMetrics({
 						) : (
 							<Tooltip title={metricsData?.rate}>
 								<span className="round-metric-tag">
-									{!isEmptyFilterValue(metricsData?.rate)
-										? `${metricsData?.rate} ops/sec`
-										: '-'}
+									{metricsData?.rate !== '-' ? `${metricsData?.rate} ops/sec` : '-'}
 								</span>
 							</Tooltip>
 						)}
@@ -97,7 +94,7 @@ function EndPointMetrics({
 							<Skeleton.Button active size="small" />
 						) : (
 							<Tooltip title={metricsData?.errorRate}>
-								{!isEmptyFilterValue(metricsData?.errorRate) ? (
+								{metricsData?.errorRate !== '-' ? (
 									<Progress
 										status="active"
 										percent={Number(Number(metricsData?.errorRate ?? 0).toFixed(2))}
