@@ -7,11 +7,13 @@ import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection
 import ROUTES from 'constants/routes';
 import AllAlertRules from 'container/ListAlertRules';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
+import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
 import AlertDetails from 'pages/AlertDetails';
+import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 function AllAlertList(): JSX.Element {
@@ -24,6 +26,28 @@ function AllAlertList(): JSX.Element {
 	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
 
 	const search = urlQuery.get('search');
+
+	const configurationTab = useMemo(() => {
+		const tabs = [
+			{
+				label: 'Planned Downtime',
+				key: 'planned-downtime',
+				children: <PlannedDowntime />,
+			},
+			{
+				label: 'Routing Policies',
+				key: 'routing-policies',
+				children: <RoutingPolicies />,
+			},
+		];
+		return (
+			<Tabs
+				className="configuration-tabs"
+				defaultActiveKey="planned-downtime"
+				items={tabs}
+			/>
+		);
+	}, []);
 
 	const items: TabsProps['items'] = [
 		{
@@ -58,11 +82,7 @@ function AllAlertList(): JSX.Element {
 				</div>
 			),
 			key: 'Configuration',
-			children: (
-				<div className="planned-downtime-container">
-					<PlannedDowntime />
-				</div>
-			),
+			children: configurationTab,
 		},
 	];
 

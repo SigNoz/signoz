@@ -27,7 +27,7 @@ describe('Value panel wrappper tests', () => {
 		);
 
 		// selected y axis unit as miliseconds (ms)
-		expect(getByText('295')).toBeInTheDocument();
+		expect(getByText('295.43')).toBeInTheDocument();
 		expect(getByText('ms')).toBeInTheDocument();
 	});
 

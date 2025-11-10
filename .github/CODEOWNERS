@@ -2,7 +2,7 @@
 # Owners are automatically requested for review for PRs that changes code
 # that they own.
 
-/frontend/ @SigNoz/frontend @YounixM
+/frontend/ @YounixM @aks07
 /frontend/src/container/MetricsApplication @srikanthccv
 /frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
 
@@ -48,13 +48,13 @@
 .github @SigNoz/devops
 
 # Scaffold Owners
-/pkg/config/ @grandwizard28
-/pkg/errors/ @grandwizard28
-/pkg/factory/ @grandwizard28
-/pkg/types/ @grandwizard28
-/pkg/valuer/ @grandwizard28
-/cmd/ @grandwizard28
-.golangci.yml @grandwizard28
+/pkg/config/ @therealpandey
+/pkg/errors/ @therealpandey
+/pkg/factory/ @therealpandey
+/pkg/types/ @therealpandey
+/pkg/valuer/ @therealpandey
+/cmd/ @therealpandey
+.golangci.yml @therealpandey
 
 # Zeus Owners
 /pkg/zeus/ @vikrantgupta25
@@ -84,4 +84,4 @@
 
 # AuthN / AuthZ Owners 
 
-/pkg/authz/ @vikrantgupta25 @grandwizard28
+/pkg/authz/ @vikrantgupta25 @therealpandey

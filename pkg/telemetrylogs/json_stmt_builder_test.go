@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
+func TestStatementBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
 	constants.BodyV2QueryEnabled = true
 	defer func() {
 		constants.BodyV2QueryEnabled = false

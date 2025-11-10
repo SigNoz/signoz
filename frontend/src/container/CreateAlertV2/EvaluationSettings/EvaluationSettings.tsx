@@ -1,28 +1,20 @@
 import './styles.scss';
 
-import { Button, Popover, Typography } from 'antd';
+import { Button, Popover } from 'antd';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
-import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { useCreateAlertState } from '../context';
-import Stepper from '../Stepper';
-import { showCondensedLayout } from '../utils';
-import AdvancedOptions from './AdvancedOptions';
 import EvaluationWindowPopover from './EvaluationWindowPopover';
 import { getEvaluationWindowTypeText, getTimeframeText } from './utils';
 
 function EvaluationSettings(): JSX.Element {
-	const {
-		alertType,
-		evaluationWindow,
-		setEvaluationWindow,
-	} = useCreateAlertState();
+	const { evaluationWindow, setEvaluationWindow } = useCreateAlertState();
+
 	const [
 		isEvaluationWindowPopoverOpen,
 		setIsEvaluationWindowPopoverOpen,
 	] = useState(false);
-	const showCondensedLayoutFlag = showCondensedLayout();
 
 	const popoverContent = (
 		<Popover
@@ -39,7 +31,7 @@ function EvaluationSettings(): JSX.Element {
 			trigger="click"
 			showArrow={false}
 		>
-			<Button>
+			<Button data-testid="evaluation-settings-button">
 				<div className="evaluate-alert-conditions-button-left">
 					{getTimeframeText(evaluationWindow)}
 				</div>
@@ -57,33 +49,12 @@ function EvaluationSettings(): JSX.Element {
 		</Popover>
 	);
 
-	// Layout consists of only the evaluation window popover
-	if (showCondensedLayoutFlag) {
-		return (
-			<div
-				className="condensed-evaluation-settings-container"
-				data-testid="condensed-evaluation-settings-container"
-			>
-				{popoverContent}
-			</div>
-		);
-	}
-
-	// Layout consists of
-	// - Stepper header
-	// - Evaluation window popover
-	// - Advanced options
 	return (
-		<div className="evaluation-settings-container">
-			<Stepper stepNumber={3} label="Evaluation settings" />
-			{alertType !== AlertTypes.ANOMALY_BASED_ALERT && (
-				<div className="evaluate-alert-conditions-container">
-					<Typography.Text>Check conditions using data from</Typography.Text>
-					<div className="evaluate-alert-conditions-separator" />
-					{popoverContent}
-				</div>
-			)}
-			<AdvancedOptions />
+		<div
+			className="condensed-evaluation-settings-container"
+			data-testid="condensed-evaluation-settings-container"
+		>
+			{popoverContent}
 		</div>
 	);
 }

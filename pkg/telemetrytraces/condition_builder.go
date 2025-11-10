@@ -73,7 +73,7 @@ func (c *conditionBuilder) conditionFor(
 			}
 		}
 	} else {
-		tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+		tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
 	}
 
 	// regular operators
@@ -162,12 +162,11 @@ func (c *conditionBuilder) conditionFor(
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 
 		var value any
-		if _, ok := column.Type.(schema.JSONColumnType); ok {
-			value = "NULL"
+		if column.IsJSONColumn() {
 			if operator == qbtypes.FilterOperatorExists {
-				return sb.NE(tblFieldName, value), nil
+				return sb.IsNotNull(tblFieldName), nil
 			} else {
-				return sb.E(tblFieldName, value), nil
+				return sb.IsNull(tblFieldName), nil
 			}
 		}
 		switch column.Type {
@@ -213,7 +212,7 @@ func (c *conditionBuilder) conditionFor(
 				return sb.NE(leftOperand, true), nil
 			}
 		default:
-			return "", fmt.Errorf("exists operator is not supported for column type %s", column.Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
 		}
 	}
 	return "", nil
@@ -225,9 +224,11 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	startNs uint64,
+	_ uint64,
 ) (string, error) {
 	if c.isSpanScopeField(key.Name) {
-		return c.buildSpanScopeCondition(key, operator, value)
+		return c.buildSpanScopeCondition(key, operator, value, startNs)
 	}
 
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
@@ -259,7 +260,7 @@ func (c *conditionBuilder) isSpanScopeField(name string) bool {
 	return keyName == SpanSearchScopeRoot || keyName == SpanSearchScopeEntryPoint
 }
 
-func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, error) {
+func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, startNs uint64) (string, error) {
 	if operator != qbtypes.FilterOperatorEqual {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s only supports '=' operator", key.Name)
 	}
@@ -283,6 +284,11 @@ func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.Telemetry
 	case SpanSearchScopeRoot:
 		return "parent_span_id = ''", nil
 	case SpanSearchScopeEntryPoint:
+		if startNs > 0 { // only add time filter if it is a valid time, else do not add
+			startS := int64(startNs / 1_000_000_000)
+			return fmt.Sprintf("((name, resource_string_service$$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s WHERE time >= toDateTime(%d))) AND parent_span_id != ''",
+				DBName, TopLevelOperationsTableName, startS), nil
+		}
 		return fmt.Sprintf("((name, resource_string_service$$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
 			DBName, TopLevelOperationsTableName), nil
 	default:

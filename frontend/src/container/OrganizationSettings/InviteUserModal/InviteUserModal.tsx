@@ -1,23 +1,10 @@
 import { Button, Form, Modal } from 'antd';
 import { FormInstance } from 'antd/lib';
 import sendInvite from 'api/v1/invite/create';
-import get from 'api/v1/invite/get';
-import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import { useAppContext } from 'providers/App/App';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useState,
-} from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
-import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
-import { PendingInvite } from 'types/api/user/getPendingInvites';
-import { ROLES } from 'types/roles';
 
 import InviteTeamMembers from '../InviteTeamMembers';
 import { InviteMemberFormValues } from '../PendingInvitesContainer';
@@ -26,17 +13,7 @@ export interface InviteUserModalProps {
 	isInviteTeamMemberModalOpen: boolean;
 	toggleModal: (value: boolean) => void;
 	form: FormInstance<InviteMemberFormValues>;
-	setDataSource?: Dispatch<SetStateAction<DataProps[]>>;
-	shouldCallApi?: boolean;
-}
-
-interface DataProps {
-	key: number;
-	name: string;
-	id: string;
-	email: string;
-	accessLevel: ROLES;
-	inviteLink: string;
+	onClose: () => void;
 }
 
 function InviteUserModal(props: InviteUserModalProps): JSX.Element {
@@ -44,53 +21,14 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 		isInviteTeamMemberModalOpen,
 		toggleModal,
 		form,
-		setDataSource,
-		shouldCallApi = false,
+
+		onClose,
 	} = props;
 	const { notifications } = useNotifications();
 	const { t } = useTranslation(['organizationsettings', 'common']);
-	const { user } = useAppContext();
+
 	const [isInvitingMembers, setIsInvitingMembers] = useState<boolean>(false);
 	const [modalForm] = Form.useForm<InviteMemberFormValues>(form);
-
-	const getPendingInvitesResponse = useQuery<
-		SuccessResponseV2<PendingInvite[]>,
-		APIError
-	>({
-		queryFn: get,
-		queryKey: ['getPendingInvites', user?.accessJwt],
-		enabled: shouldCallApi,
-	});
-
-	const getParsedInviteData = useCallback(
-		(payload: PendingInvite[] = []) =>
-			payload?.map((data) => ({
-				key: data.createdAt,
-				name: data?.name,
-				id: data.id,
-				email: data.email,
-				accessLevel: data.role,
-				inviteLink: `${window.location.origin}${ROUTES.SIGN_UP}?token=${data.token}`,
-			})),
-		[],
-	);
-
-	useEffect(() => {
-		if (
-			getPendingInvitesResponse.status === 'success' &&
-			getPendingInvitesResponse?.data?.data
-		) {
-			const data = getParsedInviteData(
-				getPendingInvitesResponse?.data?.data || [],
-			);
-			setDataSource?.(data);
-		}
-	}, [
-		getParsedInviteData,
-		getPendingInvitesResponse?.data?.data,
-		getPendingInvitesResponse.status,
-		setDataSource,
-	]);
 
 	const onInviteClickHandler = useCallback(
 		async (values: InviteMemberFormValues): Promise<void> => {
@@ -119,10 +57,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 				);
 
 				setTimeout(async () => {
-					const { data, status } = await getPendingInvitesResponse.refetch();
-					if (status === 'success' && data.data) {
-						setDataSource?.(getParsedInviteData(data?.data || []));
-					}
+					onClose();
 					setIsInvitingMembers?.(false);
 					toggleModal(false);
 				}, 2000);
@@ -134,15 +69,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 				});
 			}
 		},
-		[
-			getParsedInviteData,
-			getPendingInvitesResponse,
-			notifications,
-			setDataSource,
-			setIsInvitingMembers,
-			t,
-			toggleModal,
-		],
+		[notifications, onClose, t, toggleModal],
 	);
 
 	return (
@@ -176,10 +103,5 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 		</Modal>
 	);
 }
-
-InviteUserModal.defaultProps = {
-	setDataSource: (): void => {},
-	shouldCallApi: false,
-};
 
 export default InviteUserModal;

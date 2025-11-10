@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -91,7 +92,7 @@ func (b *logQueryStatementBuilder) Build(
 		return b.buildScalarQuery(ctx, q, query, start, end, keys, false, variables)
 	}
 
-	return nil, fmt.Errorf("unsupported request type: %s", requestType)
+	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 }
 
 func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []*telemetrytypes.FieldKeySelector {
@@ -663,7 +664,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			JsonBodyPrefix:     b.jsonBodyPrefix,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
-		})
+        }, start, end)
 
 		if err != nil {
 			return nil, err

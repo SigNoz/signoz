@@ -39,7 +39,7 @@ func (b *base) Error() string {
 		return b.e.Error()
 	}
 
-	return fmt.Sprintf("%s(%s): %s", b.t.s, b.c, b.m)
+	return b.m
 }
 
 // New returns a base error. It requires type, code and message as input.
@@ -85,9 +85,8 @@ func Wrap(cause error, t typ, code Code, message string) *base {
 	}
 }
 
-// WithAdditional wraps an existing base error with a new formatted message.
-// It is used when the original error already contains type and code.
-func WithAdditional(cause error, format string, args ...any) *base {
+// WithAdditionalf adds an additional error message to the existing error.
+func WithAdditionalf(cause error, format string, args ...any) *base {
 	t, c, m, e, u, a := Unwrapb(cause)
 	b := &base{
 		t: t,

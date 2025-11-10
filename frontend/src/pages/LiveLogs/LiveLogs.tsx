@@ -3,7 +3,6 @@ import { liveLogsCompositeQuery } from 'container/LiveLogs/constants';
 import LiveLogsContainer from 'container/LiveLogs/LiveLogsContainer';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { useEffect } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -15,11 +14,7 @@ function LiveLogs(): JSX.Element {
 		handleSetConfig(PANEL_TYPES.LIST, DataSource.LOGS);
 	}, [handleSetConfig]);
 
-	return (
-		<PreferenceContextProvider>
-			<LiveLogsContainer />
-		</PreferenceContextProvider>
-	);
+	return <LiveLogsContainer />;
 }
 
 export default LiveLogs;

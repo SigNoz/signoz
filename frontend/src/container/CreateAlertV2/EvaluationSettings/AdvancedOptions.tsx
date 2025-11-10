@@ -1,5 +1,4 @@
-import { Collapse, Input, Select, Typography } from 'antd';
-import { Y_AXIS_CATEGORIES } from 'components/YAxisUnitSelector/constants';
+import { Collapse, Input, Typography } from 'antd';
 
 import { useCreateAlertState } from '../context';
 import AdvancedOptionItem from './AdvancedOptionItem';
@@ -7,10 +6,6 @@ import EvaluationCadence from './EvaluationCadence';
 
 function AdvancedOptions(): JSX.Element {
 	const { advancedOptions, setAdvancedOptions } = useCreateAlertState();
-
-	const timeOptions = Y_AXIS_CATEGORIES.find(
-		(category) => category.name === 'Time',
-	)?.units.map((unit) => ({ label: unit.name, value: unit.id }));
 
 	return (
 		<div className="advanced-options-container">
@@ -38,24 +33,17 @@ function AdvancedOptions(): JSX.Element {
 									}
 									value={advancedOptions.sendNotificationIfDataIsMissing.toleranceLimit}
 								/>
-								<Select
-									style={{ width: 120 }}
-									options={timeOptions}
-									placeholder="Select time unit"
-									onChange={(value): void =>
-										setAdvancedOptions({
-											type: 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING',
-											payload: {
-												toleranceLimit:
-													advancedOptions.sendNotificationIfDataIsMissing.toleranceLimit,
-												timeUnit: value as string,
-											},
-										})
-									}
-									value={advancedOptions.sendNotificationIfDataIsMissing.timeUnit}
-								/>
+								<Typography.Text>Minutes</Typography.Text>
 							</div>
 						}
+						onToggle={(): void =>
+							setAdvancedOptions({
+								type: 'TOGGLE_SEND_NOTIFICATION_IF_DATA_IS_MISSING',
+								payload: !advancedOptions.sendNotificationIfDataIsMissing.enabled,
+							})
+						}
+						defaultShowInput={advancedOptions.sendNotificationIfDataIsMissing.enabled}
+						data-testid="send-notification-if-data-is-missing-container"
 					/>
 					<AdvancedOptionItem
 						title="Minimum data required"
@@ -80,8 +68,17 @@ function AdvancedOptions(): JSX.Element {
 								<Typography.Text>Datapoints</Typography.Text>
 							</div>
 						}
+						onToggle={(): void =>
+							setAdvancedOptions({
+								type: 'TOGGLE_ENFORCE_MINIMUM_DATAPOINTS',
+								payload: !advancedOptions.enforceMinimumDatapoints.enabled,
+							})
+						}
+						defaultShowInput={advancedOptions.enforceMinimumDatapoints.enabled}
+						data-testid="enforce-minimum-datapoints-container"
 					/>
-					<AdvancedOptionItem
+					{/* TODO: Add back when the functionality is implemented */}
+					{/* <AdvancedOptionItem
 						title="Account for data delay"
 						description="Shift the evaluation window backwards to account for data processing delays."
 						tooltipText="Use when your data takes time to arrive on the platform. For example, if logs typically arrive 5 minutes late, set a 5-minute delay so the alert checks the correct time window."
@@ -119,7 +116,7 @@ function AdvancedOptions(): JSX.Element {
 								/>
 							</div>
 						}
-					/>
+					/> */}
 				</Collapse.Panel>
 			</Collapse>
 		</div>

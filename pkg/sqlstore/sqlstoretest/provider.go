@@ -3,7 +3,6 @@ package sqlstoretest
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -16,10 +15,11 @@ import (
 var _ sqlstore.SQLStore = (*Provider)(nil)
 
 type Provider struct {
-	db      *sql.DB
-	mock    sqlmock.Sqlmock
-	bunDB   *bun.DB
-	dialect *dialect
+	db        *sql.DB
+	mock      sqlmock.Sqlmock
+	bunDB     *bun.DB
+	dialect   *dialect
+	formatter sqlstore.SQLFormatter
 }
 
 func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
@@ -35,14 +35,15 @@ func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
 	} else if config.Provider == "postgres" {
 		bunDB = bun.NewDB(db, pgdialect.New())
 	} else {
-		panic(fmt.Errorf("provider %q is not supported", config.Provider))
+		panic(errors.NewInvalidInputf(errors.CodeInvalidInput, "provider %q is not supported", config.Provider))
 	}
 
 	return &Provider{
-		db:      db,
-		mock:    mock,
-		bunDB:   bunDB,
-		dialect: new(dialect),
+		db:        db,
+		mock:      mock,
+		bunDB:     bunDB,
+		dialect:   new(dialect),
+		formatter: newFormatter(bunDB.Dialect()),
 	}
 }
 
@@ -62,6 +63,8 @@ func (provider *Provider) Dialect() sqlstore.SQLDialect {
 	return provider.dialect
 }
 
+func (provider *Provider) Formatter() sqlstore.SQLFormatter { return provider.formatter }
+
 func (provider *Provider) BunDBCtx(ctx context.Context) bun.IDB {
 	return provider.bunDB
 }
@@ -71,9 +74,9 @@ func (provider *Provider) RunInTxCtx(ctx context.Context, opts *sql.TxOptions, c
 }
 
 func (provider *Provider) WrapNotFoundErrf(err error, code errors.Code, format string, args ...any) error {
-	return fmt.Errorf(format, args...)
+	return errors.WrapNotFoundf(err, code, format, args...)
 }
 
 func (provider *Provider) WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error {
-	return fmt.Errorf(format, args...)
+	return errors.Wrapf(err, errors.TypeAlreadyExists, code, format, args...)
 }

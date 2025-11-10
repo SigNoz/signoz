@@ -20,6 +20,8 @@ type SQLStore interface {
 	// Returns the dialect of the database.
 	Dialect() SQLDialect
 
+	Formatter() SQLFormatter
+
 	// RunInTxCtx runs the given callback in a transaction. It creates and injects a new context with the transaction.
 	// If a transaction is present in the context, it will be used.
 	RunInTxCtx(ctx context.Context, opts *SQLStoreTxOptions, cb func(ctx context.Context) error) error
@@ -85,4 +87,36 @@ type SQLDialect interface {
 	// Toggles foreign key constraint for the given database. This makes sense only for sqlite. This cannot take a transaction as an argument and needs to take the db
 	// as an argument.
 	ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error
+}
+
+type SQLFormatter interface {
+	// JSONExtractString takes a JSON path (e.g., "$.labels.severity")
+	JSONExtractString(column, path string) []byte
+
+	// JSONType used to determine the type of the value extracted from the path
+	JSONType(column, path string) []byte
+
+	// JSONIsArray used to check whether the value is array or not
+	JSONIsArray(column, path string) []byte
+
+	// JSONArrayElements returns query as well as columns alias to be used for select and where clause
+	JSONArrayElements(column, path, alias string) ([]byte, []byte)
+
+	// JSONArrayOfStrings returns query as well as columns alias to be used for select and where clause
+	JSONArrayOfStrings(column, path, alias string) ([]byte, []byte)
+
+	// JSONArrayAgg aggregates values into a JSON array
+	JSONArrayAgg(expression string) []byte
+
+	// JSONArrayLiteral creates a literal JSON array from the given string values
+	JSONArrayLiteral(values ...string) []byte
+
+	// JSONKeys return extracted key from json as well as alias to be used for select and where clause
+	JSONKeys(column, path, alias string) ([]byte, []byte)
+
+	// TextToJsonColumn converts a text column to JSON type
+	TextToJsonColumn(column string) []byte
+
+	// LowerExpression wraps any SQL expression with lower() function for case-insensitive operations
+	LowerExpression(expression string) []byte
 }
