@@ -86,8 +86,9 @@ const interceptorRejected = async (
 
 			if (
 				response.status === 401 &&
-				// if the session rotate call errors out with 401 or the delete sessions call returns 401 then we do not retry!
+				// if the session rotate call or the create session errors out with 401 or the delete sessions call returns 401 then we do not retry!
 				response.config.url !== '/sessions/rotate' &&
+				response.config.url !== '/sessions/email_password' &&
 				!(
 					response.config.url === '/sessions' && response.config.method === 'delete'
 				)
