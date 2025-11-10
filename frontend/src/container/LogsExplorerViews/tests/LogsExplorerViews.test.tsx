@@ -157,6 +157,7 @@ const renderer = (): RenderResult =>
 					chartQueryKeyRef={{ current: {} }}
 					setWarning={(): void => {}}
 					showLiveLogs={false}
+					handleChangeSelectedView={(): void => {}}
 				/>
 			</PreferenceContextProvider>
 		</VirtuosoMockContext.Provider>,
@@ -222,6 +223,7 @@ describe('LogsExplorerViews -', () => {
 						chartQueryKeyRef={{ current: {} }}
 						setWarning={(): void => {}}
 						showLiveLogs={false}
+						handleChangeSelectedView={(): void => {}}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,
@@ -298,6 +300,7 @@ describe('LogsExplorerViews -', () => {
 						chartQueryKeyRef={{ current: {} }}
 						setWarning={(): void => {}}
 						showLiveLogs={false}
+						handleChangeSelectedView={(): void => {}}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,
@@ -349,6 +352,7 @@ describe('LogsExplorerViews -', () => {
 								chartQueryKeyRef={{ current: {} }}
 								setWarning={(): void => {}}
 								showLiveLogs={false}
+								handleChangeSelectedView={(): void => {}}
 							/>
 						</QueryBuilderContext.Provider>
 					</PreferenceContextProvider>
@@ -407,6 +411,7 @@ describe('LogsExplorerViews -', () => {
 								chartQueryKeyRef={{ current: {} }}
 								setWarning={(): void => {}}
 								showLiveLogs={false}
+								handleChangeSelectedView={(): void => {}}
 							/>
 						</QueryBuilderContext.Provider>
 					</PreferenceContextProvider>
