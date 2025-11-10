@@ -116,11 +116,7 @@ function LogsExplorerViewsContainer({
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
-		return (
-			stagedQuery.builder.queryData.find((item) => !item.disabled) ||
-			stagedQuery.builder.queryData[0] ||
-			null
-		);
+		return stagedQuery.builder.queryData[0] || null;
 	}, [stagedQuery]);
 
 	const isLimit: boolean = useMemo(() => {
