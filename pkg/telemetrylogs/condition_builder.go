@@ -34,22 +34,27 @@ func (c *conditionBuilder) conditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
 
-	switch operator {
-	case qbtypes.FilterOperatorContains,
-		qbtypes.FilterOperatorNotContains,
-		qbtypes.FilterOperatorILike,
-		qbtypes.FilterOperatorNotILike,
-		qbtypes.FilterOperatorLike,
-		qbtypes.FilterOperatorNotLike:
-		value = querybuilder.FormatValueForContains(value)
-	}
-
 	column, err := c.fm.ColumnFor(ctx, key)
 	if err != nil {
 		return "", err
 	}
 
-	if column.IsJSONColumn() && constants.BodyV2QueryEnabled && strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+	// For JSON columns, preserve the original value type (numeric, bool, etc.)
+	// Only format to string for non-JSON columns that need string formatting
+	isJSONColumn := column.IsJSONColumn() && constants.BodyV2QueryEnabled && strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix)
+	if !isJSONColumn {
+		switch operator {
+		case qbtypes.FilterOperatorContains,
+			qbtypes.FilterOperatorNotContains,
+			qbtypes.FilterOperatorILike,
+			qbtypes.FilterOperatorNotILike,
+			qbtypes.FilterOperatorLike,
+			qbtypes.FilterOperatorNotLike:
+			value = querybuilder.FormatValueForContains(value)
+		}
+	}
+
+	if isJSONColumn {
 		cond, err := c.jqb.BuildCondition(ctx, key, operator, value, sb)
 		if err != nil {
 			return "", err
@@ -228,8 +233,8 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-    _ uint64,
-    _ uint64,
+	_ uint64,
+	_ uint64,
 ) (string, error) {
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
 	if err != nil {

@@ -93,26 +93,10 @@ func (node *Node) decideElemType(operator qbtypes.FilterOperator, valueType tele
 		return false, valueType
 	}
 
-	// Check availability for scalars and scalar arrays matching valueType
-	hasScalar := false
-	hasArray := false
-	switch valueType {
-	case telemetrytypes.String:
-		hasScalar = slices.Contains(available, telemetrytypes.String)
-		hasArray = slices.Contains(available, telemetrytypes.ArrayString)
-	case telemetrytypes.Int64:
-		hasScalar = slices.Contains(available, telemetrytypes.Int64)
-		hasArray = slices.Contains(available, telemetrytypes.ArrayInt64)
-	case telemetrytypes.Float64:
-		hasScalar = slices.Contains(available, telemetrytypes.Float64)
-		hasArray = slices.Contains(available, telemetrytypes.ArrayFloat64)
-	case telemetrytypes.Bool:
-		hasScalar = slices.Contains(available, telemetrytypes.Bool)
-		hasArray = slices.Contains(available, telemetrytypes.ArrayBool)
-	default:
-		// For Dynamic or anything else, treat as undecidable against scalar set
-		return false, valueType
-	}
+	hasScalar := slices.Contains(available, valueType)
+	hasArray := func() bool {
+		return slices.Contains(available, telemetrytypes.ScalerTypeToArrayType[valueType]) || slices.Contains(available, telemetrytypes.ArrayDynamic)
+	}()
 
 	// Rule: With Contains/NotContains, PreferArrayAtEnd can only be true if matching typed array exists
 	if isMembershipContains(operator) {

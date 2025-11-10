@@ -359,19 +359,24 @@ func (b *JSONQueryBuilder) buildArrayMembershipCondition(plan *Node, operator qb
 	cached := plan.AvailableTypes
 
 	// Check if we have a typed array available for this element type
-	typedArrayType := telemetrytypes.ScalerTypeToArrayType[plan.TerminalConfig.ElemType]
+	typedArrayType := telemetrytypes.ScalerTypeToArrayType[plan.TerminalConfig.ValueType]
 	hasTypedArray := slices.Contains(cached, typedArrayType)
 	hasArrayDynamic := slices.Contains(cached, telemetrytypes.ArrayDynamic)
 
+	// create typed array out of a dynamic array
+	filteredDynamicExpr := func() string {
+		baseArrayDynamicExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", arrayPath)
+		return fmt.Sprintf("arrayMap(x->dynamicElement(x, '%s'), arrayFilter(x->(dynamicType(x) = '%s'), %s))",
+			plan.TerminalConfig.ElemType.ScalerType,
+			plan.TerminalConfig.ElemType.ScalerType,
+			baseArrayDynamicExpr)
+	}()
+	typedArrayExpr := func() string {
+		return fmt.Sprintf("dynamicElement(%s, '%s')", arrayPath, typedArrayType.StringValue())
+	}()
+
 	// If both typed array and Array(Dynamic) are present, OR both membership checks
 	if hasTypedArray && hasArrayDynamic {
-		typedArrayExpr := fmt.Sprintf("dynamicElement(%s, '%s')", arrayPath, typedArrayType.StringValue())
-		baseArrayDynamicExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", arrayPath)
-		filteredDynamicExpr := fmt.Sprintf("arrayMap(x->dynamicElement(x, '%s'), arrayFilter(x->(dynamicType(x) = '%s'), %s))",
-			plan.TerminalConfig.ElemType.StringValue(),
-			plan.TerminalConfig.ElemType.StringValue(),
-			baseArrayDynamicExpr)
-
 		m1 := b.buildArrayMembership(typedArrayExpr, operator, value, plan.TerminalConfig.ElemType, sb)
 		m2 := b.buildArrayMembership(filteredDynamicExpr, operator, value, plan.TerminalConfig.ElemType, sb)
 		return sb.Or(m1, m2), nil
@@ -380,14 +385,10 @@ func (b *JSONQueryBuilder) buildArrayMembershipCondition(plan *Node, operator qb
 	var arrayExpr string
 	if hasTypedArray {
 		// Use the typed array directly when available
-		arrayExpr = fmt.Sprintf("dynamicElement(%s, '%s')", arrayPath, typedArrayType.StringValue())
+		arrayExpr = typedArrayExpr
 	} else {
 		// Fall back to Array(Dynamic) with filtering
-		baseArrayExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", arrayPath)
-		arrayExpr = fmt.Sprintf("arrayMap(x->dynamicElement(x, '%s'), arrayFilter(x->(dynamicType(x) = '%s'), %s))",
-			plan.TerminalConfig.ElemType.StringValue(),
-			plan.TerminalConfig.ElemType.StringValue(),
-			baseArrayExpr)
+		arrayExpr = filteredDynamicExpr
 	}
 
 	// For array membership, use original value (not LIKE-wrapped)
