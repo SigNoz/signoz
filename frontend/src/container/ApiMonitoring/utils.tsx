@@ -1903,35 +1903,17 @@ export const getEndPointDetailsQueryPayload = (
 						timeAggregation: 'count',
 						spaceAggregation: 'sum',
 						functions: [],
-						filters: {
-							items: [
-								{
-									id: '3db61dd6',
-									key: {
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										dataType: DataTypes.String,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersToExpressionWithExistingQuery(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							).filter.expression,
 						},
 						expression: 'A',
 						disabled: false,
-						stepInterval: 60,
+						stepInterval: null,
 						having: [],
 						legend: '',
 						limit: null,
@@ -1940,7 +1922,12 @@ export const getEndPointDetailsQueryPayload = (
 							{
 								key: SPAN_ATTRIBUTES.URL_PATH,
 								dataType: DataTypes.String,
-								type: 'tag',
+								type: 'attribute',
+							},
+							{
+								key: 'url.full',
+								dataType: DataTypes.String,
+								type: 'attribute',
 							},
 						],
 						reduceTo: 'avg',
@@ -3137,9 +3124,9 @@ export const getFormattedEndPointStatusCodeChartData = (
 export const END_POINT_DETAILS_QUERY_KEYS_ARRAY = [
 	REACT_QUERY_KEY.GET_ENDPOINT_METRICS_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_DATA,
+	REACT_QUERY_KEY.GET_ENDPOINT_DROPDOWN_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_RATE_OVER_TIME_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_LATENCY_OVER_TIME_DATA,
-	REACT_QUERY_KEY.GET_ENDPOINT_DROPDOWN_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_DEPENDENT_SERVICES_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_BAR_CHARTS_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_LATENCY_BAR_CHARTS_DATA,
