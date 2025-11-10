@@ -1665,8 +1665,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	tableNames := []string{
 		r.logsDB + "." + r.logsLocalTableV2,
 		r.logsDB + "." + r.logsResourceLocalTableV2,
-		r.logsDB + "." + r.logsAttributeKeys,
-		r.logsDB + "." + r.logsResourceKeys,
+		r.logsDB + "." + getLocalTableName(r.logsAttributeKeys),
+		r.logsDB + "." + getLocalTableName(r.logsResourceKeys),
 	}
 
 	for _, tableName := range tableNames {
