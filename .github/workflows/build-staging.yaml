@@ -11,10 +11,6 @@ defaults:
   run:
     shell: bash
 
-env:
-  PRIMUS_HOME: .primus
-  MAKE: make --no-print-directory --makefile=.primus/src/make/main.mk
-
 jobs:
   prepare:
     runs-on: ubuntu-latest
@@ -28,27 +24,24 @@ jobs:
     steps:
       - name: self-checkout
         uses: actions/checkout@v4
-      - id: token
-        name: github-token-gen
-        uses: actions/create-github-app-token@v1
         with:
-          app-id: ${{ secrets.PRIMUS_APP_ID }}
-          private-key: ${{ secrets.PRIMUS_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-      - name: primus-checkout
-        uses: actions/checkout@v4
-        with:
-          repository: signoz/primus
-          ref: main
-          path: .primus
-          token: ${{ steps.token.outputs.token }}
+          fetch-depth: 0
       - name: build-info
         id: build-info
         run: |
-          echo "version=$($MAKE info-version)" >> $GITHUB_OUTPUT
-          echo "hash=$($MAKE info-commit-short)" >> $GITHUB_OUTPUT
-          echo "time=$($MAKE info-timestamp)" >> $GITHUB_OUTPUT
-          echo "branch=$($MAKE info-branch)" >> $GITHUB_OUTPUT
+          # Extract version from tag, or use branch-commit format
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            BRANCH=$(git rev-parse --abbrev-ref HEAD | sed 's/\//-/g')
+            COMMIT=$(git rev-parse --short HEAD)
+            VERSION="${BRANCH}-${COMMIT}"
+          fi
+          
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+          echo "branch=$(git rev-parse --abbrev-ref HEAD | sed 's/\//-/g')" >> $GITHUB_OUTPUT
 
           staging_label="${{ github.event.label.name }}"
           if [[ "${staging_label}" == "staging:"* ]]; then

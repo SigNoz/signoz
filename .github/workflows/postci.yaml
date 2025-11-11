@@ -8,15 +8,28 @@ on:
       - synchronize
 
 jobs:
-  remove:
+  remove-label:
     if: github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]'
-    uses: signoz/primus.workflows/.github/workflows/github-label.yaml@main
-    secrets: inherit
+    runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: write
       pull-requests: write
-    with:
-      PRIMUS_REF: main
-      GITHUB_LABEL_ACTION: remove
-      GITHUB_LABEL_NAME: safe-to-test
+    steps:
+      - name: remove-safe-to-test-label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                name: 'safe-to-test'
+              });
+              console.log('Removed safe-to-test label');
+            } catch (error) {
+              if (error.status === 404) {
+                console.log('Label not found, skipping');
+              } else {
+                throw error;
+              }
+            }
