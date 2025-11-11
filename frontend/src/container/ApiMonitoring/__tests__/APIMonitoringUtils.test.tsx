@@ -10,10 +10,8 @@ import {
 	formatDataForTable,
 	getAllEndpointsWidgetData,
 	getCustomFiltersForBarChart,
-	getEndPointDetailsQueryPayload,
 	getFormattedDependentServicesData,
 	getFormattedEndPointDropDownData,
-	getFormattedEndPointMetricsData,
 	getFormattedEndPointStatusCodeChartData,
 	getFormattedEndPointStatusCodeData,
 	getGroupByFiltersFromGroupByValues,
@@ -452,77 +450,6 @@ describe('API Monitoring Utils', () => {
 		});
 	});
 
-	describe('getEndPointDetailsQueryPayload', () => {
-		it('should generate proper query payload with all parameters', () => {
-			// Arrange
-			const domainName = 'test-domain';
-			const startTime = 1609459200000; // 2021-01-01
-			const endTime = 1609545600000; // 2021-01-02
-			const filters = {
-				items: [
-					{
-						id: 'test-filter',
-						key: {
-							dataType: 'string',
-							key: 'test.key',
-							type: '',
-						},
-						op: '=',
-						value: 'test-value',
-					},
-				],
-				op: 'AND',
-			};
-
-			// Act
-			const result = getEndPointDetailsQueryPayload(
-				domainName,
-				startTime,
-				endTime,
-				filters as IBuilderQuery['filters'],
-			);
-
-			// Assert
-			expect(result).toHaveLength(6); // Should return 6 queries
-
-			// Check that each query includes proper parameters
-			result.forEach((query) => {
-				expect(query).toHaveProperty('start', startTime);
-				expect(query).toHaveProperty('end', endTime);
-
-				// Should have query property with builder data
-				expect(query).toHaveProperty('query');
-				expect(query.query).toHaveProperty('builder');
-
-				// All queries should include the domain filter
-				const {
-					query: {
-						builder: { queryData },
-					},
-				} = query;
-				queryData.forEach((qd) => {
-					if (qd.filters && qd.filters.items) {
-						const serverNameFilter = qd.filters?.items?.find(
-							(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
-						);
-						expect(serverNameFilter).toBeDefined();
-						// Only check if the serverNameFilter exists, as the actual value might vary
-						// depending on implementation details or domain defaults
-						if (serverNameFilter) {
-							expect(typeof serverNameFilter.value).toBe('string');
-						}
-					}
-
-					// Should include our custom filter
-					const customFilter = qd.filters?.items?.find(
-						(item) => item.id === 'test-filter',
-					);
-					expect(customFilter).toBeDefined();
-				});
-			});
-		});
-	});
-
 	describe('getRateOverTimeWidgetData', () => {
 		it('should generate widget configuration for rate over time', () => {
 			// Arrange
@@ -785,87 +712,6 @@ describe('API Monitoring Utils', () => {
 			expect(result).toHaveLength(2);
 			expect(result[0]).toHaveProperty('value', '-');
 			expect(result[1]).toHaveProperty('value', '/api/valid-path');
-		});
-	});
-
-	describe('getFormattedEndPointMetricsData', () => {
-		it('should format endpoint metrics data correctly', () => {
-			// Arrange
-			const mockData = [
-				{
-					data: {
-						A: '50', // rate
-						B: '15000000', // latency in nanoseconds
-						C: '5', // required by type
-						D: '1640995200000000', // timestamp in nanoseconds
-						F1: '5.5', // error rate
-					},
-				},
-			];
-
-			// Act
-			const result = getFormattedEndPointMetricsData(mockData as any);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result.key).toBeDefined();
-			expect(result.rate).toBe('50');
-			expect(result.latency).toBe(15); // Should be converted from ns to ms
-			expect(result.errorRate).toBe(5.5);
-			expect(typeof result.lastUsed).toBe('string'); // Time formatting is tested elsewhere
-		});
-
-		// eslint-disable-next-line sonarjs/no-duplicate-string
-		it('should handle undefined values in data', () => {
-			// Arrange
-			const mockData = [
-				{
-					data: {
-						A: undefined,
-						B: 'n/a',
-						C: '', // required by type
-						D: undefined,
-						F1: 'n/a',
-					},
-				},
-			];
-
-			// Act
-			const result = getFormattedEndPointMetricsData(mockData as any);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result.rate).toBe('-');
-			expect(result.latency).toBe('-');
-			expect(result.errorRate).toBe(0);
-			expect(result.lastUsed).toBe('-');
-		});
-
-		it('should handle empty input array', () => {
-			// Act
-			const result = getFormattedEndPointMetricsData([]);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result.rate).toBe('-');
-			expect(result.latency).toBe('-');
-			expect(result.errorRate).toBe(0);
-			expect(result.lastUsed).toBe('-');
-		});
-
-		it('should handle undefined input', () => {
-			// Arrange
-			const undefinedInput = undefined as any;
-
-			// Act
-			const result = getFormattedEndPointMetricsData(undefinedInput);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result.rate).toBe('-');
-			expect(result.latency).toBe('-');
-			expect(result.errorRate).toBe(0);
-			expect(result.lastUsed).toBe('-');
 		});
 	});
 
