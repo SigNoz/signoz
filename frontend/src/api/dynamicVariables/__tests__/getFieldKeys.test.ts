@@ -5,9 +5,7 @@ import { getFieldKeys } from '../getFieldKeys';
 
 // Mock the API instance
 jest.mock('api', () => ({
-	ApiBaseInstance: {
-		get: jest.fn(),
-	},
+	get: jest.fn(),
 }));
 
 describe('getFieldKeys API', () => {
