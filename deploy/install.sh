@@ -261,6 +261,11 @@ wait_for_containers_start() {
     echo ""
 }
 
+analytics_fail() {
+    echo -e "😢 Note: usage of this script requires HTTPS access to segment.io. Perhaps your DNS or firewall is preventing this.\n"
+    exit 1
+}
+
 bye() {  # Prints a friendly good bye message and exits the script.
     # Switch back to the original directory
     popd > /dev/null 2>&1
@@ -311,6 +316,19 @@ request_sudo() {
         fi
 	fi
 }
+
+echo "‼️ Please note: data about your usage of this script is reported to segment.io"
+echo "‼️ to help us improve the installation experience."
+echo
+read -p "Do you agree to this? (y/n) " agree
+if [[ $agree != "y" ]]; then
+    echo -e "\n🙏 Okay. Thank you!\n"
+    exit 1
+else
+    echo
+fi
+
+{ which curl && curl -IL https://segment.io/ || wget -O - https://segment.io; } >/dev/null 2>&1 || analytics_fail
 
 echo ""
 echo -e "👋 Thank you for trying out SigNoz! "
@@ -423,11 +441,13 @@ send_event() {
 
     DATA='{ "anonymousId": "'"$SIGNOZ_INSTALLATION_ID"'", "event": "'"$event"'", "properties": { "os": "'"$os"'", '"$error $others"' "setup_type": "'"$setup_type"'" } }'
 
-    if has_curl; then
-        curl -sfL -d "$DATA" --header "$HEADER_1" --header "$HEADER_2" "$URL" > /dev/null 2>&1
-    elif has_wget; then
-        wget -q --post-data="$DATA" --header "$HEADER_1" --header "$HEADER_2" "$URL" > /dev/null 2>&1
-    fi
+    { 
+        if has_curl; then
+            curl -sfL -d "$DATA" --header "$HEADER_1" --header "$HEADER_2" "$URL" > /dev/null 2>&1
+        elif has_wget; then
+            wget -q --post-data="$DATA" --header "$HEADER_1" --header "$HEADER_2" "$URL" > /dev/null 2>&1
+        fi
+    } || analytics_fail
 }
 
 send_event "install_started"
