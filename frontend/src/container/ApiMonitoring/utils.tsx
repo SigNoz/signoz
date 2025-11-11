@@ -3564,12 +3564,11 @@ export const getRateOverTimeWidgetData = (
 			description: 'Rate over time.',
 			queryData: [
 				{
-					aggregateAttribute: {
-						dataType: DataTypes.String,
-						id: '------false',
-						key: '',
-						type: '',
-					},
+					aggregations: [
+						{
+							expression: 'rate()',
+						},
+					],
 					aggregateOperator: 'rate',
 					dataSource: DataSource.TRACES,
 					disabled: false,
@@ -3577,7 +3576,7 @@ export const getRateOverTimeWidgetData = (
 					filter: {
 						expression: convertFiltersWithUrlHandling(
 							filters || { items: [], op: 'AND' },
-							`(net.peer.name = '${domainName}' OR url.full = '${domainName}')`,
+							`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
 						),
 					},
 					functions: [],
@@ -3616,11 +3615,11 @@ export const getLatencyOverTimeWidgetData = (
 			description: 'Latency over time.',
 			queryData: [
 				{
-					aggregateAttribute: {
-						dataType: DataTypes.Float64,
-						key: 'duration_nano',
-						type: '',
-					},
+					aggregations: [
+						{
+							expression: 'p99(duration_nano)',
+						},
+					],
 					aggregateOperator: 'p99',
 					dataSource: DataSource.TRACES,
 					disabled: false,
@@ -3628,7 +3627,7 @@ export const getLatencyOverTimeWidgetData = (
 					filter: {
 						expression: convertFiltersWithUrlHandling(
 							filters || { items: [], op: 'AND' },
-							`(net.peer.name = '${domainName}' OR url.full = '${domainName}')`,
+							`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
 						),
 					},
 					functions: [],
