@@ -3216,6 +3216,11 @@ export const getAllEndpointsWidgetData = (
 			panelTypes: PANEL_TYPES.TABLE,
 			queryData: [
 				{
+					aggregations: [
+						{
+							expression: 'count()',
+						},
+					],
 					aggregateOperator: 'count',
 					dataSource: DataSource.TRACES,
 					disabled: false,
@@ -3243,11 +3248,11 @@ export const getAllEndpointsWidgetData = (
 					timeAggregation: 'count',
 				},
 				{
-					aggregateAttribute: {
-						dataType: DataTypes.Float64,
-						key: 'duration_nano',
-						type: '',
-					},
+					aggregations: [
+						{
+							expression: 'p99(duration_nano)',
+						},
+					],
 					aggregateOperator: 'p99',
 					dataSource: DataSource.TRACES,
 					disabled: false,
@@ -3275,12 +3280,11 @@ export const getAllEndpointsWidgetData = (
 					timeAggregation: 'p99',
 				},
 				{
-					aggregateAttribute: {
-						dataType: DataTypes.String,
-						id: 'timestamp------false',
-						key: 'timestamp',
-						type: '',
-					},
+					aggregations: [
+						{
+							expression: 'max(timestamp)',
+						},
+					],
 					aggregateOperator: 'max',
 					dataSource: DataSource.TRACES,
 					disabled: false,
@@ -3308,6 +3312,11 @@ export const getAllEndpointsWidgetData = (
 					timeAggregation: 'max',
 				},
 				{
+					aggregations: [
+						{
+							expression: 'count()',
+						},
+					],
 					aggregateOperator: 'count',
 					dataSource: DataSource.TRACES,
 					disabled: true,
