@@ -377,8 +377,16 @@ while [[ $# -gt 0 ]]; do
             ;;
         --baseUrl)
             shift
-            base_url="$1"
-            shift
+            if [[ $# -gt 0 ]]; then
+                base_url="$1"
+                shift
+            else
+                echo "+++++++++++ ERROR ++++++++++++++++++++++"
+                echo "Missing value for --baseUrl/--check_url; provide http(s)://hostname"
+                echo "Example: ./deploy/install.sh --baseUrl=\"https://signoz.example.com\""
+                echo "+++++++++++++++++++++++++++++++++++++++"
+                exit 1
+            fi
             ;;
         *)
             # preserve other args
