@@ -1938,11 +1938,11 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						queryName: 'A',
 						aggregateOperator: 'count',
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							key: '',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'count()',
+							},
+						],
 						timeAggregation: 'count',
 						spaceAggregation: 'sum',
 						functions: [],
