@@ -1448,12 +1448,11 @@ export const getEndPointDetailsQueryPayload = (
 			builder: {
 				queryData: [
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							id: '------false',
-							key: '',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'rate()',
+							},
+						],
 						aggregateOperator: 'rate',
 						dataSource: DataSource.TRACES,
 						disabled: false,
@@ -1479,11 +1478,11 @@ export const getEndPointDetailsQueryPayload = (
 						timeAggregation: 'rate',
 					},
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.Float64,
-							key: 'duration_nano',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'p99(duration_nano)',
+							},
+						],
 						aggregateOperator: 'p99',
 						dataSource: DataSource.TRACES,
 						disabled: false,
@@ -1509,11 +1508,11 @@ export const getEndPointDetailsQueryPayload = (
 						timeAggregation: 'p99',
 					},
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							key: 'span_id',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'count(span_id)',
+							},
+						],
 						aggregateOperator: 'count',
 						dataSource: DataSource.TRACES,
 						disabled: true,
@@ -1539,12 +1538,11 @@ export const getEndPointDetailsQueryPayload = (
 						timeAggregation: 'count',
 					},
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							id: 'timestamp------false',
-							key: 'timestamp',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'max(timestamp)',
+							},
+						],
 						aggregateOperator: 'max',
 						dataSource: DataSource.TRACES,
 						disabled: false,
@@ -1570,11 +1568,11 @@ export const getEndPointDetailsQueryPayload = (
 						timeAggregation: 'max',
 					},
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							key: 'span_id',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'count(span_id)',
+							},
+						],
 						aggregateOperator: 'count',
 						dataSource: DataSource.TRACES,
 						disabled: true,
