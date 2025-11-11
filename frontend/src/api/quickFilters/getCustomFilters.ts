@@ -1,4 +1,4 @@
-import { ApiBaseInstance } from 'api';
+import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -9,7 +9,7 @@ const getCustomFilters = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	const { signal } = props;
 	try {
-		const response = await ApiBaseInstance.get(`orgs/me/filters/${signal}`);
+		const response = await axios.get(`/orgs/me/filters/${signal}`);
 
 		return {
 			statusCode: 200,

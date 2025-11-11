@@ -282,3 +282,50 @@ func TestUTF8Validation(t *testing.T) {
 		})
 	}
 }
+
+func TestNewDefaultConfigPreservesSMTPRequireTLS(t *testing.T) {
+	testCases := []struct {
+		name         string
+		globalConfig GlobalConfig
+		expect       bool
+	}{
+		{"False", GlobalConfig{SMTPRequireTLS: false}, false},
+		{"True", GlobalConfig{SMTPRequireTLS: true}, true},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			global := tt.globalConfig
+			route := RouteConfig{
+				GroupInterval:  time.Minute,
+				GroupWait:      time.Minute,
+				RepeatInterval: time.Minute,
+			}
+			cfg, err := NewDefaultConfig(global, route, "1")
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expect, cfg.alertmanagerConfig.Global.SMTPRequireTLS)
+		})
+	}
+}
+
+func TestSetGlobalConfigPreservesSMTPRequireTLS(t *testing.T) {
+	testCases := []struct {
+		name         string
+		globalConfig GlobalConfig
+		expect       bool
+	}{
+		{"False", GlobalConfig{SMTPRequireTLS: false}, false},
+		{"True", GlobalConfig{SMTPRequireTLS: true}, true},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewConfig(&config.Config{}, "1")
+			global := tt.globalConfig
+			err := c.SetGlobalConfig(global)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expect, c.alertmanagerConfig.Global.SMTPRequireTLS)
+		})
+	}
+}
