@@ -1459,12 +1459,12 @@ export const getEndPointDetailsQueryPayload = (
 						disabled: false,
 						expression: 'A',
 						filter: {
-							expression: convertFiltersToExpressionWithExistingQuery(
+							expression: convertFiltersWithUrlHandling(
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
 								)} AND ${clientKindExpression}`,
-							).filter.expression,
+							),
 						},
 						functions: [],
 						groupBy: [],
@@ -1489,12 +1489,12 @@ export const getEndPointDetailsQueryPayload = (
 						disabled: false,
 						expression: 'B',
 						filter: {
-							expression: convertFiltersToExpressionWithExistingQuery(
+							expression: convertFiltersWithUrlHandling(
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
 								)} AND ${clientKindExpression}`,
-							).filter.expression,
+							),
 						},
 						functions: [],
 						groupBy: [],
@@ -1519,12 +1519,12 @@ export const getEndPointDetailsQueryPayload = (
 						disabled: true,
 						expression: 'C',
 						filter: {
-							expression: convertFiltersToExpressionWithExistingQuery(
+							expression: convertFiltersWithUrlHandling(
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
 								)} AND ${clientKindExpression} AND has_error = true`,
-							).filter.expression,
+							),
 						},
 						functions: [],
 						groupBy: [],
@@ -1550,12 +1550,12 @@ export const getEndPointDetailsQueryPayload = (
 						disabled: false,
 						expression: 'D',
 						filter: {
-							expression: convertFiltersToExpressionWithExistingQuery(
+							expression: convertFiltersWithUrlHandling(
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
 								)} AND ${clientKindExpression}`,
-							).filter.expression,
+							),
 						},
 						functions: [],
 						groupBy: [],
@@ -1580,12 +1580,12 @@ export const getEndPointDetailsQueryPayload = (
 						disabled: true,
 						expression: 'E',
 						filter: {
-							expression: convertFiltersToExpressionWithExistingQuery(
+							expression: convertFiltersWithUrlHandling(
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
 								)} AND ${clientKindExpression}`,
-							).filter.expression,
+							),
 						},
 						functions: [],
 						groupBy: [],
