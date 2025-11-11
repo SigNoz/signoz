@@ -12,6 +12,9 @@ jobs:
     if: github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]'
     uses: signoz/primus.workflows/.github/workflows/github-label.yaml@main
     secrets: inherit
+    permissions:
+      id-token: write
+      contents: read
     with:
       PRIMUS_REF: main
       GITHUB_LABEL_ACTION: remove

@@ -78,6 +78,9 @@ jobs:
     uses: signoz/primus.workflows/.github/workflows/js-build.yaml@main
     needs: prepare
     secrets: inherit
+    permissions:
+      id-token: write
+      contents: read
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
@@ -91,6 +94,9 @@ jobs:
     uses: signoz/primus.workflows/.github/workflows/go-build.yaml@main
     needs: [prepare, js-build]
     secrets: inherit
+    permissions:
+      id-token: write
+      contents: read
     with:
       PRIMUS_REF: main
       GO_VERSION: 1.24
