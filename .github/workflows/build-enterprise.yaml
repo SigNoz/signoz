@@ -84,7 +84,7 @@ jobs:
       JS_INPUT_ARTIFACT_CACHE_KEY: enterprise-dotenv-${{ github.sha }}
       JS_INPUT_ARTIFACT_PATH: frontend/.env
       JS_OUTPUT_ARTIFACT_CACHE_KEY: enterprise-jsbuild-${{ github.sha }}
-      JS_OUTPUT_ARTIFACT_PATH: frontend/build 
+      JS_OUTPUT_ARTIFACT_PATH: frontend/build
       DOCKER_BUILD: false
       DOCKER_MANIFEST: false
   go-build:
@@ -99,7 +99,7 @@ jobs:
       GO_BUILD_CONTEXT: ./cmd/enterprise
       GO_BUILD_FLAGS: >-
         -tags timetzdata
-        -ldflags='-linkmode external -extldflags \"-static\" -s -w
+        -ldflags='-s -w
         -X github.com/SigNoz/signoz/pkg/version.version=${{ needs.prepare.outputs.version }}
         -X github.com/SigNoz/signoz/pkg/version.variant=enterprise
         -X github.com/SigNoz/signoz/pkg/version.hash=${{ needs.prepare.outputs.hash }}
@@ -107,10 +107,8 @@ jobs:
         -X github.com/SigNoz/signoz/pkg/version.branch=${{ needs.prepare.outputs.branch }}
         -X github.com/SigNoz/signoz/ee/zeus.url=https://api.signoz.cloud
         -X github.com/SigNoz/signoz/ee/zeus.deprecatedURL=https://license.signoz.io
-        -X github.com/SigNoz/signoz/ee/query-service/constants.ZeusURL=https://api.signoz.cloud
         -X github.com/SigNoz/signoz/ee/query-service/constants.LicenseSignozIo=https://license.signoz.io/api/v1
         -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr'
-      GO_CGO_ENABLED: 1
       DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'
       DOCKER_DOCKERFILE_PATH: ./cmd/enterprise/Dockerfile.multi-arch
       DOCKER_MANIFEST: true
