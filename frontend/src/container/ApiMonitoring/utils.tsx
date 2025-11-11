@@ -48,7 +48,16 @@ import {
 
 export const isEmptyFilterValue = (value: unknown): boolean =>
 	value === '' || value === null || value === undefined || value === 'n/a';
+/**
+ * Returns '-' if value is empty, otherwise returns value as string
+ */
+export const getDisplayValue = (value: unknown): string =>
+	isEmptyFilterValue(value) ? '-' : String(value);
 
+export const getDomainNameFilterExpression = (domainName: string): string =>
+	`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`;
+
+export const clientKindExpression = `kind_string = 'Client'`;
 export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
@@ -825,6 +834,55 @@ export const getEndPointsQueryPayload = (
 	];
 };
 
+/**
+ * Converts filters to expression, handling http.url specially by creating (http.url OR url.full) condition
+ * @param filters Filters to convert
+ * @param baseExpression Base expression to combine with filters
+ * @returns Filter expression string
+ */
+export const convertFiltersWithUrlHandling = (
+	filters: IBuilderQuery['filters'],
+	baseExpression: string,
+): string => {
+	if (!filters) {
+		return baseExpression;
+	}
+
+	// Check if filters contain http.url (SPAN_ATTRIBUTES.URL_PATH)
+	const httpUrlFilter = filters.items?.find(
+		(item) => item.key?.key === SPAN_ATTRIBUTES.URL_PATH,
+	);
+
+	// If http.url filter exists, create modified filters with (http.url OR url.full)
+	if (httpUrlFilter && httpUrlFilter.value) {
+		// Remove ALL http.url filters from items (guards against duplicates)
+		const otherFilters = filters.items?.filter(
+			(item) => item.key?.key !== SPAN_ATTRIBUTES.URL_PATH,
+		);
+
+		// Convert to expression first with other filters
+		const {
+			filter: intermediateFilter,
+		} = convertFiltersToExpressionWithExistingQuery(
+			{ ...filters, items: otherFilters || [] },
+			baseExpression,
+		);
+
+		// Add the OR condition for http.url and url.full
+		const urlValue = httpUrlFilter.value;
+		const urlCondition = `(http.url = '${urlValue}' OR url.full = '${urlValue}')`;
+		return intermediateFilter.expression.trim()
+			? `${intermediateFilter.expression} AND ${urlCondition}`
+			: urlCondition;
+	}
+
+	const { filter } = convertFiltersToExpressionWithExistingQuery(
+		filters,
+		baseExpression,
+	);
+	return filter.expression;
+};
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function buildFilterExpression(
 	domainName: string,
@@ -1206,13 +1264,6 @@ export interface TopErrorsTableRowData {
 	statusCode: string;
 	statusMessage: string;
 	count: string;
-}
-
-/**
- * Returns '-' if value is empty, otherwise returns value as string
- */
-export function getDisplayValue(value: unknown): string {
-	return isEmptyFilterValue(value) ? '-' : String(value);
 }
 
 export const formatTopErrorsDataForTable = (
