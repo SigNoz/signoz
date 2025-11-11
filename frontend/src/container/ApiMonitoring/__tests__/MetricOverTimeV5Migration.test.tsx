@@ -1,21 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable sonarjs/no-duplicate-string */
-/**
- * V5 Migration Tests for Rate Over Time and Latency Over Time Charts
- *
- * These tests validate the migration from V3 to V5 format:
- * - Filter format change: filters.items[] → filter.expression
- * - Domain filter change: net.peer.name only → (net.peer.name OR url.full)
- * - stepInterval change: 60 → null
- */
 import {
 	getLatencyOverTimeWidgetData,
 	getRateOverTimeWidgetData,
 } from 'container/ApiMonitoring/utils';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 describe('MetricOverTime - V5 Migration Validation', () => {
 	const mockDomainName = 'api.example.com';
+	// eslint-disable-next-line sonarjs/no-duplicate-string
 	const mockEndpointName = '/api/users';
 	const emptyFilters: IBuilderQuery['filters'] = {
 		items: [],
@@ -65,18 +57,20 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 					{
 						id: 'test-1',
 						key: {
+							// eslint-disable-next-line sonarjs/no-duplicate-string
 							key: 'service.name',
-							dataType: 'string' as any,
+							dataType: DataTypes.String,
 							type: 'resource',
 						},
 						op: '=',
+						// eslint-disable-next-line sonarjs/no-duplicate-string
 						value: 'user-service',
 					},
 					{
 						id: 'test-2',
 						key: {
 							key: 'deployment.environment',
-							dataType: 'string' as any,
+							dataType: DataTypes.String,
 							type: 'resource',
 						},
 						op: '=',
@@ -152,7 +146,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 						id: 'test-1',
 						key: {
 							key: 'service.name',
-							dataType: 'string' as any,
+							dataType: DataTypes.String,
 							type: 'resource',
 						},
 						op: '=',
