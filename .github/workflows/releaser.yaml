@@ -28,7 +28,8 @@ jobs:
     secrets: inherit
     permissions:
       id-token: write
-      contents: read
+      contents: write
+      pull-requests: write
     needs: [detect]
     with:
       PRIMUS_REF: main
