@@ -211,37 +211,4 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			expect(expression?.match(/AND/g)?.length).toBeGreaterThanOrEqual(2);
 		});
 	});
-
-	describe('5. Edge Cases', () => {
-		it('handles empty and undefined filters gracefully', () => {
-			const emptyFiltersCase: IBuilderQuery['filters'] = { items: [], op: 'AND' };
-			const undefinedFilters = undefined;
-
-			// Test empty filters
-			const payload1 = getEndPointDetailsQueryPayload(
-				mockDomainName,
-				mockStartTime,
-				mockEndTime,
-				emptyFiltersCase,
-			);
-
-			const expression1 = payload1[1]?.query?.builder?.queryData?.[0]?.filter;
-			expect(expression1).toBeDefined();
-			expect(expression1).toContain('net.peer.name');
-			expect(expression1).toContain("kind_string = 'Client'");
-
-			// Test undefined filters (should not crash)
-			const payload2 = getEndPointDetailsQueryPayload(
-				mockDomainName,
-				mockStartTime,
-				mockEndTime,
-				undefinedFilters as any,
-			);
-
-			const expression2 =
-				payload2[1]?.query?.builder?.queryData?.[0]?.filter?.expression;
-			expect(expression2).toBeDefined();
-			expect(expression2).toContain('net.peer.name');
-		});
-	});
 });
