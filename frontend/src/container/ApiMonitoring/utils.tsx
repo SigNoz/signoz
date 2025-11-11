@@ -834,6 +834,55 @@ export const getEndPointsQueryPayload = (
 	];
 };
 
+/**
+ * Converts filters to expression, handling http.url specially by creating (http.url OR url.full) condition
+ * @param filters Filters to convert
+ * @param baseExpression Base expression to combine with filters
+ * @returns Filter expression string
+ */
+function convertFiltersWithUrlHandling(
+	filters: IBuilderQuery['filters'],
+	baseExpression: string,
+): string {
+	if (!filters) {
+		return baseExpression;
+	}
+
+	// Check if filters contain http.url (SPAN_ATTRIBUTES.URL_PATH)
+	const httpUrlFilter = filters.items?.find(
+		(item) => item.key?.key === SPAN_ATTRIBUTES.URL_PATH,
+	);
+
+	// If http.url filter exists, create modified filters with (http.url OR url.full)
+	if (httpUrlFilter && httpUrlFilter.value) {
+		// Remove ALL http.url filters from items (guards against duplicates)
+		const otherFilters = filters.items?.filter(
+			(item) => item.key?.key !== SPAN_ATTRIBUTES.URL_PATH,
+		);
+
+		// Convert to expression first with other filters
+		const {
+			filter: intermediateFilter,
+		} = convertFiltersToExpressionWithExistingQuery(
+			{ ...filters, items: otherFilters || [] },
+			baseExpression,
+		);
+
+		// Add the OR condition for http.url and url.full
+		const urlValue = httpUrlFilter.value;
+		const urlCondition = `(http.url = '${urlValue}' OR url.full = '${urlValue}')`;
+		return intermediateFilter.expression.trim()
+			? `${intermediateFilter.expression} AND ${urlCondition}`
+			: urlCondition;
+	}
+
+	const { filter } = convertFiltersToExpressionWithExistingQuery(
+		filters,
+		baseExpression,
+	);
+	return filter.expression;
+}
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function buildFilterExpression(
 	domainName: string,
@@ -1701,38 +1750,20 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'A',
-						filters: {
-							items: [
-								{
-									id: '23450eb8',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							),
 						},
 						functions: [],
 						groupBy: [
 							{
 								dataType: DataTypes.String,
 								key: 'response_status_code',
-								type: '',
+								type: 'span',
 							},
 						],
 						having: [],
@@ -1755,38 +1786,20 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'B',
-						filters: {
-							items: [
-								{
-									id: '2687dc18',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							),
 						},
 						functions: [],
 						groupBy: [
 							{
 								dataType: DataTypes.String,
 								key: 'response_status_code',
-								type: '',
+								type: 'span',
 							},
 						],
 						having: [],
@@ -1812,32 +1825,13 @@ export const getEndPointDetailsQueryPayload = (
 						timeAggregation: 'rate',
 						spaceAggregation: 'sum',
 						functions: [],
-						filters: {
-							items: [
-								{
-									id: '334840be',
-									key: {
-										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
-										key: 'net.peer.name',
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							),
 						},
 						expression: 'C',
 						disabled: false,
@@ -1849,7 +1843,7 @@ export const getEndPointDetailsQueryPayload = (
 							{
 								dataType: DataTypes.String,
 								key: 'response_status_code',
-								type: '',
+								type: 'span',
 								id: 'response_status_code--string----true',
 							},
 						],
