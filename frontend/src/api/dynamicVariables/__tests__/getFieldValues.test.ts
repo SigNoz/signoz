@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { ApiBaseInstance } from 'api';
+import axios from 'api';
 
 import { getFieldValues } from '../getFieldValues';
 
@@ -17,7 +17,7 @@ describe('getFieldValues API', () => {
 
 	it('should call the API with correct parameters (no options)', async () => {
 		// Mock API response
-		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce({
+		(axios.get as jest.Mock).mockResolvedValueOnce({
 			status: 200,
 			data: {
 				status: 'success',
@@ -34,14 +34,14 @@ describe('getFieldValues API', () => {
 		await getFieldValues();
 
 		// Verify API was called correctly with empty params
-		expect(ApiBaseInstance.get).toHaveBeenCalledWith('/fields/values', {
+		expect(axios.get).toHaveBeenCalledWith('/fields/values', {
 			params: {},
 		});
 	});
 
 	it('should call the API with signal parameter', async () => {
 		// Mock API response
-		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce({
+		(axios.get as jest.Mock).mockResolvedValueOnce({
 			status: 200,
 			data: {
 				status: 'success',
@@ -58,14 +58,14 @@ describe('getFieldValues API', () => {
 		await getFieldValues('traces');
 
 		// Verify API was called with signal parameter
-		expect(ApiBaseInstance.get).toHaveBeenCalledWith('/fields/values', {
+		expect(axios.get).toHaveBeenCalledWith('/fields/values', {
 			params: { signal: 'traces' },
 		});
 	});
 
 	it('should call the API with name parameter', async () => {
 		// Mock API response
-		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce({
+		(axios.get as jest.Mock).mockResolvedValueOnce({
 			status: 200,
 			data: {
 				status: 'success',
@@ -82,14 +82,14 @@ describe('getFieldValues API', () => {
 		await getFieldValues(undefined, 'service.name');
 
 		// Verify API was called with name parameter
-		expect(ApiBaseInstance.get).toHaveBeenCalledWith('/fields/values', {
+		expect(axios.get).toHaveBeenCalledWith('/fields/values', {
 			params: { name: 'service.name' },
 		});
 	});
 
 	it('should call the API with value parameter', async () => {
 		// Mock API response
-		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce({
+		(axios.get as jest.Mock).mockResolvedValueOnce({
 			status: 200,
 			data: {
 				status: 'success',
@@ -106,14 +106,14 @@ describe('getFieldValues API', () => {
 		await getFieldValues(undefined, 'service.name', 'front');
 
 		// Verify API was called with value parameter
-		expect(ApiBaseInstance.get).toHaveBeenCalledWith('/fields/values', {
+		expect(axios.get).toHaveBeenCalledWith('/fields/values', {
 			params: { name: 'service.name', searchText: 'front' },
 		});
 	});
 
 	it('should call the API with time range parameters', async () => {
 		// Mock API response
-		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce({
+		(axios.get as jest.Mock).mockResolvedValueOnce({
 			status: 200,
 			data: {
 				status: 'success',
@@ -138,7 +138,7 @@ describe('getFieldValues API', () => {
 		);
 
 		// Verify API was called with time range parameters (converted to milliseconds)
-		expect(ApiBaseInstance.get).toHaveBeenCalledWith('/fields/values', {
+		expect(axios.get).toHaveBeenCalledWith('/fields/values', {
 			params: {
 				signal: 'logs',
 				name: 'service.name',
@@ -165,7 +165,7 @@ describe('getFieldValues API', () => {
 			},
 		};
 
-		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce(mockResponse);
+		(axios.get as jest.Mock).mockResolvedValueOnce(mockResponse);
 
 		// Call the function
 		const result = await getFieldValues('traces', 'mixed.values');
@@ -196,7 +196,7 @@ describe('getFieldValues API', () => {
 		};
 
 		// Mock API to return our response
-		(ApiBaseInstance.get as jest.Mock).mockResolvedValueOnce(mockApiResponse);
+		(axios.get as jest.Mock).mockResolvedValueOnce(mockApiResponse);
 
 		// Call the function
 		const result = await getFieldValues('traces', 'service.name');
