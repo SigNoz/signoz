@@ -24,7 +24,10 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
+import {
+	ICurrentQueryData,
+	useHandleExplorerTabChange,
+} from 'hooks/useHandleExplorerTabChange';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { defaultTo, isEmpty, isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -75,7 +78,7 @@ function LogsExplorer(): JSX.Element {
 	const [warning, setWarning] = useState<Warning | undefined>(undefined);
 
 	const handleChangeSelectedView = useCallback(
-		(view: ExplorerViews): void => {
+		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
 			handleSetConfig(
 				defaultTo(explorerViewToPanelType[view], PANEL_TYPES.LIST),
 				DataSource.LOGS,
@@ -87,7 +90,10 @@ function LogsExplorer(): JSX.Element {
 				setShowLiveLogs(false);
 			}
 
-			handleExplorerTabChange(explorerViewToPanelType[view]);
+			handleExplorerTabChange(
+				explorerViewToPanelType[view],
+				querySearchParameters,
+			);
 		},
 		[handleSetConfig, handleExplorerTabChange, setSelectedView],
 	);
@@ -311,6 +317,7 @@ function LogsExplorer(): JSX.Element {
 									setIsLoadingQueries={setIsLoadingQueries}
 									setWarning={setWarning}
 									showLiveLogs={showLiveLogs}
+									handleChangeSelectedView={handleChangeSelectedView}
 								/>
 							</div>
 						</div>

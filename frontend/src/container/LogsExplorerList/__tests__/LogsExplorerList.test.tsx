@@ -126,6 +126,7 @@ describe('LogsExplorerList - empty states', () => {
 						chartQueryKeyRef={{ current: {} }}
 						setWarning={(): void => {}}
 						showLiveLogs={false}
+						handleChangeSelectedView={(): void => {}}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,
@@ -190,6 +191,7 @@ describe('LogsExplorerList - empty states', () => {
 						chartQueryKeyRef={{ current: {} }}
 						setWarning={(): void => {}}
 						showLiveLogs={false}
+						handleChangeSelectedView={(): void => {}}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,
