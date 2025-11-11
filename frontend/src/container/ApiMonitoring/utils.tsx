@@ -1741,11 +1741,11 @@ export const getEndPointDetailsQueryPayload = (
 			builder: {
 				queryData: [
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							key: 'span_id',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'count(span_id)',
+							},
+						],
 						aggregateOperator: 'count',
 						dataSource: DataSource.TRACES,
 						disabled: false,
@@ -1777,11 +1777,11 @@ export const getEndPointDetailsQueryPayload = (
 						timeAggregation: 'count',
 					},
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.Float64,
-							key: 'duration_nano',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'p99(duration_nano)',
+							},
+						],
 						aggregateOperator: 'p99',
 						dataSource: DataSource.TRACES,
 						disabled: false,
@@ -1816,12 +1816,11 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						queryName: 'C',
 						aggregateOperator: 'rate',
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							id: '------false',
-							key: '',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'rate()',
+							},
+						],
 						timeAggregation: 'rate',
 						spaceAggregation: 'sum',
 						functions: [],
