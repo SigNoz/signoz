@@ -11,7 +11,7 @@ const getService = async (props: Props): Promise<PayloadProps> => {
 			end: `${props.end}`,
 			tags: props.selectedTags,
 		});
-		return response.data?.data ?? response.data;
+		return response.data.data;
 	} catch (error) {
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}

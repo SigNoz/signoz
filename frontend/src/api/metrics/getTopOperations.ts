@@ -18,7 +18,7 @@ const getTopOperations = async (props: Props): Promise<PayloadProps> => {
 			limit: 5000,
 		});
 
-		return response.data?.data ?? response.data;
+		return response.data.data;
 	} catch (error) {
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
