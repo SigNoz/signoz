@@ -7,5 +7,6 @@ const (
 	InfoThresholdName     = "info"
 	LabelThresholdName    = "threshold.name"
 	LabelSeverityName     = "severity"
+	LabelLastSeen         = "lastSeen"
 	LabelRuleId           = "ruleId"
 )
