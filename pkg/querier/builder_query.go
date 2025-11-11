@@ -255,8 +255,14 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		case *qbtypes.RawData:
 			for _, rr := range typedPayload.Rows {
 				seeder := func() error {
-					body := rr.Data["body_v2"].(map[string]any)
-					promoted := rr.Data["promoted"].(map[string]any)
+					body, ok := rr.Data["body_v2"].(map[string]any)
+					if !ok {
+						return nil
+					}
+					promoted, ok := rr.Data["promoted"].(map[string]any)
+					if !ok {
+						return nil
+					}
 					seed(promoted, body)
 					str, err := sonic.MarshalString(body)
 					if err != nil {

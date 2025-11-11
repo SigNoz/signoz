@@ -55,17 +55,17 @@ type JSONQueryBuilder struct {
 
 func NewJSONQueryBuilder(ctx context.Context,
 	telemetryStore telemetrystore.TelemetryStore, logger *slog.Logger) (*JSONQueryBuilder, error) {
-	metadata := &JSONQueryBuilder{telemetryStore: telemetryStore, cache: sync.Map{}}
+	builder := &JSONQueryBuilder{telemetryStore: telemetryStore, cache: sync.Map{}, logger: logger}
 
-	metadata.init()
-	metadata.stringIndexedColumns.Store(make(map[string]string))
+	builder.init()
+	builder.stringIndexedColumns.Store(make(map[string]string))
 
 	// load promoted paths initially
-	if err := metadata.syncPromoted(context.Background()); err != nil {
+	if err := builder.syncPromoted(context.Background()); err != nil {
 		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to load promoted paths")
 	}
 
-	return metadata, metadata.syncPathTypes(ctx, true)
+	return builder, builder.syncPathTypes(ctx, true)
 }
 
 func (b *JSONQueryBuilder) init() {
@@ -168,7 +168,7 @@ func (b *JSONQueryBuilder) syncPathTypes(ctx context.Context, fullLoad bool) err
 
 func (b *JSONQueryBuilder) syncStringIndexedColumns(ctx context.Context) error {
 	query := fmt.Sprintf(`SELECT type, expr FROM 
-	clusterAllReplicas('%s' %s) 
+	clusterAllReplicas('%s', %s) 
 	WHERE database = '%s' AND table = '%s' AND type = 'ngrambf_v1'
 	AND (expr LIKE '%%body_v2.%%' OR expr LIKE '%%promoted.%%')`,
 		b.telemetryStore.Cluster(), SkipIndexTableName, DBName, LogsV2LocalTableName)
@@ -247,15 +247,6 @@ func (b *JSONQueryBuilder) syncPromoted(ctx context.Context) error {
 	return nil
 }
 
-func wrapLikeValueIfNeeded(operator qbtypes.FilterOperator, value any) any {
-	switch operator {
-	case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorNotContains:
-		return fmt.Sprintf("%%%v%%", value)
-	default:
-		return value
-	}
-}
-
 // BuildCondition builds the full WHERE condition for body_v2 JSON paths
 func (b *JSONQueryBuilder) BuildCondition(ctx context.Context, key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
@@ -265,7 +256,7 @@ func (b *JSONQueryBuilder) BuildCondition(ctx context.Context, key *telemetrytyp
 
 	conditions := []string{}
 	for _, plan := range plan {
-		condition, err := b.EmitPlannedCondition(plan, path, operator, value, sb)
+		condition, err := b.emitPlannedCondition(plan, operator, value, sb)
 		if err != nil {
 			return "", err
 		}
@@ -302,18 +293,10 @@ func (b *JSONQueryBuilder) PlanJSONPath(path string, operator qbtypes.FilterOper
 	return plans
 }
 
-// EmitPlannedCondition materializes the SQL WHERE clause from a Node tree.
-func (b *JSONQueryBuilder) EmitPlannedCondition(plan *Node, fullPath string, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
-	effVal := wrapLikeValueIfNeeded(operator, value)
-
-	// plan traversal
-	return b.emitPlannedCondition(plan, operator, value, effVal, sb)
-}
-
 // emitPlannedCondition handles paths with array traversal
-func (b *JSONQueryBuilder) emitPlannedCondition(plan *Node, operator qbtypes.FilterOperator, value, effVal any, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (b *JSONQueryBuilder) emitPlannedCondition(plan *Node, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	// Build traversal + terminal recursively per-hop
-	compiled, err := b.recurseArrayHops(plan, operator, value, effVal, sb)
+	compiled, err := b.recurseArrayHops(plan, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
@@ -323,7 +306,7 @@ func (b *JSONQueryBuilder) emitPlannedCondition(plan *Node, operator qbtypes.Fil
 }
 
 // buildTerminalCondition creates the innermost condition
-func (b *JSONQueryBuilder) buildTerminalCondition(node *Node, operator qbtypes.FilterOperator, value, effVal any, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (b *JSONQueryBuilder) buildTerminalCondition(node *Node, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	// Use the parent's alias + current field name for the full path
 	fieldPath := node.FieldPath()
 
@@ -333,7 +316,7 @@ func (b *JSONQueryBuilder) buildTerminalCondition(node *Node, operator qbtypes.F
 
 	case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorNotContains, qbtypes.FilterOperatorLike, qbtypes.FilterOperatorILike, qbtypes.FilterOperatorNotLike:
 		if node.TerminalConfig.PreferArrayAtEnd {
-			return b.buildArrayMembershipCondition(node, operator, value, effVal, sb)
+			return b.buildArrayMembershipCondition(node, operator, value, sb)
 		}
 		elemType := node.TerminalConfig.ElemType
 		fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, elemType.StringValue())
@@ -343,16 +326,16 @@ func (b *JSONQueryBuilder) buildTerminalCondition(node *Node, operator qbtypes.F
 			fieldExpr = expr
 		}
 
-		return b.applyOperator(sb, fieldExpr, operator, effVal)
+		return b.applyOperator(sb, fieldExpr, operator, value)
 	default:
 		valueType := node.TerminalConfig.ValueType
 		fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, valueType.StringValue())
-		return b.applyOperator(sb, fieldExpr, operator, effVal)
+		return b.applyOperator(sb, fieldExpr, operator, value)
 	}
 }
 
 // buildArrayMembershipCondition handles array membership checks
-func (b *JSONQueryBuilder) buildArrayMembershipCondition(plan *Node, operator qbtypes.FilterOperator, value, effVal any, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (b *JSONQueryBuilder) buildArrayMembershipCondition(plan *Node, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	arrayPath := plan.FieldPath()
 
 	// Check if we should use Array(Dynamic) filtering or typed array
@@ -377,8 +360,14 @@ func (b *JSONQueryBuilder) buildArrayMembershipCondition(plan *Node, operator qb
 
 	// If both typed array and Array(Dynamic) are present, OR both membership checks
 	if hasTypedArray && hasArrayDynamic {
-		m1 := b.buildArrayMembership(typedArrayExpr, operator, value, plan.TerminalConfig.ElemType, sb)
-		m2 := b.buildArrayMembership(filteredDynamicExpr, operator, value, plan.TerminalConfig.ElemType, sb)
+		m1, err := b.buildArrayMembership(typedArrayExpr, operator, value, plan.TerminalConfig.ElemType, sb)
+		if err != nil {
+			return "", err
+		}
+		m2, err := b.buildArrayMembership(filteredDynamicExpr, operator, value, plan.TerminalConfig.ElemType, sb)
+		if err != nil {
+			return "", err
+		}
 		return sb.Or(m1, m2), nil
 	}
 
@@ -392,17 +381,17 @@ func (b *JSONQueryBuilder) buildArrayMembershipCondition(plan *Node, operator qb
 	}
 
 	// For array membership, use original value (not LIKE-wrapped)
-	return b.buildArrayMembership(arrayExpr, operator, value, plan.TerminalConfig.ElemType, sb), nil
+	return b.buildArrayMembership(arrayExpr, operator, value, plan.TerminalConfig.ElemType, sb)
 }
 
 // recurseArrayHops recursively builds array traversal conditions
-func (b *JSONQueryBuilder) recurseArrayHops(current *Node, operator qbtypes.FilterOperator, value, effVal any, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (b *JSONQueryBuilder) recurseArrayHops(current *Node, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if current == nil {
 		return "", fmt.Errorf("navigation failed, current node is nil")
 	}
 
 	if current.IsTerminal {
-		terminalCond, err := b.buildTerminalCondition(current, operator, value, effVal, sb)
+		terminalCond, err := b.buildTerminalCondition(current, operator, value, sb)
 		if err != nil {
 			return "", err
 		}
@@ -419,7 +408,7 @@ func (b *JSONQueryBuilder) recurseArrayHops(current *Node, operator qbtypes.Filt
 	branches := make([]string, 0, 2)
 	if hasArrayJSON {
 		jsonArrayExpr := fmt.Sprintf("dynamicElement(%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')", fieldPath, current.MaxDynamicTypes, current.MaxDynamicPaths)
-		childGroupJSON, err := b.recurseArrayHops(current.Branches[BranchJSON], operator, value, effVal, sb)
+		childGroupJSON, err := b.recurseArrayHops(current.Branches[BranchJSON], operator, value, sb)
 		if err != nil {
 			return "", err
 		}
@@ -430,7 +419,7 @@ func (b *JSONQueryBuilder) recurseArrayHops(current *Node, operator qbtypes.Filt
 		dynFilteredExpr := fmt.Sprintf("arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), %s))", dynBaseExpr)
 
 		// Create the Query for Dynamic array
-		childGroupDyn, err := b.recurseArrayHops(current.Branches[BranchDynamic], operator, value, effVal, sb)
+		childGroupDyn, err := b.recurseArrayHops(current.Branches[BranchDynamic], operator, value, sb)
 		if err != nil {
 			return "", err
 		}
@@ -443,7 +432,7 @@ func (b *JSONQueryBuilder) recurseArrayHops(current *Node, operator qbtypes.Filt
 	return fmt.Sprintf("(%s)", strings.Join(branches, " OR ")), nil
 }
 
-func (b *JSONQueryBuilder) buildArrayMembership(arrayExpr string, operator qbtypes.FilterOperator, value any, elemType telemetrytypes.JSONDataType, sb *sqlbuilder.SelectBuilder) string {
+func (b *JSONQueryBuilder) buildArrayMembership(arrayExpr string, operator qbtypes.FilterOperator, value any, elemType telemetrytypes.JSONDataType, sb *sqlbuilder.SelectBuilder) (string, error) {
 	var membership string
 	if elemType == telemetrytypes.String {
 		// For string arrays:
@@ -452,9 +441,11 @@ func (b *JSONQueryBuilder) buildArrayMembership(arrayExpr string, operator qbtyp
 		if isMembershipContains(operator) {
 			membership = fmt.Sprintf("arrayExists(x -> x = %s, %s)", sb.Var(value), arrayExpr)
 		} else if isMembershipLike(operator) {
-			likeVal := wrapLikeValueIfNeeded(operator, value)
-			// TODO: applyOperator should be used here; this is way too hardcoded
-			membership = fmt.Sprintf("arrayExists(x -> %s, %s)", sb.Var(likeVal), arrayExpr)
+			op, err := b.applyOperator(sb, "x", operator, value)
+			if err != nil {
+				return "", err
+			}
+			membership = fmt.Sprintf("arrayExists(x -> %s, %s)", op, arrayExpr)
 		} else {
 			membership = fmt.Sprintf("arrayExists(x -> x = %s, %s)", sb.Var(value), arrayExpr)
 		}
@@ -464,9 +455,10 @@ func (b *JSONQueryBuilder) buildArrayMembership(arrayExpr string, operator qbtyp
 	}
 
 	if b.isNotOperator(operator) {
-		return fmt.Sprintf("NOT %s", membership)
+		return fmt.Sprintf("NOT %s", membership), nil
 	}
-	return membership
+
+	return membership, nil
 }
 
 func (b *JSONQueryBuilder) isNotOperator(op qbtypes.FilterOperator) bool {

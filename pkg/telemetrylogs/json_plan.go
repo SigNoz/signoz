@@ -46,10 +46,6 @@ func (n *Node) Alias() string {
 		return fmt.Sprintf("`%s`", n.Name)
 	}
 
-	if n.Name == "parameters" {
-		fmt.Println("hello")
-	}
-
 	parentAlias := strings.TrimLeft(n.Parent.Alias(), "`")
 	parentAlias = strings.TrimRight(parentAlias, "`")
 
