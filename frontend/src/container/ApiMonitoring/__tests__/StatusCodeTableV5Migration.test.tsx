@@ -12,6 +12,7 @@
  * - Three queries: A (count), B (p99 latency), C (rate)
  * - All grouped by response_status_code
  */
+import { TraceAggregation } from 'api/v5/v5';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -68,13 +69,18 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			// Query A: Count
 			expect(queryA.queryName).toBe('A');
 			expect(queryA.aggregateOperator).toBe('count');
-			expect(queryA.aggregateAttribute?.key).toBe('span_id');
+			expect(queryA.aggregations?.[0]).toBeDefined();
+			expect((queryA.aggregations?.[0] as TraceAggregation)?.expression).toBe(
+				'count(span_id)',
+			);
 			expect(queryA.disabled).toBe(false);
 
 			// Query B: P99 Latency
 			expect(queryB.queryName).toBe('B');
 			expect(queryB.aggregateOperator).toBe('p99');
-			expect(queryB.aggregateAttribute?.key).toBe('duration_nano');
+			expect((queryB.aggregations?.[0] as TraceAggregation)?.expression).toBe(
+				'p99(duration_nano)',
+			);
 			expect(queryB.disabled).toBe(false);
 
 			// Query C: Rate
