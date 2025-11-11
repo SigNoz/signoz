@@ -706,7 +706,7 @@ def test_set_ttl_logs_success(
 
     # Verify TTL settings in Clickhouse
     # Allow some time for the TTL to be applied
-    time.sleep(2)
+    time.sleep(5)
 
     # Check TTL settings on relevant logs tables
     tables_to_check = [

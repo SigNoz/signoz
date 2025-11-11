@@ -1296,8 +1296,8 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 	tableNameArray := []string{
 		r.logsDB + "." + r.logsLocalTableV2,
 		r.logsDB + "." + r.logsResourceLocalTableV2,
-		r.logsDB + "." + getLocalTableName(r.logsAttributeKeys),
-		r.logsDB + "." + getLocalTableName(r.logsResourceKeys),
+		getLocalTableName(r.logsDB + "." + r.logsAttributeKeys),
+		getLocalTableName(r.logsDB + "." + r.logsResourceKeys),
 	}
 
 	// check if there is existing things to be done
@@ -1333,11 +1333,11 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 	}
 
 	ttlLogsV2AttributeKeys := fmt.Sprintf(
-		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + "+
+		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp + "+
 			"INTERVAL %v SECOND DELETE", tableNameArray[2], r.cluster, params.DelDuration)
 
 	ttlLogsV2ResourceKeys := fmt.Sprintf(
-		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + "+
+		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp + "+
 			"INTERVAL %v SECOND DELETE", tableNameArray[3], r.cluster, params.DelDuration)
 
 	ttlPayload := map[string]string{
@@ -1518,7 +1518,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				req = fmt.Sprintf(ttlV2Resource, tableName, r.cluster, params.DelDuration)
 			}
 
-			if len(params.ColdStorageVolume) > 0 {
+			if len(params.ColdStorageVolume) > 0 && !strings.HasSuffix(distributedTableName, r.spanAttributesKeysTable) {
 				if strings.HasSuffix(distributedTableName, r.traceResourceTableV3) {
 					req += fmt.Sprintf(ttlTracesV2ResourceColdStorage, params.ToColdStorageDuration, params.ColdStorageVolume)
 				} else {
@@ -1665,8 +1665,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	tableNames := []string{
 		r.logsDB + "." + r.logsLocalTableV2,
 		r.logsDB + "." + r.logsResourceLocalTableV2,
-		r.logsDB + "." + getLocalTableName(r.logsAttributeKeys),
-		r.logsDB + "." + getLocalTableName(r.logsResourceKeys),
+		getLocalTableName(r.logsDB + "." + r.logsAttributeKeys),
+		getLocalTableName(r.logsDB + "." + r.logsResourceKeys),
 	}
 
 	for _, tableName := range tableNames {
@@ -1722,12 +1722,12 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	}
 
 	ttlPayload[tableNames[2]] = []string{
-		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
+		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL timestamp + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
 			tableNames[2], r.cluster, maxRetentionTTL),
 	}
 
 	ttlPayload[tableNames[3]] = []string{
-		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
+		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL timestamp + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
 			tableNames[3], r.cluster, maxRetentionTTL),
 	}
 
