@@ -9,7 +9,7 @@ const getCustomFilters = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	const { signal } = props;
 	try {
-		const response = await axios.get(`orgs/me/filters/${signal}`);
+		const response = await axios.get(`/orgs/me/filters/${signal}`);
 
 		return {
 			statusCode: 200,

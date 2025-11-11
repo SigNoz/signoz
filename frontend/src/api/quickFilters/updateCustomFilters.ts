@@ -6,7 +6,7 @@ import { UpdateCustomFiltersProps } from 'types/api/quickFilters/updateCustomFil
 const updateCustomFiltersAPI = async (
 	props: UpdateCustomFiltersProps,
 ): Promise<SuccessResponse<void> | AxiosError> =>
-	axios.put(`orgs/me/filters`, {
+	axios.put(`/orgs/me/filters`, {
 		...props.data,
 	});
 
