@@ -3575,10 +3575,10 @@ export const getRateOverTimeWidgetData = (
 					disabled: false,
 					expression: 'A',
 					filter: {
-						expression: convertFiltersToExpressionWithExistingQuery(
+						expression: convertFiltersWithUrlHandling(
 							filters || { items: [], op: 'AND' },
 							`(net.peer.name = '${domainName}' OR url.full = '${domainName}')`,
-						).filter.expression,
+						),
 					},
 					functions: [],
 					groupBy: [],
@@ -3626,10 +3626,10 @@ export const getLatencyOverTimeWidgetData = (
 					disabled: false,
 					expression: 'A',
 					filter: {
-						expression: convertFiltersToExpressionWithExistingQuery(
+						expression: convertFiltersWithUrlHandling(
 							filters || { items: [], op: 'AND' },
 							`(net.peer.name = '${domainName}' OR url.full = '${domainName}')`,
-						).filter.expression,
+						),
 					},
 					functions: [],
 					groupBy: [],
