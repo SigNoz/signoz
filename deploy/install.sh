@@ -387,10 +387,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Simple validation: enforce scheme (http:// or https://)
-if ! [[ "$base_url" =~ ^https?:// ]]; then
+# Basic validation: require scheme + hostname (no whitespace-only URLs)
+if ! [[ "$base_url" =~ ^https?://(\[[0-9a-fA-F:]+\]|[-[:alnum:]_.%]+)(:[0-9]+)?([/?#].*)?$ ]]; then
     echo "+++++++++++ ERROR ++++++++++++++++++++++"
-    echo "Invalid --baseUrl/--check_url: must start with http:// or https://"
+    echo "Invalid --baseUrl/--check_url: provide http(s):// plus a hostname (optionally with port/path)"
     echo "Example: ./deploy/install.sh --baseUrl=\"https://signoz.example.com\""
     echo "+++++++++++++++++++++++++++++++++++++++"
     exit 1
