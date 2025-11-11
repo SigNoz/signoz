@@ -3,46 +3,46 @@
 # that they own.
 
 /frontend/ @YounixM @aks07
-/frontend/src/container/MetricsApplication @srikanthccv
-/frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
+/frontend/src/container/MetricsApplication @rohitpandit0007
+/frontend/src/container/NewWidget/RightContainer/types.ts @rohitpandit0007
 
 # Dashboard, Alert, Metrics, Service Map, Services
-/frontend/src/container/ListOfDashboard/ @srikanthccv
-/frontend/src/container/NewDashboard/ @srikanthccv
-/frontend/src/pages/DashboardsListPage/ @srikanthccv
-/frontend/src/pages/DashboardWidget/ @srikanthccv
-/frontend/src/pages/NewDashboard/ @srikanthccv
-/frontend/src/providers/Dashboard/ @srikanthccv
+/frontend/src/container/ListOfDashboard/ @rohitpandit0007
+/frontend/src/container/NewDashboard/ @rohitpandit0007
+/frontend/src/pages/DashboardsListPage/ @rohitpandit0007
+/frontend/src/pages/DashboardWidget/ @rohitpandit0007
+/frontend/src/pages/NewDashboard/ @rohitpandit0007
+/frontend/src/providers/Dashboard/ @rohitpandit0007
 
 # Alerts
-/frontend/src/container/AlertHistory/ @srikanthccv
-/frontend/src/container/AllAlertChannels/ @srikanthccv
-/frontend/src/container/AnomalyAlertEvaluationView/ @srikanthccv
-/frontend/src/container/CreateAlertChannels/ @srikanthccv
-/frontend/src/container/CreateAlertRule/ @srikanthccv
-/frontend/src/container/EditAlertChannels/ @srikanthccv
-/frontend/src/container/FormAlertChannels/ @srikanthccv
-/frontend/src/container/FormAlertRules/ @srikanthccv
-/frontend/src/container/ListAlertRules/ @srikanthccv
-/frontend/src/container/TriggeredAlerts/ @srikanthccv
-/frontend/src/pages/AlertChannelCreate/ @srikanthccv
-/frontend/src/pages/AlertDetails/ @srikanthccv
-/frontend/src/pages/AlertHistory/ @srikanthccv
-/frontend/src/pages/AlertList/ @srikanthccv
-/frontend/src/pages/CreateAlert/ @srikanthccv
-/frontend/src/providers/Alert.tsx @srikanthccv
+/frontend/src/container/AlertHistory/ @rohitpandit0007
+/frontend/src/container/AllAlertChannels/ @rohitpandit0007
+/frontend/src/container/AnomalyAlertEvaluationView/ @rohitpandit0007
+/frontend/src/container/CreateAlertChannels/ @rohitpandit0007
+/frontend/src/container/CreateAlertRule/ @rohitpandit0007
+/frontend/src/container/EditAlertChannels/ @rohitpandit0007
+/frontend/src/container/FormAlertChannels/ @rohitpandit0007
+/frontend/src/container/FormAlertRules/ @rohitpandit0007
+/frontend/src/container/ListAlertRules/ @rohitpandit0007
+/frontend/src/container/TriggeredAlerts/ @rohitpandit0007
+/frontend/src/pages/AlertChannelCreate/ @rohitpandit0007
+/frontend/src/pages/AlertDetails/ @rohitpandit0007
+/frontend/src/pages/AlertHistory/ @rohitpandit0007
+/frontend/src/pages/AlertList/ @rohitpandit0007
+/frontend/src/pages/CreateAlert/ @rohitpandit0007
+/frontend/src/providers/Alert.tsx @rohitpandit0007
 
 # Metrics
-/frontend/src/container/MetricsExplorer/ @srikanthccv
-/frontend/src/pages/MetricsApplication/ @srikanthccv
-/frontend/src/pages/MetricsExplorer/ @srikanthccv
+/frontend/src/container/MetricsExplorer/ @rohitpandit0007
+/frontend/src/pages/MetricsApplication/ @rohitpandit0007
+/frontend/src/pages/MetricsExplorer/ @rohitpandit0007
 
 # Services and Service Map
-/frontend/src/container/ServiceApplication/ @srikanthccv
-/frontend/src/container/ServiceTable/ @srikanthccv
-/frontend/src/pages/Services/ @srikanthccv
-/frontend/src/pages/ServiceTopLevelOperations/ @srikanthccv
-/frontend/src/container/Home/Services/ @srikanthccv
+/frontend/src/container/ServiceApplication/ @rohitpandit0007
+/frontend/src/container/ServiceTable/ @rohitpandit0007
+/frontend/src/pages/Services/ @rohitpandit0007
+/frontend/src/pages/ServiceTopLevelOperations/ @rohitpandit0007
+/frontend/src/container/Home/Services/ @rohitpandit0007
 
 /deploy/ @SigNoz/devops
 .github @SigNoz/devops
@@ -73,14 +73,14 @@
 /pkg/statsreporter/ @vikrantgupta25
 
 # Querier Owners
-/pkg/querier/ @srikanthccv
-/pkg/variables/ @srikanthccv
-/pkg/types/querybuildertypes/ @srikanthccv
-/pkg/querybuilder/ @srikanthccv
-/pkg/telemetrylogs/ @srikanthccv
-/pkg/telemetrymetadata/ @srikanthccv
-/pkg/telemetrymetrics/ @srikanthccv
-/pkg/telemetrytraces/ @srikanthccv
+/pkg/querier/ @rohitpandit0007
+/pkg/variables/ @rohitpandit0007
+/pkg/types/querybuildertypes/ @rohitpandit0007
+/pkg/querybuilder/ @rohitpandit0007
+/pkg/telemetrylogs/ @rohitpandit0007
+/pkg/telemetrymetadata/ @rohitpandit0007
+/pkg/telemetrymetrics/ @rohitpandit0007
+/pkg/telemetrytraces/ @rohitpandit0007
 
 # AuthN / AuthZ Owners 
 
