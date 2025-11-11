@@ -840,10 +840,10 @@ export const getEndPointsQueryPayload = (
  * @param baseExpression Base expression to combine with filters
  * @returns Filter expression string
  */
-function convertFiltersWithUrlHandling(
+export const convertFiltersWithUrlHandling = (
 	filters: IBuilderQuery['filters'],
 	baseExpression: string,
-): string {
+): string => {
 	if (!filters) {
 		return baseExpression;
 	}
@@ -881,7 +881,7 @@ function convertFiltersWithUrlHandling(
 		baseExpression,
 	);
 	return filter.expression;
-}
+};
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function buildFilterExpression(
