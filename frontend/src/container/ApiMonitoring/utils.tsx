@@ -59,6 +59,56 @@ export const getDomainNameFilterExpression = (domainName: string): string =>
 	`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`;
 
 export const clientKindExpression = `kind_string = 'Client'`;
+
+/**
+ * Converts filters to expression, handling http.url specially by creating (http.url OR url.full) condition
+ * @param filters Filters to convert
+ * @param baseExpression Base expression to combine with filters
+ * @returns Filter expression string
+ */
+export const convertFiltersWithUrlHandling = (
+	filters: IBuilderQuery['filters'],
+	baseExpression: string,
+): string => {
+	if (!filters) {
+		return baseExpression;
+	}
+
+	// Check if filters contain http.url (SPAN_ATTRIBUTES.URL_PATH)
+	const httpUrlFilter = filters.items?.find(
+		(item) => item.key?.key === SPAN_ATTRIBUTES.URL_PATH,
+	);
+
+	// If http.url filter exists, create modified filters with (http.url OR url.full)
+	if (httpUrlFilter && httpUrlFilter.value) {
+		// Remove ALL http.url filters from items (guards against duplicates)
+		const otherFilters = filters.items?.filter(
+			(item) => item.key?.key !== SPAN_ATTRIBUTES.URL_PATH,
+		);
+
+		// Convert to expression first with other filters
+		const {
+			filter: intermediateFilter,
+		} = convertFiltersToExpressionWithExistingQuery(
+			{ ...filters, items: otherFilters || [] },
+			baseExpression,
+		);
+
+		// Add the OR condition for http.url and url.full
+		const urlValue = httpUrlFilter.value;
+		const urlCondition = `(http.url = '${urlValue}' OR url.full = '${urlValue}')`;
+		return intermediateFilter.expression.trim()
+			? `${intermediateFilter.expression} AND ${urlCondition}`
+			: urlCondition;
+	}
+
+	const { filter } = convertFiltersToExpressionWithExistingQuery(
+		filters,
+		baseExpression,
+	);
+	return filter.expression;
+};
+
 export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
@@ -328,14 +378,19 @@ export const getDomainMetricsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						queryName: 'A',
 						aggregateOperator: 'count',
+						aggregations: [
+							{
+								expression: 'count()',
+							},
+						],
 						timeAggregation: 'rate',
 						spaceAggregation: 'sum',
 						functions: [],
 						filter: {
-							expression: convertFiltersToExpressionWithExistingQuery(
+							expression: convertFiltersWithUrlHandling(
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(domainName)} AND ${urlExpression}`,
-							).filter.expression,
+							),
 						},
 						expression: 'A',
 						disabled: false,
@@ -351,19 +406,19 @@ export const getDomainMetricsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						queryName: 'B',
 						aggregateOperator: 'p99',
-						aggregateAttribute: {
-							dataType: DataTypes.Float64,
-							key: 'duration_nano',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'p99(duration_nano)',
+							},
+						],
 						timeAggregation: 'p99',
 						spaceAggregation: 'sum',
 						functions: [],
 						filter: {
-							expression: convertFiltersToExpressionWithExistingQuery(
+							expression: convertFiltersWithUrlHandling(
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(domainName)}`,
-							).filter.expression,
+							),
 						},
 						expression: 'B',
 						disabled: false,
@@ -379,20 +434,19 @@ export const getDomainMetricsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						queryName: 'C',
 						aggregateOperator: 'count',
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							id: '------false',
-							key: '',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'count()',
+							},
+						],
 						timeAggregation: 'count',
 						spaceAggregation: 'sum',
 						functions: [],
 						filter: {
-							expression: convertFiltersToExpressionWithExistingQuery(
+							expression: convertFiltersWithUrlHandling(
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(domainName)} AND has_error = true`,
-							).filter.expression,
+							),
 						},
 						expression: 'C',
 						disabled: true,
@@ -408,20 +462,19 @@ export const getDomainMetricsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						queryName: 'D',
 						aggregateOperator: 'max',
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							id: 'timestamp------false',
-							key: 'timestamp',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'max(timestamp)',
+							},
+						],
 						timeAggregation: 'max',
 						spaceAggregation: 'sum',
 						functions: [],
 						filter: {
-							expression: convertFiltersToExpressionWithExistingQuery(
+							expression: convertFiltersWithUrlHandling(
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(domainName)}`,
-							).filter.expression,
+							),
 						},
 						expression: 'D',
 						disabled: false,
@@ -786,55 +839,6 @@ export const getEndPointsQueryPayload = (
 			step: 60,
 		},
 	];
-};
-
-/**
- * Converts filters to expression, handling http.url specially by creating (http.url OR url.full) condition
- * @param filters Filters to convert
- * @param baseExpression Base expression to combine with filters
- * @returns Filter expression string
- */
-export const convertFiltersWithUrlHandling = (
-	filters: IBuilderQuery['filters'],
-	baseExpression: string,
-): string => {
-	if (!filters) {
-		return baseExpression;
-	}
-
-	// Check if filters contain http.url (SPAN_ATTRIBUTES.URL_PATH)
-	const httpUrlFilter = filters.items?.find(
-		(item) => item.key?.key === SPAN_ATTRIBUTES.URL_PATH,
-	);
-
-	// If http.url filter exists, create modified filters with (http.url OR url.full)
-	if (httpUrlFilter && httpUrlFilter.value) {
-		// Remove ALL http.url filters from items (guards against duplicates)
-		const otherFilters = filters.items?.filter(
-			(item) => item.key?.key !== SPAN_ATTRIBUTES.URL_PATH,
-		);
-
-		// Convert to expression first with other filters
-		const {
-			filter: intermediateFilter,
-		} = convertFiltersToExpressionWithExistingQuery(
-			{ ...filters, items: otherFilters || [] },
-			baseExpression,
-		);
-
-		// Add the OR condition for http.url and url.full
-		const urlValue = httpUrlFilter.value;
-		const urlCondition = `(http.url = '${urlValue}' OR url.full = '${urlValue}')`;
-		return intermediateFilter.expression.trim()
-			? `${intermediateFilter.expression} AND ${urlCondition}`
-			: urlCondition;
-	}
-
-	const { filter } = convertFiltersToExpressionWithExistingQuery(
-		filters,
-		baseExpression,
-	);
-	return filter.expression;
 };
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
