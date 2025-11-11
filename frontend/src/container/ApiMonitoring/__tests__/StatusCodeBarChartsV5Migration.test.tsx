@@ -15,6 +15,7 @@
  * - stepInterval: 60 → null
  * - Grouped by response_status_code
  */
+import { TraceAggregation } from 'api/v5/v5';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -106,7 +107,10 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			// Aggregation: p99 on duration_nano
 			expect(queryA.queryName).toBe('A');
 			expect(queryA.aggregateOperator).toBe('p99');
-			expect(queryA.aggregateAttribute?.key).toBe('duration_nano');
+			expect(queryA.aggregations?.[0]).toBeDefined();
+			expect((queryA.aggregations?.[0] as TraceAggregation)?.expression).toBe(
+				'p99(duration_nano)',
+			);
 			expect(queryA.disabled).toBe(false);
 
 			// Grouped by response_status_code
