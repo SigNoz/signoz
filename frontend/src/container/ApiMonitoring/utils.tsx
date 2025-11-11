@@ -2039,31 +2039,13 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'A',
-						filters: {
-							items: [
-								{
-									id: 'b78ff216',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							),
 						},
 						functions: [],
 						groupBy: [
@@ -2094,31 +2076,13 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'B',
-						filters: {
-							items: [
-								{
-									id: 'a9024472',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							),
 						},
 						functions: [],
 						groupBy: [
@@ -2150,31 +2114,13 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'C',
-						filters: {
-							items: [
-								{
-									id: '1b6c062d',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							),
 						},
 						functions: [],
 						groupBy: [
@@ -2205,40 +2151,13 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						disabled: true,
 						expression: 'D',
-						filters: {
-							items: [
-								{
-									id: 'd14792a8',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '3212bf1a',
-									key: {
-										key: 'has_error',
-										type: '',
-									},
-									op: '=',
-									value: 'true',
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression} AND has_error = true`,
+							),
 						},
 						functions: [],
 						groupBy: [
@@ -2779,21 +2698,18 @@ export const getFormattedDependentServicesData = (
 	return data?.map((row) => ({
 		key: v4(),
 		serviceData: {
-			serviceName: row.data['service.name'] || '-',
-			count:
-				row.data.A !== undefined && row.data.A !== 'n/a' ? Number(row.data.A) : '-',
+			serviceName: getDisplayValue(row.data['service.name']),
+			count: !isEmptyFilterValue(row.data.A) ? Number(row.data.A) : '-',
 			percentage:
-				totalCount > 0 && row.data.A !== undefined && row.data.A !== 'n/a'
+				totalCount > 0 && !isEmptyFilterValue(row.data.A)
 					? Number(((Number(row.data.A) / totalCount) * 100).toFixed(2))
-					: 0,
+					: '-',
 		},
-		latency:
-			row.data.B !== undefined && row.data.B !== 'n/a'
-				? Math.round(Number(row.data.B) / 1000000)
-				: '-',
-		rate: row.data.C !== undefined && row.data.C !== 'n/a' ? row.data.C : '-',
-		errorPercentage:
-			row.data.F1 !== undefined && row.data.F1 !== 'n/a' ? row.data.F1 : 0,
+		latency: !isEmptyFilterValue(row.data.B)
+			? Math.round(Number(row.data.B) / 1000000)
+			: '-',
+		rate: getDisplayValue(row.data.C),
+		errorPercentage: !isEmptyFilterValue(row.data.F1) ? row.data.F1 : '-',
 	}));
 };
 
@@ -2806,7 +2722,9 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 			<div className="top-services-item">
 				<div className="top-services-item-progress">
 					<div className="top-services-item-key">{serviceData.serviceName}</div>
-					<div className="top-services-item-count">{serviceData.count} Calls</div>
+					<div className="top-services-item-count">
+						{serviceData.count !== '-' ? `${serviceData.count} Calls` : '-'}
+					</div>
 					<div
 						className="top-services-item-progress-bar"
 						style={{ width: `${serviceData.percentage}%` }}
@@ -2814,9 +2732,8 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 				</div>
 				<div className="top-services-item-percentage">
 					{typeof serviceData.percentage === 'number'
-						? serviceData.percentage.toFixed(2)
-						: serviceData.percentage}
-					%
+						? `${serviceData.percentage.toFixed(2)}%`
+						: '-'}
 				</div>
 			</div>
 		),
@@ -2840,8 +2757,10 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		),
 		dataIndex: 'latency',
 		key: 'latency',
-		render: (latency: number): ReactNode => (
-			<div className="top-services-item-latency">{latency || '-'}ms</div>
+		render: (latency: number | string): ReactNode => (
+			<div className="top-services-item-latency">
+				{latency !== '-' ? `${latency || '-'}ms` : '-'}
+			</div>
 		),
 		sorter: (a: DependentServicesData, b: DependentServicesData): number => {
 			const latencyA =
@@ -2863,19 +2782,17 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		render: (
 			errorPercentage: number | string,
 			// eslint-disable-next-line sonarjs/no-identical-functions
-		): React.ReactNode => {
-			const errorPercentageValue =
-				errorPercentage === 'n/a' || errorPercentage === '-' ? 0 : errorPercentage;
-			return (
+		): React.ReactNode =>
+			errorPercentage !== '-' ? (
 				<Progress
 					status="active"
-					percent={Number((errorPercentageValue as number).toFixed(2))}
+					percent={Number((errorPercentage as number).toFixed(2))}
 					strokeLinecap="butt"
 					size="small"
 					strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
 					string => {
 						const errorPercentagePercent = Number(
-							(errorPercentageValue as number).toFixed(2),
+							(errorPercentage as number).toFixed(2),
 						);
 						if (errorPercentagePercent >= 90) return Color.BG_SAKURA_500;
 						if (errorPercentagePercent >= 60) return Color.BG_AMBER_500;
@@ -2883,8 +2800,9 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 					})()}
 					className="progress-bar error-rate"
 				/>
-			);
-		},
+			) : (
+				'-'
+			),
 		sorter: (a: DependentServicesData, b: DependentServicesData): number => {
 			const errorPercentageA =
 				a.errorPercentage === '-' || a.errorPercentage === 'n/a'
@@ -2904,8 +2822,10 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		dataIndex: 'rate',
 		key: 'rate',
 		align: 'right',
-		render: (rate: number): ReactNode => (
-			<div className="top-services-item-rate">{rate || '-'} ops/sec</div>
+		render: (rate: number | string): ReactNode => (
+			<div className="top-services-item-rate">
+				{rate !== '-' ? `${rate || '-'} ops/sec` : '-'}
+			</div>
 		),
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		sorter: (a: DependentServicesData, b: DependentServicesData): number => {
@@ -3186,12 +3106,12 @@ export const getFormattedEndPointStatusCodeChartData = (
 export const END_POINT_DETAILS_QUERY_KEYS_ARRAY = [
 	REACT_QUERY_KEY.GET_ENDPOINT_METRICS_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_DATA,
-	REACT_QUERY_KEY.GET_ENDPOINT_RATE_OVER_TIME_DATA,
-	REACT_QUERY_KEY.GET_ENDPOINT_LATENCY_OVER_TIME_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_DROPDOWN_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_DEPENDENT_SERVICES_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_BAR_CHARTS_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_LATENCY_BAR_CHARTS_DATA,
+	REACT_QUERY_KEY.GET_ENDPOINT_RATE_OVER_TIME_DATA,
+	REACT_QUERY_KEY.GET_ENDPOINT_LATENCY_OVER_TIME_DATA,
 ];
 
 export const getAllEndpointsWidgetData = (
