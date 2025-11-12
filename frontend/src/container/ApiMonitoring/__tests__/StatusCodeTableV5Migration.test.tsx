@@ -9,6 +9,7 @@
  * - URL handling: Special logic for (http.url OR url.full)
  * - Domain filter: (net.peer.name OR server.address)
  * - Kind filter: kind_string = 'Client'
+ * - Kind filter: response_status_code EXISTS
  * - Three queries: A (count), B (p99 latency), C (rate)
  * - All grouped by response_status_code
  */
@@ -51,6 +52,9 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 
 			// Base filter 2: Kind
 			expect(queryA.filter?.expression).toContain("kind_string = 'Client'");
+
+			// Base filter 3: response_status_code EXISTS
+			expect(queryA.filter?.expression).toContain('response_status_code EXISTS');
 		});
 	});
 
@@ -147,6 +151,7 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			// Base filters present
 			expect(expression).toContain('net.peer.name');
 			expect(expression).toContain("kind_string = 'Client'");
+			expect(expression).toContain('response_status_code EXISTS');
 
 			// Custom filters merged
 			expect(expression).toContain('service.name');
@@ -212,6 +217,7 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			// Base filters present
 			expect(expression).toContain('net.peer.name');
 			expect(expression).toContain("kind_string = 'Client'");
+			expect(expression).toContain('response_status_code EXISTS');
 
 			// All ANDed together (at least 2 ANDs: domain+kind, custom filter, url condition)
 			expect(expression?.match(/AND/g)?.length).toBeGreaterThanOrEqual(2);

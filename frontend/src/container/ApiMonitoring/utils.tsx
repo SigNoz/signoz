@@ -1755,7 +1755,7 @@ export const getEndPointDetailsQueryPayload = (
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
-								)} AND ${clientKindExpression}`,
+								)} AND ${clientKindExpression} AND response_status_code EXISTS`,
 							),
 						},
 						functions: [],
@@ -1791,7 +1791,7 @@ export const getEndPointDetailsQueryPayload = (
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
-								)} AND ${clientKindExpression}`,
+								)} AND ${clientKindExpression} AND response_status_code EXISTS`,
 							),
 						},
 						functions: [],
@@ -1829,7 +1829,7 @@ export const getEndPointDetailsQueryPayload = (
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
-								)} AND ${clientKindExpression}`,
+								)} AND ${clientKindExpression} AND response_status_code EXISTS`,
 							),
 						},
 						expression: 'C',
