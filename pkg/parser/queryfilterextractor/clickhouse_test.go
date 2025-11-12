@@ -445,7 +445,7 @@ func TestClickHouseFilterExtractor_SimpleCTEGroupByQueries(t *testing.T) {
 		{
 			name: "Simple CTE with GROUP BY",
 			query: `WITH aggregated AS (
-				SELECT region, sum(value) AS total
+				SELECT region as region_alias, sum(value) AS total
 				FROM metrics
 				WHERE metric_name = 'cpu_usage'
 				GROUP BY region
@@ -457,7 +457,7 @@ func TestClickHouseFilterExtractor_SimpleCTEGroupByQueries(t *testing.T) {
 		{
 			name: "CTE chain - should return last GROUP BY",
 			query: `WITH step1 AS (
-				SELECT service, ts, value
+				SELECT service as service_alias, ts, value
 				FROM metrics
 				WHERE metric_name = 'requests'
 				GROUP BY service, ts

@@ -107,12 +107,20 @@ func (e *ClickHouseFilterExtractor) extractFromBinaryOp(op *clickhouse.BinaryOpe
 		e.extractMetricFromBinaryOp(op, op.LeftExpr, metricNames)
 		return
 	}
-
-	// If neither side is metric_name, the Walk function will continue traversing
-	// nested nodes automatically, so we don't need to do anything here
 }
 
 // extractMetricFromBinaryOp extracts metric names from the value side of a binary operation
+//
+// Supported operators:
+//   - "=", "==": Extracts literal string values or values from any() function
+//   - "IN", "GLOBAL IN": Extracts all literal string values from the list
+//
+// Unsupported operators (can be added later if needed):
+//   - "!=", "<>", "NOT IN": Negative filters. (e.g., metric_name != 'a')
+//   - "LIKE", "ILIKE": Pattern matching filters
+//   - "NOT LIKE", "NOT ILIKE": Negative pattern matching filters
+//   - "OR", "AND": Boolean operators as the Walk function will automatically traverse both sides
+//     of OR/AND operations and extract metrics from each branch. (e.g., metric_name='a' OR metric_name='b')
 func (e *ClickHouseFilterExtractor) extractMetricFromBinaryOp(op *clickhouse.BinaryOperation, valueExpr clickhouse.Expr, metricNames map[string]bool) {
 	switch op.Operation {
 	case "=", "==":
@@ -127,23 +135,9 @@ func (e *ClickHouseFilterExtractor) extractMetricFromBinaryOp(op *clickhouse.Bin
 		} else if val := e.extractStringLiteral(valueExpr); val != "" {
 			metricNames[val] = true
 		}
-	case "IN":
+	case "IN", "GLOBAL IN":
 		// metric_name IN ('a', 'b', 'c')
-		// Skip if value side is a function call (per spec - function-wrapped literals are ignored, CH59)
-		if _, ok := valueExpr.(*clickhouse.FunctionExpr); !ok {
-			e.extractInValues(valueExpr, metricNames)
-		}
-	case "!=", "<>", "NOT IN", "NOT LIKE", "NOT ILIKE":
-		// Skip negative filters for now
-	case "LIKE", "ILIKE":
-		// Skip pattern filters for now
-	case "OR":
-		// Handle OR conditions: metric_name='a' OR metric_name='b'
-		// The Walk function will traverse both sides, so we don't need to do anything special
-	case "AND":
-		// Handle AND conditions - Walk will traverse both sides
-	case "GLOBAL IN":
-		// Handle GLOBAL IN - same as IN for our purposes
+		// GLOBAL IN behaves the same as IN for metric extraction purposes
 		// Skip if value side is a function call (per spec - function-wrapped literals are ignored, CH59)
 		if _, ok := valueExpr.(*clickhouse.FunctionExpr); !ok {
 			e.extractInValues(valueExpr, metricNames)
@@ -172,7 +166,6 @@ func (e *ClickHouseFilterExtractor) extractGroupFromGroupByClause(groupByClause 
 	// Note: We only extract from the top-level ColumnExprList.Items to avoid extracting nested parts
 	// This prevents extracting 'timestamp' from 'toDate(timestamp)' - we only get 'toDate(timestamp)'
 	if exprList, ok := exprListNode.(*clickhouse.ColumnExprList); ok {
-		seen := make(map[string]bool)
 		// Extract each expression from the list - these are top-level only
 		if exprList.Items != nil {
 			for _, item := range exprList.Items {
@@ -180,10 +173,7 @@ func (e *ClickHouseFilterExtractor) extractGroupFromGroupByClause(groupByClause 
 				if groupKey != "" {
 					// Strip table alias if present (e.g., "m.region" -> "region")
 					groupKey = e.stripTableAlias(groupKey)
-					if !seen[groupKey] {
-						groupBy[groupKey] = true
-						seen[groupKey] = true
-					}
+					groupBy[groupKey] = true
 				}
 			}
 		}
