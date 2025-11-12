@@ -3248,31 +3248,20 @@ export const getRateOverTimeWidgetData = (
 			description: 'Rate over time.',
 			queryData: [
 				{
-					aggregateAttribute: {
-						dataType: DataTypes.String,
-						id: '------false',
-						key: '',
-						type: '',
-					},
+					aggregations: [
+						{
+							expression: 'rate()',
+						},
+					],
 					aggregateOperator: 'rate',
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
-					filters: {
-						items: [
-							{
-								id: '3c76fe0b',
-								key: {
-									dataType: DataTypes.String,
-									key: SPAN_ATTRIBUTES.SERVER_NAME,
-									type: 'tag',
-								},
-								op: '=',
-								value: domainName,
-							},
-							...(filters?.items || []),
-						],
-						op: 'AND',
+					filter: {
+						expression: convertFiltersWithUrlHandling(
+							filters || { items: [], op: 'AND' },
+							`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
+						),
 					},
 					functions: [],
 					groupBy: [],
@@ -3283,7 +3272,7 @@ export const getRateOverTimeWidgetData = (
 					queryName: 'A',
 					reduceTo: 'avg',
 					spaceAggregation: 'sum',
-					stepInterval: 60,
+					stepInterval: null,
 					timeAggregation: 'rate',
 				},
 			],
@@ -3310,30 +3299,20 @@ export const getLatencyOverTimeWidgetData = (
 			description: 'Latency over time.',
 			queryData: [
 				{
-					aggregateAttribute: {
-						dataType: DataTypes.Float64,
-						key: 'duration_nano',
-						type: '',
-					},
+					aggregations: [
+						{
+							expression: 'p99(duration_nano)',
+						},
+					],
 					aggregateOperator: 'p99',
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
-					filters: {
-						items: [
-							{
-								id: '63adb3ff',
-								key: {
-									dataType: DataTypes.String,
-									key: SPAN_ATTRIBUTES.SERVER_NAME,
-									type: 'tag',
-								},
-								op: '=',
-								value: domainName,
-							},
-							...(filters?.items || []),
-						],
-						op: 'AND',
+					filter: {
+						expression: convertFiltersWithUrlHandling(
+							filters || { items: [], op: 'AND' },
+							`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
+						),
 					},
 					functions: [],
 					groupBy: [],
@@ -3344,7 +3323,7 @@ export const getLatencyOverTimeWidgetData = (
 					queryName: 'A',
 					reduceTo: 'avg',
 					spaceAggregation: 'sum',
-					stepInterval: 60,
+					stepInterval: null,
 					timeAggregation: 'p99',
 				},
 			],
