@@ -1951,7 +1951,7 @@ export const getEndPointDetailsQueryPayload = (
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
-								)} AND ${clientKindExpression}`,
+								)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
 							),
 						},
 						expression: 'A',
