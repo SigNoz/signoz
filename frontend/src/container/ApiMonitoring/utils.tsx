@@ -1405,41 +1405,22 @@ export const getEndPointDetailsQueryPayload = (
 			builder: {
 				queryData: [
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							id: '------false',
-							key: '',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'rate()',
+							},
+						],
 						aggregateOperator: 'rate',
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'A',
-						filters: {
-							items: [
-								{
-									id: '874562e1',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							),
 						},
 						functions: [],
 						groupBy: [],
@@ -1454,40 +1435,22 @@ export const getEndPointDetailsQueryPayload = (
 						timeAggregation: 'rate',
 					},
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.Float64,
-							key: 'duration_nano',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'p99(duration_nano)',
+							},
+						],
 						aggregateOperator: 'p99',
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'B',
-						filters: {
-							items: [
-								{
-									id: '0c5564e0',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							),
 						},
 						functions: [],
 						groupBy: [],
@@ -1502,50 +1465,22 @@ export const getEndPointDetailsQueryPayload = (
 						timeAggregation: 'p99',
 					},
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							key: 'span_id',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'count(span_id)',
+							},
+						],
 						aggregateOperator: 'count',
 						dataSource: DataSource.TRACES,
 						disabled: true,
 						expression: 'C',
-						filters: {
-							items: [
-								{
-									id: '0d656701',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '83ef9a1b',
-									key: {
-										dataType: DataTypes.bool,
-										key: 'has_error',
-										type: '',
-									},
-									op: '=',
-									value: 'true',
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression} AND has_error = true`,
+							),
 						},
 						functions: [],
 						groupBy: [],
@@ -1560,41 +1495,22 @@ export const getEndPointDetailsQueryPayload = (
 						timeAggregation: 'count',
 					},
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							id: 'timestamp------false',
-							key: 'timestamp',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'max(timestamp)',
+							},
+						],
 						aggregateOperator: 'max',
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'D',
-						filters: {
-							items: [
-								{
-									id: '918f5b99',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							),
 						},
 						functions: [],
 						groupBy: [],
@@ -1609,40 +1525,22 @@ export const getEndPointDetailsQueryPayload = (
 						timeAggregation: 'max',
 					},
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							key: 'span_id',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'count(span_id)',
+							},
+						],
 						aggregateOperator: 'count',
 						dataSource: DataSource.TRACES,
 						disabled: true,
 						expression: 'E',
-						filters: {
-							items: [
-								{
-									id: 'b355d1aa',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							),
 						},
 						functions: [],
 						groupBy: [],
@@ -1699,47 +1597,29 @@ export const getEndPointDetailsQueryPayload = (
 			builder: {
 				queryData: [
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							key: 'span_id',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'count(span_id)',
+							},
+						],
 						aggregateOperator: 'count',
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'A',
-						filters: {
-							items: [
-								{
-									id: '23450eb8',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression} AND response_status_code EXISTS`,
+							),
 						},
 						functions: [],
 						groupBy: [
 							{
 								dataType: DataTypes.String,
 								key: 'response_status_code',
-								type: '',
+								type: 'span',
 							},
 						],
 						having: [],
@@ -1753,47 +1633,29 @@ export const getEndPointDetailsQueryPayload = (
 						timeAggregation: 'count',
 					},
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.Float64,
-							key: 'duration_nano',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'p99(duration_nano)',
+							},
+						],
 						aggregateOperator: 'p99',
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'B',
-						filters: {
-							items: [
-								{
-									id: '2687dc18',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression} AND response_status_code EXISTS`,
+							),
 						},
 						functions: [],
 						groupBy: [
 							{
 								dataType: DataTypes.String,
 								key: 'response_status_code',
-								type: '',
+								type: 'span',
 							},
 						],
 						having: [],
@@ -1810,41 +1672,21 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						queryName: 'C',
 						aggregateOperator: 'rate',
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							id: '------false',
-							key: '',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'rate()',
+							},
+						],
 						timeAggregation: 'rate',
 						spaceAggregation: 'sum',
 						functions: [],
-						filters: {
-							items: [
-								{
-									id: '334840be',
-									key: {
-										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
-										key: 'net.peer.name',
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression} AND response_status_code EXISTS`,
+							),
 						},
 						expression: 'C',
 						disabled: false,
@@ -1856,7 +1698,7 @@ export const getEndPointDetailsQueryPayload = (
 							{
 								dataType: DataTypes.String,
 								key: 'response_status_code',
-								type: '',
+								type: 'span',
 								id: 'response_status_code--string----true',
 							},
 						],
@@ -2260,48 +2102,29 @@ export const getEndPointDetailsQueryPayload = (
 			builder: {
 				queryData: [
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							id: '------false',
-							key: '',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'count()',
+							},
+						],
 						aggregateOperator: 'count',
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'A',
-						filters: {
-							items: [
-								{
-									id: 'c6724407',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							),
 						},
 						functions: [],
 						groupBy: [
 							{
 								dataType: DataTypes.String,
 								key: 'response_status_code',
-								type: '',
+								type: 'span',
 							},
 						],
 						having: [],
@@ -2311,7 +2134,7 @@ export const getEndPointDetailsQueryPayload = (
 						queryName: 'A',
 						reduceTo: 'avg',
 						spaceAggregation: 'sum',
-						stepInterval: 60,
+						stepInterval: null,
 						timeAggregation: 'rate',
 					},
 				],
@@ -2350,47 +2173,29 @@ export const getEndPointDetailsQueryPayload = (
 			builder: {
 				queryData: [
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.Float64,
-							key: 'duration_nano',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'p99(duration_nano)',
+							},
+						],
 						aggregateOperator: 'p99',
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'A',
-						filters: {
-							items: [
-								{
-									id: 'aae93366',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression}`,
+							),
 						},
 						functions: [],
 						groupBy: [
 							{
 								dataType: DataTypes.String,
 								key: 'response_status_code',
-								type: '',
+								type: 'span',
 							},
 						],
 						having: [],
@@ -2400,7 +2205,7 @@ export const getEndPointDetailsQueryPayload = (
 						queryName: 'A',
 						reduceTo: 'avg',
 						spaceAggregation: 'sum',
-						stepInterval: 60,
+						stepInterval: null,
 						timeAggregation: 'p99',
 					},
 				],
@@ -2577,19 +2382,24 @@ export const getFormattedEndPointMetricsData = (
 		};
 	}
 
+	const dataMap = data[0].data;
+
+	// Convert nanoseconds to milliseconds for latency (only if valid)
+	const latencyInMs = !isEmptyFilterValue(dataMap.B)
+		? convertNanoToMilliseconds(Number(dataMap.B))
+		: undefined;
+
+	// Convert timestamp to relative time (only if valid)
+	const lastUsedFormatted = !isEmptyFilterValue(data[0].data.D)
+		? getLastUsedRelativeTime(new Date(data[0].data.D as string).getTime())
+		: undefined;
+
 	return {
 		key: v4(),
-		rate: data[0].data.A === 'n/a' || !data[0].data.A ? '-' : data[0].data.A,
-		latency:
-			data[0].data.B === 'n/a' || data[0].data.B === undefined
-				? '-'
-				: Math.round(Number(data[0].data.B) / 1000000),
-		errorRate:
-			data[0].data.F1 === 'n/a' || !data[0].data.F1 ? 0 : Number(data[0].data.F1),
-		lastUsed:
-			data[0].data.D === 'n/a' || !data[0].data.D
-				? '-'
-				: getLastUsedRelativeTime(Math.floor(Number(data[0].data.D) / 1000000)),
+		rate: getDisplayValue(dataMap.A),
+		latency: getDisplayValue(latencyInMs),
+		errorRate: getDisplayValue(dataMap.F1),
+		lastUsed: getDisplayValue(lastUsedFormatted),
 	};
 };
 
@@ -2599,17 +2409,12 @@ export const getFormattedEndPointStatusCodeData = (
 	if (!data) return [];
 	return data.map((row) => ({
 		key: v4(),
-		statusCode:
-			row.data.response_status_code === 'n/a' ||
-			row.data.response_status_code === undefined
-				? '-'
-				: row.data.response_status_code,
-		count: row.data.A === 'n/a' || row.data.A === undefined ? '-' : row.data.A,
-		rate: row.data.C === 'n/a' || row.data.C === undefined ? '-' : row.data.C,
-		p99Latency:
-			row.data.B === 'n/a' || row.data.B === undefined
-				? '-'
-				: Math.round(Number(row.data.B) / 1000000), // Convert from nanoseconds to milliseconds,
+		statusCode: getDisplayValue(row.data.response_status_code),
+		count: isEmptyFilterValue(row.data.A) ? '-' : (row.data.A as number),
+		rate: isEmptyFilterValue(row.data.C) ? '-' : (row.data.C as number),
+		p99Latency: isEmptyFilterValue(row.data.B)
+			? '-'
+			: Math.round(Number(row.data.B) / 1000000),
 	}));
 };
 
@@ -2670,7 +2475,9 @@ export const endPointStatusCodeColumns: ColumnType<EndPointStatusCodeData>[] = [
 				b.p99Latency === '-' || b.p99Latency === 'n/a' ? 0 : Number(b.p99Latency);
 			return p99LatencyA - p99LatencyB;
 		},
-		render: (latency: number): ReactNode => <span>{latency || '-'}ms</span>,
+		render: (latency: number | string): ReactNode => (
+			<span>{latency !== '-' ? `${latency}ms` : '-'}</span>
+		),
 	},
 ];
 
@@ -3144,12 +2951,12 @@ export const getFormattedEndPointStatusCodeChartData = (
 export const END_POINT_DETAILS_QUERY_KEYS_ARRAY = [
 	REACT_QUERY_KEY.GET_ENDPOINT_METRICS_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_DATA,
-	REACT_QUERY_KEY.GET_ENDPOINT_RATE_OVER_TIME_DATA,
-	REACT_QUERY_KEY.GET_ENDPOINT_LATENCY_OVER_TIME_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_DROPDOWN_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_DEPENDENT_SERVICES_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_BAR_CHARTS_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_LATENCY_BAR_CHARTS_DATA,
+	REACT_QUERY_KEY.GET_ENDPOINT_RATE_OVER_TIME_DATA,
+	REACT_QUERY_KEY.GET_ENDPOINT_LATENCY_OVER_TIME_DATA,
 ];
 
 export const getAllEndpointsWidgetData = (
