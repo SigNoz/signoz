@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 	"math"
 	"net/http"
 	"sort"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
