@@ -467,7 +467,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
 		lbls := labels.NewBuilder(labels.Labels{})
 		if !r.lastTimestampWithDatapoints.IsZero() {
-			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
+			lbls.Set(ruletypes.LabelLastSeen, r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
 		}
 		resultVector = append(resultVector, ruletypes.Sample{
 			Metric:    lbls.Labels(),
@@ -544,7 +544,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 		r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
 		lbls := labels.NewBuilder(labels.Labels{})
 		if !r.lastTimestampWithDatapoints.IsZero() {
-			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
+			lbls.Set(ruletypes.LabelLastSeen, r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
 		}
 		resultVector = append(resultVector, ruletypes.Sample{
 			Metric:    lbls.Labels(),

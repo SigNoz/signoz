@@ -1,5 +1,12 @@
 package ruletypes
 
-const CriticalThresholdName = "CRITICAL"
-const LabelThresholdName = "threshold.name"
-const LabelRuleId = "ruleId"
+const (
+	CriticalThresholdName = "critical"
+	ErrorThresholdName    = "error"
+	WarningThresholdName  = "warning"
+	InfoThresholdName     = "info"
+	LabelThresholdName    = "threshold.name"
+	LabelSeverityName     = "severity"
+	LabelLastSeen         = "lastSeen"
+	LabelRuleId           = "ruleId"
+)
