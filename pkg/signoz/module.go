@@ -22,6 +22,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
+	"github.com/SigNoz/signoz/pkg/modules/services"
+	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
@@ -32,6 +34,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
@@ -51,6 +54,7 @@ type Modules struct {
 	RawDataExport  rawdataexport.Module
 	AuthDomain     authdomain.Module
 	Session        session.Module
+	Services       services.Module
 	SpanPercentile spanpercentile.Module
 }
 
@@ -63,6 +67,7 @@ func NewModules(
 	alertmanager alertmanager.Alertmanager,
 	analytics analytics.Analytics,
 	querier querier.Querier,
+	telemetryStore telemetrystore.TelemetryStore,
 	authNs map[authtypes.AuthNProvider]authn.AuthN,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
@@ -85,5 +90,6 @@ func NewModules(
 		AuthDomain:     implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)),
 		Session:        implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
 		SpanPercentile: implspanpercentile.NewModule(querier, providerSettings),
+		Services:       implservices.NewModule(querier, telemetryStore),
 	}
 }
