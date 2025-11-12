@@ -90,8 +90,9 @@ export function QueryTable({
 			column: any,
 			tableColumns: any,
 		): void => {
-			e.stopPropagation();
 			if (isQueryTypeBuilder && enableDrillDown) {
+				e.stopPropagation();
+
 				onClick({ x: e.clientX, y: e.clientY }, { record, column, tableColumns });
 			}
 		},
