@@ -1,7 +1,6 @@
 package querier
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"reflect"
@@ -15,6 +14,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/bytedance/sonic"
 )
 
 var (
@@ -374,6 +374,8 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 
 	var outRows []*qbtypes.RawRow
 
+	totalUnmarshalTime := time.Duration(0)
+
 	for rows.Next() {
 		// fresh copy of the scan slice (otherwise the driver reuses pointers)
 		scan := make([]any, colCnt)
@@ -401,14 +403,14 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 				case []byte:
 					if len(x) > 0 {
 						var v any
-						if err := json.Unmarshal(x, &v); err == nil {
+						if err := sonic.Unmarshal(x, &v); err == nil {
 							val = v
 						}
 					}
 				case string:
 					if x != "" {
 						var v any
-						if err := json.Unmarshal([]byte(x), &v); err == nil {
+						if err := sonic.Unmarshal([]byte(x), &v); err == nil {
 							val = v
 						}
 					}
@@ -438,6 +440,8 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("total unmarshal time: %s\n", totalUnmarshalTime)
 
 	return &qbtypes.RawData{
 		QueryName: queryName,
