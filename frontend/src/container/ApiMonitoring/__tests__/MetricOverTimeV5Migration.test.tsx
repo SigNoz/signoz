@@ -33,7 +33,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 			expect(queryData).not.toHaveProperty('filters.items');
 		});
 
-		it('uses new domain filter format: (net.peer.name OR url.full)', () => {
+		it('uses new domain filter format: (net.peer.name OR server.address)', () => {
 			const widget = getRateOverTimeWidgetData(
 				mockDomainName,
 				mockEndpointName,
@@ -44,7 +44,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			// Verify EXACT new filter format with OR operator
 			expect(queryData?.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR url.full = '${mockDomainName}')`,
+				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
 			);
 
 			// Endpoint name is used in legend, not filter
@@ -90,7 +90,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			// Verify domain filter is present
 			expect(queryData?.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR url.full = '${mockDomainName}')`,
+				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
 			);
 
 			// Verify custom filters are merged into the expression
@@ -120,7 +120,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 			expect(queryData).not.toHaveProperty('filters.items');
 		});
 
-		it('uses new domain filter format: (net.peer.name OR url.full)', () => {
+		it('uses new domain filter format: (net.peer.name OR server.address)', () => {
 			const widget = getLatencyOverTimeWidgetData(
 				mockDomainName,
 				mockEndpointName,
@@ -132,7 +132,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 			// Verify EXACT new filter format with OR operator
 			expect(queryData.filter).toBeDefined();
 			expect(queryData?.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR url.full = '${mockDomainName}')`,
+				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
 			);
 
 			// Endpoint name is used in legend, not filter
@@ -166,12 +166,8 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			// Verify domain filter is present
 			expect(queryData?.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR url.full = '${mockDomainName}')`,
+				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}') service.name = 'user-service'`,
 			);
-
-			// Verify custom filters are merged into the expression
-			expect(queryData?.filter?.expression).toContain('service.name');
-			expect(queryData?.filter?.expression).toContain('user-service');
 		});
 	});
 });
