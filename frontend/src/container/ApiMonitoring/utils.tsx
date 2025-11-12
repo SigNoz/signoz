@@ -2705,6 +2705,7 @@ export const statusCodeWidgetInfo = [
 interface EndPointDropDownResponseRow {
 	data: {
 		[SPAN_ATTRIBUTES.URL_PATH]: string;
+		'url.full': string;
 		A: number;
 	};
 }
@@ -2721,8 +2722,8 @@ export const getFormattedEndPointDropDownData = (
 	if (!data) return [];
 	return data.map((row) => ({
 		key: v4(),
-		label: row.data[SPAN_ATTRIBUTES.URL_PATH] || '-',
-		value: row.data[SPAN_ATTRIBUTES.URL_PATH] || '-',
+		label: row.data[SPAN_ATTRIBUTES.URL_PATH] || row.data['url.full'] || '-',
+		value: row.data[SPAN_ATTRIBUTES.URL_PATH] || row.data['url.full'] || '-',
 	}));
 };
 
