@@ -11,7 +11,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-var arraySep = jsontypeexporter.ArraySeparator
+var (
+	arraySep      = jsontypeexporter.ArraySeparator
+	arrayAnyIndex = "[*]."
+)
 
 // Node is now a tree structure representing the complete JSON path traversal
 // that precomputes all possible branches and their types
@@ -113,8 +116,9 @@ func (node *Node) decideElemType(operator qbtypes.FilterOperator, valueType tele
 		return false, valueType
 	}
 	if hasArray {
-		return true, valueType
+		return true, telemetrytypes.ScalerTypeToArrayType[valueType]
 	}
+
 	return false, valueType
 }
 
@@ -207,15 +211,23 @@ func IsFloatActuallyInt(f float64) bool {
 	return float64(int64(f)) == f
 }
 
+type PlanBuilder struct {
+	parts      []string
+	operator   qbtypes.FilterOperator
+	value      any
+	getTypes   func(path string) []telemetrytypes.JSONDataType
+	isPromoted bool
+}
+
 // buildPlan recursively builds the path plan tree
-func (b *JSONQueryBuilder) buildPlan(parts []string, index int, operator qbtypes.FilterOperator, value any, parent *Node, isDynArrChild bool) *Node {
-	if index >= len(parts) {
+func (pb *PlanBuilder) buildPlan(index int, parent *Node, isDynArrChild bool) *Node {
+	if index >= len(pb.parts) {
 		return nil
 	}
 
-	part := parts[index]
-	pathSoFar := strings.Join(parts[:index+1], arraySep)
-	isTerminal := index == len(parts)-1
+	part := pb.parts[index]
+	pathSoFar := strings.Join(pb.parts[:index+1], arraySep)
+	isTerminal := index == len(pb.parts)-1
 
 	// Calculate progression parameters based on parent's values
 	var maxTypes, maxPaths int
@@ -241,7 +253,7 @@ func (b *JSONQueryBuilder) buildPlan(parts []string, index int, operator qbtypes
 		Name:            part,
 		IsArray:         !isTerminal, // Only non-terminal parts are arrays
 		IsTerminal:      isTerminal,
-		AvailableTypes:  b.getTypeSet(pathSoFar),
+		AvailableTypes:  pb.getTypes(pathSoFar),
 		Branches:        make(map[BranchType]*Node),
 		Parent:          parent,
 		MaxDynamicTypes: maxTypes,
@@ -253,15 +265,51 @@ func (b *JSONQueryBuilder) buildPlan(parts []string, index int, operator qbtypes
 
 	// Configure terminal if this is the last part
 	if isTerminal {
-		node.configureTerminal(operator, value)
+		node.configureTerminal(pb.operator, pb.value)
 	} else {
 		if hasJSON {
-			node.Branches[BranchJSON] = b.buildPlan(parts, index+1, operator, value, node, false)
+			node.Branches[BranchJSON] = pb.buildPlan(index+1, node, false)
 		}
 		if hasDynamic {
-			node.Branches[BranchDynamic] = b.buildPlan(parts, index+1, operator, value, node, true)
+			node.Branches[BranchDynamic] = pb.buildPlan(index+1, node, true)
 		}
 	}
 
 	return node
+}
+
+// PlanJSON builds a tree structure representing the complete JSON path traversal
+// that precomputes all possible branches and their types
+func PlanJSON(path string, operator qbtypes.FilterOperator, value any, isPromoted bool, getTypes func(path string) []telemetrytypes.JSONDataType) []*Node {
+	// TODO: PlanJSONPath requires the Start and End of the Query to select correct column between promoted and body_v2 using
+	// creation time in distributed_promoted_paths
+	path = strings.ReplaceAll(path, arrayAnyIndex, arraySep)
+	parts := strings.Split(path, arraySep)
+
+	pb := &PlanBuilder{
+		parts:      parts,
+		operator:   operator,
+		value:      value,
+		getTypes:   getTypes,
+		isPromoted: isPromoted,
+	}
+	plans := []*Node{
+		pb.buildPlan(0, &Node{
+			Name:            "body_v2",
+			isRoot:          true,
+			MaxDynamicTypes: 32,
+			MaxDynamicPaths: 0,
+		}, false),
+	}
+
+	if isPromoted {
+		plans = append(plans, pb.buildPlan(0, &Node{
+			Name:            "promoted",
+			isRoot:          true,
+			MaxDynamicTypes: 32,
+			MaxDynamicPaths: 1024,
+		}, true))
+	}
+
+	return plans
 }

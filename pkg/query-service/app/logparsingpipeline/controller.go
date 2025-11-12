@@ -141,7 +141,7 @@ func (ic *LogParsingPipelineController) getDefaultPipelines() ([]pipelinetypes.G
 		preprocessingPipeline := pipelinetypes.GettablePipeline{
 			StoreablePipeline: pipelinetypes.StoreablePipeline{
 				Name:    "Default Pipeline - PreProcessing Body",
-				Alias:   "PreprocessingBodyDefault",
+				Alias:   "NormalizeBodyDefault",
 				Enabled: true,
 			},
 			Filter: &v3.FilterSet{
@@ -157,7 +157,7 @@ func (ic *LogParsingPipelineController) getDefaultPipelines() ([]pipelinetypes.G
 			Config: []pipelinetypes.PipelineOperator{
 				{
 					ID:      uuid.NewString(),
-					Type:    "preprocessor",
+					Type:    "normalize",
 					Enabled: true,
 					If:      "body != nil",
 				},

@@ -252,7 +252,7 @@ func (b *JSONQueryBuilder) BuildCondition(ctx context.Context, key *telemetrytyp
 	operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 
 	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
-	plan := b.PlanJSONPath(path, operator, value)
+	plan := PlanJSON(path, operator, value, b.IsPromoted(path), b.getTypeSet)
 
 	conditions := []string{}
 	for _, plan := range plan {
@@ -263,34 +263,6 @@ func (b *JSONQueryBuilder) BuildCondition(ctx context.Context, key *telemetrytyp
 		conditions = append(conditions, condition)
 	}
 	return sb.Or(conditions...), nil
-}
-
-// PlanJSONPath builds a tree structure representing the complete JSON path traversal
-// that precomputes all possible branches and their types
-func (b *JSONQueryBuilder) PlanJSONPath(path string, operator qbtypes.FilterOperator, value any) []*Node {
-	// TODO: PlanJSONPath requires the Start and End of the Query to select correct column between promoted and body_v2 using
-	// creation time in distributed_promoted_paths
-
-	parts := strings.Split(path, arraySep)
-	plans := []*Node{
-		b.buildPlan(parts, 0, operator, value, &Node{
-			Name:            "body_v2",
-			isRoot:          true,
-			MaxDynamicTypes: 32,
-			MaxDynamicPaths: 0,
-		}, false),
-	}
-
-	if b.IsPromoted(path) {
-		plans = append(plans, b.buildPlan(parts, 0, operator, value, &Node{
-			Name:            "promoted",
-			isRoot:          true,
-			MaxDynamicTypes: 32,
-			MaxDynamicPaths: 1024,
-		}, true))
-	}
-
-	return plans
 }
 
 // emitPlannedCondition handles paths with array traversal
@@ -532,7 +504,7 @@ type GroupByArrayJoinInfo struct {
 func (b *JSONQueryBuilder) BuildGroupBy(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*GroupByArrayJoinInfo, error) {
 	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
 
-	plan := b.PlanJSONPath(path, qbtypes.FilterOperatorExists, nil)
+	plan := PlanJSON(path, qbtypes.FilterOperatorExists, nil, b.IsPromoted(path), b.getTypeSet)
 	if len(plan) == 0 {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
 			"Could not find any valid paths for: %s", path)
