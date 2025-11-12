@@ -89,6 +89,8 @@ export const useQueryOperations: UseQueryOperations = ({
 					name: metricName,
 					type: metricType,
 				});
+			} else {
+				setPreviousMetricInfo(null);
 			}
 		}
 	}, [query]);
@@ -295,7 +297,6 @@ export const useQueryOperations: UseQueryOperations = ({
 
 				if (!isEditMode) {
 					// Get current metric info
-					const currentMetricName = newQuery.aggregateAttribute?.key || '';
 					const currentMetricType = newQuery.aggregateAttribute?.type || '';
 
 					const prevMetricType = previousMetricInfo?.type
@@ -377,14 +378,6 @@ export const useQueryOperations: UseQueryOperations = ({
 								},
 							];
 						}
-					}
-
-					// Update the tracked metric info for next comparison only if we have valid data
-					if (currentMetricName && currentMetricType) {
-						setPreviousMetricInfo({
-							name: currentMetricName,
-							type: currentMetricType,
-						});
 					}
 				}
 			}
