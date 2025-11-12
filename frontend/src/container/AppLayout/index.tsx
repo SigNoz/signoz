@@ -836,7 +836,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					})}
 					data-overlayscrollbars-initialize
 				>
-					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />} key={pathname}>
 						<LayoutContent data-overlayscrollbars-initialize>
 							<OverlayScrollbar>
 								<ChildrenContainer>

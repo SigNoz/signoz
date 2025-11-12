@@ -245,5 +245,81 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 				}),
 			);
 		});
+
+		it('should reset operators when going from gauge -> empty -> gauge', () => {
+			// Start with a gauge metric
+			const gaugeQuery: IBuilderQuery = {
+				...defaultMockQuery,
+				aggregateAttribute: {
+					key: 'original_gauge',
+					dataType: DataTypes.Float64,
+					type: ATTRIBUTE_TYPES.GAUGE,
+				} as BaseAutocompleteData,
+				aggregations: [
+					{
+						timeAggregation: MetricAggregateOperator.COUNT_DISTINCT,
+						metricName: 'original_gauge',
+						temporality: '',
+						spaceAggregation: '',
+					},
+				],
+			};
+			const { result, rerender } = renderHook(
+				({ query }) =>
+					useQueryOperations({
+						query,
+						index: 0,
+						entityVersion: ENTITY_VERSION_V5,
+					}),
+				{
+					initialProps: { query: gaugeQuery },
+				},
+			);
+
+			// Re-render with empty attribute
+			const emptyAttribute: BaseAutocompleteData = {
+				key: '',
+				dataType: DataTypes.Float64,
+				type: '',
+			};
+			const emptyQuery: IBuilderQuery = {
+				...defaultMockQuery,
+				aggregateAttribute: emptyAttribute,
+				aggregations: [
+					{
+						timeAggregation: MetricAggregateOperator.COUNT,
+						metricName: '',
+						temporality: '',
+						spaceAggregation: MetricAggregateOperator.SUM,
+					},
+				],
+			};
+			rerender({ query: emptyQuery });
+
+			// Change to a new gauge metric
+			const newGaugeAttribute: BaseAutocompleteData = {
+				key: 'new_gauge',
+				dataType: DataTypes.Float64,
+				type: ATTRIBUTE_TYPES.GAUGE,
+			};
+			act(() => {
+				result.current.handleChangeAggregatorAttribute(newGaugeAttribute);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenLastCalledWith(
+				0,
+				expect.objectContaining({
+					aggregateAttribute: newGaugeAttribute,
+					aggregations: [
+						{
+							timeAggregation: MetricAggregateOperator.AVG,
+							metricName: 'new_gauge',
+							temporality: '',
+							spaceAggregation: '',
+						},
+					],
+				}),
+			);
+		});
 	});
 });
