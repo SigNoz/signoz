@@ -3,6 +3,7 @@
 /* eslint-disable prefer-destructuring */
 /* eslint-disable sonarjs/no-duplicate-string */
 import { render, screen, waitFor } from '@testing-library/react';
+import { TraceAggregation } from 'api/v5/v5';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -120,7 +121,10 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 			const queryA = queryData.find((q: any) => q.queryName === 'A');
 			expect(queryA).toBeDefined();
 			expect(queryA.dataSource).toBe('traces');
-			expect(queryA.aggregateOperator).toBe('count');
+			expect(queryA.aggregations?.[0]).toBeDefined();
+			expect((queryA.aggregations?.[0] as TraceAggregation)?.expression).toBe(
+				'count()',
+			);
 			// Verify exact domain filter expression structure
 			expect(queryA.filter.expression).toContain(
 				"(net.peer.name = '0.0.0.0' OR server.address = '0.0.0.0')",
@@ -133,7 +137,10 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 			const queryB = queryData.find((q: any) => q.queryName === 'B');
 			expect(queryB).toBeDefined();
 			expect(queryB.aggregateOperator).toBe('p99');
-			expect(queryB.aggregateAttribute.key).toBe('duration_nano');
+			expect(queryB.aggregations?.[0]).toBeDefined();
+			expect((queryB.aggregations?.[0] as TraceAggregation)?.expression).toBe(
+				'p99(duration_nano)',
+			);
 			// Verify exact domain filter expression structure
 			expect(queryB.filter.expression).toContain(
 				"(net.peer.name = '0.0.0.0' OR server.address = '0.0.0.0')",
@@ -146,13 +153,21 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 			expect(queryC.filter.expression).toContain(
 				"(net.peer.name = '0.0.0.0' OR server.address = '0.0.0.0')",
 			);
+			expect(queryC.aggregations?.[0]).toBeDefined();
+			expect((queryC.aggregations?.[0] as TraceAggregation)?.expression).toBe(
+				'count()',
+			);
+
 			expect(queryC.filter.expression).toContain('has_error = true');
 
 			// Verify Query D - max timestamp
 			const queryD = queryData.find((q: any) => q.queryName === 'D');
 			expect(queryD).toBeDefined();
 			expect(queryD.aggregateOperator).toBe('max');
-			expect(queryD.aggregateAttribute.key).toBe('timestamp');
+			expect(queryD.aggregations?.[0]).toBeDefined();
+			expect((queryD.aggregations?.[0] as TraceAggregation)?.expression).toBe(
+				'max(timestamp)',
+			);
 			// Verify exact domain filter expression structure
 			expect(queryD.filter.expression).toContain(
 				"(net.peer.name = '0.0.0.0' OR server.address = '0.0.0.0')",
