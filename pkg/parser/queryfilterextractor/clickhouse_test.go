@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestClickHouseFilterExtractor_Extract(t *testing.T) {
+func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 	extractor := NewClickHouseFilterExtractor()
 
 	tests := []struct {
@@ -291,13 +291,13 @@ func TestClickHouseFilterExtractor_Extract(t *testing.T) {
 			name:        "CH46 - WINDOW function",
 			query:       `SELECT region, avg(value) FROM metrics WHERE metric_name='cpu' WINDOW w AS (PARTITION BY region ORDER BY timestamp)`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{"region"},
+			wantGroupBy: []string{},
 		},
 		{
 			name:        "CH47 - Window function inline",
 			query:       `SELECT region, avg(value) OVER (PARTITION BY region) FROM metrics WHERE metric_name='cpu'`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{"region"},
+			wantGroupBy: []string{},
 		},
 		{
 			name:        "CH48 - CASE expression",
@@ -421,6 +421,520 @@ func TestClickHouseFilterExtractor_Extract(t *testing.T) {
 			}
 			if !reflect.DeepEqual(gotGroupBy, wantGroupBy) {
 				t.Errorf("Extract() GroupBy = %v, want %v, query %s", gotGroupBy, wantGroupBy, tt.query)
+			}
+		})
+	}
+}
+
+func TestClickHouseFilterExtractor_SimpleCTEGroupByQueries(t *testing.T) {
+	extractor := NewClickHouseFilterExtractor()
+
+	tests := []struct {
+		name        string
+		query       string
+		wantMetrics []string
+		wantGroupBy []string
+		wantError   bool
+	}{
+		{
+			name:        "Basic test - no CTE",
+			query:       `SELECT * FROM metrics WHERE metric_name = 'cpu_usage' GROUP BY region`,
+			wantMetrics: []string{"cpu_usage"},
+			wantGroupBy: []string{"region"},
+		},
+		{
+			name: "Simple CTE with GROUP BY",
+			query: `WITH aggregated AS (
+				SELECT region, sum(value) AS total
+				FROM metrics
+				WHERE metric_name = 'cpu_usage'
+				GROUP BY region
+			)
+			SELECT * FROM aggregated`,
+			wantMetrics: []string{"cpu_usage"},
+			wantGroupBy: []string{"region"},
+		},
+		{
+			name: "CTE chain - should return last GROUP BY",
+			query: `WITH step1 AS (
+				SELECT service, ts, value
+				FROM metrics
+				WHERE metric_name = 'requests'
+				GROUP BY service, ts
+			),
+			step2 AS (
+				SELECT ts, avg(value) AS avg_value
+				FROM step1
+				GROUP BY ts
+			)
+			SELECT * FROM step2`,
+			wantMetrics: []string{"requests"},
+			wantGroupBy: []string{"ts"},
+		},
+		{
+			name: "Outer GROUP BY overrides CTE GROUP BY",
+			query: `WITH cte AS (
+				SELECT region, service, value
+				FROM metrics
+				WHERE metric_name = 'memory'
+				GROUP BY region, service
+			)
+			SELECT region, sum(value)
+			FROM cte
+			GROUP BY region`,
+			wantMetrics: []string{"memory"},
+			wantGroupBy: []string{"region"},
+		},
+		{
+			name: "Nested subquery",
+			query: `SELECT ts, value
+			FROM (
+				SELECT le, ts, sum(per_series_value) AS value
+				FROM (
+					SELECT le, ts, value AS per_series_value
+					FROM metrics
+					WHERE metric_name = 'histogram'
+					GROUP BY le, ts, value
+				)
+				GROUP BY le, ts
+			)
+			GROUP BY ts`,
+			wantMetrics: []string{"histogram"},
+			wantGroupBy: []string{"ts"},
+		},
+		{
+			name: "CTE without GROUP BY - should extract from outer",
+			query: `WITH cte AS (
+				SELECT region, service, value
+				FROM metrics
+				WHERE metric_name = 'disk'
+			)
+			SELECT region, sum(value)
+			FROM cte
+			GROUP BY region`,
+			wantMetrics: []string{"disk"},
+			wantGroupBy: []string{"region"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := extractor.Extract(tt.query)
+
+			if (err != nil) != tt.wantError {
+				t.Errorf("Extract() error = %v, wantError %v", err, tt.wantError)
+				return
+			}
+
+			if err != nil {
+				return
+			}
+
+			// Sort results for consistent comparison
+			sort.Strings(result.MetricNames)
+			sort.Strings(result.GroupBy)
+			sort.Strings(tt.wantMetrics)
+			sort.Strings(tt.wantGroupBy)
+
+			if !reflect.DeepEqual(result.MetricNames, tt.wantMetrics) {
+				t.Errorf("Extract() MetricNames = %v, want %v", result.MetricNames, tt.wantMetrics)
+			}
+
+			if !reflect.DeepEqual(result.GroupBy, tt.wantGroupBy) {
+				t.Errorf("Extract() GroupBy = %v, want %v", result.GroupBy, tt.wantGroupBy)
+			}
+		})
+	}
+}
+
+func TestClickHouseFilterExtractor_NestedComplexCTEGroupByQueries(t *testing.T) {
+	extractor := NewClickHouseFilterExtractor()
+
+	tests := []struct {
+		name        string
+		query       string
+		wantMetrics []string
+		wantGroupBy []string
+		wantError   bool
+	}{
+		{
+			name: "TC1 - CTE with GROUP BY, outer SELECT without GROUP BY",
+			query: `
+WITH __spatial_aggregation_cte AS    (
+        SELECT            
+        toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,
+            service,
+            op,
+            sum(value) / 60 AS value        
+            FROM signoz_metrics.distributed_samples_v4 AS points
+        INNER JOIN   (
+            SELECT                
+            fingerprint,
+                JSONExtractString(labels, 'service.name') AS service,
+                JSONExtractString(labels, 'operation') AS op
+            FROM signoz_metrics.time_series_v4
+            WHERE (metric_name IN ('app_requests_total')) AND (unix_milli >= 1731340800000) AND (unix_milli <= 1731344400000) AND (LOWER(temporality) LIKE LOWER('delta')) AND (__normalized = false)
+            GROUP BY                
+            fingerprint,
+                service,
+                op
+        ) AS filtered_time_series 
+        ON points.fingerprint = filtered_time_series.fingerprint
+        WHERE (metric_name IN ('app_requests_total')) AND (unix_milli >= 1731340800000) AND (unix_milli < 1731344400000)
+        GROUP BY            
+        ts,
+            service,
+            op
+    )
+SELECT ts, service, value FROM __spatial_aggregation_cte
+			`,
+			wantMetrics: []string{"app_requests_total"},
+			wantGroupBy: []string{"ts", "service", "op"},
+		},
+		{
+			name: "TC2 - CTE chain with multiple CTEs",
+			query: `
+		WITH    __temporal_aggregation_cte AS    (
+		        SELECT
+		        fingerprint,
+		            toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,
+		            avg(value) AS per_series_value
+		        FROM signoz_metrics.distributed_samples_v4 AS points
+		        INNER JOIN        (
+		            SELECT fingerprint
+		            FROM signoz_metrics.time_series_v4
+		            WHERE (metric_name IN ('node.cpu.usage')) AND (unix_milli >= 1731427200000) AND (unix_milli <= 1731430800000) AND (LOWER(temporality) LIKE LOWER('cumulative')) AND (__normalized = false)
+		            GROUP BY fingerprint
+		        ) AS filtered_time_series
+		        ON points.fingerprint = filtered_time_series.fingerprint
+		        WHERE (metric_name IN ('node.cpu.usage')) AND (unix_milli >= 1731427200000) AND (unix_milli < 1731430800000)
+		        GROUP BY
+		        fingerprint,
+		            ts
+		        ORDER BY
+		        fingerprint ASC,
+		            ts ASC
+		            ),
+		    __spatial_aggregation_cte AS    (
+		        SELECT
+		        ts,
+		            avg(per_series_value) AS value
+		            FROM __temporal_aggregation_cte
+		        WHERE isNaN(per_series_value) = 0
+		        GROUP BY ts
+		    )
+		SELECT * FROM __spatial_aggregation_cte;
+					`,
+			wantMetrics: []string{"node.cpu.usage"},
+			wantGroupBy: []string{"ts"},
+		},
+		{
+			name: "TC3 - Outer GROUP BY overrides CTE GROUP BY",
+			query: `
+		WITH __spatial_aggregation_cte AS (
+		    SELECT
+		        toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,
+		        svc,
+		        le,
+		        sum(value)/60 AS value
+		        FROM signoz_metrics.distributed_samples_v4 AS points
+		    INNER JOIN (
+		        SELECT
+		            fingerprint,
+		            JSONExtractString(labels, 'service.name') AS svc,
+		            JSONExtractString(labels, 'le') AS le
+		        FROM signoz_metrics.time_series_v4
+		        WHERE
+		            metric_name IN ('http_request_duration.bucket')
+		            AND unix_milli >= 1731513600000
+		            AND unix_milli <= 1731518880000
+		            AND LOWER(temporality) LIKE LOWER('delta')
+		            AND __normalized = false
+		            GROUP BY
+		            fingerprint,
+		            svc,
+		            le
+		    ) AS filtered_time_series
+		    ON points.fingerprint = filtered_time_series.fingerprint
+		    WHERE
+		        metric_name IN ('http_request_duration.bucket')
+		        AND unix_milli >= 1731517140000
+		        AND unix_milli < 1731518880000
+		        GROUP BY
+		        ts,
+		        svc,
+		        le
+		)
+		SELECT
+		    ts,
+		    svc,
+		    histogramQuantile(
+		        arrayMap(x -> toFloat64(x), groupArray(le)),
+		        groupArray(value),
+		        0.900    ) AS value
+		        FROM __spatial_aggregation_cte
+		GROUP BY
+		    svc,
+		    ts
+					`,
+			wantMetrics: []string{"http_request_duration.bucket"},
+			wantGroupBy: []string{"svc", "ts"},
+		},
+		{
+			name: "TC4 - Nested subquery with outer GROUP BY override",
+			query: `
+		SELECT
+		    ts,
+		    histogramQuantile(
+		        arrayMap(x -> toFloat64(x), groupArray(le)),
+		        groupArray(value),
+		        0.990    ) AS value
+		    FROM (
+		    SELECT
+		        le,
+		        ts,
+		        sum(per_series_value) AS value    FROM (
+		        SELECT
+		            le,
+		            ts,
+		            If(
+		                (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0,
+		                nan,
+		                If(
+		                    (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400,
+		                    nan,
+		                    (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) /
+		                    (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)
+		                )
+		            ) AS per_series_value
+		        FROM (
+		            SELECT
+		                fingerprint,
+		                any(le) AS le,
+		                toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) AS ts,
+		                max(value) AS per_series_value
+		            FROM signoz_metrics.distributed_samples_v4
+		            INNER JOIN (
+		                SELECT DISTINCT
+		                    JSONExtractString(labels, 'le') AS le,
+		                    fingerprint
+		                FROM signoz_metrics.time_series_v4_1day
+		                WHERE
+		                    metric_name IN ['signoz_latency_bucket']
+		                    AND temporality = 'Cumulative'                    AND __normalized = false                    AND unix_milli >= 1650931200000                    AND unix_milli < 1651078380000                    AND like(JSONExtractString(labels, 'service_name'), '%frontend%')
+		            ) AS filtered_time_series
+		            USING fingerprint
+		            WHERE
+		                metric_name IN ['signoz_latency_bucket']
+		                AND unix_milli >= 1650991980000                AND unix_milli < 1651078380000                AND bitAnd(flags, 1) = 0            GROUP BY
+		                fingerprint,
+		                ts
+		            ORDER BY
+		                fingerprint,
+		                ts
+		        )
+		        WINDOW rate_window AS (
+		            PARTITION BY fingerprint
+		            ORDER BY fingerprint, ts
+		        )
+		    )
+		    WHERE isNaN(per_series_value) = 0
+		    GROUP BY
+		        le,
+		        ts
+		    ORDER BY
+		        le ASC,
+		        ts ASC)
+		GROUP BY ts
+		ORDER BY ts ASC
+					`,
+			wantMetrics: []string{"signoz_latency_bucket"},
+			wantGroupBy: []string{"ts"},
+		},
+		{
+			name: "TC5 - Multiple CTEs with outer GROUP BY",
+			query: `
+		WITH  toUInt64(1650991980000) AS start_ms,
+		  toUInt64(1651078380000)   AS end_ms,
+		  toUInt64(60) AS bucket_s
+		  , job_last AS (
+		  SELECT    toStartOfInterval(
+		      toDateTime(intDiv(s.unix_milli,1000)),
+		      toIntervalSecond(bucket_s)
+		    ) AS ts,
+		    JSONExtractString(tsv.labels,'k8s.job.name') AS job,
+		    maxIf(s.value, s.metric_name='k8s.job.failed_pods')             AS failed,
+		    maxIf(s.value, s.metric_name='k8s.job.successful_pods')         AS success,
+		    maxIf(s.value, s.metric_name='k8s.job.desired_successful_pods') AS desired
+		  FROM signoz_metrics.distributed_samples_v4 AS s
+		  JOIN signoz_metrics.time_series_v4_1day AS tsv
+		    ON s.fingerprint = tsv.fingerprint
+		  WHERE s.metric_name IN (
+		          'k8s.job.failed_pods',
+		          'k8s.job.successful_pods',
+		          'k8s.job.desired_successful_pods'        )
+		    AND s.unix_milli >= start_ms AND s.unix_milli < end_ms
+		  GROUP BY ts, job
+		)
+		, flags AS (
+		  SELECT
+		  ts,
+		    job,
+		    failed,
+		    success,
+		    desired,
+		    (success = desired AND desired > 0) AS complete_now
+		  FROM job_last
+		), deltas AS (
+		  SELECT    curr.ts,
+		    curr.job,
+		    greatest(curr.failed  - ifNull(prev.failed,  0), 0) AS d_failed,
+		    greatest(curr.success - ifNull(prev.success, 0), 0) AS d_success,
+		    greatest(curr.desired - ifNull(prev.desired, 0), 0) AS d_desired
+		  FROM flags AS curr
+		  LEFT JOIN flags AS prev
+		    ON curr.job = prev.job
+		   AND prev.ts  = curr.ts - toIntervalSecond(bucket_s)
+		), job_first_success AS (
+		  SELECT job, min(ts) AS first_success_ts
+		  FROM flags
+		  WHERE complete_now
+		  GROUP BY job
+		)
+		SELECT  d.ts,
+		  sum(
+		    multiIf(
+		      greatest(d_failed + d_success - d_desired, 0) > 0      AND (
+		        js.first_success_ts IS NULL
+		        OR js.first_success_ts < d.ts
+		        ),
+		      greatest(d_failed + d_success - d_desired, 0),
+		      0    )
+		  ) AS value FROM deltas AS d
+		LEFT JOIN job_first_success AS js
+		  ON d.job = js.job
+		GROUP BY d.ts
+		ORDER BY d.ts;
+					`,
+			wantMetrics: []string{"k8s.job.failed_pods", "k8s.job.successful_pods", "k8s.job.desired_successful_pods"},
+			wantGroupBy: []string{"ts"},
+		},
+		{
+			name: "TC6 - Outer GROUP BY with ClickHouse dialect (backticks)",
+			query: `
+		SELECT
+		    ` + "`os.type`" + `,
+		    state,
+		    ` + "`host_name`" + `,
+		    ts,
+		    max(per_series_value) AS value FROM (
+		    SELECT
+		        fingerprint,
+		        any(` + "`os.type`" + `) AS ` + "`os.type`" + `,
+		        any(state) AS state,
+		        any(` + "`host_name`" + `) AS ` + "`host_name`" + `,
+		        toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) AS ts,
+		        max(value) AS per_series_value
+		    FROM signoz_metrics.distributed_samples_v4
+		    INNER JOIN (
+		        SELECT DISTINCT
+		            JSONExtractString(labels, 'os.type') AS ` + "`os.type`" + `,
+		            JSONExtractString(labels, 'state') AS state,
+		            JSONExtractString(labels, 'host_name') AS ` + "`host_name`" + `,
+		            fingerprint
+		        FROM signoz_metrics.time_series_v4_1day
+		        WHERE
+		            metric_name IN ['system.memory.usage']
+		            AND temporality = 'Unspecified'            AND __normalized = false            AND unix_milli >= 1650931200000            AND unix_milli < 1651078380000            AND JSONExtractString(labels, 'host.name') = 'signoz-host'    ) AS filtered_time_series
+		    USING fingerprint
+		    WHERE
+		        metric_name IN ['system.memory.usage']
+		        AND unix_milli >= 1650991980000        AND unix_milli < 1651078380000        AND bitAnd(flags, 1) = 0    GROUP BY
+		        fingerprint,
+		        ts
+		    ORDER BY
+		        fingerprint,
+		        ts
+		)
+		WHERE isNaN(per_series_value) = 0
+		GROUP BY
+		    ` + "`os.type`" + `,
+		    state,
+		    ` + "`host_name`" + `,
+		    ts
+		ORDER BY
+		    ` + "`os.type`" + ` DESC,
+		    state ASC,
+		    ` + "`host_name`" + ` ASC,
+		    ts ASC
+					`,
+			wantMetrics: []string{"system.memory.usage"},
+			wantGroupBy: []string{"os.type", "state", "host_name", "ts"},
+		},
+		{
+			name: "TC7 - Multiple CTEs with final outer GROUP BY",
+			query: `
+		WITH  toUInt64(1650991980000) AS start_ms,
+		  toUInt64(1651078380000)   AS end_ms,
+		  toUInt64(60) AS bucket_s , job_last AS (
+		  SELECT    toStartOfInterval(toDateTime(intDiv(s.unix_milli, 1000)), toIntervalSecond(bucket_s)) AS ts,
+		    JSONExtractString(tsv.labels, 'k8s.job.name') AS job,
+		    maxIf(s.value, s.metric_name = 'k8s.job.successful_pods')         AS max_success,
+		    maxIf(s.value, s.metric_name = 'k8s.job.desired_successful_pods') AS max_desired
+		  FROM signoz_metrics.distributed_samples_v4 AS s
+		  JOIN signoz_metrics.time_series_v4_1day AS tsv
+		    ON s.fingerprint = tsv.fingerprint
+		  WHERE s.metric_name IN ('k8s.job.successful_pods', 'k8s.job.desired_successful_pods')
+		    AND s.unix_milli >= start_ms AND s.unix_milli < end_ms
+		  GROUP BY ts, job
+		)
+		, flags AS (
+		  SELECT    ts,
+		    job,
+		    (max_success = max_desired AND max_desired > 0) AS complete_now
+		  FROM job_last
+		)
+		SELECT  curr.ts,
+		  sum(
+		    multiIf(
+		      curr.complete_now = 1      AND (prev.complete_now = 0 OR prev.complete_now IS NULL),
+		      1, 0
+		      )
+		  ) AS value FROM flags AS curr
+		LEFT JOIN flags AS prev
+		  ON curr.job = prev.job
+		  AND prev.ts = curr.ts - toIntervalSecond(bucket_s)
+		GROUP BY curr.ts
+		ORDER BY curr.ts;
+					`,
+			wantMetrics: []string{"k8s.job.successful_pods", "k8s.job.desired_successful_pods"},
+			wantGroupBy: []string{"ts"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := extractor.Extract(tt.query)
+
+			if err != nil {
+				if tt.wantError {
+					return
+				}
+				t.Errorf("Extract() error = %v, wantError %v", err, tt.wantError)
+				return
+			}
+
+			// Sort for comparison
+			gotMetrics := sortStrings(result.MetricNames)
+			wantMetrics := sortStrings(tt.wantMetrics)
+			gotGroupBy := sortStrings(result.GroupBy)
+			wantGroupBy := sortStrings(tt.wantGroupBy)
+
+			if !reflect.DeepEqual(gotMetrics, wantMetrics) {
+				t.Errorf("Extract() MetricNames = %v, want %v", gotMetrics, wantMetrics)
+			}
+			if !reflect.DeepEqual(gotGroupBy, wantGroupBy) {
+				t.Errorf("Extract() GroupBy = %v, want %v", gotGroupBy, wantGroupBy)
 			}
 		})
 	}

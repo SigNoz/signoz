@@ -52,9 +52,19 @@ func (e *ClickHouseFilterExtractor) Extract(query string) (*FilterResult, error)
 		})
 	}
 
-	// Extract GROUP BY only from top-level queries
+	// Extract GROUP BY from the top-level queries by first building a map of CTEs and
+	// then recursively extracting the GROUP BY from the CTEs and subqueries.
+
+	// Build CTE map for all top-level queries
+	cteMap := make(map[string]*clickhouse.SelectQuery)
 	for query := range topLevelQueries {
-		e.extractGroupBy(query, groupBy)
+		e.buildCTEMap(query, cteMap)
+	}
+
+	// Extract GROUP BY from the CTEs and subqueries using recursive approach
+	visited := make(map[*clickhouse.SelectQuery]bool)
+	for query := range topLevelQueries {
+		e.extractGroupByRecursive(query, cteMap, groupBy, visited)
 	}
 
 	// Convert sets to slices
@@ -123,14 +133,10 @@ func (e *ClickHouseFilterExtractor) extractMetricFromBinaryOp(op *clickhouse.Bin
 		if _, ok := valueExpr.(*clickhouse.FunctionExpr); !ok {
 			e.extractInValues(valueExpr, metricNames)
 		}
-	case "!=", "<>":
-		// Skip negative filters per spec
-	case "NOT IN":
-		// Skip negative filters per spec
+	case "!=", "<>", "NOT IN", "NOT LIKE", "NOT ILIKE":
+		// Skip negative filters for now
 	case "LIKE", "ILIKE":
-		// Skip pattern filters per spec
-	case "NOT LIKE", "NOT ILIKE":
-		// Skip pattern filters per spec
+		// Skip pattern filters for now
 	case "OR":
 		// Handle OR conditions: metric_name='a' OR metric_name='b'
 		// The Walk function will traverse both sides, so we don't need to do anything special
@@ -145,62 +151,44 @@ func (e *ClickHouseFilterExtractor) extractMetricFromBinaryOp(op *clickhouse.Bin
 	}
 }
 
-// extractGroupBy extracts GROUP BY columns from a query, and also PARTITION BY from window functions
-func (e *ClickHouseFilterExtractor) extractGroupBy(query *clickhouse.SelectQuery, groupBy map[string]bool) {
-	// Find GroupByClause in the query
-	groupByClause, found := clickhouse.Find(query, func(node clickhouse.Expr) bool {
-		_, ok := node.(*clickhouse.GroupByClause)
+// extractGroupFromGroupByClause extracts GROUP BY columns from a specific GroupByClause
+func (e *ClickHouseFilterExtractor) extractGroupFromGroupByClause(groupByClause *clickhouse.GroupByClause, groupBy map[string]bool) {
+	if groupByClause == nil {
+		return
+	}
+
+	// Extract GROUP BY expressions properly
+	// Find only the direct child ColumnExprList, not nested ones
+	// We use Find instead of FindAll to get only the first (direct child) ColumnExprList
+	exprListNode, foundList := clickhouse.Find(groupByClause, func(node clickhouse.Expr) bool {
+		_, ok := node.(*clickhouse.ColumnExprList)
 		return ok
 	})
 
-	if found {
-		gb, ok := groupByClause.(*clickhouse.GroupByClause)
-		if ok {
-			// Extract GROUP BY expressions properly
-			// Find only the direct child ColumnExprList, not nested ones
-			// We use Find instead of FindAll to get only the first (direct child) ColumnExprList
-			exprListNode, foundList := clickhouse.Find(gb, func(node clickhouse.Expr) bool {
-				_, ok := node.(*clickhouse.ColumnExprList)
-				return ok
-			})
+	if !foundList {
+		return
+	}
 
-			if foundList {
-				if exprList, ok := exprListNode.(*clickhouse.ColumnExprList); ok {
-					seen := make(map[string]bool)
-					// Extract each expression from the list - these are top-level only
-					if exprList.Items != nil {
-						for _, item := range exprList.Items {
-							groupKey := e.extractGroupByExpr(item)
-							if groupKey != "" {
-								// Strip table alias if present (e.g., "m.region" -> "region")
-								groupKey = e.stripTableAlias(groupKey)
-								if !seen[groupKey] {
-									groupBy[groupKey] = true
-									seen[groupKey] = true
-								}
-							}
-						}
+	// Note: We only extract from the top-level ColumnExprList.Items to avoid extracting nested parts
+	// This prevents extracting 'timestamp' from 'toDate(timestamp)' - we only get 'toDate(timestamp)'
+	if exprList, ok := exprListNode.(*clickhouse.ColumnExprList); ok {
+		seen := make(map[string]bool)
+		// Extract each expression from the list - these are top-level only
+		if exprList.Items != nil {
+			for _, item := range exprList.Items {
+				groupKey := e.extractGroupByExpr(item)
+				if groupKey != "" {
+					// Strip table alias if present (e.g., "m.region" -> "region")
+					groupKey = e.stripTableAlias(groupKey)
+					if !seen[groupKey] {
+						groupBy[groupKey] = true
+						seen[groupKey] = true
 					}
 				}
 			}
-
-			// Note: We only extract from the top-level ColumnExprList.Items to avoid extracting nested parts
-			// This prevents extracting 'timestamp' from 'toDate(timestamp)' - we only get 'toDate(timestamp)'
 		}
 	}
 
-	// Also extract PARTITION BY from window functions
-	// Find PartitionByClause nodes directly
-	partitionBys := clickhouse.FindAll(query, func(node clickhouse.Expr) bool {
-		_, ok := node.(*clickhouse.PartitionByClause)
-		return ok
-	})
-
-	for _, pbNode := range partitionBys {
-		if pb, ok := pbNode.(*clickhouse.PartitionByClause); ok {
-			e.extractPartitionByExprs(pb, groupBy)
-		}
-	}
 }
 
 // extractGroupByExpr extracts a single GROUP BY expression as a string
@@ -211,6 +199,11 @@ func (e *ClickHouseFilterExtractor) extractGroupByExpr(expr clickhouse.Expr) str
 
 	switch ex := expr.(type) {
 	case *clickhouse.Ident:
+		// Handling for backticks which are native to ClickHouse and used for literal names.
+		// CH Parser removes the backticks from the identifier, so we need to add them back.
+		if ex.QuoteType == clickhouse.BackTicks {
+			return "`" + ex.Name + "`"
+		}
 		return ex.Name
 	case *clickhouse.NestedIdentifier:
 		// For nested identifiers like "m.region" or "toDate(timestamp)"
@@ -221,12 +214,7 @@ func (e *ClickHouseFilterExtractor) extractGroupByExpr(expr clickhouse.Expr) str
 			return fullName
 		}
 		// Otherwise, extract just the column name (last part) to strip table alias
-		parts := splitIdentifier(fullName)
-		if len(parts) > 1 {
-			// Has table alias, return just column name
-			return parts[len(parts)-1]
-		}
-		return fullName
+		return e.stripTableAlias(fullName)
 	case *clickhouse.FunctionExpr:
 		// For function expressions, return the complete function call string
 		return ex.String()
@@ -253,42 +241,18 @@ func (e *ClickHouseFilterExtractor) extractGroupByExpr(expr clickhouse.Expr) str
 }
 
 // stripTableAlias removes table alias prefix from a column name (e.g., "m.region" -> "region")
+// but for literals with backticks, we need preserve the entire string. (e.g., `os.type` -> "os.type")
 func (e *ClickHouseFilterExtractor) stripTableAlias(name string) string {
+	// Handling for backticks which are native to ClickHouse and used for literal names.
+	if strings.HasPrefix(name, "`") && strings.HasSuffix(name, "`") {
+		return strings.Trim(name, "`")
+	}
+
 	parts := splitIdentifier(name)
 	if len(parts) > 1 {
 		return parts[len(parts)-1]
 	}
 	return name
-}
-
-// extractPartitionByExprs extracts expressions from a PartitionByClause
-func (e *ClickHouseFilterExtractor) extractPartitionByExprs(pb *clickhouse.PartitionByClause, groupBy map[string]bool) {
-	// Extract identifiers from the partition by clause
-	idents := clickhouse.FindAll(pb, func(node clickhouse.Expr) bool {
-		_, ok1 := node.(*clickhouse.Ident)
-		_, ok2 := node.(*clickhouse.NestedIdentifier)
-		return ok1 || ok2
-	})
-
-	for _, identNode := range idents {
-		if ident, ok := identNode.(*clickhouse.Ident); ok {
-			groupBy[ident.Name] = true
-		} else if nested, ok := identNode.(*clickhouse.NestedIdentifier); ok {
-			groupBy[nested.String()] = true
-		}
-	}
-
-	// Also find function expressions
-	funcs := clickhouse.FindAll(pb, func(node clickhouse.Expr) bool {
-		_, ok := node.(*clickhouse.FunctionExpr)
-		return ok
-	})
-
-	for _, fnNode := range funcs {
-		if fn, ok := fnNode.(*clickhouse.FunctionExpr); ok {
-			groupBy[fn.String()] = true
-		}
-	}
 }
 
 // getColumnName extracts column name from an expression
@@ -299,11 +263,7 @@ func (e *ClickHouseFilterExtractor) getColumnName(expr clickhouse.Expr) string {
 	case *clickhouse.NestedIdentifier:
 		// Use String() and extract the last part (column name)
 		fullName := ex.String()
-		parts := splitIdentifier(fullName)
-		if len(parts) > 0 {
-			return parts[len(parts)-1]
-		}
-		return fullName
+		return e.stripTableAlias(fullName)
 	case *clickhouse.Path:
 		// Handle Path type for qualified column names like "m.metric_name"
 		// Extract the last field which is the column name
@@ -362,6 +322,7 @@ func (e *ClickHouseFilterExtractor) extractStringLiteral(expr clickhouse.Expr) s
 func (e *ClickHouseFilterExtractor) extractInValues(expr clickhouse.Expr, metricNames map[string]bool) {
 	// Find all string literals in the expression
 	strLits := clickhouse.FindAll(expr, func(node clickhouse.Expr) bool {
+		// metric_name passed in `in` condition will be string literal.
 		_, ok := node.(*clickhouse.StringLiteral)
 		return ok
 	})
@@ -385,4 +346,187 @@ func (e *ClickHouseFilterExtractor) extractFromAnyFunction(expr clickhouse.Expr,
 			e.extractInValues(expr, metricNames)
 		}
 	}
+}
+
+// ========================================
+// CTE and Subquery GROUP BY Support
+// ========================================
+
+// buildCTEMap builds a map of CTE names to their SelectQuery nodes by recursively
+// traversing all queries and their nested expressions
+func (e *ClickHouseFilterExtractor) buildCTEMap(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery) {
+	if query == nil {
+		return
+	}
+
+	// Access CTEs directly from WithClause if it exists
+	if query.With != nil && query.With.CTEs != nil {
+		for _, cte := range query.With.CTEs {
+			cteName := e.extractCTEName(cte)
+			cteQuery := e.extractCTEQuery(cte)
+			if cteName != "" && cteQuery != nil {
+				cteMap[cteName] = cteQuery
+				// Recursively build CTE map for nested CTEs
+				e.buildCTEMap(cteQuery, cteMap)
+			}
+		}
+	}
+
+	// Also check for CTEs in subqueries and other expressions
+	e.buildCTEMapFromExpr(query, cteMap)
+}
+
+// buildCTEMapFromExpr recursively extracts CTEs from various expression types
+func (e *ClickHouseFilterExtractor) buildCTEMapFromExpr(expr clickhouse.Expr, cteMap map[string]*clickhouse.SelectQuery) {
+	if expr == nil {
+		return
+	}
+
+	// Walk through all nodes to find SelectQuery nodes that might contain CTEs
+	clickhouse.Walk(expr, func(node clickhouse.Expr) bool {
+		switch n := node.(type) {
+		case *clickhouse.SelectQuery:
+			// Don't process the same query we started with to avoid infinite recursion
+			if n != expr {
+				e.buildCTEMap(n, cteMap)
+			}
+		case *clickhouse.TableExpr:
+			if n.Expr != nil {
+				e.buildCTEMapFromExpr(n.Expr, cteMap)
+			}
+		case *clickhouse.JoinTableExpr:
+			if n.Table != nil {
+				e.buildCTEMapFromExpr(n.Table, cteMap)
+			}
+		}
+		return true // Continue traversal
+	})
+}
+
+// extractGroupByRecursive implements the recursive GROUP BY extraction logic
+// It follows the top-down approach where outer GROUP BY overrides inner GROUP BY
+func (e *ClickHouseFilterExtractor) extractGroupByRecursive(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery, groupBy map[string]bool, visited map[*clickhouse.SelectQuery]bool) {
+	if query == nil || visited[query] {
+		return
+	}
+
+	// Mark this query as visited to prevent cycles
+	visited[query] = true
+
+	// First, check if this query has its own GROUP BY using direct field access
+	hasGroupBy := query.GroupBy != nil
+
+	// If this query has GROUP BY, use it (outer overrides inner)
+	if hasGroupBy {
+		tempGroupBy := make(map[string]bool)
+		e.extractGroupFromGroupByClause(query.GroupBy, tempGroupBy)
+		for key := range tempGroupBy {
+			groupBy[key] = true
+		}
+		return
+	}
+
+	// If no GROUP BY in this query, follow CTE/subquery references
+	sourceQuery := e.extractSourceQuery(query, cteMap)
+	if sourceQuery != nil {
+		e.extractGroupByRecursive(sourceQuery, cteMap, groupBy, visited)
+	}
+}
+
+// extractSourceQuery extracts the SelectQuery from FROM expressions
+// Handles CTE references, subqueries, and table expressions
+func (e *ClickHouseFilterExtractor) extractSourceQuery(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery) *clickhouse.SelectQuery {
+	if query == nil || query.From == nil {
+		return nil
+	}
+
+	// Find the FROM clause and extract the source
+	fromExprs := clickhouse.FindAll(query.From, func(node clickhouse.Expr) bool {
+		switch node.(type) {
+		case *clickhouse.Ident, *clickhouse.NestedIdentifier, *clickhouse.SelectQuery, *clickhouse.TableExpr:
+			return true
+		}
+		return false
+	})
+
+	for _, fromExpr := range fromExprs {
+		switch expr := fromExpr.(type) {
+		case *clickhouse.Ident:
+			// CTE reference by simple name
+			if cteQuery, exists := cteMap[expr.Name]; exists {
+				return cteQuery
+			}
+		case *clickhouse.NestedIdentifier:
+			// CTE reference by nested name
+			cteName := expr.String()
+			if cteQuery, exists := cteMap[cteName]; exists {
+				return cteQuery
+			}
+		case *clickhouse.SelectQuery:
+			// Direct subquery
+			return expr
+		case *clickhouse.TableExpr:
+			// Table expression - check if it contains a subquery or CTE reference
+			if expr.Expr != nil {
+				if subQuery, ok := expr.Expr.(*clickhouse.SelectQuery); ok {
+					return subQuery
+				}
+				// Check for CTE references in table expressions
+				if ident, ok := expr.Expr.(*clickhouse.Ident); ok {
+					if cteQuery, exists := cteMap[ident.Name]; exists {
+						return cteQuery
+					}
+				}
+				if nested, ok := expr.Expr.(*clickhouse.NestedIdentifier); ok {
+					cteName := nested.String()
+					if cteQuery, exists := cteMap[cteName]; exists {
+						return cteQuery
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// extractCTEName extracts the CTE name from a CTEStmt
+func (e *ClickHouseFilterExtractor) extractCTEName(cte *clickhouse.CTEStmt) string {
+	if cte == nil || cte.Expr == nil {
+		return ""
+	}
+
+	switch name := cte.Expr.(type) {
+	case *clickhouse.Ident:
+		return name.Name
+	case *clickhouse.NestedIdentifier:
+		return name.String()
+	default:
+		return cte.Expr.String()
+	}
+}
+
+// extractCTEQuery extracts the SelectQuery from a CTEStmt
+func (e *ClickHouseFilterExtractor) extractCTEQuery(cte *clickhouse.CTEStmt) *clickhouse.SelectQuery {
+	if cte == nil || cte.Alias == nil {
+		return nil
+	}
+
+	// The Alias field should contain a SelectQuery
+	if selectQuery, ok := cte.Alias.(*clickhouse.SelectQuery); ok {
+		return selectQuery
+	}
+
+	// In some cases, the query might be wrapped in another expression
+	// Try to find a SelectQuery within the expression
+	var foundQuery *clickhouse.SelectQuery
+	clickhouse.Walk(cte.Alias, func(node clickhouse.Expr) bool {
+		if selectQuery, ok := node.(*clickhouse.SelectQuery); ok {
+			foundQuery = selectQuery
+			return false // Stop traversal
+		}
+		return true
+	})
+
+	return foundQuery
 }
