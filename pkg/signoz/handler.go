@@ -18,6 +18,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
+	"github.com/SigNoz/signoz/pkg/modules/services"
+	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
@@ -41,6 +43,7 @@ type Handlers struct {
 	AuthDomain     authdomain.Handler
 	Session        session.Handler
 	SpanPercentile spanpercentile.Handler
+	Services       services.Handler
 }
 
 func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Handlers {
@@ -56,6 +59,7 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Han
 		RawDataExport:  implrawdataexport.NewHandler(modules.RawDataExport),
 		AuthDomain:     implauthdomain.NewHandler(modules.AuthDomain),
 		Session:        implsession.NewHandler(modules.Session),
+		Services:       implservices.NewHandler(modules.Services),
 		SpanPercentile: implspanpercentile.NewHandler(modules.SpanPercentile),
 	}
 }
