@@ -1,4 +1,4 @@
-import { ApiBaseInstance } from 'api';
+import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
@@ -24,7 +24,7 @@ export const getFieldKeys = async (
 	}
 
 	try {
-		const response = await ApiBaseInstance.get('/fields/keys', { params });
+		const response = await axios.get('/fields/keys', { params });
 
 		return {
 			httpStatusCode: response.status,
