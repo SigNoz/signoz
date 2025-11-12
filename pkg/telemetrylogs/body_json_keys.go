@@ -20,7 +20,7 @@ var CodeUnknownJSONDataType = errors.MustNewCode("unknown_json_data_type")
 // limit: 0 for no limit (full sync), >0 for pagination (metadata API)
 // Returns: (paths, complete, highestLastSeen, error)
 func ExtractBodyPaths(ctx context.Context, telemetryStore telemetrystore.TelemetryStore,
-	searchText string, limit int, lastSeen uint64) (map[string]*utils.ConcurrentSet[telemetrytypes.JSONDataType], bool, uint64, error) {
+	searchTexts []string, limit int, lastSeen uint64) (map[string]*utils.ConcurrentSet[telemetrytypes.JSONDataType], bool, uint64, error) {
 
 	from := fmt.Sprintf("%s.%s", DBName, PathTypesTableName)
 	// For full sync (lastSeen = 0), don't apply limit unless explicitly requested
@@ -41,8 +41,12 @@ func ExtractBodyPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 	).From(from)
 
 	// Add search filter if provided
-	if searchText != "" {
-		sb.Where(sb.ILike("path", "%"+escapeForLike(searchText)+"%"))
+	if len(searchTexts) > 0 {
+		orClauses := []string{}
+		for _, searchText := range searchTexts {
+			orClauses = append(orClauses, sb.ILike("path", "%"+escapeForLike(searchText)+"%"))
+		}
+		sb.Where(sb.Or(orClauses...))
 	}
 
 	// Add incremental sync filter if lastSeen > 0

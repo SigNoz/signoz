@@ -133,7 +133,7 @@ func (b *JSONQueryBuilder) syncPathTypes(ctx context.Context, fullLoad bool) err
 	} else {
 		limit = 10000 // Reasonable limit for incremental sync
 	}
-	bodyJSONPaths, _, highestLastSeen, err := ExtractBodyPaths(ctx, b.telemetryStore, "", limit, lastSeen)
+	bodyJSONPaths, _, highestLastSeen, err := ExtractBodyPaths(ctx, b.telemetryStore, nil, limit, lastSeen)
 	if err != nil {
 		return err
 	}
