@@ -274,7 +274,7 @@ function App(): JSX.Element {
 					chat_settings: {
 						app_id: process.env.PYLON_APP_ID,
 						email: user.email,
-						name: user.displayName,
+						name: user.displayName || user.email,
 					},
 				};
 			}

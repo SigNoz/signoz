@@ -11,7 +11,6 @@ import {
 	getAllEndpointsWidgetData,
 	getCustomFiltersForBarChart,
 	getFormattedEndPointDropDownData,
-	getFormattedEndPointMetricsData,
 	getFormattedEndPointStatusCodeChartData,
 	getFormattedEndPointStatusCodeData,
 	getGroupByFiltersFromGroupByValues,
@@ -712,87 +711,6 @@ describe('API Monitoring Utils', () => {
 			expect(result).toHaveLength(2);
 			expect(result[0]).toHaveProperty('value', '-');
 			expect(result[1]).toHaveProperty('value', '/api/valid-path');
-		});
-	});
-
-	describe('getFormattedEndPointMetricsData', () => {
-		it('should format endpoint metrics data correctly', () => {
-			// Arrange
-			const mockData = [
-				{
-					data: {
-						A: '50', // rate
-						B: '15000000', // latency in nanoseconds
-						C: '5', // required by type
-						D: '1640995200000000', // timestamp in nanoseconds
-						F1: '5.5', // error rate
-					},
-				},
-			];
-
-			// Act
-			const result = getFormattedEndPointMetricsData(mockData as any);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result.key).toBeDefined();
-			expect(result.rate).toBe('50');
-			expect(result.latency).toBe(15); // Should be converted from ns to ms
-			expect(result.errorRate).toBe(5.5);
-			expect(typeof result.lastUsed).toBe('string'); // Time formatting is tested elsewhere
-		});
-
-		// eslint-disable-next-line sonarjs/no-duplicate-string
-		it('should handle undefined values in data', () => {
-			// Arrange
-			const mockData = [
-				{
-					data: {
-						A: undefined,
-						B: 'n/a',
-						C: '', // required by type
-						D: undefined,
-						F1: 'n/a',
-					},
-				},
-			];
-
-			// Act
-			const result = getFormattedEndPointMetricsData(mockData as any);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result.rate).toBe('-');
-			expect(result.latency).toBe('-');
-			expect(result.errorRate).toBe(0);
-			expect(result.lastUsed).toBe('-');
-		});
-
-		it('should handle empty input array', () => {
-			// Act
-			const result = getFormattedEndPointMetricsData([]);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result.rate).toBe('-');
-			expect(result.latency).toBe('-');
-			expect(result.errorRate).toBe(0);
-			expect(result.lastUsed).toBe('-');
-		});
-
-		it('should handle undefined input', () => {
-			// Arrange
-			const undefinedInput = undefined as any;
-
-			// Act
-			const result = getFormattedEndPointMetricsData(undefinedInput);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result.rate).toBe('-');
-			expect(result.latency).toBe('-');
-			expect(result.errorRate).toBe(0);
-			expect(result.lastUsed).toBe('-');
 		});
 	});
 
