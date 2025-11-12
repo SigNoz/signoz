@@ -198,6 +198,9 @@ func (r *BaseRule) currentAlerts() []*ruletypes.Alert {
 // This is useful in cases where we want to check if an alert is still active
 // based on the labels we have.
 func (r *BaseRule) ActiveAlertsLabelFP() map[uint64]struct{} {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
 	activeAlerts := make(map[uint64]struct{}, len(r.Active))
 	for _, alert := range r.Active {
 		if alert == nil || alert.QueryResultLables == nil {
@@ -316,6 +319,9 @@ func (r *BaseRule) GetEvaluationTimestamp() time.Time {
 }
 
 func (r *BaseRule) State() model.AlertState {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
 	maxState := model.StateInactive
 	for _, a := range r.Active {
 		if a.State > maxState {

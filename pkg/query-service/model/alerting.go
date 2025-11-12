@@ -12,13 +12,15 @@ import (
 // AlertState denotes the state of an active alert.
 type AlertState int
 
+// The enum values are ordered by priority (lowest to highest).
+// When determining overall rule state, higher numeric values take precedence.
 const (
 	StateInactive AlertState = iota
 	StatePending
+	StateRecovering
 	StateFiring
 	StateNoData
 	StateDisabled
-	StateRecovering
 )
 
 func (s AlertState) String() string {
