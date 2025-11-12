@@ -12,7 +12,7 @@ import { SidebarItem } from 'container/SideNav/sideNav.types';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
-import { Wrench } from 'lucide-react';
+import { Cog } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -236,7 +236,7 @@ function SettingsPage(): JSX.Element {
 					className="settings-page-header-title"
 					data-testid="settings-page-title"
 				>
-					<Wrench size={16} />
+					<Cog size={16} />
 					Settings
 				</div>
 			</header>

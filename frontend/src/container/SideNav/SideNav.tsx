@@ -167,6 +167,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const [hasScroll, setHasScroll] = useState(false);
 	const navTopSectionRef = useRef<HTMLDivElement>(null);
+	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
 	const checkScroll = useCallback((): void => {
 		if (navTopSectionRef.current) {
@@ -592,7 +593,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					},
 					{
 						type: 'group',
-						label: "WHAT's NEW",
+						label: "WHAT'S NEW",
 					},
 					...dropdownItems,
 					{
@@ -850,7 +851,13 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	return (
 		<div className={cx('sidenav-container', isPinned && 'pinned')}>
-			<div className={cx('sideNav', isPinned && 'pinned')}>
+			<div
+				className={cx(
+					'sideNav',
+					isPinned && 'pinned',
+					isDropdownOpen && 'dropdown-open',
+				)}
+			>
 				<div className="brand-container">
 					<div className="brand">
 						<div className="brand-company-meta">
@@ -1051,6 +1058,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									placement="topLeft"
 									overlayClassName="nav-dropdown-overlay help-support-dropdown"
 									trigger={['click']}
+									onOpenChange={(open): void => setIsDropdownOpen(open)}
 								>
 									<div className="nav-item">
 										<div className="nav-item-data" data-testid="help-support-nav-item">
@@ -1071,6 +1079,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									placement="topLeft"
 									overlayClassName="nav-dropdown-overlay settings-dropdown"
 									trigger={['click']}
+									onOpenChange={(open): void => setIsDropdownOpen(open)}
 								>
 									<div className="nav-item">
 										<div className="nav-item-data" data-testid="settings-nav-item">

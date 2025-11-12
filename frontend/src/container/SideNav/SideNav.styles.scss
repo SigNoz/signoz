@@ -494,7 +494,8 @@
 		background: var(--bg-slate-300);
 	}
 
-	&:hover {
+	&:not(.pinned):hover,
+	&.dropdown-open {
 		flex: 0 0 240px;
 		max-width: 240px;
 		min-width: 240px;
@@ -864,6 +865,12 @@
 				line-height: normal;
 				letter-spacing: 0.14px;
 			}
+
+			&:hover:not(.ant-dropdown-menu-item-disabled) {
+				.ant-dropdown-menu-title-content {
+					color: var(--bg-vanilla-100, #fff);
+				}
+			}
 		}
 	}
 }
@@ -902,6 +909,10 @@
 
 	.ant-dropdown-menu-item-disabled {
 		opacity: 0.7;
+	}
+
+	.ant-dropdown-menu {
+		width: 100% !important; // todo:sagar check with shuvam once
 	}
 }
 
@@ -1064,6 +1075,10 @@
 	}
 }
 
+.help-support-dropdown li.ant-dropdown-menu-item-divider {
+	background-color: var(--Slate-500, #161922) !important;
+}
+
 .lightMode {
 	.sideNav {
 		background: var(--bg-vanilla-100);
@@ -1123,7 +1138,8 @@
 			}
 		}
 
-		&:hover {
+		&:not(.pinned):hover,
+		&.dropdown-open {
 			background: var(--bg-vanilla-100);
 		}
 	}
@@ -1133,6 +1149,12 @@
 			.ant-dropdown-menu-item {
 				.ant-dropdown-menu-title-content {
 					color: var(--bg-ink-400);
+				}
+
+				&:hover:not(.ant-dropdown-menu-item-disabled) {
+					.ant-dropdown-menu-title-content {
+						color: var(--bg-ink-500);
+					}
 				}
 			}
 		}
@@ -1209,6 +1231,10 @@
 		.title {
 			color: var(--bg-ink-400);
 		}
+	}
+
+	.help-support-dropdown li.ant-dropdown-menu-item-divider {
+		background-color: var(--bg-vanilla-300) !important;
 	}
 }
 
