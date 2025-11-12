@@ -3230,7 +3230,7 @@ export const getAllEndpointsWidgetData = (
 							filters,
 							`${getDomainNameFilterExpression(
 								domainName,
-							)} AND ${clientKindExpression}`,
+							)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
 						),
 					},
 					functions: [],
@@ -3262,7 +3262,7 @@ export const getAllEndpointsWidgetData = (
 							filters,
 							`${getDomainNameFilterExpression(
 								domainName,
-							)} AND ${clientKindExpression}`,
+							)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
 						),
 					},
 					functions: [],
@@ -3294,7 +3294,7 @@ export const getAllEndpointsWidgetData = (
 							filters,
 							`${getDomainNameFilterExpression(
 								domainName,
-							)} AND ${clientKindExpression}`,
+							)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
 						),
 					},
 					functions: [],
@@ -3326,7 +3326,7 @@ export const getAllEndpointsWidgetData = (
 							filters,
 							`${getDomainNameFilterExpression(
 								domainName,
-							)} AND ${clientKindExpression} AND has_error = true`,
+							)} AND ${clientKindExpression} AND has_error = true AND (http.url EXISTS OR url.full EXISTS)`,
 						),
 					},
 					functions: [],
