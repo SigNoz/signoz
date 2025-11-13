@@ -15,6 +15,13 @@ export const panelTypeToExplorerView: Record<PANEL_TYPES, ExplorerViews> = {
 	[PANEL_TYPES.EMPTY_WIDGET]: ExplorerViews.LIST,
 };
 
+export const explorerViewToPanelType = {
+	[ExplorerViews.LIST]: PANEL_TYPES.LIST,
+	[ExplorerViews.TIMESERIES]: PANEL_TYPES.TIME_SERIES,
+	[ExplorerViews.TRACE]: PANEL_TYPES.TRACE,
+	[ExplorerViews.TABLE]: PANEL_TYPES.TABLE,
+} as Record<ExplorerViews, PANEL_TYPES>;
+
 /**
  * Get the explorer view based on panel type from URL or saved view
  * @param searchParams - URL search parameters

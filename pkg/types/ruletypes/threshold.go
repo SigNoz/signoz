@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"sort"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/converter"
@@ -256,6 +257,7 @@ func PrepareSampleLabelsForRule(seriesLabels map[string]string, thresholdName st
 		lb.Set(name, value)
 	}
 	lb.Set(LabelThresholdName, thresholdName)
+	lb.Set(LabelSeverityName, strings.ToLower(thresholdName))
 	return lb.Labels()
 }
 

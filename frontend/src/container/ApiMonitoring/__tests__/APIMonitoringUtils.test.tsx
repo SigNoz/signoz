@@ -10,7 +10,6 @@ import {
 	formatDataForTable,
 	getAllEndpointsWidgetData,
 	getCustomFiltersForBarChart,
-	getEndPointDetailsQueryPayload,
 	getFormattedDependentServicesData,
 	getFormattedEndPointDropDownData,
 	getFormattedEndPointMetricsData,
@@ -448,77 +447,6 @@ describe('API Monitoring Utils', () => {
 			expect(result).toEqual({
 				port: '-',
 				endpoint: nonUrl,
-			});
-		});
-	});
-
-	describe('getEndPointDetailsQueryPayload', () => {
-		it('should generate proper query payload with all parameters', () => {
-			// Arrange
-			const domainName = 'test-domain';
-			const startTime = 1609459200000; // 2021-01-01
-			const endTime = 1609545600000; // 2021-01-02
-			const filters = {
-				items: [
-					{
-						id: 'test-filter',
-						key: {
-							dataType: 'string',
-							key: 'test.key',
-							type: '',
-						},
-						op: '=',
-						value: 'test-value',
-					},
-				],
-				op: 'AND',
-			};
-
-			// Act
-			const result = getEndPointDetailsQueryPayload(
-				domainName,
-				startTime,
-				endTime,
-				filters as IBuilderQuery['filters'],
-			);
-
-			// Assert
-			expect(result).toHaveLength(6); // Should return 6 queries
-
-			// Check that each query includes proper parameters
-			result.forEach((query) => {
-				expect(query).toHaveProperty('start', startTime);
-				expect(query).toHaveProperty('end', endTime);
-
-				// Should have query property with builder data
-				expect(query).toHaveProperty('query');
-				expect(query.query).toHaveProperty('builder');
-
-				// All queries should include the domain filter
-				const {
-					query: {
-						builder: { queryData },
-					},
-				} = query;
-				queryData.forEach((qd) => {
-					if (qd.filters && qd.filters.items) {
-						const serverNameFilter = qd.filters?.items?.find(
-							(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
-						);
-						expect(serverNameFilter).toBeDefined();
-						// Only check if the serverNameFilter exists, as the actual value might vary
-						// depending on implementation details or domain defaults
-						if (serverNameFilter) {
-							expect(typeof serverNameFilter.value).toBe('string');
-						}
-					}
-
-					// Should include our custom filter
-					const customFilter = qd.filters?.items?.find(
-						(item) => item.id === 'test-filter',
-					);
-					expect(customFilter).toBeDefined();
-				});
 			});
 		});
 	});
