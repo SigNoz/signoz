@@ -374,8 +374,6 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 
 	var outRows []*qbtypes.RawRow
 
-	totalUnmarshalTime := time.Duration(0)
-
 	for rows.Next() {
 		// fresh copy of the scan slice (otherwise the driver reuses pointers)
 		scan := make([]any, colCnt)
@@ -440,8 +438,6 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("total unmarshal time: %s\n", totalUnmarshalTime)
 
 	return &qbtypes.RawData{
 		QueryName: queryName,
