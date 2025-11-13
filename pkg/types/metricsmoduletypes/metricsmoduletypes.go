@@ -55,7 +55,7 @@ type TreemapRequest struct {
 	Start      int64       `json:"start"`
 	End        int64       `json:"end"`
 	Limit      int         `json:"limit"`
-	Mode       TreemapMode `json:"mode"`
+	Treemap    TreemapMode `json:"treemap"`
 }
 
 // TreemapEntry represents each node in the treemap response.

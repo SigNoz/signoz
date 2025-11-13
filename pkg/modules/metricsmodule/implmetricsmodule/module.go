@@ -28,7 +28,10 @@ type module struct {
 	logger         *slog.Logger
 }
 
-const metricDatabaseName = "signoz_metrics"
+const (
+	metricDatabaseName       = "signoz_metrics"
+	updatedMetadataTableName = "distributed_updated_metadata"
+)
 
 // NewModule constructs the metrics module with the provided dependencies.
 func NewModule(ts telemetrystore.TelemetryStore) metricsmodule.Module {
@@ -399,9 +402,289 @@ func (m *module) fetchSampleCounts(
 	return sampleMap, nil
 }
 
+func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterSQL string, filterArgs []any) ([]metricsmoduletypes.TreemapEntry, error) {
+	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
+
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
+	filterClause := ""
+	if filterSQL != "true" {
+		filterClause = fmt.Sprintf(" AND (%s)", filterSQL)
+	}
+
+	query := fmt.Sprintf(`
+		SELECT
+			metric_name,
+			total_value,
+			(total_value * 100.0 / total_time_series) AS percentage
+		FROM (
+			SELECT
+				metric_name,
+				uniq(fingerprint) AS total_value,
+				(SELECT uniq(fingerprint)
+				FROM %s.%s
+				WHERE unix_milli BETWEEN ? AND ?
+				AND NOT startsWith(metric_name, 'signoz')
+				AND __normalized = ?
+				%s) AS total_time_series
+			FROM %s.%s
+			WHERE unix_milli BETWEEN ? AND ?
+			AND NOT startsWith(metric_name, 'signoz')
+			AND __normalized = ?
+			%s
+			GROUP BY metric_name
+		)
+		ORDER BY percentage DESC
+		LIMIT ?;`,
+		metricDatabaseName, tsTable, filterClause,
+		metricDatabaseName, tsTable, filterClause,
+	)
+
+	args := make([]any, 0, 6+2*len(filterArgs))
+	args = append(args, start, end, normalized)
+	if filterClause != "" {
+		args = append(args, filterArgs...)
+	}
+	args = append(args, start, end, normalized)
+	if filterClause != "" {
+		args = append(args, filterArgs...)
+	}
+	args = append(args, req.Limit)
+
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute timeseries treemap query")
+	}
+	defer rows.Close()
+
+	entries := make([]metricsmoduletypes.TreemapEntry, 0)
+	for rows.Next() {
+		var (
+			name       string
+			totalValue uint64
+			percentage float64
+		)
+		if err := rows.Scan(&name, &totalValue, &percentage); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan timeseries treemap row")
+		}
+		entries = append(entries, metricsmoduletypes.TreemapEntry{
+			MetricName: name,
+			TotalValue: totalValue,
+			Percentage: percentage,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating timeseries treemap rows")
+	}
+
+	return entries, nil
+}
+
+func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterSQL string, filterArgs []any) ([]metricsmoduletypes.TreemapEntry, error) {
+	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
+	sampleTable, countExpr := utils.WhichSampleTableToUse(req.Start, req.End)
+
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
+	filterClause := ""
+	if filterSQL != "true" {
+		filterClause = fmt.Sprintf(" AND (%s)", filterSQL)
+	}
+
+	queryLimit := req.Limit + 50
+	metricsQuery := fmt.Sprintf(`
+		SELECT
+			ts.metric_name AS metric_name,
+			uniq(ts.fingerprint) AS timeSeries
+		FROM %s.%s AS ts
+		WHERE NOT startsWith(ts.metric_name, 'signoz')
+		AND __normalized = ?
+		AND unix_milli BETWEEN ? AND ?
+		%s
+		GROUP BY ts.metric_name
+		ORDER BY timeSeries DESC
+		LIMIT %d;`,
+		metricDatabaseName, tsTable, filterClause, queryLimit)
+
+	args := make([]any, 0, 3+len(filterArgs))
+	args = append(args, normalized, start, end)
+	if filterClause != "" {
+		args = append(args, filterArgs...)
+	}
+
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(ctx, metricsQuery, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute samples treemap pre-query")
+	}
+	defer rows.Close()
+
+	metricNames := make([]string, 0)
+	for rows.Next() {
+		var (
+			name       string
+			timeSeries uint64
+		)
+		if err := rows.Scan(&name, &timeSeries); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan samples treemap pre-query row")
+		}
+		metricNames = append(metricNames, name)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating samples treemap pre-query rows")
+	}
+
+	if len(metricNames) == 0 {
+		return []metricsmoduletypes.TreemapEntry{}, nil
+	}
+
+	metricPlaceholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
+	var (
+		queryBuilder strings.Builder
+		sampleArgs   []any
+	)
+
+	queryBuilder.WriteString(fmt.Sprintf(`
+		WITH TotalSamples AS (
+			SELECT %s AS total_samples
+			FROM %s.%s
+			WHERE unix_milli BETWEEN ? AND ?
+		),
+		Samples AS (
+			SELECT
+				dm.metric_name,
+				%s AS samples
+			FROM %s.%s AS dm
+			WHERE dm.unix_milli BETWEEN ? AND ?
+			AND dm.metric_name IN (%s)`,
+		countExpr, metricDatabaseName, sampleTable,
+		countExpr, metricDatabaseName, sampleTable, metricPlaceholders,
+	))
+
+	sampleArgs = append(sampleArgs, req.Start, req.End)
+	sampleArgs = append(sampleArgs, req.Start, req.End)
+	for _, name := range metricNames {
+		sampleArgs = append(sampleArgs, name)
+	}
+
+	if filterSQL != "true" {
+		metricPlaceholdersSub := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
+		queryBuilder.WriteString(fmt.Sprintf(`
+			AND dm.fingerprint IN (
+				SELECT ts.fingerprint
+				FROM %s.%s AS ts
+				WHERE ts.metric_name IN (%s)
+				AND unix_milli BETWEEN ? AND ?
+				AND NOT startsWith(ts.metric_name, 'signoz')
+				AND __normalized = ?
+				AND (%s)
+				GROUP BY ts.fingerprint
+				)`,
+			metricDatabaseName, localTsTable, metricPlaceholdersSub, filterSQL,
+		))
+
+		for _, name := range metricNames {
+			sampleArgs = append(sampleArgs, name)
+		}
+		sampleArgs = append(sampleArgs, start, end, normalized)
+		sampleArgs = append(sampleArgs, filterArgs...)
+	}
+
+	queryBuilder.WriteString(`
+		GROUP BY dm.metric_name
+			)
+			SELECT
+				s.metric_name,
+				s.samples,
+				CASE WHEN t.total_samples = 0 THEN 0 ELSE (s.samples * 100.0 / t.total_samples) END AS percentage
+			FROM Samples s
+			CROSS JOIN TotalSamples t
+			ORDER BY percentage DESC
+			LIMIT ?;`)
+
+	sampleArgs = append(sampleArgs, req.Limit)
+
+	rows, err = db.Query(ctx, queryBuilder.String(), sampleArgs...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute samples treemap query")
+	}
+	defer rows.Close()
+
+	entries := make([]metricsmoduletypes.TreemapEntry, 0)
+	for rows.Next() {
+		var (
+			name       string
+			value      uint64
+			percentage float64
+		)
+		if err := rows.Scan(&name, &value, &percentage); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan samples treemap row")
+		}
+		entries = append(entries, metricsmoduletypes.TreemapEntry{
+			MetricName: name,
+			TotalValue: value,
+			Percentage: percentage,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating samples treemap rows")
+	}
+
+	return entries, nil
+}
+
 // GetTreemap will return metrics treemap information once implemented.
 func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.TreemapRequest) (*metricsmoduletypes.TreemapResponse, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "metrics treemap not implemented yet")
+	if req == nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.Start <= 0 || req.End <= 0 || req.Start >= req.End {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range")
+	}
+
+	if req.Limit <= 0 {
+		req.Limit = 10
+	}
+
+	mode := req.Treemap
+	if mode == "" {
+		mode = metricsmoduletypes.TreemapModeTimeSeries
+	}
+
+	filterSQL, filterArgs, err := m.buildFilterClause(req.Expression, req.Start, req.End)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &metricsmoduletypes.TreemapResponse{}
+	switch mode {
+	case metricsmoduletypes.TreemapModeSamples:
+		entries, err := m.computeSamplesTreemap(ctx, req, filterSQL, filterArgs)
+		if err != nil {
+			return nil, err
+		}
+		resp.Samples = entries
+	case metricsmoduletypes.TreemapModeTimeSeries:
+		fallthrough
+	default:
+		entries, err := m.computeTimeseriesTreemap(ctx, req, filterSQL, filterArgs)
+		if err != nil {
+			return nil, err
+		}
+		resp.TimeSeries = entries
+	}
+
+	return resp, nil
 }
 
 func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
