@@ -112,6 +112,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		setShowPaymentFailedWarning,
 	] = useState<boolean>(false);
 
+	const errorBoundaryRef = useRef<Sentry.ErrorBoundary>(null);
+
 	const [showSlowApiWarning, setShowSlowApiWarning] = useState(false);
 	const [slowApiWarningShown, setSlowApiWarningShown] = useState(false);
 
@@ -377,6 +379,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getChangelogByVersionResponse.data,
 		getChangelogByVersionResponse.isSuccess,
 	]);
+
+	// reset error boundary on route change
+	useEffect(() => {
+		if (errorBoundaryRef.current) {
+			errorBoundaryRef.current.resetErrorBoundary();
+		}
+	}, [pathname]);
 
 	const isToDisplayLayout = isLoggedIn;
 
@@ -836,7 +845,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					})}
 					data-overlayscrollbars-initialize
 				>
-					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />} key={pathname}>
+					<Sentry.ErrorBoundary
+						fallback={<ErrorBoundaryFallback />}
+						ref={errorBoundaryRef}
+					>
 						<LayoutContent data-overlayscrollbars-initialize>
 							<OverlayScrollbar>
 								<ChildrenContainer>
