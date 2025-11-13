@@ -84,7 +84,7 @@ function Attributes(props: IAttributesProps): JSX.Element {
 				className={cx('attributes-container', isSearchVisible ? 'border-top' : '')}
 			>
 				{datasource
-					.filter((item) => !!item.value)
+					.filter((item) => !!item.value && item.value !== '-')
 					.map((item) => (
 						<div
 							className={cx('item', { pinned: pinnedAttributes[item.field] })}
