@@ -129,7 +129,7 @@ func (e *ClickHouseFilterExtractor) extractMetricFromBinaryOp(op *clickhouse.Bin
 		if fn, ok := valueExpr.(*clickhouse.FunctionExpr); ok {
 			// Only handle any() function, skip others like lowercase('cpu')
 			if fn.Name != nil && fn.Name.Name == "any" {
-				e.extractFromAnyFunction(valueExpr, metricNames)
+				e.extractInValues(valueExpr, metricNames)
 			}
 			// Otherwise skip function-wrapped literals per spec
 		} else if val := e.extractStringLiteral(valueExpr); val != "" {
@@ -274,16 +274,6 @@ func (e *ClickHouseFilterExtractor) extractInValues(expr clickhouse.Expr, metric
 	}
 }
 
-// extractFromAnyFunction extracts values from any() function calls like any(['a', 'b'])
-func (e *ClickHouseFilterExtractor) extractFromAnyFunction(expr clickhouse.Expr, metricNames map[string]bool) {
-	if fn, ok := expr.(*clickhouse.FunctionExpr); ok {
-		if fn.Name != nil && fn.Name.Name == "any" {
-			// Extract string literals from the function parameters
-			e.extractInValues(expr, metricNames)
-		}
-	}
-}
-
 // ========================================
 // CTE and Subquery GROUP BY Support
 // ========================================
@@ -379,7 +369,7 @@ func (e *ClickHouseFilterExtractor) extractSourceQuery(query *clickhouse.SelectQ
 	// Find the FROM clause and extract the source
 	fromExprs := clickhouse.FindAll(query.From, func(node clickhouse.Expr) bool {
 		switch node.(type) {
-		case *clickhouse.Ident, *clickhouse.NestedIdentifier, *clickhouse.SelectQuery, *clickhouse.TableExpr:
+		case *clickhouse.Ident, *clickhouse.SelectQuery:
 			return true
 		}
 		return false

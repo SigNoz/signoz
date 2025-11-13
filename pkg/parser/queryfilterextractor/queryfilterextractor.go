@@ -1,4 +1,7 @@
-// Package queryfilterextractor extracts metric names and grouping keys from queries
+// Package queryfilterextractor provides utilities for extracting metric names
+// and grouping keys.
+//
+// This is useful for metrics discovery, and query analysis.
 package queryfilterextractor
 
 type FilterResult struct {

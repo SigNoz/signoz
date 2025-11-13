@@ -93,7 +93,7 @@ func (v *promQLVisitor) visitVectorSelector(vs *parser.VectorSelector) {
 
 	// Check for __name__ label matcher
 	for _, matcher := range vs.LabelMatchers {
-		if matcher.Name == "__name__" {
+		if matcher.Name == labels.MetricName {
 			switch matcher.Type {
 			case labels.MatchEqual:
 				v.metricNames[matcher.Value] = true
