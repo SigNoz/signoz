@@ -13,6 +13,7 @@ import { GraphClickMetaData } from 'container/GridCardLayout/useNavigateToExplor
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep } from 'lodash-es';
 import { ArrowUpDown, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
@@ -3357,12 +3358,26 @@ export const getAllEndpointsWidgetData = (
 	);
 
 	widget.renderColumnCell = {
-		[SPAN_ATTRIBUTES.URL_PATH]: (url: any): ReactNode => {
-			const { endpoint } = extractPortAndEndpoint(url);
-			return (
-				<span>{endpoint === 'n/a' || url === undefined ? '-' : endpoint}</span>
-			);
-		},
+		[SPAN_ATTRIBUTES.URL_PATH]: (((
+			url: string | number,
+			record?: RowData,
+		): ReactNode => {
+			// First try to use the url from the column value
+			let urlValue = url;
+
+			// If url is empty/null and we have the record, fallback to url.full
+			if (isEmptyFilterValue(url) && record) {
+				const { 'url.full': urlFull } = record;
+				urlValue = urlFull;
+			}
+
+			if (!urlValue || urlValue === 'n/a') {
+				return <span>-</span>;
+			}
+
+			const { endpoint } = extractPortAndEndpoint(String(urlValue));
+			return <span>{getDisplayValue(endpoint)}</span>;
+		}) as unknown) as (record: RowData) => ReactNode,
 		A: (numOfCalls: any): ReactNode => (
 			<span>
 				{numOfCalls === 'n/a' || numOfCalls === undefined ? '-' : numOfCalls}
