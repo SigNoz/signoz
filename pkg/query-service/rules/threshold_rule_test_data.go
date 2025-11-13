@@ -1280,12 +1280,12 @@ var (
 			thresholdName:          "cat1_atleastonce_equals_recovery",
 		},
 		{
-			description: "Cat1: AtleastOnce + NotEquals - active alert, one value in recovery zone → IsRecovering=true",
+			description: "Cat1: AtleastOnce + NotEquals - active alert, values equal target but not recovery → IsRecovering=true",
 			values: v3.Series{
 				Points: []v3.Point{
-					{Value: 5.0}, // equals recovery (doesn't match NotEq condition)
-					{Value: 3.0}, // not equal to recovery (matches NotEq condition)
-					{Value: 5.0}, // equals recovery
+					{Value: 10.0}, // equals target (doesn't breach target)
+					{Value: 10.0}, // equals target (doesn't breach target)
+					{Value: 10.0}, // equals target (doesn't breach target)
 				},
 				Labels: map[string]string{"service": "test4"},
 			},
@@ -1296,52 +1296,11 @@ var (
 			target:                 10.0,
 			recoveryTarget:         func() *float64 { v := 5.0; return &v }(),
 			activeAlerts:           nil,
-			expectedAlertSample:    v3.Point{Value: 3.0},
+			expectedAlertSample:    v3.Point{Value: 10.0}, // All values = 10, which != 5 (recovery condition met)
 			expectedTarget:         10.0,
 			expectedRecoveryTarget: 5.0,
 			thresholdName:          "cat1_atleastonce_noteq_recovery",
 		},
-		// NO Support for AboveOrEq and BelowOrEq
-		// {
-		// 	description: "Cat1: AtleastOnce + AboveOrEq - active alert, value in recovery zone → IsRecovering=true",
-		// 	values: v3.Series{
-		// 		Points: []v3.Point{
-		// 			{Value: 85.0}, // >= recovery (80)
-		// 		},
-		// 		Labels: map[string]string{"service": "test22"},
-		// 	},
-		// 	expectAlert:            true,
-		// 	expectRecovery:         true,
-		// 	compareOp:              "5", // AboveOrEq
-		// 	matchType:              "1", // AtleastOnce
-		// 	target:                 100.0,
-		// 	recoveryTarget:         func() *float64 { v := 80.0; return &v }(),
-		// 	activeAlerts:           nil,
-		// 	expectedAlertSample:    v3.Point{Value: 85.0},
-		// 	expectedTarget:         100.0,
-		// 	expectedRecoveryTarget: 80.0,
-		// 	thresholdName:          "cat1_atleastonce_aboveoreq_recovery",
-		// },
-		// {
-		// 	description: "Cat1: AtleastOnce + BelowOrEq - active alert, value in recovery zone → IsRecovering=true",
-		// 	values: v3.Series{
-		// 		Points: []v3.Point{
-		// 			{Value: 65.0}, // <= recovery (70)
-		// 		},
-		// 		Labels: map[string]string{"service": "test24"},
-		// 	},
-		// 	expectAlert:            true,
-		// 	expectRecovery:         true,
-		// 	compareOp:              "6", // BelowOrEq
-		// 	matchType:              "1", // AtleastOnce
-		// 	target:                 50.0,
-		// 	recoveryTarget:         func() *float64 { v := 70.0; return &v }(),
-		// 	activeAlerts:           nil,
-		// 	expectedAlertSample:    v3.Point{Value: 65.0},
-		// 	expectedTarget:         50.0,
-		// 	expectedRecoveryTarget: 70.0,
-		// 	thresholdName:          "cat1_atleastonce_beloworeq_recovery",
-		// },
 		{
 			description: "Cat1: AtleastOnce + OutsideBounds - active alert, |value| in recovery zone → IsRecovering=true",
 			values: v3.Series{
@@ -1476,12 +1435,12 @@ var (
 			thresholdName:          "cat2_allthetimes_equals_recovery",
 		},
 		{
-			description: "Cat2: AllTheTimes + NotEquals - active alert, all values not equal recovery → IsRecovering=true",
+			description: "Cat2: AllTheTimes + NotEquals - active alert, all values equal target but not recovery → IsRecovering=true",
 			values: v3.Series{
 				Points: []v3.Point{
-					{Value: 3.0},
-					{Value: 4.0},
-					{Value: 2.0},
+					{Value: 10.0}, // equals target (doesn't breach)
+					{Value: 10.0}, // equals target (doesn't breach)
+					{Value: 10.0}, // equals target (doesn't breach)
 				},
 				Labels: map[string]string{"service": "test9"},
 			},
@@ -1492,7 +1451,7 @@ var (
 			target:                 10.0,
 			recoveryTarget:         func() *float64 { v := 5.0; return &v }(),
 			activeAlerts:           nil,
-			expectedAlertSample:    v3.Point{Value: 3.0},
+			expectedAlertSample:    v3.Point{Value: 10.0}, // All equal target, all != recovery
 			expectedTarget:         10.0,
 			expectedRecoveryTarget: 5.0,
 			thresholdName:          "cat2_allthetimes_noteq_recovery",
@@ -1572,13 +1531,13 @@ var (
 			thresholdName:          "cat3_onaverage_equals_recovery",
 		},
 		{
-			description: "Cat3: OnAverage + NotEquals - active alert, avg not equal recovery → IsRecovering=true",
+			description: "Cat3: OnAverage + NotEquals - active alert, avg equals target but not recovery → IsRecovering=true",
 			values: v3.Series{
 				Points: []v3.Point{
-					{Value: 2.0},
-					{Value: 3.0},
-					{Value: 4.0},
-				}, // avg = 3.0 (not equal to 5.0)
+					{Value: 8.0},
+					{Value: 10.0},
+					{Value: 12.0},
+				}, // avg = 10.0 (equals target, not equal to recovery 5.0)
 				Labels: map[string]string{"service": "test13"},
 			},
 			expectAlert:            true,
@@ -1588,34 +1547,11 @@ var (
 			target:                 10.0,
 			recoveryTarget:         func() *float64 { v := 5.0; return &v }(),
 			activeAlerts:           nil,
-			expectedAlertSample:    v3.Point{Value: 3.0},
+			expectedAlertSample:    v3.Point{Value: 10.0}, // avg = 10.0
 			expectedTarget:         10.0,
 			expectedRecoveryTarget: 5.0,
 			thresholdName:          "cat3_onaverage_noteq_recovery",
 		},
-		// NO Support for AboveOrEq
-		// {
-		// 	description: "Cat3: OnAverage + AboveOrEq - active alert, avg equals recovery → IsRecovering=true",
-		// 	values: v3.Series{
-		// 		Points: []v3.Point{
-		// 			{Value: 75.0},
-		// 			{Value: 80.0}, // avg will be >= 80
-		// 			{Value: 85.0},
-		// 		}, // avg = 80
-		// 		Labels: map[string]string{"service": "test23"},
-		// 	},
-		// 	expectAlert:            true,
-		// 	expectRecovery:         true,
-		// 	compareOp:              "5", // AboveOrEq
-		// 	matchType:              "3", // OnAverage
-		// 	target:                 100.0,
-		// 	recoveryTarget:         func() *float64 { v := 80.0; return &v }(),
-		// 	activeAlerts:           nil,
-		// 	expectedAlertSample:    v3.Point{Value: 80.0},
-		// 	expectedTarget:         100.0,
-		// 	expectedRecoveryTarget: 80.0,
-		// 	thresholdName:          "cat3_onaverage_aboveoreq_recovery",
-		// },
 		{
 			description: "Cat3: OnAverage + OutsideBounds - active alert, avg |value| in recovery zone → IsRecovering=false",
 			values: v3.Series{
@@ -1710,13 +1646,13 @@ var (
 			thresholdName:          "cat4_intotal_equals_recovery",
 		},
 		{
-			description: "Cat4: InTotal + NotEquals - active alert, sum not equal recovery → IsRecovering=true",
+			description: "Cat4: InTotal + NotEquals - active alert, sum equals target but not recovery → IsRecovering=true",
 			values: v3.Series{
 				Points: []v3.Point{
-					{Value: 1.0},
-					{Value: 1.0},
-					{Value: 1.0},
-				}, // sum = 3.0 (not equal to 5.0)
+					{Value: 3.0},
+					{Value: 3.0},
+					{Value: 4.0},
+				}, // sum = 10.0 (equals target, not equal to recovery 5.0)
 				Labels: map[string]string{"service": "test17"},
 			},
 			expectAlert:            true,
@@ -1726,34 +1662,11 @@ var (
 			target:                 10.0,
 			recoveryTarget:         func() *float64 { v := 5.0; return &v }(),
 			activeAlerts:           nil,
-			expectedAlertSample:    v3.Point{Value: 3.0},
+			expectedAlertSample:    v3.Point{Value: 10.0}, // sum = 10.0
 			expectedTarget:         10.0,
 			expectedRecoveryTarget: 5.0,
 			thresholdName:          "cat4_intotal_noteq_recovery",
 		},
-		// NO Support for BelowOrEq
-		// {
-		// 	description: "Cat4: InTotal + BelowOrEq - active alert, sum in recovery zone → IsRecovering=true",
-		// 	values: v3.Series{
-		// 		Points: []v3.Point{
-		// 			{Value: 20.0},
-		// 			{Value: 25.0},
-		// 			{Value: 15.0},
-		// 		}, // sum = 60 (<= 70)
-		// 		Labels: map[string]string{"service": "test25"},
-		// 	},
-		// 	expectAlert:            true,
-		// 	expectRecovery:         true,
-		// 	compareOp:              "6", // BelowOrEq
-		// 	matchType:              "4", // InTotal
-		// 	target:                 50.0,
-		// 	recoveryTarget:         func() *float64 { v := 70.0; return &v }(),
-		// 	activeAlerts:           nil,
-		// 	expectedAlertSample:    v3.Point{Value: 60.0},
-		// 	expectedTarget:         50.0,
-		// 	expectedRecoveryTarget: 70.0,
-		// 	thresholdName:          "cat4_intotal_beloworeq_recovery",
-		// },
 
 		// ============================================================
 		// Category 5: MatchType - Last with All CompareOps
@@ -1829,12 +1742,12 @@ var (
 			thresholdName:          "cat5_last_equals_recovery",
 		},
 		{
-			description: "Cat5: Last + NotEquals - active alert, last value not equal recovery → IsRecovering=true",
+			description: "Cat5: Last + NotEquals - active alert, last value equals target but not recovery → IsRecovering=true",
 			values: v3.Series{
 				Points: []v3.Point{
-					{Value: 10.0}, // not equal target (ignored)
 					{Value: 5.0},  // equals recovery (ignored)
-					{Value: 3.0},  // last: not equal recovery
+					{Value: 3.0},  // not equal to either (ignored)
+					{Value: 10.0}, // last: equals target, not equal recovery
 				},
 				Labels: map[string]string{"service": "test21"},
 			},
@@ -1845,7 +1758,7 @@ var (
 			target:                 10.0,
 			recoveryTarget:         func() *float64 { v := 5.0; return &v }(),
 			activeAlerts:           nil,
-			expectedAlertSample:    v3.Point{Value: 3.0},
+			expectedAlertSample:    v3.Point{Value: 10.0}, // last = 10.0
 			expectedTarget:         10.0,
 			expectedRecoveryTarget: 5.0,
 			thresholdName:          "cat5_last_noteq_recovery",
