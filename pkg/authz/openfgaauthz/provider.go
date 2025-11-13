@@ -148,6 +148,16 @@ func (provider *provider) getOrCreateModel(ctx context.Context, storeID string) 
 	return authorizationModel.AuthorizationModelId, nil
 }
 
+func (provider *provider) getStoreIDandModelID() (string, string) {
+	provider.mtx.RLock()
+	defer provider.mtx.RUnlock()
+
+	storeID := provider.storeID
+	modelID := provider.modelID
+
+	return storeID, modelID
+}
+
 // the language model doesn't have any equality check
 // https://github.com/openfga/language/blob/main/pkg/go/transformer/module-to-model_test.go#L38
 func (provider *provider) isModelEqual(expected *openfgav1.AuthorizationModel, actual *openfgav1.AuthorizationModel) (bool, error) {
@@ -177,11 +187,7 @@ func (provider *provider) isModelEqual(expected *openfgav1.AuthorizationModel, a
 }
 
 func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.TupleKey) error {
-	provider.mtx.RLock()
-	storeID := provider.storeID
-	modelID := provider.modelID
-	provider.mtx.RUnlock()
-
+	storeID, modelID := provider.getStoreIDandModelID()
 	checkResponse, err := provider.openfgaServer.Check(
 		ctx,
 		&openfgav1.CheckRequest{
@@ -205,11 +211,7 @@ func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.TupleKe
 }
 
 func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.TupleKey) error {
-	provider.mtx.RLock()
-	storeID := provider.storeID
-	modelID := provider.modelID
-	provider.mtx.RUnlock()
-
+	storeID, modelID := provider.getStoreIDandModelID()
 	batchCheckItems := make([]*openfgav1.BatchCheckItem, 0)
 	for _, tuple := range tupleReq {
 		batchCheckItems = append(batchCheckItems, &openfgav1.BatchCheckItem{
@@ -262,11 +264,7 @@ func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims aut
 }
 
 func (provider *provider) Write(ctx context.Context, additions []*openfgav1.TupleKey, deletions []*openfgav1.TupleKey) error {
-	provider.mtx.RLock()
-	storeID := provider.storeID
-	modelID := provider.modelID
-	provider.mtx.RUnlock()
-
+	storeID, modelID := provider.getStoreIDandModelID()
 	deletionTuplesWithoutCondition := make([]*openfgav1.TupleKeyWithoutCondition, len(deletions))
 	for idx, tuple := range deletions {
 		deletionTuplesWithoutCondition[idx] = &openfgav1.TupleKeyWithoutCondition{User: tuple.User, Object: tuple.Object, Relation: tuple.Relation}
@@ -297,11 +295,7 @@ func (provider *provider) Write(ctx context.Context, additions []*openfgav1.Tupl
 }
 
 func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, typeable authtypes.Typeable) ([]*authtypes.Object, error) {
-	provider.mtx.RLock()
-	storeID := provider.storeID
-	modelID := provider.modelID
-	provider.mtx.RUnlock()
-
+	storeID, modelID := provider.getStoreIDandModelID()
 	response, err := provider.openfgaServer.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              storeID,
 		AuthorizationModelId: modelID,
