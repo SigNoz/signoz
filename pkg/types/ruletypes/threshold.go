@@ -124,6 +124,9 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 		smpl, shouldAlert := threshold.shouldAlert(series, unit)
 		if shouldAlert {
 			smpl.Target = *threshold.TargetValue
+			if threshold.RecoveryTarget != nil {
+				smpl.RecoveryTarget = threshold.RecoveryTarget
+			}
 			smpl.TargetUnit = threshold.TargetUnit
 			resultVector = append(resultVector, smpl)
 			continue
@@ -139,7 +142,8 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 		if evalData.HasActiveAlert(alertHash) {
 			smpl, matchesRecoveryThrehold := threshold.matchesRecoveryThreshold(series, unit)
 			if matchesRecoveryThrehold {
-				smpl.Target = *threshold.RecoveryTarget
+				smpl.Target = *threshold.TargetValue
+				smpl.RecoveryTarget = threshold.RecoveryTarget
 				smpl.TargetUnit = threshold.TargetUnit
 				// IsRecovering to notify that metrics is in recovery stage
 				smpl.IsRecovering = true
