@@ -17,18 +17,13 @@ type handler struct {
 	module role.Module
 }
 
-func NewHandler(module role.Module) (role.Handler, error) {
-	return &handler{module: module}, nil
+func NewHandler(module role.Module) role.Handler {
+	return &handler{module: module}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -40,7 +35,7 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := handler.module.Create(ctx, orgID, req.DisplayName, req.Description)
+	role, err := handler.module.Create(ctx, valuer.MustNewUUID(claims.OrgID), req.DisplayName, req.Description)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -52,11 +47,6 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -73,7 +63,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := handler.module.Get(ctx, orgID, roleID)
+	role, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), roleID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -85,11 +75,6 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -117,7 +102,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	objects, err := handler.module.GetObjects(ctx, orgID, roleID, relation)
+	objects, err := handler.module.GetObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, relation)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -147,13 +132,8 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
 
-	roles, err := handler.module.List(ctx, orgID)
+	roles, err := handler.module.List(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -165,11 +145,6 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -192,7 +167,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.Patch(ctx, orgID, roleID, req.DisplayName, req.Description)
+	err = handler.module.Patch(ctx, valuer.MustNewUUID(claims.OrgID), roleID, req.DisplayName, req.Description)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -204,11 +179,6 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -248,7 +218,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.PatchObjects(ctx, orgID, roleID, relation, patchableObjects.Additions, patchableObjects.Deletions)
+	err = handler.module.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, relation, patchableObjects.Additions, patchableObjects.Deletions)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -260,11 +230,6 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -281,7 +246,7 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.Delete(ctx, orgID, roleID)
+	err = handler.module.Delete(ctx, valuer.MustNewUUID(claims.OrgID), roleID)
 	if err != nil {
 		render.Error(rw, err)
 		return
