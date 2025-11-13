@@ -147,9 +147,6 @@ func (e *ClickHouseFilterExtractor) extractMetricFromBinaryOp(op *clickhouse.Bin
 
 // extractGroupFromGroupByClause extracts GROUP BY columns from a specific GroupByClause
 func (e *ClickHouseFilterExtractor) extractGroupFromGroupByClause(groupByClause *clickhouse.GroupByClause, groupBy map[string]bool) {
-	if groupByClause == nil {
-		return
-	}
 
 	// Extract GROUP BY expressions properly
 	// Find only the direct child ColumnExprList, not nested ones
@@ -332,7 +329,7 @@ func (e *ClickHouseFilterExtractor) buildCTEMapFromExpr(expr clickhouse.Expr, ct
 // extractGroupByRecursive implements the recursive GROUP BY extraction logic
 // It follows the top-down approach where outer GROUP BY overrides inner GROUP BY
 func (e *ClickHouseFilterExtractor) extractGroupByRecursive(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery, groupBy map[string]bool, visited map[*clickhouse.SelectQuery]bool) {
-	if query == nil || visited[query] {
+	if visited[query] {
 		return
 	}
 
@@ -362,7 +359,7 @@ func (e *ClickHouseFilterExtractor) extractGroupByRecursive(query *clickhouse.Se
 // extractSourceQuery extracts the SelectQuery from FROM expressions
 // Handles CTE references, subqueries, and table expressions
 func (e *ClickHouseFilterExtractor) extractSourceQuery(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery) *clickhouse.SelectQuery {
-	if query == nil || query.From == nil {
+	if query.From == nil {
 		return nil
 	}
 
