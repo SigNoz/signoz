@@ -1,19 +1,19 @@
 package metricsmoduletypes
 
 // Order specifies column ordering preferences for stats queries.
-type Order struct {
+type OrderBy struct {
 	Column string `json:"column"`
 	Order  string `json:"order"`
 }
 
 // StatsRequest represents the payload accepted by the metrics stats endpoint.
 type StatsRequest struct {
-	Expression string `json:"expression"`
-	Start      int64  `json:"start"`
-	End        int64  `json:"end"`
-	Limit      int    `json:"limit"`
-	Offset     int    `json:"offset"`
-	Order      *Order `json:"order,omitempty"`
+	Expression string   `json:"expression"`
+	Start      int64    `json:"start"`
+	End        int64    `json:"end"`
+	Limit      int      `json:"limit"`
+	Offset     int      `json:"offset"`
+	OrderBy    *OrderBy `json:"orderBy,omitempty"`
 }
 
 // MetricStat mirrors the summary information returned per metric.
