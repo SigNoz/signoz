@@ -1431,7 +1431,7 @@ func TestMultipleThresholdRule(t *testing.T) {
 	}
 }
 
-func TestThresholdRuleEval(t *testing.T) {
+func TestThresholdRuleEval_BasicCases(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
 		AlertName: "Eval Recovery Threshold Test",
 		AlertType: ruletypes.AlertTypeMetric,
@@ -1459,9 +1459,45 @@ func TestThresholdRuleEval(t *testing.T) {
 		},
 	}
 
-	logger := instrumentationtest.New().Logger()
+	runEvalTests(t, postableRule, tcThresholdRuleEval)
 
-	for _, c := range tcThresholdRuleEval {
+}
+
+func TestThresholdRuleEval_MatchPlusCompareOps(t *testing.T) {
+	postableRule := ruletypes.PostableRule{
+		AlertName: "Eval Match Plus Compare Ops Threshold Test",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeThreshold,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "probe_success",
+						},
+						AggregateOperator: v3.AggregateOperatorNoOp,
+						DataSource:        v3.DataSourceMetrics,
+						Expression:        "A",
+					},
+				},
+			},
+		},
+	}
+
+	runEvalTests(t, postableRule, tcThresholdRuleEvalMatchPlusCompareOps)
+
+}
+
+func runEvalTests(t *testing.T, postableRule ruletypes.PostableRule, testCases []recoveryTestCase) {
+	logger := instrumentationtest.New().Logger()
+	for _, c := range testCases {
 		t.Run(c.description, func(t *testing.T) {
 			// Prepare threshold with recovery target
 			threshold := ruletypes.BasicRuleThreshold{
@@ -1524,8 +1560,9 @@ func TestThresholdRuleEval(t *testing.T) {
 			assert.NoError(t, err)
 
 			// Verify results
-			if c.expectAlert {
-				assert.NotEmpty(t, resultVectors, "Expected alert but got no result vectors")
+			if c.expectAlert || c.expectRecovery {
+				// Either a new alert fires or recovery happens - both return result vectors
+				assert.NotEmpty(t, resultVectors, "Expected alert or recovery but got no result vectors")
 				if len(resultVectors) > 0 {
 					found := false
 					for _, sample := range resultVectors {
@@ -1547,6 +1584,7 @@ func TestThresholdRuleEval(t *testing.T) {
 					assert.True(t, found, "Expected alert sample value %.2f not found in result vectors. Got values: %v", c.expectedAlertSample.Value, getVectorValues(resultVectors))
 				}
 			} else {
+				// No alert and no recovery expected - should be empty
 				assert.Empty(t, resultVectors, "Expected no alert but got result vectors: %v", resultVectors)
 			}
 		})
