@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -13,7 +14,14 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { Dispatch, memo, SetStateAction, useEffect, useMemo } from 'react';
+import {
+	Dispatch,
+	memo,
+	MutableRefObject,
+	SetStateAction,
+	useEffect,
+	useMemo,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -31,12 +39,14 @@ interface TracesViewProps {
 	isFilterApplied: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
+	queryKeyRef?: MutableRefObject<any>;
 }
 
 function TracesView({
 	isFilterApplied,
 	setWarning,
 	setIsLoadingQueries,
+	queryKeyRef,
 }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
@@ -54,6 +64,31 @@ function TracesView({
 		[stagedQuery],
 	);
 
+	const queryKey = useMemo(
+		() => [
+			REACT_QUERY_KEY.GET_QUERY_RANGE,
+			globalSelectedTime,
+			maxTime,
+			minTime,
+			stagedQuery,
+			panelType,
+			paginationQueryData,
+		],
+		[
+			globalSelectedTime,
+			maxTime,
+			minTime,
+			stagedQuery,
+			panelType,
+			paginationQueryData,
+		],
+	);
+
+	if (queryKeyRef) {
+		// eslint-disable-next-line no-param-reassign
+		queryKeyRef.current = queryKey;
+	}
+
 	const { data, isLoading, isFetching, isError, error } = useGetQueryRange(
 		{
 			query: transformedQuery,
@@ -69,15 +104,7 @@ function TracesView({
 		},
 		ENTITY_VERSION_V5,
 		{
-			queryKey: [
-				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				globalSelectedTime,
-				maxTime,
-				minTime,
-				stagedQuery,
-				panelType,
-				paginationQueryData,
-			],
+			queryKey,
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.TRACE,
 		},
 	);
@@ -166,5 +193,9 @@ function TracesView({
 		</Container>
 	);
 }
+
+TracesView.defaultProps = {
+	queryKeyRef: undefined,
+};
 
 export default memo(TracesView);

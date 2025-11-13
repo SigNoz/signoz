@@ -68,6 +68,7 @@ function TracesExplorer(): JSX.Element {
 	});
 
 	const [searchParams] = useSearchParams();
+	const listQueryKeyRef = useRef<any>();
 
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
@@ -218,6 +219,7 @@ function TracesExplorer(): JSX.Element {
 								<RightToolbarActions
 									onStageRunQuery={(): void => handleRunQuery()}
 									isLoadingQueries={isLoadingQueries}
+									listQueryKeyRef={listQueryKeyRef}
 								/>
 							}
 						/>
@@ -243,6 +245,7 @@ function TracesExplorer(): JSX.Element {
 									isFilterApplied={isFilterApplied}
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
+									queryKeyRef={listQueryKeyRef}
 								/>
 							</div>
 						)}
@@ -253,6 +256,7 @@ function TracesExplorer(): JSX.Element {
 									isFilterApplied={isFilterApplied}
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
+									queryKeyRef={listQueryKeyRef}
 								/>
 							</div>
 						)}
@@ -264,6 +268,7 @@ function TracesExplorer(): JSX.Element {
 									isFilterApplied={isFilterApplied}
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
+									queryKeyRef={listQueryKeyRef}
 								/>
 							</div>
 						)}
@@ -273,6 +278,7 @@ function TracesExplorer(): JSX.Element {
 								<TableView
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
+									queryKeyRef={listQueryKeyRef}
 								/>
 							</div>
 						)}

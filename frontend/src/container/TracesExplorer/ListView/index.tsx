@@ -28,6 +28,7 @@ import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
 	memo,
+	MutableRefObject,
 	SetStateAction,
 	useCallback,
 	useEffect,
@@ -50,12 +51,14 @@ interface ListViewProps {
 	isFilterApplied: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
+	queryKeyRef?: MutableRefObject<any>;
 }
 
 function ListView({
 	isFilterApplied,
 	setWarning,
 	setIsLoadingQueries,
+	queryKeyRef,
 }: ListViewProps): JSX.Element {
 	const {
 		stagedQuery,
@@ -120,6 +123,11 @@ function ListView({
 			orderBy,
 		],
 	);
+
+	if (queryKeyRef) {
+		// eslint-disable-next-line no-param-reassign
+		queryKeyRef.current = queryKey;
+	}
 
 	const { data, isFetching, isLoading, isError, error } = useGetQueryRange(
 		{
@@ -267,5 +275,9 @@ function ListView({
 		</Container>
 	);
 }
+
+ListView.defaultProps = {
+	queryKeyRef: undefined,
+};
 
 export default memo(ListView);
