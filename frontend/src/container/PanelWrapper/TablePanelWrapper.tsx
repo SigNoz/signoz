@@ -41,6 +41,7 @@ function TablePanelWrapper({
 			panelType={widget.panelTypes}
 			queryRangeRequest={queryRangeRequest}
 			decimalPrecision={widget.decimalPrecision}
+			hiddenColumns={widget.hiddenColumns}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}
 		/>

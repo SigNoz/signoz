@@ -30,6 +30,7 @@ export type GridTableComponentProps = {
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;
 	queryRangeRequest?: QueryRangeRequestV5;
+	hiddenColumns?: string[];
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 
