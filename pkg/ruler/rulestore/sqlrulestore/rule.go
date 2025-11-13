@@ -44,6 +44,7 @@ func (r *rule) EditRule(ctx context.Context, storedRule *ruletypes.Rule, cb func
 			NewUpdate().
 			Model(storedRule).
 			Where("id = ?", storedRule.ID.StringValue()).
+			Where("deleted = ?", false).
 			Exec(ctx)
 		if err != nil {
 			return err
@@ -58,8 +59,20 @@ func (r *rule) DeleteRule(ctx context.Context, id valuer.UUID, cb func(context.C
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewDelete().
-			Model(new(ruletypes.Rule)).
+			Model(new(ruletypes.StorablePlannedMaintenanceRule)).
+			Where("rule_id = ?", id.StringValue()).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		_, err = r.sqlstore.
+			BunDBCtx(ctx).
+			NewUpdate().
+			Model((*ruletypes.Rule)(nil)).
+			Set("deleted = ?", true).
 			Where("id = ?", id.StringValue()).
+			Where("deleted = ?", false).
 			Exec(ctx)
 		if err != nil {
 			return err
@@ -79,7 +92,7 @@ func (r *rule) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.R
 		BunDB().
 		NewSelect().
 		Model(&rules).
-		Where("org_id = ?", orgID).
+		Where("org_id = ?", orgID).Where("deleted = ?", false).
 		Scan(ctx)
 	if err != nil {
 		return rules, err
@@ -94,7 +107,7 @@ func (r *rule) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.Ru
 		BunDB().
 		NewSelect().
 		Model(rule).
-		Where("id = ?", id.StringValue()).
+		Where("id = ?", id.StringValue()).Where("deleted = ?", false).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

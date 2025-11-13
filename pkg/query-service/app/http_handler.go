@@ -821,6 +821,10 @@ func (aH *APIHandler) createDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	if len(schedule.RuleIDs) == 0 {
+		schedule.SilenceAll = true
+	}
+
 	_, err = aH.ruleManager.MaintenanceStore().CreatePlannedMaintenance(r.Context(), schedule)
 	if err != nil {
 		render.Error(w, err)
@@ -846,6 +850,10 @@ func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Reques
 	if err := schedule.Validate(); err != nil {
 		render.Error(w, err)
 		return
+	}
+
+	if len(schedule.RuleIDs) == 0 {
+		schedule.SilenceAll = true
 	}
 
 	err = aH.ruleManager.MaintenanceStore().EditPlannedMaintenance(r.Context(), schedule, id)

@@ -78,6 +78,7 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 		Description: maintenance.Description,
 		Schedule:    maintenance.Schedule,
 		OrgID:       claims.OrgID,
+		SilenceAll:  maintenance.SilenceAll,
 	}
 
 	maintenanceRules := make([]*ruletypes.StorablePlannedMaintenanceRule, 0)
@@ -163,6 +164,7 @@ func (r *maintenance) EditPlannedMaintenance(ctx context.Context, maintenance ru
 		Description: maintenance.Description,
 		Schedule:    maintenance.Schedule,
 		OrgID:       claims.OrgID,
+		SilenceAll:  maintenance.SilenceAll,
 	}
 
 	storablePlannedMaintenanceRules := make([]*ruletypes.StorablePlannedMaintenanceRule, 0)
