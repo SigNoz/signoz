@@ -3358,7 +3358,7 @@ export const getAllEndpointsWidgetData = (
 	);
 
 	widget.renderColumnCell = {
-		[SPAN_ATTRIBUTES.URL_PATH]: (((
+		[SPAN_ATTRIBUTES.URL_PATH]: (
 			url: string | number,
 			record?: RowData,
 		): ReactNode => {
@@ -3377,7 +3377,7 @@ export const getAllEndpointsWidgetData = (
 
 			const { endpoint } = extractPortAndEndpoint(String(urlValue));
 			return <span>{getDisplayValue(endpoint)}</span>;
-		}) as unknown) as (record: RowData) => ReactNode,
+		},
 		A: (numOfCalls: any): ReactNode => (
 			<span>
 				{numOfCalls === 'n/a' || numOfCalls === undefined ? '-' : numOfCalls}
