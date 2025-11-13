@@ -185,6 +185,7 @@ function EndPointDetails({
 		REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_LATENCY_BAR_CHARTS_DATA,
 		REACT_QUERY_KEY.GET_ENDPOINT_METRICS_DATA,
 		REACT_QUERY_KEY.GET_ENDPOINT_DEPENDENT_SERVICES_DATA,
+		REACT_QUERY_KEY.GET_ENDPOINT_DROPDOWN_DATA,
 	] as const;
 
 	const endPointDetailsDataQueries = useQueries(
@@ -197,7 +198,7 @@ function EndPointDetails({
 				queryKey: [
 					END_POINT_DETAILS_QUERY_KEYS_ARRAY[index],
 					payload,
-					filters?.items, // Include filters.items in queryKey for better caching
+					...(filters?.items?.length ? filters.items : []), // Include filters.items in queryKey for better caching
 					version,
 				],
 				queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
