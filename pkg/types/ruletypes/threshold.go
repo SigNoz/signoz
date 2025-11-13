@@ -75,7 +75,6 @@ func (eval EvalData) HasActiveAlert(sampleLabelFp uint64) bool {
 }
 
 type RuleThreshold interface {
-	ShouldAlert(series v3.Series, unit string) (Vector, error)
 	// Eval runs the given series through the threshold rules
 	// using the given EvalData and returns the matching series
 	Eval(series v3.Series, unit string, evalData EvalData) (Vector, error)
@@ -117,20 +116,6 @@ func (r BasicRuleThresholds) Validate() error {
 	return errors.Join(errs...)
 }
 
-func (r BasicRuleThresholds) ShouldAlert(series v3.Series, unit string) (Vector, error) {
-	var resultVector Vector
-	thresholds := []BasicRuleThreshold(r)
-	sortThresholds(thresholds)
-	for _, threshold := range thresholds {
-		smpl, shouldAlert := threshold.shouldAlert(series, unit)
-		if shouldAlert {
-			smpl.Target = *threshold.TargetValue
-			smpl.TargetUnit = threshold.TargetUnit
-			resultVector = append(resultVector, smpl)
-		}
-	}
-	return resultVector, nil
-}
 func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalData) (Vector, error) {
 	var resultVector Vector
 	thresholds := []BasicRuleThreshold(r)

@@ -29,80 +29,6 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-func TestThresholdRuleShouldAlert(t *testing.T) {
-	postableRule := ruletypes.PostableRule{
-		AlertName: "Tricky Condition Tests",
-		AlertType: ruletypes.AlertTypeMetric,
-		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(5 * time.Minute),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
-		}},
-		RuleCondition: &ruletypes.RuleCondition{
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
-				BuilderQueries: map[string]*v3.BuilderQuery{
-					"A": {
-						QueryName:    "A",
-						StepInterval: 60,
-						AggregateAttribute: v3.AttributeKey{
-							Key: "probe_success",
-						},
-						AggregateOperator: v3.AggregateOperatorNoOp,
-						DataSource:        v3.DataSourceMetrics,
-						Expression:        "A",
-					},
-				},
-			},
-		},
-	}
-
-	logger := instrumentationtest.New().Logger()
-
-	for idx, c := range tcThresholdRuleShouldAlert {
-		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
-			Kind: ruletypes.BasicThresholdKind,
-			Spec: ruletypes.BasicRuleThresholds{
-				{
-					TargetValue: &c.target,
-					MatchType:   ruletypes.MatchType(c.matchType),
-					CompareOp:   ruletypes.CompareOp(c.compareOp),
-				},
-			},
-		}
-
-		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
-		if err != nil {
-			assert.NoError(t, err)
-		}
-
-		values := c.values
-		for i := range values.Points {
-			values.Points[i].Timestamp = time.Now().UnixMilli()
-		}
-
-		resultVectors, err := rule.Threshold.ShouldAlert(c.values, rule.Unit())
-		assert.NoError(t, err, "Test case %d", idx)
-
-		// Compare result vectors with expected behavior
-		if c.expectAlert {
-			assert.NotEmpty(t, resultVectors, "Expected alert but got no result vectors for case %d", idx)
-			if len(resultVectors) > 0 {
-				found := false
-				for _, sample := range resultVectors {
-					if sample.V == c.expectedAlertSample.Value {
-						found = true
-						break
-					}
-				}
-				assert.True(t, found, "Expected alert sample value %.2f not found in result vectors for case %d. Got values: %v", c.expectedAlertSample.Value, idx, getVectorValues(resultVectors))
-			}
-		} else {
-			assert.Empty(t, resultVectors, "Expected no alert but got result vectors for case %d", idx)
-		}
-	}
-}
-
 func TestThresholdRuleEvalBackwardCompat(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
 		AlertName: "Eval Backward Compatibility Test without recovery target",
@@ -534,7 +460,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		vector, err := rule.Threshold.ShouldAlert(c.values, rule.Unit())
+		vector, err := rule.Threshold.Eval(c.values, rule.Unit(), ruletypes.EvalData{})
 		assert.NoError(t, err)
 
 		for name, value := range c.values.Labels {
@@ -544,7 +470,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 		}
 
 		// Get result vectors from threshold evaluation
-		resultVectors, err := rule.Threshold.ShouldAlert(c.values, rule.Unit())
+		resultVectors, err := rule.Threshold.Eval(c.values, rule.Unit(), ruletypes.EvalData{})
 		assert.NoError(t, err, "Test case %d", idx)
 
 		// Compare result vectors with expected behavior
