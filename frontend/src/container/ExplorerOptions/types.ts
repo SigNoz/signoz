@@ -2,6 +2,8 @@ import { NotificationInstance } from 'antd/es/notification/interface';
 import { AxiosResponse } from 'axios';
 import { SaveViewWithNameProps } from 'components/ExplorerCard/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Dispatch, SetStateAction } from 'react';
 import { UseMutateAsyncFunction } from 'react-query';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
@@ -38,3 +40,8 @@ export type PreservedViewType =
 export type PreservedViewsInLocalStorage = Partial<
 	Record<PreservedViewType, { key: string; value: string }>
 >;
+
+export type ChangeViewFunctionType = (
+	view: ExplorerViews,
+	querySearchParameters?: ICurrentQueryData,
+) => void;
