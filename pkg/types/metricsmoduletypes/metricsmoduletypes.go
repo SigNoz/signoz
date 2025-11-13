@@ -2,8 +2,8 @@ package metricsmoduletypes
 
 // Order specifies column ordering preferences for stats queries.
 type OrderBy struct {
-	Column string `json:"column"`
-	Order  string `json:"order"`
+	ColumnName string `json:"columnName"`
+	Order      string `json:"order"`
 }
 
 // StatsRequest represents the payload accepted by the metrics stats endpoint.
@@ -16,7 +16,7 @@ type StatsRequest struct {
 	OrderBy    *OrderBy `json:"orderBy,omitempty"`
 }
 
-// MetricStat mirrors the summary information returned per metric.
+// MetricStat represents the summary information returned per metric.
 type MetricStat struct {
 	MetricName   string `json:"metricName"`
 	Description  string `json:"description"`
@@ -27,10 +27,16 @@ type MetricStat struct {
 	LastReceived int64  `json:"lastReceived"`
 }
 
-// StatsResponse captures the aggregated metrics statistics.
+// StatsResponse represents the aggregated metrics statistics.
 type StatsResponse struct {
 	Metrics []MetricStat `json:"metrics"`
 	Total   uint64       `json:"total"`
+}
+
+type MetricMetadata struct {
+	Description string `json:"description"`
+	MetricType  string `json:"type"`
+	MetricUnit  string `json:"unit"`
 }
 
 // TreemapMode indicates which treemap variant the caller requests.
