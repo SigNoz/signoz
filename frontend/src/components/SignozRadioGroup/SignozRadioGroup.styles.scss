@@ -65,6 +65,11 @@
 				border-color: var(--bg-vanilla-400) !important;
 				color: var(--text-ink-400) !important;
 			}
+			&:not(.ant-radio-button-wrapper-disabled) {
+				&::before {
+					background: var(--bg-vanilla-200) !important;
+				}
+			}
 		}
 
 		.tab:hover,
