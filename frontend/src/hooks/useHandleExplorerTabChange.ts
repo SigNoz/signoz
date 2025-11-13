@@ -9,6 +9,12 @@ import { DataSource } from 'types/common/queryBuilder';
 import { useGetSearchQueryParam } from './queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from './queryBuilder/useQueryBuilder';
 
+export interface ICurrentQueryData {
+	name: string;
+	id: string;
+	query: Query;
+}
+
 export const useHandleExplorerTabChange = (): {
 	handleExplorerTabChange: (
 		type: string,
@@ -87,9 +93,3 @@ export const useHandleExplorerTabChange = (): {
 
 	return { handleExplorerTabChange };
 };
-
-interface ICurrentQueryData {
-	name: string;
-	id: string;
-	query: Query;
-}
