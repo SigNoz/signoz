@@ -3,10 +3,9 @@ import { cloneDeep } from 'lodash-es';
 import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export const getListViewQuery = (
-	stagedQuery: Query | null,
+	stagedQuery: Query,
 	orderBy?: string,
-): Query | null => {
-	if (!stagedQuery) return null;
+): Query => {
 	const query = stagedQuery
 		? cloneDeep(stagedQuery)
 		: cloneDeep(initialQueriesMap.traces);

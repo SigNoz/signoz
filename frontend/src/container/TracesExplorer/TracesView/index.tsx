@@ -9,6 +9,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
+import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
@@ -30,7 +31,6 @@ import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
-import { transformBuilderQueryFields } from 'utils/queryTransformers';
 
 import TraceExplorerControls from '../Controls';
 import { TracesLoading } from '../TraceLoading/TraceLoading';
@@ -61,16 +61,8 @@ function TracesView({
 	);
 
 	const transformedQuery = useMemo(
-		() =>
-			transformBuilderQueryFields(stagedQuery || initialQueriesMap.traces, {
-				orderBy: [
-					{
-						columnName: orderBy.split(':')[0],
-						order: orderBy.split(':')[1] as 'asc' | 'desc',
-					},
-				],
-			}),
-		[stagedQuery, orderBy],
+		() => getListViewQuery(stagedQuery || initialQueriesMap.traces),
+		[stagedQuery],
 	);
 
 	const handleOrderChange = useCallback((value: string) => {
