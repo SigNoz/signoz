@@ -188,6 +188,7 @@ func (e *ClickHouseFilterExtractor) extractGroupByExpr(expr clickhouse.Expr) str
 	}
 
 	switch ex := expr.(type) {
+	// Ident is a simple identifier like "region" or "timestamp"
 	case *clickhouse.Ident:
 		// Handling for backticks which are native to ClickHouse and used for literal names.
 		// CH Parser removes the backticks from the identifier, so we need to add them back.
@@ -195,35 +196,17 @@ func (e *ClickHouseFilterExtractor) extractGroupByExpr(expr clickhouse.Expr) str
 			return "`" + ex.Name + "`"
 		}
 		return ex.Name
-	case *clickhouse.NestedIdentifier:
-		// For nested identifiers like "m.region" or "toDate(timestamp)"
-		// Check if it's actually a function call by looking at the structure
-		fullName := ex.String()
-		// If it contains parentheses, it might be a function - return as-is
-		if strings.Contains(fullName, "(") {
-			return fullName
-		}
-		// Otherwise, extract just the column name (last part) to strip table alias
-		return e.stripTableAlias(fullName)
+	// FunctionExpr is a function call like "toDate(timestamp)"
 	case *clickhouse.FunctionExpr:
 		// For function expressions, return the complete function call string
 		return ex.String()
+	// ColumnExpr is a column expression like "m.region", "toDate(timestamp)"
 	case *clickhouse.ColumnExpr:
 		// ColumnExpr wraps another expression - extract the underlying expression
 		if ex.Expr != nil {
 			return e.extractGroupByExpr(ex.Expr)
 		}
 		return ex.String()
-	case *clickhouse.AliasExpr:
-		// For aliases, use the alias name if available, otherwise underlying expression
-		if ex.Alias != nil {
-			if ident, ok := ex.Alias.(*clickhouse.Ident); ok {
-				return ident.Name
-			}
-			// If alias is not an Ident, use its string representation
-			return ex.Alias.String()
-		}
-		return e.extractGroupByExpr(ex.Expr)
 	default:
 		// For other expression types, return the string representation
 		return expr.String()
@@ -238,7 +221,8 @@ func (e *ClickHouseFilterExtractor) stripTableAlias(name string) string {
 		return strings.Trim(name, "`")
 	}
 
-	parts := splitIdentifier(name)
+	// split the name by dot and return the last part
+	parts := strings.Split(name, ".")
 	if len(parts) > 1 {
 		return parts[len(parts)-1]
 	}
@@ -250,10 +234,6 @@ func (e *ClickHouseFilterExtractor) getColumnName(expr clickhouse.Expr) string {
 	switch ex := expr.(type) {
 	case *clickhouse.Ident:
 		return ex.Name
-	case *clickhouse.NestedIdentifier:
-		// Use String() and extract the last part (column name)
-		fullName := ex.String()
-		return e.stripTableAlias(fullName)
 	case *clickhouse.Path:
 		// Handle Path type for qualified column names like "m.metric_name"
 		// Extract the last field which is the column name
@@ -261,42 +241,8 @@ func (e *ClickHouseFilterExtractor) getColumnName(expr clickhouse.Expr) string {
 			return ex.Fields[len(ex.Fields)-1].Name
 		}
 		return ""
-	case *clickhouse.AliasExpr:
-		// If it's aliased, check the underlying expression
-		return e.getColumnName(ex.Expr)
 	}
 	return ""
-}
-
-// splitIdentifier splits a dotted identifier like "table.column" or "alias.column"
-func splitIdentifier(ident string) []string {
-	// Simple split on dot - may need to handle quoted identifiers in the future
-	parts := []string{}
-	current := ""
-	inQuotes := false
-	quoteChar := byte(0)
-
-	for i := 0; i < len(ident); i++ {
-		char := ident[i]
-		if !inQuotes && (char == '"' || char == '`' || char == '\'') {
-			inQuotes = true
-			quoteChar = char
-		} else if inQuotes && char == quoteChar {
-			inQuotes = false
-			quoteChar = 0
-		} else if !inQuotes && char == '.' {
-			if current != "" {
-				parts = append(parts, current)
-				current = ""
-			}
-			continue
-		}
-		current += string(char)
-	}
-	if current != "" {
-		parts = append(parts, current)
-	}
-	return parts
 }
 
 // extractStringLiteral extracts a string literal value from an expression
@@ -446,41 +392,16 @@ func (e *ClickHouseFilterExtractor) extractSourceQuery(query *clickhouse.SelectQ
 			if cteQuery, exists := cteMap[expr.Name]; exists {
 				return cteQuery
 			}
-		case *clickhouse.NestedIdentifier:
-			// CTE reference by nested name
-			cteName := expr.String()
-			if cteQuery, exists := cteMap[cteName]; exists {
-				return cteQuery
-			}
 		case *clickhouse.SelectQuery:
 			// Direct subquery
 			return expr
-		case *clickhouse.TableExpr:
-			// Table expression - check if it contains a subquery or CTE reference
-			if expr.Expr != nil {
-				if subQuery, ok := expr.Expr.(*clickhouse.SelectQuery); ok {
-					return subQuery
-				}
-				// Check for CTE references in table expressions
-				if ident, ok := expr.Expr.(*clickhouse.Ident); ok {
-					if cteQuery, exists := cteMap[ident.Name]; exists {
-						return cteQuery
-					}
-				}
-				if nested, ok := expr.Expr.(*clickhouse.NestedIdentifier); ok {
-					cteName := nested.String()
-					if cteQuery, exists := cteMap[cteName]; exists {
-						return cteQuery
-					}
-				}
-			}
 		}
 	}
 
 	return nil
 }
 
-// extractCTEName extracts the CTE name from a CTEStmt
+// extractCTEName extracts the CTE name from a CTEStmt, the Expr field is the name of the CTE
 func (e *ClickHouseFilterExtractor) extractCTEName(cte *clickhouse.CTEStmt) string {
 	if cte == nil || cte.Expr == nil {
 		return ""
@@ -489,14 +410,12 @@ func (e *ClickHouseFilterExtractor) extractCTEName(cte *clickhouse.CTEStmt) stri
 	switch name := cte.Expr.(type) {
 	case *clickhouse.Ident:
 		return name.Name
-	case *clickhouse.NestedIdentifier:
-		return name.String()
 	default:
 		return cte.Expr.String()
 	}
 }
 
-// extractCTEQuery extracts the SelectQuery from a CTEStmt
+// extractCTEQuery extracts the SelectQuery from a CTEStmt, the Alias field is the SelectQuery
 func (e *ClickHouseFilterExtractor) extractCTEQuery(cte *clickhouse.CTEStmt) *clickhouse.SelectQuery {
 	if cte == nil || cte.Alias == nil {
 		return nil
@@ -507,16 +426,5 @@ func (e *ClickHouseFilterExtractor) extractCTEQuery(cte *clickhouse.CTEStmt) *cl
 		return selectQuery
 	}
 
-	// In some cases, the query might be wrapped in another expression
-	// Try to find a SelectQuery within the expression
-	var foundQuery *clickhouse.SelectQuery
-	clickhouse.Walk(cte.Alias, func(node clickhouse.Expr) bool {
-		if selectQuery, ok := node.(*clickhouse.SelectQuery); ok {
-			foundQuery = selectQuery
-			return false // Stop traversal
-		}
-		return true
-	})
-
-	return foundQuery
+	return nil
 }

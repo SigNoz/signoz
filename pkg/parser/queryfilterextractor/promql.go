@@ -77,9 +77,6 @@ func (v *promQLVisitor) Visit(node parser.Node, path []parser.Node) (parser.Visi
 	case *parser.ParenExpr:
 		// Parentheses don't change semantics, continue traversal
 		return v, nil
-	case *parser.UnaryExpr:
-		// Unary expressions may contain VectorSelectors
-		return v, nil
 	case *parser.MatrixSelector:
 		// Matrix selectors wrap VectorSelectors
 		return v, nil
@@ -100,12 +97,8 @@ func (v *promQLVisitor) visitVectorSelector(vs *parser.VectorSelector) {
 			switch matcher.Type {
 			case labels.MatchEqual:
 				v.metricNames[matcher.Value] = true
-			case labels.MatchNotEqual:
-				// Skip per spec - negative filters don't extract metric names
-			case labels.MatchRegexp:
-				// Skip per spec - regex patterns don't extract exact metric names
-			case labels.MatchNotRegexp:
-				// Skip per spec - negative regex patterns don't extract exact metric names
+				// Skip for negative filters - negative filters don't extract metric names
+				// case labels.MatchNotEqual, labels.MatchRegexp, labels.MatchNotRegexp:
 			}
 		}
 	}

@@ -1,3 +1,4 @@
+// Package queryfilterextractor extracts metric names and grouping keys from queries
 package queryfilterextractor
 
 type FilterResult struct {

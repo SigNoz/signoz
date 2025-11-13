@@ -396,6 +396,12 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			wantMetrics: []string{"cpu"},
 			wantGroupBy: []string{"region"},
 		},
+		{
+			name:        "CH64 - Only select query get's extracted and parsed",
+			query:       `SELECT avg(value) FROM metrics WHERE 'cpu' = metric_name GROUP BY region;CREATE DATABASE mydb; DELETE FROM metrics WHERE metric_name = 'memory';`,
+			wantMetrics: []string{"cpu"},
+			wantGroupBy: []string{"region"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -479,7 +485,7 @@ func TestClickHouseFilterExtractor_SimpleCTEGroupByQueries(t *testing.T) {
 				WHERE metric_name = 'memory'
 				GROUP BY region, service
 			)
-			SELECT region, sum(value)
+			SELECT region as region_alias, sum(value) as total
 			FROM cte
 			GROUP BY region`,
 			wantMetrics: []string{"memory"},
