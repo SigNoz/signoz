@@ -123,8 +123,8 @@ export function getAppContextMockState(
 	};
 }
 
-export function mockLocation(pathname: string): void {
-	jest.fn().mockReturnValue({
+export function mockLocation(pathname: string): jest.Mock {
+	return jest.fn().mockReturnValue({
 		pathname,
 	});
 }
