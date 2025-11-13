@@ -94,98 +94,6 @@ func (provider *provider) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (provider *provider) getOrCreateStore(ctx context.Context, name string) (string, error) {
-	stores, err := provider.openfgaServer.ListStores(ctx, &openfgav1.ListStoresRequest{})
-	if err != nil {
-		return "", err
-	}
-
-	for _, store := range stores.GetStores() {
-		if store.GetName() == name {
-			return store.Id, nil
-		}
-	}
-
-	store, err := provider.openfgaServer.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: name})
-	if err != nil {
-		return "", err
-	}
-
-	return store.Id, nil
-}
-
-func (provider *provider) getOrCreateModel(ctx context.Context, storeID string) (string, error) {
-	schema, err := openfgapkgtransformer.TransformModuleFilesToModel(provider.openfgaSchema, "1.1")
-	if err != nil {
-		return "", err
-	}
-
-	authorisationModels, err := provider.openfgaServer.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{StoreId: storeID})
-	if err != nil {
-		return "", err
-	}
-
-	for _, authModel := range authorisationModels.GetAuthorizationModels() {
-		equal, err := provider.isModelEqual(schema, authModel)
-		if err != nil {
-			return "", err
-		}
-		if equal {
-			return authModel.Id, nil
-		}
-	}
-
-	authorizationModel, err := provider.openfgaServer.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
-		StoreId:         storeID,
-		TypeDefinitions: schema.TypeDefinitions,
-		SchemaVersion:   schema.SchemaVersion,
-		Conditions:      schema.Conditions,
-	})
-	if err != nil {
-		return "", err
-	}
-
-	return authorizationModel.AuthorizationModelId, nil
-}
-
-func (provider *provider) getStoreIDandModelID() (string, string) {
-	provider.mtx.RLock()
-	defer provider.mtx.RUnlock()
-
-	storeID := provider.storeID
-	modelID := provider.modelID
-
-	return storeID, modelID
-}
-
-// the language model doesn't have any equality check
-// https://github.com/openfga/language/blob/main/pkg/go/transformer/module-to-model_test.go#L38
-func (provider *provider) isModelEqual(expected *openfgav1.AuthorizationModel, actual *openfgav1.AuthorizationModel) (bool, error) {
-	// we need to initialize a new model since the model extracted from schema doesn't have id
-	expectedAuthModel := openfgav1.AuthorizationModel{
-		SchemaVersion:   expected.SchemaVersion,
-		TypeDefinitions: expected.TypeDefinitions,
-		Conditions:      expected.Conditions,
-	}
-	expectedAuthModelBytes, err := protojson.Marshal(&expectedAuthModel)
-	if err != nil {
-		return false, err
-	}
-
-	actualAuthModel := openfgav1.AuthorizationModel{
-		SchemaVersion:   actual.SchemaVersion,
-		TypeDefinitions: actual.TypeDefinitions,
-		Conditions:      actual.Conditions,
-	}
-	actualAuthModelBytes, err := protojson.Marshal(&actualAuthModel)
-	if err != nil {
-		return false, err
-	}
-
-	return string(expectedAuthModelBytes) == string(actualAuthModelBytes), nil
-
-}
-
 func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.TupleKey) error {
 	storeID, modelID := provider.getStoreIDandModelID()
 	checkResponse, err := provider.openfgaServer.Check(
@@ -308,4 +216,96 @@ func (provider *provider) ListObjects(ctx context.Context, subject string, relat
 	}
 
 	return authtypes.MustNewObjectsFromStringSlice(response.Objects), nil
+}
+
+func (provider *provider) getOrCreateStore(ctx context.Context, name string) (string, error) {
+	stores, err := provider.openfgaServer.ListStores(ctx, &openfgav1.ListStoresRequest{})
+	if err != nil {
+		return "", err
+	}
+
+	for _, store := range stores.GetStores() {
+		if store.GetName() == name {
+			return store.Id, nil
+		}
+	}
+
+	store, err := provider.openfgaServer.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: name})
+	if err != nil {
+		return "", err
+	}
+
+	return store.Id, nil
+}
+
+func (provider *provider) getOrCreateModel(ctx context.Context, storeID string) (string, error) {
+	schema, err := openfgapkgtransformer.TransformModuleFilesToModel(provider.openfgaSchema, "1.1")
+	if err != nil {
+		return "", err
+	}
+
+	authorisationModels, err := provider.openfgaServer.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{StoreId: storeID})
+	if err != nil {
+		return "", err
+	}
+
+	for _, authModel := range authorisationModels.GetAuthorizationModels() {
+		equal, err := provider.isModelEqual(schema, authModel)
+		if err != nil {
+			return "", err
+		}
+		if equal {
+			return authModel.Id, nil
+		}
+	}
+
+	authorizationModel, err := provider.openfgaServer.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
+		StoreId:         storeID,
+		TypeDefinitions: schema.TypeDefinitions,
+		SchemaVersion:   schema.SchemaVersion,
+		Conditions:      schema.Conditions,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return authorizationModel.AuthorizationModelId, nil
+}
+
+// the language model doesn't have any equality check
+// https://github.com/openfga/language/blob/main/pkg/go/transformer/module-to-model_test.go#L38
+func (provider *provider) isModelEqual(expected *openfgav1.AuthorizationModel, actual *openfgav1.AuthorizationModel) (bool, error) {
+	// we need to initialize a new model since the model extracted from schema doesn't have id
+	expectedAuthModel := openfgav1.AuthorizationModel{
+		SchemaVersion:   expected.SchemaVersion,
+		TypeDefinitions: expected.TypeDefinitions,
+		Conditions:      expected.Conditions,
+	}
+	expectedAuthModelBytes, err := protojson.Marshal(&expectedAuthModel)
+	if err != nil {
+		return false, err
+	}
+
+	actualAuthModel := openfgav1.AuthorizationModel{
+		SchemaVersion:   actual.SchemaVersion,
+		TypeDefinitions: actual.TypeDefinitions,
+		Conditions:      actual.Conditions,
+	}
+	actualAuthModelBytes, err := protojson.Marshal(&actualAuthModel)
+	if err != nil {
+		return false, err
+	}
+
+	return string(expectedAuthModelBytes) == string(actualAuthModelBytes), nil
+
+}
+
+func (provider *provider) getStoreIDandModelID() (string, string) {
+	provider.mtx.RLock()
+	defer provider.mtx.RUnlock()
+
+	storeID := provider.storeID
+	modelID := provider.modelID
+
+	return storeID, modelID
 }
