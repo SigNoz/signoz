@@ -196,11 +196,12 @@ func addStatsFromStorableDashboard(dashboard *StorableDashboard, stats map[strin
 						for _, queryData := range builderQueryData {
 							data, ok := queryData.(map[string]interface{})
 							if ok {
-								if data["dataSource"] == "traces" {
+								switch data["dataSource"] {
+								case "traces":
 									stats["dashboard.panels.traces.count"] = stats["dashboard.panels.traces.count"].(int64) + 1
-								} else if data["dataSource"] == "metrics" {
+								case "metrics":
 									stats["dashboard.panels.metrics.count"] = stats["dashboard.panels.metrics.count"].(int64) + 1
-								} else if data["dataSource"] == "logs" {
+								case "logs":
 									stats["dashboard.panels.logs.count"] = stats["dashboard.panels.logs.count"].(int64) + 1
 								}
 							}

@@ -8,16 +8,16 @@ type RequestType struct {
 
 var (
 	RequestTypeUnknown = RequestType{valuer.NewString("")}
-	// Scalar result(s), example: number panel, and table panel
+	// Scalar result(s), example: number panel, and table panel.
 	RequestTypeScalar = RequestType{valuer.NewString("scalar")}
-	// []Point (struct{TS int64; Val float64}), example: line/area/bar chart
+	// []Point (struct{TS int64; Val float64}), example: line/area/bar chart.
 	RequestTypeTimeSeries = RequestType{valuer.NewString("time_series")}
-	// [][]any, SQL result set, but paginated, example: list view
+	// [][]any, SQL result set, but paginated, example: list view.
 	RequestTypeRaw = RequestType{valuer.NewString("raw")}
-	// [][]any, SQL result set, but live, example: live list view
+	// [][]any, SQL result set, but live, example: live list view.
 	RequestTypeRawStream = RequestType{valuer.NewString("raw_stream")}
-	// [][]any, Specialized SQL result set, paginated
+	// [][]any, Specialized SQL result set, paginated.
 	RequestTypeTrace = RequestType{valuer.NewString("trace")}
-	// []Bucket (struct{Lower,Upper,Count float64}), example: histogram
+	// []Bucket (struct{Lower,Upper,Count float64}), example: histogram.
 	RequestTypeDistribution = RequestType{valuer.NewString("distribution")}
 )

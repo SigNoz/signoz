@@ -7,12 +7,12 @@ import (
 
 const (
 
-	// Internal Columns
+	// Internal Columns.
 	LogsV2IDColumn                   = "id"
 	LogsV2TimestampBucketStartColumn = "ts_bucket_start"
 	LogsV2ResourceFingerPrintColumn  = "resource_fingerprint"
 
-	// Intrinsic Columns
+	// Intrinsic Columns.
 	LogsV2TimestampColumn         = "timestamp"
 	LogsV2ObservedTimestampColumn = "observed_timestamp"
 	LogsV2BodyColumn              = "body"
@@ -24,7 +24,7 @@ const (
 	LogsV2ScopeNameColumn         = "scope_name"
 	LogsV2ScopeVersionColumn      = "scope_version"
 
-	// Contextual Columns
+	// Contextual Columns.
 	LogsV2AttributesStringColumn = "attributes_string"
 	LogsV2AttributesNumberColumn = "attributes_number"
 	LogsV2AttributesBoolColumn   = "attributes_bool"

@@ -13,11 +13,11 @@ var (
 	}
 
 	// LogsBackwardCompatKeys contains bidirectional mappings for logs
-	// Currently empty, can be extended in the future
+	// Currently empty, can be extended in the future.
 	LogsBackwardCompatKeys = BackwardCompatibleKeyMap{}
 
 	// MetricsBackwardCompatKeys contains bidirectional mappings for metrics
-	// Currently empty, can be extended in the future
+	// Currently empty, can be extended in the future.
 	MetricsBackwardCompatKeys = BackwardCompatibleKeyMap{}
 )
 

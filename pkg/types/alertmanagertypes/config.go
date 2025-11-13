@@ -31,7 +31,7 @@ var (
 )
 
 type (
-	// GlobalConfig is the type for the global configuration
+	// GlobalConfig is the type for the global configuration.
 	GlobalConfig = config.GlobalConfig
 )
 
@@ -52,7 +52,7 @@ type StoreableConfig struct {
 	OrgID  string `bun:"org_id"`
 }
 
-// Config is the type for the entire alertmanager configuration
+// Config is the type for the entire alertmanager configuration.
 type Config struct {
 	// alertmanagerConfig is the actual alertmanager configuration referenced from the upstream
 	alertmanagerConfig *config.Config

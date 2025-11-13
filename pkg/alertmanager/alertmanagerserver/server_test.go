@@ -124,7 +124,7 @@ func TestServerPutAlerts(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, len(gettableAlerts))
-	assert.Equal(t, gettableAlerts[0].Alert.Labels["alertname"], "test-alert")
+	assert.Equal(t, gettableAlerts[0].Labels["alertname"], "test-alert")
 	assert.NoError(t, server.Stop(context.Background()))
 }
 

@@ -5,5 +5,5 @@ var (
 	StatusError          = status{"error"}
 )
 
-// Defines custom error types
+// Defines custom error types.
 type status struct{ s string }

@@ -15,7 +15,7 @@ type ThirdPartyApiRequest struct {
 	GroupBy  []qbtypes.GroupByKey `json:"groupBy,omitempty"`
 }
 
-// Validate validates the ThirdPartyApiRequest
+// Validate validates the ThirdPartyApiRequest.
 func (req *ThirdPartyApiRequest) Validate() error {
 	if req.Start >= req.End {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "start time must be before end time")
