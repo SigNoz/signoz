@@ -101,11 +101,6 @@ export const getYAxisFormattedValue = (
 	if (numValue === Infinity) return '∞';
 	if (numValue === -Infinity) return '-∞';
 
-	// Use custom formatter for the 'none' format honoring precision
-	if (format === 'none') {
-		return formatDecimalWithLeadingZeros(numValue, precision);
-	}
-
 	// For all other standard formats, delegate to grafana/data's built-in formatter.
 	const computeDecimals = (): number | undefined => {
 		if (precision === PrecisionOptionsEnum.FULL) {
@@ -126,6 +121,11 @@ export const getYAxisFormattedValue = (
 	};
 
 	try {
+		// Use custom formatter for the 'none' format honoring precision
+		if (format === 'none') {
+			return formatDecimalWithLeadingZeros(numValue, precision);
+		}
+
 		const formatter = getValueFormat(format);
 		const formattedValue = formatter(numValue, computeDecimals(), undefined);
 		if (formattedValue.text && formattedValue.text.includes('.')) {
