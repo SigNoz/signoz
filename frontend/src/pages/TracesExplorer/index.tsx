@@ -26,11 +26,15 @@ import TracesView from 'container/TracesExplorer/TracesView';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
+import {
+	ICurrentQueryData,
+	useHandleExplorerTabChange,
+} from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { cloneDeep, isEmpty, set } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
+import { TOOLBAR_VIEWS } from 'pages/TracesExplorer/constants';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Warning } from 'types/api';
@@ -39,7 +43,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import {
-	getExplorerViewForPanelType,
+	explorerViewToPanelType,
 	getExplorerViewFromUrl,
 } from 'utils/explorerUtils';
 import { v4 } from 'uuid';
@@ -52,7 +56,6 @@ function TracesExplorer(): JSX.Element {
 		handleRunQuery,
 		stagedQuery,
 		handleSetConfig,
-		updateQueriesData,
 	} = useQueryBuilder();
 
 	const { options } = useOptionsMenu({
@@ -74,80 +77,35 @@ function TracesExplorer(): JSX.Element {
 		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
 	);
 
+	const [warning, setWarning] = useState<Warning | undefined>(undefined);
+	const [isOpen, setOpen] = useState<boolean>(true);
+
+	const defaultQuery = useMemo(
+		(): Query =>
+			updateAllQueriesOperators(
+				initialQueriesMap.traces,
+				PANEL_TYPES.LIST,
+				DataSource.TRACES,
+			),
+		[updateAllQueriesOperators],
+	);
+
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const { safeNavigate } = useSafeNavigate();
 
-	// Update selected view when panel type from URL changes
-	useEffect(() => {
-		if (panelTypesFromUrl) {
-			const newView = getExplorerViewForPanelType(panelTypesFromUrl);
-			if (newView && newView !== selectedView) {
-				setSelectedView(newView);
-			}
-		}
-	}, [panelTypesFromUrl, selectedView]);
-
-	const [shouldReset, setShouldReset] = useState(false);
-
-	const [defaultQuery, setDefaultQuery] = useState<Query>(() =>
-		updateAllQueriesOperators(
-			initialQueriesMap.traces,
-			PANEL_TYPES.LIST,
-			DataSource.TRACES,
-		),
-	);
-
 	const handleChangeSelectedView = useCallback(
-		(view: ExplorerViews): void => {
-			if (selectedView === ExplorerViews.LIST) {
-				handleSetConfig(PANEL_TYPES.LIST, DataSource.TRACES);
-			}
-
-			if (
-				(selectedView === ExplorerViews.TRACE ||
-					selectedView === ExplorerViews.LIST) &&
-				stagedQuery?.builder?.queryTraceOperator &&
-				stagedQuery.builder.queryTraceOperator.length > 0
-			) {
-				// remove order by from trace operator
-				set(stagedQuery, 'builder.queryTraceOperator[0].orderBy', []);
-			}
-
-			if (view === ExplorerViews.LIST || view === ExplorerViews.TRACE) {
-				// loop through all the queries and remove the group by
-
-				const updateQuery = updateQueriesData(
-					currentQuery,
-					'queryData',
-					(item) => ({ ...item, groupBy: [], orderBy: [] }),
-				);
-
-				setDefaultQuery(updateQuery);
-
-				setShouldReset(true);
-			}
+		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
+			handleSetConfig(explorerViewToPanelType[view], DataSource.TRACES);
 
 			setSelectedView(view);
 
 			handleExplorerTabChange(
-				view === ExplorerViews.TIMESERIES ? PANEL_TYPES.TIME_SERIES : view,
+				explorerViewToPanelType[view],
+				querySearchParameters,
 			);
 		},
-		[
-			selectedView,
-			currentQuery,
-			stagedQuery,
-			handleExplorerTabChange,
-			handleSetConfig,
-			updateQueriesData,
-		],
+		[handleExplorerTabChange, handleSetConfig],
 	);
-
-	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
-
-		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
-	}, [stagedQuery]);
 
 	const exportDefaultQuery = useMemo(
 		() =>
@@ -204,22 +162,8 @@ function TracesExplorer(): JSX.Element {
 		[exportDefaultQuery, panelType, safeNavigate, getUpdatedQueryForExport],
 	);
 
-	useShareBuilderUrl({ defaultValue: defaultQuery, forceReset: shouldReset });
+	useShareBuilderUrl({ defaultValue: defaultQuery });
 
-	useEffect(() => {
-		if (shouldReset) {
-			setShouldReset(false);
-			setDefaultQuery(
-				updateAllQueriesOperators(
-					initialQueriesMap.traces,
-					PANEL_TYPES.LIST,
-					DataSource.TRACES,
-				),
-			);
-		}
-	}, [shouldReset, updateAllQueriesOperators]);
-
-	const [isOpen, setOpen] = useState<boolean>(true);
 	const logEventCalledRef = useRef(false);
 
 	useEffect(() => {
@@ -229,51 +173,13 @@ function TracesExplorer(): JSX.Element {
 		}
 	}, []);
 
-	const toolbarViews = useMemo(
-		() => ({
-			list: {
-				name: 'list',
-				label: 'List',
-				show: true,
-				key: 'list',
-			},
-			timeseries: {
-				name: 'timeseries',
-				label: 'Timeseries',
-				disabled: false,
-				show: true,
-				key: 'timeseries',
-			},
-			trace: {
-				name: 'trace',
-				label: 'Trace',
-				disabled: false,
-				show: true,
-				key: 'trace',
-			},
-			table: {
-				name: 'table',
-				label: 'Table',
-				disabled: false,
-				show: true,
-				key: 'table',
-			},
-			clickhouse: {
-				name: 'clickhouse',
-				label: 'Clickhouse',
-				disabled: false,
-				show: false,
-				key: 'clickhouse',
-			},
-		}),
-		[],
-	);
-
-	const isFilterApplied = useMemo(() => !isEmpty(listQuery?.filters?.items), [
-		listQuery,
-	]);
-
-	const [warning, setWarning] = useState<Warning | undefined>(undefined);
+	const isFilterApplied = useMemo(() => {
+		// if any of the non-disabled queries has filters applied, return true
+		const result = stagedQuery?.builder?.queryData?.filter(
+			(item) => !isEmpty(item.filters?.items) && !item.disabled,
+		);
+		return !!result?.length;
+	}, [stagedQuery]);
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
@@ -300,7 +206,7 @@ function TracesExplorer(): JSX.Element {
 								<LeftToolbarActions
 									showFilter={isOpen}
 									handleFilterVisibilityChange={(): void => setOpen(!isOpen)}
-									items={toolbarViews}
+									items={TOOLBAR_VIEWS}
 									selectedView={selectedView}
 									onChangeSelectedView={handleChangeSelectedView}
 								/>
@@ -377,6 +283,7 @@ function TracesExplorer(): JSX.Element {
 						query={exportDefaultQuery}
 						sourcepage={DataSource.TRACES}
 						onExport={handleExport}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				</div>
 			</div>
