@@ -122,11 +122,12 @@ func (migration *addAuthz) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "condition_name", DataType: sqlschema.DataTypeText, Nullable: true},
 			{Name: "condition_context", DataType: sqlschema.DataTypeText, Nullable: true},
 		},
-		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"store", "ulid", "object_type"}}})
+		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"store", "ulid", "object_type"}},
+	})
 	sqls = append(sqls, tableSQLs...)
 
-	for _, sqlStmt := range sqls {
-		if _, err := tx.ExecContext(ctx, string(sqlStmt)); err != nil {
+	for _, sql := range sqls {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}
 	}
