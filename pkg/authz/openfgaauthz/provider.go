@@ -178,13 +178,15 @@ func (provider *provider) isModelEqual(expected *openfgav1.AuthorizationModel, a
 
 func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.TupleKey) error {
 	provider.mtx.RLock()
-	defer provider.mtx.RUnlock()
+	storeID := provider.storeID
+	modelID := provider.modelID
+	provider.mtx.RUnlock()
 
 	checkResponse, err := provider.openfgaServer.Check(
 		ctx,
 		&openfgav1.CheckRequest{
-			StoreId:              provider.storeID,
-			AuthorizationModelId: provider.modelID,
+			StoreId:              storeID,
+			AuthorizationModelId: modelID,
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     tupleReq.User,
 				Relation: tupleReq.Relation,
@@ -204,7 +206,9 @@ func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.TupleKe
 
 func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.TupleKey) error {
 	provider.mtx.RLock()
-	defer provider.mtx.RUnlock()
+	storeID := provider.storeID
+	modelID := provider.modelID
+	provider.mtx.RUnlock()
 
 	batchCheckItems := make([]*openfgav1.BatchCheckItem, 0)
 	for _, tuple := range tupleReq {
@@ -220,8 +224,8 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.
 	checkResponse, err := provider.openfgaServer.BatchCheck(
 		ctx,
 		&openfgav1.BatchCheckRequest{
-			StoreId:              provider.storeID,
-			AuthorizationModelId: provider.modelID,
+			StoreId:              storeID,
+			AuthorizationModelId: modelID,
 			Checks:               batchCheckItems,
 		})
 	if err != nil {
@@ -259,7 +263,9 @@ func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims aut
 
 func (provider *provider) Write(ctx context.Context, additions []*openfgav1.TupleKey, deletions []*openfgav1.TupleKey) error {
 	provider.mtx.RLock()
-	defer provider.mtx.RUnlock()
+	storeID := provider.storeID
+	modelID := provider.modelID
+	provider.mtx.RUnlock()
 
 	deletionTuplesWithoutCondition := make([]*openfgav1.TupleKeyWithoutCondition, len(deletions))
 	for idx, tuple := range deletions {
@@ -267,8 +273,8 @@ func (provider *provider) Write(ctx context.Context, additions []*openfgav1.Tupl
 	}
 
 	_, err := provider.openfgaServer.Write(ctx, &openfgav1.WriteRequest{
-		StoreId:              provider.storeID,
-		AuthorizationModelId: provider.modelID,
+		StoreId:              storeID,
+		AuthorizationModelId: modelID,
 		Writes: func() *openfgav1.WriteRequestWrites {
 			if len(additions) == 0 {
 				return nil
@@ -292,11 +298,13 @@ func (provider *provider) Write(ctx context.Context, additions []*openfgav1.Tupl
 
 func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, typeable authtypes.Typeable) ([]*authtypes.Object, error) {
 	provider.mtx.RLock()
-	defer provider.mtx.RUnlock()
+	storeID := provider.storeID
+	modelID := provider.modelID
+	provider.mtx.RUnlock()
 
 	response, err := provider.openfgaServer.ListObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              provider.storeID,
-		AuthorizationModelId: provider.modelID,
+		StoreId:              storeID,
+		AuthorizationModelId: modelID,
 		User:                 subject,
 		Relation:             relation.StringValue(),
 		Type:                 typeable.Type().StringValue(),
