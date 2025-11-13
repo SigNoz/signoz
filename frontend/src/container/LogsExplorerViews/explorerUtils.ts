@@ -184,11 +184,6 @@ export const getExportQueryData = (
 	if (!query) return null;
 
 	if (panelType === PANEL_TYPES.LIST) {
-		const paginateData = getPaginationQueryDataV2({
-			page: 1,
-			pageSize: 100,
-		});
-
 		const listQuery = getListQuery(query);
 		if (!listQuery) return null;
 
@@ -199,14 +194,13 @@ export const getExportQueryData = (
 				queryData: [
 					{
 						...listQuery,
-						...paginateData,
 						orderBy: [
 							{
 								columnName: 'timestamp',
 								order: 'desc',
 							},
 						],
-						limit: 100,
+						limit: null,
 					},
 				],
 			},

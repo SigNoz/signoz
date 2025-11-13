@@ -300,7 +300,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, authNs)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, authNs)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings)
