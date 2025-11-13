@@ -1,4 +1,4 @@
-import { ApiBaseInstance as axios } from 'api';
+import { LogEventAxiosInstance as axios } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';

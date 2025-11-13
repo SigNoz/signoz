@@ -200,15 +200,15 @@ ApiV5Instance.interceptors.request.use(interceptorsRequestResponse);
 //
 
 // axios Base
-export const ApiBaseInstance = axios.create({
+export const LogEventAxiosInstance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
 });
 
-ApiBaseInstance.interceptors.response.use(
+LogEventAxiosInstance.interceptors.response.use(
 	interceptorsResponse,
 	interceptorRejectedBase,
 );
-ApiBaseInstance.interceptors.request.use(interceptorsRequestResponse);
+LogEventAxiosInstance.interceptors.request.use(interceptorsRequestResponse);
 //
 
 // gateway Api V1
