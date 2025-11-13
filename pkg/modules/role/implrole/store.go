@@ -13,8 +13,8 @@ type store struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func NewStore(sqlstore sqlstore.SQLStore) (roletypes.Store, error) {
-	return &store{sqlstore: sqlstore}, nil
+func NewStore(sqlstore sqlstore.SQLStore) roletypes.Store {
+	return &store{sqlstore: sqlstore}
 }
 
 func (store *store) Create(ctx context.Context, role *roletypes.StorableRole) error {
@@ -38,7 +38,7 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 		BunDB().
 		NewSelect().
 		Model(role).
-		Where("orgID = ?", orgID).
+		Where("org_id = ?", orgID).
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
@@ -55,7 +55,7 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.S
 		BunDB().
 		NewSelect().
 		Model(&roles).
-		Where("orgID = ?", orgID).
+		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, roletypes.ErrCodeRoleNotFound, "no roles found in org_id: %s", orgID)
