@@ -92,6 +92,9 @@
 
 		.qb-trace-operator-editor-container {
 			flex: 1;
+			.cm-activeLine > span {
+				font-size: 12px;
+			}
 		}
 
 		&.arrow-left {
