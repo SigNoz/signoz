@@ -8,6 +8,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
+	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
+	"github.com/SigNoz/signoz/pkg/modules/metricsmodule/implmetricsmodule"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -44,6 +46,7 @@ type Handlers struct {
 	Session        session.Handler
 	SpanPercentile spanpercentile.Handler
 	Services       services.Handler
+	Metrics        metricsmodule.Handler
 }
 
 func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Handlers {
@@ -60,6 +63,7 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Han
 		AuthDomain:     implauthdomain.NewHandler(modules.AuthDomain),
 		Session:        implsession.NewHandler(modules.Session),
 		Services:       implservices.NewHandler(modules.Services),
+		Metrics:        implmetricsmodule.NewHandler(modules.Metrics),
 		SpanPercentile: implspanpercentile.NewHandler(modules.SpanPercentile),
 	}
 }
