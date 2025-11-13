@@ -222,4 +222,18 @@ describe('useRoutingPolicies', () => {
 		const callArg = mockHistoryReplace.mock.calls[0][0];
 		expect(callArg).toBe('/alerts?');
 	});
+
+	it('should filter policies by description', () => {
+		const { result } = renderHookWithWrapper();
+
+		act(() => {
+			result.current.setSearchTerm(MOCK_ROUTING_POLICY_1.description || '');
+		});
+
+		expect(result.current.searchTerm).toBe(MOCK_ROUTING_POLICY_1.description);
+		expect(result.current.routingPoliciesData).toHaveLength(1);
+		expect(result.current.routingPoliciesData[0].description).toBe(
+			MOCK_ROUTING_POLICY_1.description,
+		);
+	});
 });

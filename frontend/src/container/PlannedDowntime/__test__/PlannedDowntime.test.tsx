@@ -1,13 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
+import { PayloadProps } from 'api/plannedDowntime/getAllDowntimeSchedules';
+import { AxiosError, AxiosResponse } from 'axios';
 import {
 	mockLocation,
 	mockQueryParams,
 } from 'container/RoutingPolicies/__tests__/testUtils';
+import { UseQueryResult } from 'react-query';
 import { render } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
 import { PlannedDowntime } from '../PlannedDowntime';
+import { buildSchedule, createMockDowntime } from './testUtils';
 
 const SEARCH_PLACEHOLDER = 'Search for a planned downtime...';
 
@@ -17,29 +20,51 @@ const MOCK_DOWNTIME_3_NAME = 'Mock Downtime 3';
 const MOCK_DATE_1 = '2024-01-01';
 const MOCK_DATE_2 = '2024-01-02';
 const MOCK_DATE_3 = '2024-01-03';
-const MOCK_DOWNTIME_1 = {
+
+const MOCK_DOWNTIME_1 = createMockDowntime({
 	id: 1,
 	name: MOCK_DOWNTIME_1_NAME,
 	createdAt: MOCK_DATE_1,
 	updatedAt: MOCK_DATE_1,
-	schedule: { startTime: MOCK_DATE_1, timezone: 'UTC' },
+	schedule: buildSchedule({ startTime: MOCK_DATE_1, timezone: 'UTC' }),
 	alertIds: [],
-};
-const MOCK_DOWNTIME_2 = {
+});
+
+const MOCK_DOWNTIME_2 = createMockDowntime({
 	id: 2,
 	name: MOCK_DOWNTIME_2_NAME,
 	createdAt: MOCK_DATE_2,
 	updatedAt: MOCK_DATE_2,
-	schedule: { startTime: MOCK_DATE_2, timezone: 'UTC' },
+	schedule: buildSchedule({ startTime: MOCK_DATE_2, timezone: 'UTC' }),
 	alertIds: [],
-};
-const MOCK_DOWNTIME_3 = {
+});
+
+const MOCK_DOWNTIME_3 = createMockDowntime({
 	id: 3,
 	name: MOCK_DOWNTIME_3_NAME,
 	createdAt: MOCK_DATE_3,
 	updatedAt: MOCK_DATE_3,
-	schedule: { startTime: MOCK_DATE_3, timezone: 'UTC' },
+	schedule: buildSchedule({ startTime: MOCK_DATE_3, timezone: 'UTC' }),
 	alertIds: [],
+});
+
+const MOCK_DOWNTIME_RESPONSE: Partial<AxiosResponse<PayloadProps>> = {
+	data: {
+		data: [MOCK_DOWNTIME_1, MOCK_DOWNTIME_2, MOCK_DOWNTIME_3],
+	},
+};
+
+type DowntimeQueryResult = UseQueryResult<
+	AxiosResponse<PayloadProps>,
+	AxiosError
+>;
+
+const mockDowntimeQueryResult: Partial<DowntimeQueryResult> = {
+	data: MOCK_DOWNTIME_RESPONSE as AxiosResponse<PayloadProps>,
+	isLoading: false,
+	isFetching: false,
+	isError: false,
+	refetch: jest.fn(),
 };
 
 const mockUseLocation = jest.fn().mockReturnValue({
@@ -65,21 +90,12 @@ jest.mock('hooks/useSafeNavigate', () => ({
 }));
 
 jest.mock('api/plannedDowntime/getAllDowntimeSchedules', () => ({
-	useGetAllDowntimeSchedules: (): any => ({
-		data: {
-			data: {
-				data: [MOCK_DOWNTIME_1, MOCK_DOWNTIME_2, MOCK_DOWNTIME_3],
-			},
-		},
-		isLoading: false,
-		isFetching: false,
-		isError: false,
-		refetch: jest.fn(),
-	}),
+	useGetAllDowntimeSchedules: (): DowntimeQueryResult =>
+		mockDowntimeQueryResult as DowntimeQueryResult,
 }));
 jest.mock('api/alerts/getAll', () => ({
 	__esModule: true,
-	default: (): any => Promise.resolve({ payload: [] }),
+	default: (): Promise<{ payload: [] }> => Promise.resolve({ payload: [] }),
 }));
 
 describe('PlannedDowntime Component', () => {
@@ -150,9 +166,7 @@ describe('PlannedDowntime Component', () => {
 	it('should display all downtime schedules when no search term is entered', async () => {
 		render(<PlannedDowntime />, {}, { role: USER_ROLES.ADMIN });
 
-		await waitFor(() => {
-			expect(screen.getByText(MOCK_DOWNTIME_1_NAME)).toBeInTheDocument();
-		});
+		expect(screen.getByText(MOCK_DOWNTIME_1_NAME)).toBeInTheDocument();
 		expect(screen.getByText(MOCK_DOWNTIME_2_NAME)).toBeInTheDocument();
 		expect(screen.getByText(MOCK_DOWNTIME_3_NAME)).toBeInTheDocument();
 	});
@@ -160,9 +174,7 @@ describe('PlannedDowntime Component', () => {
 	it('should filter downtime schedules by name when searching', async () => {
 		render(<PlannedDowntime />, {}, { role: USER_ROLES.ADMIN });
 
-		await waitFor(() => {
-			expect(screen.getByText(MOCK_DOWNTIME_1_NAME)).toBeInTheDocument();
-		});
+		expect(screen.getByText(MOCK_DOWNTIME_1_NAME)).toBeInTheDocument();
 
 		const searchInput = screen.getByPlaceholderText(SEARCH_PLACEHOLDER);
 

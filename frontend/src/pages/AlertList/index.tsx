@@ -16,8 +16,7 @@ import AlertDetails from 'pages/AlertDetails';
 import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
-const PLANNED_DOWNTIME_SUB_TAB = 'planned-downtime';
-const ROUTING_POLICIES_SUB_TAB = 'routing-policies';
+import { AlertListSubTabs, AlertListTabs } from './types';
 
 function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();
@@ -31,7 +30,7 @@ function AllAlertList(): JSX.Element {
 
 	const handleConfigurationTabChange = useCallback(
 		(subTab: string): void => {
-			urlQuery.set('tab', 'Configuration');
+			urlQuery.set('tab', AlertListTabs.CONFIGURATION);
 			urlQuery.set('subTab', subTab);
 			urlQuery.delete('search');
 			safeNavigate(`/alerts?${urlQuery.toString()}`);
@@ -43,19 +42,19 @@ function AllAlertList(): JSX.Element {
 		const tabs = [
 			{
 				label: 'Planned Downtime',
-				key: PLANNED_DOWNTIME_SUB_TAB,
+				key: AlertListSubTabs.PLANNED_DOWNTIME,
 				children: <PlannedDowntime />,
 			},
 			{
 				label: 'Routing Policies',
-				key: ROUTING_POLICIES_SUB_TAB,
+				key: AlertListSubTabs.ROUTING_POLICIES,
 				children: <RoutingPolicies />,
 			},
 		];
 		return (
 			<Tabs
 				className="configuration-tabs"
-				activeKey={subTab || PLANNED_DOWNTIME_SUB_TAB}
+				activeKey={subTab || AlertListSubTabs.PLANNED_DOWNTIME}
 				items={tabs}
 				onChange={handleConfigurationTabChange}
 			/>
@@ -70,7 +69,7 @@ function AllAlertList(): JSX.Element {
 					Triggered Alerts
 				</div>
 			),
-			key: 'TriggeredAlerts',
+			key: AlertListTabs.TRIGGERED_ALERTS,
 			children: <TriggeredAlerts />,
 		},
 		{
@@ -80,7 +79,7 @@ function AllAlertList(): JSX.Element {
 					Alert Rules
 				</div>
 			),
-			key: 'AlertRules',
+			key: AlertListTabs.ALERT_RULES,
 			children: (
 				<div className="alert-rules-container">
 					{isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />}
@@ -94,7 +93,7 @@ function AllAlertList(): JSX.Element {
 					Configuration
 				</div>
 			),
-			key: 'Configuration',
+			key: AlertListTabs.CONFIGURATION,
 			children: configurationTab,
 		},
 	];
@@ -103,13 +102,13 @@ function AllAlertList(): JSX.Element {
 		<Tabs
 			destroyInactiveTabPane
 			items={items}
-			activeKey={tab || 'AlertRules'}
+			activeKey={tab || AlertListTabs.ALERT_RULES}
 			onChange={(tab): void => {
 				urlQuery.set('tab', tab);
 
 				// If navigating to Configuration tab, set default subTab
-				if (tab === 'Configuration') {
-					const currentSubTab = subTab || PLANNED_DOWNTIME_SUB_TAB;
+				if (tab === AlertListTabs.CONFIGURATION) {
+					const currentSubTab = subTab || AlertListSubTabs.PLANNED_DOWNTIME;
 					urlQuery.set('subTab', currentSubTab);
 				} else {
 					// Clear subTab when navigating out of Configuration tab

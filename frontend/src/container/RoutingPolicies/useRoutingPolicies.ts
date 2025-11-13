@@ -78,8 +78,10 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		const unfilteredRoutingPolicies = mapApiResponseToRoutingPolicies(
 			routingPolicies as SuccessResponseV2<GetRoutingPoliciesResponse>,
 		);
-		return unfilteredRoutingPolicies.filter((routingPolicy) =>
-			routingPolicy.name.toLowerCase().includes(searchTerm.toLowerCase()),
+		return unfilteredRoutingPolicies.filter(
+			(routingPolicy) =>
+				routingPolicy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				routingPolicy.description?.toLowerCase().includes(searchTerm.toLowerCase()),
 		);
 	}, [routingPolicies, searchTerm]);
 
