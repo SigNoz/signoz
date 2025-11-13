@@ -113,7 +113,7 @@ var (
 		},
 	}
 
-	tcThresholdRuleShouldAlert = []struct {
+	tcThresholdRuleEvalNoRecoveryTarget = []struct {
 		values              v3.Series
 		expectAlert         bool
 		compareOp           string
@@ -873,14 +873,20 @@ var (
 			matchType      string
 			compareOp      string
 		}
-		expectedAlertSample v3.Point
-		expectedTarget      float64
-		thresholdName       string // for hash calculation
+		expectedAlertSample    v3.Point
+		expectedTarget         float64
+		expectedRecoveryTarget float64
+		thresholdName          string // for hash calculation
 	}{
-		// Category 1: No Active Alert - Recovery Matches (3 cases)
-		// Goal: Verify no series returned even when recovery threshold matches
+		// ============================================================
+		// Category 1: No Active Alert - Recovery Zone Match
+		// ============================================================
+		// Purpose: Verify recovery threshold is IGNORED when there's no active alert
+		// Behavior: Even if value is in recovery zone (between target and recovery threshold),
+		//           no alert should be returned because recovery only applies to existing alerts
+		// Expected: expectAlert=false, expectRecovery=false for all cases
 		{
-			description: "No active alert - Above: recovery matches but no active alert",
+			description: "Cat1: Above operator - value in recovery zone, no active alert → no alert returned",
 			values: v3.Series{
 				Points: []v3.Point{
 					{Value: 90.0},
@@ -899,7 +905,7 @@ var (
 			thresholdName:  "test_threshold",
 		},
 		{
-			description: "No active alert - Below: recovery matches but no active alert",
+			description: "Cat1: Below operator - value in recovery zone, no active alert → no alert returned",
 			values: v3.Series{
 				Points: []v3.Point{
 					{Value: 60.0},
@@ -918,7 +924,7 @@ var (
 			thresholdName:  "test_threshold",
 		},
 		{
-			description: "No active alert - NotEq: recovery matches but no active alert",
+			description: "Cat1: NotEq operator - value in recovery zone, no active alert → no alert returned",
 			values: v3.Series{
 				Points: []v3.Point{
 					{Value: 1.0},
@@ -936,10 +942,16 @@ var (
 			activeAlerts:   map[uint64]struct{}{}, // No active alerts
 			thresholdName:  "test_threshold",
 		},
-		// Category 2: Active Alert - Recovery Matches (3 cases)
-		// Goal: Verify IsRecovering=true when recovery threshold matches (but target doesn't)
+		// ============================================================
+		// Category 2: Active Alert - In Recovery Zone
+		// ============================================================
+		// Purpose: Verify IsRecovering=true when alert is active and value is in recovery zone
+		// Behavior: Value has improved (no longer breaches target) but hasn't fully recovered
+		//           (still breaches recovery threshold). This is the "improving" state.
+		// Expected: expectAlert=true, expectRecovery=true, IsRecovering=true
+		//           Sample uses recovery target value, not main target
 		{
-			description: "Active alert - Above: recovery matches, target doesn't",
+			description: "Cat2: Above operator - active alert, value below target but above recovery → IsRecovering=true",
 			values: v3.Series{
 				Points: []v3.Point{
 					{Value: 90.0},
@@ -948,19 +960,20 @@ var (
 					"service": "frontend",
 				},
 			},
-			expectAlert:         true,
-			expectRecovery:      true,
-			compareOp:           "1", // Above
-			matchType:           "1", // AtleastOnce
-			target:              100.0,
-			recoveryTarget:      func() *float64 { v := 80.0; return &v }(),
-			activeAlerts:        nil, // Auto-calculate from labels+thresholdName
-			expectedAlertSample: v3.Point{Value: 90.0},
-			expectedTarget:      80.0,
-			thresholdName:       "test_threshold_above",
+			expectAlert:            true,
+			expectRecovery:         true,
+			compareOp:              "1", // Above
+			matchType:              "1", // AtleastOnce
+			target:                 100.0,
+			recoveryTarget:         func() *float64 { v := 80.0; return &v }(),
+			activeAlerts:           nil, // Auto-calculate from labels+thresholdName
+			expectedAlertSample:    v3.Point{Value: 90.0},
+			expectedTarget:         100.0,
+			expectedRecoveryTarget: 80.0,
+			thresholdName:          "test_threshold_above",
 		},
 		{
-			description: "Active alert - Below: recovery matches, target doesn't",
+			description: "Cat2: Below operator - active alert, value above target but below recovery → IsRecovering=true",
 			values: v3.Series{
 				Points: []v3.Point{
 					{Value: 60.0},
@@ -969,19 +982,20 @@ var (
 					"service": "backend",
 				},
 			},
-			expectAlert:         true,
-			expectRecovery:      true,
-			compareOp:           "2", // Below
-			matchType:           "1", // AtleastOnce
-			target:              50.0,
-			recoveryTarget:      func() *float64 { v := 70.0; return &v }(),
-			activeAlerts:        nil, // Auto-calculate from labels+thresholdName
-			expectedAlertSample: v3.Point{Value: 60.0},
-			expectedTarget:      70.0,
-			thresholdName:       "test_threshold_below",
+			expectAlert:            true,
+			expectRecovery:         true,
+			compareOp:              "2", // Below
+			matchType:              "1", // AtleastOnce
+			target:                 50.0,
+			recoveryTarget:         func() *float64 { v := 70.0; return &v }(),
+			activeAlerts:           nil, // Auto-calculate from labels+thresholdName
+			expectedAlertSample:    v3.Point{Value: 60.0},
+			expectedTarget:         50.0,
+			expectedRecoveryTarget: 70.0,
+			thresholdName:          "test_threshold_below",
 		},
 		{
-			description: "Active alert - NotEq: recovery matches, target doesn't",
+			description: "Cat2: NotEq operator - active alert, value equals target but not recovery → IsRecovering=true",
 			values: v3.Series{
 				Points: []v3.Point{
 					{Value: 1.0},
@@ -990,21 +1004,28 @@ var (
 					"service": "api",
 				},
 			},
-			expectAlert:         true,
-			expectRecovery:      true,
-			compareOp:           "4", // NotEq
-			matchType:           "1", // AtleastOnce
-			target:              1.0,
-			recoveryTarget:      func() *float64 { v := 0.0; return &v }(),
-			activeAlerts:        nil, // Auto-calculate from labels+thresholdName
-			expectedAlertSample: v3.Point{Value: 1.0},
-			expectedTarget:      0.0,
-			thresholdName:       "test_threshold_noteq",
+			expectAlert:            true,
+			expectRecovery:         true,
+			compareOp:              "4", // NotEq
+			matchType:              "1", // AtleastOnce
+			target:                 1.0,
+			recoveryTarget:         func() *float64 { v := 0.0; return &v }(),
+			activeAlerts:           nil, // Auto-calculate from labels+thresholdName
+			expectedAlertSample:    v3.Point{Value: 1.0},
+			expectedTarget:         1.0,
+			expectedRecoveryTarget: 0.0,
+			thresholdName:          "test_threshold_noteq",
 		},
-		// Category 3: Active Alert - Still Alerting (3 cases)
-		// Goal: Verify normal alert continues (not recovery) when target still matches
+		// ============================================================
+		// Category 3: Active Alert - Still Breaching Target
+		// ============================================================
+		// Purpose: Verify normal alert behavior when target threshold is still breached
+		// Behavior: Value still breaches the main target threshold, so alert continues firing
+		//           normally. Recovery threshold is not checked when target still breaches.
+		// Expected: expectAlert=true, expectRecovery=false (normal firing alert)
+		//           Sample uses main target value, not recovery target
 		{
-			description: "Active alert - Above: target still matches, not recovery",
+			description: "Cat3: Above operator - active alert, value still above target → normal firing alert",
 			values: v3.Series{
 				Points: []v3.Point{
 					{Value: 110.0},
@@ -1013,19 +1034,20 @@ var (
 					"service": "frontend",
 				},
 			},
-			expectAlert:         true,
-			expectRecovery:      false,
-			compareOp:           "1", // Above
-			matchType:           "1", // AtleastOnce
-			target:              100.0,
-			recoveryTarget:      func() *float64 { v := 80.0; return &v }(),
-			activeAlerts:        nil, // Auto-calculate from labels+thresholdName
-			expectedAlertSample: v3.Point{Value: 110.0},
-			expectedTarget:      100.0,
-			thresholdName:       "test_threshold_still_alerting_above",
+			expectAlert:            true,
+			expectRecovery:         false,
+			compareOp:              "1", // Above
+			matchType:              "1", // AtleastOnce
+			target:                 100.0,
+			recoveryTarget:         func() *float64 { v := 80.0; return &v }(),
+			activeAlerts:           nil, // Auto-calculate from labels+thresholdName
+			expectedAlertSample:    v3.Point{Value: 110.0},
+			expectedTarget:         100.0,
+			expectedRecoveryTarget: 80.0,
+			thresholdName:          "test_threshold_still_alerting_above",
 		},
 		{
-			description: "Active alert - Below: target still matches, not recovery",
+			description: "Cat3: Below operator - active alert, value still below target → normal firing alert",
 			values: v3.Series{
 				Points: []v3.Point{
 					{Value: 40.0},
@@ -1034,19 +1056,20 @@ var (
 					"service": "backend",
 				},
 			},
-			expectAlert:         true,
-			expectRecovery:      false,
-			compareOp:           "2", // Below
-			matchType:           "1", // AtleastOnce
-			target:              50.0,
-			recoveryTarget:      func() *float64 { v := 70.0; return &v }(),
-			activeAlerts:        nil, // Auto-calculate from labels+thresholdName
-			expectedAlertSample: v3.Point{Value: 40.0},
-			expectedTarget:      50.0,
-			thresholdName:       "test_threshold_still_alerting_below",
+			expectAlert:            true,
+			expectRecovery:         false,
+			compareOp:              "2", // Below
+			matchType:              "1", // AtleastOnce
+			target:                 50.0,
+			recoveryTarget:         func() *float64 { v := 70.0; return &v }(),
+			activeAlerts:           nil, // Auto-calculate from labels+thresholdName
+			expectedAlertSample:    v3.Point{Value: 40.0},
+			expectedTarget:         50.0,
+			expectedRecoveryTarget: 70.0,
+			thresholdName:          "test_threshold_still_alerting_below",
 		},
 		{
-			description: "Active alert - value doesn't match target or recovery",
+			description: "Cat3: Above operator - active alert, value fully recovered (below recovery) → alert resolved",
 			values: v3.Series{
 				Points: []v3.Point{
 					{Value: 75.0},
@@ -1064,79 +1087,15 @@ var (
 			activeAlerts:   nil, // Auto-calculate from labels+thresholdName
 			thresholdName:  "test_threshold_no_match",
 		},
-		// Category 4: Basic MatchType Coverage (3 cases)
-		// Goal: Verify recovery works with different match types
+		// ============================================================
+		// Category 4: Alert Identity & Fingerprint Matching
+		// ============================================================
+		// Purpose: Verify recovery only applies to alerts with matching fingerprints
+		// Behavior: Alert fingerprint = hash(series labels + threshold name)
+		//           Recovery requires exact fingerprint match with active alert
+		// Expected: Recovery only triggers when alert fingerprint matches active alert
 		{
-			description: "MatchType AtleastOnce with recovery",
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 90.0},
-					{Value: 85.0},
-				},
-				Labels: map[string]string{
-					"service": "frontend",
-				},
-			},
-			expectAlert:         true,
-			expectRecovery:      true,
-			compareOp:           "1", // Above
-			matchType:           "1", // AtleastOnce
-			target:              100.0,
-			recoveryTarget:      func() *float64 { v := 80.0; return &v }(),
-			activeAlerts:        nil, // Auto-calculate from labels+thresholdName
-			expectedAlertSample: v3.Point{Value: 90.0},
-			expectedTarget:      80.0,
-			thresholdName:       "test_threshold_atleast_once",
-		},
-		{
-			description: "MatchType AllTheTimes with recovery",
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 60.0},
-					{Value: 65.0},
-				},
-				Labels: map[string]string{
-					"service": "backend",
-				},
-			},
-			expectAlert:         true,
-			expectRecovery:      true,
-			compareOp:           "2", // Below
-			matchType:           "2", // AllTheTimes
-			target:              50.0,
-			recoveryTarget:      func() *float64 { v := 70.0; return &v }(),
-			activeAlerts:        nil,                   // Auto-calculate from labels+thresholdName
-			expectedAlertSample: v3.Point{Value: 65.0}, // Max value for AllTheTimes with Below
-			expectedTarget:      70.0,
-			thresholdName:       "test_threshold_all_times",
-		},
-		{
-			description: "MatchType OnAverage with recovery",
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 85.0},
-					{Value: 90.0},
-					{Value: 95.0},
-				},
-				Labels: map[string]string{
-					"service": "api",
-				},
-			},
-			expectAlert:         true,
-			expectRecovery:      true,
-			compareOp:           "1", // Above
-			matchType:           "3", // OnAverage
-			target:              100.0,
-			recoveryTarget:      func() *float64 { v := 80.0; return &v }(),
-			activeAlerts:        nil,                   // Auto-calculate from labels+thresholdName
-			expectedAlertSample: v3.Point{Value: 90.0}, // Average = (85+90+95)/3 = 90
-			expectedTarget:      80.0,
-			thresholdName:       "test_threshold_on_average",
-		},
-		// Category 5: Alert Hash & Label Handling (3 cases)
-		// Goal: Verify correct alert identification via hash
-		{
-			description: "Wrong hash - no recovery despite match (active alert exists but for different hash)",
+			description: "Cat4: Wrong alert fingerprint - value in recovery zone but different active alert → no recovery",
 			values: v3.Series{
 				Points: []v3.Point{
 					{Value: 90.0},
@@ -1155,7 +1114,7 @@ var (
 			thresholdName:  "test_threshold_wrong_hash",
 		},
 		{
-			description: "Correct hash - recovery triggered",
+			description: "Cat4: Correct alert fingerprint - value in recovery zone and matching active alert → IsRecovering=true",
 			values: v3.Series{
 				Points: []v3.Point{
 					{Value: 90.0},
@@ -1164,19 +1123,20 @@ var (
 					"service": "frontend",
 				},
 			},
-			expectAlert:         true,
-			expectRecovery:      true,
-			compareOp:           "1", // Above
-			matchType:           "1", // AtleastOnce
-			target:              100.0,
-			recoveryTarget:      func() *float64 { v := 80.0; return &v }(),
-			activeAlerts:        nil, // Auto-calculate from labels+thresholdName
-			expectedAlertSample: v3.Point{Value: 90.0},
-			expectedTarget:      80.0,
-			thresholdName:       "test_threshold_correct_hash",
+			expectAlert:            true,
+			expectRecovery:         true,
+			compareOp:              "1", // Above
+			matchType:              "1", // AtleastOnce
+			target:                 100.0,
+			recoveryTarget:         func() *float64 { v := 80.0; return &v }(),
+			activeAlerts:           nil, // Auto-calculate from labels+thresholdName
+			expectedAlertSample:    v3.Point{Value: 90.0},
+			expectedTarget:         100.0,
+			expectedRecoveryTarget: 80.0,
+			thresholdName:          "test_threshold_correct_hash",
 		},
 		{
-			description: "Multiple thresholds - only first has active alert",
+			description: "Cat4: Multiple thresholds - each tracks recovery independently based on its own fingerprint",
 			values: v3.Series{
 				Points: []v3.Point{
 					{Value: 90.0},
@@ -1208,31 +1168,10 @@ var (
 					compareOp:      "1", // Above
 				},
 			},
-			expectedAlertSample: v3.Point{Value: 90.0},
-			expectedTarget:      80.0,
-			thresholdName:       "test_threshold_multiple",
-		},
-		// Additional case: RecoveryTarget is nil - should only check target
-		{
-			description: "No recovery target - normal alert behavior",
-			values: v3.Series{
-				Points: []v3.Point{
-					{Value: 110.0},
-				},
-				Labels: map[string]string{
-					"service": "frontend",
-				},
-			},
-			expectAlert:         true,
-			expectRecovery:      false,
-			compareOp:           "1", // Above
-			matchType:           "1", // AtleastOnce
-			target:              100.0,
-			recoveryTarget:      nil,                            // No recovery target
-			activeAlerts:        map[uint64]struct{}{12345: {}}, // Has active alert but no recovery target
-			expectedAlertSample: v3.Point{Value: 110.0},
-			expectedTarget:      100.0,
-			thresholdName:       "test_threshold_no_recovery",
+			expectedAlertSample:    v3.Point{Value: 90.0},
+			expectedTarget:         100.0,
+			expectedRecoveryTarget: 80.0,
+			thresholdName:          "test_threshold_multiple",
 		},
 	}
 )

@@ -719,7 +719,7 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 	assert.Equal(t, 1, len(vector))
 }
 
-func TestAnomalyNegationShouldAlert(t *testing.T) {
+func TestAnomalyNegationEval(t *testing.T) {
 	tests := []struct {
 		name          string
 		ruleJSON      []byte
@@ -1048,7 +1048,7 @@ func TestAnomalyNegationShouldAlert(t *testing.T) {
 
 			resultVector, err := ruleThreshold.Eval(tt.series, "", EvalData{})
 			if err != nil {
-				t.Fatalf("unexpected error from ShouldAlert: %v", err)
+				t.Fatalf("unexpected error from Eval: %v", err)
 			}
 
 			shouldAlert := len(resultVector) > 0

@@ -59,7 +59,7 @@ func TestThresholdRuleEvalBackwardCompat(t *testing.T) {
 
 	logger := instrumentationtest.New().Logger()
 
-	for idx, c := range tcThresholdRuleShouldAlert {
+	for idx, c := range tcThresholdRuleEvalNoRecoveryTarget {
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
@@ -1537,6 +1537,9 @@ func TestThresholdRuleEval(t *testing.T) {
 							// Verify target value
 							if c.expectedTarget != 0 || sample.Target != 0 {
 								assert.InDelta(t, c.expectedTarget, sample.Target, 0.01, "Target value mismatch")
+							}
+							if sample.RecoveryTarget != nil {
+								assert.InDelta(t, *sample.RecoveryTarget, c.expectedRecoveryTarget, 0.01, "Recovery target value mismatch")
 							}
 							break
 						}

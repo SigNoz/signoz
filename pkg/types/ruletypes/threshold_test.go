@@ -9,7 +9,7 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
-func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
+func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 	target := 100.0
 
 	tests := []struct {

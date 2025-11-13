@@ -23,7 +23,7 @@ func getVectorValues(vectors []ruletypes.Sample) []float64 {
 	return values
 }
 
-func TestPromRuleShouldAlert(t *testing.T) {
+func TestPromRuleEval(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
 		AlertName: "Test Rule",
 		AlertType: ruletypes.AlertTypeMetric,
