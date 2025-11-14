@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -33,24 +33,18 @@ func NewRepo(sqlStore sqlstore.SQLStore) Repo {
 // insertPipeline stores a given postable pipeline to database
 func (r *Repo) insertPipeline(
 	ctx context.Context, orgID valuer.UUID, postable *pipelinetypes.PostablePipeline,
-) (*pipelinetypes.GettablePipeline, *model.ApiError) {
+) (*pipelinetypes.GettablePipeline, error) {
 	if err := postable.IsValid(); err != nil {
-		return nil, model.BadRequest(errors.Wrap(err,
-			"pipeline is not valid",
-		))
+		return nil, errors.WithAdditionalf(err, "pipeline is not valid")
 	}
 
 	rawConfig, err := json.Marshal(postable.Config)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err,
-			"failed to unmarshal postable pipeline config",
-		))
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to unmarshal postable pipeline config")
 	}
 	filter, err := json.Marshal(postable.Filter)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err,
-			"failed to marshal postable pipeline filter",
-		))
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to marshal postable pipeline filter")
 	}
 
 	claims, errv2 := authtypes.ClaimsFromContext(ctx)
@@ -85,10 +79,9 @@ func (r *Repo) insertPipeline(
 	_, err = r.sqlStore.BunDB().NewInsert().
 		Model(&insertRow.StoreablePipeline).
 		Exec(ctx)
-
 	if err != nil {
 		zap.L().Error("error in inserting pipeline data", zap.Error(err))
-		return nil, model.InternalError(errors.Wrap(err, "failed to insert pipeline"))
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to insert pipeline")
 	}
 
 	return insertRow, nil
@@ -97,8 +90,7 @@ func (r *Repo) insertPipeline(
 // getPipelinesByVersion returns pipelines associated with a given version
 func (r *Repo) getPipelinesByVersion(
 	ctx context.Context, orgID string, version int,
-) ([]pipelinetypes.GettablePipeline, []error) {
-	var errors []error
+) ([]pipelinetypes.GettablePipeline, error) {
 	storablePipelines := []pipelinetypes.StoreablePipeline{}
 	err := r.sqlStore.BunDB().NewSelect().
 		Model(&storablePipelines).
@@ -110,7 +102,7 @@ func (r *Repo) getPipelinesByVersion(
 		Order("p.order_id ASC").
 		Scan(ctx)
 	if err != nil {
-		return nil, []error{fmt.Errorf("failed to get pipelines from db: %v", err)}
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to get pipelines from db")
 	}
 
 	gettablePipelines := make([]pipelinetypes.GettablePipeline, len(storablePipelines))
@@ -118,17 +110,18 @@ func (r *Repo) getPipelinesByVersion(
 		return gettablePipelines, nil
 	}
 
+	var errs []error
 	for i := range storablePipelines {
 		gettablePipelines[i].StoreablePipeline = storablePipelines[i]
 		if err := gettablePipelines[i].ParseRawConfig(); err != nil {
-			errors = append(errors, err)
+			errs = append(errs, err)
 		}
 		if err := gettablePipelines[i].ParseFilter(); err != nil {
-			errors = append(errors, err)
+			errs = append(errs, err)
 		}
 	}
 
-	return gettablePipelines, errors
+	return gettablePipelines, errors.Join(errs...)
 }
 
 // GetPipelines returns pipeline and errors (if any)

@@ -12,11 +12,14 @@ var (
 	CodeMethodNotAllowed        = Code{"method_not_allowed"}
 	CodeAlreadyExists           = Code{"already_exists"}
 	CodeUnauthenticated         = Code{"unauthenticated"}
+	CodeUnauthorized            = Code{"unauthorized"}
 	CodeForbidden               = Code{"forbidden"}
 	CodeCanceled                = Code{"canceled"}
 	CodeTimeout                 = Code{"timeout"}
 	CodeUnknown                 = Code{"unknown"}
 	CodeLicenseUnavailable      = Code{"license_unavailable"}
+	CodeBadRequest              = Code{"bad_request"}
+	CodeUnavailable             = Code{"unavailable"}
 )
 
 var (

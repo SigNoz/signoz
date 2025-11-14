@@ -8,10 +8,10 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	coreModel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -163,21 +163,16 @@ func checkDuplicateString(pipeline []string) bool {
 	return false
 }
 
-func GenerateCollectorConfigWithPipelines(
-	config []byte,
-	pipelines []pipelinetypes.GettablePipeline,
-) ([]byte, *coreModel.ApiError) {
+func GenerateCollectorConfigWithPipelines(config []byte, pipelines []pipelinetypes.GettablePipeline) ([]byte, error) {
 	var collectorConf map[string]interface{}
 	err := yaml.Unmarshal([]byte(config), &collectorConf)
 	if err != nil {
-		return nil, coreModel.BadRequest(err)
+		return nil, errors.Wrap(err, errors.TypeInvalidInput, errors.CodeBadRequest, "could not unmarshal collector config")
 	}
 
 	signozPipelineProcessors, signozPipelineProcNames, err := PreparePipelineProcessor(pipelines)
 	if err != nil {
-		return nil, coreModel.BadRequest(errors.Wrap(
-			err, "could not prepare otel collector processors for log pipelines",
-		))
+		return nil, err
 	}
 
 	// Escape any `$`s as `$$$` in config generated for pipelines, to ensure any occurrences
@@ -186,9 +181,7 @@ func GenerateCollectorConfigWithPipelines(
 		procConf := signozPipelineProcessors[procName]
 		serializedProcConf, err := yaml.Marshal(procConf)
 		if err != nil {
-			return nil, coreModel.InternalError(fmt.Errorf(
-				"could not marshal processor config for %s: %w", procName, err,
-			))
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not marshal processor config for %s", procName)
 		}
 		escapedSerializedConf := strings.ReplaceAll(
 			string(serializedProcConf), "$", "$$",
@@ -197,9 +190,7 @@ func GenerateCollectorConfigWithPipelines(
 		var escapedConf map[string]interface{}
 		err = yaml.Unmarshal([]byte(escapedSerializedConf), &escapedConf)
 		if err != nil {
-			return nil, coreModel.InternalError(fmt.Errorf(
-				"could not unmarshal dollar escaped processor config for %s: %w", procName, err,
-			))
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not unmarshal dollar escaped processor config for %s", procName)
 		}
 
 		signozPipelineProcessors[procName] = escapedConf
