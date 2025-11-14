@@ -136,3 +136,7 @@ func (enum *UUID) UnmarshalText(text []byte) error {
 	*enum = uuid
 	return nil
 }
+
+func (enum UUID) MarshalText() (text []byte, err error) {
+	return []byte(enum.StringValue()), nil
+}
