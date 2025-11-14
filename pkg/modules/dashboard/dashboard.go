@@ -12,6 +12,21 @@ import (
 )
 
 type Module interface {
+	// enables public sharing for dashboard.
+	CreatePublic(context.Context, *dashboardtypes.PublicDashboard) error
+
+	// gets the config for public sharing by org_id and dashboard_id.
+	GetPublic(context.Context, valuer.UUID, string) (*dashboardtypes.PublicDashboard, error)
+
+	// gets the config for public sharing by id and owned org ids.
+	GetPublicByOrgsAndId(context.Context, []*types.Organization, string) (*dashboardtypes.PublicDashboard, error)
+
+	// updates the config for public sharing.
+	UpdatePublic(context.Context, *dashboardtypes.PublicDashboard) error
+
+	// disables the public sharing for the dashboard.
+	DeletePublic(context.Context, valuer.UUID, string) error
+
 	Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)
 
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error)

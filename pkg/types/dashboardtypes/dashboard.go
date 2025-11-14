@@ -17,6 +17,11 @@ var (
 	TypeableResourcesDashboards = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("dashboards"))
 )
 
+var (
+	ErrCodeDashboardInvalidInput = errors.MustNewCode("dashboard_invalid_input")
+	ErrCodeDashboardNotFound     = errors.MustNewCode("dashboard_not_found")
+)
+
 type StorableDashboard struct {
 	bun.BaseModel `bun:"table:dashboard"`
 
@@ -313,14 +318,4 @@ func (lockUnlockDashboard *LockUnlockDashboard) UnmarshalJSON(src []byte) error 
 	return nil
 }
 
-type Store interface {
-	Create(context.Context, *StorableDashboard) error
-
-	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableDashboard, error)
-
-	List(context.Context, valuer.UUID) ([]*StorableDashboard, error)
-
-	Update(context.Context, valuer.UUID, *StorableDashboard) error
-
-	Delete(context.Context, valuer.UUID, valuer.UUID) error
-}
+func (dashboard *Dashboard) MaskForPublicSharing() {}

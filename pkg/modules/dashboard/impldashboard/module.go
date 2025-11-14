@@ -50,6 +50,10 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 	return dashboard, nil
 }
 
+func (module *module) CreatePublic(ctx context.Context, publicDashboard *dashboardtypes.PublicDashboard) error {
+	return module.store.CreatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
+}
+
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
 	storableDashboard, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
@@ -61,6 +65,29 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 		return nil, err
 	}
 	return dashboard, nil
+}
+
+func (module *module) GetPublic(ctx context.Context, orgID valuer.UUID, dashboardID string) (*dashboardtypes.PublicDashboard, error) {
+	storablePublicDashboard, err := module.store.GetPublic(ctx, orgID.StringValue(), dashboardID)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypes.NewPublicDashboardFromStorablePublicDashboard(storablePublicDashboard), nil
+}
+
+func (module *module) GetPublicByOrgsAndId(ctx context.Context, orgs []*types.Organization, id string) (*dashboardtypes.PublicDashboard, error) {
+	orgIDs := []string{}
+	for _, org := range orgs {
+		orgIDs = append(orgIDs, org.ID.StringValue())
+	}
+
+	storablePublicDashboard, err := module.store.GetPublicByOrgIDsAndId(ctx, orgIDs, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypes.NewPublicDashboardFromStorablePublicDashboard(storablePublicDashboard), nil
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
@@ -101,6 +128,10 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return dashboard, nil
 }
 
+func (module *module) UpdatePublic(ctx context.Context, publicDashboard *dashboardtypes.PublicDashboard) error {
+	return module.store.UpdatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
+}
+
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, role types.Role, lock bool) error {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
@@ -135,6 +166,10 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	return module.store.Delete(ctx, orgID, id)
+}
+
+func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID string) error {
+	return module.store.DeletePublic(ctx, orgID.StringValue(), dashboardID)
 }
 
 func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {

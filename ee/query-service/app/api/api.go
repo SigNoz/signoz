@@ -99,6 +99,16 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/billing", am.AdminAccess(ah.getBilling)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/portal", am.AdminAccess(ah.LicensingAPI.Portal)).Methods(http.MethodPost)
 
+	// dashboards
+	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.CreatePublicDashboard)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.GetPublicDashboard)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.UpdatePublicDashboard)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.DeletePublicDashboard)).Methods(http.MethodDelete)
+
+	// public access for dashboards
+	router.HandleFunc("/api/v1/public/dashboards/{id}", ah.GetPublicDashboardData).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/public/dashboards/{id}/widgets/{index}/query_range", ah.GetPublicDashboardWidgetQueryRange).Methods(http.MethodGet)
+
 	// v3
 	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.LicensingAPI.Activate)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.LicensingAPI.Refresh)).Methods(http.MethodPut)

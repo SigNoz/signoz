@@ -1,0 +1,29 @@
+package dashboardtypes
+
+import (
+	"context"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+type Store interface {
+	Create(context.Context, *StorableDashboard) error
+
+	CreatePublic(context.Context, *StorablePublicDashboard) error
+
+	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableDashboard, error)
+
+	GetPublic(context.Context, string, string) (*StorablePublicDashboard, error)
+
+	GetPublicByOrgIDsAndId(context.Context, []string, string) (*StorablePublicDashboard, error)
+
+	List(context.Context, valuer.UUID) ([]*StorableDashboard, error)
+
+	Update(context.Context, valuer.UUID, *StorableDashboard) error
+
+	UpdatePublic(context.Context, *StorablePublicDashboard) error
+
+	Delete(context.Context, valuer.UUID, valuer.UUID) error
+
+	DeletePublic(context.Context, string, string) error
+}
