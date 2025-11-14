@@ -57,7 +57,7 @@ function ResourceAttributesFilter(): JSX.Element | null {
 				query={query}
 				onChange={handleChangeTagFilters}
 				operatorConfigKey={OperatorConfigKeys.EXCEPTIONS}
-				hideSpanScopeSelector={false}
+				hideSpanScopeSelector
 			/>
 		</div>
 	);
