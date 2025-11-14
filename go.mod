@@ -87,6 +87,7 @@ require (
 )
 
 require (
+	github.com/dgraph-io/ristretto/v2 v2.3.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.15.1 // indirect

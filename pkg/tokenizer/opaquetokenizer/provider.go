@@ -14,7 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/allegro/bigcache/v3"
+	"github.com/dgraph-io/ristretto/v2"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -30,7 +30,7 @@ type provider struct {
 	tokenStore          authtypes.TokenStore
 	orgGetter           organization.Getter
 	stopC               chan struct{}
-	lastObservedAtCache *bigcache.BigCache
+	lastObservedAtCache *ristretto.Cache[string, string]
 }
 
 func NewFactory(cache cache.Cache, tokenStore authtypes.TokenStore, orgGetter organization.Getter) factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config] {
@@ -42,11 +42,13 @@ func NewFactory(cache cache.Cache, tokenStore authtypes.TokenStore, orgGetter or
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config tokenizer.Config, cache cache.Cache, tokenStore authtypes.TokenStore, orgGetter organization.Getter) (tokenizer.Tokenizer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/tokenizer/opaquetokenizer")
 
-	lastObservedAtCache, err := bigcache.New(ctx, bigcache.Config{
-		Shards:       1024,
-		LifeWindow:   config.Lifetime.Max,
-		CleanWindow:  config.Opaque.GC.Interval,
-		StatsEnabled: false,
+	// TODO: (blocker for merge) move these hardcoded values to a config based value
+	// ? ASK: Since this is a very small cache for very specific usecase, we can actually tone down the numbers
+	lastObservedAtCache, err := ristretto.NewCache(&ristretto.Config[string, string]{
+		NumCounters: 1e6,     // 1 million
+		MaxCost:     1 << 28, // ~ 256 MB
+		BufferItems: 64,
+		Metrics:     false, // ! ASK: should enable based on config?
 	})
 	if err != nil {
 		return nil, err
@@ -231,8 +233,10 @@ func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken str
 		return nil
 	}
 
-	if err := provider.lastObservedAtCache.Set(lastObservedAtCacheKey(accessToken, token.UserID), []byte(lastObservedAt.Format(time.RFC3339))); err != nil {
-		return err
+	// ! ASK: are we planning to always set the cost as 1 or do we need some logic to know the cost?
+	if ok := provider.lastObservedAtCache.Set(lastObservedAtCacheKey(accessToken, token.UserID), lastObservedAt.Format(time.RFC3339), 1); !ok {
+		// ! ASK: around improving this
+		return errors.New(errors.TypeInternal, errors.CodeInternal, "placeholder error - to be improved")
 	}
 
 	err = provider.cache.Set(ctx, emptyOrgID, accessTokenCacheKey(accessToken), token, provider.config.Lifetime.Max)
@@ -256,7 +260,7 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 	stats := make(map[string]any)
 	stats["auth_token.count"] = len(tokens)
 
-	accessTokenToLastObservedAt, err := provider.listLastObservedAtDesc()
+	accessTokenToLastObservedAt, err := provider.listLastObservedAtDesc(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +282,7 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 }
 
 func (provider *provider) ListMaxLastObservedAtByOrgID(ctx context.Context, orgID valuer.UUID) (map[valuer.UUID]time.Time, error) {
-	accessTokenToLastObservedAts, err := provider.listLastObservedAtDesc()
+	accessTokenToLastObservedAts, err := provider.listLastObservedAtDesc(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +352,7 @@ func (provider *provider) gc(ctx context.Context) error {
 }
 
 func (provider *provider) flushLastObservedAt(ctx context.Context) error {
-	accessTokenToLastObservedAt, err := provider.listLastObservedAtDesc()
+	accessTokenToLastObservedAt, err := provider.listLastObservedAtDesc(ctx)
 	if err != nil {
 		return err
 	}
@@ -430,32 +434,33 @@ func (provider *provider) getOrGetSetIdentity(ctx context.Context, userID valuer
 	return identity, nil
 }
 
-func (provider *provider) listLastObservedAtDesc() ([]map[string]any, error) {
-	iterator := provider.lastObservedAtCache.Iterator()
+func (provider *provider) listLastObservedAtDesc(ctx context.Context) ([]map[string]any, error) {
+	orgs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	tokens, err := provider.tokenStore.ListByOrgID(ctx, orgs[0].ID)
+	if err != nil {
+		return nil, err
+	}
 
 	var accessTokenToLastObservedAt []map[string]any
 
-	for iterator.SetNext() {
-		value, err := iterator.Value()
-		if err != nil {
-			return nil, err
-		}
+	for _, token := range tokens {
+		cachedLastObservedAt, ok := provider.lastObservedAtCache.Get(lastObservedAtCacheKey(token.AccessToken, token.UserID))
+		if ok {
+			tokenLastObservedAt, err := time.Parse(time.RFC3339, cachedLastObservedAt)
+			if err != nil {
+				return nil, err
+			}
 
-		accessToken, userID, err := accessTokenAndUserIDFromLastObservedAtCacheKey(value.Key())
-		if err != nil {
-			return nil, err
+			accessTokenToLastObservedAt = append(accessTokenToLastObservedAt, map[string]any{
+				"user_id":          token.UserID,
+				"access_token":     token.AccessToken,
+				"last_observed_at": tokenLastObservedAt,
+			})
 		}
-
-		lastObservedAt, err := time.Parse(time.RFC3339, string(value.Value()))
-		if err != nil {
-			return nil, err
-		}
-
-		accessTokenToLastObservedAt = append(accessTokenToLastObservedAt, map[string]any{
-			"user_id":          userID,
-			"access_token":     accessToken,
-			"last_observed_at": lastObservedAt,
-		})
 	}
 
 	// sort by descending order of last_observed_at
