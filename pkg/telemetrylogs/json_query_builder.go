@@ -166,6 +166,7 @@ func (b *JSONQueryBuilder) syncPathTypes(ctx context.Context, fullLoad bool) err
 	return nil
 }
 
+// TODO: change this to use ListIndexedPaths function
 func (b *JSONQueryBuilder) syncStringIndexedColumns(ctx context.Context) error {
 	query := fmt.Sprintf(`SELECT type, expr FROM 
 	clusterAllReplicas('%s', %s) 

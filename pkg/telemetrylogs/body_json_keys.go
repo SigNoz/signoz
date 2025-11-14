@@ -3,10 +3,12 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
-	"strings"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -44,7 +46,7 @@ func ExtractBodyPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 	if len(searchTexts) > 0 {
 		orClauses := []string{}
 		for _, searchText := range searchTexts {
-			orClauses = append(orClauses, sb.ILike("path", "%"+escapeForLike(searchText)+"%"))
+			orClauses = append(orClauses, sb.ILike("path", querybuilder.FormatValueForContains(searchText)))
 		}
 		sb.Where(sb.Or(orClauses...))
 	}
@@ -125,12 +127,31 @@ func ExtractBodyPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 	return paths, complete, highestLastSeen, nil
 }
 
-// escapeForLike escapes special characters for LIKE queries
-func escapeForLike(s string) string {
-	// Escape common LIKE special characters
-	// Order matters: escape backslashes first to avoid double-escaping
-	s = strings.ReplaceAll(s, "\\", "\\\\")
-	s = strings.ReplaceAll(s, "%", "\\%")
-	s = strings.ReplaceAll(s, "_", "\\_")
-	return s
+func ListIndexedPaths(ctx context.Context, telemetryStore telemetrystore.TelemetryStore) ([]string, error) {
+	query := fmt.Sprintf(`SELECT type, expr FROM 
+	clusterAllReplicas('%s', %s) 
+	WHERE database = '%s' AND table = '%s' AND type = 'ngrambf_v1'
+	AND (expr LIKE '%%%s%%' OR expr LIKE '%%%s%%')`,
+		telemetryStore.Cluster(), SkipIndexTableName, DBName, LogsV2LocalTableName, constants.BodyJSONColumnPrefix, constants.BodyPromotedColumnPrefix)
+	rows, err := telemetryStore.ClickhouseDB().Query(ctx, query)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to load string indexed columns")
+	}
+	defer rows.Close()
+
+	paths := []string{}
+	for rows.Next() {
+		var typ string
+		var expr string
+		if err := rows.Scan(&typ, &expr); err != nil {
+			return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to scan string indexed column")
+		}
+		subColumn, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(expr)
+		if err != nil {
+			return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("failed to unfold JSON sub column index expression for %s", expr))
+		}
+		paths = append(paths, subColumn)
+	}
+
+	return paths, nil
 }
