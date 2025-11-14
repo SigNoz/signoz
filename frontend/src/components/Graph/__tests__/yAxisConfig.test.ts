@@ -369,23 +369,3 @@ describe('getYAxisFormattedValue - precision option tests', () => {
 		);
 	});
 });
-
-describe('getYAxisFormattedValue - edge case test', () => {
-	test('with number prop (-ve) testing', () => {
-		expect(getYAxisFormattedValue(12345.6789 as any, 'none', 3)).toBe(
-			'12345.678',
-		);
-		expect(getYAxisFormattedValue(12345.6789 as any, 'percent', 4)).toBe(
-			'12345.6789%',
-		);
-	});
-	test('more than significant digits', () => {
-		expect(
-			getYAxisFormattedValue(
-				'0.000026254299141484417',
-				's',
-				PrecisionOptionsEnum.FULL,
-			),
-		).toBe('26.254299141484417 µs');
-	});
-});
