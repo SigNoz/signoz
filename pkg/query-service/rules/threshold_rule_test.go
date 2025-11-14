@@ -1590,3 +1590,170 @@ func runEvalTests(t *testing.T, postableRule ruletypes.PostableRule, testCases [
 		})
 	}
 }
+
+// runMultiThresholdEvalTests runs tests for multiple threshold scenarios
+// where each threshold can be in a different state (firing, recovering, resolved)
+func runMultiThresholdEvalTests(t *testing.T, postableRule ruletypes.PostableRule, testCases []multiThresholdTestCase) {
+	logger := instrumentationtest.New().Logger()
+	for _, c := range testCases {
+		t.Run(c.description, func(t *testing.T) {
+			// Prepare primary threshold
+			threshold := ruletypes.BasicRuleThreshold{
+				Name:           c.thresholdName,
+				TargetValue:    &c.target,
+				RecoveryTarget: c.recoveryTarget,
+				MatchType:      ruletypes.MatchType(c.matchType),
+				CompareOp:      ruletypes.CompareOp(c.compareOp),
+			}
+
+			// Build thresholds list
+			thresholds := ruletypes.BasicRuleThresholds{threshold}
+
+			// Add additional thresholds
+			for _, addThreshold := range c.additionalThresholds {
+				thresholds = append(thresholds, ruletypes.BasicRuleThreshold{
+					Name:           addThreshold.name,
+					TargetValue:    &addThreshold.target,
+					RecoveryTarget: addThreshold.recoveryTarget,
+					MatchType:      ruletypes.MatchType(addThreshold.matchType),
+					CompareOp:      ruletypes.CompareOp(addThreshold.compareOp),
+				})
+			}
+
+			postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+				Kind: ruletypes.BasicThresholdKind,
+				Spec: thresholds,
+			}
+
+			rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+			if err != nil {
+				assert.NoError(t, err)
+				return
+			}
+
+			values := c.values
+			for i := range values.Points {
+				values.Points[i].Timestamp = time.Now().UnixMilli()
+			}
+
+			// Prepare activeAlerts: if nil, auto-calculate from labels + all threshold names
+			activeAlerts := c.activeAlerts
+			if activeAlerts == nil {
+				activeAlerts = make(map[uint64]struct{})
+				// Add primary threshold
+				sampleLabels := ruletypes.PrepareSampleLabelsForRule(values.Labels, c.thresholdName)
+				alertHash := sampleLabels.Hash()
+				activeAlerts[alertHash] = struct{}{}
+				// Add additional thresholds
+				for _, addThreshold := range c.additionalThresholds {
+					sampleLabels := ruletypes.PrepareSampleLabelsForRule(values.Labels, addThreshold.name)
+					alertHash := sampleLabels.Hash()
+					activeAlerts[alertHash] = struct{}{}
+				}
+			}
+
+			evalData := ruletypes.EvalData{
+				ActiveAlerts: activeAlerts,
+			}
+
+			resultVectors, err := rule.Threshold.Eval(values, rule.Unit(), evalData)
+			assert.NoError(t, err)
+
+			// Validate total sample count
+			assert.Equal(t, c.ExpectedSampleCount, len(resultVectors),
+				"Expected %d samples but got %d. Sample values: %v",
+				c.ExpectedSampleCount, len(resultVectors), getVectorValues(resultVectors))
+
+			// Build a map of threshold name -> sample for easy lookup
+			samplesByThreshold := make(map[string]ruletypes.Sample)
+			for _, sample := range resultVectors {
+				thresholdName := sample.Metric.Get(ruletypes.LabelThresholdName)
+				samplesByThreshold[thresholdName] = sample
+			}
+
+			// Validate each threshold's expected result
+			for thresholdName, expectation := range c.ExpectedResults {
+				sample, found := samplesByThreshold[thresholdName]
+
+				if expectation.ShouldReturnSample {
+					assert.True(t, found, "Expected sample for threshold '%s' but not found in results", thresholdName)
+					if !found {
+						continue
+					}
+
+					// Validate IsRecovering flag
+					assert.Equal(t, expectation.IsRecovering, sample.IsRecovering,
+						"Threshold '%s': IsRecovering flag mismatch", thresholdName)
+
+					// Validate sample value
+					assert.InDelta(t, expectation.SampleValue, sample.V, 0.01,
+						"Threshold '%s': Sample value mismatch", thresholdName)
+
+					// Validate target value
+					assert.InDelta(t, expectation.TargetValue, sample.Target, 0.01,
+						"Threshold '%s': Target value mismatch", thresholdName)
+
+					// Validate recovery target value
+					if expectation.RecoveryValue != nil {
+						assert.NotNil(t, sample.RecoveryTarget,
+							"Threshold '%s': Expected RecoveryTarget to be set but it was nil", thresholdName)
+						if sample.RecoveryTarget != nil {
+							assert.InDelta(t, *expectation.RecoveryValue, *sample.RecoveryTarget, 0.01,
+								"Threshold '%s': RecoveryTarget value mismatch", thresholdName)
+						}
+					}
+				} else {
+					assert.False(t, found, "Expected NO sample for threshold '%s' but found one with value %.2f",
+						thresholdName, sample.V)
+				}
+			}
+
+			// Validate sample order if specified
+			if len(c.ExpectedSampleOrder) > 0 {
+				assert.Equal(t, len(c.ExpectedSampleOrder), len(resultVectors),
+					"Expected sample order length mismatch")
+				for i, expectedName := range c.ExpectedSampleOrder {
+					if i < len(resultVectors) {
+						actualName := resultVectors[i].Metric.Get(ruletypes.LabelThresholdName)
+						assert.Equal(t, expectedName, actualName,
+							"Sample order mismatch at index %d: expected '%s', got '%s'",
+							i, expectedName, actualName)
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestThresholdRuleEval_MultiThreshold tests multiple threshold scenarios
+// where each threshold can be in a different state (firing, recovering, resolved)
+func TestThresholdRuleEval_MultiThreshold(t *testing.T) {
+	postableRule := ruletypes.PostableRule{
+		AlertName: "Multi-Threshold Recovery Test",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeThreshold,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "probe_success",
+						},
+						AggregateOperator: v3.AggregateOperatorNoOp,
+						DataSource:        v3.DataSourceMetrics,
+						Expression:        "A",
+					},
+				},
+			},
+		},
+	}
+
+	runMultiThresholdEvalTests(t, postableRule, tcThresholdRuleEvalMultiThreshold)
+}
