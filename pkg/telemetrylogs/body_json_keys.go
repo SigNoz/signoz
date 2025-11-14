@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz-otel-collector/utils"
@@ -127,13 +128,13 @@ func ExtractBodyPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 	return paths, complete, highestLastSeen, nil
 }
 
-func ListIndexedPaths(ctx context.Context, telemetryStore telemetrystore.TelemetryStore) ([]string, error) {
+func ListIndexedPaths(ctx context.Context, cluster string, conn clickhouse.Conn) ([]string, error) {
 	query := fmt.Sprintf(`SELECT type, expr FROM 
 	clusterAllReplicas('%s', %s) 
 	WHERE database = '%s' AND table = '%s' AND type = 'ngrambf_v1'
 	AND (expr LIKE '%%%s%%' OR expr LIKE '%%%s%%')`,
-		telemetryStore.Cluster(), SkipIndexTableName, DBName, LogsV2LocalTableName, constants.BodyJSONColumnPrefix, constants.BodyPromotedColumnPrefix)
-	rows, err := telemetryStore.ClickhouseDB().Query(ctx, query)
+		cluster, SkipIndexTableName, DBName, LogsV2LocalTableName, constants.BodyJSONColumnPrefix, constants.BodyPromotedColumnPrefix)
+	rows, err := conn.Query(ctx, query)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to load string indexed columns")
 	}
