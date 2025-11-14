@@ -15,9 +15,13 @@ import (
 	"sync"
 	"time"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	collectorConstants "github.com/SigNoz/signoz-otel-collector/constants"
+
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -43,6 +47,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
+
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -156,6 +161,9 @@ type ClickHouseReader struct {
 	cache                      cache.Cache
 	metadataDB                 string
 	metadataTable              string
+
+	pathTypesLocalTable string
+	pathTypesTable      string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -223,7 +231,139 @@ func NewReaderFromClickhouseConnection(
 		cache:                      cache,
 		metadataDB:                 options.primary.MetadataDB,
 		metadataTable:              options.primary.MetadataTable,
+		pathTypesLocalTable:        options.primary.PathTypesLocalTable,
+		pathTypesTable:             options.primary.PathTypesTable,
 	}
+}
+
+// PromotePaths inserts provided JSON paths into the promoted paths table for logs queries.
+func (r *ClickHouseReader) PromotePaths(ctx context.Context, paths []string) error {
+	if len(paths) == 0 {
+		return errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "paths cannot be empty")
+	}
+
+	// Table: signoz_logs.distributed_promoted_paths with columns: path, created_at (UInt64 epoch ms)
+	batch, err := r.db.PrepareBatch(ctx, "INSERT INTO signoz_logs.distributed_promoted_paths (path, created_at) VALUES")
+	if err != nil {
+		return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to prepare batch: %w", err)
+	}
+
+	nowMs := uint64(time.Now().UnixMilli())
+	for _, p := range paths {
+		trimmed := strings.TrimSpace(p)
+		if trimmed == "" {
+			continue
+		}
+		if err := batch.Append(trimmed, nowMs); err != nil {
+			_ = batch.Abort()
+			return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to append path: %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to send batch: %w", err)
+	}
+	return nil
+}
+
+// CreateJSONPathIndexes creates string ngram + token filter indexes on JSON path subcolumns for LIKE queries.
+func (r *ClickHouseReader) CreateJSONPathIndexes(ctx context.Context, columns map[string][]string) error {
+	if len(columns) == 0 {
+		return nil
+	}
+	indexes := []schemamigrator.Index{}
+	// We'll add indexes on the local logs table across cluster
+	// Index expression: lower(assumeNotNull(dynamicElement(promoted.<path>, 'String')))
+	for parentColumn, paths := range columns {
+		for _, path := range paths {
+			ngramIndex := schemamigrator.Index{
+				Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, path, schemamigrator.IndexTypeNGramBF),
+				Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, path),
+				Type:        "ngrambf_v1(4, 5000, 2, 0)",
+				Granularity: 1,
+			}
+			tokenIndex := schemamigrator.Index{
+				Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, path, schemamigrator.IndexTypeTokenBF),
+				Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, path),
+				Type:        "tokenbf_v1(1024, 2, 0)",
+				Granularity: 1,
+			}
+			indexes = append(indexes, ngramIndex, tokenIndex)
+		}
+	}
+
+	for _, index := range indexes {
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD %s",
+			r.logsDB, r.logsLocalTableV2, r.cluster, index.ToSQL())
+		if err := r.db.Exec(ctx, query); err != nil {
+			return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to create index: %s", err)
+		}
+	}
+	return nil
+}
+
+// PromoteAndIndexPaths handles promoting paths and creating indexes in one call.
+func (r *ClickHouseReader) PromoteAndIndexPaths(
+	ctx context.Context,
+	_ string,
+	paths ...model.PromotePathItem,
+) error {
+	if len(paths) == 0 {
+		return errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "paths cannot be empty")
+	}
+
+	// Load existing promoted paths once
+	existing := make(map[string]struct{})
+	rows, qerr := r.db.Query(ctx, "SELECT path FROM signoz_logs.distributed_promoted_paths")
+	if qerr == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var p string
+			if err := rows.Scan(&p); err == nil {
+				existing[p] = struct{}{}
+			}
+		}
+	}
+
+	var toInsert []string
+	indexes := make(map[string][]string)
+	indexes[collectorConstants.BodyJSONColumn] = []string{}
+	indexes[collectorConstants.BodyPromotedColumn] = []string{}
+	for _, it := range paths {
+		if err := it.Validate(); err != nil {
+			return err
+		}
+		if it.Promote {
+			toInsert = append(toInsert, it.Path)
+		}
+		if it.Indexed {
+			// remove the "body." prefix from the path
+			trimmedPath := strings.TrimPrefix(it.Path, telemetrylogs.BodyJSONStringSearchPrefix)
+			parentColumn := collectorConstants.BodyJSONColumn
+
+			// if the path is already promoted or is being promoted, add it to the promoted column
+			if _, promoted := existing[trimmedPath]; promoted || it.Promote {
+				parentColumn = collectorConstants.BodyPromotedColumn
+			}
+
+			indexes[parentColumn] = append(indexes[parentColumn], trimmedPath)
+		}
+	}
+
+	if len(toInsert) > 0 {
+		err := r.PromotePaths(ctx, toInsert)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(indexes) > 0 {
+		if err := r.CreateJSONPathIndexes(ctx, indexes); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
@@ -1327,9 +1467,21 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 			params.ToColdStorageDuration, params.ColdStorageVolume)
 	}
 
+	// TTL query for path_types table to follow the same TTL as logs
+	pathTypesLocal := fmt.Sprintf("%s.%s", r.logsDB, r.pathTypesLocalTable)
+	ttlPathTypes := fmt.Sprintf(
+		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(last_seen / 1000000000) + "+
+			"INTERVAL %v SECOND DELETE", pathTypesLocal, r.cluster, params.DelDuration)
+	if len(params.ColdStorageVolume) > 0 {
+		ttlPathTypes += fmt.Sprintf(", toDateTime(last_seen / 1000000000) "+
+			"+ INTERVAL %v SECOND TO VOLUME '%s'",
+			params.ToColdStorageDuration, params.ColdStorageVolume)
+	}
+
 	ttlPayload := map[string]string{
 		tableNameArray[0]: ttlLogsV2,
 		tableNameArray[1]: ttlLogsV2Resource,
+		pathTypesLocal:    ttlPathTypes,
 	}
 
 	// set the ttl if nothing is pending/ no errors
