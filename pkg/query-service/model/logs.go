@@ -4,9 +4,11 @@ import (
 	"context"
 	"strings"
 
+	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
 	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 )
 
 type QueryProgress struct {
@@ -88,8 +90,12 @@ func (i *PromotePathItem) Validate() error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "array paths can not be promoted or indexed")
 	}
 
-	if strings.HasPrefix(i.Path, "body.") || strings.HasPrefix(i.Path, "body_v2.") || strings.HasPrefix(i.Path, "promoted.") {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "`body.`, `body_v2.`, `promoted.` don't add these prefixes to the path")
+	if strings.HasPrefix(i.Path, constants.BodyJSONColumnPrefix) || strings.HasPrefix(i.Path, constants.BodyPromotedColumnPrefix) {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "`%s`, `%s` don't add these prefixes to the path", constants.BodyJSONColumnPrefix, constants.BodyPromotedColumnPrefix)
+	}
+
+	if !strings.HasPrefix(i.Path, telemetrylogs.BodyJSONStringSearchPrefix) {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must start with `body.`")
 	}
 
 	isCardinal := keycheck.IsCardinal(i.Path)

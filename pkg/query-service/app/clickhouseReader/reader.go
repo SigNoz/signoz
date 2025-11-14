@@ -16,9 +16,12 @@ import (
 	"time"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	collectorConstants "github.com/SigNoz/signoz-otel-collector/constants"
+
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -44,6 +47,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
+
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -263,32 +267,36 @@ func (r *ClickHouseReader) PromotePaths(ctx context.Context, paths []string) err
 }
 
 // CreateJSONPathIndexes creates string ngram + token filter indexes on JSON path subcolumns for LIKE queries.
-func (r *ClickHouseReader) CreateJSONPathIndexes(ctx context.Context, columns []string) error {
+func (r *ClickHouseReader) CreateJSONPathIndexes(ctx context.Context, columns map[string][]string) error {
 	if len(columns) == 0 {
 		return nil
 	}
+	indexes := []schemamigrator.Index{}
 	// We'll add indexes on the local logs table across cluster
 	// Index expression: lower(assumeNotNull(dynamicElement(promoted.<path>, 'String')))
-	for _, column := range columns {
-		ngramIndex := schemamigrator.Index{
-			Name:        schemamigrator.JSONSubColumnIndexName(column, schemamigrator.IndexTypeNGramBF),
-			Expression:  schemamigrator.JSONSubColumnIndexExpr(column),
-			Type:        "ngrambf_v1(4, 5000, 2, 0)",
-			Granularity: 1,
-		}
-		tokenIndex := schemamigrator.Index{
-			Name:        schemamigrator.JSONSubColumnIndexName(column, schemamigrator.IndexTypeTokenBF),
-			Expression:  schemamigrator.JSONSubColumnIndexExpr(column),
-			Type:        "tokenbf_v1(1024, 2, 0)",
-			Granularity: 1,
-		}
-		indexes := []schemamigrator.Index{ngramIndex, tokenIndex}
-		for _, index := range indexes {
-			query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD %s",
-				r.logsDB, r.logsLocalTableV2, r.cluster, index.ToSQL())
-			if err := r.db.Exec(ctx, query); err != nil {
-				return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to create index: %s", err)
+	for parentColumn, paths := range columns {
+		for _, path := range paths {
+			ngramIndex := schemamigrator.Index{
+				Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, path, schemamigrator.IndexTypeNGramBF),
+				Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, path),
+				Type:        "ngrambf_v1(4, 5000, 2, 0)",
+				Granularity: 1,
 			}
+			tokenIndex := schemamigrator.Index{
+				Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, path, schemamigrator.IndexTypeTokenBF),
+				Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, path),
+				Type:        "tokenbf_v1(1024, 2, 0)",
+				Granularity: 1,
+			}
+			indexes = append(indexes, ngramIndex, tokenIndex)
+		}
+	}
+
+	for _, index := range indexes {
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD %s",
+			r.logsDB, r.logsLocalTableV2, r.cluster, index.ToSQL())
+		if err := r.db.Exec(ctx, query); err != nil {
+			return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to create index: %s", err)
 		}
 	}
 	return nil
@@ -317,16 +325,10 @@ func (r *ClickHouseReader) PromoteAndIndexPaths(
 		}
 	}
 
-	indexPath := func(promoted bool, path string) string {
-		parentColumn := "body_v2"
-		if promoted {
-			parentColumn = "promoted"
-		}
-		return parentColumn + "." + path
-	}
-
 	var toInsert []string
-	var indexes []string
+	indexes := make(map[string][]string)
+	indexes[collectorConstants.BodyJSONColumn] = []string{}
+	indexes[collectorConstants.BodyPromotedColumn] = []string{}
 	for _, it := range paths {
 		if err := it.Validate(); err != nil {
 			return err
@@ -335,17 +337,16 @@ func (r *ClickHouseReader) PromoteAndIndexPaths(
 			toInsert = append(toInsert, it.Path)
 		}
 		if it.Indexed {
-			// path is being promoted as well as indexed
-			if it.Promote {
-				indexes = append(indexes, indexPath(true, it.Path))
-				continue
+			// remove the "body." prefix from the path
+			trimmedPath := strings.TrimPrefix(it.Path, telemetrylogs.BodyJSONStringSearchPrefix)
+			parentColumn := collectorConstants.BodyJSONColumn
+
+			// if the path is already promoted or is being promoted, add it to the promoted column
+			if _, promoted := existing[trimmedPath]; promoted || it.Promote {
+				parentColumn = collectorConstants.BodyPromotedColumn
 			}
-			// path is being indexed and is already promoted
-			if _, ok := existing[it.Path]; ok {
-				indexes = append(indexes, indexPath(true, it.Path))
-			} else { // path is being indexed and is not promoted
-				indexes = append(indexes, indexPath(false, it.Path))
-			}
+
+			indexes[parentColumn] = append(indexes[parentColumn], trimmedPath)
 		}
 	}
 

@@ -179,6 +179,7 @@ func (c *conditionBuilder) conditionFor(
 		}
 
 		var value any
+		// schema.JSONColumnType{} now can not be used in switch cases, so we need to check if the column is a JSON column
 		if column.IsJSONColumn() {
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.IsNotNull(tblFieldName), nil

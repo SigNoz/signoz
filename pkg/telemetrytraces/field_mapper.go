@@ -236,8 +236,8 @@ func (m *defaultFieldMapper) FieldFor(
 		return "", err
 	}
 
-	// handle non-comparable JSONColumnType explicitly
-	if _, ok := column.Type.(schema.JSONColumnType); ok {
+	// schema.JSONColumnType{} now can not be used in switch cases, so we need to check if the column is a JSON column
+	if column.IsJSONColumn() {
 		// json is only supported for resource context as of now
 		if key.FieldContext != telemetrytypes.FieldContextResource {
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
