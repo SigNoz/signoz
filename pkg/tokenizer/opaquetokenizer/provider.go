@@ -251,7 +251,7 @@ func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken str
 		return nil
 	}
 
-	if ok := provider.lastObservedAtCache.Set(lastObservedAtCacheKey(accessToken, token.UserID), lastObservedAt, 1); !ok {
+	if ok := provider.lastObservedAtCache.Set(lastObservedAtCacheKey(accessToken, token.UserID), lastObservedAt, 24); !ok {
 		provider.settings.Logger().ErrorContext(ctx, "error caching last observed at timestamp", "user_id", token.UserID)
 	}
 
