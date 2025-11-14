@@ -159,7 +159,9 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			continue
 		}
 
-		results, err := r.Threshold.ShouldAlert(toCommonSeries(series), r.Unit())
+		results, err := r.Threshold.Eval(toCommonSeries(series), r.Unit(), ruletypes.EvalData{
+			ActiveAlerts: r.ActiveAlertsLabelFP(),
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -233,6 +235,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 				Value:             result.V,
 				GeneratorURL:      r.GeneratorURL(),
 				Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
+				IsRecovering:      result.IsRecovering,
 			}
 		}
 	}
@@ -245,6 +248,9 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		if alert, ok := r.Active[h]; ok && alert.State != model.StateInactive {
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
+			// Update the recovering and missing state of existing alert
+			alert.IsRecovering = a.IsRecovering
+			alert.Missing = a.Missing
 			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
 				alert.Receivers = ruleReceiverMap[v]
 			}
@@ -304,6 +310,29 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			})
 		}
 
+		// We need to change firing alert to recovering if the returned sample meets recovery threshold
+		changeAlertingToRecovering := a.State == model.StateFiring && a.IsRecovering
+		// We need to change recovering alerts to firing if the returned sample meets target threshold
+		changeRecoveringToFiring := a.State == model.StateRecovering && !a.IsRecovering && !a.Missing
+		// in any of the above case we need to update the status of alert
+		if changeAlertingToRecovering || changeRecoveringToFiring {
+			state := model.StateRecovering
+			if changeRecoveringToFiring {
+				state = model.StateFiring
+			}
+			a.State = state
+			r.logger.DebugContext(ctx, "converting alert state", "name", r.Name(), "state", state)
+			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
+				RuleID:       r.ID(),
+				RuleName:     r.Name(),
+				State:        state,
+				StateChanged: true,
+				UnixMilli:    ts.UnixMilli(),
+				Labels:       model.LabelsString(labelsJSON),
+				Fingerprint:  a.QueryResultLables.Hash(),
+				Value:        a.Value,
+			})
+		}
 	}
 	r.health = ruletypes.HealthGood
 	r.lastError = err
