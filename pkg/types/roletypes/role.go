@@ -22,7 +22,7 @@ var (
 )
 
 var (
-	TypeableResourcesRoles = authtypes.MustNewTypeableResources(authtypes.MustNewName("roles"))
+	TypeableResourcesRoles = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("roles"))
 )
 
 type StorableRole struct {
