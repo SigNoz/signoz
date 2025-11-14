@@ -20,11 +20,11 @@ var (
 )
 
 var TypeableRelations = map[Type][]Relation{
-	TypeUser:         {RelationRead, RelationUpdate, RelationDelete},
-	TypeRole:         {RelationAssignee, RelationRead, RelationUpdate, RelationDelete},
-	TypeOrganization: {RelationCreate, RelationRead, RelationUpdate, RelationDelete, RelationList},
-	TypeResource:     {RelationRead, RelationUpdate, RelationDelete, RelationBlock},
-	TypeResources:    {RelationCreate, RelationList},
+	TypeUser:          {RelationRead, RelationUpdate, RelationDelete},
+	TypeRole:          {RelationAssignee, RelationRead, RelationUpdate, RelationDelete},
+	TypeOrganization:  {RelationCreate, RelationRead, RelationUpdate, RelationDelete, RelationList},
+	TypeMetaResource:  {RelationRead, RelationUpdate, RelationDelete, RelationBlock},
+	TypeMetaResources: {RelationCreate, RelationList},
 }
 
 type Relation struct{ valuer.String }

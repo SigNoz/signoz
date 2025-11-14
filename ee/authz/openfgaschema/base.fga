@@ -21,12 +21,12 @@ type role
     define update: [user, role#assignee]
     define delete: [user, role#assignee]
 
-type resources
+type metaresources
   relations
     define create: [user, role#assignee]
     define list: [user, role#assignee]
 
-type resource
+type metaresource
   relations
       define read: [user, anonymous, role#assignee]
       define update: [user, role#assignee]
@@ -35,6 +35,6 @@ type resource
       define block: [user, role#assignee]
 
 
-type telemetry
+type telemetryresource
   relations
       define read: [user, anonymous, role#assignee]
