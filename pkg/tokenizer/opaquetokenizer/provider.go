@@ -81,7 +81,8 @@ func (provider *provider) Start(ctx context.Context) error {
 
 			orgs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
 			if err != nil {
-				return err
+				provider.settings.Logger().ErrorContext(ctx, "failed to get orgs data", "error", err)
+				continue
 			}
 
 			for _, org := range orgs {
