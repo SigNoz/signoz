@@ -5,7 +5,7 @@ import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -46,6 +46,11 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 		[selectedDashboard],
 	);
 
+	// Use ref to access latest mutateAsync without recreating the callback
+	// queryRangeMutation object recreates on every render, but mutateAsync is stable
+	const mutateAsyncRef = useRef(queryRangeMutation.mutateAsync);
+	mutateAsyncRef.current = queryRangeMutation.mutateAsync;
+
 	const getUpdatedQuery = useCallback(
 		async ({
 			widgetConfig,
@@ -63,12 +68,12 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 			});
 
 			// Execute query and process results
-			const queryResult = await queryRangeMutation.mutateAsync(queryPayload);
+			const queryResult = await mutateAsyncRef.current(queryPayload);
 
 			// Map query data from API response
 			return mapQueryDataFromApi(queryResult.data.compositeQuery);
 		},
-		[dynamicVariables, globalSelectedInterval, queryRangeMutation],
+		[dynamicVariables, globalSelectedInterval],
 	);
 
 	return {
