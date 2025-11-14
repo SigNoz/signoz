@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Skeleton, Tooltip, Typography } from 'antd';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	DomainMetricsResponseRow,
@@ -44,10 +44,10 @@ function DomainMetrics({
 			queryKey: [
 				REACT_QUERY_KEY.GET_DOMAIN_METRICS_DATA,
 				payload,
-				ENTITY_VERSION_V4,
+				ENTITY_VERSION_V5,
 			],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
+				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
 			enabled: !!payload,
 			staleTime: 60 * 1000, // 1 minute stale time : optimize this part
 		})),
@@ -132,7 +132,9 @@ function DomainMetrics({
 						) : (
 							<Tooltip title={formattedDomainMetricsData.latency}>
 								<span className="round-metric-tag">
-									{(Number(formattedDomainMetricsData.latency) / 1000).toFixed(3)}s
+									{formattedDomainMetricsData.latency !== '-'
+										? `${(Number(formattedDomainMetricsData.latency) / 1000).toFixed(3)}s`
+										: '-'}
 								</span>
 							</Tooltip>
 						)}
@@ -143,23 +145,27 @@ function DomainMetrics({
 							<Skeleton.Button active size="small" />
 						) : (
 							<Tooltip title={formattedDomainMetricsData.errorRate}>
-								<Progress
-									status="active"
-									percent={Number(
-										Number(formattedDomainMetricsData.errorRate).toFixed(2),
-									)}
-									strokeLinecap="butt"
-									size="small"
-									strokeColor={((): string => {
-										const errorRatePercent = Number(
+								{formattedDomainMetricsData.errorRate !== '-' ? (
+									<Progress
+										status="active"
+										percent={Number(
 											Number(formattedDomainMetricsData.errorRate).toFixed(2),
-										);
-										if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-										if (errorRatePercent >= 60) return Color.BG_AMBER_500;
-										return Color.BG_FOREST_500;
-									})()}
-									className="progress-bar"
-								/>
+										)}
+										strokeLinecap="butt"
+										size="small"
+										strokeColor={((): string => {
+											const errorRatePercent = Number(
+												Number(formattedDomainMetricsData.errorRate).toFixed(2),
+											);
+											if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
+											if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+											return Color.BG_FOREST_500;
+										})()}
+										className="progress-bar"
+									/>
+								) : (
+									'-'
+								)}
 							</Tooltip>
 						)}
 					</Typography.Text>

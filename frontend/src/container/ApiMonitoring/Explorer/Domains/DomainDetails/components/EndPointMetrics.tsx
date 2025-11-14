@@ -1,12 +1,16 @@
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Skeleton, Tooltip, Typography } from 'antd';
-import { getFormattedEndPointMetricsData } from 'container/ApiMonitoring/utils';
+import {
+	getDisplayValue,
+	getFormattedEndPointMetricsData,
+} from 'container/ApiMonitoring/utils';
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 
 import ErrorState from './ErrorState';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function EndPointMetrics({
 	endPointMetricsDataQuery,
 }: {
@@ -70,7 +74,9 @@ function EndPointMetrics({
 							<Skeleton.Button active size="small" />
 						) : (
 							<Tooltip title={metricsData?.rate}>
-								<span className="round-metric-tag">{metricsData?.rate} ops/sec</span>
+								<span className="round-metric-tag">
+									{metricsData?.rate !== '-' ? `${metricsData?.rate} ops/sec` : '-'}
+								</span>
 							</Tooltip>
 						)}
 					</Typography.Text>
@@ -79,7 +85,7 @@ function EndPointMetrics({
 							<Skeleton.Button active size="small" />
 						) : (
 							<Tooltip title={metricsData?.latency}>
-								<span className="round-metric-tag">{metricsData?.latency}ms</span>
+								{metricsData?.latency !== '-' ? `${metricsData?.latency}ms` : '-'}
 							</Tooltip>
 						)}
 					</Typography.Text>
@@ -88,21 +94,25 @@ function EndPointMetrics({
 							<Skeleton.Button active size="small" />
 						) : (
 							<Tooltip title={metricsData?.errorRate}>
-								<Progress
-									status="active"
-									percent={Number(Number(metricsData?.errorRate ?? 0).toFixed(2))}
-									strokeLinecap="butt"
-									size="small"
-									strokeColor={((): string => {
-										const errorRatePercent = Number(
-											Number(metricsData?.errorRate ?? 0).toFixed(2),
-										);
-										if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-										if (errorRatePercent >= 60) return Color.BG_AMBER_500;
-										return Color.BG_FOREST_500;
-									})()}
-									className="progress-bar"
-								/>
+								{metricsData?.errorRate !== '-' ? (
+									<Progress
+										status="active"
+										percent={Number(Number(metricsData?.errorRate ?? 0).toFixed(2))}
+										strokeLinecap="butt"
+										size="small"
+										strokeColor={((): string => {
+											const errorRatePercent = Number(
+												Number(metricsData?.errorRate ?? 0).toFixed(2),
+											);
+											if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
+											if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+											return Color.BG_FOREST_500;
+										})()}
+										className="progress-bar"
+									/>
+								) : (
+									'-'
+								)}
 							</Tooltip>
 						)}
 					</Typography.Text>
@@ -110,7 +120,9 @@ function EndPointMetrics({
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (
-							<Tooltip title={metricsData?.lastUsed}>{metricsData?.lastUsed}</Tooltip>
+							<Tooltip title={metricsData?.lastUsed}>
+								{getDisplayValue(metricsData?.lastUsed)}
+							</Tooltip>
 						)}
 					</Typography.Text>
 				</div>
