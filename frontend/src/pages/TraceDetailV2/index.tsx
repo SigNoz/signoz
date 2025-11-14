@@ -1,12 +1,10 @@
 import './TraceDetailV2.styles.scss';
 
-import { Button, Tabs } from 'antd';
+import { Tabs } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { Compass, Cone, TowerControl, Undo } from 'lucide-react';
-import TraceDetail from 'pages/TraceDetail';
-import { useCallback, useState } from 'react';
+import { Compass, Cone, TowerControl } from 'lucide-react';
 
 import TraceDetailsV2 from './TraceDetailV2';
 
@@ -16,11 +14,10 @@ interface INewTraceDetailProps {
 		key: string;
 		children: JSX.Element;
 	}[];
-	handleOldTraceDetails: () => void;
 }
 
 function NewTraceDetail(props: INewTraceDetailProps): JSX.Element {
-	const { items, handleOldTraceDetails } = props;
+	const { items } = props;
 	return (
 		<div className="traces-module-container">
 			<Tabs
@@ -39,24 +36,12 @@ function NewTraceDetail(props: INewTraceDetailProps): JSX.Element {
 						history.push(ROUTES.TRACES_FUNNELS);
 					}
 				}}
-				tabBarExtraContent={
-					<Button
-						type="text"
-						onClick={handleOldTraceDetails}
-						className="old-switch"
-						icon={<Undo size={14} />}
-					>
-						Old Trace Details
-					</Button>
-				}
 			/>
 		</div>
 	);
 }
 
 export default function TraceDetailsPage(): JSX.Element {
-	const [showOldTraceDetails, setShowOldTraceDetails] = useState<boolean>(false);
-
 	const items = [
 		{
 			label: (
@@ -86,13 +71,6 @@ export default function TraceDetailsPage(): JSX.Element {
 			children: <div />,
 		},
 	];
-	const handleOldTraceDetails = useCallback(() => {
-		setShowOldTraceDetails(true);
-	}, []);
 
-	return showOldTraceDetails ? (
-		<TraceDetail />
-	) : (
-		<NewTraceDetail items={items} handleOldTraceDetails={handleOldTraceDetails} />
-	);
+	return <NewTraceDetail items={items} />;
 }

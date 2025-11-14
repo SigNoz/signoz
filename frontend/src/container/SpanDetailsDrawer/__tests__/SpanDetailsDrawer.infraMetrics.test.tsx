@@ -253,7 +253,7 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		renderSpanDetailsDrawer();
 
 		// Click on metrics tab
-		const infraMetricsButton = screen.getByRole('radio', { name: /metrics/i });
+		const infraMetricsButton = screen.getByRole('button', { name: /metrics/i });
 		expect(infraMetricsButton).toBeInTheDocument();
 
 		fireEvent.click(infraMetricsButton);
@@ -301,17 +301,17 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 
 		// Should NOT show infra tab, only logs tab
 		expect(
-			screen.queryByRole('radio', { name: /metrics/i }),
+			screen.queryByRole('button', { name: /metrics/i }),
 		).not.toBeInTheDocument();
-		expect(screen.getByRole('radio', { name: /logs/i })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /logs/i })).toBeInTheDocument();
 	});
 
 	it('should show infra tab when span has infra metadata', async () => {
 		renderSpanDetailsDrawer();
 
 		// Should show both logs and infra tabs
-		expect(screen.getByRole('radio', { name: /metrics/i })).toBeInTheDocument();
-		expect(screen.getByRole('radio', { name: /logs/i })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /metrics/i })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /logs/i })).toBeInTheDocument();
 	});
 
 	it('should handle pod-only metadata correctly', async () => {
@@ -328,7 +328,7 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		);
 
 		// Click on infra tab
-		const infraMetricsButton = screen.getByRole('radio', { name: /metrics/i });
+		const infraMetricsButton = screen.getByRole('button', { name: /metrics/i });
 		fireEvent.click(infraMetricsButton);
 
 		await waitFor(() => {
@@ -364,7 +364,7 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		);
 
 		// Click on infra tab
-		const infraMetricsButton = screen.getByRole('radio', { name: /metrics/i });
+		const infraMetricsButton = screen.getByRole('button', { name: /metrics/i });
 		fireEvent.click(infraMetricsButton);
 
 		await waitFor(() => {
@@ -400,7 +400,7 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		);
 
 		// Click on infra tab
-		const infraMetricsButton = screen.getByRole('radio', { name: /metrics/i });
+		const infraMetricsButton = screen.getByRole('button', { name: /metrics/i });
 		fireEvent.click(infraMetricsButton);
 
 		await waitFor(() => {
@@ -426,8 +426,8 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		renderSpanDetailsDrawer();
 
 		// Initially should show logs tab content
-		const logsButton = screen.getByRole('radio', { name: /logs/i });
-		const infraMetricsButton = screen.getByRole('radio', { name: /metrics/i });
+		const logsButton = screen.getByRole('button', { name: /logs/i });
+		const infraMetricsButton = screen.getByRole('button', { name: /metrics/i });
 
 		expect(logsButton).toBeInTheDocument();
 		expect(infraMetricsButton).toBeInTheDocument();
@@ -470,10 +470,10 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		renderSpanDetailsDrawer();
 
 		// Should show infra tab when span has any of: clusterName, podName, nodeName, hostName
-		expect(screen.getByRole('radio', { name: /metrics/i })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /metrics/i })).toBeInTheDocument();
 
 		// Click on infra tab
-		const infraMetricsButton = screen.getByRole('radio', { name: /metrics/i });
+		const infraMetricsButton = screen.getByRole('button', { name: /metrics/i });
 		fireEvent.click(infraMetricsButton);
 
 		await waitFor(() => {
