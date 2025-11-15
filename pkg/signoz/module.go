@@ -81,7 +81,7 @@ func NewModules(
 		Preference:     implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
 		SavedView:      implsavedview.NewModule(sqlstore),
 		Apdex:          implapdex.NewModule(sqlstore),
-		Dashboard:      impldashboard.NewModule(sqlstore, providerSettings, analytics),
+		Dashboard:      impldashboard.NewModule(sqlstore, providerSettings, analytics, orgGetter),
 		User:           user,
 		UserGetter:     userGetter,
 		QuickFilter:    quickfilter,

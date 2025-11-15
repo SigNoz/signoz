@@ -12,6 +12,21 @@ import (
 )
 
 type Module interface {
+	// enables public sharing for dashboard.
+	CreatePublic(context.Context, *dashboardtypes.PublicDashboard) error
+
+	// gets the config for public sharing by org_id and dashboard_id.
+	GetPublic(context.Context, valuer.UUID, valuer.UUID) (*dashboardtypes.PublicDashboard, error)
+
+	// get the dashboard data by public dashboard id
+	GetDashboardByPublicID(context.Context, valuer.UUID) (*dashboardtypes.Dashboard, error)
+
+	// updates the config for public sharing.
+	UpdatePublic(context.Context, *dashboardtypes.PublicDashboard) error
+
+	// disables the public sharing for the dashboard.
+	DeletePublic(context.Context, valuer.UUID, valuer.UUID) error
+
 	Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)
 
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error)
@@ -32,6 +47,18 @@ type Module interface {
 }
 
 type Handler interface {
+	CreatePublic(http.ResponseWriter, *http.Request)
+
+	GetPublic(http.ResponseWriter, *http.Request)
+
+	GetPublicData(http.ResponseWriter, *http.Request)
+
+	GetPublicWidgetQueryRange(http.ResponseWriter, *http.Request)
+
+	UpdatePublic(http.ResponseWriter, *http.Request)
+
+	DeletePublic(http.ResponseWriter, *http.Request)
+
 	Create(http.ResponseWriter, *http.Request)
 
 	Update(http.ResponseWriter, *http.Request)
