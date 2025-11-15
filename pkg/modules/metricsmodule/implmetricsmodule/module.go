@@ -26,8 +26,6 @@ import (
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
-const defaultFilterConditionTrue = "true"
-
 type module struct {
 	telemetryStore         telemetrystore.TelemetryStore
 	fieldMapper            qbtypes.FieldMapper
@@ -35,11 +33,6 @@ type module struct {
 	logger                 *slog.Logger
 	telemetryMetadataStore telemetrytypes.MetadataStore
 }
-
-const (
-	metricDatabaseName                  = telemetrymetrics.DBName
-	distributedUpdatedMetadataTableName = telemetrymetrics.UpdatedMetadataTableName
-)
 
 // NewModule constructs the metrics module with the provided dependencies.
 func NewModule(ts telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings) metricsmodule.Module {
@@ -137,9 +130,8 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range")
 	}
 
-	// TODO(nikhilmantri0902): limit upper cap?
-	if req.Limit <= 0 {
-		req.Limit = 10
+	if req.Limit < 1 || req.Limit > 5000 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
 	}
 
 	if req.Offset < 0 {
@@ -158,8 +150,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 
 	// TODO(nikhilmantri0902): even the fetch samples coubt function below relies on these
 	//values, is it okay to recalculate them there in the function itself?
-	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
-	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
+	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 
 	normalized := true
 	if constants.IsDotMetricsEnabled {
@@ -246,7 +237,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 		return resp, nil
 	}
 
-	sampleMap, err := m.fetchSampleCounts(ctx, metricNames, req, orderCfg.orderBySamples, orderCfg.direction, sampleTable, localTsTable, countExp, filterSQL, filterArgs, normalized, start, end)
+	sampleMap, err := m.fetchSampleCounts(ctx, metricNames, req, orderCfg.orderBySamples, orderCfg.direction, filterSQL, filterArgs, normalized)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +270,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 
 	if orderCfg.orderBySamples {
 		sort.Slice(resp.Metrics, func(i, j int) bool {
-			if orderCfg.direction == "ASC" {
+			if orderCfg.direction == OrderByDirectionAsc {
 				return resp.Metrics[i].Samples < resp.Metrics[j].Samples
 			}
 			return resp.Metrics[i].Samples > resp.Metrics[j].Samples
@@ -296,17 +287,15 @@ func (m *module) fetchSampleCounts(
 	req *metricsmoduletypes.StatsRequest,
 	orderBySamples bool,
 	orderDirection string,
-	sampleTable string,
-	localTsTable string,
-	countExpr string,
 	filterSQL string,
 	filterArgs []any,
 	normalized bool,
-	start int64,
-	end int64,
 ) (map[string]uint64, error) {
-	metricPlaceholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
 
+	start, end, _, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
+	samplesTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
+
+	metricPlaceholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
 	var (
 		queryBuilder strings.Builder
 		args         []any
@@ -335,8 +324,8 @@ func (m *module) fetchSampleCounts(
 				AND dm.unix_milli BETWEEN ? AND ?
 				GROUP BY dm.metric_name
 			) AS s`,
-			countExpr,
-			metricDatabaseName, sampleTable,
+			countExp,
+			metricDatabaseName, samplesTable,
 			metricPlaceholders,
 			metricDatabaseName, localTsTable,
 			metricPlaceholders,
@@ -366,8 +355,8 @@ func (m *module) fetchSampleCounts(
 				AND unix_milli BETWEEN ? AND ?
 				GROUP BY metric_name
 			) AS s`,
-			countExpr,
-			metricDatabaseName, sampleTable,
+			countExp,
+			metricDatabaseName, samplesTable,
 			metricPlaceholders,
 		))
 		for _, name := range metricNames {
@@ -657,13 +646,12 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range")
 	}
 
-	if req.Limit <= 0 {
-		req.Limit = 10
+	if req.Limit < 1 || req.Limit > 5000 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
 	}
 
-	mode := req.Treemap
-	if mode == "" {
-		mode = metricsmoduletypes.TreemapModeTimeSeries
+	if req.Treemap != metricsmoduletypes.TreemapModeSamples && req.Treemap != metricsmoduletypes.TreemapModeTimeSeries {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid treemap mode")
 	}
 
 	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Expression, req.Start, req.End)
@@ -672,7 +660,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 	}
 
 	resp := &metricsmoduletypes.TreemapResponse{}
-	switch mode {
+	switch req.Treemap {
 	case metricsmoduletypes.TreemapModeSamples:
 		entries, err := m.computeSamplesTreemap(ctx, req, filterSQL, filterArgs)
 		if err != nil {
