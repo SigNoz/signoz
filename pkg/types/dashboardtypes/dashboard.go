@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -314,4 +315,184 @@ func (lockUnlockDashboard *LockUnlockDashboard) UnmarshalJSON(src []byte) error 
 	return nil
 }
 
-func (dashboard *Dashboard) MaskForPublicSharing() {}
+func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime uint64, widgetIndex int64) (*querybuildertypesv5.QueryRangeRequest, error) {
+	compositeQueries := querybuildertypesv5.CompositeQuery{}
+	if dashboard.Data == nil {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	if dashboard.Data["widgets"] == nil {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	widgets, ok := dashboard.Data["widgets"]
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	data, ok := widgets.([]interface{})
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	if len(data) < int(widgetIndex) {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	widget := data[widgetIndex]
+
+	widgetData, ok := widget.(map[string]any)
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	query, ok := widgetData["query"]
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	queryData, ok := query.(map[string]any)
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	queryType, ok := queryData["queryType"]
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	queryTypeStr, ok := queryType.(string)
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	switch queryTypeStr {
+	case "builder":
+		builder, ok := queryData["builder"]
+		if !ok {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		}
+
+		builderData, ok := builder.(map[string]any)
+		if !ok {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		}
+
+		// builder query has three sections: queryData, queryFormulas, queryTraceOperator
+		// query data
+		builderQueryData, ok := builderData["queryData"]
+		if !ok {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		}
+
+		builderQueryDataSlice, ok := builderQueryData.([]any)
+		if !ok {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		}
+
+		for _, query := range builderQueryDataSlice {
+			compositeQueries.Queries = append(compositeQueries.Queries, querybuildertypesv5.QueryEnvelope{Type: querybuildertypesv5.QueryTypeBuilder, Spec: query})
+		}
+
+		// query formulas
+		builderQueryFormulas, ok := builderData["queryFormulas"]
+		if !ok {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		}
+
+		builderQueryFormulasSlice, ok := builderQueryFormulas.([]any)
+		if !ok {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		}
+
+		for _, query := range builderQueryFormulasSlice {
+			compositeQueries.Queries = append(compositeQueries.Queries, querybuildertypesv5.QueryEnvelope{Type: querybuildertypesv5.QueryTypeFormula, Spec: query})
+		}
+
+		// query trace operator
+		builderQueryTraceOperator, ok := builderData["queryTraceOperator"]
+		if !ok {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		}
+
+		builderQueryTraceOperatorSlice, ok := builderQueryTraceOperator.([]any)
+		if !ok {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		}
+
+		for _, query := range builderQueryTraceOperatorSlice {
+			compositeQueries.Queries = append(compositeQueries.Queries, querybuildertypesv5.QueryEnvelope{Type: querybuildertypesv5.QueryTypeTraceOperator, Spec: query})
+		}
+
+	case "clickhouse_sql":
+		chQuery, ok := queryData["clickhouse_sql"]
+		if !ok {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		}
+
+		chQueryData, ok := chQuery.([]any)
+		if !ok {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		}
+
+		for _, query := range chQueryData {
+			compositeQueries.Queries = append(compositeQueries.Queries, querybuildertypesv5.QueryEnvelope{Type: querybuildertypesv5.QueryTypeClickHouseSQL, Spec: query})
+		}
+	case "promql":
+		promQuery, ok := queryData["promql"]
+		if !ok {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		}
+
+		promQueryData, ok := promQuery.([]any)
+		if !ok {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		}
+
+		for _, query := range promQueryData {
+			compositeQueries.Queries = append(compositeQueries.Queries, querybuildertypesv5.QueryEnvelope{Type: querybuildertypesv5.QueryTypePromQL, Spec: query})
+		}
+
+	default:
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	panelType, ok := widgetData["panelTypes"]
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	panelTypeStr, ok := panelType.(string)
+	if !ok {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	}
+
+	return &querybuildertypesv5.QueryRangeRequest{
+		SchemaVersion:  "v1",
+		Start:          startTime,
+		End:            endTime,
+		RequestType:    dashboard.getQueryRequestTypeFromPanelType(panelTypeStr),
+		CompositeQuery: compositeQueries,
+	}, nil
+
+}
+
+func (dashboard *Dashboard) getQueryRequestTypeFromPanelType(panelType string) querybuildertypesv5.RequestType {
+	switch panelType {
+	case "graph":
+	case "bar":
+		return querybuildertypesv5.RequestTypeTimeSeries
+	case "table":
+	case "pie":
+	case "value":
+		return querybuildertypesv5.RequestTypeScalar
+	case "trace":
+		return querybuildertypesv5.RequestTypeTrace
+	case "list":
+		return querybuildertypesv5.RequestTypeRaw
+	case "histogram":
+		return querybuildertypesv5.RequestTypeDistribution
+	}
+
+	return querybuildertypesv5.RequestTypeUnknown
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -12,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -23,11 +25,12 @@ import (
 type handler struct {
 	module           dashboard.Module
 	providerSettings factory.ProviderSettings
+	querier          querier.Querier
 	licensing        licensing.Licensing
 }
 
-func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettings, licensing licensing.Licensing) dashboard.Handler {
-	return &handler{module: module, providerSettings: providerSettings, licensing: licensing}
+func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing) dashboard.Handler {
+	return &handler{module: module, providerSettings: providerSettings, querier: querier, licensing: licensing}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
@@ -306,8 +309,71 @@ func (handler *handler) GetPublicData(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, dashboardtypes.NewPublicDashboardDataFromDashboard(dashboard, publicDashboard))
 }
 
-func (handler *handler) GetPublicWidgetQueryRange(http.ResponseWriter, *http.Request) {
-	panic("unimplemented")
+func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	widgetIndex, ok := mux.Vars(r)["index"]
+	if !ok {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "widget index is missing from the path"))
+		return
+	}
+
+	startTimeStr := r.URL.Query().Get("startTime")
+	if startTimeStr == "" {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "startTime is missing from query params"))
+		return
+	}
+
+	endTimeStr := r.URL.Query().Get("endTime")
+	if endTimeStr == "" {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "endTime is missing from query params"))
+		return
+	}
+
+	dashboard, err := handler.module.GetDashboardByPublicID(ctx, id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	widgetIdxInt, err := strconv.ParseInt(widgetIndex, 10, 64)
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid widget index"))
+		return
+	}
+
+	startTime, err := strconv.ParseUint(startTimeStr, 10, 64)
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid startTime"))
+		return
+	}
+
+	endTime, err := strconv.ParseUint(endTimeStr, 10, 64)
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid endTime"))
+		return
+	}
+
+	query, err := dashboard.GetWidgetQuery(startTime, endTime, widgetIdxInt)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	queryRangeResults, err := handler.querier.QueryRange(ctx, dashboard.OrgID, query)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, queryRangeResults)
 }
 
 func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
