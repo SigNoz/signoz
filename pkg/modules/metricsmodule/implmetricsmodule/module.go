@@ -6,63 +6,107 @@ import (
 	"log/slog"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
+	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
+const defaultFilterConditionTrue = "true"
+
 type module struct {
-	telemetryStore telemetrystore.TelemetryStore
-	fieldMapper    qbtypes.FieldMapper
-	condBuilder    qbtypes.ConditionBuilder
-	logger         *slog.Logger
+	telemetryStore         telemetrystore.TelemetryStore
+	fieldMapper            qbtypes.FieldMapper
+	condBuilder            qbtypes.ConditionBuilder
+	logger                 *slog.Logger
+	telemetryMetadataStore telemetrytypes.MetadataStore
 }
 
 const (
-	metricDatabaseName       = "signoz_metrics"
-	updatedMetadataTableName = "distributed_updated_metadata"
+	metricDatabaseName                  = telemetrymetrics.DBName
+	distributedUpdatedMetadataTableName = telemetrymetrics.UpdatedMetadataTableName
 )
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore) metricsmodule.Module {
+func NewModule(ts telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings) metricsmodule.Module {
 	// TODO(nikhilmantri0902, srikanthccv): the three following dependencies are they rightly getting passed
+	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
+		providerSettings,
+		ts,
+		telemetrytraces.DBName,
+		telemetrytraces.TagAttributesV2TableName,
+		telemetrytraces.SpanAttributesKeysTblName,
+		telemetrytraces.SpanIndexV3TableName,
+		telemetrymetrics.DBName,
+		telemetrymetrics.AttributesMetadataTableName,
+		telemetrymeter.DBName,
+		telemetrymeter.SamplesAgg1dTableName,
+		telemetrylogs.DBName,
+		telemetrylogs.LogsV2TableName,
+		telemetrylogs.TagAttributesV2TableName,
+		telemetrylogs.LogAttributeKeysTblName,
+		telemetrylogs.LogResourceKeysTblName,
+		telemetrymetadata.DBName,
+		telemetrymetadata.AttributesMetadataLocalTableName,
+	)
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
-	logger := slog.Default()
 	return &module{
-		telemetryStore: ts,
-		fieldMapper:    fieldMapper,
-		condBuilder:    condBuilder,
-		logger:         logger,
+		telemetryStore:         ts,
+		fieldMapper:            fieldMapper,
+		condBuilder:            condBuilder,
+		logger:                 providerSettings.Logger,
+		telemetryMetadataStore: telemetryMetadataStore,
 	}
 }
 
-func (m *module) buildFilterClause(expression string, startMillis, endMillis int64) (string, []any, error) {
+func (m *module) buildFilterClause(ctx context.Context, expression string, startMillis, endMillis int64) (string, []any, error) {
 	expression = strings.TrimSpace(expression)
 	if expression == "" {
-		return "true", nil, nil
+		return defaultFilterConditionTrue, nil, nil
+	}
+
+	// TODO(nikhilmantri0902, srikanthccv): if this is the right way of dealing with  whereClauseSelectors
+	whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(expression)
+	for idx := range whereClauseSelectors {
+		whereClauseSelectors[idx].Signal = telemetrytypes.SignalMetrics
+		whereClauseSelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
+		// whereClauseSelectors[idx].MetricContext = &telemetrytypes.MetricContext{
+		// 	MetricName: query.Aggregations[0].MetricName,
+		// }
+		// whereClauseSelectors[idx].Source = query.Source
+	}
+
+	keys, _, err := m.telemetryMetadataStore.GetKeysMulti(ctx, whereClauseSelectors)
+	if err != nil {
+		return "", nil, err
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
 		Logger:           m.logger,
 		FieldMapper:      m.fieldMapper,
 		ConditionBuilder: m.condBuilder,
-		// Metrics filters never rely on full text search columns.
-		SkipFullTextFilter: true,
+		FullTextColumn: &telemetrytypes.TelemetryFieldKey{
+			Name: "labels"},
+		FieldKeys: keys,
 	}
 
-	startNs := uint64(time.Duration(startMillis) * time.Millisecond)
-	endNs := uint64(time.Duration(endMillis) * time.Millisecond)
+	startNs := uint64(startMillis * 1_000_000)
+	endNs := uint64(endMillis * 1_000_000)
 
 	whereClause, err := querybuilder.PrepareWhereClause(expression, opts, startNs, endNs)
 	if err != nil {
@@ -70,56 +114,16 @@ func (m *module) buildFilterClause(expression string, startMillis, endMillis int
 	}
 
 	if whereClause == nil || whereClause.WhereClause == nil {
-		return "true", nil, nil
+		return defaultFilterConditionTrue, nil, nil
 	}
 
-	sql, args := whereClause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return sql, args, nil
-}
+	whereClauseString, args := whereClause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
+	// Remove "WHERE" (case sensitive) from the start of sql string, if present
+	whereClauseString = strings.TrimSpace(whereClauseString)
+	whereClauseString = strings.TrimPrefix(whereClauseString, "WHERE")
+	whereClauseString = strings.TrimSpace(whereClauseString)
 
-type orderConfig struct {
-	sqlColumn      string
-	direction      string
-	orderBySamples bool
-}
-
-func resolveOrderBy(order *metricsmoduletypes.OrderBy) (orderConfig, error) {
-	cfg := orderConfig{
-		sqlColumn:      "timeseries",
-		direction:      "DESC",
-		orderBySamples: false,
-	}
-
-	if order == nil {
-		return cfg, nil
-	}
-
-	switch strings.ToLower(order.ColumnName) {
-	case "", "timeseries":
-		cfg.sqlColumn = "timeseries"
-	case "samples":
-		cfg.orderBySamples = true
-		cfg.sqlColumn = "timeseries" // defer true ordering until samples computed
-	case "metricname", "metric_name":
-		cfg.sqlColumn = "metric_name"
-	case "lastreceived", "last_received":
-		cfg.sqlColumn = "lastReceived"
-	default:
-		return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order column %q", order.ColumnName)
-	}
-
-	if order.Order != "" {
-		switch strings.ToUpper(order.Order) {
-		case "ASC":
-			cfg.direction = "ASC"
-		case "DESC":
-			cfg.direction = "DESC"
-		default:
-			return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order direction %q", order.Order)
-		}
-	}
-
-	return cfg, nil
+	return whereClauseString, args, nil
 }
 
 func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.StatsRequest) (*metricsmoduletypes.StatsResponse, error) {
@@ -145,11 +149,13 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 		return nil, err
 	}
 
-	filterSQL, filterArgs, err := m.buildFilterClause(req.Expression, req.Start, req.End)
+	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Expression, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
 
+	// TODO(nikhilmantri0902): even the fetch samples coubt function below relies on these
+	//values, is it okay to recalculate them there in the function itself?
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
 	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
 
@@ -304,7 +310,7 @@ func (m *module) fetchSampleCounts(
 		args         []any
 	)
 
-	if filterSQL != "true" {
+	if filterSQL != defaultFilterConditionTrue {
 		queryBuilder.WriteString(fmt.Sprintf(
 			`SELECT 
 				s.samples,
@@ -334,12 +340,16 @@ func (m *module) fetchSampleCounts(
 			metricPlaceholders,
 			filterSQL,
 		))
-
-		args = append(args,
-			normalized,
-			start, end,
-		)
+		for _, name := range metricNames {
+			args = append(args, name)
+		}
+		for _, name := range metricNames {
+			args = append(args, name)
+		}
+		args = append(args, normalized)
+		args = append(args, start, end)
 		args = append(args, filterArgs...)
+		args = append(args, req.Start, req.End)
 	} else {
 		queryBuilder.WriteString(fmt.Sprintf(
 			`SELECT 
@@ -358,6 +368,10 @@ func (m *module) fetchSampleCounts(
 			metricDatabaseName, sampleTable,
 			metricPlaceholders,
 		))
+		for _, name := range metricNames {
+			args = append(args, name)
+		}
+		args = append(args, req.Start, req.End)
 	}
 
 	if orderBySamples {
@@ -365,16 +379,7 @@ func (m *module) fetchSampleCounts(
 	}
 
 	queryBuilder.WriteString(" LIMIT ?;")
-
-	for _, name := range metricNames {
-		args = append(args, name)
-	}
-	if filterSQL != "true" {
-		for _, name := range metricNames {
-			args = append(args, name)
-		}
-	}
-	args = append(args, req.Start, req.End, req.Limit)
+	args = append(args, req.Limit)
 
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(ctx, queryBuilder.String(), args...)
@@ -411,7 +416,7 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 	}
 
 	filterClause := ""
-	if filterSQL != "true" {
+	if filterSQL != defaultFilterConditionTrue {
 		filterClause = fmt.Sprintf(" AND (%s)", filterSQL)
 	}
 
@@ -425,11 +430,9 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 				metric_name,
 				uniq(fingerprint) AS total_value,
 				(SELECT uniq(fingerprint)
-				FROM %s.%s
-				WHERE unix_milli BETWEEN ? AND ?
-				AND NOT startsWith(metric_name, 'signoz')
-				AND __normalized = ?
-				%s) AS total_time_series
+					FROM %s.%s
+					WHERE unix_milli BETWEEN ? AND ?
+					AND __normalized = ?) AS total_time_series
 			FROM %s.%s
 			WHERE unix_milli BETWEEN ? AND ?
 			AND NOT startsWith(metric_name, 'signoz')
@@ -439,15 +442,15 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 		)
 		ORDER BY percentage DESC
 		LIMIT ?;`,
-		metricDatabaseName, tsTable, filterClause,
-		metricDatabaseName, tsTable, filterClause,
+		metricDatabaseName,
+		tsTable,
+		metricDatabaseName,
+		tsTable,
+		filterClause,
 	)
 
 	args := make([]any, 0, 6+2*len(filterArgs))
 	args = append(args, start, end, normalized)
-	if filterClause != "" {
-		args = append(args, filterArgs...)
-	}
 	args = append(args, start, end, normalized)
 	if filterClause != "" {
 		args = append(args, filterArgs...)
@@ -495,7 +498,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 	}
 
 	filterClause := ""
-	if filterSQL != "true" {
+	if filterSQL != defaultFilterConditionTrue {
 		filterClause = fmt.Sprintf(" AND (%s)", filterSQL)
 	}
 
@@ -575,7 +578,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 		sampleArgs = append(sampleArgs, name)
 	}
 
-	if filterSQL != "true" {
+	if filterSQL != defaultFilterConditionTrue {
 		metricPlaceholdersSub := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
 		queryBuilder.WriteString(fmt.Sprintf(`
 			AND dm.fingerprint IN (
@@ -661,7 +664,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 		mode = metricsmoduletypes.TreemapModeTimeSeries
 	}
 
-	filterSQL, filterArgs, err := m.buildFilterClause(req.Expression, req.Start, req.End)
+	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Expression, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
@@ -674,9 +677,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 			return nil, err
 		}
 		resp.Samples = entries
-	case metricsmoduletypes.TreemapModeTimeSeries:
-		fallthrough
-	default:
+	default: // TreemapModeTimeSeries
 		entries, err := m.computeTimeseriesTreemap(ctx, req, filterSQL, filterArgs)
 		if err != nil {
 			return nil, err
@@ -695,7 +696,7 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 	placeholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
 	// TODO(nikhilmantri0902): move table names to constants
 	query := fmt.Sprintf(`SELECT metric_name, description, type, unit FROM %s.%s WHERE metric_name IN (%s)`,
-		constants.SIGNOZ_METRIC_DBNAME, "distributed_updated_metadata", placeholders)
+		metricDatabaseName, distributedUpdatedMetadataTableName, placeholders)
 
 	args := make([]any, len(metricNames))
 	for i := range metricNames {

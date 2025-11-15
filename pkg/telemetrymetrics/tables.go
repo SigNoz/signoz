@@ -8,6 +8,8 @@ import (
 
 const (
 	DBName                           = "signoz_metrics"
+	UpdatedMetadataTableName         = "distributed_updated_metadata"
+	UpdatedMetadataLocalTableName    = "updated_metadata"
 	SamplesV4TableName               = "distributed_samples_v4"
 	SamplesV4LocalTableName          = "samples_v4"
 	SamplesV4Agg5mTableName          = "distributed_samples_v4_agg_5m"

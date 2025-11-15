@@ -18,7 +18,7 @@ type StatsRequest struct {
 
 // MetricStat represents the summary information returned per metric.
 type MetricStat struct {
-	MetricName   string `json:"metricName"`
+	MetricName   string `json:"metric_name"`
 	Description  string `json:"description"`
 	MetricType   string `json:"type"`
 	MetricUnit   string `json:"unit"`
@@ -60,13 +60,13 @@ type TreemapRequest struct {
 
 // TreemapEntry represents each node in the treemap response.
 type TreemapEntry struct {
-	MetricName string  `json:"metricName"`
+	MetricName string  `json:"metric_name"`
 	Percentage float64 `json:"percentage"`
-	TotalValue uint64  `json:"totalValue"`
+	TotalValue uint64  `json:"total_value"`
 }
 
 // TreemapResponse is the output structure for the treemap endpoint.
 type TreemapResponse struct {
-	TimeSeries []TreemapEntry `json:"timeseries,omitempty"`
-	Samples    []TreemapEntry `json:"samples,omitempty"`
+	TimeSeries []TreemapEntry `json:"timeseries"`
+	Samples    []TreemapEntry `json:"samples"`
 }

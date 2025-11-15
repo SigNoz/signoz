@@ -94,6 +94,6 @@ func NewModules(
 		Session:        implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
 		SpanPercentile: implspanpercentile.NewModule(querier, providerSettings),
 		Services:       implservices.NewModule(querier, telemetryStore),
-		Metrics:        implmetricsmodule.NewModule(telemetryStore),
+		Metrics:        implmetricsmodule.NewModule(telemetryStore, providerSettings),
 	}
 }
