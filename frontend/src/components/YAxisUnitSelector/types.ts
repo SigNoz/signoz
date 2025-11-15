@@ -14,7 +14,7 @@ export enum UniversalYAxisUnit {
 	HOURS = 'h',
 	MINUTES = 'min',
 	SECONDS = 's',
-	MICROSECONDS = 'us',
+	MICROSECONDS = 'µs',
 	MILLISECONDS = 'ms',
 	NANOSECONDS = 'ns',
 
@@ -363,4 +363,14 @@ export enum YAxisUnit {
 	OPEN_METRICS_WRITES_MINUTE = 'writes_per_minute',
 
 	OPEN_METRICS_PERCENT_UNIT = 'percentunit',
+}
+
+export interface ScaledValue {
+	value: number;
+	label: string;
+}
+
+export interface UnitFamilyConfig {
+	units: UniversalYAxisUnit[];
+	scaleFactor: number;
 }
