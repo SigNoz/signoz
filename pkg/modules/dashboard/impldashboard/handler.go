@@ -361,7 +361,7 @@ func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *htt
 		return
 	}
 
-	query, err := dashboard.GetWidgetQuery(startTime, endTime, widgetIdxInt)
+	query, err := dashboard.GetWidgetQuery(startTime, endTime, widgetIdxInt, handler.providerSettings.Logger)
 	if err != nil {
 		render.Error(rw, err)
 		return

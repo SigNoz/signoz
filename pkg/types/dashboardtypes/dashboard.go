@@ -3,9 +3,11 @@ package dashboardtypes
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -315,166 +317,114 @@ func (lockUnlockDashboard *LockUnlockDashboard) UnmarshalJSON(src []byte) error 
 	return nil
 }
 
-func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime uint64, widgetIndex int64) (*querybuildertypesv5.QueryRangeRequest, error) {
-	compositeQueries := querybuildertypesv5.CompositeQuery{}
-	if dashboard.Data == nil {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime uint64, widgetIndex int64, logger *slog.Logger) (*querybuildertypesv5.QueryRangeRequest, error) {
+	type dashboardData struct {
+		Widgets []struct {
+			PanelTypes string `json:"panelTypes"`
+			Query      struct {
+				Builder struct {
+					QueryData          []map[string]any `json:"queryData"`
+					QueryFormulas      []map[string]any `json:"queryFormulas"`
+					QueryTraceOperator []map[string]any `json:"queryTraceOperator"`
+				} `json:"builder"`
+				ClickhouseSQL []map[string]any `json:"clickhouse_sql"`
+				PromQL        []map[string]any `json:"promql"`
+				QueryType     string           `json:"queryType"`
+			} `json:"query"`
+		} `json:"widgets"`
 	}
 
-	if dashboard.Data["widgets"] == nil {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	dataJSON, err := json.Marshal(dashboard.Data)
+	if err != nil {
+		return nil, err
 	}
 
-	widgets, ok := dashboard.Data["widgets"]
-	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	var data dashboardData
+	err = json.Unmarshal(dataJSON, &data)
+	if err != nil {
+		return nil, err
 	}
 
-	data, ok := widgets.([]interface{})
-	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	if len(data.Widgets) < int(widgetIndex) {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "widget with index %v doesn't exist", widgetIndex)
 	}
 
-	if len(data) < int(widgetIndex) {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-	}
-
-	widget := data[widgetIndex]
-
-	widgetData, ok := widget.(map[string]any)
-	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-	}
-
-	query, ok := widgetData["query"]
-	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-	}
-
-	queryData, ok := query.(map[string]any)
-	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-	}
-
-	queryType, ok := queryData["queryType"]
-	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-	}
-
-	queryTypeStr, ok := queryType.(string)
-	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-	}
-
-	switch queryTypeStr {
+	compositeQueries := []any{}
+	widgetData := data.Widgets[widgetIndex]
+	switch widgetData.Query.QueryType {
 	case "builder":
-		builder, ok := queryData["builder"]
-		if !ok {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		migrate := transition.NewMigrateCommon(logger)
+		for _, query := range widgetData.Query.Builder.QueryData {
+			queryName, ok := query["queryName"].(string)
+			if !ok {
+				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "cannot type cast query name as string")
+			}
+			compositeQueries = append(compositeQueries, migrate.WrapInV5Envelope(queryName, query, "builder_query"))
 		}
-
-		builderData, ok := builder.(map[string]any)
-		if !ok {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		for _, query := range widgetData.Query.Builder.QueryFormulas {
+			queryName, ok := query["queryName"].(string)
+			if !ok {
+				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "cannot type cast query name as string")
+			}
+			compositeQueries = append(compositeQueries, migrate.WrapInV5Envelope(queryName, query, "builder_formula"))
 		}
-
-		// builder query has three sections: queryData, queryFormulas, queryTraceOperator
-		// query data
-		builderQueryData, ok := builderData["queryData"]
-		if !ok {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		for _, query := range widgetData.Query.Builder.QueryTraceOperator {
+			queryName, ok := query["queryName"].(string)
+			if !ok {
+				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "cannot type cast query name as string")
+			}
+			compositeQueries = append(compositeQueries, migrate.WrapInV5Envelope(queryName, query, "builder_trace_operator"))
 		}
-
-		builderQueryDataSlice, ok := builderQueryData.([]any)
-		if !ok {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-		}
-
-		for _, query := range builderQueryDataSlice {
-			compositeQueries.Queries = append(compositeQueries.Queries, querybuildertypesv5.QueryEnvelope{Type: querybuildertypesv5.QueryTypeBuilder, Spec: query})
-		}
-
-		// query formulas
-		builderQueryFormulas, ok := builderData["queryFormulas"]
-		if !ok {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-		}
-
-		builderQueryFormulasSlice, ok := builderQueryFormulas.([]any)
-		if !ok {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-		}
-
-		for _, query := range builderQueryFormulasSlice {
-			compositeQueries.Queries = append(compositeQueries.Queries, querybuildertypesv5.QueryEnvelope{Type: querybuildertypesv5.QueryTypeFormula, Spec: query})
-		}
-
-		// query trace operator
-		builderQueryTraceOperator, ok := builderData["queryTraceOperator"]
-		if !ok {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-		}
-
-		builderQueryTraceOperatorSlice, ok := builderQueryTraceOperator.([]any)
-		if !ok {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-		}
-
-		for _, query := range builderQueryTraceOperatorSlice {
-			compositeQueries.Queries = append(compositeQueries.Queries, querybuildertypesv5.QueryEnvelope{Type: querybuildertypesv5.QueryTypeTraceOperator, Spec: query})
-		}
-
 	case "clickhouse_sql":
-		chQuery, ok := queryData["clickhouse_sql"]
-		if !ok {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-		}
-
-		chQueryData, ok := chQuery.([]any)
-		if !ok {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-		}
-
-		for _, query := range chQueryData {
-			compositeQueries.Queries = append(compositeQueries.Queries, querybuildertypesv5.QueryEnvelope{Type: querybuildertypesv5.QueryTypeClickHouseSQL, Spec: query})
+		for _, query := range widgetData.Query.ClickhouseSQL {
+			envelope := map[string]any{
+				"type": "clickhouse_sql",
+				"spec": map[string]any{
+					"name":     query["name"],
+					"query":    query["query"],
+					"disabled": query["disabled"],
+					"legend":   query["legend"],
+				},
+			}
+			compositeQueries = append(compositeQueries, envelope)
 		}
 	case "promql":
-		promQuery, ok := queryData["promql"]
-		if !ok {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+		for _, query := range widgetData.Query.ClickhouseSQL {
+			envelope := map[string]any{
+				"type": "promql",
+				"spec": map[string]any{
+					"name":     query["name"],
+					"query":    query["query"],
+					"disabled": query["disabled"],
+					"legend":   query["legend"],
+				},
+			}
+			compositeQueries = append(compositeQueries, envelope)
 		}
-
-		promQueryData, ok := promQuery.([]any)
-		if !ok {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
-		}
-
-		for _, query := range promQueryData {
-			compositeQueries.Queries = append(compositeQueries.Queries, querybuildertypesv5.QueryEnvelope{Type: querybuildertypesv5.QueryTypePromQL, Spec: query})
-		}
-
-	default:
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
 	}
 
-	panelType, ok := widgetData["panelTypes"]
-	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	queryRangeReq := map[string]any{
+		"schemaVersion": "v1",
+		"start":         startTime,
+		"end":           endTime,
+		"requestType":   dashboard.getQueryRequestTypeFromPanelType(widgetData.PanelTypes),
+		"compositeQuery": map[string]any{
+			"queries": compositeQueries,
+		},
 	}
 
-	panelTypeStr, ok := panelType.(string)
-	if !ok {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "")
+	req, err := json.Marshal(queryRangeReq)
+	if err != nil {
+		return nil, err
 	}
 
-	return &querybuildertypesv5.QueryRangeRequest{
-		SchemaVersion:  "v1",
-		Start:          startTime,
-		End:            endTime,
-		RequestType:    dashboard.getQueryRequestTypeFromPanelType(panelTypeStr),
-		CompositeQuery: compositeQueries,
-	}, nil
+	queryRangeRequest := new(querybuildertypesv5.QueryRangeRequest)
+	err = json.Unmarshal(req, queryRangeRequest)
+	if err != nil {
+		return nil, err
+	}
 
+	return queryRangeRequest, nil
 }
 
 func (dashboard *Dashboard) getQueryRequestTypeFromPanelType(panelType string) querybuildertypesv5.RequestType {
