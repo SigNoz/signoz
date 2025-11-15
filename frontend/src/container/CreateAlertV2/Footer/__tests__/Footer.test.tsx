@@ -67,6 +67,10 @@ const SAVE_ALERT_RULE_TEXT = 'Save Alert Rule';
 const TEST_NOTIFICATION_TEXT = 'Test Notification';
 const DISCARD_TEXT = 'Discard';
 
+const LOADER_ICON_SELECTOR = 'svg.lucide-loader';
+const CHECK_ICON_SELECTOR = 'svg.lucide-check';
+const PLAY_ICON_SELECTOR = 'svg.lucide-play';
+
 describe('Footer', () => {
 	beforeEach(() => {
 		useQueryBuilder.mockReturnValue({
@@ -244,5 +248,62 @@ describe('Footer', () => {
 			screen.getByRole('button', { name: /test notification/i }),
 		).toBeEnabled();
 		expect(screen.getByRole('button', { name: /discard/i })).toBeEnabled();
+	});
+
+	it('should show loader icon on test notification button when testing alert rule', () => {
+		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+			...mockAlertContextState,
+			isTestingAlertRule: true,
+		});
+		const { container } = render(<Footer />);
+
+		// When testing alert rule, the play icon is replaced with a loader icon
+		const playIconForTestNotificationButton = container.querySelector(
+			PLAY_ICON_SELECTOR,
+		);
+		expect(playIconForTestNotificationButton).not.toBeInTheDocument();
+
+		const loaderIconForTestNotificationButton = container.querySelector(
+			LOADER_ICON_SELECTOR,
+		);
+		expect(loaderIconForTestNotificationButton).toBeInTheDocument();
+	});
+
+	it('should not show check icon on save alert rule button when updating alert rule', () => {
+		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+			...mockAlertContextState,
+			isUpdatingAlertRule: true,
+		});
+		const { container } = render(<Footer />);
+
+		// When updating alert rule, the check icon is replaced with a loader icon
+		const checkIconForSaveAlertRuleButton = container.querySelector(
+			CHECK_ICON_SELECTOR,
+		);
+		expect(checkIconForSaveAlertRuleButton).not.toBeInTheDocument();
+
+		const loaderIconForSaveAlertRuleButton = container.querySelector(
+			LOADER_ICON_SELECTOR,
+		);
+		expect(loaderIconForSaveAlertRuleButton).toBeInTheDocument();
+	});
+
+	it('should not show check icon on save alert rule button when creating alert rule', () => {
+		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+			...mockAlertContextState,
+			isCreatingAlertRule: true,
+		});
+		const { container } = render(<Footer />);
+
+		// When creating alert rule, the check icon is replaced with a loader icon
+		const checkIconForSaveAlertRuleButton = container.querySelector(
+			CHECK_ICON_SELECTOR,
+		);
+		expect(checkIconForSaveAlertRuleButton).not.toBeInTheDocument();
+
+		const loaderIconForSaveAlertRuleButton = container.querySelector(
+			LOADER_ICON_SELECTOR,
+		);
+		expect(loaderIconForSaveAlertRuleButton).toBeInTheDocument();
 	});
 });
