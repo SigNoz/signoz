@@ -1,6 +1,7 @@
 package dashboardtypes
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -10,6 +11,7 @@ import (
 )
 
 var (
+	ErrCodePublicDashboardInvalidInput  = errors.MustNewCode("public_dashboard_invalid_input")
 	ErrCodePublicDashboardNotFound      = errors.MustNewCode("public_dashboard_not_found")
 	ErrCodePublicDashboardAlreadyExists = errors.MustNewCode("public_dashboard_already_exists")
 )
@@ -20,6 +22,7 @@ type StorablePublicDashboard struct {
 	types.Identifiable
 	types.TimeAuditable
 	TimeRangeEnabled bool   `bun:"time_range_enabled,type:boolean,notnull"`
+	DefaultTimeRange string `bun:"default_time_range,type:text,notnull"`
 	DashboardID      string `bun:"dashboard_id,type:text,notnull"`
 }
 
@@ -28,20 +31,32 @@ type PublicDashboard struct {
 	types.TimeAuditable
 
 	TimeRangeEnabled bool        `json:"timeRangeEnabled"`
+	DefaultTimeRange string      `json:"defaultTimeRange"`
 	DashboardID      valuer.UUID `json:"dashboardId"`
 }
 
+type GettablePublicDasbhboard struct {
+	TimeRangeEnabled bool   `json:"timeRangeEnabled"`
+	DefaultTimeRange string `json:"defaultTimeRange"`
+	PublicPath       string `json:"publicPath"`
+}
+
 type PostablePublicDashboard struct {
-	TimeRangeEnabled bool `json:"timeRangeEnabled"`
+	TimeRangeEnabled bool   `json:"timeRangeEnabled"`
+	DefaultTimeRange string `json:"defaultTimeRange"`
 }
 
 type UpdatablePublicDashboard struct {
-	TimeRangeEnabled bool `json:"timeRangeEnabled"`
+	TimeRangeEnabled bool   `json:"timeRangeEnabled"`
+	DefaultTimeRange string `json:"defaultTimeRange"`
 }
 
-type GettablePublicDashboardData = Dashboard
+type GettablePublicDashboardData struct {
+	Dashboard       *Dashboard                `json:"dashboard"`
+	PublicDashboard *GettablePublicDasbhboard `json:"publicDashboard"`
+}
 
-func NewPublicDashboard(timeRangeEnabled bool, dashboardID valuer.UUID) *PublicDashboard {
+func NewPublicDashboard(timeRangeEnabled bool, defaultTimeRange string, dashboardID valuer.UUID) *PublicDashboard {
 	return &PublicDashboard{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -51,6 +66,7 @@ func NewPublicDashboard(timeRangeEnabled bool, dashboardID valuer.UUID) *PublicD
 			UpdatedAt: time.Now(),
 		},
 		TimeRangeEnabled: timeRangeEnabled,
+		DefaultTimeRange: defaultTimeRange,
 		DashboardID:      dashboardID,
 	}
 }
@@ -60,6 +76,7 @@ func NewStorablePublicDashboardFromPublicDashboard(publicDashboard *PublicDashbo
 		Identifiable:     publicDashboard.Identifiable,
 		TimeAuditable:    publicDashboard.TimeAuditable,
 		TimeRangeEnabled: publicDashboard.TimeRangeEnabled,
+		DefaultTimeRange: publicDashboard.DefaultTimeRange,
 		DashboardID:      publicDashboard.DashboardID.StringValue(),
 	}
 }
@@ -69,11 +86,20 @@ func NewPublicDashboardFromStorablePublicDashboard(storable *StorablePublicDashb
 		Identifiable:     storable.Identifiable,
 		TimeAuditable:    storable.TimeAuditable,
 		TimeRangeEnabled: storable.TimeRangeEnabled,
+		DefaultTimeRange: storable.DefaultTimeRange,
 		DashboardID:      valuer.MustNewUUID(storable.DashboardID),
 	}
 }
 
-func NewPublicDashboardDataFromDashboard(dashboard *Dashboard) *GettablePublicDashboardData {
+func NewGettablePublicDashboard(publicDashboard *PublicDashboard) *GettablePublicDasbhboard {
+	return &GettablePublicDasbhboard{
+		TimeRangeEnabled: publicDashboard.TimeRangeEnabled,
+		DefaultTimeRange: publicDashboard.DefaultTimeRange,
+		PublicPath:       publicDashboard.PublicPath(),
+	}
+}
+
+func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *PublicDashboard) *GettablePublicDashboardData {
 	if dashboard.Data != nil && dashboard.Data["widgets"] != nil {
 		widgets, ok := dashboard.Data["widgets"]
 		if ok {
@@ -93,6 +119,7 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard) *GettablePublicDa
 									builderQuery, ok := query["builder"].(map[string]any)
 									if ok {
 										queryData, ok := builderQuery["queryData"].([]any)
+										updatedQueryData := []any{}
 										if ok {
 											for _, query := range queryData {
 												updatedQueryMap := make(map[string]any)
@@ -103,11 +130,13 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard) *GettablePublicDa
 													updatedQueryMap["queryName"] = queryMap["queryName"]
 													updatedQueryMap["expression"] = queryMap["expression"]
 												}
-												query = updatedQueryMap
+												updatedQueryData = append(updatedQueryData, updatedQueryMap)
 											}
 										}
+										builderQuery["queryData"] = updatedQueryData
 
 										queryFormulas, ok := builderQuery["queryFormulas"].([]any)
+										updatedQueryFormula := []any{}
 										if ok {
 											for _, queryFormula := range queryFormulas {
 												updatedQueryFormulaMap := make(map[string]any)
@@ -117,11 +146,13 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard) *GettablePublicDa
 													updatedQueryFormulaMap["queryName"] = queryFormulaMap["queryName"]
 													updatedQueryFormulaMap["expression"] = queryFormulaMap["expression"]
 												}
-												queryFormula = updatedQueryFormulaMap
+												updatedQueryFormula = append(updatedQueryFormula, updatedQueryFormulaMap)
 											}
 										}
+										builderQuery["queryFormulas"] = updatedQueryFormula
 
 										queryTraceOperator, ok := builderQuery["queryTraceOperator"].([]any)
+										updatedQueryTraceOperator := []any{}
 										if ok {
 											for _, query := range queryTraceOperator {
 												updatedQueryTraceOperatorMap := make(map[string]any)
@@ -132,14 +163,16 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard) *GettablePublicDa
 													updatedQueryTraceOperatorMap["queryName"] = queryMap["queryName"]
 													updatedQueryTraceOperatorMap["expression"] = queryMap["expression"]
 												}
-												query = updatedQueryTraceOperatorMap
+												updatedQueryTraceOperator = append(updatedQueryTraceOperator, updatedQueryTraceOperatorMap)
 											}
 										}
+										builderQuery["queryTraceOperator"] = updatedQueryTraceOperator
 									}
 								case "clickhouse_sql":
 									delete(query, "builder")
 									delete(query, "promql")
 									clickhouseSQLQuery, ok := query["clickhouse_sql"].([]any)
+									updatedClickhouseSQLQuery := []any{}
 									if ok {
 										for _, clickhouseSQLQuery := range clickhouseSQLQuery {
 											updatedClickhouseSQLQueryMap := make(map[string]any)
@@ -148,13 +181,15 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard) *GettablePublicDa
 												updatedClickhouseSQLQueryMap["legend"] = clickhouseSQLQueryMap["legend"]
 												updatedClickhouseSQLQueryMap["name"] = clickhouseSQLQueryMap["name"]
 											}
-											clickhouseSQLQuery = updatedClickhouseSQLQueryMap
+											updatedClickhouseSQLQuery = append(updatedClickhouseSQLQuery, updatedClickhouseSQLQueryMap)
 										}
 									}
+									query["clickhouse_sql"] = updatedClickhouseSQLQuery
 								case "promql":
 									delete(query, "builder")
 									delete(query, "clickhouse_sql")
 									promQLQuery, ok := query["promql"].([]any)
+									updatedPromQLQuery := []any{}
 									if ok {
 										for _, promQLQuery := range promQLQuery {
 											updatedPromQLQueryMap := make(map[string]any)
@@ -163,9 +198,10 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard) *GettablePublicDa
 												updatedPromQLQueryMap["legend"] = promQLQueryMap["legend"]
 												updatedPromQLQueryMap["name"] = promQLQueryMap["name"]
 											}
-											promQLQuery = updatedPromQLQueryMap
+											updatedPromQLQuery = append(updatedPromQLQuery, updatedPromQLQueryMap)
 										}
 									}
+									query["promql"] = updatedPromQLQuery
 								}
 							}
 
@@ -176,20 +212,64 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard) *GettablePublicDa
 		}
 	}
 	return &GettablePublicDashboardData{
-		ID: dashboard.ID,
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: dashboard.TimeAuditable.CreatedAt,
-			UpdatedAt: dashboard.TimeAuditable.UpdatedAt,
+		Dashboard: &Dashboard{
+			ID: dashboard.ID,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: dashboard.TimeAuditable.CreatedAt,
+				UpdatedAt: dashboard.TimeAuditable.UpdatedAt,
+			},
+			UserAuditable: types.UserAuditable{
+				CreatedBy: dashboard.UserAuditable.CreatedBy,
+				UpdatedBy: dashboard.UserAuditable.UpdatedBy,
+			},
+			Data: dashboard.Data,
 		},
-		UserAuditable: types.UserAuditable{
-			CreatedBy: dashboard.UserAuditable.CreatedBy,
-			UpdatedBy: dashboard.UserAuditable.UpdatedBy,
+		PublicDashboard: &GettablePublicDasbhboard{
+			TimeRangeEnabled: publicDashboard.TimeRangeEnabled,
+			DefaultTimeRange: publicDashboard.DefaultTimeRange,
+			PublicPath:       publicDashboard.PublicPath(),
 		},
-		Data: dashboard.Data,
 	}
 }
 
-func (typ *PublicDashboard) Update(timeRangeEnabled bool) {
+func (typ *PublicDashboard) Update(timeRangeEnabled bool, defaultTimeRange string) {
 	typ.TimeRangeEnabled = timeRangeEnabled
+	typ.DefaultTimeRange = defaultTimeRange
 	typ.UpdatedAt = time.Now()
+}
+
+func (typ *PublicDashboard) PublicPath() string {
+	return "/public/dashboard/" + typ.ID.StringValue()
+}
+
+func (typ *PostablePublicDashboard) UnmarshalJSON(data []byte) error {
+	type alias PostablePublicDashboard
+	var temp alias
+
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.DefaultTimeRange == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "defaultTimeRange cannot be empty")
+	}
+
+	*typ = PostablePublicDashboard(temp)
+	return nil
+}
+
+func (typ *UpdatablePublicDashboard) UnmarshalJSON(data []byte) error {
+	type alias UpdatablePublicDashboard
+	var temp alias
+
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.DefaultTimeRange == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "defaultTimeRange cannot be empty")
+	}
+
+	*typ = UpdatablePublicDashboard(temp)
+	return nil
 }

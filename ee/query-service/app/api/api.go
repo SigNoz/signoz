@@ -107,7 +107,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	// public access for dashboards
 	router.HandleFunc("/api/v1/public/dashboards/{id}", ah.Signoz.Handlers.Dashboard.GetPublicData).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/public/dashboards/{id}/widgets/{index}/query_range", ah.GetPublicDashboardWidgetQueryRange).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/public/dashboards/{id}/widgets/{index}/query_range", ah.Signoz.Handlers.Dashboard.GetPublicWidgetQueryRange).Methods(http.MethodGet)
 
 	// v3
 	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.LicensingAPI.Activate)).Methods(http.MethodPost)

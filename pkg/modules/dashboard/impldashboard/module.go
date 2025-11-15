@@ -67,7 +67,7 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 }
 
 func (module *module) GetPublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) (*dashboardtypes.PublicDashboard, error) {
-	storablePublicDashboard, err := module.store.GetPublic(ctx, orgID.StringValue(), dashboardID.StringValue())
+	storablePublicDashboard, err := module.store.GetPublic(ctx, dashboardID.StringValue())
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 }
 
 func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
-	return module.store.DeletePublic(ctx, orgID.StringValue(), dashboardID.StringValue())
+	return module.store.DeletePublic(ctx, dashboardID.StringValue())
 }
 
 func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {

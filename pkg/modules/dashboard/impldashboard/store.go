@@ -64,7 +64,7 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return storableDashboard, nil
 }
 
-func (store *store) GetPublic(ctx context.Context, orgID string, dashboardID string) (*dashboardtypes.StorablePublicDashboard, error) {
+func (store *store) GetPublic(ctx context.Context, dashboardID string) (*dashboardtypes.StorablePublicDashboard, error) {
 	storable := new(dashboardtypes.StorablePublicDashboard)
 
 	err := store.
@@ -73,7 +73,6 @@ func (store *store) GetPublic(ctx context.Context, orgID string, dashboardID str
 		NewSelect().
 		Model(storable).
 		Where("dashboard_id = ?", dashboardID).
-		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodePublicDashboardNotFound, "dashboard with id %s isn't public", dashboardID)
@@ -166,14 +165,13 @@ func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 	return nil
 }
 
-func (store *store) DeletePublic(ctx context.Context, orgID string, dashboardID string) error {
+func (store *store) DeletePublic(ctx context.Context, dashboardID string) error {
 	_, err := store.
 		sqlstore.
 		BunDB().
 		NewDelete().
 		Model(new(dashboardtypes.StorablePublicDashboard)).
 		Where("dashboard_id = ?", dashboardID).
-		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
 		return store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodePublicDashboardNotFound, "dashboard with id %s isn't public", dashboardID)

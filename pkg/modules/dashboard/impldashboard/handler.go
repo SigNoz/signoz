@@ -213,6 +213,7 @@ func (handler *handler) CreatePublic(rw http.ResponseWriter, r *http.Request) {
 	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
+		return
 	}
 
 	id, err := valuer.NewUUID(mux.Vars(r)["id"])
@@ -233,7 +234,7 @@ func (handler *handler) CreatePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	publicDashboard := dashboardtypes.NewPublicDashboard(req.TimeRangeEnabled, id)
+	publicDashboard := dashboardtypes.NewPublicDashboard(req.TimeRangeEnabled, req.DefaultTimeRange, id)
 	err = handler.module.CreatePublic(ctx, publicDashboard)
 	if err != nil {
 		render.Error(rw, err)
@@ -256,6 +257,7 @@ func (handler *handler) GetPublic(rw http.ResponseWriter, r *http.Request) {
 	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
+		return
 	}
 
 	id, err := valuer.NewUUID(mux.Vars(r)["id"])
@@ -276,7 +278,7 @@ func (handler *handler) GetPublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, publicDashboard)
+	render.Success(rw, http.StatusOK, dashboardtypes.NewGettablePublicDashboard(publicDashboard))
 }
 
 func (handler *handler) GetPublicData(rw http.ResponseWriter, r *http.Request) {
@@ -295,7 +297,17 @@ func (handler *handler) GetPublicData(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, dashboardtypes.NewPublicDashboardDataFromDashboard(dashboard))
+	publicDashboard, err := handler.module.GetPublic(ctx, dashboard.OrgID, valuer.MustNewUUID(dashboard.ID))
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboardtypes.NewPublicDashboardDataFromDashboard(dashboard, publicDashboard))
+}
+
+func (handler *handler) GetPublicWidgetQueryRange(http.ResponseWriter, *http.Request) {
+	panic("unimplemented")
 }
 
 func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
@@ -311,6 +323,7 @@ func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
 	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
+		return
 	}
 
 	id, err := valuer.NewUUID(mux.Vars(r)["id"])
@@ -326,7 +339,7 @@ func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	req := new(dashboardtypes.UpdatablePublicDashboard)
-	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, req, binding.WithDisallowUnknownFields(true)); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -337,7 +350,7 @@ func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	publicDashboard.Update(req.TimeRangeEnabled)
+	publicDashboard.Update(req.TimeRangeEnabled, req.DefaultTimeRange)
 	err = handler.module.UpdatePublic(ctx, publicDashboard)
 	if err != nil {
 		render.Error(rw, err)
@@ -360,6 +373,7 @@ func (handler *handler) DeletePublic(rw http.ResponseWriter, r *http.Request) {
 	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
+		return
 	}
 
 	id, err := valuer.NewUUID(mux.Vars(r)["id"])

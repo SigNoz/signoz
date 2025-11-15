@@ -13,7 +13,7 @@ type Store interface {
 
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableDashboard, error)
 
-	GetPublic(context.Context, string, string) (*StorablePublicDashboard, error)
+	GetPublic(context.Context, string) (*StorablePublicDashboard, error)
 
 	GetDashboardByOrgsAndPublicID(context.Context, []string, string) (*StorableDashboard, error)
 
@@ -25,5 +25,5 @@ type Store interface {
 
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
-	DeletePublic(context.Context, string, string) error
+	DeletePublic(context.Context, string) error
 }

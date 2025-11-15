@@ -53,6 +53,8 @@ type Handler interface {
 
 	GetPublicData(http.ResponseWriter, *http.Request)
 
+	GetPublicWidgetQueryRange(http.ResponseWriter, *http.Request)
+
 	UpdatePublic(http.ResponseWriter, *http.Request)
 
 	DeletePublic(http.ResponseWriter, *http.Request)

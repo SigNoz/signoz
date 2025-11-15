@@ -23,7 +23,7 @@ var (
 )
 
 type StorableDashboard struct {
-	bun.BaseModel `bun:"table:dashboard"`
+	bun.BaseModel `bun:"table:dashboard,alias:dashboard"`
 
 	types.Identifiable
 	types.TimeAuditable
