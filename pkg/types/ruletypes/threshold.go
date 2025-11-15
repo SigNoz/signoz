@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"sort"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/converter"
@@ -103,7 +104,7 @@ func (r BasicRuleThresholds) ShouldAlert(series v3.Series, unit string) (Vector,
 	for _, threshold := range thresholds {
 		smpl, shouldAlert := threshold.shouldAlert(series, unit)
 		if shouldAlert {
-			smpl.Target = threshold.target(unit)
+			smpl.Target = *threshold.TargetValue
 			smpl.TargetUnit = threshold.TargetUnit
 			resultVector = append(resultVector, smpl)
 		}
@@ -198,7 +199,10 @@ func (b BasicRuleThreshold) shouldAlert(series v3.Series, ruleUnit string) (Samp
 
 	target := b.target(ruleUnit)
 
+	// TODO(srikanthccv): is it better to move the logic to notifier instead of
+	// adding two labels?
 	lbls = append(lbls, labels.Label{Name: LabelThresholdName, Value: b.Name})
+	lbls = append(lbls, labels.Label{Name: LabelSeverityName, Value: strings.ToLower(b.Name)})
 
 	series.Points = removeGroupinSetPoints(series)
 

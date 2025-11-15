@@ -15,10 +15,11 @@ import (
 var _ sqlstore.SQLStore = (*Provider)(nil)
 
 type Provider struct {
-	db      *sql.DB
-	mock    sqlmock.Sqlmock
-	bunDB   *bun.DB
-	dialect *dialect
+	db        *sql.DB
+	mock      sqlmock.Sqlmock
+	bunDB     *bun.DB
+	dialect   *dialect
+	formatter sqlstore.SQLFormatter
 }
 
 func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
@@ -38,10 +39,11 @@ func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
 	}
 
 	return &Provider{
-		db:      db,
-		mock:    mock,
-		bunDB:   bunDB,
-		dialect: new(dialect),
+		db:        db,
+		mock:      mock,
+		bunDB:     bunDB,
+		dialect:   new(dialect),
+		formatter: newFormatter(bunDB.Dialect()),
 	}
 }
 
@@ -60,6 +62,8 @@ func (provider *Provider) Mock() sqlmock.Sqlmock {
 func (provider *Provider) Dialect() sqlstore.SQLDialect {
 	return provider.dialect
 }
+
+func (provider *Provider) Formatter() sqlstore.SQLFormatter { return provider.formatter }
 
 func (provider *Provider) BunDBCtx(ctx context.Context) bun.IDB {
 	return provider.bunDB

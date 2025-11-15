@@ -138,6 +138,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewUpdateTTLSettingForCustomRetentionFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRoutePolicyFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddAuthTokenFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddAuthzFactory(sqlstore, sqlschema),
 	)
 }
 

@@ -401,14 +401,14 @@ body {
 	font-size: 12px;
 	position: absolute;
 	margin: 0.5rem;
-	background: rgba(0, 0, 0);
+	background: var(--bg-ink-300);
 	-webkit-font-smoothing: antialiased;
-	color: #fff;
+	color: var(--bg-vanilla-100);
 	z-index: 10000;
 	// pointer-events: none;
 	overflow: auto;
 	max-height: 480px !important;
-	max-width: 240px !important;
+	max-width: 300px !important;
 	border-radius: 5px;
 	border: 1px solid rgba(255, 255, 255, 0.1);
 
@@ -571,6 +571,12 @@ body {
 }
 
 .lightMode {
+	#overlay {
+		color: var(--bg-ink-500);
+		background: var(--bg-vanilla-100);
+		border: 1px solid var(--bg-vanilla-300);
+	}
+
 	.ant-dropdown-menu {
 		border: 1px solid var(--bg-vanilla-300);
 		background: var(--bg-vanilla-100);
