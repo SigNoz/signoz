@@ -44,6 +44,8 @@ const (
 // NewModule constructs the metrics module with the provided dependencies.
 func NewModule(ts telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings) metricsmodule.Module {
 	// TODO(nikhilmantri0902, srikanthccv): the three following dependencies are they rightly getting passed
+	// basically is this a good design. Alternatively, we can also take telemetrymetadatastore from newModules
+	// where all the modules are initialized, but there also this will be needed as today its not initialized there.
 	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
 		providerSettings,
 		ts,
