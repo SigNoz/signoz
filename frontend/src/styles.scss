@@ -1,7 +1,7 @@
-@import '@signozhq/design-tokens/dist/style.css';
-@import 'overlayscrollbars/overlayscrollbars.css';
+@use './periscope.scss';
 
-@import './periscope.scss';
+@use '@signozhq/design-tokens/dist/style.css';
+@use 'overlayscrollbars/overlayscrollbars.css';
 
 /* Import fonts from CDN */
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans&wght@500&display=swap');
