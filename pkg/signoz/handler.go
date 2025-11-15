@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
@@ -46,14 +47,14 @@ type Handlers struct {
 	Services       services.Handler
 }
 
-func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Handlers {
+func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, licensing licensing.Licensing) Handlers {
 	return Handlers{
 		Organization:   implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
 		Preference:     implpreference.NewHandler(modules.Preference),
 		User:           impluser.NewHandler(modules.User, modules.UserGetter),
 		SavedView:      implsavedview.NewHandler(modules.SavedView),
 		Apdex:          implapdex.NewHandler(modules.Apdex),
-		Dashboard:      impldashboard.NewHandler(modules.Dashboard, providerSettings),
+		Dashboard:      impldashboard.NewHandler(modules.Dashboard, providerSettings, licensing),
 		QuickFilter:    implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:    impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport:  implrawdataexport.NewHandler(modules.RawDataExport),

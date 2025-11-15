@@ -8,7 +8,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -21,10 +23,11 @@ import (
 type handler struct {
 	module           dashboard.Module
 	providerSettings factory.ProviderSettings
+	licensing        licensing.Licensing
 }
 
-func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettings) dashboard.Handler {
-	return &handler{module: module, providerSettings: providerSettings}
+func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettings, licensing licensing.Licensing) dashboard.Handler {
+	return &handler{module: module, providerSettings: providerSettings, licensing: licensing}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
@@ -189,6 +192,189 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = handler.module.Delete(ctx, orgID, dashboardID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) CreatePublic(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	_, err = handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(dashboardtypes.PostablePublicDashboard)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	publicDashboard := dashboardtypes.NewPublicDashboard(req.TimeRangeEnabled, id)
+	err = handler.module.CreatePublic(ctx, publicDashboard)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, nil)
+}
+
+func (handler *handler) GetPublic(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	_, err = handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	publicDashboard, err := handler.module.GetPublic(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, publicDashboard)
+}
+
+func (handler *handler) GetPublicData(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.GetDashboardByPublicID(ctx, id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboardtypes.NewPublicDashboardDataFromDashboard(dashboard))
+}
+
+func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	_, err = handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(dashboardtypes.UpdatablePublicDashboard)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	publicDashboard, err := handler.module.GetPublic(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	publicDashboard.Update(req.TimeRangeEnabled)
+	err = handler.module.UpdatePublic(ctx, publicDashboard)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) DeletePublic(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	_, err = handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.DeletePublic(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return

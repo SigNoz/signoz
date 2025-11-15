@@ -82,15 +82,17 @@ func (store *store) GetPublic(ctx context.Context, orgID string, dashboardID str
 	return storable, nil
 }
 
-func (store *store) GetPublicByOrgIDsAndId(ctx context.Context, orgIDs []string, id string) (*dashboardtypes.StorablePublicDashboard, error) {
-	storable := new(dashboardtypes.StorablePublicDashboard)
+func (store *store) GetDashboardByOrgsAndPublicID(ctx context.Context, orgIDs []string, id string) (*dashboardtypes.StorableDashboard, error) {
+	storable := new(dashboardtypes.StorableDashboard)
 
 	err := store.
 		sqlstore.
 		BunDB().
 		NewSelect().
 		Model(storable).
-		Where("id = ?", id).
+		Join("JOIN public_dashboard").
+		JoinOn("public_dashboard.dashboard_id = dashboard.id").
+		Where("public_dashboard.id = ?", id).
 		Where("org_id IN (?)", bun.In(orgIDs)).
 		Scan(ctx)
 	if err != nil {

@@ -303,7 +303,7 @@ func New(
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, authNs)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings)
+	handlers := NewHandlers(modules, providerSettings, licensing)
 
 	// Create a list of all stats collectors
 	statsCollectors := []statsreporter.StatsCollector{

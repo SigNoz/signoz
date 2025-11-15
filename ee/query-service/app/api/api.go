@@ -100,13 +100,13 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/portal", am.AdminAccess(ah.LicensingAPI.Portal)).Methods(http.MethodPost)
 
 	// dashboards
-	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.CreatePublicDashboard)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.GetPublicDashboard)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.UpdatePublicDashboard)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.DeletePublicDashboard)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.Signoz.Handlers.Dashboard.CreatePublic)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.Signoz.Handlers.Dashboard.GetPublic)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.Signoz.Handlers.Dashboard.UpdatePublic)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.Signoz.Handlers.Dashboard.DeletePublic)).Methods(http.MethodDelete)
 
 	// public access for dashboards
-	router.HandleFunc("/api/v1/public/dashboards/{id}", ah.GetPublicDashboardData).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/public/dashboards/{id}", ah.Signoz.Handlers.Dashboard.GetPublicData).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/public/dashboards/{id}/widgets/{index}/query_range", ah.GetPublicDashboardWidgetQueryRange).Methods(http.MethodGet)
 
 	// v3

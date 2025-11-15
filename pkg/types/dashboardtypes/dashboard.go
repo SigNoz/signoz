@@ -102,7 +102,7 @@ func NewDashboard(orgID valuer.UUID, createdBy string, storableDashboardData Sto
 	}, nil
 }
 
-func NewDashboardFromStorableDashboard(storableDashboard *StorableDashboard) (*Dashboard, error) {
+func NewDashboardFromStorableDashboard(storableDashboard *StorableDashboard) *Dashboard {
 	return &Dashboard{
 		ID: storableDashboard.ID.StringValue(),
 		TimeAuditable: types.TimeAuditable{
@@ -116,20 +116,16 @@ func NewDashboardFromStorableDashboard(storableDashboard *StorableDashboard) (*D
 		OrgID:  storableDashboard.OrgID,
 		Data:   storableDashboard.Data,
 		Locked: storableDashboard.Locked,
-	}, nil
+	}
 }
 
-func NewDashboardsFromStorableDashboards(storableDashboards []*StorableDashboard) ([]*Dashboard, error) {
+func NewDashboardsFromStorableDashboards(storableDashboards []*StorableDashboard) []*Dashboard {
 	dashboards := make([]*Dashboard, len(storableDashboards))
 	for idx, storableDashboard := range storableDashboards {
-		dashboard, err := NewDashboardFromStorableDashboard(storableDashboard)
-		if err != nil {
-			return nil, err
-		}
-		dashboards[idx] = dashboard
+		dashboards[idx] = NewDashboardFromStorableDashboard(storableDashboard)
 	}
 
-	return dashboards, nil
+	return dashboards
 }
 
 func NewGettableDashboardsFromDashboards(dashboards []*Dashboard) ([]*GettableDashboard, error) {

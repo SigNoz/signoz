@@ -15,7 +15,7 @@ type Store interface {
 
 	GetPublic(context.Context, string, string) (*StorablePublicDashboard, error)
 
-	GetPublicByOrgIDsAndId(context.Context, []string, string) (*StorablePublicDashboard, error)
+	GetDashboardByOrgsAndPublicID(context.Context, []string, string) (*StorableDashboard, error)
 
 	List(context.Context, valuer.UUID) ([]*StorableDashboard, error)
 

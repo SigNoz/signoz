@@ -56,11 +56,6 @@ func (migration *addPublicDashboards) Up(ctx context.Context, db *bun.DB) error 
 	})
 	sqls = append(sqls, tableSQL...)
 
-	indexSQL := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{
-		ColumnNames: []sqlschema.ColumnName{"dashboard_id"},
-	})
-	sqls = append(sqls, indexSQL...)
-
 	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
