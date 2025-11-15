@@ -79,6 +79,16 @@ const stopEventsExtension = EditorView.domEventHandlers({
 	},
 });
 
+interface QuerySearchProps {
+	placeholder?: string;
+	onChange: (value: string, syncExpression?: boolean) => void;
+	queryData: IBuilderQuery;
+	dataSource: DataSource;
+	signalSource?: string;
+	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
+	onRun?: (query: string) => void;
+}
+
 function QuerySearch({
 	placeholder,
 	onChange,
@@ -87,15 +97,7 @@ function QuerySearch({
 	onRun,
 	signalSource,
 	hardcodedAttributeKeys,
-}: {
-	placeholder?: string;
-	onChange: (value: string) => void;
-	queryData: IBuilderQuery;
-	dataSource: DataSource;
-	signalSource?: string;
-	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
-	onRun?: (query: string) => void;
-}): JSX.Element {
+}: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [query, setQuery] = useState<string>(queryData.filter?.expression || '');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -107,8 +109,12 @@ function QuerySearch({
 		message: '',
 		errors: [],
 	});
+	const isProgrammaticChangeRef = useRef(false);
+	const [isEditorReady, setIsEditorReady] = useState(false);
+	// Reference to the editor view for programmatic autocompletion
+	const editorRef = useRef<EditorView | null>(null);
 
-	const handleQueryValidation = (newQuery: string): void => {
+	const handleQueryValidation = useCallback((newQuery: string): void => {
 		try {
 			const validationResponse = validateQuery(newQuery);
 			setValidation(validationResponse);
@@ -119,11 +125,47 @@ function QuerySearch({
 				errors: [error as IDetailedError],
 			});
 		}
-	};
+	}, []);
 
 	// Track if the query was changed externally (from queryData) vs internally (user input)
 	const [isExternalQueryChange, setIsExternalQueryChange] = useState(false);
 	const [lastExternalQuery, setLastExternalQuery] = useState<string>('');
+
+	const updateEditorValue = useCallback(
+		(value: string, options: { skipOnChange?: boolean } = {}): void => {
+			const view = editorRef.current;
+			if (!view) return;
+
+			const currentValue = view.state.doc.toString();
+			if (currentValue === value) return;
+
+			if (options.skipOnChange) {
+				isProgrammaticChangeRef.current = true;
+			}
+
+			view.dispatch({
+				changes: {
+					from: 0,
+					to: currentValue.length,
+					insert: value,
+				},
+				selection: {
+					anchor: value.length,
+				},
+			});
+		},
+		[],
+	);
+
+	const handleEditorCreate = useCallback(
+		(view: EditorView): EditorView => {
+			editorRef.current = view;
+			setIsEditorReady(true);
+			updateEditorValue(query, { skipOnChange: true });
+			return view;
+		},
+		[query, updateEditorValue],
+	);
 
 	useEffect(() => {
 		const newQuery = queryData.filter?.expression || '';
@@ -133,15 +175,25 @@ function QuerySearch({
 			setIsExternalQueryChange(true);
 			setLastExternalQuery(newQuery);
 		}
-	}, [queryData.filter?.expression, lastExternalQuery]);
+	}, [lastExternalQuery, queryData.filter?.expression]);
 
-	// Validate query when it changes externally (from queryData)
 	useEffect(() => {
-		if (isExternalQueryChange && query) {
+		if (!isExternalQueryChange || !isEditorReady) return;
+
+		updateEditorValue(query, { skipOnChange: true });
+
+		if (query) {
 			handleQueryValidation(query);
-			setIsExternalQueryChange(false);
 		}
-	}, [isExternalQueryChange, query]);
+
+		setIsExternalQueryChange(false);
+	}, [
+		handleQueryValidation,
+		isEditorReady,
+		isExternalQueryChange,
+		query,
+		updateEditorValue,
+	]);
 
 	const [keySuggestions, setKeySuggestions] = useState<
 		QueryKeyDataSuggestionsProps[] | null
@@ -159,8 +211,6 @@ function QuerySearch({
 
 	const lastPosRef = useRef<{ line: number; ch: number }>({ line: 0, ch: 0 });
 
-	// Reference to the editor view for programmatic autocompletion
-	const editorRef = useRef<EditorView | null>(null);
 	const lastKeyRef = useRef<string>('');
 	const lastFetchedKeyRef = useRef<string>('');
 	const lastValueRef = useRef<string>('');
@@ -506,6 +556,7 @@ function QuerySearch({
 
 		if (!editorRef.current) {
 			editorRef.current = viewUpdate.view;
+			setIsEditorReady(true);
 		}
 
 		const selection = viewUpdate.view.state.selection.main;
@@ -555,10 +606,15 @@ function QuerySearch({
 
 	const handleChange = (value: string): void => {
 		setQuery(value);
+
+		if (isProgrammaticChangeRef.current) {
+			isProgrammaticChangeRef.current = false;
+			setIsExternalQueryChange(false);
+			return;
+		}
+
 		onChange(value);
-		// Mark as internal change to avoid triggering external validation
 		setIsExternalQueryChange(false);
-		// Update lastExternalQuery to prevent external validation trigger
 		setLastExternalQuery(value);
 	};
 
@@ -583,11 +639,7 @@ function QuerySearch({
 	const handleExampleClick = (exampleQuery: string): void => {
 		// If there's an existing query, append the example with AND
 		const newQuery = query ? `${query} AND ${exampleQuery}` : exampleQuery;
-		setQuery(newQuery);
-		// Mark as internal change to avoid triggering external validation
-		setIsExternalQueryChange(false);
-		// Update lastExternalQuery to prevent external validation trigger
-		setLastExternalQuery(newQuery);
+		updateEditorValue(newQuery);
 	};
 
 	// Helper function to render a badge for the current context mode
@@ -1289,10 +1341,10 @@ function QuerySearch({
 				</Tooltip>
 
 				<CodeMirror
-					value={query}
 					theme={isDarkMode ? copilot : githubLight}
 					onChange={handleChange}
 					onUpdate={handleUpdate}
+					onCreateEditor={handleEditorCreate}
 					className={cx('query-where-clause-editor', {
 						isValid: validation.isValid === true,
 						hasErrors: validation.errors.length > 0,
