@@ -162,13 +162,14 @@ func (c *conditionBuilder) conditionFor(
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 
 		var value any
-		switch column.Type {
-		case schema.JSONColumnType{}:
+		if column.IsJSONColumn() {
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.IsNotNull(tblFieldName), nil
 			} else {
 				return sb.IsNull(tblFieldName), nil
 			}
+		}
+		switch column.Type {
 		case schema.ColumnTypeString,
 			schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			schema.FixedStringColumnType{Length: 32},
@@ -223,8 +224,8 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-    startNs uint64,
-    _ uint64,
+	startNs uint64,
+	_ uint64,
 ) (string, error) {
 	if c.isSpanScopeField(key.Name) {
 		return c.buildSpanScopeCondition(key, operator, value, startNs)

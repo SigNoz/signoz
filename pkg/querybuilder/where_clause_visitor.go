@@ -172,7 +172,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return &PreparedWhereClause{whereClause, visitor.warnings, visitor.mainWarnURL}, nil
+	return &PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type

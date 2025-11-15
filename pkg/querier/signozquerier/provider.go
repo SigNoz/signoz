@@ -36,7 +36,7 @@ func NewFactory(
 }
 
 func newProvider(
-	_ context.Context,
+	ctx context.Context,
 	settings factory.ProviderSettings,
 	cfg querier.Config,
 	telemetryStore telemetrystore.TelemetryStore,
@@ -101,8 +101,14 @@ func newProvider(
 	)
 
 	// Create log statement builder
+	jqb, err := telemetrylogs.NewJSONQueryBuilder(ctx, telemetryStore, settings.Logger)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create field mapper and condition builder for body JSON queries
 	logFieldMapper := telemetrylogs.NewFieldMapper()
-	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, jqb)
 	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
 		settings,
 		resourceFilterFieldMapper,
@@ -125,6 +131,7 @@ func newProvider(
 		telemetryMetadataStore,
 		logFieldMapper,
 		logConditionBuilder,
+		jqb,
 		logResourceFilterStmtBuilder,
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,

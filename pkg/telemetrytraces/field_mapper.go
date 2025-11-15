@@ -236,8 +236,8 @@ func (m *defaultFieldMapper) FieldFor(
 		return "", err
 	}
 
-	switch column.Type {
-	case schema.JSONColumnType{}:
+	// handle non-comparable JSONColumnType explicitly
+	if _, ok := column.Type.(schema.JSONColumnType); ok {
 		// json is only supported for resource context as of now
 		if key.FieldContext != telemetrytypes.FieldContextResource {
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
@@ -253,7 +253,9 @@ func (m *defaultFieldMapper) FieldFor(
 		} else {
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		}
+	}
 
+	switch column.Type {
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,

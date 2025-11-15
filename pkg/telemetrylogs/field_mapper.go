@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz-otel-collector/utils"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -28,6 +30,11 @@ var (
 		"severity_text":      {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
 		"severity_number":    {Name: "severity_number", Type: schema.ColumnTypeUInt8},
 		"body":               {Name: "body", Type: schema.ColumnTypeString},
+		"body_v2": {Name: "body_v2", Type: schema.JSONColumnType{
+			MaxDynamicTypes: utils.ToPointer(uint(32)),
+			MaxDynamicPaths: utils.ToPointer(uint(0)),
+		}},
+		"promoted": {Name: "promoted", Type: schema.JSONColumnType{}},
 		"attributes_string": {Name: "attributes_string", Type: schema.MapColumnType{
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
@@ -61,7 +68,7 @@ func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
 
-func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		return logsV2Columns["resource"], nil
@@ -87,6 +94,11 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		if !ok {
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+				// Use body_v2 if feature flag is enabled and we have a body condition builder
+				if constants.BodyV2QueryEnabled {
+					return logsV2Columns["body_v2"], nil
+				}
+				// Fall back to legacy body column
 				return logsV2Columns["body"], nil
 			}
 			return nil, qbtypes.ErrColumnNotFound
@@ -103,9 +115,9 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		return "", err
 	}
 
-	switch column.Type {
-	case schema.JSONColumnType{}:
-		// json is only supported for resource context as of now
+	// handle non-comparable JSONColumnType explicitly
+	if _, ok := column.Type.(schema.JSONColumnType); ok {
+		// json is only supported for resource context as of now (legacy behavior)
 		if key.FieldContext != telemetrytypes.FieldContextResource {
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
@@ -121,7 +133,9 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		} else {
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		}
+	}
 
+	switch column.Type {
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,

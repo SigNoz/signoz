@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/bytedance/sonic"
 )
 
 type builderQuery[T any] struct {
@@ -248,6 +249,40 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		return nil, err
 	}
 
+	// merge body_v2 and promoted into body
+	if q.spec.Signal == telemetrytypes.SignalLogs {
+		switch typedPayload := payload.(type) {
+		case *qbtypes.RawData:
+			for _, rr := range typedPayload.Rows {
+				seeder := func() error {
+					body, ok := rr.Data["body_v2"].(map[string]any)
+					if !ok {
+						return nil
+					}
+					promoted, ok := rr.Data["promoted"].(map[string]any)
+					if !ok {
+						return nil
+					}
+					seed(promoted, body)
+					str, err := sonic.MarshalString(body)
+					if err != nil {
+						return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal body")
+					}
+					rr.Data["body"] = str
+					return nil
+				}
+				err := seeder()
+				if err != nil {
+					return nil, err
+				}
+
+				delete(rr.Data, "body_v2")
+				delete(rr.Data, "promoted")
+			}
+			payload = typedPayload
+		}
+	}
+
 	return &qbtypes.Result{
 		Type:  q.kind,
 		Value: payload,
@@ -374,4 +409,19 @@ func decodeCursor(cur string) (int64, error) {
 		return 0, err
 	}
 	return strconv.ParseInt(string(b), 10, 64)
+}
+
+func seed(promoted map[string]any, body map[string]any) {
+	for key, fromValue := range promoted {
+		if toValue, ok := body[key]; !ok {
+			body[key] = fromValue
+		} else {
+			if fromValue, ok := fromValue.(map[string]any); ok {
+				if toValue, ok := toValue.(map[string]any); ok {
+					seed(fromValue, toValue)
+					body[key] = toValue
+				}
+			}
+		}
+	}
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
+	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
@@ -61,4 +63,39 @@ func GetLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3
 		}
 	}
 	return data
+}
+
+type PromotePathsRequest struct {
+	Paths []PromotePathItem `json:"paths"`
+}
+
+type PromotePathItem struct {
+	Path    string `json:"path"`
+	Promote bool   `json:"promote"`
+	Indexed bool   `json:"indexed"`
+}
+
+func (i *PromotePathItem) Validate() error {
+	if i.Path == "" {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path is required")
+	}
+
+	if strings.Contains(i.Path, " ") {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path cannot contain spaces")
+	}
+
+	if strings.Contains(i.Path, ":") {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "array paths can not be promoted or indexed")
+	}
+
+	if strings.HasPrefix(i.Path, "body.") || strings.HasPrefix(i.Path, "body_v2.") || strings.HasPrefix(i.Path, "promoted.") {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "`body.`, `body_v2.`, `promoted.` don't add these prefixes to the path")
+	}
+
+	isCardinal := keycheck.IsCardinal(i.Path)
+	if isCardinal {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cardinal paths can not be promoted or indexed")
+	}
+
+	return nil
 }
