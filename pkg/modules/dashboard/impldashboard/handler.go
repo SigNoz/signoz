@@ -331,19 +331,13 @@ func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *htt
 		return
 	}
 
-	startTimeStr := r.URL.Query().Get("startTime")
-	if startTimeStr == "" {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "startTime is missing from query params"))
-		return
-	}
-
-	endTimeStr := r.URL.Query().Get("endTime")
-	if endTimeStr == "" {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "endTime is missing from query params"))
-		return
-	}
-
 	dashboard, err := handler.module.GetDashboardByPublicID(ctx, id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	publicDashboard, err := handler.module.GetPublic(ctx, dashboard.OrgID, valuer.MustNewUUID(dashboard.ID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -355,16 +349,25 @@ func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *htt
 		return
 	}
 
-	startTime, err := strconv.ParseUint(startTimeStr, 10, 64)
-	if err != nil {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid startTime"))
-		return
-	}
+	var startTime, endTime uint64
+	if publicDashboard.TimeRangeEnabled {
+		startTimeUint, err := strconv.ParseUint(r.URL.Query().Get("startTime"), 10, 64)
+		if err != nil {
+			render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid startTime"))
+			return
+		}
 
-	endTime, err := strconv.ParseUint(endTimeStr, 10, 64)
-	if err != nil {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid endTime"))
-		return
+		endTimeUint, err := strconv.ParseUint(r.URL.Query().Get("endTime"), 10, 64)
+		if err != nil {
+			render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid endTime"))
+			return
+		}
+
+		startTime = startTimeUint
+		endTime = endTimeUint
+	} else {
+		startTime = uint64(time.Now().Add(-publicDashboard.DefaultTimeRange).UnixMilli())
+		endTime = uint64(time.Now().UnixMilli())
 	}
 
 	query, err := dashboard.GetWidgetQuery(startTime, endTime, widgetIdxInt, handler.providerSettings.Logger)

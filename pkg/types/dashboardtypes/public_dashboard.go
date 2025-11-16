@@ -21,34 +21,34 @@ type StorablePublicDashboard struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	TimeRangeEnabled bool   `bun:"time_range_enabled,type:boolean,notnull"`
-	DefaultTimeRange string `bun:"default_time_range,type:text,notnull"`
-	DashboardID      string `bun:"dashboard_id,type:text,notnull"`
+	TimeRangeEnabled bool          `bun:"time_range_enabled,type:boolean,notnull"`
+	DefaultTimeRange time.Duration `bun:"default_time_range,type:text,notnull"`
+	DashboardID      string        `bun:"dashboard_id,type:text,notnull"`
 }
 
 type PublicDashboard struct {
 	types.Identifiable
 	types.TimeAuditable
 
-	TimeRangeEnabled bool        `json:"timeRangeEnabled"`
-	DefaultTimeRange string      `json:"defaultTimeRange"`
-	DashboardID      valuer.UUID `json:"dashboardId"`
+	TimeRangeEnabled bool          `json:"timeRangeEnabled"`
+	DefaultTimeRange time.Duration `json:"defaultTimeRange"`
+	DashboardID      valuer.UUID   `json:"dashboardId"`
 }
 
 type GettablePublicDasbhboard struct {
-	TimeRangeEnabled bool   `json:"timeRangeEnabled"`
-	DefaultTimeRange string `json:"defaultTimeRange"`
-	PublicPath       string `json:"publicPath"`
+	TimeRangeEnabled bool          `json:"timeRangeEnabled"`
+	DefaultTimeRange time.Duration `json:"defaultTimeRange"`
+	PublicPath       string        `json:"publicPath"`
 }
 
 type PostablePublicDashboard struct {
-	TimeRangeEnabled bool   `json:"timeRangeEnabled"`
-	DefaultTimeRange string `json:"defaultTimeRange"`
+	TimeRangeEnabled bool          `json:"timeRangeEnabled"`
+	DefaultTimeRange time.Duration `json:"defaultTimeRange"`
 }
 
 type UpdatablePublicDashboard struct {
-	TimeRangeEnabled bool   `json:"timeRangeEnabled"`
-	DefaultTimeRange string `json:"defaultTimeRange"`
+	TimeRangeEnabled bool          `json:"timeRangeEnabled"`
+	DefaultTimeRange time.Duration `json:"defaultTimeRange"`
 }
 
 type GettablePublicDashboardData struct {
@@ -56,7 +56,7 @@ type GettablePublicDashboardData struct {
 	PublicDashboard *GettablePublicDasbhboard `json:"publicDashboard"`
 }
 
-func NewPublicDashboard(timeRangeEnabled bool, defaultTimeRange string, dashboardID valuer.UUID) *PublicDashboard {
+func NewPublicDashboard(timeRangeEnabled bool, defaultTimeRange time.Duration, dashboardID valuer.UUID) *PublicDashboard {
 	return &PublicDashboard{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -234,7 +234,7 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *
 	}, nil
 }
 
-func (typ *PublicDashboard) Update(timeRangeEnabled bool, defaultTimeRange string) {
+func (typ *PublicDashboard) Update(timeRangeEnabled bool, defaultTimeRange time.Duration) {
 	typ.TimeRangeEnabled = timeRangeEnabled
 	typ.DefaultTimeRange = defaultTimeRange
 	typ.UpdatedAt = time.Now()
@@ -252,8 +252,8 @@ func (typ *PostablePublicDashboard) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if temp.DefaultTimeRange == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "defaultTimeRange cannot be empty")
+	if temp.DefaultTimeRange == 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "defaultTimeRange cannot be zero")
 	}
 
 	*typ = PostablePublicDashboard(temp)
@@ -268,8 +268,8 @@ func (typ *UpdatablePublicDashboard) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if temp.DefaultTimeRange == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "defaultTimeRange cannot be empty")
+	if temp.DefaultTimeRange == 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "defaultTimeRange cannot be zero")
 	}
 
 	*typ = UpdatablePublicDashboard(temp)
