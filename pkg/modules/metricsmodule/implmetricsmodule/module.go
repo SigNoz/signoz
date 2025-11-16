@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"sort"
 	"strings"
 
@@ -650,7 +651,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
 	}
 
-	if req.Treemap != metricsmoduletypes.TreemapModeSamples && req.Treemap != metricsmoduletypes.TreemapModeTimeSeries {
+	if !slices.Contains([]metricsmoduletypes.TreemapMode{metricsmoduletypes.TreemapModeSamples, metricsmoduletypes.TreemapModeTimeSeries}, req.Treemap) {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid treemap mode")
 	}
 
