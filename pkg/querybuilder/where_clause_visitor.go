@@ -94,6 +94,7 @@ type PreparedWhereClause struct {
 
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
 func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64, endNs uint64) (*PreparedWhereClause, error) {
+
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
 	lexer := grammar.NewFilterQueryLexer(input)
