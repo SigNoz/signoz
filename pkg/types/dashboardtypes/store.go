@@ -26,4 +26,6 @@ type Store interface {
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
 	DeletePublic(context.Context, string) error
+
+	RunInTx(context.Context, func(context.Context) error) error
 }

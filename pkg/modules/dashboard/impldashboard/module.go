@@ -165,7 +165,29 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
 	}
 
-	return module.store.Delete(ctx, orgID, id)
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		err := module.store.Delete(ctx, orgID, id)
+		if err != nil {
+			return err
+		}
+
+		err = module.store.DeletePublic(ctx, id.StringValue())
+		if err != nil {
+			// do not do anything if no public config exists.
+			if !errors.Ast(err, errors.TypeNotFound) {
+				return err
+			}
+
+			return nil
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {

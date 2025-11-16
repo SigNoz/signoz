@@ -306,7 +306,13 @@ func (handler *handler) GetPublicData(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, dashboardtypes.NewPublicDashboardDataFromDashboard(dashboard, publicDashboard))
+	gettablePublicDashboardData, err := dashboardtypes.NewPublicDashboardDataFromDashboard(dashboard, publicDashboard)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, gettablePublicDashboardData)
 }
 
 func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *http.Request) {
@@ -405,7 +411,7 @@ func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	req := new(dashboardtypes.UpdatablePublicDashboard)
-	if err := binding.JSON.BindBody(r.Body, req, binding.WithDisallowUnknownFields(true)); err != nil {
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}

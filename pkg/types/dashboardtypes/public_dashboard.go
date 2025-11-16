@@ -99,118 +99,120 @@ func NewGettablePublicDashboard(publicDashboard *PublicDashboard) *GettablePubli
 	}
 }
 
-func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *PublicDashboard) *GettablePublicDashboardData {
-	if dashboard.Data != nil && dashboard.Data["widgets"] != nil {
-		widgets, ok := dashboard.Data["widgets"]
-		if ok {
-			data, ok := widgets.([]interface{})
-			if ok {
-				for _, widget := range data {
-					widgetMap, ok := widget.(map[string]interface{})
-					if ok && widgetMap["query"] != nil {
-						query, ok := widgetMap["query"].(map[string]any)
-						if ok {
-							queryType, ok := query["queryType"].(string)
-							if ok {
-								switch queryType {
-								case "builder":
-									delete(query, "clickhouse_sql")
-									delete(query, "promql")
-									builderQuery, ok := query["builder"].(map[string]any)
-									if ok {
-										queryData, ok := builderQuery["queryData"].([]any)
-										updatedQueryData := []any{}
-										if ok {
-											for _, query := range queryData {
-												updatedQueryMap := make(map[string]any)
-												queryMap, ok := query.(map[string]any)
-												if ok {
-													updatedQueryMap["aggregation"] = queryMap["aggregation"]
-													updatedQueryMap["legend"] = queryMap["legend"]
-													updatedQueryMap["queryName"] = queryMap["queryName"]
-													updatedQueryMap["expression"] = queryMap["expression"]
-												}
-												updatedQueryData = append(updatedQueryData, updatedQueryMap)
-											}
-										}
-										builderQuery["queryData"] = updatedQueryData
+func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *PublicDashboard) (*GettablePublicDashboardData, error) {
+	type dashboardData struct {
+		Widgets []struct {
+			PanelTypes string `json:"panelTypes"`
+			Query      struct {
+				Builder struct {
+					QueryData          []map[string]any `json:"queryData"`
+					QueryFormulas      []map[string]any `json:"queryFormulas"`
+					QueryTraceOperator []map[string]any `json:"queryTraceOperator"`
+				} `json:"builder"`
+				ClickhouseSQL []map[string]any `json:"clickhouse_sql"`
+				PromQL        []map[string]any `json:"promql"`
+				QueryType     string           `json:"queryType"`
+			} `json:"query"`
+		} `json:"widgets"`
+	}
 
-										queryFormulas, ok := builderQuery["queryFormulas"].([]any)
-										updatedQueryFormula := []any{}
-										if ok {
-											for _, queryFormula := range queryFormulas {
-												updatedQueryFormulaMap := make(map[string]any)
-												queryFormulaMap, ok := queryFormula.(map[string]any)
-												if ok {
-													updatedQueryFormulaMap["legend"] = queryFormulaMap["legend"]
-													updatedQueryFormulaMap["queryName"] = queryFormulaMap["queryName"]
-													updatedQueryFormulaMap["expression"] = queryFormulaMap["expression"]
-												}
-												updatedQueryFormula = append(updatedQueryFormula, updatedQueryFormulaMap)
-											}
-										}
-										builderQuery["queryFormulas"] = updatedQueryFormula
+	dataJSON, err := json.Marshal(dashboard.Data)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "invalid dashboard data")
+	}
 
-										queryTraceOperator, ok := builderQuery["queryTraceOperator"].([]any)
-										updatedQueryTraceOperator := []any{}
-										if ok {
-											for _, query := range queryTraceOperator {
-												updatedQueryTraceOperatorMap := make(map[string]any)
-												queryMap, ok := query.(map[string]any)
-												if ok {
-													updatedQueryTraceOperatorMap["aggregation"] = queryMap["aggregation"]
-													updatedQueryTraceOperatorMap["legend"] = queryMap["legend"]
-													updatedQueryTraceOperatorMap["queryName"] = queryMap["queryName"]
-													updatedQueryTraceOperatorMap["expression"] = queryMap["expression"]
-												}
-												updatedQueryTraceOperator = append(updatedQueryTraceOperator, updatedQueryTraceOperatorMap)
-											}
-										}
-										builderQuery["queryTraceOperator"] = updatedQueryTraceOperator
-									}
-								case "clickhouse_sql":
-									delete(query, "builder")
-									delete(query, "promql")
-									clickhouseSQLQuery, ok := query["clickhouse_sql"].([]any)
-									updatedClickhouseSQLQuery := []any{}
-									if ok {
-										for _, clickhouseSQLQuery := range clickhouseSQLQuery {
-											updatedClickhouseSQLQueryMap := make(map[string]any)
-											clickhouseSQLQueryMap, ok := clickhouseSQLQuery.(map[string]any)
-											if ok {
-												updatedClickhouseSQLQueryMap["legend"] = clickhouseSQLQueryMap["legend"]
-												updatedClickhouseSQLQueryMap["name"] = clickhouseSQLQueryMap["name"]
-											}
-											updatedClickhouseSQLQuery = append(updatedClickhouseSQLQuery, updatedClickhouseSQLQueryMap)
-										}
-									}
-									query["clickhouse_sql"] = updatedClickhouseSQLQuery
-								case "promql":
-									delete(query, "builder")
-									delete(query, "clickhouse_sql")
-									promQLQuery, ok := query["promql"].([]any)
-									updatedPromQLQuery := []any{}
-									if ok {
-										for _, promQLQuery := range promQLQuery {
-											updatedPromQLQueryMap := make(map[string]any)
-											promQLQueryMap, ok := promQLQuery.(map[string]any)
-											if ok {
-												updatedPromQLQueryMap["legend"] = promQLQueryMap["legend"]
-												updatedPromQLQueryMap["name"] = promQLQueryMap["name"]
-											}
-											updatedPromQLQuery = append(updatedPromQLQuery, updatedPromQLQueryMap)
-										}
-									}
-									query["promql"] = updatedPromQLQuery
-								}
-							}
+	var data dashboardData
+	err = json.Unmarshal(dataJSON, &data)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "invalid dashboard data")
+	}
 
-						}
-					}
-				}
+	for _, widget := range data.Widgets {
+		switch widget.Query.QueryType {
+		case "builder":
+			widget.Query.ClickhouseSQL = []map[string]any{}
+			widget.Query.PromQL = []map[string]any{}
+
+			updatedQueryData := []map[string]any{}
+			for _, queryData := range widget.Query.Builder.QueryData {
+				updatedQueryMap := map[string]any{}
+				updatedQueryMap["aggregation"] = queryData["aggregation"]
+				updatedQueryMap["legend"] = queryData["legend"]
+				updatedQueryMap["queryName"] = queryData["queryName"]
+				updatedQueryMap["expression"] = queryData["expression"]
+				updatedQueryData = append(updatedQueryData, updatedQueryMap)
 			}
+			widget.Query.Builder.QueryData = updatedQueryData
+
+			updatedQueryFormulas := []map[string]any{}
+			for _, queryFormula := range widget.Query.Builder.QueryFormulas {
+				updatedQueryFormulaMap := map[string]any{}
+				updatedQueryFormulaMap["legend"] = queryFormula["legend"]
+				updatedQueryFormulaMap["queryName"] = queryFormula["queryName"]
+				updatedQueryFormulaMap["expression"] = queryFormula["expression"]
+				updatedQueryFormulas = append(updatedQueryFormulas, updatedQueryFormulaMap)
+			}
+			widget.Query.Builder.QueryFormulas = updatedQueryFormulas
+
+			updatedQueryTraceOperator := []map[string]any{}
+			for _, queryTraceOperator := range widget.Query.Builder.QueryTraceOperator {
+				updatedQueryTraceOperatorMap := map[string]any{}
+				updatedQueryTraceOperatorMap["aggregation"] = queryTraceOperator["aggregation"]
+				updatedQueryTraceOperatorMap["legend"] = queryTraceOperator["legend"]
+				updatedQueryTraceOperatorMap["queryName"] = queryTraceOperator["queryName"]
+				updatedQueryTraceOperatorMap["expression"] = queryTraceOperator["expression"]
+				updatedQueryTraceOperator = append(updatedQueryTraceOperator, updatedQueryTraceOperatorMap)
+			}
+			widget.Query.Builder.QueryTraceOperator = updatedQueryTraceOperator
+
+		case "clickhouse_sql":
+			widget.Query.Builder = struct {
+				QueryData          []map[string]any `json:"queryData"`
+				QueryFormulas      []map[string]any `json:"queryFormulas"`
+				QueryTraceOperator []map[string]any `json:"queryTraceOperator"`
+			}{}
+			widget.Query.PromQL = []map[string]any{}
+
+			updatedClickhouseSQLQuery := []map[string]any{}
+			for _, clickhouseSQLQuery := range widget.Query.ClickhouseSQL {
+				updatedClickhouseSQLQueryMap := make(map[string]any)
+				updatedClickhouseSQLQueryMap["legend"] = clickhouseSQLQuery["legend"]
+				updatedClickhouseSQLQueryMap["name"] = clickhouseSQLQuery["name"]
+				updatedClickhouseSQLQuery = append(updatedClickhouseSQLQuery, updatedClickhouseSQLQueryMap)
+			}
+			widget.Query.ClickhouseSQL = updatedClickhouseSQLQuery
+		case "promql":
+			widget.Query.Builder = struct {
+				QueryData          []map[string]any `json:"queryData"`
+				QueryFormulas      []map[string]any `json:"queryFormulas"`
+				QueryTraceOperator []map[string]any `json:"queryTraceOperator"`
+			}{}
+			widget.Query.ClickhouseSQL = []map[string]any{}
+
+			updatedPromQLQuery := []map[string]any{}
+			for _, promQLQuery := range widget.Query.PromQL {
+				updatedPromQLQueryMap := make(map[string]any)
+				updatedPromQLQueryMap["legend"] = promQLQuery["legend"]
+				updatedPromQLQueryMap["name"] = promQLQuery["name"]
+				updatedPromQLQuery = append(updatedPromQLQuery, updatedPromQLQueryMap)
+			}
+			widget.Query.PromQL = updatedPromQLQuery
+		default:
+			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "invalid query type: %s", widget.Query.QueryType)
 		}
 	}
+
+	updatedDashboardDataJSON, err := json.Marshal(data)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "invalid dashboard data")
+	}
+
+	updatedDashboardData := map[string]any{}
+	err = json.Unmarshal(updatedDashboardDataJSON, &updatedDashboardData)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "invalid dashboard data")
+	}
+
 	return &GettablePublicDashboardData{
 		Dashboard: &Dashboard{
 			ID: dashboard.ID,
@@ -222,14 +224,14 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *
 				CreatedBy: dashboard.UserAuditable.CreatedBy,
 				UpdatedBy: dashboard.UserAuditable.UpdatedBy,
 			},
-			Data: dashboard.Data,
+			Data: updatedDashboardData,
 		},
 		PublicDashboard: &GettablePublicDasbhboard{
 			TimeRangeEnabled: publicDashboard.TimeRangeEnabled,
 			DefaultTimeRange: publicDashboard.DefaultTimeRange,
 			PublicPath:       publicDashboard.PublicPath(),
 		},
-	}
+	}, nil
 }
 
 func (typ *PublicDashboard) Update(timeRangeEnabled bool, defaultTimeRange string) {

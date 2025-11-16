@@ -21,8 +21,10 @@ var (
 )
 
 var (
-	ErrCodeDashboardInvalidInput = errors.MustNewCode("dashboard_invalid_input")
-	ErrCodeDashboardNotFound     = errors.MustNewCode("dashboard_not_found")
+	ErrCodeDashboardInvalidInput       = errors.MustNewCode("dashboard_invalid_input")
+	ErrCodeDashboardNotFound           = errors.MustNewCode("dashboard_not_found")
+	ErrCodeDashboardInvalidData        = errors.MustNewCode("dashboard_invalid_data")
+	ErrCodeDashboardInvalidWidgetQuery = errors.MustNewCode("dashboard_invalid_widget_query")
 )
 
 type StorableDashboard struct {
@@ -336,13 +338,13 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime uint64, widgetInde
 
 	dataJSON, err := json.Marshal(dashboard.Data)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "invalid dashboard data")
 	}
 
 	var data dashboardData
 	err = json.Unmarshal(dataJSON, &data)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "invalid dashboard data")
 	}
 
 	if len(data.Widgets) < int(widgetIndex)+1 {
@@ -357,21 +359,21 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime uint64, widgetInde
 		for _, query := range widgetData.Query.Builder.QueryData {
 			queryName, ok := query["queryName"].(string)
 			if !ok {
-				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "cannot type cast query name as string")
+				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "cannot type cast query name as string")
 			}
 			compositeQueries = append(compositeQueries, migrate.WrapInV5Envelope(queryName, query, "builder_query"))
 		}
 		for _, query := range widgetData.Query.Builder.QueryFormulas {
 			queryName, ok := query["queryName"].(string)
 			if !ok {
-				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "cannot type cast query name as string")
+				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "cannot type cast query name as string")
 			}
 			compositeQueries = append(compositeQueries, migrate.WrapInV5Envelope(queryName, query, "builder_formula"))
 		}
 		for _, query := range widgetData.Query.Builder.QueryTraceOperator {
 			queryName, ok := query["queryName"].(string)
 			if !ok {
-				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "cannot type cast query name as string")
+				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "cannot type cast query name as string")
 			}
 			compositeQueries = append(compositeQueries, migrate.WrapInV5Envelope(queryName, query, "builder_trace_operator"))
 		}
@@ -415,13 +417,13 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime uint64, widgetInde
 
 	req, err := json.Marshal(queryRangeReq)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "invalid query request")
 	}
 
 	queryRangeRequest := new(querybuildertypesv5.QueryRangeRequest)
 	err = json.Unmarshal(req, queryRangeRequest)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "invalid query request")
 	}
 
 	return queryRangeRequest, nil
