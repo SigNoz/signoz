@@ -12,8 +12,10 @@ const (
 )
 
 type ColumnInfo struct {
-	Name  string
-	Alias string
+	Name        string
+	Alias       string
+	OriginExpr  string
+	OriginField string
 }
 
 type FilterResult struct {
