@@ -149,6 +149,7 @@ export const getGraphOptions = (
 	scales: {
 		x: {
 			stacked: isStacked,
+			offset: false,
 			grid: {
 				display: true,
 				color: getGridColor(),
