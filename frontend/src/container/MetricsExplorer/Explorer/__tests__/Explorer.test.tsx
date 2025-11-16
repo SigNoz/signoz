@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { MetricDetails } from 'api/metricsExplorer/getMetricDetails';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import * as useOptionsMenuHooks from 'container/OptionsMenu';
 import * as useUpdateDashboardHooks from 'hooks/dashboard/useUpdateDashboard';
@@ -130,6 +131,21 @@ jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 const BUILDER_UNITS_FILTER_TEST_ID = 'builder-units-filter';
 const SECONDS_UNIT_LABEL = 'seconds';
 
+const mockMetric: MetricDetails = {
+	name: 'metric1',
+	description: 'metric1 description',
+	type: 'metric1 type',
+	unit: 'metric1 unit',
+	timeseries: 1,
+	samples: 1,
+	timeSeriesTotal: 1,
+	timeSeriesActive: 1,
+	lastReceived: '2021-01-01',
+	attributes: [],
+	alerts: null,
+	dashboards: null,
+};
+
 function renderExplorer(): void {
 	render(
 		<QueryClientProvider client={queryClient}>
@@ -198,7 +214,7 @@ describe('Explorer', () => {
 			units: ['seconds'],
 			isLoading: false,
 			isError: false,
-			metrics: [],
+			metrics: [mockMetric],
 		});
 
 		renderExplorer();
@@ -213,7 +229,7 @@ describe('Explorer', () => {
 			units: ['seconds', 'seconds'],
 			isLoading: false,
 			isError: false,
-			metrics: [],
+			metrics: [mockMetric, mockMetric],
 		});
 
 		renderExplorer();
@@ -232,7 +248,7 @@ describe('Explorer', () => {
 			units: ['seconds', 'milliseconds'],
 			isLoading: false,
 			isError: false,
-			metrics: [],
+			metrics: [mockMetric, mockMetric],
 		});
 
 		renderExplorer();
@@ -250,7 +266,7 @@ describe('Explorer', () => {
 			units: [],
 			isLoading: false,
 			isError: false,
-			metrics: [],
+			metrics: [mockMetric],
 		});
 
 		renderExplorer();
