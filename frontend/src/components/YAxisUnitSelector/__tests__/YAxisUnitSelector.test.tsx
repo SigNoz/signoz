@@ -91,4 +91,26 @@ describe('YAxisUnitSelector', () => {
 		expect(screen.getByText('Bytes (B)')).toBeInTheDocument();
 		expect(screen.getByText('Seconds (s)')).toBeInTheDocument();
 	});
+
+	it('shows warning message when incompatible unit is selected', () => {
+		render(
+			<YAxisUnitSelector value="By" onChange={mockOnChange} initialValue="s" />,
+		);
+		const warningIcon = screen.getByLabelText('warning');
+		expect(warningIcon).toBeInTheDocument();
+		fireEvent.mouseOver(warningIcon);
+		return screen
+			.findByText(
+				'Incompatible unit selected. Please select a unit from the Time category.',
+			)
+			.then((el) => expect(el).toBeInTheDocument());
+	});
+
+	it('does not show warning message when compatible unit is selected', () => {
+		render(
+			<YAxisUnitSelector value="s" onChange={mockOnChange} initialValue="ms" />,
+		);
+		const warningIcon = screen.queryByLabelText('warning');
+		expect(warningIcon).not.toBeInTheDocument();
+	});
 });

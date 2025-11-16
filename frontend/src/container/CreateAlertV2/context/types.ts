@@ -47,6 +47,7 @@ export interface ICreateAlertContextProps {
 		unknown
 	>;
 	isEditMode: boolean;
+	initialAlertState?: GetCreateAlertLocalStateFromAlertDefReturn;
 }
 
 export interface ICreateAlertProviderProps {

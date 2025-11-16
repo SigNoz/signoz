@@ -1,7 +1,11 @@
 import './styles.scss';
 
-import { Select } from 'antd';
+import { WarningFilled } from '@ant-design/icons';
+import { Color } from '@signozhq/design-tokens';
+import { Select, Tooltip } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
+import classNames from 'classnames';
+import { useMemo } from 'react';
 
 import { UniversalYAxisUnitMappings } from './constants';
 import { UniversalYAxisUnit, YAxisUnitSelectorProps } from './types';
@@ -14,8 +18,37 @@ function YAxisUnitSelector({
 	loading = false,
 	'data-testid': dataTestId,
 	source,
+	initialValue,
 }: YAxisUnitSelectorProps): JSX.Element {
 	const universalUnit = mapMetricUnitToUniversalUnit(value);
+
+	const initialCategory = useMemo(() => {
+		const initialUniversalUnit = mapMetricUnitToUniversalUnit(initialValue);
+		const unit = Y_AXIS_CATEGORIES.find((category) =>
+			category.units.some((unit) => unit.id === initialUniversalUnit),
+		);
+		return unit?.name;
+	}, [initialValue]);
+
+	const currentCategory = useMemo(() => {
+		const currentUniversalUnit = mapMetricUnitToUniversalUnit(value);
+		const unit = Y_AXIS_CATEGORIES.find((category) =>
+			category.units.some((unit) => unit.id === currentUniversalUnit),
+		);
+		return unit?.name;
+	}, [value]);
+
+	const incompatibleUnitMessage = useMemo(() => {
+		if (!initialValue) return '';
+		if (
+			initialCategory &&
+			currentCategory &&
+			initialCategory !== currentCategory
+		) {
+			return `Incompatible unit selected. Please select a unit from the ${initialCategory} category.`;
+		}
+		return '';
+	}, [initialCategory, currentCategory, initialValue]);
 
 	const handleSearch = (
 		searchTerm: string,
@@ -49,7 +82,16 @@ function YAxisUnitSelector({
 				placeholder={placeholder}
 				filterOption={(input, option): boolean => handleSearch(input, option)}
 				loading={loading}
-				data-testid={dataTestId}
+				suffixIcon={
+					incompatibleUnitMessage ? (
+						<Tooltip title={incompatibleUnitMessage}>
+							<WarningFilled color={Color.BG_AMBER_500} />
+						</Tooltip>
+					) : null
+				}
+				className={classNames({
+					'warning-state': incompatibleUnitMessage,
+				})}
 			>
 				{categories.map((category) => (
 					<Select.OptGroup key={category.name} label={category.name}>
