@@ -66,7 +66,7 @@ function Filter({
 	const uniqueLabels: Array<string> = useMemo(() => {
 		const allLabelsSet = new Set<string>();
 		allAlerts.forEach((e) =>
-			Object.keys(e.labels).forEach((e) => {
+			Object.keys(e.labels || {}).forEach((e) => {
 				allLabelsSet.add(e);
 			}),
 		);
