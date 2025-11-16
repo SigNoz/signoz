@@ -81,8 +81,8 @@ function Explorer(): JSX.Element {
 
 	useEffect(() => {
 		// Set the y axis unit to the first metric unit if
-		// 2. There is one metric unit and it is not empty
-		// 3. All metric units are the same and not empty
+		// 1. There is one metric unit and it is not empty
+		// 2. All metric units are the same and not empty
 		if (units.length === 0) {
 			setYAxisUnit('');
 		} else if (units.length === 1 && units[0] !== '') {
@@ -90,7 +90,8 @@ function Explorer(): JSX.Element {
 		} else if (areAllMetricUnitsSame && units[0] !== '') {
 			setYAxisUnit(units[0]);
 		}
-	}, [units, areAllMetricUnitsSame]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [JSON.stringify(units), areAllMetricUnitsSame]);
 
 	useEffect(() => {
 		// Disable one chart per query if -

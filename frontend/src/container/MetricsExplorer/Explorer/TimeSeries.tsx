@@ -261,7 +261,7 @@ function TimeSeries({
 											<Typography.Link onClick={goToMetricDetails}>
 												metric details
 											</Typography.Link>{' '}
-											drawer.
+											page.
 										</Typography.Text>
 									}
 								>
