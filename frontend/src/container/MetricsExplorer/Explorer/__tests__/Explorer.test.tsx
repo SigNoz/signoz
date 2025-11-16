@@ -15,6 +15,7 @@ import { LicenseEvent } from 'types/api/licensesV3/getActive';
 import { DataSource } from 'types/common/queryBuilder';
 
 import Explorer from '../Explorer';
+import * as useGetMetricUnitsHooks from '../utils';
 
 const mockSetSearchParams = jest.fn();
 const queryClient = new QueryClient();
@@ -126,6 +127,23 @@ jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 	...mockUseQueryBuilderData,
 } as any);
 
+const BUILDER_UNITS_FILTER_TEST_ID = 'builder-units-filter';
+const SECONDS_UNIT_LABEL = 'seconds';
+
+function renderExplorer(): void {
+	render(
+		<QueryClientProvider client={queryClient}>
+			<MemoryRouter>
+				<Provider store={store}>
+					<ErrorModalProvider>
+						<Explorer />
+					</ErrorModalProvider>
+				</Provider>
+			</MemoryRouter>
+		</QueryClientProvider>,
+	);
+}
+
 describe('Explorer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -142,17 +160,7 @@ describe('Explorer', () => {
 			mockSetSearchParams,
 		]);
 
-		render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<ErrorModalProvider>
-							<Explorer />
-						</ErrorModalProvider>
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
-		);
+		renderExplorer();
 
 		expect(mockUpdateAllQueriesOperators).toHaveBeenCalledWith(
 			initialQueriesMap[DataSource.METRICS],
@@ -167,17 +175,7 @@ describe('Explorer', () => {
 			mockSetSearchParams,
 		]);
 
-		render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<ErrorModalProvider>
-							<Explorer />
-						</ErrorModalProvider>
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
-		);
+		renderExplorer();
 
 		const toggle = screen.getByRole('switch');
 		expect(toggle).toBeChecked();
@@ -189,19 +187,76 @@ describe('Explorer', () => {
 			mockSetSearchParams,
 		]);
 
-		render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<ErrorModalProvider>
-							<Explorer />
-						</ErrorModalProvider>
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
-		);
+		renderExplorer();
 
 		const toggle = screen.getByRole('switch');
 		expect(toggle).not.toBeChecked();
+	});
+
+	it('should render pre-populated y axis unit for single metric', () => {
+		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
+			units: ['seconds'],
+			isLoading: false,
+			isError: false,
+			metrics: [],
+		});
+
+		renderExplorer();
+
+		const yAxisUnitSelector = screen.getByTestId(BUILDER_UNITS_FILTER_TEST_ID);
+		expect(yAxisUnitSelector).toBeInTheDocument();
+		expect(yAxisUnitSelector).toHaveTextContent(SECONDS_UNIT_LABEL);
+	});
+
+	it('should render pre-populated y axis unit for mutliple metrics with same unit', () => {
+		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
+			units: ['seconds', 'seconds'],
+			isLoading: false,
+			isError: false,
+			metrics: [],
+		});
+
+		renderExplorer();
+
+		const yAxisUnitSelector = screen.getByTestId(BUILDER_UNITS_FILTER_TEST_ID);
+		expect(yAxisUnitSelector).toBeInTheDocument();
+		expect(yAxisUnitSelector).toHaveTextContent(SECONDS_UNIT_LABEL);
+
+		// One chart per query switch should be enabled
+		const oneChartPerQueryToggle = screen.getByRole('switch');
+		expect(oneChartPerQueryToggle).toBeEnabled();
+	});
+
+	it('should hide y axis unit selector for multiple metrics with different units', () => {
+		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
+			units: ['seconds', 'milliseconds'],
+			isLoading: false,
+			isError: false,
+			metrics: [],
+		});
+
+		renderExplorer();
+
+		const yAxisUnitSelector = screen.queryByTestId(BUILDER_UNITS_FILTER_TEST_ID);
+		expect(yAxisUnitSelector).not.toBeInTheDocument();
+
+		// One chart per query toggle should be disabled
+		const oneChartPerQueryToggle = screen.getByRole('switch');
+		expect(oneChartPerQueryToggle).toBeDisabled();
+	});
+
+	it('should render empty y axis unit selector for a single metric with no unit', () => {
+		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
+			units: [],
+			isLoading: false,
+			isError: false,
+			metrics: [],
+		});
+
+		renderExplorer();
+
+		const yAxisUnitSelector = screen.queryByTestId(BUILDER_UNITS_FILTER_TEST_ID);
+		expect(yAxisUnitSelector).toBeInTheDocument();
+		expect(yAxisUnitSelector).toHaveTextContent('Select unit');
 	});
 });
