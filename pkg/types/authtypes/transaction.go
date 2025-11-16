@@ -33,22 +33,24 @@ func NewObject(resource Resource, selector Selector) (*Object, error) {
 }
 
 func MustNewObjectFromString(input string) *Object {
-	parts := strings.Split(input, ":")
-	if len(parts) != 3 {
-		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid list objects output: %s", input))
+	parts := strings.Split(input, "/")
+	if len(parts) != 4 {
+		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid input format: %s", input))
+	}
+
+	typeParts := strings.Split(parts[0], ":")
+	if len(typeParts) != 2 {
+		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid type format: %s", parts[0]))
 	}
 
 	resource := Resource{
-		Type: MustNewType(parts[0]),
-		Name: MustNewName(parts[1]),
+		Type: MustNewType(typeParts[0]),
+		Name: MustNewName(parts[2]),
 	}
 
-	object := &Object{
-		Resource: resource,
-		Selector: MustNewSelector(resource.Type, parts[2]),
-	}
+	selector := MustNewSelector(resource.Type, parts[3])
 
-	return object
+	return &Object{Resource: resource, Selector: selector}
 }
 
 func MustNewObjectsFromStringSlice(input []string) []*Object {
@@ -57,6 +59,14 @@ func MustNewObjectsFromStringSlice(input []string) []*Object {
 		objects = append(objects, MustNewObjectFromString(str))
 	}
 	return objects
+}
+
+func NewTransaction(relation Relation, object Object) (*Transaction, error) {
+	if !slices.Contains(TypeableRelations[object.Resource.Type], relation) {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "invalid relation %s for type %s", relation.StringValue(), object.Resource.Type.StringValue())
+	}
+
+	return &Transaction{Relation: relation, Object: object}, nil
 }
 
 func (object *Object) UnmarshalJSON(data []byte) error {
@@ -77,14 +87,6 @@ func (object *Object) UnmarshalJSON(data []byte) error {
 
 	*object = *obj
 	return nil
-}
-
-func NewTransaction(relation Relation, object Object) (*Transaction, error) {
-	if !slices.Contains(TypeableRelations[object.Resource.Type], relation) {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "invalid relation %s for type %s", relation.StringValue(), object.Resource.Type.StringValue())
-	}
-
-	return &Transaction{Relation: relation, Object: object}, nil
 }
 
 func (transaction *Transaction) UnmarshalJSON(data []byte) error {
