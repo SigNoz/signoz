@@ -77,7 +77,6 @@ jest.mock(
 		const Prec = { highest: (ext: unknown) => ext } as unknown;
 
 		type CodeMirrorProps = {
-			value?: string;
 			onChange?: (v: string) => void;
 			onFocus?: () => void;
 			onBlur?: () => void;
@@ -101,7 +100,6 @@ jest.mock(
 		};
 
 		function CodeMirrorMock({
-			value,
 			onChange,
 			onFocus,
 			onBlur,
@@ -111,37 +109,112 @@ jest.mock(
 			'data-testid': dataTestId,
 			extensions,
 		}: CodeMirrorProps): JSX.Element {
-			const [localValue, setLocalValue] = React.useState<string>(value ?? '');
+			// Uncontrolled component - manages its own state
+			const [localValue, setLocalValue] = React.useState<string>('');
+			const valueRef = React.useRef<string>('');
+			const editorViewRef = React.useRef<{
+				state: { doc: { toString: () => string } };
+				dispatch: (update: {
+					changes?: { from?: number; to?: number; insert?: string };
+				}) => void;
+			} | null>(null);
 
-			// Provide a fake editor instance
+			// Keep ref in sync with state
+			React.useEffect(() => {
+				valueRef.current = localValue;
+			}, [localValue]);
+
+			// Create a mock editor view that can be updated programmatically
+			const createEditorView = (): {
+				state: { doc: { toString: () => string } };
+				dispatch: (update: {
+					changes?: { from?: number; to?: number; insert?: string };
+				}) => void;
+			} => {
+				const view = {
+					state: {
+						doc: {
+							// Always read from valueRef to get current value
+							toString: (): string => valueRef.current,
+						},
+					},
+					dispatch: (update: {
+						changes?: { from?: number; to?: number; insert?: string };
+					}): void => {
+						if (update.changes?.insert !== undefined) {
+							const newValue = update.changes.insert;
+							// Update both state and ref immediately
+							valueRef.current = newValue;
+							setLocalValue(newValue);
+						}
+					},
+				};
+				editorViewRef.current = view;
+				return view;
+			};
+
+			// Provide a fake editor instance on mount
 			React.useEffect(() => {
 				if (onCreateEditor) {
-					onCreateEditor(new EditorViewMock() as any);
+					const view = createEditorView();
+					onCreateEditor(view as any);
 				}
 				// eslint-disable-next-line react-hooks/exhaustive-deps
 			}, []);
 
-			// Call onUpdate whenever localValue changes to simulate cursor and doc
-			React.useEffect(() => {
-				if (onUpdate) {
-					const text = String(localValue ?? '');
-					const head = text.length;
-					onUpdate({
-						view: {
-							state: {
-								selection: { main: { head } },
-								doc: {
-									toString: (): string => text,
-									lineAt: () => ({
-										number: 1,
-										from: 0,
-										to: text.length,
-										text,
-									}),
-								},
+			// Helper to create onUpdate payload
+			const createUpdatePayload = (
+				text: string,
+			): {
+				view: {
+					state: {
+						selection: { main: { head: number } };
+						doc: {
+							toString: () => string;
+							lineAt: () => {
+								number: number;
+								from: number;
+								to: number;
+								text: string;
+							};
+						};
+					};
+				};
+			} => {
+				const head = text.length;
+				return {
+					view: {
+						state: {
+							selection: { main: { head } },
+							doc: {
+								toString: (): string => text,
+								lineAt: (): {
+									number: number;
+									from: number;
+									to: number;
+									text: string;
+								} => ({
+									number: 1,
+									from: 0,
+									to: text.length,
+									text,
+								}),
 							},
 						},
-					});
+					},
+				};
+			};
+
+			// Update editor view ref when localValue changes so getCurrentQuery() works
+			// Also call onUpdate for programmatic updates (when dispatch is called)
+			React.useEffect(() => {
+				if (editorViewRef.current) {
+					editorViewRef.current.state.doc.toString = (): string => valueRef.current;
+				}
+				// Call onUpdate for programmatic updates (not user input, which is handled in handleChange)
+				if (onUpdate && editorViewRef.current) {
+					const text = String(localValue ?? '');
+					onUpdate(createUpdatePayload(text));
 				}
 				// eslint-disable-next-line react-hooks/exhaustive-deps
 			}, [localValue]);
@@ -169,17 +242,31 @@ jest.mock(
 					});
 			};
 
+			const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+				const newValue = e.target.value;
+				setLocalValue(newValue);
+				// Update valueRef immediately for synchronous access
+				valueRef.current = newValue;
+				// Update editor view ref immediately
+				if (editorViewRef.current) {
+					editorViewRef.current.state.doc.toString = (): string => newValue;
+				}
+				// Call onUpdate synchronously with new value
+				if (onUpdate) {
+					const text = String(newValue ?? '');
+					onUpdate(createUpdatePayload(text));
+				}
+				if (onChange) {
+					onChange(newValue);
+				}
+			};
+
 			return (
 				<textarea
 					data-testid={dataTestId || 'query-where-clause-editor'}
 					placeholder={placeholder}
 					value={localValue}
-					onChange={(e): void => {
-						setLocalValue(e.target.value);
-						if (onChange) {
-							onChange(e.target.value);
-						}
-					}}
+					onChange={handleChange}
 					onFocus={onFocus}
 					onBlur={onBlur}
 					onKeyDown={handleKeyDown}
@@ -205,9 +292,9 @@ const PLACEHOLDER_TEXT =
 	"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')";
 const TESTID_EDITOR = 'query-where-clause-editor';
 const SAMPLE_KEY_TYPING = 'http.';
-const SAMPLE_VALUE_TYPING_INCOMPLETE = " service.name = '";
-const SAMPLE_VALUE_TYPING_COMPLETE = " service.name = 'frontend'";
-const SAMPLE_STATUS_QUERY = " status_code = '200'";
+const SAMPLE_VALUE_TYPING_INCOMPLETE = "service.name = '";
+const SAMPLE_VALUE_TYPING_COMPLETE = "service.name = 'frontend'";
+const SAMPLE_STATUS_QUERY = "http.status_code = '200'";
 
 describe('QuerySearch', () => {
 	it('renders with placeholder', () => {
