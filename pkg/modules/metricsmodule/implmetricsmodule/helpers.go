@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
 )
 
+// helper struct just for the implementation way we chose
 type orderConfig struct {
 	sqlColumn      string
 	direction      string
@@ -14,6 +15,7 @@ type orderConfig struct {
 }
 
 func resolveOrderBy(order *metricsmoduletypes.OrderBy) (orderConfig, error) {
+	// default orderBy
 	cfg := orderConfig{
 		sqlColumn:      orderByColNameTimeSeries,
 		direction:      orderByDirectionDesc,
