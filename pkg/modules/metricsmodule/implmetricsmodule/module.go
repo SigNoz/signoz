@@ -242,7 +242,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 		return nil, err
 	}
 
-	meta, err := m.GetUpdatedMetricsMetadata(ctx, orgID, metricNames...)
+	meta, err := m.GetUpdatedMetricsMetadata(ctx, orgID, metricNames)
 	if err != nil {
 		return nil, err
 	}
@@ -678,7 +678,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 	return resp, nil
 }
 
-func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
+func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
 	if len(metricNames) == 0 {
 		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
 	}
