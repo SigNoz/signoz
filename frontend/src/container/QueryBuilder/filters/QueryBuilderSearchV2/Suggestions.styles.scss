@@ -32,6 +32,9 @@
 			gap: 8px;
 
 			.value {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
 			}
 		}
 		.right-section {
