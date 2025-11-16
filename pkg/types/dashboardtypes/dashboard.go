@@ -345,7 +345,7 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime uint64, widgetInde
 		return nil, err
 	}
 
-	if len(data.Widgets) < int(widgetIndex) {
+	if len(data.Widgets) < int(widgetIndex)+1 {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "widget with index %v doesn't exist", widgetIndex)
 	}
 
