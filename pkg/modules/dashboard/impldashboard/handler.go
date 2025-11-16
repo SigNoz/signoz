@@ -366,7 +366,13 @@ func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *htt
 		startTime = startTimeUint
 		endTime = endTimeUint
 	} else {
-		startTime = uint64(time.Now().Add(-publicDashboard.DefaultTimeRange).UnixMilli())
+		timeRange, err := time.ParseDuration(publicDashboard.DefaultTimeRange)
+		if err != nil {
+			// this should't happen as we shouldn't let such values in DB
+			panic(err)
+		}
+
+		startTime = uint64(time.Now().Add(-timeRange).UnixMilli())
 		endTime = uint64(time.Now().UnixMilli())
 	}
 

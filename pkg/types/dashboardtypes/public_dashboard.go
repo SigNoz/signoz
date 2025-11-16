@@ -21,34 +21,34 @@ type StorablePublicDashboard struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	TimeRangeEnabled bool          `bun:"time_range_enabled,type:boolean,notnull"`
-	DefaultTimeRange time.Duration `bun:"default_time_range,type:text,notnull"`
-	DashboardID      string        `bun:"dashboard_id,type:text,notnull"`
+	TimeRangeEnabled bool   `bun:"time_range_enabled,type:boolean,notnull"`
+	DefaultTimeRange string `bun:"default_time_range,type:text,notnull"`
+	DashboardID      string `bun:"dashboard_id,type:text,notnull"`
 }
 
 type PublicDashboard struct {
 	types.Identifiable
 	types.TimeAuditable
 
-	TimeRangeEnabled bool          `json:"timeRangeEnabled"`
-	DefaultTimeRange time.Duration `json:"defaultTimeRange"`
-	DashboardID      valuer.UUID   `json:"dashboardId"`
+	TimeRangeEnabled bool        `json:"timeRangeEnabled"`
+	DefaultTimeRange string      `json:"defaultTimeRange"`
+	DashboardID      valuer.UUID `json:"dashboardId"`
 }
 
 type GettablePublicDasbhboard struct {
-	TimeRangeEnabled bool          `json:"timeRangeEnabled"`
-	DefaultTimeRange time.Duration `json:"defaultTimeRange"`
-	PublicPath       string        `json:"publicPath"`
+	TimeRangeEnabled bool   `json:"timeRangeEnabled"`
+	DefaultTimeRange string `json:"defaultTimeRange"`
+	PublicPath       string `json:"publicPath"`
 }
 
 type PostablePublicDashboard struct {
-	TimeRangeEnabled bool          `json:"timeRangeEnabled"`
-	DefaultTimeRange time.Duration `json:"defaultTimeRange"`
+	TimeRangeEnabled bool   `json:"timeRangeEnabled"`
+	DefaultTimeRange string `json:"defaultTimeRange"`
 }
 
 type UpdatablePublicDashboard struct {
-	TimeRangeEnabled bool          `json:"timeRangeEnabled"`
-	DefaultTimeRange time.Duration `json:"defaultTimeRange"`
+	TimeRangeEnabled bool   `json:"timeRangeEnabled"`
+	DefaultTimeRange string `json:"defaultTimeRange"`
 }
 
 type GettablePublicDashboardData struct {
@@ -56,7 +56,7 @@ type GettablePublicDashboardData struct {
 	PublicDashboard *GettablePublicDasbhboard `json:"publicDashboard"`
 }
 
-func NewPublicDashboard(timeRangeEnabled bool, defaultTimeRange time.Duration, dashboardID valuer.UUID) *PublicDashboard {
+func NewPublicDashboard(timeRangeEnabled bool, defaultTimeRange string, dashboardID valuer.UUID) *PublicDashboard {
 	return &PublicDashboard{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -127,7 +127,7 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "invalid dashboard data")
 	}
 
-	for _, widget := range data.Widgets {
+	for idx, widget := range data.Widgets {
 		switch widget.Query.QueryType {
 		case "builder":
 			widget.Query.ClickhouseSQL = []map[string]any{}
@@ -136,7 +136,7 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *
 			updatedQueryData := []map[string]any{}
 			for _, queryData := range widget.Query.Builder.QueryData {
 				updatedQueryMap := map[string]any{}
-				updatedQueryMap["aggregation"] = queryData["aggregation"]
+				updatedQueryMap["aggregations"] = queryData["aggregations"]
 				updatedQueryMap["legend"] = queryData["legend"]
 				updatedQueryMap["queryName"] = queryData["queryName"]
 				updatedQueryMap["expression"] = queryData["expression"]
@@ -157,7 +157,7 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *
 			updatedQueryTraceOperator := []map[string]any{}
 			for _, queryTraceOperator := range widget.Query.Builder.QueryTraceOperator {
 				updatedQueryTraceOperatorMap := map[string]any{}
-				updatedQueryTraceOperatorMap["aggregation"] = queryTraceOperator["aggregation"]
+				updatedQueryTraceOperatorMap["aggregations"] = queryTraceOperator["aggregations"]
 				updatedQueryTraceOperatorMap["legend"] = queryTraceOperator["legend"]
 				updatedQueryTraceOperatorMap["queryName"] = queryTraceOperator["queryName"]
 				updatedQueryTraceOperatorMap["expression"] = queryTraceOperator["expression"]
@@ -200,31 +200,17 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *
 		default:
 			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "invalid query type: %s", widget.Query.QueryType)
 		}
-	}
 
-	updatedDashboardDataJSON, err := json.Marshal(data)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "invalid dashboard data")
-	}
-
-	updatedDashboardData := map[string]any{}
-	err = json.Unmarshal(updatedDashboardDataJSON, &updatedDashboardData)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "invalid dashboard data")
+		if widgets, ok := dashboard.Data["widgets"].([]any); ok {
+			if widgetMap, ok := widgets[idx].(map[string]any); ok {
+				widgetMap["query"] = widget.Query
+			}
+		}
 	}
 
 	return &GettablePublicDashboardData{
 		Dashboard: &Dashboard{
-			ID: dashboard.ID,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: dashboard.TimeAuditable.CreatedAt,
-				UpdatedAt: dashboard.TimeAuditable.UpdatedAt,
-			},
-			UserAuditable: types.UserAuditable{
-				CreatedBy: dashboard.UserAuditable.CreatedBy,
-				UpdatedBy: dashboard.UserAuditable.UpdatedBy,
-			},
-			Data: updatedDashboardData,
+			Data: dashboard.Data,
 		},
 		PublicDashboard: &GettablePublicDasbhboard{
 			TimeRangeEnabled: publicDashboard.TimeRangeEnabled,
@@ -234,7 +220,7 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *
 	}, nil
 }
 
-func (typ *PublicDashboard) Update(timeRangeEnabled bool, defaultTimeRange time.Duration) {
+func (typ *PublicDashboard) Update(timeRangeEnabled bool, defaultTimeRange string) {
 	typ.TimeRangeEnabled = timeRangeEnabled
 	typ.DefaultTimeRange = defaultTimeRange
 	typ.UpdatedAt = time.Now()
@@ -252,8 +238,9 @@ func (typ *PostablePublicDashboard) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if temp.DefaultTimeRange == 0 {
-		return errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "defaultTimeRange cannot be zero")
+	_, err := time.ParseDuration(temp.DefaultTimeRange)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "unable to parse defaultTimeRange %s", temp.DefaultTimeRange)
 	}
 
 	*typ = PostablePublicDashboard(temp)
@@ -268,8 +255,9 @@ func (typ *UpdatablePublicDashboard) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if temp.DefaultTimeRange == 0 {
-		return errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "defaultTimeRange cannot be zero")
+	_, err := time.ParseDuration(temp.DefaultTimeRange)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "unable to parse defaultTimeRange %s", temp.DefaultTimeRange)
 	}
 
 	*typ = UpdatablePublicDashboard(temp)

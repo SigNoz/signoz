@@ -45,7 +45,7 @@ func (migration *addPublicDashboards) Up(ctx context.Context, db *bun.DB) error 
 		Columns: []*sqlschema.Column{
 			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "time_range_enabled", DataType: sqlschema.DataTypeBoolean, Nullable: false},
-			{Name: "default_time_range", DataType: sqlschema.DataTypeBigInt, Nullable: false},
+			{Name: "default_time_range", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "dashboard_id", DataType: sqlschema.DataTypeText, Nullable: false},
@@ -58,6 +58,7 @@ func (migration *addPublicDashboards) Up(ctx context.Context, db *bun.DB) error 
 	sqls = append(sqls, tableSQL...)
 
 	indexSQL := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{
+		TableName:   "public_dashboard",
 		ColumnNames: []sqlschema.ColumnName{"dashboard_id"},
 	})
 	sqls = append(sqls, indexSQL...)
