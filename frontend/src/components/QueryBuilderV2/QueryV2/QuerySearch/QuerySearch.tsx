@@ -99,7 +99,6 @@ function QuerySearch({
 	hardcodedAttributeKeys,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const [query, setQuery] = useState<string>(queryData.filter?.expression || '');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
 	const [activeKey, setActiveKey] = useState<string>('');
 	const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -131,6 +130,12 @@ function QuerySearch({
 	const [isExternalQueryChange, setIsExternalQueryChange] = useState(false);
 	const [lastExternalQuery, setLastExternalQuery] = useState<string>('');
 
+	// Helper function to get current editor value
+	const getCurrentQuery = useCallback(
+		(): string => editorRef.current?.state.doc.toString() || '',
+		[],
+	);
+
 	const updateEditorValue = useCallback(
 		(value: string, options: { skipOnChange?: boolean } = {}): void => {
 			const view = editorRef.current;
@@ -161,17 +166,19 @@ function QuerySearch({
 		(view: EditorView): EditorView => {
 			editorRef.current = view;
 			setIsEditorReady(true);
-			updateEditorValue(query, { skipOnChange: true });
+			// Only runs once on editor creation, initialize with queryData
+			const initialQuery = queryData.filter?.expression || '';
+			updateEditorValue(initialQuery, { skipOnChange: true });
 			return view;
 		},
-		[query, updateEditorValue],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
 	);
 
 	useEffect(() => {
 		const newQuery = queryData.filter?.expression || '';
 		// Only mark as external change if the query actually changed from external source
 		if (newQuery !== lastExternalQuery) {
-			setQuery(newQuery);
 			setIsExternalQueryChange(true);
 			setLastExternalQuery(newQuery);
 		}
@@ -180,10 +187,11 @@ function QuerySearch({
 	useEffect(() => {
 		if (!isExternalQueryChange || !isEditorReady) return;
 
-		updateEditorValue(query, { skipOnChange: true });
+		const newQuery = queryData.filter?.expression || '';
+		updateEditorValue(newQuery, { skipOnChange: true });
 
-		if (query) {
-			handleQueryValidation(query);
+		if (newQuery) {
+			handleQueryValidation(newQuery);
 		}
 
 		setIsExternalQueryChange(false);
@@ -191,7 +199,7 @@ function QuerySearch({
 		handleQueryValidation,
 		isEditorReady,
 		isExternalQueryChange,
-		query,
+		queryData.filter?.expression,
 		updateEditorValue,
 	]);
 
@@ -605,8 +613,6 @@ function QuerySearch({
 	}, []);
 
 	const handleChange = (value: string): void => {
-		setQuery(value);
-
 		if (isProgrammaticChangeRef.current) {
 			isProgrammaticChangeRef.current = false;
 			setIsExternalQueryChange(false);
@@ -619,7 +625,8 @@ function QuerySearch({
 	};
 
 	const handleBlur = (): void => {
-		handleQueryValidation(query);
+		const currentQuery = getCurrentQuery();
+		handleQueryValidation(currentQuery);
 		setIsFocused(false);
 	};
 
@@ -638,7 +645,10 @@ function QuerySearch({
 
 	const handleExampleClick = (exampleQuery: string): void => {
 		// If there's an existing query, append the example with AND
-		const newQuery = query ? `${query} AND ${exampleQuery}` : exampleQuery;
+		const currentQuery = getCurrentQuery();
+		const newQuery = currentQuery
+			? `${currentQuery} AND ${exampleQuery}`
+			: exampleQuery;
 		updateEditorValue(newQuery);
 	};
 
@@ -674,8 +684,10 @@ function QuerySearch({
 		const word = context.matchBefore(/[a-zA-Z0-9_.:/?&=#%\-\[\]]*/);
 		if (word?.from === word?.to && !context.explicit) return null;
 
+		// Get current query from editor
+		const currentQuery = editorRef.current?.state.doc.toString() || '';
 		// Get the query context at the cursor position
-		const queryContext = getQueryContextAtCursor(query, cursorPos.ch);
+		const queryContext = getQueryContextAtCursor(currentQuery, cursorPos.ch);
 
 		// Define autocomplete options based on the context
 		let options: {
@@ -1171,7 +1183,8 @@ function QuerySearch({
 
 		if (queryContext.isInParenthesis) {
 			// Different suggestions based on the context within parenthesis or bracket
-			const curChar = query.charAt(cursorPos.ch - 1) || '';
+			const currentQuery = editorRef.current?.state.doc.toString() || '';
+			const curChar = currentQuery.charAt(cursorPos.ch - 1) || '';
 
 			if (curChar === '(' || curChar === '[') {
 				// Right after opening parenthesis/bracket
@@ -1320,7 +1333,7 @@ function QuerySearch({
 						style={{
 							position: 'absolute',
 							top: 8,
-							right: validation.isValid === false && query ? 40 : 8, // Move left when error shown
+							right: validation.isValid === false && getCurrentQuery() ? 40 : 8, // Move left when error shown
 							cursor: 'help',
 							zIndex: 10,
 							transition: 'right 0.2s ease',
@@ -1382,7 +1395,7 @@ function QuerySearch({
 									// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
 									run: (): boolean => {
 										if (onRun && typeof onRun === 'function') {
-											onRun(query);
+											onRun(getCurrentQuery());
 										} else {
 											handleRunQuery();
 										}
@@ -1408,7 +1421,7 @@ function QuerySearch({
 					onBlur={handleBlur}
 				/>
 
-				{query && validation.isValid === false && !isFocused && (
+				{getCurrentQuery() && validation.isValid === false && !isFocused && (
 					<div
 						className={cx('query-status-container', {
 							hasErrors: validation.errors.length > 0,
