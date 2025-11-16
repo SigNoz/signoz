@@ -85,7 +85,7 @@ func TestPostProcessStatsResp_FiltersEnrichesAndOrders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resp := cloneStatsResp(tt.input)
+			resp := tt.input
 			m := &module{}
 			m.postProcessStatsResp(resp, tt.updatedMeta, tt.samplesCount, tt.orderBySamples, tt.orderByDirection)
 			if !reflect.DeepEqual(resp.Metrics, tt.want) {
@@ -93,16 +93,4 @@ func TestPostProcessStatsResp_FiltersEnrichesAndOrders(t *testing.T) {
 			}
 		})
 	}
-}
-
-func cloneStatsResp(in *metricsmoduletypes.StatsResponse) *metricsmoduletypes.StatsResponse {
-	if in == nil {
-		return nil
-	}
-	out := &metricsmoduletypes.StatsResponse{
-		Metrics: make([]metricsmoduletypes.MetricStat, len(in.Metrics)),
-		Total:   in.Total,
-	}
-	copy(out.Metrics, in.Metrics)
-	return out
 }
