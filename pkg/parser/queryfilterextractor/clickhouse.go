@@ -27,10 +27,9 @@ func (e *ClickHouseFilterExtractor) Extract(query string) (*FilterResult, error)
 		return nil, err
 	}
 
-	result := &FilterResult{MetricNames: []string{}, GroupBy: []string{}}
+	result := &FilterResult{MetricNames: []string{}, GroupBy: []string{}, GroupByColumns: []ColumnInfo{}}
 
 	metricNames := make(map[string]bool)
-	groupBy := make(map[string]bool)
 
 	// Track top-level queries for GROUP BY extraction
 	topLevelQueries := make(map[*clickhouse.SelectQuery]bool)
@@ -61,18 +60,29 @@ func (e *ClickHouseFilterExtractor) Extract(query string) (*FilterResult, error)
 		e.buildCTEMap(query, cteMap)
 	}
 
-	// Extract GROUP BY from the CTEs and subqueries using recursive approach
+	// Extract GROUP BY with aliases from the CTEs and subqueries using recursive approach
+	// Use a map to handle duplicates (last alias wins across queries)
+	groupByColumnsMap := make(map[string]string) // column name -> alias
 	visited := make(map[*clickhouse.SelectQuery]bool)
 	for query := range topLevelQueries {
-		e.extractGroupByRecursive(query, cteMap, groupBy, visited)
+		columns := e.extractGroupByRecursive(query, cteMap, visited)
+		for _, col := range columns {
+			// Last alias wins for duplicate columns across multiple queries
+			groupByColumnsMap[col.Name] = col.Alias
+		}
 	}
 
 	// Convert sets to slices
 	for metric := range metricNames {
 		result.MetricNames = append(result.MetricNames, metric)
 	}
-	for groupKey := range groupBy {
-		result.GroupBy = append(result.GroupBy, groupKey)
+
+	// Build GroupByColumns from the map
+	for name, alias := range groupByColumnsMap {
+		result.GroupByColumns = append(result.GroupByColumns, ColumnInfo{
+			Name:  name,
+			Alias: alias,
+		})
 	}
 
 	return result, nil
@@ -272,6 +282,75 @@ func (e *ClickHouseFilterExtractor) extractInValues(expr clickhouse.Expr, metric
 }
 
 // ========================================
+// SELECT Column Alias Extraction
+// ========================================
+
+// extractSelectColumns extracts column names and their aliases from SELECT clause of a specific query
+// Returns a map where key is normalized column name and value is the alias
+// For duplicate columns with different aliases, the last alias wins
+// This follows the same pattern as extractGroupFromGroupByClause - finding direct children only
+func (e *ClickHouseFilterExtractor) extractSelectColumns(query *clickhouse.SelectQuery) map[string]string {
+	aliasMap := make(map[string]string)
+
+	if query == nil {
+		return aliasMap
+	}
+
+	// Find SelectItem nodes which represent columns in the SELECT clause
+	// SelectItem has an Expr field (the column/expression) and an Alias field
+	selectItems := clickhouse.FindAll(query, func(node clickhouse.Expr) bool {
+		_, ok := node.(*clickhouse.SelectItem)
+		return ok
+	})
+
+	// Process each SelectItem and extract column name and alias
+	for _, itemNode := range selectItems {
+		if selectItem, ok := itemNode.(*clickhouse.SelectItem); ok {
+			// Extract the column name/expression from SelectItem.Expr
+			columnName := e.extractSelectItemName(selectItem)
+			if columnName == "" {
+				continue
+			}
+
+			// Normalize column name (strip table alias)
+			normalizedName := e.stripTableAlias(columnName)
+
+			// Extract alias from SelectItem.Alias
+			alias := e.extractSelectItemAlias(selectItem)
+
+			// Store in map - last alias wins for duplicates
+			aliasMap[normalizedName] = alias
+		}
+	}
+
+	return aliasMap
+}
+
+// extractSelectItemName extracts the column name or expression from a SelectItem
+func (e *ClickHouseFilterExtractor) extractSelectItemName(selectItem *clickhouse.SelectItem) string {
+	if selectItem == nil || selectItem.Expr == nil {
+		return ""
+	}
+
+	return e.extractGroupByExpr(selectItem.Expr)
+}
+
+// extractSelectItemAlias extracts the alias from a SelectItem
+// Returns empty string if no alias is present
+func (e *ClickHouseFilterExtractor) extractSelectItemAlias(selectItem *clickhouse.SelectItem) string {
+	if selectItem == nil || selectItem.Alias == nil {
+		return ""
+	}
+
+	// The Alias field is an *Ident (pointer type)
+	if selectItem.Alias.Name != "" {
+		return selectItem.Alias.Name
+	}
+
+	return ""
+}
+
+// ========================================
 // CTE and Subquery GROUP BY Support
 // ========================================
 
@@ -326,11 +405,12 @@ func (e *ClickHouseFilterExtractor) buildCTEMapFromExpr(expr clickhouse.Expr, ct
 	})
 }
 
-// extractGroupByRecursive implements the recursive GROUP BY extraction logic
+// extractGroupByRecursive implements the recursive GROUP BY extraction logic with alias tracking
 // It follows the top-down approach where outer GROUP BY overrides inner GROUP BY
-func (e *ClickHouseFilterExtractor) extractGroupByRecursive(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery, groupBy map[string]bool, visited map[*clickhouse.SelectQuery]bool) {
+// Returns a slice of ColumnInfo with column names and their aliases
+func (e *ClickHouseFilterExtractor) extractGroupByRecursive(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery, visited map[*clickhouse.SelectQuery]bool) []ColumnInfo {
 	if visited[query] {
-		return
+		return nil
 	}
 
 	// Mark this query as visited to prevent cycles
@@ -341,19 +421,32 @@ func (e *ClickHouseFilterExtractor) extractGroupByRecursive(query *clickhouse.Se
 
 	// If this query has GROUP BY, use it (outer overrides inner)
 	if hasGroupBy {
+		// Extract GROUP BY columns
 		tempGroupBy := make(map[string]bool)
 		e.extractGroupFromGroupByClause(query.GroupBy, tempGroupBy)
-		for key := range tempGroupBy {
-			groupBy[key] = true
+
+		// Extract SELECT columns and their aliases from the same query level
+		selectAliases := e.extractSelectColumns(query)
+
+		// Build ColumnInfo array by matching GROUP BY with SELECT aliases
+		result := []ColumnInfo{}
+		for groupByCol := range tempGroupBy {
+			alias := selectAliases[groupByCol] // Will be "" if not in SELECT
+			result = append(result, ColumnInfo{
+				Name:  groupByCol,
+				Alias: alias,
+			})
 		}
-		return
+		return result
 	}
 
 	// If no GROUP BY in this query, follow CTE/subquery references
 	sourceQuery := e.extractSourceQuery(query, cteMap)
 	if sourceQuery != nil {
-		e.extractGroupByRecursive(sourceQuery, cteMap, groupBy, visited)
+		return e.extractGroupByRecursive(sourceQuery, cteMap, visited)
 	}
+
+	return nil
 }
 
 // extractSourceQuery extracts the SelectQuery from FROM expressions

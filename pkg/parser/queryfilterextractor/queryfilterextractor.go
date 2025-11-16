@@ -11,11 +11,17 @@ const (
 	ExtractorPromQL = "qfe_promql"
 )
 
+type ColumnInfo struct {
+	Name  string
+	Alias string
+}
+
 type FilterResult struct {
 	// MetricNames are the metrics that are being filtered on
 	MetricNames []string
 	// GroupBy are the group bys that are being used to group the results
-	GroupBy []string
+	GroupBy        []string
+	GroupByColumns []ColumnInfo
 }
 
 type FilterExtractor interface {
