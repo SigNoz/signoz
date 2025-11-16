@@ -13,11 +13,10 @@ type orderConfig struct {
 	orderBySamples bool
 }
 
-// TODO(nikhilmantri0902, srikanthccv): Is this is the best way to do things? What does this function even mean?
 func resolveOrderBy(order *metricsmoduletypes.OrderBy) (orderConfig, error) {
 	cfg := orderConfig{
-		sqlColumn:      OrderByColNameTimeSeries,
-		direction:      OrderByDirectionDesc,
+		sqlColumn:      orderByColNameTimeSeries,
+		direction:      orderByDirectionDesc,
 		orderBySamples: false,
 	}
 
@@ -26,23 +25,23 @@ func resolveOrderBy(order *metricsmoduletypes.OrderBy) (orderConfig, error) {
 	}
 
 	switch strings.ToLower(order.ColumnName) {
-	case OrderByColNameTimeSeries:
-		cfg.sqlColumn = OrderByColNameTimeSeries
-	case OrderByColNameSamples:
+	case orderByColNameTimeSeries:
+		cfg.sqlColumn = orderByColNameTimeSeries
+	case orderByColNameSamples:
 		cfg.orderBySamples = true
-		cfg.sqlColumn = OrderByColNameTimeSeries // defer true ordering until samples computed
-	case OrderByColNameMetricName: // TODO(nikhilmantri0902, srikanthccv): we should provide ordering by metric_name also in my opinion
-		cfg.sqlColumn = OrderByColNameMetricName
+		cfg.sqlColumn = orderByColNameTimeSeries // defer true ordering until samples computed
+	case orderByColNameMetricName: // TODO(nikhilmantri0902, srikanthccv): we should provide ordering by metric_name also in my opinion
+		cfg.sqlColumn = orderByColNameMetricName
 	default:
 		return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order column %q", order.ColumnName)
 	}
 
 	if order.Order != "" {
 		switch strings.ToUpper(order.Order) {
-		case OrderByDirectionAsc:
-			cfg.direction = OrderByDirectionAsc
-		case OrderByDirectionDesc:
-			cfg.direction = OrderByDirectionDesc
+		case orderByDirectionAsc:
+			cfg.direction = orderByDirectionAsc
+		case orderByDirectionDesc:
+			cfg.direction = orderByDirectionDesc
 		default:
 			return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order direction %q", order.Order)
 		}

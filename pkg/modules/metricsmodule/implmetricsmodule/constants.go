@@ -13,10 +13,14 @@ const (
 const defaultFilterConditionTrue = "true"
 
 const (
-	OrderByColNameTimeSeries = "timeseries"
-	OrderByColNameSamples    = "samples"
-	OrderByColNameMetricName = "metric_name"
+	orderByColNameTimeSeries = "timeseries"
+	orderByColNameSamples    = "samples"
+	orderByColNameMetricName = "metric_name"
 
-	OrderByDirectionAsc  = "ASC"
-	OrderByDirectionDesc = "DESC"
+	orderByDirectionAsc  = "ASC"
+	orderByDirectionDesc = "DESC"
+)
+
+const (
+	sqlKeyWordWhere = "WHERE"
 )
