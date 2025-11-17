@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -20,6 +21,9 @@ type Module interface {
 
 	// get the dashboard data by public dashboard id
 	GetDashboardByPublicID(context.Context, valuer.UUID) (*dashboardtypes.Dashboard, error)
+
+	// gets the org for the given public dashboard
+	GetPublicDashboardOrgAndSelectors(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error)
 
 	// updates the config for public sharing.
 	UpdatePublic(context.Context, *dashboardtypes.PublicDashboard) error

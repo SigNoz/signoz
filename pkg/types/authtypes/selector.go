@@ -1,11 +1,13 @@
 package authtypes
 
 import (
-	"context"
 	"encoding/json"
+	"net/http"
 	"regexp"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
@@ -27,7 +29,8 @@ var (
 	typeMetaResourcesSelectorRegex = regexp.MustCompile(`^\*$`)
 )
 
-type SelectorCallbackFn func(context.Context, Claims) ([]Selector, error)
+type SelectorCallbackFn func(*http.Request, Claims) ([]Selector, error)
+type SelectorCallbackWithoutClaimsFn func(*http.Request, []*types.Organization) ([]Selector, valuer.UUID, error)
 
 type Selector struct {
 	val string

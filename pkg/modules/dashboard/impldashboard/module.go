@@ -127,6 +127,22 @@ func (module *module) GetDashboardByPublicID(ctx context.Context, id valuer.UUID
 	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
 }
 
+func (module *module) GetPublicDashboardOrgAndSelectors(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+	orgIDs := make([]string, len(orgs))
+	for idx, org := range orgs {
+		orgIDs[idx] = org.ID.StringValue()
+	}
+
+	storableDashboard, err := module.store.GetDashboardByOrgsAndPublicID(ctx, orgIDs, id.StringValue())
+	if err != nil {
+		return nil, valuer.UUID{}, err
+	}
+
+	return []authtypes.Selector{
+		authtypes.MustNewSelector(authtypes.TypeMetaResource, id.StringValue()),
+	}, storableDashboard.OrgID, nil
+}
+
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
 	storableDashboards, err := module.store.List(ctx, orgID)
 	if err != nil {

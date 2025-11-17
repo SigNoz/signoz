@@ -174,6 +174,25 @@ func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims aut
 	return nil
 }
 
+func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, _ authtypes.Relation, translation authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector) error {
+	subject, err := authtypes.NewSubject(authtypes.TypeAnonymous, authtypes.AnonymousUser.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	tuples, err := authtypes.TypeableOrganization.Tuples(subject, translation, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeOrganization, orgID.StringValue())}, orgID)
+	if err != nil {
+		return err
+	}
+
+	err = provider.BatchCheck(ctx, tuples)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (provider *provider) Write(ctx context.Context, additions []*openfgav1.TupleKey, deletions []*openfgav1.TupleKey) error {
 	storeID, modelID := provider.getStoreIDandModelID()
 	deletionTuplesWithoutCondition := make([]*openfgav1.TupleKeyWithoutCondition, len(deletions))

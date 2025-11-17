@@ -52,6 +52,7 @@ type SigNoz struct {
 	Sharder         sharder.Sharder
 	StatsReporter   statsreporter.StatsReporter
 	Tokenizer       pkgtokenizer.Tokenizer
+	Authz           authz.AuthZ
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -368,6 +369,7 @@ func New(
 		Emailing:        emailing,
 		Sharder:         sharder,
 		Tokenizer:       tokenizer,
+		Authz:           authz,
 		Modules:         modules,
 		Handlers:        handlers,
 	}, nil

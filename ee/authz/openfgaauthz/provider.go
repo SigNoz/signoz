@@ -66,6 +66,25 @@ func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims aut
 	return nil
 }
 
+func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, _ authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector) error {
+	subject, err := authtypes.NewSubject(authtypes.TypeAnonymous, authtypes.AnonymousUser.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	tuples, err := typeable.Tuples(subject, relation, selectors, orgID)
+	if err != nil {
+		return err
+	}
+
+	err = provider.BatchCheck(ctx, tuples)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (provider *provider) BatchCheck(ctx context.Context, tuples []*openfgav1.TupleKey) error {
 	return provider.pkgAuthzService.BatchCheck(ctx, tuples)
 }
