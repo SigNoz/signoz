@@ -5,15 +5,16 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
-	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -22,17 +23,17 @@ type module struct {
 	settings  factory.ScopedProviderSettings
 	analytics analytics.Analytics
 	orgGetter organization.Getter
-	authz     authz.AuthZ
+	role      role.Module
 }
 
-func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, authz authz.AuthZ) dashboard.Module {
+func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/impldashboard")
 	return &module{
 		store:     NewStore(sqlstore),
 		settings:  scopedProviderSettings,
 		analytics: analytics,
 		orgGetter: orgGetter,
-		authz:     authz,
+		role:      role,
 	}
 }
 
@@ -57,23 +58,30 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 }
 
 func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
-	err := module.store.CreatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
+	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(authtypes.AnonymousUserRoleName, authtypes.AnonymousUserRoleDescription, orgID))
 	if err != nil {
 		return err
 	}
 
-	subject := authtypes.MustNewSubject(authtypes.TypeAnonymous, "*", nil)
-	tuples, err := dashboardtypes.TypeableMetaResourceDashboard.Tuples(
-		subject,
-		authtypes.RelationRead,
-		[]authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.DashboardID.StringValue())},
-		orgID,
+	err = module.role.AssignRole(ctx, role.ID, authtypes.MustNewSubject(authtypes.TypeAnonymous, authtypes.TypeAnonymous.StringValue(), nil))
+	if err != nil {
+		return err
+	}
+
+	additionObject := authtypes.MustNewObject(
+		authtypes.Resource{
+			Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
+			Type: authtypes.TypeMetaResource,
+		},
+		authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.ID.String()),
 	)
+
+	err = module.role.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, []*authtypes.Object{additionObject}, nil)
 	if err != nil {
 		return err
 	}
 
-	err = module.authz.Write(ctx, tuples, nil)
+	err = module.store.CreatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
 	if err != nil {
 		return err
 	}
@@ -112,22 +120,6 @@ func (module *module) GetDashboardByPublicID(ctx context.Context, id valuer.UUID
 	}
 
 	storableDashboard, err := module.store.GetDashboardByOrgsAndPublicID(ctx, orgIDs, id.StringValue())
-	if err != nil {
-		return nil, err
-	}
-
-	subject := authtypes.MustNewSubject(authtypes.TypeAnonymous, valuer.GenerateUUID().StringValue(), nil)
-	tuples, err := dashboardtypes.TypeableMetaResourceDashboard.Tuples(
-		subject,
-		authtypes.RelationRead,
-		[]authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeMetaResource, storableDashboard.ID.StringValue())},
-		storableDashboard.OrgID,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	err = module.authz.BatchCheck(ctx, tuples)
 	if err != nil {
 		return nil, err
 	}
@@ -231,23 +223,30 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 }
 
 func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
-	err := module.store.DeletePublic(ctx, dashboardID.StringValue())
+	publicDashboard, err := module.GetPublic(ctx, orgID, dashboardID)
 	if err != nil {
 		return err
 	}
 
-	subject := authtypes.MustNewSubject(authtypes.TypeAnonymous, "*", nil)
-	tuples, err := dashboardtypes.TypeableMetaResourceDashboard.Tuples(
-		subject,
-		authtypes.RelationRead,
-		[]authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeMetaResource, dashboardID.StringValue())},
-		orgID,
+	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(authtypes.AnonymousUserRoleName, authtypes.AnonymousUserRoleDescription, orgID))
+	if err != nil {
+		return err
+	}
+
+	deletionObject := authtypes.MustNewObject(
+		authtypes.Resource{
+			Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
+			Type: authtypes.TypeMetaResource,
+		},
+		authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.ID.String()),
 	)
+
+	err = module.role.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, nil, []*authtypes.Object{deletionObject})
 	if err != nil {
 		return err
 	}
 
-	err = module.authz.Write(ctx, nil, tuples)
+	err = module.store.DeletePublic(ctx, dashboardID.StringValue())
 	if err != nil {
 		return err
 	}

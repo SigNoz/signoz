@@ -5,10 +5,12 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
 type module struct {
@@ -25,15 +27,23 @@ func NewModule(store roletypes.Store, authz authz.AuthZ, registry []role.Registe
 	}
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, displayName, description string) (*roletypes.Role, error) {
-	role := roletypes.NewRole(displayName, description, orgID)
+func (module *module) Create(ctx context.Context, role *roletypes.Role) error {
+	return module.store.Create(ctx, roletypes.NewStorableRoleFromRole(role))
+}
 
-	storableRole, err := roletypes.NewStorableRoleFromRole(role)
+func (module *module) GetOrCreate(ctx context.Context, role *roletypes.Role) (*roletypes.Role, error) {
+	existingRole, err := module.store.GetByNameAndOrgID(ctx, role.Name, role.OrgID)
 	if err != nil {
-		return nil, err
+		if !errors.Ast(err, errors.TypeNotFound) {
+			return nil, err
+		}
 	}
 
-	err = module.store.Create(ctx, storableRole)
+	if existingRole != nil {
+		return roletypes.NewRoleFromStorableRole(existingRole), nil
+	}
+
+	err = module.store.Create(ctx, roletypes.NewStorableRoleFromRole(role))
 	if err != nil {
 		return nil, err
 	}
@@ -63,12 +73,7 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 		return nil, err
 	}
 
-	role, err := roletypes.NewRoleFromStorableRole(storableRole)
-	if err != nil {
-		return nil, err
-	}
-
-	return role, nil
+	return roletypes.NewRoleFromStorableRole(storableRole), nil
 }
 
 func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*authtypes.Object, error) {
@@ -107,39 +112,14 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes
 
 	roles := make([]*roletypes.Role, len(storableRoles))
 	for idx, storableRole := range storableRoles {
-		role, err := roletypes.NewRoleFromStorableRole(storableRole)
-		if err != nil {
-			return nil, err
-		}
-		roles[idx] = role
+		roles[idx] = roletypes.NewRoleFromStorableRole(storableRole)
 	}
 
 	return roles, nil
 }
 
-func (module *module) Patch(ctx context.Context, orgID valuer.UUID, id valuer.UUID, displayName, description *string) error {
-	storableRole, err := module.store.Get(ctx, orgID, id)
-	if err != nil {
-		return err
-	}
-
-	role, err := roletypes.NewRoleFromStorableRole(storableRole)
-	if err != nil {
-		return err
-	}
-
-	role.PatchMetadata(displayName, description)
-	updatedRole, err := roletypes.NewStorableRoleFromRole(role)
-	if err != nil {
-		return err
-	}
-
-	err = module.store.Update(ctx, orgID, updatedRole)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (module *module) Patch(ctx context.Context, orgID valuer.UUID, role *roletypes.Role) error {
+	return module.store.Update(ctx, orgID, roletypes.NewStorableRoleFromRole(role))
 }
 
 func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation, additions, deletions []*authtypes.Object) error {
@@ -159,6 +139,19 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 	}
 
 	return nil
+}
+
+func (module *module) AssignRole(ctx context.Context, id valuer.UUID, subject string) error {
+	return module.authz.Write(ctx,
+		[]*openfgav1.TupleKey{
+			{
+				User:     subject,
+				Relation: authtypes.RelationAssignee.StringValue(),
+				Object:   authtypes.MustNewSelector(authtypes.TypeRole, id.StringValue()).String(),
+			},
+		},
+		nil,
+	)
 }
 
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {

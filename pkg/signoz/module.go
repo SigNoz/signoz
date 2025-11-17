@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/services"
@@ -83,7 +84,7 @@ func NewModules(
 		Preference:     implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
 		SavedView:      implsavedview.NewModule(sqlstore),
 		Apdex:          implapdex.NewModule(sqlstore),
-		Dashboard:      impldashboard.NewModule(sqlstore, providerSettings, analytics, orgGetter, authz),
+		Dashboard:      impldashboard.NewModule(sqlstore, providerSettings, analytics, orgGetter, implrole.NewModule(implrole.NewStore(sqlstore), authz, nil)),
 		User:           user,
 		UserGetter:     userGetter,
 		QuickFilter:    quickfilter,
