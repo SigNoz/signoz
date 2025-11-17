@@ -3,7 +3,6 @@ package jwttokenizer
 import (
 	"context"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -29,7 +28,7 @@ type provider struct {
 	settings            factory.ScopedProviderSettings
 	cache               cache.Cache
 	tokenStore          authtypes.TokenStore
-	lastObservedAtCache *ristretto.Cache[string, map[string]time.Time]
+	lastObservedAtCache *ristretto.Cache[string, map[valuer.UUID]time.Time]
 	stopC               chan struct{}
 }
 
@@ -46,7 +45,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		settings.Logger().ErrorContext(ctx, "🚨 CRITICAL SECURITY ISSUE: No JWT secret key specified!", "error", "SIGNOZ_JWT_SECRET environment variable is not set. This has dire consequences for the security of the application. Without a JWT secret, user sessions are vulnerable to tampering and unauthorized access. Please set the SIGNOZ_TOKENIZER_JWT_SECRET environment variable immediately. For more information, please refer to https://github.com/SigNoz/signoz/issues/8400.")
 	}
 
-	lastObservedAtCache, err := ristretto.NewCache(&ristretto.Config[string, map[string]time.Time]{
+	lastObservedAtCache, err := ristretto.NewCache(&ristretto.Config[string, map[valuer.UUID]time.Time]{
 		NumCounters: 10 * expectedLastObservedAtCacheEntries, // 10x of expected entries
 		MaxCost:     1 << 19,                                 // ~ 512 KB
 		BufferItems: 64,
@@ -167,7 +166,7 @@ func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken str
 		return nil
 	}
 
-	cachedLastObservedAts[lastObservedAtCacheKey(valuer.MustNewUUID(claims.UserID))] = lastObservedAt
+	cachedLastObservedAts[valuer.MustNewUUID(claims.UserID)] = lastObservedAt
 
 	if ok := provider.lastObservedAtCache.Set(claims.OrgID, cachedLastObservedAts, 1); !ok {
 		provider.settings.Logger().ErrorContext(ctx, "error caching last observed at timestamp", "user_id", claims.UserID)
@@ -187,7 +186,7 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 
 	if len(userIDToLastObservedAts) > 0 {
 		userIDToLastObservedAtMax := userIDToLastObservedAts[0]
-		if lastObservedAt, ok := userIDToLastObservedAtMax["last_observed_at"].(time.Time); ok {
+		for _, lastObservedAt := range userIDToLastObservedAtMax {
 			if !lastObservedAt.IsZero() {
 				stats["auth_token.last_observed_at.max.time"] = lastObservedAt.UTC()
 				stats["auth_token.last_observed_at.max.time_unix"] = lastObservedAt.Unix()
@@ -227,27 +226,19 @@ func (provider *provider) ListMaxLastObservedAtByOrgID(ctx context.Context, orgI
 	maxLastObservedAtPerUserID := make(map[valuer.UUID]time.Time)
 
 	for _, userIDToLastObservedAt := range userIDToLastObservedAts {
-		userID, ok := userIDToLastObservedAt["user_id"].(valuer.UUID)
-		if !ok {
-			continue
-		}
+		for userID, lastObservedAt := range userIDToLastObservedAt {
+			if lastObservedAt.IsZero() {
+				continue
+			}
 
-		lastObservedAt, ok := userIDToLastObservedAt["last_observed_at"].(time.Time)
-		if !ok {
-			continue
-		}
+			if _, ok := maxLastObservedAtPerUserID[userID]; !ok {
+				maxLastObservedAtPerUserID[userID] = lastObservedAt.UTC()
+				continue
+			}
 
-		if lastObservedAt.IsZero() {
-			continue
-		}
-
-		if _, ok := maxLastObservedAtPerUserID[userID]; !ok {
-			maxLastObservedAtPerUserID[userID] = lastObservedAt.UTC()
-			continue
-		}
-
-		if lastObservedAt.UTC().After(maxLastObservedAtPerUserID[userID]) {
-			maxLastObservedAtPerUserID[userID] = lastObservedAt.UTC()
+			if lastObservedAt.UTC().After(maxLastObservedAtPerUserID[userID]) {
+				maxLastObservedAtPerUserID[userID] = lastObservedAt.UTC()
+			}
 		}
 	}
 
@@ -279,30 +270,35 @@ func (provider *provider) getOrSetIdentity(ctx context.Context, orgID, userID va
 	return identity, nil
 }
 
-func (provider *provider) listLastObservedAtDesc(ctx context.Context, orgID valuer.UUID) []map[string]any {
-	var userIDToLastObservedAt []map[string]any
+func (provider *provider) listLastObservedAtDesc(ctx context.Context, orgID valuer.UUID) []map[valuer.UUID]time.Time {
+	var userIDToLastObservedAt []map[valuer.UUID]time.Time
 
 	cachedLastObservedAts, ok := provider.lastObservedAtCache.Get(orgID.String())
 	if !ok {
 		return nil
 	}
 
-	for key, value := range cachedLastObservedAts {
-		userID, err := userIDFromLastObservedAtCacheKey(key)
-		if err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "invalid cache key", "error", err, "key", key)
-			continue
-		}
-
-		userIDToLastObservedAt = append(userIDToLastObservedAt, map[string]any{
-			"user_id":          userID,
-			"last_observed_at": value,
+	for userID, lastObservedAt := range cachedLastObservedAts {
+		userIDToLastObservedAt = append(userIDToLastObservedAt, map[valuer.UUID]time.Time{
+			userID: lastObservedAt,
 		})
 	}
 
 	// sort by descending order of last_observed_at
-	slices.SortFunc(userIDToLastObservedAt, func(a, b map[string]any) int {
-		return b["last_observed_at"].(time.Time).Compare(a["last_observed_at"].(time.Time))
+	slices.SortFunc(userIDToLastObservedAt, func(a, b map[valuer.UUID]time.Time) int {
+		var aT, bT time.Time
+
+		for _, t := range a {
+			aT = t
+			break
+		}
+
+		for _, t := range b {
+			bT = t
+			break
+		}
+
+		return bT.Compare(aT)
 	})
 
 	return userIDToLastObservedAt
@@ -310,18 +306,4 @@ func (provider *provider) listLastObservedAtDesc(ctx context.Context, orgID valu
 
 func identityCacheKey(userID valuer.UUID) string {
 	return "identity::" + userID.String()
-}
-
-func userIDFromLastObservedAtCacheKey(key string) (valuer.UUID, error) {
-	parts := strings.Split(key, "::")
-
-	if len(parts) != 2 {
-		return valuer.UUID{}, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid last observed at cache key")
-	}
-
-	return valuer.MustNewUUID(parts[1]), nil
-}
-
-func lastObservedAtCacheKey(userID valuer.UUID) string {
-	return "user_id::" + userID.String()
 }
