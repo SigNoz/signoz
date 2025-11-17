@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 )
 
 type QueryProgress struct {
@@ -67,14 +68,12 @@ func GetLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3
 	return data
 }
 
-type PromotePathsRequest struct {
-	Paths []PromotePathItem `json:"paths"`
-}
-
 type PromotePathItem struct {
 	Path    string `json:"path"`
-	Promote bool   `json:"promote"`
-	Indexed bool   `json:"indexed"`
+	Promote bool   `json:"promote,omitempty"`
+	Index   bool   `json:"index,omitempty"`
+
+	Indexes []schemamigrator.Index `json:"indexes,omitempty"`
 }
 
 func (i *PromotePathItem) Validate() error {

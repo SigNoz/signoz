@@ -128,10 +128,10 @@ func ExtractBodyPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 	return paths, complete, highestLastSeen, nil
 }
 
-func ListIndexedPaths(ctx context.Context, cluster string, conn clickhouse.Conn) ([]string, error) {
-	query := fmt.Sprintf(`SELECT type, expr FROM 
+func ListIndexedPaths(ctx context.Context, cluster string, conn clickhouse.Conn) ([]schemamigrator.Index, error) {
+	query := fmt.Sprintf(`SELECT name, type_full, expr, granularity FROM 
 	clusterAllReplicas('%s', %s) 
-	WHERE database = '%s' AND table = '%s' AND type = 'ngrambf_v1'
+	WHERE database = '%s' AND table = '%s'
 	AND (expr LIKE '%%%s%%' OR expr LIKE '%%%s%%')`,
 		cluster, SkipIndexTableName, DBName, LogsV2LocalTableName, constants.BodyJSONColumnPrefix, constants.BodyPromotedColumnPrefix)
 	rows, err := conn.Query(ctx, query)
@@ -140,19 +140,42 @@ func ListIndexedPaths(ctx context.Context, cluster string, conn clickhouse.Conn)
 	}
 	defer rows.Close()
 
-	paths := []string{}
+	indexes := []schemamigrator.Index{}
 	for rows.Next() {
-		var typ string
+		var name string
+		var typeFull string
 		var expr string
-		if err := rows.Scan(&typ, &expr); err != nil {
+		var granularity uint64
+		if err := rows.Scan(&name, &typeFull, &expr, &granularity); err != nil {
 			return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to scan string indexed column")
 		}
-		subColumn, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(expr)
-		if err != nil {
-			return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("failed to unfold JSON sub column index expression for %s", expr))
-		}
-		paths = append(paths, subColumn)
+		indexes = append(indexes, schemamigrator.Index{
+			Name:        name,
+			Type:        typeFull,
+			Expression:  expr,
+			Granularity: int(granularity),
+		})
 	}
 
-	return paths, nil
+	return indexes, nil
+}
+
+func ListPromotedPaths(ctx context.Context, conn clickhouse.Conn) (map[string]struct{}, error) {
+	query := fmt.Sprintf("SELECT path FROM %s.%s", DBName, PromotedPathsTableName)
+	rows, err := conn.Query(ctx, query)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to load promoted paths")
+	}
+	defer rows.Close()
+
+	next := make(map[string]struct{})
+	for rows.Next() {
+		var path string
+		if err := rows.Scan(&path); err != nil {
+			return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to scan promoted path")
+		}
+		next[path] = struct{}{}
+	}
+
+	return next, nil
 }

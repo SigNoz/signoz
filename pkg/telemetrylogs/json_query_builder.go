@@ -217,22 +217,10 @@ func (b *JSONQueryBuilder) IsPromoted(path string) bool {
 
 // syncPromoted refreshes the promoted paths from ClickHouse and reconciles the set.
 func (b *JSONQueryBuilder) syncPromoted(ctx context.Context) error {
-	query := fmt.Sprintf("SELECT path FROM %s.%s", DBName, PromotedPathsTableName)
-	rows, err := b.telemetryStore.ClickhouseDB().Query(ctx, query)
+	next, err := ListPromotedPaths(ctx, b.telemetryStore.ClickhouseDB())
 	if err != nil {
-		return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to load promoted paths")
+		return err
 	}
-	defer rows.Close()
-
-	next := make(map[string]struct{})
-	for rows.Next() {
-		var path string
-		if err := rows.Scan(&path); err != nil {
-			return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to scan promoted path")
-		}
-		next[path] = struct{}{}
-	}
-
 	// Delete stale
 	b.promotedPaths.Range(func(k, _ any) bool {
 		key, _ := k.(string)
