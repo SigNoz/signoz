@@ -6,7 +6,11 @@ import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { FlatLogData } from 'lib/logs/flatLogData';
+import {
+	FlatLogData,
+	LOG_FIELD_BODY_KEY,
+	LOG_FIELD_TIMESTAMP_KEY,
+} from 'lib/logs/flatLogData';
 import { useTimezone } from 'providers/Timezone';
 import { useMemo } from 'react';
 
@@ -22,9 +26,6 @@ import {
 	UseTableViewProps,
 	UseTableViewResult,
 } from './types';
-
-const LogTimeFieldKey = 'log.timestamp:string';
-const LogBodyFieldKey = 'log.body:string';
 
 export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	const {
@@ -54,7 +55,9 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
-			.filter((e) => !['id', LogBodyFieldKey, LogTimeFieldKey].includes(e.key))
+			.filter(
+				(e) => !['id', LOG_FIELD_BODY_KEY, LOG_FIELD_TIMESTAMP_KEY].includes(e.key),
+			)
 			.map((field) => ({
 				title: field.displayName,
 				dataIndex: field.key,
@@ -106,13 +109,13 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					),
 				}),
 			},
-			...(fields.some((field) => field.key === LogTimeFieldKey)
+			...(fields.some((field) => field.key === LOG_FIELD_TIMESTAMP_KEY)
 				? [
 						{
 							title: 'timestamp',
-							dataIndex: LogTimeFieldKey,
+							dataIndex: LOG_FIELD_TIMESTAMP_KEY,
 							key: 'timestamp',
-							accessorKey: LogTimeFieldKey,
+							accessorKey: LOG_FIELD_TIMESTAMP_KEY,
 							id: 'timestamp',
 							// https://github.com/ant-design/ant-design/discussions/36886
 							render: (
@@ -120,7 +123,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								record: Record<string, unknown>,
 							): ColumnTypeRender<Record<string, unknown>> => {
 								const timestampValue =
-									(record[LogTimeFieldKey] as string | number) || field;
+									(record[LOG_FIELD_TIMESTAMP_KEY] as string | number) || field;
 								const date =
 									typeof timestampValue === 'string'
 										? formatTimezoneAdjustedTimestamp(
@@ -145,19 +148,19 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				  ]
 				: []),
 			...(appendTo === 'center' ? fieldColumns : []),
-			...(fields.some((field) => field.key === LogBodyFieldKey)
+			...(fields.some((field) => field.key === LOG_FIELD_BODY_KEY)
 				? [
 						{
 							title: 'body',
-							dataIndex: LogBodyFieldKey,
+							dataIndex: LOG_FIELD_BODY_KEY,
 							key: 'body',
-							accessorKey: LogBodyFieldKey,
+							accessorKey: LOG_FIELD_BODY_KEY,
 							id: 'body',
 							render: (
 								field: string | number,
 								record: Record<string, unknown>,
 							): ColumnTypeRender<Record<string, unknown>> => {
-								const bodyValue = (record[LogBodyFieldKey] as string) || '';
+								const bodyValue = (record[LOG_FIELD_BODY_KEY] as string) || '';
 								return {
 									props: {
 										style: bodyColumnStyle,

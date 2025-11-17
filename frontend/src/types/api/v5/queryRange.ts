@@ -130,7 +130,7 @@ export interface TelemetryFieldKey {
 	name: string;
 	displayName?: string;
 	// display name can change dynamically depending on if there's a conflicting field with same name and in only meant for UI display
-	key: string;
+	key?: string;
 	// key is a unique identifier generated for each field, used for comparisons and selections
 	// key = fieldContext.name:fieldDataType
 	description?: string;

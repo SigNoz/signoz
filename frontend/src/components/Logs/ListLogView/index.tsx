@@ -13,6 +13,10 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
+import {
+	LOG_FIELD_BODY_KEY,
+	LOG_FIELD_TIMESTAMP_KEY,
+} from 'lib/logs/flatLogData';
 import { useTimezone } from 'providers/Timezone';
 import { useCallback, useMemo, useState } from 'react';
 // interfaces
@@ -32,7 +36,7 @@ import {
 	Text,
 	TextContainer,
 } from './styles';
-import { isValidLogField, LogBodyFieldKey, LogTimeFieldKey } from './util';
+import { isValidLogField } from './util';
 
 interface LogFieldProps {
 	fieldKey: string;
@@ -173,13 +177,13 @@ function ListLogView({
 
 	const timestampValue = useMemo(
 		() =>
-			typeof flattenLogData[LogTimeFieldKey] === 'string'
+			typeof flattenLogData[LOG_FIELD_TIMESTAMP_KEY] === 'string'
 				? formatTimezoneAdjustedTimestamp(
-						flattenLogData[LogTimeFieldKey],
+						flattenLogData[LOG_FIELD_TIMESTAMP_KEY],
 						DATE_TIME_FORMATS.ISO_DATETIME_MS,
 				  )
 				: formatTimezoneAdjustedTimestamp(
-						flattenLogData[LogTimeFieldKey] / 1e6,
+						flattenLogData[LOG_FIELD_TIMESTAMP_KEY] / 1e6,
 						DATE_TIME_FORMATS.ISO_DATETIME_MS,
 				  ),
 		[flattenLogData, formatTimezoneAdjustedTimestamp],
@@ -218,10 +222,12 @@ function ListLogView({
 					/>
 					<div>
 						<LogContainer fontSize={fontSize}>
-							{updatedSelecedFields.some((field) => field.key === LogBodyFieldKey) && (
+							{updatedSelecedFields.some(
+								(field) => field.key === LOG_FIELD_BODY_KEY,
+							) && (
 								<LogGeneralField
 									fieldKey="Log"
-									fieldValue={flattenLogData[LogBodyFieldKey]}
+									fieldValue={flattenLogData[LOG_FIELD_BODY_KEY]}
 									linesPerRow={linesPerRow}
 									fontSize={fontSize}
 								/>
@@ -233,7 +239,9 @@ function ListLogView({
 									fontSize={fontSize}
 								/>
 							)}
-							{updatedSelecedFields.some((field) => field.key === LogTimeFieldKey) && (
+							{updatedSelecedFields.some(
+								(field) => field.key === LOG_FIELD_TIMESTAMP_KEY,
+							) && (
 								<LogGeneralField
 									fieldKey="Timestamp"
 									fieldValue={timestampValue}
@@ -243,7 +251,8 @@ function ListLogView({
 
 							{updatedSelecedFields
 								.filter(
-									(field) => ![LogTimeFieldKey, LogBodyFieldKey].includes(field.key),
+									(field) =>
+										![LOG_FIELD_TIMESTAMP_KEY, LOG_FIELD_BODY_KEY].includes(field.key),
 								)
 								.map((field) =>
 									isValidLogField(flattenLogData[field.key] as never) ? (

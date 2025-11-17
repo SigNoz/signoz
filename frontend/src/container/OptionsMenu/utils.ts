@@ -102,7 +102,7 @@ function updateConflictingDisplayNames(
 		);
 
 		if (suffix) {
-			columnsByKey.set(column.key, {
+			columnsByKey.set(column.key || column.name, {
 				...column,
 				displayName: `${column.name}${suffix}`,
 			});
@@ -130,11 +130,11 @@ export function resolveColumnConflicts(
 	// First pass: deduplicate by key and group by name
 	suggestions.forEach((suggestion) => {
 		// Skip duplicates (same key)
-		if (columnsByKey.has(suggestion.key)) {
+		if (columnsByKey.has(suggestion.key || suggestion.name)) {
 			return;
 		}
 
-		columnsByKey.set(suggestion.key, suggestion);
+		columnsByKey.set(suggestion.key || suggestion.name, suggestion);
 
 		// Group by name for conflict detection
 		const existing = columnsByName.get(suggestion.name) || [];

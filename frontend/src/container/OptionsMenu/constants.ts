@@ -1,4 +1,8 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
+import {
+	LOG_FIELD_BODY_KEY,
+	LOG_FIELD_TIMESTAMP_KEY,
+} from 'lib/logs/flatLogData';
 
 import { FontSize, OptionsQuery } from './types';
 
@@ -18,7 +22,7 @@ export const defaultLogsSelectedColumns: TelemetryFieldKey[] = [
 		fieldContext: 'log',
 		fieldDataType: 'string',
 		isIndexed: false,
-		key: 'log.timestamp:string',
+		key: LOG_FIELD_TIMESTAMP_KEY,
 		displayName: 'Timestamp',
 	},
 	{
@@ -27,7 +31,7 @@ export const defaultLogsSelectedColumns: TelemetryFieldKey[] = [
 		fieldContext: 'log',
 		fieldDataType: 'string',
 		isIndexed: false,
-		key: 'log.body:string',
+		key: LOG_FIELD_BODY_KEY,
 		displayName: 'Body',
 	},
 ];

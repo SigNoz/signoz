@@ -20,6 +20,10 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import createQueryParams from 'lib/createQueryParams';
+import {
+	LOG_FIELD_BODY_KEY,
+	LOG_FIELD_TIMESTAMP_KEY,
+} from 'lib/logs/flatLogData';
 import { Compass } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
@@ -184,13 +188,13 @@ function SpanLogs({
 							type: '',
 							displayName: 'Body',
 							name: 'body',
-							key: 'log.body:string',
+							key: LOG_FIELD_BODY_KEY,
 						},
 						{
 							dataType: 'string',
 							type: '',
 							name: 'timestamp',
-							key: 'log.timestamp:string',
+							key: LOG_FIELD_TIMESTAMP_KEY,
 							displayName: 'Timestamp',
 						},
 					]}

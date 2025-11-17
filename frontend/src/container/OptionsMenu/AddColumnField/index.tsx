@@ -45,7 +45,9 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 			{config.value?.map((column) => (
 				<AddColumnItem direction="horizontal" key={column.key}>
 					<Typography>{column.displayName || column.name}</Typography>
-					<DeleteOutlinedIcon onClick={(): void => config.onRemove(column.key)} />
+					<DeleteOutlinedIcon
+						onClick={(): void => config.onRemove(column.key || column.name)}
+					/>
 				</AddColumnItem>
 			))}
 		</AddColumnWrapper>
