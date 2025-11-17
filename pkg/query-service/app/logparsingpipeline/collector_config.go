@@ -10,12 +10,20 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	coreModel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"go.uber.org/zap"
 )
 
 var lockLogsPipelineSpec sync.RWMutex
+
+var (
+	CodeCollectorConfigUnmarshalFailed        = errors.MustNewCode("collector_config_unmarshal_failed")
+	CodeCollectorConfigMarshalFailed          = errors.MustNewCode("collector_config_marshal_failed")
+	CodeCollectorConfigServiceNotFound        = errors.MustNewCode("collector_config_service_not_found")
+	CodeCollectorConfigServiceMarshalFailed   = errors.MustNewCode("collector_config_service_marshal_failed")
+	CodeCollectorConfigServiceUnmarshalFailed = errors.MustNewCode("collector_config_service_unmarshal_failed")
+	CodeCollectorConfigLogsPipelineNotFound   = errors.MustNewCode("collector_config_logs_pipeline_not_found")
+)
 
 // check if the processors already exist
 // if yes then update the processor.
@@ -57,15 +65,15 @@ type otelPipeline struct {
 
 func getOtelPipelineFromConfig(config map[string]interface{}) (*otelPipeline, error) {
 	if _, ok := config["service"]; !ok {
-		return nil, fmt.Errorf("service not found in OTEL config")
+		return nil, errors.NewInvalidInputf(CodeCollectorConfigServiceNotFound, "service not found in OTEL config")
 	}
 	b, err := json.Marshal(config["service"])
 	if err != nil {
-		return nil, err
+		return nil, errors.WrapInternalf(err, CodeCollectorConfigServiceMarshalFailed, "could not marshal OTEL config")
 	}
 	p := otelPipeline{}
 	if err := json.Unmarshal(b, &p); err != nil {
-		return nil, err
+		return nil, errors.WrapInternalf(err, CodeCollectorConfigServiceUnmarshalFailed, "could not unmarshal OTEL config")
 	}
 	return &p, nil
 }
@@ -167,7 +175,7 @@ func GenerateCollectorConfigWithPipelines(config []byte, pipelines []pipelinetyp
 	var collectorConf map[string]interface{}
 	err := yaml.Unmarshal([]byte(config), &collectorConf)
 	if err != nil {
-		return nil, errors.Wrap(err, errors.TypeInvalidInput, errors.CodeBadRequest, "could not unmarshal collector config")
+		return nil, errors.WrapInvalidInputf(err, CodeCollectorConfigUnmarshalFailed, "could not unmarshal collector config")
 	}
 
 	signozPipelineProcessors, signozPipelineProcNames, err := PreparePipelineProcessor(pipelines)
@@ -181,7 +189,7 @@ func GenerateCollectorConfigWithPipelines(config []byte, pipelines []pipelinetyp
 		procConf := signozPipelineProcessors[procName]
 		serializedProcConf, err := yaml.Marshal(procConf)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not marshal processor config for %s", procName)
+			return nil, errors.WrapInternalf(err, CodeCollectorConfigMarshalFailed, "could not marshal processor config for %s", procName)
 		}
 		escapedSerializedConf := strings.ReplaceAll(
 			string(serializedProcConf), "$", "$$",
@@ -190,7 +198,7 @@ func GenerateCollectorConfigWithPipelines(config []byte, pipelines []pipelinetyp
 		var escapedConf map[string]interface{}
 		err = yaml.Unmarshal([]byte(escapedSerializedConf), &escapedConf)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not unmarshal dollar escaped processor config for %s", procName)
+			return nil, errors.WrapInternalf(err, CodeCollectorConfigUnmarshalFailed, "could not unmarshal dollar escaped processor config for %s", procName)
 		}
 
 		signozPipelineProcessors[procName] = escapedConf
@@ -202,12 +210,10 @@ func GenerateCollectorConfigWithPipelines(config []byte, pipelines []pipelinetyp
 	// build the new processor list in service.pipelines.logs
 	p, err := getOtelPipelineFromConfig(collectorConf)
 	if err != nil {
-		return nil, coreModel.BadRequest(err)
+		return nil, err
 	}
 	if p.Pipelines.Logs == nil {
-		return nil, coreModel.InternalError(fmt.Errorf(
-			"logs pipeline doesn't exist",
-		))
+		return nil, errors.NewInternalf(CodeCollectorConfigLogsPipelineNotFound, "logs pipeline doesn't exist")
 	}
 
 	updatedProcessorList, _ := buildCollectorPipelineProcessorsList(p.Pipelines.Logs.Processors, signozPipelineProcNames)
@@ -218,7 +224,7 @@ func GenerateCollectorConfigWithPipelines(config []byte, pipelines []pipelinetyp
 
 	updatedConf, err := yaml.Marshal(collectorConf)
 	if err != nil {
-		return nil, coreModel.BadRequest(err)
+		return nil, errors.WrapInternalf(err, CodeCollectorConfigMarshalFailed, "could not marshal collector config")
 	}
 
 	return updatedConf, nil

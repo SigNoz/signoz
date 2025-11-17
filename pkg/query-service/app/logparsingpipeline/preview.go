@@ -38,7 +38,7 @@ func SimulatePipelinesProcessing(ctx context.Context, pipelines []pipelinetypes.
 
 	processorFactories, err := otelcol.MakeFactoryMap(signozlogspipelineprocessor.NewFactory())
 	if err != nil {
-		return nil, nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "could not construct processor factory map")
+		return nil, nil, errors.WrapInternalf(err, CodeProcessorFactoryMapFailed, "could not construct processor factory map")
 	}
 
 	// Pipelines translate to logtransformprocessors in otel collector config.

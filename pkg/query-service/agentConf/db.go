@@ -17,6 +17,15 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+var (
+	CodeConfigVersionNotFound          = errors.MustNewCode("config_version_not_found")
+	CodeElementTypeRequired            = errors.MustNewCode("element_type_required")
+	CodeConfigElementsRequired         = errors.MustNewCode("config_elements_required")
+	CodeConfigVersionInsertFailed      = errors.MustNewCode("config_version_insert_failed")
+	CodeConfigElementInsertFailed      = errors.MustNewCode("config_element_insert_failed")
+	CodeConfigDeployStatusUpdateFailed = errors.MustNewCode("config_deploy_status_update_failed")
+)
+
 // Repo handles DDL and DML ops on ingestion rules
 type Repo struct {
 	store sqlstore.SQLStore
@@ -69,9 +78,9 @@ func (r *Repo) GetConfigVersion(
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.Wrap(err, errors.TypeNotFound, errors.CodeNotFound, "config version not found")
+			return nil, errors.WrapNotFoundf(err, CodeConfigVersionNotFound, "config version not found")
 		}
-		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to get config version")
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get config version")
 	}
 
 	return &c, nil
@@ -93,9 +102,9 @@ func (r *Repo) GetLatestVersion(
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.Wrap(err, errors.TypeNotFound, errors.CodeNotFound, "config latest version not found")
+			return nil, errors.WrapNotFoundf(err, CodeConfigVersionNotFound, "config latest version not found")
 		}
-		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to get latest config version")
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get latest config version")
 	}
 
 	return &c, nil
@@ -106,13 +115,13 @@ func (r *Repo) insertConfig(
 ) error {
 
 	if c.ElementType.StringValue() == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeBadRequest, "element type is required for creating agent config version")
+		return errors.NewInvalidInputf(CodeElementTypeRequired, "element type is required for creating agent config version")
 	}
 
 	// allowing empty elements for logs - use case is deleting all pipelines
 	if len(elements) == 0 && c.ElementType != opamptypes.ElementTypeLogPipelines {
 		zap.L().Error("insert config called with no elements ", zap.String("ElementType", c.ElementType.StringValue()))
-		return errors.New(errors.TypeInvalidInput, errors.CodeBadRequest, "config must have atleast one element")
+		return errors.NewInvalidInputf(CodeConfigElementsRequired, "config must have atleast one element")
 	}
 
 	if c.Version != 0 {
@@ -126,7 +135,7 @@ func (r *Repo) insertConfig(
 	configVersion, err := r.GetLatestVersion(ctx, orgId, c.ElementType)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		zap.L().Error("failed to fetch latest config version", zap.Error(err))
-		return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch latest config version")
+		return err
 	}
 
 	if configVersion != nil {
@@ -151,7 +160,7 @@ func (r *Repo) insertConfig(
 		Exec(ctx)
 	if dbErr != nil {
 		zap.L().Error("error in inserting config version: ", zap.Error(dbErr))
-		return errors.Wrap(dbErr, errors.TypeInternal, errors.CodeInternal, "failed to insert config version")
+		return errors.WrapInternalf(dbErr, CodeConfigVersionInsertFailed, "failed to insert config version")
 	}
 
 	for _, e := range elements {
@@ -167,7 +176,7 @@ func (r *Repo) insertConfig(
 		}
 		_, dbErr = r.store.BunDB().NewInsert().Model(agentConfigElement).Exec(ctx)
 		if dbErr != nil {
-			return errors.Wrap(dbErr, errors.TypeInternal, errors.CodeInternal, "failed to insert config element")
+			return errors.WrapInternalf(dbErr, CodeConfigElementInsertFailed, "failed to insert config element")
 		}
 	}
 
@@ -219,7 +228,7 @@ func (r *Repo) updateDeployStatusByHash(
 		Exec(ctx)
 	if err != nil {
 		zap.L().Error("failed to update deploy status", zap.Error(err))
-		return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to update deploy status")
+		return errors.WrapInternalf(err, CodeConfigDeployStatusUpdateFailed, "failed to update deploy status")
 	}
 
 	return nil

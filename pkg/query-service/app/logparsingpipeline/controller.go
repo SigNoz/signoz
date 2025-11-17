@@ -21,6 +21,10 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	CodeRawPipelinesMarshalFailed = errors.MustNewCode("raw_pipelines_marshal_failed")
+)
+
 // Controller takes care of deployment cycle of log parsing pipelines.
 type LogParsingPipelineController struct {
 	Repo
@@ -261,7 +265,7 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 
 	rawPipelineData, err := json.Marshal(pipelinesResp.Pipelines)
 	if err != nil {
-		return nil, "", errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "could not serialize pipelines to JSON")
+		return nil, "", errors.WrapInternalf(err, CodeRawPipelinesMarshalFailed, "could not serialize pipelines to JSON")
 	}
 
 	return updatedConf, string(rawPipelineData), nil

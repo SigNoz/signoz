@@ -1791,7 +1791,7 @@ func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWrite
 	}
 	traceID := mux.Vars(r)["traceId"]
 	if traceID == "" {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "traceID is required"))
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "traceID is required"))
 		return
 	}
 
@@ -1825,7 +1825,7 @@ func (aH *APIHandler) GetFlamegraphSpansForTrace(w http.ResponseWriter, r *http.
 
 	traceID := mux.Vars(r)["traceId"]
 	if traceID == "" {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "traceID is required"))
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "traceID is required"))
 		return
 	}
 
@@ -1928,7 +1928,7 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
-		render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to get org id from context"))
+		render.Error(w, errors.NewInternalf(errors.CodeInternal, "failed to get org id from context"))
 		return
 	}
 
@@ -2069,7 +2069,7 @@ func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	if aH.SetupCompleted {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "self-registration is disabled"))
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "self-registration is disabled"))
 		return
 	}
 
@@ -4073,11 +4073,11 @@ func parseAgentConfigVersion(r *http.Request) (int, error) {
 	version64, err := strconv.ParseInt(versionString, 0, 8)
 
 	if err != nil {
-		return 0, errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid version number")
+		return 0, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid version number")
 	}
 
 	if version64 <= 0 {
-		return 0, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid version number")
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid version number")
 	}
 
 	return int(version64), nil
@@ -4087,7 +4087,7 @@ func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 	req := logparsingpipeline.PipelinesPreviewRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeBadRequest, "failed to decode request body: %w", err))
+		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to decode request body: %w"))
 		return
 	}
 

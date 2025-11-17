@@ -13,6 +13,12 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	CodeNoAgentsAvailable          = errors.MustNewCode("no_agents_available")
+	CodeOpAmpServerDown            = errors.MustNewCode("opamp_server_down")
+	CodeMultipleAgentsNotSupported = errors.MustNewCode("multiple_agents_not_supported")
+)
+
 // inserts or updates ingestion controller processors depending
 // on the signal (metrics or traces)
 func UpsertControlProcessors(ctx context.Context, signal string,
@@ -31,17 +37,17 @@ func UpsertControlProcessors(ctx context.Context, signal string,
 	}
 
 	if opAmpServer == nil {
-		return "", errors.New(errors.TypeInternal, errors.CodeUnavailable, "opamp server is down, unable to push config to agent at this moment")
+		return "", errors.NewInternalf(CodeOpAmpServerDown, "opamp server is down, unable to push config to agent at this moment")
 	}
 
 	agents := opAmpServer.agents.GetAllAgents()
 	if len(agents) == 0 {
-		return "", errors.New(errors.TypeInternal, errors.CodeUnavailable, "no agents available at the moment")
+		return "", errors.NewInternalf(CodeNoAgentsAvailable, "no agents available at the moment")
 	}
 
 	if len(agents) > 1 && signal == string(Traces) {
 		zap.L().Debug("found multiple agents. this feature is not supported for traces pipeline (sampling rules)")
-		return "", errors.New(errors.TypeInvalidInput, errors.CodeBadRequest, "multiple agents not supported in sampling rules")
+		return "", errors.NewInvalidInputf(CodeMultipleAgentsNotSupported, "multiple agents not supported in sampling rules")
 	}
 	hash := ""
 	for _, agent := range agents {

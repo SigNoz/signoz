@@ -23,6 +23,10 @@ import (
 
 var m *Manager
 
+var (
+	CodeConfigVersionNoConfig = errors.MustNewCode("config_version_no_config")
+)
+
 func init() {
 	m = &Manager{}
 }
@@ -108,13 +112,9 @@ func (m *Manager) RecommendAgentConfig(orgId valuer.UUID, currentConfYaml []byte
 			return nil, "", err
 		}
 
-		// TODO(Piyush): Turn errors from feature.RecommendAgentConfig into proper packager errors
-		// and remove the Wrap call here.
 		updatedConf, serializedSettingsUsed, err := feature.RecommendAgentConfig(orgId, recommendation, latestConfig)
 		if err != nil {
-			return nil, "", errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf(
-				"failed to generate agent config recommendation for %s", featureType,
-			))
+			return nil, "", errors.WithAdditionalf(err, "agent config recommendation for %s failed", featureType)
 		}
 		recommendation = updatedConf
 
@@ -228,7 +228,7 @@ func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType
 
 	if configVersion == nil || (configVersion != nil && configVersion.Config == "") {
 		zap.L().Debug("config version has no conf yaml", zap.Any("configVersion", configVersion))
-		return errors.New(errors.TypeInvalidInput, errors.CodeBadRequest, "the config version can not be redeployed")
+		return errors.NewInvalidInputf(CodeConfigVersionNoConfig, "the config version can not be redeployed")
 	}
 	switch typ {
 	case opamptypes.ElementTypeSamplingRules:
