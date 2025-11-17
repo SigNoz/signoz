@@ -163,7 +163,7 @@ func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken str
 
 	cachedLastObservedAts, ok := provider.lastObservedAtCache.Get(claims.OrgID)
 	if !ok {
-		return nil
+		cachedLastObservedAts = make(map[valuer.UUID]time.Time)
 	}
 
 	cachedLastObservedAts[valuer.MustNewUUID(claims.UserID)] = lastObservedAt
@@ -190,6 +190,7 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 			if !lastObservedAt.IsZero() {
 				stats["auth_token.last_observed_at.max.time"] = lastObservedAt.UTC()
 				stats["auth_token.last_observed_at.max.time_unix"] = lastObservedAt.Unix()
+				break
 			}
 		}
 	}
