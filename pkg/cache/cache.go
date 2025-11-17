@@ -15,7 +15,7 @@ type Cache interface {
 
 	// Get gets the cacheble entity in the dest entity passed.
 	// TODO: Remove allowExpired from Get.
-	Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable, allowExpired bool) error
+	Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable) error
 
 	// Delete deletes the cacheable entity from cache
 	Delete(ctx context.Context, orgID valuer.UUID, cacheKey string)

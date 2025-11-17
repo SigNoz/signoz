@@ -374,7 +374,7 @@ func (provider *provider) flushLastObservedAt(ctx context.Context, org *types.Or
 
 func (provider *provider) getOrGetSetToken(ctx context.Context, accessToken string) (*authtypes.Token, error) {
 	token := new(authtypes.Token)
-	err := provider.cache.Get(ctx, emptyOrgID, accessTokenCacheKey(accessToken), token, false)
+	err := provider.cache.Get(ctx, emptyOrgID, accessTokenCacheKey(accessToken), token)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
@@ -420,7 +420,7 @@ func (provider *provider) setIdentity(ctx context.Context, identity *authtypes.I
 
 func (provider *provider) getOrGetSetIdentity(ctx context.Context, userID valuer.UUID) (*authtypes.Identity, error) {
 	identity := new(authtypes.Identity)
-	err := provider.cache.Get(ctx, emptyOrgID, identityCacheKey(userID), identity, false)
+	err := provider.cache.Get(ctx, emptyOrgID, identityCacheKey(userID), identity)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
@@ -13,18 +14,20 @@ import (
 )
 
 type provider struct {
-	config   tokenizer.Config
-	settings factory.ScopedProviderSettings
-	stopC    chan struct{}
+	config     tokenizer.Config
+	settings   factory.ScopedProviderSettings
+	cache      cache.Cache
+	tokenStore authtypes.TokenStore
+	stopC      chan struct{}
 }
 
-func NewFactory() factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config] {
+func NewFactory(cache cache.Cache, tokenStore authtypes.TokenStore) factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("jwt"), func(ctx context.Context, providerSettings factory.ProviderSettings, config tokenizer.Config) (tokenizer.Tokenizer, error) {
-		return New(ctx, providerSettings, config)
+		return New(ctx, providerSettings, config, cache, tokenStore)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config tokenizer.Config) (tokenizer.Tokenizer, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config tokenizer.Config, cache cache.Cache, tokenStore authtypes.TokenStore) (tokenizer.Tokenizer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/tokenizer/jwttokenizer")
 
 	if config.JWT.Secret == "" {
@@ -34,6 +37,8 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	return tokenizer.NewWrappedTokenizer(settings, &provider{
 		config:   config,
 		settings: settings,
+		cache: cache,
+		tokenStore: tokenStore,
 		stopC:    make(chan struct{}),
 	}), nil
 }
@@ -83,6 +88,8 @@ func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (
 	if err != nil {
 		return nil, err
 	}
+
+	// ! do some role check here
 
 	return authtypes.NewIdentity(valuer.MustNewUUID(claims.UserID), valuer.MustNewUUID(claims.OrgID), valuer.MustNewEmail(claims.Email), claims.Role), nil
 }
