@@ -27,7 +27,7 @@ func UpsertControlProcessors(ctx context.Context, signal string,
 
 	if signal != string(Metrics) && signal != string(Traces) {
 		zap.L().Error("received invalid signal int UpsertControlProcessors", zap.String("signal", signal))
-		return "", errors.New(errors.TypeInvalidInput, errors.CodeBadRequest, "signal not supported in ingestion rules: %s", signal)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "signal not supported in ingestion rules: %s", signal)
 	}
 
 	if opAmpServer == nil {

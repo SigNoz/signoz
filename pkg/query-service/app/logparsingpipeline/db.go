@@ -127,7 +127,7 @@ func (r *Repo) getPipelinesByVersion(
 // GetPipelines returns pipeline and errors (if any)
 func (r *Repo) GetPipeline(
 	ctx context.Context, orgID string, id string,
-) (*pipelinetypes.GettablePipeline, *model.ApiError) {
+) (*pipelinetypes.GettablePipeline, error) {
 	storablePipelines := []pipelinetypes.StoreablePipeline{}
 
 	err := r.sqlStore.BunDB().NewSelect().
@@ -137,12 +137,12 @@ func (r *Repo) GetPipeline(
 		Scan(ctx)
 	if err != nil {
 		zap.L().Error("failed to get ingestion pipeline from db", zap.Error(err))
-		return nil, model.InternalError(errors.Wrap(err, "failed to get ingestion pipeline from db"))
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get ingestion pipeline from db")
 	}
 
 	if len(storablePipelines) == 0 {
 		zap.L().Warn("No row found for ingestion pipeline id", zap.String("id", id))
-		return nil, model.NotFoundError(fmt.Errorf("no row found for ingestion pipeline id %v", id))
+		return nil, errors.NewNotFoundf(errors.CodeNotFound, "no row found for ingestion pipeline id %v", id)
 	}
 
 	if len(storablePipelines) == 1 {
@@ -150,20 +150,16 @@ func (r *Repo) GetPipeline(
 		gettablePipeline.StoreablePipeline = storablePipelines[0]
 		if err := gettablePipeline.ParseRawConfig(); err != nil {
 			zap.L().Error("invalid pipeline config found", zap.String("id", id), zap.Error(err))
-			return nil, model.InternalError(
-				errors.Wrap(err, "found an invalid pipeline config"),
-			)
+			return nil, err
 		}
 		if err := gettablePipeline.ParseFilter(); err != nil {
 			zap.L().Error("invalid pipeline filter found", zap.String("id", id), zap.Error(err))
-			return nil, model.InternalError(
-				errors.Wrap(err, "found an invalid pipeline filter"),
-			)
+			return nil, err
 		}
 		return &gettablePipeline, nil
 	}
 
-	return nil, model.InternalError(fmt.Errorf("multiple pipelines with same id"))
+	return nil, errors.NewInternalf(errors.CodeInternal, "multiple pipelines with same id")
 }
 
 func (r *Repo) DeletePipeline(ctx context.Context, orgID string, id string) error {
