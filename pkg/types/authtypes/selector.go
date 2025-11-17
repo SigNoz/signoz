@@ -29,7 +29,7 @@ var (
 	typeMetaResourcesSelectorRegex = regexp.MustCompile(`^\*$`)
 )
 
-type SelectorCallbackFn func(*http.Request, Claims) ([]Selector, error)
+type SelectorCallbackWithClaimsFn func(*http.Request, Claims) ([]Selector, error)
 type SelectorCallbackWithoutClaimsFn func(*http.Request, []*types.Organization) ([]Selector, valuer.UUID, error)
 
 type Selector struct {
