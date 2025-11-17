@@ -553,7 +553,17 @@ func (e *ClickHouseFilterExtractor) extractColumnOrigin(
 	// so we delete it after the search is done for current query
 	defer delete(visited, query)
 
-	// Step 1: Check if this column is in the SELECT clause of the current query
+	// Step 1: Search in CTE and Joins, this will take us to very end of the SubQueries and CTE
+	sourceQuery := e.extractSourceQuery(query, cteMap)
+	if sourceQuery != nil {
+		returningOrigin := e.extractColumnOrigin(columnName, sourceQuery, cteMap, visited)
+		if returningOrigin != columnName {
+			return returningOrigin
+		}
+	}
+
+	// Step 2: Once we're sure there are no SubQueries and CTE we just find all the selectItem
+	// and then get their column origin values
 	selectItems := clickhouse.FindAll(query, func(node clickhouse.Expr) bool {
 		_, ok := node.(*clickhouse.SelectItem)
 		return ok
@@ -620,23 +630,6 @@ func (e *ClickHouseFilterExtractor) extractColumnOrigin(
 		return finalColumnOrigin
 	}
 
-	// Step 2: Column not found in SELECT - check if it comes from source query
-	sourceQuery := e.extractSourceQuery(query, cteMap)
-	if sourceQuery != nil {
-		return e.extractColumnOrigin(columnName, sourceQuery, cteMap, visited)
-	}
-
-	// Step 3: Check JOIN subqueries
-	if query.From != nil {
-		joinQueries := e.extractJoinQueries(query.From)
-		for _, joinQuery := range joinQueries {
-			origin := e.extractColumnOrigin(columnName, joinQuery, cteMap, visited)
-			if origin != columnName || e.columnExistsInQuery(columnName, joinQuery) {
-				return origin
-			}
-		}
-	}
-
 	return columnName
 }
 
@@ -661,46 +654,6 @@ func (e *ClickHouseFilterExtractor) isSimpleColumnReference(expr clickhouse.Expr
 		// Check if it wraps a simple reference
 		if ex.Expr != nil {
 			return e.isSimpleColumnReference(ex.Expr)
-		}
-	}
-	return false
-}
-
-// extractJoinQueries extracts SelectQuery nodes from JOIN clauses
-func (e *ClickHouseFilterExtractor) extractJoinQueries(fromExpr clickhouse.Expr) []*clickhouse.SelectQuery {
-	var queries []*clickhouse.SelectQuery
-
-	// Find all SelectQuery nodes within JOIN expressions
-	selectQueries := clickhouse.FindAll(fromExpr, func(node clickhouse.Expr) bool {
-		_, ok := node.(*clickhouse.SelectQuery)
-		return ok
-	})
-
-	for _, queryNode := range selectQueries {
-		if selectQuery, ok := queryNode.(*clickhouse.SelectQuery); ok {
-			queries = append(queries, selectQuery)
-		}
-	}
-
-	return queries
-}
-
-// columnExistsInQuery checks if a column exists in a query's SELECT clause
-func (e *ClickHouseFilterExtractor) columnExistsInQuery(columnName string, query *clickhouse.SelectQuery) bool {
-	selectItems := clickhouse.FindAll(query, func(node clickhouse.Expr) bool {
-		_, ok := node.(*clickhouse.SelectItem)
-		return ok
-	})
-
-	for _, itemNode := range selectItems {
-		if selectItem, ok := itemNode.(*clickhouse.SelectItem); ok {
-			alias := e.extractSelectItemAlias(selectItem)
-			exprStr := e.extractSelectItemName(selectItem)
-			normalizedExpr := e.stripTableAlias(exprStr)
-
-			if alias == columnName || normalizedExpr == columnName {
-				return true
-			}
 		}
 	}
 	return false
