@@ -36,7 +36,6 @@ type TerminalConfig struct {
 type Node struct {
 	// Node information
 	Name       string
-	IsArray    bool
 	IsTerminal bool
 	isRoot     bool // marked true for only body_json and body_json_promoted
 
@@ -251,7 +250,6 @@ func (pb *PlanBuilder) buildPlan(index int, parent *Node, isDynArrChild bool) *N
 	// Create node for this path segment
 	node := &Node{
 		Name:            part,
-		IsArray:         !isTerminal, // Only non-terminal parts are arrays
 		IsTerminal:      isTerminal,
 		AvailableTypes:  pb.getTypes(pathSoFar),
 		Branches:        make(map[BranchType]*Node),
@@ -281,6 +279,11 @@ func (pb *PlanBuilder) buildPlan(index int, parent *Node, isDynArrChild bool) *N
 // PlanJSON builds a tree structure representing the complete JSON path traversal
 // that precomputes all possible branches and their types
 func PlanJSON(path string, operator qbtypes.FilterOperator, value any, isPromoted bool, getTypes func(path string) []telemetrytypes.JSONDataType) []*Node {
+	// if path is empty, return nil
+	if path == "" {
+		return nil
+	}
+
 	// TODO: PlanJSON requires the Start and End of the Query to select correct column between promoted and body_json using
 	// creation time in distributed_promoted_paths
 	path = strings.ReplaceAll(path, arrayAnyIndex, arraySep)
