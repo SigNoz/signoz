@@ -182,12 +182,16 @@ function SpanLogs({
 						{
 							dataType: 'string',
 							type: '',
+							displayName: 'Body',
 							name: 'body',
+							key: 'log.body:string',
 						},
 						{
 							dataType: 'string',
 							type: '',
 							name: 'timestamp',
+							key: 'log.timestamp:string',
+							displayName: 'Timestamp',
 						},
 					]}
 				/>

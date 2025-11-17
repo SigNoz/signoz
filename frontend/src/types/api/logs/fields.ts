@@ -1,5 +1,7 @@
 export interface IField {
 	name: string;
+	displayName: string;
+	key: string;
 	type: string;
 	dataType: string;
 }

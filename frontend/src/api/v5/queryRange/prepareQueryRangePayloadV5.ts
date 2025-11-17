@@ -138,7 +138,7 @@ function createBaseSpec(
 	const nonEmptySelectColumns = (queryData.selectColumns as (
 		| BaseAutocompleteData
 		| TelemetryFieldKey
-	)[])?.filter((c) => ('key' in c ? c?.key : c?.name));
+	)[])?.filter((c) => c?.key);
 
 	return {
 		stepInterval: queryData?.stepInterval || null,
@@ -149,6 +149,7 @@ function createBaseSpec(
 				? queryData.groupBy.map(
 						(item: any): GroupByKey => ({
 							name: item.key,
+							key: `${item?.type}.${item.key}:${item?.dataType}`,
 							fieldDataType: item?.dataType || '',
 							fieldContext: item?.type || '',
 							description: item?.description,
@@ -172,6 +173,9 @@ function createBaseSpec(
 						(order: any): OrderBy => ({
 							key: {
 								name: order.columnName,
+								key: `${order?.fieldContext ?? (order?.type as FieldContext)}.${
+									order.columnName
+								}:${order?.fieldDataType ?? (order?.dataType as FieldDataType)}`,
 							},
 							direction: order.order,
 						}),
@@ -207,6 +211,7 @@ function createBaseSpec(
 
 						const fieldObj: TelemetryFieldKey = {
 							name: fieldName,
+							key: `${column?.fieldContext}.${fieldName}:${column?.fieldDataType}`,
 							fieldDataType:
 								column?.fieldDataType ?? (column?.dataType as FieldDataType),
 							signal: column?.signal ?? undefined,
@@ -364,7 +369,7 @@ function createTraceOperatorBaseSpec(
 	const nonEmptySelectColumns = (queryData.selectColumns as (
 		| BaseAutocompleteData
 		| TelemetryFieldKey
-	)[])?.filter((c) => ('key' in c ? c?.key : c?.name));
+	)[])?.filter((c) => c?.key);
 
 	const {
 		stepInterval,
@@ -384,6 +389,7 @@ function createTraceOperatorBaseSpec(
 				? groupBy.map(
 						(item: any): GroupByKey => ({
 							name: item.key,
+							key: `${item?.type}.${item.key}:${item?.dataType}`,
 							fieldDataType: item?.dataType,
 							fieldContext: item?.type,
 							description: item?.description,
@@ -404,6 +410,9 @@ function createTraceOperatorBaseSpec(
 						(order: any): OrderBy => ({
 							key: {
 								name: order.columnName,
+								key: `${order?.fieldContext ?? (order?.type as FieldContext)}.${
+									order.columnName
+								}:${order?.fieldDataType ?? (order?.dataType as FieldDataType)}`,
 							},
 							direction: order.order,
 						}),
@@ -416,6 +425,9 @@ function createTraceOperatorBaseSpec(
 			: nonEmptySelectColumns?.map(
 					(column: any): TelemetryFieldKey => ({
 						name: column.name ?? column.key,
+						key: `${column?.fieldContext ?? (column?.type as FieldContext)}.${
+							column.name ?? column.key
+						}:${column?.fieldDataType ?? (column?.dataType as FieldDataType)}`,
 						fieldDataType:
 							column?.fieldDataType ?? (column?.dataType as FieldDataType),
 						fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
@@ -587,6 +599,9 @@ export const prepareQueryRangePayloadV5 = ({
 							(order: any): OrderBy => ({
 								key: {
 									name: order.columnName,
+									key: `${order?.fieldContext ?? (order?.type as FieldContext)}.${
+										order.columnName
+									}:${order?.fieldDataType ?? (order?.dataType as FieldDataType)}`,
 								},
 								direction: order.order,
 							}),

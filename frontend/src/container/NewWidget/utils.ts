@@ -560,6 +560,7 @@ export const getDefaultWidgetData = (
 		...field,
 		type: field.fieldContext ?? '',
 		dataType: field.fieldDataType ?? '',
+		displayName: field.displayName || field.name,
 	})),
 	selectedTracesFields: defaultTraceSelectedColumns,
 });

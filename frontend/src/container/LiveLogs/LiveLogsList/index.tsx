@@ -13,7 +13,6 @@ import InfinityTableView from 'container/LogsExplorerList/InfinityTableView';
 import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useEventSource } from 'providers/EventSource';
@@ -57,10 +56,7 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 		[formattedLogs, activeLogId],
 	);
 
-	const selectedFields = convertKeysToColumnFields([
-		...defaultLogsSelectedColumns,
-		...options.selectColumns,
-	]);
+	const selectedFields = convertKeysToColumnFields(options.selectColumns);
 
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {

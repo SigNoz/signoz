@@ -75,11 +75,15 @@ function EntityLogs({
 						dataType: 'string',
 						type: '',
 						name: 'body',
+						displayName: 'Body',
+						key: 'log.body:string',
 					},
 					{
 						dataType: 'string',
 						type: '',
 						name: 'timestamp',
+						displayName: 'Timestamp',
+						key: 'log.timestamp:string',
 					},
 				]}
 			/>

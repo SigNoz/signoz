@@ -18,15 +18,15 @@ export const getLogPanelColumnsList = (
 
 	const columns: ColumnsType<RowData> =
 		selectedLogFields?.map((field: IField) => {
-			const { name } = field;
+			const { name, key, displayName } = field;
 
 			return {
-				title: name,
-				dataIndex: name,
-				key: name,
-				width: name === 'body' ? 350 : 100,
+				title: displayName,
+				dataIndex: key,
+				key,
+				width: key === 'log.body:string' ? 350 : 100,
 				render: (value: ReactNode): JSX.Element => {
-					if (name === 'timestamp') {
+					if (key === 'log.timestamp:string') {
 						return (
 							<Typography.Text>
 								{formatTimezoneAdjustedTimestamp(value as string)}
@@ -34,7 +34,7 @@ export const getLogPanelColumnsList = (
 						);
 					}
 
-					if (name === 'body') {
+					if (key === 'log.body:string') {
 						return (
 							<Typography.Paragraph ellipsis={{ rows: 1 }} data-testid={name}>
 								{value}

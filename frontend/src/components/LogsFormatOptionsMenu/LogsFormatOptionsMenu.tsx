@@ -416,18 +416,21 @@ function OptionsMenu({
 									)}
 
 									<div className="column-format">
-										{addColumn?.value?.map(({ name }) => (
-											<div className="column-name" key={name}>
+										{addColumn?.value?.map((column) => (
+											<div className="column-name" key={column.key}>
 												<div className="name">
-													<Tooltip placement="left" title={name}>
-														{name}
+													<Tooltip
+														placement="left"
+														title={column.displayName || column.name}
+													>
+														{column.displayName || column.name}
 													</Tooltip>
 												</div>
 												{addColumn?.value?.length > 1 && (
 													<X
 														className="delete-btn"
 														size={14}
-														onClick={(): void => addColumn.onRemove(name)}
+														onClick={(): void => addColumn.onRemove(column.key)}
 													/>
 												)}
 											</div>

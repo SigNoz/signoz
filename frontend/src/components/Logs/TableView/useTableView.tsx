@@ -23,6 +23,9 @@ import {
 	UseTableViewResult,
 } from './types';
 
+const LogTimeFieldKey = 'log.timestamp:string';
+const LogBodyFieldKey = 'log.body:string';
+
 export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	const {
 		logs,
@@ -51,28 +54,31 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
-			.filter((e) => !['id', 'body', 'timestamp'].includes(e.name))
-			.map(({ name }) => ({
-				title: name,
-				dataIndex: name,
-				accessorKey: name,
-				id: name.toLowerCase().replace(/\./g, '_'),
-				key: name,
-				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
-					props: {
-						style: isListViewPanel
-							? defaultListViewPanelStyle
-							: getDefaultCellStyle(isDarkMode),
-					},
-					children: (
-						<Typography.Paragraph
-							ellipsis={{ rows: linesPerRow }}
-							className={cx('paragraph', fontSize)}
-						>
-							{field}
-						</Typography.Paragraph>
-					),
-				}),
+			.filter((e) => !['id', LogBodyFieldKey, LogTimeFieldKey].includes(e.key))
+			.map((field) => ({
+				title: field.displayName,
+				dataIndex: field.key,
+				accessorKey: field.key,
+				id: field.key.toLowerCase().replace(/\./g, '_').replace(/:/g, '_'),
+				key: field.key,
+				render: (fieldValue, record): ColumnTypeRender<Record<string, unknown>> => {
+					const value = record[field.key] || fieldValue;
+					return {
+						props: {
+							style: isListViewPanel
+								? defaultListViewPanelStyle
+								: getDefaultCellStyle(isDarkMode),
+						},
+						children: (
+							<Typography.Paragraph
+								ellipsis={{ rows: linesPerRow }}
+								className={cx('paragraph', fontSize)}
+							>
+								{value}
+							</Typography.Paragraph>
+						),
+					};
+				},
 			}));
 
 		if (isListViewPanel) {
@@ -100,26 +106,29 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					),
 				}),
 			},
-			...(fields.some((field) => field.name === 'timestamp')
+			...(fields.some((field) => field.key === LogTimeFieldKey)
 				? [
 						{
 							title: 'timestamp',
-							dataIndex: 'timestamp',
+							dataIndex: LogTimeFieldKey,
 							key: 'timestamp',
-							accessorKey: 'timestamp',
+							accessorKey: LogTimeFieldKey,
 							id: 'timestamp',
 							// https://github.com/ant-design/ant-design/discussions/36886
 							render: (
 								field: string | number,
+								record: Record<string, unknown>,
 							): ColumnTypeRender<Record<string, unknown>> => {
+								const timestampValue =
+									(record[LogTimeFieldKey] as string | number) || field;
 								const date =
-									typeof field === 'string'
+									typeof timestampValue === 'string'
 										? formatTimezoneAdjustedTimestamp(
-												field,
+												timestampValue,
 												DATE_TIME_FORMATS.ISO_DATETIME_MS,
 										  )
 										: formatTimezoneAdjustedTimestamp(
-												field / 1e6,
+												timestampValue / 1e6,
 												DATE_TIME_FORMATS.ISO_DATETIME_MS,
 										  );
 								return {
@@ -136,33 +145,37 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				  ]
 				: []),
 			...(appendTo === 'center' ? fieldColumns : []),
-			...(fields.some((field) => field.name === 'body')
+			...(fields.some((field) => field.key === LogBodyFieldKey)
 				? [
 						{
 							title: 'body',
-							dataIndex: 'body',
+							dataIndex: LogBodyFieldKey,
 							key: 'body',
-							accessorKey: 'body',
+							accessorKey: LogBodyFieldKey,
 							id: 'body',
 							render: (
 								field: string | number,
-							): ColumnTypeRender<Record<string, unknown>> => ({
-								props: {
-									style: bodyColumnStyle,
-								},
-								children: (
-									<TableBodyContent
-										dangerouslySetInnerHTML={{
-											__html: getSanitizedLogBody(field as string, {
-												shouldEscapeHtml: true,
-											}),
-										}}
-										fontSize={fontSize}
-										linesPerRow={linesPerRow}
-										isDarkMode={isDarkMode}
-									/>
-								),
-							}),
+								record: Record<string, unknown>,
+							): ColumnTypeRender<Record<string, unknown>> => {
+								const bodyValue = (record[LogBodyFieldKey] as string) || '';
+								return {
+									props: {
+										style: bodyColumnStyle,
+									},
+									children: (
+										<TableBodyContent
+											dangerouslySetInnerHTML={{
+												__html: getSanitizedLogBody(bodyValue, {
+													shouldEscapeHtml: true,
+												}),
+											}}
+											fontSize={fontSize}
+											linesPerRow={linesPerRow}
+											isDarkMode={isDarkMode}
+										/>
+									),
+								};
+							},
 						},
 				  ]
 				: []),
