@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -135,6 +137,8 @@ type Reader interface {
 	GetNormalizedStatus(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]bool, error)
 
 	PromoteAndIndexPaths(ctx context.Context, orgID string, paths ...model.PromotePathItem) error
+	ListBodySkipIndexes(ctx context.Context) ([]schemamigrator.Index, error)
+	ListPromotedPaths(ctx context.Context) ([]string, error)
 }
 
 type Querier interface {
