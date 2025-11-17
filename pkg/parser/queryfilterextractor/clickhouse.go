@@ -445,6 +445,7 @@ func (e *ClickHouseFilterExtractor) extractGroupByRecursive(query *clickhouse.Se
 	}
 
 	// If no GROUP BY in this query, follow CTE/subquery references
+	// It might have grouping inside the CTE/subquery
 	sourceQuery := e.extractSourceQuery(query, cteMap)
 	if sourceQuery != nil {
 		return e.extractGroupByRecursive(sourceQuery, cteMap, visited)
@@ -455,6 +456,17 @@ func (e *ClickHouseFilterExtractor) extractGroupByRecursive(query *clickhouse.Se
 
 // extractSourceQuery extracts the SelectQuery from FROM expressions
 // Handles CTE references, subqueries, and table expressions
+// For example: from the below query We'll try to extract the name of the source query
+// which in the below case is "aggregated". Once we find it we return the SelectQuery node
+// from the cteMap, which acts as the source for the GROUP BY extraction.
+//
+//	 WITH aggregated AS (
+//		SELECT region as region_alias, sum(value) AS total
+//		FROM metrics
+//		WHERE metric_name = 'cpu_usage'
+//		GROUP BY region
+//	 )
+//	 SELECT * FROM aggregated
 func (e *ClickHouseFilterExtractor) extractSourceQuery(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery) *clickhouse.SelectQuery {
 	if query.From == nil {
 		return nil
@@ -547,46 +559,65 @@ func (e *ClickHouseFilterExtractor) extractColumnOrigin(
 		return ok
 	})
 
-	for _, itemNode := range selectItems {
-		if selectItem, ok := itemNode.(*clickhouse.SelectItem); ok {
-			// Check if this SelectItem matches our column (by alias or by name)
-			alias := e.extractSelectItemAlias(selectItem)
-			exprStr := e.extractSelectItemName(selectItem)
-			normalizedExpr := e.stripTableAlias(exprStr)
+	// extractOriginFromSelectItem extracts the origin from a SelectItem
+	extractOriginFromSelectItem := func(selectItem *clickhouse.SelectItem) *string {
+		// Check if this SelectItem matches our column (by alias or by name)
+		alias := e.extractSelectItemAlias(selectItem)
+		exprStr := e.extractSelectItemName(selectItem)
+		normalizedExpr := e.stripTableAlias(exprStr)
 
-			// Case 1: Column matches an alias in SELECT
-			if alias == columnName {
-				// This is an alias - get the expression it's aliasing
-				if selectItem.Expr != nil {
-					originExpr := e.extractFullExpression(selectItem.Expr)
-					// If the expression is just a column name, trace it back further
-					if normalizedExpr == columnName || e.isSimpleColumnReference(selectItem.Expr) {
-						// It's referencing another column - trace back through source query
-						sourceQuery := e.extractSourceQuery(query, cteMap)
-						if sourceQuery != nil {
-							return e.extractColumnOrigin(normalizedExpr, sourceQuery, cteMap, visited)
-						}
-					}
-					return originExpr
-				}
-			}
-
-			// Case 2: Column matches the expression itself (no alias)
-			if normalizedExpr == columnName {
-				// Check if this is a simple column reference or a complex expression
-				if e.isSimpleColumnReference(selectItem.Expr) {
-					// Simple column - trace back through source query
+		// Case 1: Column matches an alias in SELECT
+		if alias == columnName {
+			// This is an alias - get the expression it's aliasing
+			if selectItem.Expr != nil {
+				originExpr := e.extractFullExpression(selectItem.Expr)
+				// If the expression is just a column name, trace it back further
+				if normalizedExpr == columnName || e.isSimpleColumnReference(selectItem.Expr) {
+					// It's referencing another column - trace back through source query
 					sourceQuery := e.extractSourceQuery(query, cteMap)
 					if sourceQuery != nil {
-						return e.extractColumnOrigin(columnName, sourceQuery, cteMap, visited)
+						originExpr := e.extractColumnOrigin(normalizedExpr, sourceQuery, cteMap, visited)
+						return &originExpr
 					}
-					return columnName
-				} else {
-					// Complex expression - return it as origin
-					return e.extractFullExpression(selectItem.Expr)
 				}
+				return &originExpr
 			}
 		}
+
+		// Case 2: Column matches the expression itself (no alias)
+		if normalizedExpr == columnName {
+			// Check if this is a simple column reference or a complex expression
+			if e.isSimpleColumnReference(selectItem.Expr) {
+				// Simple column - trace back through source query
+				sourceQuery := e.extractSourceQuery(query, cteMap)
+				if sourceQuery != nil {
+					originExpr := e.extractColumnOrigin(columnName, sourceQuery, cteMap, visited)
+					return &originExpr
+				}
+				return &columnName
+			} else {
+				// Complex expression - return it as origin
+				originExpr := e.extractFullExpression(selectItem.Expr)
+				return &originExpr
+			}
+		}
+		return nil
+	}
+
+	var finalColumnOrigin string
+	for _, itemNode := range selectItems {
+		if selectItem, ok := itemNode.(*clickhouse.SelectItem); ok {
+			// We call the extractOriginFromSelectItem function for each SelectItem
+			// and if the origin is not nil, we set the finalColumnOrigin to the origin
+			// this has to be done to get to the most nested origin of column where selectItem is present
+			origin := extractOriginFromSelectItem(selectItem)
+			if origin != nil {
+				finalColumnOrigin = *origin
+			}
+		}
+	}
+	if finalColumnOrigin != "" {
+		return finalColumnOrigin
 	}
 
 	// Step 2: Column not found in SELECT - check if it comes from source query
