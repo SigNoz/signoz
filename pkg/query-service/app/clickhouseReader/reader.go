@@ -353,7 +353,9 @@ func (r *ClickHouseReader) PromoteAndIndexPaths(
 		// remove the "body." prefix from the path
 		trimmedPath := strings.TrimPrefix(it.Path, telemetrylogs.BodyJSONStringSearchPrefix)
 		if it.Promote {
-			toInsert = append(toInsert, trimmedPath)
+			if _, promoted := existing[trimmedPath]; !promoted {
+				toInsert = append(toInsert, trimmedPath)
+			}
 		}
 		if it.Index {
 			parentColumn := collectorConstants.BodyJSONColumn
