@@ -18,7 +18,6 @@ import (
 	"time"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	collectorConstants "github.com/SigNoz/signoz-otel-collector/constants"
 
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
@@ -358,10 +357,10 @@ func (r *ClickHouseReader) PromoteAndIndexPaths(
 			}
 		}
 		if it.Index {
-			parentColumn := collectorConstants.BodyJSONColumn
+			parentColumn := telemetrylogs.LogsV2BodyJSONColumn
 			// if the path is already promoted or is being promoted, add it to the promoted column
 			if _, promoted := existing[trimmedPath]; promoted || it.Promote {
-				parentColumn = collectorConstants.BodyPromotedColumn
+				parentColumn = telemetrylogs.LogsV2BodyPromotedColumn
 			}
 
 			indexes = append(indexes, parentColumn+"."+trimmedPath)
