@@ -279,6 +279,11 @@ func (pb *PlanBuilder) buildPlan(index int, parent *Node, isDynArrChild bool) *N
 // PlanJSON builds a tree structure representing the complete JSON path traversal
 // that precomputes all possible branches and their types
 func PlanJSON(path string, operator qbtypes.FilterOperator, value any, isPromoted bool, getTypes func(path string) []telemetrytypes.JSONDataType) []*Node {
+	// if path is empty, return nil
+	if path == "" {
+		return nil
+	}
+
 	// TODO: PlanJSON requires the Start and End of the Query to select correct column between promoted and body_json using
 	// creation time in distributed_promoted_paths
 	path = strings.ReplaceAll(path, arrayAnyIndex, arraySep)
