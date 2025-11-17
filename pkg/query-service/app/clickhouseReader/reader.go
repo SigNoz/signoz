@@ -18,7 +18,6 @@ import (
 	"time"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	collectorConstants "github.com/SigNoz/signoz-otel-collector/constants"
 
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
@@ -353,13 +352,15 @@ func (r *ClickHouseReader) PromoteAndIndexPaths(
 		// remove the "body." prefix from the path
 		trimmedPath := strings.TrimPrefix(it.Path, telemetrylogs.BodyJSONStringSearchPrefix)
 		if it.Promote {
-			toInsert = append(toInsert, trimmedPath)
+			if _, promoted := existing[trimmedPath]; !promoted {
+				toInsert = append(toInsert, trimmedPath)
+			}
 		}
 		if it.Index {
-			parentColumn := collectorConstants.BodyJSONColumn
+			parentColumn := telemetrylogs.LogsV2BodyJSONColumn
 			// if the path is already promoted or is being promoted, add it to the promoted column
 			if _, promoted := existing[trimmedPath]; promoted || it.Promote {
-				parentColumn = collectorConstants.BodyPromotedColumn
+				parentColumn = telemetrylogs.LogsV2BodyPromotedColumn
 			}
 
 			indexes = append(indexes, parentColumn+"."+trimmedPath)
@@ -1484,21 +1485,9 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 			params.ToColdStorageDuration, params.ColdStorageVolume)
 	}
 
-	// TTL query for path_types table to follow the same TTL as logs
-	pathTypesLocal := fmt.Sprintf("%s.%s", r.logsDB, r.pathTypesLocalTable)
-	ttlPathTypes := fmt.Sprintf(
-		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(last_seen / 1000000000) + "+
-			"INTERVAL %v SECOND DELETE", pathTypesLocal, r.cluster, params.DelDuration)
-	if len(params.ColdStorageVolume) > 0 {
-		ttlPathTypes += fmt.Sprintf(", toDateTime(last_seen / 1000000000) "+
-			"+ INTERVAL %v SECOND TO VOLUME '%s'",
-			params.ToColdStorageDuration, params.ColdStorageVolume)
-	}
-
 	ttlPayload := map[string]string{
 		tableNameArray[0]: ttlLogsV2,
 		tableNameArray[1]: ttlLogsV2Resource,
-		pathTypesLocal:    ttlPathTypes,
 	}
 
 	// set the ttl if nothing is pending/ no errors

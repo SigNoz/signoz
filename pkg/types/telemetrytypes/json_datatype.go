@@ -12,23 +12,17 @@ func (jdt JSONDataType) StringValue() string {
 }
 
 var (
-	String                = JSONDataType{"String", false, ""}
-	Int64                 = JSONDataType{"Int64", false, ""}
-	Float64               = JSONDataType{"Float64", false, ""}
-	Bool                  = JSONDataType{"Bool", false, ""}
-	Dynamic               = JSONDataType{"Dynamic", false, ""}
-	ArrayString           = JSONDataType{"Array(Nullable(String))", true, "String"}
-	ArrayInt64            = JSONDataType{"Array(Nullable(Int64))", true, "Int64"}
-	ArrayFloat64          = JSONDataType{"Array(Nullable(Float64))", true, "Float64"}
-	ArrayBool             = JSONDataType{"Array(Nullable(Bool))", true, "Bool"}
-	ArrayDynamic          = JSONDataType{"Array(Dynamic)", true, "Dynamic"}
-	ArrayJSONNestedLevel1 = JSONDataType{"Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))", true, "JSON"}
-	ArrayJSONNestedLevel2 = JSONDataType{"Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))", true, "JSON"}
-	ArrayJSONNestedLevel3 = JSONDataType{"Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))", true, "JSON"}
-	ArrayJSONNestedLevel4 = JSONDataType{"Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))", true, "JSON"}
-	ArrayJSONNestedLevel5 = JSONDataType{"Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))", true, "JSON"}
-	ArrayJSONNestedLevel6 = JSONDataType{"Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))", true, "JSON"}
-	ArrayJSON             = JSONDataType{"Array(JSON)", true, "JSON"}
+	String       = JSONDataType{"String", false, ""}
+	Int64        = JSONDataType{"Int64", false, ""}
+	Float64      = JSONDataType{"Float64", false, ""}
+	Bool         = JSONDataType{"Bool", false, ""}
+	Dynamic      = JSONDataType{"Dynamic", false, ""}
+	ArrayString  = JSONDataType{"Array(Nullable(String))", true, "String"}
+	ArrayInt64   = JSONDataType{"Array(Nullable(Int64))", true, "Int64"}
+	ArrayFloat64 = JSONDataType{"Array(Nullable(Float64))", true, "Float64"}
+	ArrayBool    = JSONDataType{"Array(Nullable(Bool))", true, "Bool"}
+	ArrayDynamic = JSONDataType{"Array(Dynamic)", true, "Dynamic"}
+	ArrayJSON    = JSONDataType{"Array(JSON)", true, "JSON"}
 )
 
 var MappingStringToJSONDataType = map[string]JSONDataType{
@@ -42,13 +36,7 @@ var MappingStringToJSONDataType = map[string]JSONDataType{
 	"Array(Nullable(Float64))": ArrayFloat64,
 	"Array(Nullable(Bool))":    ArrayBool,
 	"Array(Dynamic)":           ArrayDynamic,
-	"Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))": ArrayJSONNestedLevel1,
-	"Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))":  ArrayJSONNestedLevel2,
-	"Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))":  ArrayJSONNestedLevel3,
-	"Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))":  ArrayJSONNestedLevel4,
-	"Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))":  ArrayJSONNestedLevel5,
-	"Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))":  ArrayJSONNestedLevel6,
-	"Array(JSON)": ArrayJSON,
+	"Array(JSON)":              ArrayJSON,
 }
 
 var ScalerTypeToArrayType = map[JSONDataType]JSONDataType{

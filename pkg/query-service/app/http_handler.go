@@ -37,7 +37,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 
-	collectorConstants "github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
@@ -2026,10 +2025,10 @@ func (aH *APIHandler) promotePaths(w http.ResponseWriter, r *http.Request) {
 
 			response := []model.PromotePathItem{}
 			for _, path := range promotedPaths {
-				fullPath := collectorConstants.BodyPromotedColumnPrefix + path
+				fullPath := telemetrylogs.BodyPromotedColumnPrefix + path
 				path = telemetrylogs.BodyJSONStringSearchPrefix + path
 				item := model.PromotePathItem{
-					Path: path,
+					Path:    path,
 					Promote: true,
 				}
 				indexes, ok := aggr[fullPath]
@@ -2047,7 +2046,7 @@ func (aH *APIHandler) promotePaths(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					return err
 				}
-				path := strings.TrimPrefix(expr, collectorConstants.BodyJSONColumnPrefix)
+				path := strings.TrimPrefix(expr, telemetrylogs.BodyJSONColumnPrefix)
 				path = telemetrylogs.BodyJSONStringSearchPrefix + path
 				response = append(response, model.PromotePathItem{
 					Path:    path,
