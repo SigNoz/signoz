@@ -63,7 +63,7 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 		return err
 	}
 
-	err = module.role.AssignRole(ctx, role.ID, authtypes.MustNewSubject(authtypes.TypeAnonymous, authtypes.TypeAnonymous.StringValue(), nil))
+	err = module.role.Assign(ctx, role.ID, orgID, authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.StringValue(), orgID, nil))
 	if err != nil {
 		return err
 	}

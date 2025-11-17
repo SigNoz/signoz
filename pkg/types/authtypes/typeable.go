@@ -25,6 +25,7 @@ var (
 
 var (
 	TypeableUser         = &typeableUser{}
+	TypeableAnonymous    = &typeableAnonymous{}
 	TypeableRole         = &typeableRole{}
 	TypeableOrganization = &typeableOrganization{}
 )

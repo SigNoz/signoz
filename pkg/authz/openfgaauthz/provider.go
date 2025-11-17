@@ -156,7 +156,7 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.
 }
 
 func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, _ authtypes.Relation, translation authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector) error {
-	subject, err := authtypes.NewSubject(authtypes.TypeUser, claims.UserID, nil)
+	subject, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
 	if err != nil {
 		return err
 	}
@@ -175,7 +175,7 @@ func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims aut
 }
 
 func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, _ authtypes.Relation, translation authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector) error {
-	subject, err := authtypes.NewSubject(authtypes.TypeAnonymous, authtypes.AnonymousUser.String(), nil)
+	subject, err := authtypes.NewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), orgID, nil)
 	if err != nil {
 		return err
 	}

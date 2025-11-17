@@ -187,8 +187,9 @@ func GetAdditionTuples(id valuer.UUID, orgID valuer.UUID, relation authtypes.Rel
 		typeable := authtypes.MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
 		transactionTuples, err := typeable.Tuples(
 			authtypes.MustNewSubject(
-				authtypes.TypeRole,
+				authtypes.TypeableRole,
 				id.String(),
+				orgID,
 				&authtypes.RelationAssignee,
 			),
 			relation,
@@ -212,8 +213,9 @@ func GetDeletionTuples(id valuer.UUID, orgID valuer.UUID, relation authtypes.Rel
 		typeable := authtypes.MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
 		transactionTuples, err := typeable.Tuples(
 			authtypes.MustNewSubject(
-				authtypes.TypeRole,
+				authtypes.TypeableRole,
 				id.String(),
+				orgID,
 				&authtypes.RelationAssignee,
 			),
 			relation,

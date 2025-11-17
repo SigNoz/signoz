@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
 type module struct {
@@ -89,7 +88,7 @@ func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valu
 				authz.
 				ListObjects(
 					ctx,
-					authtypes.MustNewSubject(authtypes.TypeRole, storableRole.ID.String(), &authtypes.RelationAssignee),
+					authtypes.MustNewSubject(authtypes.TypeableRole, storableRole.ID.String(), orgID, &authtypes.RelationAssignee),
 					relation,
 					authtypes.MustNewTypeableFromType(resource.Type, resource.Name),
 				)
@@ -141,17 +140,19 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 	return nil
 }
 
-func (module *module) AssignRole(ctx context.Context, id valuer.UUID, subject string) error {
-	return module.authz.Write(ctx,
-		[]*openfgav1.TupleKey{
-			{
-				User:     subject,
-				Relation: authtypes.RelationAssignee.StringValue(),
-				Object:   authtypes.MustNewSelector(authtypes.TypeRole, id.StringValue()).String(),
-			},
+func (module *module) Assign(ctx context.Context, id valuer.UUID, orgID valuer.UUID, subject string) error {
+	tuples, err := authtypes.TypeableRole.Tuples(
+		subject,
+		authtypes.RelationAssignee,
+		[]authtypes.Selector{
+			authtypes.MustNewSelector(authtypes.TypeRole, id.StringValue()),
 		},
-		nil,
+		orgID,
 	)
+	if err != nil {
+		return err
+	}
+	return module.authz.Write(ctx, tuples, nil)
 }
 
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {

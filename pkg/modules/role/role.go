@@ -38,7 +38,7 @@ type Module interface {
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Assigns role to the given subject.
-	AssignRole(context.Context, valuer.UUID, string) error
+	Assign(context.Context, valuer.UUID, valuer.UUID, string) error
 
 	RegisterTypeable
 }
