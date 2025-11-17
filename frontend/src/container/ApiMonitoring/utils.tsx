@@ -14,6 +14,7 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { convertNanoToMilliseconds } from 'container/MetricsExplorer/Summary/utils';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep } from 'lodash-es';
 import { ArrowUpDown, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
@@ -578,7 +579,14 @@ const defaultGroupBy = [
 		isColumn: false,
 		isJSON: false,
 		key: SPAN_ATTRIBUTES.URL_PATH,
-		type: 'tag',
+		type: 'attribute',
+	},
+	{
+		dataType: DataTypes.String,
+		isColumn: false,
+		isJSON: false,
+		key: 'url.full',
+		type: 'attribute',
 	},
 	// {
 	// 	key: SPAN_ATTRIBUTES.SERVER_PORT,
@@ -2893,40 +2901,22 @@ export const getAllEndpointsWidgetData = (
 			panelTypes: PANEL_TYPES.TABLE,
 			queryData: [
 				{
-					aggregateAttribute: {
-						dataType: DataTypes.String,
-						key: 'span_id',
-						type: '',
-					},
+					aggregations: [
+						{
+							expression: 'count()',
+						},
+					],
 					aggregateOperator: 'count',
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
-					filters: {
-						items: [
-							{
-								id: 'ec316e57',
-								key: {
-									dataType: DataTypes.String,
-									key: SPAN_ATTRIBUTES.SERVER_NAME,
-									type: 'tag',
-								},
-								op: '=',
-								value: domainName,
-							},
-							{
-								id: '212678b9',
-								key: {
-									key: 'kind_string',
-									dataType: DataTypes.String,
-									type: '',
-								},
-								op: '=',
-								value: 'Client',
-							},
-							...(filters?.items || []),
-						],
-						op: 'AND',
+					filter: {
+						expression: convertFiltersWithUrlHandling(
+							filters,
+							`${getDomainNameFilterExpression(
+								domainName,
+							)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+						),
 					},
 					functions: [],
 					groupBy: isGroupedByAttribute
@@ -2943,40 +2933,22 @@ export const getAllEndpointsWidgetData = (
 					timeAggregation: 'count',
 				},
 				{
-					aggregateAttribute: {
-						dataType: DataTypes.Float64,
-						key: 'duration_nano',
-						type: '',
-					},
+					aggregations: [
+						{
+							expression: 'p99(duration_nano)',
+						},
+					],
 					aggregateOperator: 'p99',
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'B',
-					filters: {
-						items: [
-							{
-								id: '46d57857',
-								key: {
-									dataType: DataTypes.String,
-									key: SPAN_ATTRIBUTES.SERVER_NAME,
-									type: 'tag',
-								},
-								op: '=',
-								value: domainName,
-							},
-							{
-								id: '212678b9',
-								key: {
-									key: 'kind_string',
-									dataType: DataTypes.String,
-									type: '',
-								},
-								op: '=',
-								value: 'Client',
-							},
-							...(filters?.items || []),
-						],
-						op: 'AND',
+					filter: {
+						expression: convertFiltersWithUrlHandling(
+							filters,
+							`${getDomainNameFilterExpression(
+								domainName,
+							)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+						),
 					},
 					functions: [],
 					groupBy: isGroupedByAttribute
@@ -2993,41 +2965,22 @@ export const getAllEndpointsWidgetData = (
 					timeAggregation: 'p99',
 				},
 				{
-					aggregateAttribute: {
-						dataType: DataTypes.String,
-						id: 'timestamp------false',
-						key: 'timestamp',
-						type: '',
-					},
+					aggregations: [
+						{
+							expression: 'max(timestamp)',
+						},
+					],
 					aggregateOperator: 'max',
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'C',
-					filters: {
-						items: [
-							{
-								id: '4a237616',
-								key: {
-									dataType: DataTypes.String,
-									key: SPAN_ATTRIBUTES.SERVER_NAME,
-									type: 'tag',
-								},
-								op: '=',
-								value: domainName,
-							},
-							{
-								id: '212678b9',
-								key: {
-									key: 'kind_string',
-									dataType: DataTypes.String,
-									type: '',
-								},
-								op: '=',
-								value: 'Client',
-							},
-							...(filters?.items || []),
-						],
-						op: 'AND',
+					filter: {
+						expression: convertFiltersWithUrlHandling(
+							filters,
+							`${getDomainNameFilterExpression(
+								domainName,
+							)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+						),
 					},
 					functions: [],
 					groupBy: isGroupedByAttribute
@@ -3044,50 +2997,22 @@ export const getAllEndpointsWidgetData = (
 					timeAggregation: 'max',
 				},
 				{
-					aggregateAttribute: {
-						dataType: DataTypes.String,
-						key: 'span_id',
-						type: '',
-					},
+					aggregations: [
+						{
+							expression: 'count()',
+						},
+					],
 					aggregateOperator: 'count',
 					dataSource: DataSource.TRACES,
 					disabled: true,
 					expression: 'D',
-					filters: {
-						items: [
-							{
-								id: 'f162de1e',
-								key: {
-									dataType: DataTypes.String,
-									key: SPAN_ATTRIBUTES.SERVER_NAME,
-									type: 'tag',
-								},
-								op: '=',
-								value: domainName,
-							},
-							{
-								id: '3df0ac1d',
-								key: {
-									dataType: DataTypes.bool,
-									key: 'has_error',
-									type: '',
-								},
-								op: '=',
-								value: true,
-							},
-							{
-								id: '212678b9',
-								key: {
-									key: 'kind_string',
-									dataType: DataTypes.String,
-									type: '',
-								},
-								op: '=',
-								value: 'Client',
-							},
-							...(filters?.items || []),
-						],
-						op: 'AND',
+					filter: {
+						expression: convertFiltersWithUrlHandling(
+							filters,
+							`${getDomainNameFilterExpression(
+								domainName,
+							)} AND ${clientKindExpression} AND has_error = true AND (http.url EXISTS OR url.full EXISTS)`,
+						),
 					},
 					functions: [],
 					groupBy: isGroupedByAttribute
@@ -3117,11 +3042,25 @@ export const getAllEndpointsWidgetData = (
 	);
 
 	widget.renderColumnCell = {
-		[SPAN_ATTRIBUTES.URL_PATH]: (url: any): ReactNode => {
-			const { endpoint } = extractPortAndEndpoint(url);
-			return (
-				<span>{endpoint === 'n/a' || url === undefined ? '-' : endpoint}</span>
-			);
+		[SPAN_ATTRIBUTES.URL_PATH]: (
+			url: string | number,
+			record?: RowData,
+		): ReactNode => {
+			// First try to use the url from the column value
+			let urlValue = url;
+
+			// If url is empty/null and we have the record, fallback to url.full
+			if (isEmptyFilterValue(url) && record) {
+				const { 'url.full': urlFull } = record;
+				urlValue = urlFull;
+			}
+
+			if (!urlValue || urlValue === 'n/a') {
+				return <span>-</span>;
+			}
+
+			const { endpoint } = extractPortAndEndpoint(String(urlValue));
+			return <span>{getDisplayValue(endpoint)}</span>;
 		},
 		A: (numOfCalls: any): ReactNode => (
 			<span>
@@ -3140,9 +3079,7 @@ export const getAllEndpointsWidgetData = (
 				{lastUsed === 'n/a' || lastUsed === undefined
 					? '-'
 					: getLastUsedRelativeTime(
-							new Date(
-								new Date(Math.floor(Number(lastUsed) / 1000000)).toISOString(),
-							).getTime(),
+							new Date(new Date(lastUsed).toISOString()).getTime(),
 					  )}
 			</span>
 		),
@@ -3199,10 +3136,12 @@ export const getAllEndpointsWidgetData = (
 		</div>
 	);
 
+	widget.hiddenColumns = ['url.full'];
+
 	return widget;
 };
 
-const keysToRemove = ['http.url', 'A', 'B', 'C', 'F1'];
+const keysToRemove = ['http.url', 'url.full', 'B', 'C', 'F1'];
 
 export const getGroupByFiltersFromGroupByValues = (
 	rowData: any,
