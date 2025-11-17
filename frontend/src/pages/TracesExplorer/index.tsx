@@ -12,12 +12,15 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
-import ExportPanel from 'container/ExportPanel';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import TimeSeriesView from 'container/TimeSeriesView';
 import Toolbar from 'container/Toolbar/Toolbar';
+import {
+	getExportQueryData,
+	getQueryByPanelType,
+} from 'container/TracesExplorer/explorerUtils';
 import ListView from 'container/TracesExplorer/ListView';
 import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import QuerySection from 'container/TracesExplorer/QuerySection';
@@ -31,7 +34,7 @@ import {
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { cloneDeep, isEmpty, set } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { TOOLBAR_VIEWS } from 'pages/TracesExplorer/constants';
@@ -50,7 +53,6 @@ import { v4 } from 'uuid';
 
 function TracesExplorer(): JSX.Element {
 	const {
-		currentQuery,
 		panelType,
 		updateAllQueriesOperators,
 		handleRunQuery,
@@ -110,25 +112,12 @@ function TracesExplorer(): JSX.Element {
 
 	const exportDefaultQuery = useMemo(
 		() =>
-			updateAllQueriesOperators(
-				currentQuery || initialQueriesMap.traces,
-				PANEL_TYPES.TIME_SERIES,
-				DataSource.TRACES,
+			getQueryByPanelType(
+				stagedQuery || initialQueriesMap.traces,
+				panelType || PANEL_TYPES.LIST,
 			),
-		[currentQuery, updateAllQueriesOperators],
+		[stagedQuery, panelType],
 	);
-
-	const getUpdatedQueryForExport = useCallback((): Query => {
-		const updatedQuery = cloneDeep(currentQuery);
-
-		set(
-			updatedQuery,
-			'builder.queryData[0].selectColumns',
-			options.selectColumns,
-		);
-
-		return updatedQuery;
-	}, [currentQuery, options.selectColumns]);
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
@@ -140,10 +129,11 @@ function TracesExplorer(): JSX.Element {
 
 			const widgetId = v4();
 
-			const query =
-				panelType === PANEL_TYPES.LIST
-					? getUpdatedQueryForExport()
-					: exportDefaultQuery;
+			const query = getExportQueryData(
+				exportDefaultQuery,
+				panelTypeParam,
+				options,
+			);
 
 			logEvent('Traces Explorer: Add to dashboard successful', {
 				panelType,
@@ -160,7 +150,7 @@ function TracesExplorer(): JSX.Element {
 
 			safeNavigate(dashboardEditView);
 		},
-		[exportDefaultQuery, panelType, safeNavigate, getUpdatedQueryForExport],
+		[exportDefaultQuery, panelType, safeNavigate, options],
 	);
 
 	useShareBuilderUrl({ defaultValue: defaultQuery });
@@ -231,14 +221,6 @@ function TracesExplorer(): JSX.Element {
 					</ExplorerCard>
 
 					<div className="traces-explorer-views">
-						<div className="traces-explorer-export-panel">
-							<ExportPanel
-								query={exportDefaultQuery}
-								isLoading={false}
-								onExport={handleExport}
-							/>
-						</div>
-
 						{selectedView === ExplorerViews.LIST && (
 							<div className="trace-explorer-list-view">
 								<ListView

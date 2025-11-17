@@ -1,5 +1,6 @@
-import { initialQueriesMap } from 'constants/queryBuilder';
-import { cloneDeep } from 'lodash-es';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { OptionsQuery } from 'container/OptionsMenu/types';
+import { cloneDeep, set } from 'lodash-es';
 import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export const getListViewQuery = (
@@ -42,5 +43,33 @@ export const getListViewQuery = (
 		}
 	}
 
+	return query;
+};
+
+export const getQueryByPanelType = (
+	stagedQuery: Query,
+	panelType: PANEL_TYPES,
+): Query => {
+	if (panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE) {
+		return getListViewQuery(stagedQuery);
+	}
+	return stagedQuery;
+};
+
+export const getExportQueryData = (
+	query: Query,
+	panelType: PANEL_TYPES,
+	options: OptionsQuery,
+): Query => {
+	if (panelType === PANEL_TYPES.LIST) {
+		const updatedQuery = cloneDeep(query);
+		set(
+			updatedQuery,
+			'builder.queryData[0].selectColumns',
+			options.selectColumns,
+		);
+
+		return updatedQuery;
+	}
 	return query;
 };
