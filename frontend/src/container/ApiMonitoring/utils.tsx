@@ -865,14 +865,8 @@ function buildFilterExpression(
 		baseFilterParts.push('status_message EXISTS');
 	}
 	const filterExpression = baseFilterParts.join(' AND ');
-	if (!filters) {
-		return filterExpression;
-	}
-	const { filter } = convertFiltersToExpressionWithExistingQuery(
-		filters,
-		filterExpression,
-	);
-	return filter.expression;
+
+	return convertFiltersWithUrlHandling(filters, filterExpression);
 }
 
 export const getTopErrorsQueryPayload = (
@@ -1752,43 +1746,25 @@ export const getEndPointDetailsQueryPayload = (
 						dataSource: DataSource.TRACES,
 						queryName: 'A',
 						aggregateOperator: 'count',
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							key: '',
-							type: '',
-						},
+						aggregations: [
+							{
+								expression: 'count()',
+							},
+						],
 						timeAggregation: 'count',
 						spaceAggregation: 'sum',
 						functions: [],
-						filters: {
-							items: [
-								{
-									id: '3db61dd6',
-									key: {
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										dataType: DataTypes.String,
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-								...(filters?.items || []),
-							],
-							op: 'AND',
+						filter: {
+							expression: convertFiltersWithUrlHandling(
+								filters || { items: [], op: 'AND' },
+								`${getDomainNameFilterExpression(
+									domainName,
+								)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+							),
 						},
 						expression: 'A',
 						disabled: false,
-						stepInterval: 60,
+						stepInterval: null,
 						having: [],
 						legend: '',
 						limit: null,
@@ -1797,7 +1773,12 @@ export const getEndPointDetailsQueryPayload = (
 							{
 								key: SPAN_ATTRIBUTES.URL_PATH,
 								dataType: DataTypes.String,
-								type: 'tag',
+								type: 'attribute',
+							},
+							{
+								key: 'url.full',
+								dataType: DataTypes.String,
+								type: 'attribute',
 							},
 						],
 						reduceTo: 'avg',
@@ -2415,6 +2396,7 @@ export const statusCodeWidgetInfo = [
 interface EndPointDropDownResponseRow {
 	data: {
 		[SPAN_ATTRIBUTES.URL_PATH]: string;
+		'url.full': string;
 		A: number;
 	};
 }
@@ -2431,8 +2413,8 @@ export const getFormattedEndPointDropDownData = (
 	if (!data) return [];
 	return data.map((row) => ({
 		key: v4(),
-		label: row.data[SPAN_ATTRIBUTES.URL_PATH] || '-',
-		value: row.data[SPAN_ATTRIBUTES.URL_PATH] || '-',
+		label: row.data[SPAN_ATTRIBUTES.URL_PATH] || row.data['url.full'] || '-',
+		value: row.data[SPAN_ATTRIBUTES.URL_PATH] || row.data['url.full'] || '-',
 	}));
 };
 
