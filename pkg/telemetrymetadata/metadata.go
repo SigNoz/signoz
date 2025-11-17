@@ -1425,10 +1425,11 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 		return nil, false, false, nil
 	}
 
+	// TODO(nikhilmantri0902, srikanthccv): Please verify if handled to be returned as true n the following case.
+	// if we return handled as true, there is no further query in the getMetricFieldsValue function.
 	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified && fieldValueSelector.FieldContext != key.FieldContext {
 		return &telemetrytypes.TelemetryFieldValues{}, true, true, nil
 	}
-
 	if fieldValueSelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified && fieldValueSelector.FieldDataType != key.FieldDataType {
 		return &telemetrytypes.TelemetryFieldValues{}, true, true, nil
 	}
