@@ -89,7 +89,15 @@ func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (
 		return nil, err
 	}
 
-	// ! do some role check here
+	// check claimed role
+	dbIdentity, err := provider.getOrSetIdentity(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
+	if err != nil {
+		return nil, err
+	}
+
+	if dbIdentity.Role != claims.Role {
+		return nil, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "claim role mismatch")
+	}
 
 	return authtypes.NewIdentity(valuer.MustNewUUID(claims.UserID), valuer.MustNewUUID(claims.OrgID), valuer.MustNewEmail(claims.Email), claims.Role), nil
 }
@@ -156,4 +164,33 @@ func (provider *provider) Stop(ctx context.Context) error {
 
 func (provider *provider) ListMaxLastObservedAtByOrgID(ctx context.Context, orgID valuer.UUID) (map[valuer.UUID]time.Time, error) {
 	return map[valuer.UUID]time.Time{}, nil
+}
+
+func (provider *provider) getOrSetIdentity(ctx context.Context, orgID, userID valuer.UUID) (*authtypes.Identity, error) {
+	identity := new(authtypes.Identity)
+
+	err := provider.cache.Get(ctx, orgID, identityCacheKey(userID), identity)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		provider.settings.Logger().ErrorContext(ctx, "failed to get identity from cache", "error", err)
+	}
+
+	if err == nil {
+		return identity, nil
+	}
+
+	identity, err = provider.tokenStore.GetIdentityByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = provider.cache.Set(ctx, identity.OrgID, identityCacheKey(identity.UserID), identity, -1)
+	if err != nil {
+		provider.settings.Logger().ErrorContext(ctx, "failed to cache identity", "error", err)
+	}
+
+	return identity, nil
+}
+
+func identityCacheKey(userID valuer.UUID) string {
+	return "identity::" + userID.String()
 }

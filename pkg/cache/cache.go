@@ -14,7 +14,6 @@ type Cache interface {
 	Set(ctx context.Context, orgID valuer.UUID, cacheKey string, data cachetypes.Cacheable, ttl time.Duration) error
 
 	// Get gets the cacheble entity in the dest entity passed.
-	// TODO: Remove allowExpired from Get.
 	Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable) error
 
 	// Delete deletes the cacheable entity from cache
