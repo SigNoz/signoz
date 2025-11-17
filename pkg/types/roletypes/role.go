@@ -27,6 +27,11 @@ var (
 )
 
 var (
+	RoleTypeCustom  = valuer.NewString("custom")
+	RoleTypeManaged = valuer.NewString("managed")
+)
+
+var (
 	TypeableResourcesRoles = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("roles"))
 )
 
@@ -37,6 +42,7 @@ type StorableRole struct {
 	types.TimeAuditable
 	Name        string `bun:"name,type:string"`
 	Description string `bun:"description,type:string"`
+	Type        string `bun:"type,type:string"`
 	OrgID       string `bun:"org_id,type:string"`
 }
 
@@ -45,6 +51,7 @@ type Role struct {
 	types.TimeAuditable
 	Name        string      `json:"name"`
 	Description string      `json:"description"`
+	Type        string      `json:"type"`
 	OrgID       valuer.UUID `json:"org_id"`
 }
 
@@ -69,6 +76,7 @@ func NewStorableRoleFromRole(role *Role) *StorableRole {
 		TimeAuditable: role.TimeAuditable,
 		Name:          role.Name,
 		Description:   role.Description,
+		Type:          role.Type,
 		OrgID:         role.OrgID.StringValue(),
 	}
 }
@@ -79,11 +87,12 @@ func NewRoleFromStorableRole(storableRole *StorableRole) *Role {
 		TimeAuditable: storableRole.TimeAuditable,
 		Name:          storableRole.Name,
 		Description:   storableRole.Description,
+		Type:          storableRole.Type,
 		OrgID:         valuer.MustNewUUID(storableRole.OrgID),
 	}
 }
 
-func NewRole(name, description string, orgID valuer.UUID) *Role {
+func NewRole(name, description string, roleType string, orgID valuer.UUID) *Role {
 	return &Role{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -94,6 +103,7 @@ func NewRole(name, description string, orgID valuer.UUID) *Role {
 		},
 		Name:        name,
 		Description: description,
+		Type:        roleType,
 		OrgID:       orgID,
 	}
 }

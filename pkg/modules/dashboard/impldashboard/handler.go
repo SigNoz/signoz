@@ -213,11 +213,11 @@ func (handler *handler) CreatePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// _, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
-	// if err != nil {
-	// 	render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
-	// 	return
-	// }
+	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
+		return
+	}
 
 	id, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
@@ -257,11 +257,11 @@ func (handler *handler) GetPublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// _, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
-	// if err != nil {
-	// 	render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
-	// 	return
-	// }
+	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
+		return
+	}
 
 	id, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
@@ -401,11 +401,11 @@ func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// _, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
-	// if err != nil {
-	// 	render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
-	// 	return
-	// }
+	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
+		return
+	}
 
 	id, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
@@ -451,11 +451,11 @@ func (handler *handler) DeletePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// _, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
-	// if err != nil {
-	// 	render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
-	// 	return
-	// }
+	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
+		return
+	}
 
 	id, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {

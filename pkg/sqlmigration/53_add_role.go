@@ -54,6 +54,7 @@ func (migration *addRole) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "description", DataType: sqlschema.DataTypeText, Nullable: true},
+			{Name: "type", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{

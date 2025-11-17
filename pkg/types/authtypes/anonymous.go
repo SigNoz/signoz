@@ -6,6 +6,6 @@ import (
 
 var (
 	AnonymousUser                = valuer.UUID{}
-	AnonymousUserRoleName        = "anonymous-access"
-	AnonymousUserRoleDescription = "Anonymous Role for public access objects"
+	AnonymousUserRoleName        = "signoz-anonymous"
+	AnonymousUserRoleDescription = "Role assigned to anonymous users for access to public resources."
 )

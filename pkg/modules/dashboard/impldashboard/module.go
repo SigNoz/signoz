@@ -58,7 +58,7 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 }
 
 func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
-	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(authtypes.AnonymousUserRoleName, authtypes.AnonymousUserRoleDescription, orgID))
+	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(authtypes.AnonymousUserRoleName, authtypes.AnonymousUserRoleDescription, roletypes.RoleTypeManaged.StringValue(), orgID))
 	if err != nil {
 		return err
 	}
@@ -244,7 +244,7 @@ func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashb
 		return err
 	}
 
-	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(authtypes.AnonymousUserRoleName, authtypes.AnonymousUserRoleDescription, orgID))
+	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(authtypes.AnonymousUserRoleName, authtypes.AnonymousUserRoleDescription, roletypes.RoleTypeManaged.StringValue(), orgID))
 	if err != nil {
 		return err
 	}
