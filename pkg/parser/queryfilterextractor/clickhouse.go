@@ -385,6 +385,34 @@ func (e *ClickHouseFilterExtractor) buildCTEMap(query *clickhouse.SelectQuery, c
 	e.buildCTEMapFromExpr(query, cteMap)
 }
 
+// extractCTEName extracts the CTE name from a CTEStmt, the Expr field is the name of the CTE
+func (e *ClickHouseFilterExtractor) extractCTEName(cte *clickhouse.CTEStmt) string {
+	if cte == nil || cte.Expr == nil {
+		return ""
+	}
+
+	switch name := cte.Expr.(type) {
+	case *clickhouse.Ident:
+		return name.Name
+	default:
+		return cte.Expr.String()
+	}
+}
+
+// extractCTEQuery extracts the SelectQuery from a CTEStmt, the Alias field is the SelectQuery
+func (e *ClickHouseFilterExtractor) extractCTEQuery(cte *clickhouse.CTEStmt) *clickhouse.SelectQuery {
+	if cte == nil || cte.Alias == nil {
+		return nil
+	}
+
+	// The Alias field should contain a SelectQuery
+	if selectQuery, ok := cte.Alias.(*clickhouse.SelectQuery); ok {
+		return selectQuery
+	}
+
+	return nil
+}
+
 // buildCTEMapFromExpr recursively extracts CTEs from various expression types
 func (e *ClickHouseFilterExtractor) buildCTEMapFromExpr(expr clickhouse.Expr, cteMap map[string]*clickhouse.SelectQuery) {
 	if expr == nil {
@@ -502,34 +530,6 @@ func (e *ClickHouseFilterExtractor) extractSourceQuery(query *clickhouse.SelectQ
 			// Direct subquery
 			return expr
 		}
-	}
-
-	return nil
-}
-
-// extractCTEName extracts the CTE name from a CTEStmt, the Expr field is the name of the CTE
-func (e *ClickHouseFilterExtractor) extractCTEName(cte *clickhouse.CTEStmt) string {
-	if cte == nil || cte.Expr == nil {
-		return ""
-	}
-
-	switch name := cte.Expr.(type) {
-	case *clickhouse.Ident:
-		return name.Name
-	default:
-		return cte.Expr.String()
-	}
-}
-
-// extractCTEQuery extracts the SelectQuery from a CTEStmt, the Alias field is the SelectQuery
-func (e *ClickHouseFilterExtractor) extractCTEQuery(cte *clickhouse.CTEStmt) *clickhouse.SelectQuery {
-	if cte == nil || cte.Alias == nil {
-		return nil
-	}
-
-	// The Alias field should contain a SelectQuery
-	if selectQuery, ok := cte.Alias.(*clickhouse.SelectQuery); ok {
-		return selectQuery
 	}
 
 	return nil
