@@ -36,7 +36,6 @@ type TerminalConfig struct {
 type Node struct {
 	// Node information
 	Name       string
-	IsArray    bool
 	IsTerminal bool
 	isRoot     bool // marked true for only body_json and body_json_promoted
 
@@ -251,7 +250,6 @@ func (pb *PlanBuilder) buildPlan(index int, parent *Node, isDynArrChild bool) *N
 	// Create node for this path segment
 	node := &Node{
 		Name:            part,
-		IsArray:         !isTerminal, // Only non-terminal parts are arrays
 		IsTerminal:      isTerminal,
 		AvailableTypes:  pb.getTypes(pathSoFar),
 		Branches:        make(map[BranchType]*Node),
