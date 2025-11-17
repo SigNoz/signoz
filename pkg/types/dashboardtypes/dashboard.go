@@ -392,7 +392,7 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime uint64, widgetInde
 			compositeQueries = append(compositeQueries, envelope)
 		}
 	case "promql":
-		for _, query := range widgetData.Query.ClickhouseSQL {
+		for _, query := range widgetData.Query.PromQL {
 			envelope := map[string]any{
 				"type": "promql",
 				"spec": map[string]any{
