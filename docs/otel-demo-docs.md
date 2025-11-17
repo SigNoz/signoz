@@ -103,9 +103,19 @@ Remember to replace the region and ingestion key with proper values as obtained 
 
 Both SigNoz and OTel demo app [frontend-proxy service, to be accurate] share common port allocation at 8080. To prevent port allocation conflicts, modify the OTel demo application config to use port 8081 as the `ENVOY_PORT` value as shown below, and run docker compose command.
 
+Also, both SigNoz and OTel Demo App have the same `PROMETHEUS_PORT` configured, by default both of them try to start at `9090`, which may cause either of them to fail depending upon which one acquires it first. To prevent this, we need to mofify the value of `PROMETHEUS_PORT` too.
+
+
 ```sh
-ENVOY_PORT=8081 docker compose up -d
+ENVOY_PORT=8081 PROMETHEUS_PORT=9091 docker compose up -d
 ```
+
+Alternatively, we can modify these values using the `.env` file too, which reduces the command as just:
+
+```sh
+docker compose up -d
+```
+
 This spins up multiple microservices, with OpenTelemetry instrumentation enabled. you can verify this by,
 ```sh
 docker compose ps -a
