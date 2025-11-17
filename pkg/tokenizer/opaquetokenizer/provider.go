@@ -49,7 +49,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	// * move these hardcoded values to a config based value when needed
 	lastObservedAtCache, err := ristretto.NewCache(&ristretto.Config[string, time.Time]{
 		NumCounters: 10 * expectedLastObservedAtCacheEntries, // 10x of expected entries
-		MaxCost:     1 << 19, // ~ 512 KB
+		MaxCost:     1 << 19,                                 // ~ 512 KB
 		BufferItems: 64,
 		Metrics:     false,
 	})
