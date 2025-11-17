@@ -20,6 +20,7 @@ var (
 var (
 	typeUserSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeRoleSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
+	typeAnonymousSelectorRegex    = regexp.MustCompile(`^\*$`)
 	typeOrganizationSelectorRegex = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeMetaResourceSelectorRegex = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	// metaresources selectors are used to select either all or none
@@ -81,6 +82,11 @@ func IsValidSelector(typed Type, selector string) error {
 	case TypeRole:
 		if !typeRoleSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeRoleSelectorRegex.String())
+		}
+		return nil
+	case TypeAnonymous:
+		if !typeAnonymousSelectorRegex.MatchString(selector) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeAnonymousSelectorRegex.String())
 		}
 		return nil
 	case TypeOrganization:

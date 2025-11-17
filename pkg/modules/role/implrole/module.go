@@ -84,7 +84,7 @@ func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valu
 				authz.
 				ListObjects(
 					ctx,
-					authtypes.MustNewSubject(authtypes.TypeRole, storableRole.ID.String(), authtypes.RelationAssignee),
+					authtypes.MustNewSubject(authtypes.TypeRole, storableRole.ID.String(), &authtypes.RelationAssignee),
 					relation,
 					authtypes.MustNewTypeableFromType(resource.Type, resource.Name),
 				)

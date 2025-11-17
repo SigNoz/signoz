@@ -4,6 +4,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authn"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
@@ -69,6 +70,7 @@ func NewModules(
 	querier querier.Querier,
 	telemetryStore telemetrystore.TelemetryStore,
 	authNs map[authtypes.AuthNProvider]authn.AuthN,
+	authz authz.AuthZ,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -81,7 +83,7 @@ func NewModules(
 		Preference:     implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
 		SavedView:      implsavedview.NewModule(sqlstore),
 		Apdex:          implapdex.NewModule(sqlstore),
-		Dashboard:      impldashboard.NewModule(sqlstore, providerSettings, analytics, orgGetter),
+		Dashboard:      impldashboard.NewModule(sqlstore, providerSettings, analytics, orgGetter, authz),
 		User:           user,
 		UserGetter:     userGetter,
 		QuickFilter:    quickfilter,

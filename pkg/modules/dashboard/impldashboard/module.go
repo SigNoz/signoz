@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -21,15 +22,17 @@ type module struct {
 	settings  factory.ScopedProviderSettings
 	analytics analytics.Analytics
 	orgGetter organization.Getter
+	authz     authz.AuthZ
 }
 
-func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter) dashboard.Module {
+func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, authz authz.AuthZ) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/impldashboard")
 	return &module{
 		store:     NewStore(sqlstore),
 		settings:  scopedProviderSettings,
 		analytics: analytics,
 		orgGetter: orgGetter,
+		authz:     authz,
 	}
 }
 
@@ -53,8 +56,29 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 	return dashboard, nil
 }
 
-func (module *module) CreatePublic(ctx context.Context, publicDashboard *dashboardtypes.PublicDashboard) error {
-	return module.store.CreatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
+func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
+	err := module.store.CreatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
+	if err != nil {
+		return err
+	}
+
+	subject := authtypes.MustNewSubject(authtypes.TypeAnonymous, "*", nil)
+	tuples, err := dashboardtypes.TypeableMetaResourceDashboard.Tuples(
+		subject,
+		authtypes.RelationRead,
+		[]authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.DashboardID.StringValue())},
+		orgID,
+	)
+	if err != nil {
+		return err
+	}
+
+	err = module.authz.Write(ctx, tuples, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
@@ -88,6 +112,22 @@ func (module *module) GetDashboardByPublicID(ctx context.Context, id valuer.UUID
 	}
 
 	storableDashboard, err := module.store.GetDashboardByOrgsAndPublicID(ctx, orgIDs, id.StringValue())
+	if err != nil {
+		return nil, err
+	}
+
+	subject := authtypes.MustNewSubject(authtypes.TypeAnonymous, valuer.GenerateUUID().StringValue(), nil)
+	tuples, err := dashboardtypes.TypeableMetaResourceDashboard.Tuples(
+		subject,
+		authtypes.RelationRead,
+		[]authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeMetaResource, storableDashboard.ID.StringValue())},
+		storableDashboard.OrgID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.authz.BatchCheck(ctx, tuples)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +231,28 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 }
 
 func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
-	return module.store.DeletePublic(ctx, dashboardID.StringValue())
+	err := module.store.DeletePublic(ctx, dashboardID.StringValue())
+	if err != nil {
+		return err
+	}
+
+	subject := authtypes.MustNewSubject(authtypes.TypeAnonymous, "*", nil)
+	tuples, err := dashboardtypes.TypeableMetaResourceDashboard.Tuples(
+		subject,
+		authtypes.RelationRead,
+		[]authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeMetaResource, dashboardID.StringValue())},
+		orgID,
+	)
+	if err != nil {
+		return err
+	}
+
+	err = module.authz.Write(ctx, nil, tuples)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
@@ -282,5 +343,5 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 }
 
 func (module *module) MustGetTypeables() []authtypes.Typeable {
-	return []authtypes.Typeable{dashboardtypes.TypeableResourceDashboard, dashboardtypes.TypeableResourcesDashboards}
+	return []authtypes.Typeable{dashboardtypes.TypeableMetaResourceDashboard, dashboardtypes.TypeableMetaResourcesDashboards}
 }

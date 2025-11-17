@@ -48,7 +48,7 @@ func (provider *provider) Check(ctx context.Context, tuple *openfgav1.TupleKey) 
 }
 
 func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, _ authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector) error {
-	subject, err := authtypes.NewSubject(authtypes.TypeUser, claims.UserID, authtypes.Relation{})
+	subject, err := authtypes.NewSubject(authtypes.TypeUser, claims.UserID, nil)
 	if err != nil {
 		return err
 	}

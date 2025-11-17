@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	TypeableResourceDashboard   = authtypes.MustNewTypeableMetaResource(authtypes.MustNewName("dashboard"))
-	TypeableResourcesDashboards = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("dashboards"))
+	TypeableMetaResourceDashboard   = authtypes.MustNewTypeableMetaResource(authtypes.MustNewName("dashboard"))
+	TypeableMetaResourcesDashboards = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("dashboards"))
 )
 
 var (

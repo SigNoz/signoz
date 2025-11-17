@@ -13,7 +13,7 @@ import (
 
 type Module interface {
 	// enables public sharing for dashboard.
-	CreatePublic(context.Context, *dashboardtypes.PublicDashboard) error
+	CreatePublic(context.Context, valuer.UUID, *dashboardtypes.PublicDashboard) error
 
 	// gets the config for public sharing by org_id and dashboard_id.
 	GetPublic(context.Context, valuer.UUID, valuer.UUID) (*dashboardtypes.PublicDashboard, error)

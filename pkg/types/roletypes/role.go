@@ -179,7 +179,7 @@ func GetAdditionTuples(id valuer.UUID, orgID valuer.UUID, relation authtypes.Rel
 			authtypes.MustNewSubject(
 				authtypes.TypeRole,
 				id.String(),
-				authtypes.RelationAssignee,
+				&authtypes.RelationAssignee,
 			),
 			relation,
 			[]authtypes.Selector{object.Selector},
@@ -204,7 +204,7 @@ func GetDeletionTuples(id valuer.UUID, orgID valuer.UUID, relation authtypes.Rel
 			authtypes.MustNewSubject(
 				authtypes.TypeRole,
 				id.String(),
-				authtypes.RelationAssignee,
+				&authtypes.RelationAssignee,
 			),
 			relation,
 			[]authtypes.Selector{object.Selector},
