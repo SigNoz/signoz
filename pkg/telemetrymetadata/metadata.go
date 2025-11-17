@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -29,6 +31,66 @@ var (
 	ErrFailedToGetMeterValues   = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get meter values")
 	ErrFailedToGetRelatedValues = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get related values")
 )
+
+type intrinsicValueKind int
+
+const (
+	intrinsicValueKindString intrinsicValueKind = iota
+	intrinsicValueKindBool
+)
+
+type intrinsicMetricFieldDefinition struct {
+	key       telemetrytypes.TelemetryFieldKey
+	valueKind intrinsicValueKind
+}
+
+var intrinsicMetricFieldDefinitions = map[string]intrinsicMetricFieldDefinition{
+	"metric_name": {
+		key: telemetrytypes.TelemetryFieldKey{
+			Name:          "metric_name",
+			Signal:        telemetrytypes.SignalMetrics,
+			FieldContext:  telemetrytypes.FieldContextMetric,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		valueKind: intrinsicValueKindString,
+	},
+	"type": {
+		key: telemetrytypes.TelemetryFieldKey{
+			Name:          "type",
+			Signal:        telemetrytypes.SignalMetrics,
+			FieldContext:  telemetrytypes.FieldContextMetric,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		valueKind: intrinsicValueKindString,
+	},
+	"temporality": {
+		key: telemetrytypes.TelemetryFieldKey{
+			Name:          "temporality",
+			Signal:        telemetrytypes.SignalMetrics,
+			FieldContext:  telemetrytypes.FieldContextMetric,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		valueKind: intrinsicValueKindString,
+	},
+	"is_monotonic": {
+		key: telemetrytypes.TelemetryFieldKey{
+			Name:          "is_monotonic",
+			Signal:        telemetrytypes.SignalMetrics,
+			FieldContext:  telemetrytypes.FieldContextMetric,
+			FieldDataType: telemetrytypes.FieldDataTypeBool,
+		},
+		valueKind: intrinsicValueKindBool,
+	},
+	"__normalized": {
+		key: telemetrytypes.TelemetryFieldKey{
+			Name:          "__normalized",
+			Signal:        telemetrytypes.SignalMetrics,
+			FieldContext:  telemetrytypes.FieldContextMetric,
+			FieldDataType: telemetrytypes.FieldDataTypeBool,
+		},
+		valueKind: intrinsicValueKindBool,
+	},
+}
 
 type telemetryMetaStore struct {
 	logger                    *slog.Logger
@@ -796,6 +858,63 @@ func applyBackwardCompatibleKeys(mapOfKeys map[string][]*telemetrytypes.Telemetr
 	}
 }
 
+func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) map[string][]*telemetrytypes.TelemetryFieldKey {
+	if len(selectors) == 0 {
+		return keys
+	}
+	if keys == nil {
+		keys = make(map[string][]*telemetrytypes.TelemetryFieldKey)
+	}
+
+	for _, selector := range selectors {
+		if selector == nil {
+			continue
+		}
+		if selector.Signal != telemetrytypes.SignalMetrics && selector.Signal != telemetrytypes.SignalUnspecified {
+			continue
+		}
+
+		for name, definition := range intrinsicMetricFieldDefinitions {
+			if !selectorMatchesIntrinsicField(selector, definition.key, name) {
+				continue
+			}
+			keyCopy := definition.key
+			keys[name] = append(keys[name], &keyCopy)
+		}
+	}
+
+	return keys
+}
+
+func selectorMatchesIntrinsicField(selector *telemetrytypes.FieldKeySelector, definition telemetrytypes.TelemetryFieldKey, intrinsicName string) bool {
+	if selector == nil {
+		return false
+	}
+
+	if selector.FieldContext != telemetrytypes.FieldContextUnspecified && selector.FieldContext != definition.FieldContext {
+		return false
+	}
+
+	if selector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified && selector.FieldDataType != definition.FieldDataType {
+		return false
+	}
+
+	return matchesSelectorName(selector.Name, intrinsicName, selector.SelectorMatchType)
+}
+
+func matchesSelectorName(selectorName, target string, matchType telemetrytypes.FieldSelectorMatchType) bool {
+	if selectorName == "" {
+		return true
+	}
+
+	switch matchType {
+	case telemetrytypes.FieldSelectorMatchTypeExact:
+		return strings.EqualFold(selectorName, target)
+	default:
+		return strings.Contains(strings.ToLower(target), strings.ToLower(selectorName))
+	}
+}
+
 func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	var keys []*telemetrytypes.TelemetryFieldKey
 	var complete bool = true
@@ -851,6 +970,7 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 	}
 
 	applyBackwardCompatibleKeys(mapOfKeys)
+	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, selectors)
 
 	return mapOfKeys, complete, nil
 }
@@ -916,6 +1036,7 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 	}
 
 	applyBackwardCompatibleKeys(mapOfKeys)
+	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, fieldKeySelectors)
 
 	return mapOfKeys, complete, nil
 }
@@ -978,7 +1099,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
 			FieldKeys:        keys,
-        }, 0, 0)
+		}, 0, 0)
 		if err == nil {
 			sb.AddWhereClause(whereClause.WhereClause)
 		} else {
@@ -1002,20 +1123,20 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 			// search on attributes
 			key.FieldContext = telemetrytypes.FieldContextAttribute
-            cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
 			if err == nil {
 				conds = append(conds, cond)
 			}
 
 			// search on resource
 			key.FieldContext = telemetrytypes.FieldContextResource
-            cond, err = t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err = t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
 			if err == nil {
 				conds = append(conds, cond)
 			}
 			key.FieldContext = origContext
 		} else {
-            cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
 			if err == nil {
 				conds = append(conds, cond)
 			}
@@ -1241,6 +1362,10 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 
 // getMetricFieldValues returns field values and whether the result is complete
 func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+	if values, complete, handled, err := t.getIntrinsicMetricFieldValues(ctx, fieldValueSelector); handled {
+		return values, complete, err
+	}
+
 	sb := sqlbuilder.
 		Select("DISTINCT attr_string_value").
 		From(t.metricsDBName + "." + t.metricsFieldsTblName)
@@ -1312,6 +1437,112 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 	complete := rowCount <= limit
 
 	return values, complete, nil
+}
+
+func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, bool, error) {
+	if fieldValueSelector == nil {
+		return nil, false, false, nil
+	}
+
+	definition, ok := intrinsicMetricFieldDefinitions[fieldValueSelector.Name]
+	if !ok {
+		return nil, false, false, nil
+	}
+
+	if fieldValueSelector.Signal != telemetrytypes.SignalMetrics && fieldValueSelector.Signal != telemetrytypes.SignalUnspecified {
+		return nil, false, false, nil
+	}
+
+	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified && fieldValueSelector.FieldContext != definition.key.FieldContext {
+		return &telemetrytypes.TelemetryFieldValues{}, true, true, nil
+	}
+
+	if fieldValueSelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified && fieldValueSelector.FieldDataType != definition.key.FieldDataType {
+		return &telemetrytypes.TelemetryFieldValues{}, true, true, nil
+	}
+
+	sb := sqlbuilder.Select(fmt.Sprintf("DISTINCT %s", sqlbuilder.Escape(definition.key.Name))).
+		From(t.metricsDBName + "." + telemetrymetrics.TimeseriesV4TableName)
+
+	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricName != "" {
+		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
+	}
+
+	if fieldValueSelector.StartUnixMilli > 0 {
+		sb.Where(sb.GE("unix_milli", fieldValueSelector.StartUnixMilli))
+	}
+
+	if fieldValueSelector.EndUnixMilli > 0 {
+		sb.Where(sb.LE("unix_milli", fieldValueSelector.EndUnixMilli))
+	}
+
+	if fieldValueSelector.Value != "" {
+		switch definition.valueKind {
+		case intrinsicValueKindBool:
+			if boolVal, ok := parseBoolValue(fieldValueSelector.Value); ok {
+				sb.Where(sb.E(definition.key.Name, boolVal))
+			}
+		default:
+			if fieldValueSelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
+				sb.Where(sb.E(definition.key.Name, fieldValueSelector.Value))
+			} else {
+				sb.Where(sb.ILike(definition.key.Name, "%"+escapeForLike(fieldValueSelector.Value)+"%"))
+			}
+		}
+	}
+
+	limit := fieldValueSelector.Limit
+	if limit == 0 {
+		limit = 50
+	}
+	sb.Limit(limit + 1)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, false, true, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+	}
+	defer rows.Close()
+
+	values := &telemetrytypes.TelemetryFieldValues{}
+	rowCount := 0
+	for rows.Next() {
+		rowCount++
+		if rowCount > limit {
+			break
+		}
+
+		switch definition.valueKind {
+		case intrinsicValueKindBool:
+			var raw uint8
+			if err := rows.Scan(&raw); err != nil {
+				return nil, false, true, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+			}
+			boolVal := raw != 0
+			values.BoolValues = append(values.BoolValues, boolVal)
+			values.StringValues = append(values.StringValues, strconv.FormatBool(boolVal))
+		default:
+			var str string
+			if err := rows.Scan(&str); err != nil {
+				return nil, false, true, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+			}
+			values.StringValues = append(values.StringValues, str)
+		}
+	}
+
+	complete := rowCount <= limit
+	return values, complete, true, nil
+}
+
+func parseBoolValue(input string) (bool, bool) {
+	switch strings.ToLower(strings.TrimSpace(input)) {
+	case "true", "1", "t", "yes":
+		return true, true
+	case "false", "0", "f", "no":
+		return false, true
+	default:
+		return false, false
+	}
 }
 
 func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {

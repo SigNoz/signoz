@@ -298,3 +298,132 @@ func TestApplyBackwardCompatibleKeys(t *testing.T) {
 		})
 	}
 }
+
+func TestEnrichWithIntrinsicMetricKeys(t *testing.T) {
+	result := enrichWithIntrinsicMetricKeys(
+		map[string][]*telemetrytypes.TelemetryFieldKey{},
+		[]*telemetrytypes.FieldKeySelector{
+			{
+				Signal:            telemetrytypes.SignalMetrics,
+				Name:              "metric",
+				SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
+			},
+		},
+	)
+
+	require.Contains(t, result, "metric_name")
+	assert.Equal(t, telemetrytypes.FieldContextMetric, result["metric_name"][0].FieldContext)
+
+	result = enrichWithIntrinsicMetricKeys(
+		map[string][]*telemetrytypes.TelemetryFieldKey{},
+		[]*telemetrytypes.FieldKeySelector{
+			{
+				Signal:            telemetrytypes.SignalMetrics,
+				Name:              "metric",
+				FieldContext:      telemetrytypes.FieldContextAttribute,
+				SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
+			},
+		},
+	)
+	assert.NotContains(t, result, "metric_name")
+}
+
+func TestGetMetricFieldValuesIntrinsicMetricName(t *testing.T) {
+	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
+
+	metadata := NewTelemetryMetaStore(
+		instrumentationtest.New().ToProviderSettings(),
+		mockTelemetryStore,
+		telemetrytraces.DBName,
+		telemetrytraces.TagAttributesV2TableName,
+		telemetrytraces.SpanAttributesKeysTblName,
+		telemetrytraces.SpanIndexV3TableName,
+		telemetrymetrics.DBName,
+		telemetrymetrics.AttributesMetadataTableName,
+		telemetrymeter.DBName,
+		telemetrymeter.SamplesAgg1dTableName,
+		telemetrylogs.DBName,
+		telemetrylogs.LogsV2TableName,
+		telemetrylogs.TagAttributesV2TableName,
+		telemetrylogs.LogAttributeKeysTblName,
+		telemetrylogs.LogResourceKeysTblName,
+		DBName,
+		AttributesMetadataLocalTableName,
+	)
+
+	valueRows := cmock.NewRows([]cmock.ColumnType{
+		{Name: "metric_name", Type: "String"},
+	}, [][]any{{"metric.a"}, {"metric.b"}})
+
+	query := `SELECT DISTINCT .*metric_name.*` + telemetrymetrics.TimeseriesV4TableName
+
+	mock.ExpectQuery(query).
+		WithArgs(51).
+		WillReturnRows(valueRows)
+
+	values, complete, err := metadata.(*telemetryMetaStore).getMetricFieldValues(context.Background(), &telemetrytypes.FieldValueSelector{
+		FieldKeySelector: &telemetrytypes.FieldKeySelector{
+			Signal:            telemetrytypes.SignalMetrics,
+			Name:              "metric_name",
+			Limit:             50,
+			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
+		},
+		Limit: 50,
+	})
+	require.NoError(t, err)
+	assert.True(t, complete)
+	assert.ElementsMatch(t, []string{"metric.a", "metric.b"}, values.StringValues)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestGetMetricFieldValuesIntrinsicBool(t *testing.T) {
+	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
+
+	metadata := NewTelemetryMetaStore(
+		instrumentationtest.New().ToProviderSettings(),
+		mockTelemetryStore,
+		telemetrytraces.DBName,
+		telemetrytraces.TagAttributesV2TableName,
+		telemetrytraces.SpanAttributesKeysTblName,
+		telemetrytraces.SpanIndexV3TableName,
+		telemetrymetrics.DBName,
+		telemetrymetrics.AttributesMetadataTableName,
+		telemetrymeter.DBName,
+		telemetrymeter.SamplesAgg1dTableName,
+		telemetrylogs.DBName,
+		telemetrylogs.LogsV2TableName,
+		telemetrylogs.TagAttributesV2TableName,
+		telemetrylogs.LogAttributeKeysTblName,
+		telemetrylogs.LogResourceKeysTblName,
+		DBName,
+		AttributesMetadataLocalTableName,
+	)
+
+	boolRows := cmock.NewRows([]cmock.ColumnType{
+		{Name: "__normalized", Type: "UInt8"},
+	}, [][]any{{uint8(1)}})
+
+	query := `SELECT DISTINCT .*__normalized.*` + telemetrymetrics.TimeseriesV4TableName
+
+	mock.ExpectQuery(query).
+		WithArgs(true, 11).
+		WillReturnRows(boolRows)
+
+	values, complete, err := metadata.(*telemetryMetaStore).getMetricFieldValues(context.Background(), &telemetrytypes.FieldValueSelector{
+		FieldKeySelector: &telemetrytypes.FieldKeySelector{
+			Signal:            telemetrytypes.SignalMetrics,
+			Name:              "__normalized",
+			Limit:             10,
+			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
+		},
+		Value: "true",
+		Limit: 10,
+	})
+	require.NoError(t, err)
+	assert.True(t, complete)
+	assert.Equal(t, []bool{true}, values.BoolValues)
+	assert.Equal(t, []string{"true"}, values.StringValues)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
