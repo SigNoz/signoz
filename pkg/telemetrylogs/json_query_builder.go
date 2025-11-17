@@ -28,15 +28,6 @@ var (
 	CodePromotedPlanMissing      = errors.MustNewCode("promoted_plan_missing")
 )
 
-// Operator intent helpers
-func isMembershipContains(op qbtypes.FilterOperator) bool {
-	return op == qbtypes.FilterOperatorContains || op == qbtypes.FilterOperatorNotContains
-}
-
-func isMembershipLike(op qbtypes.FilterOperator) bool {
-	return op == qbtypes.FilterOperatorLike || op == qbtypes.FilterOperatorILike || op == qbtypes.FilterOperatorNotLike
-}
-
 type PathType struct {
 	Path     string `ch:"path"`
 	Type     string `ch:"type"`

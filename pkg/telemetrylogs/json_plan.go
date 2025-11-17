@@ -313,3 +313,12 @@ func PlanJSON(path string, operator qbtypes.FilterOperator, value any, isPromote
 
 	return plans
 }
+
+// Operator intent helpers
+func isMembershipContains(op qbtypes.FilterOperator) bool {
+	return op == qbtypes.FilterOperatorContains || op == qbtypes.FilterOperatorNotContains
+}
+
+func isMembershipLike(op qbtypes.FilterOperator) bool {
+	return op == qbtypes.FilterOperatorLike || op == qbtypes.FilterOperatorILike || op == qbtypes.FilterOperatorNotLike
+}
