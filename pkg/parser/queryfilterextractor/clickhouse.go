@@ -46,7 +46,7 @@ func (e *ClickHouseFilterExtractor) Extract(query string) (*FilterResult, error)
 
 		// Walk the AST to extract metrics
 		clickhouse.Walk(selectQuery, func(node clickhouse.Expr) bool {
-			e.extractFromNode(node, metricNames)
+			e.fillMetricNamesFromExpr(node, metricNames)
 			return true // Continue traversal
 		})
 	}
@@ -65,7 +65,7 @@ func (e *ClickHouseFilterExtractor) Extract(query string) (*FilterResult, error)
 	groupByColumnsMap := make(map[string]ColumnInfo) // column name -> ColumnInfo
 	visited := make(map[*clickhouse.SelectQuery]bool)
 	for query := range topLevelQueries {
-		columns := e.extractGroupByRecursive(query, cteMap, visited)
+		columns := e.extractGroupByColumns(query, cteMap, visited)
 		for _, col := range columns {
 			// Last column info wins for duplicate columns across multiple queries
 			groupByColumnsMap[col.Name] = col
@@ -85,38 +85,42 @@ func (e *ClickHouseFilterExtractor) Extract(query string) (*FilterResult, error)
 	return result, nil
 }
 
-// extractFromNode extracts metric names from various node types
-func (e *ClickHouseFilterExtractor) extractFromNode(node clickhouse.Expr, metricNames map[string]bool) {
+// ========================================
+// Metric Name Extraction
+// ========================================
+
+// fillMetricNamesFromExpr extracts metric names from various node types
+func (e *ClickHouseFilterExtractor) fillMetricNamesFromExpr(node clickhouse.Expr, metricNames map[string]bool) {
 	if node == nil {
 		return
 	}
 
 	switch n := node.(type) {
 	case *clickhouse.BinaryOperation:
-		e.extractFromBinaryOp(n, metricNames)
+		e.fillMetricFromBinaryOp(n, metricNames)
 	}
 }
 
-// extractFromBinaryOp extracts metrics from binary operations
-func (e *ClickHouseFilterExtractor) extractFromBinaryOp(op *clickhouse.BinaryOperation, metricNames map[string]bool) {
+// fillMetricFromBinaryOp extracts metrics from binary operations
+func (e *ClickHouseFilterExtractor) fillMetricFromBinaryOp(op *clickhouse.BinaryOperation, metricNames map[string]bool) {
 	// Check if left side is metric_name column
 	leftCol := e.getColumnName(op.LeftExpr)
 	rightCol := e.getColumnName(op.RightExpr)
 
 	// Handle metric_name on left side: metric_name = 'value'
 	if leftCol == MetricNameColumn {
-		e.extractMetricFromBinaryOp(op, op.RightExpr, metricNames)
+		e.fillMetricWithBinaryOpConditions(op, op.RightExpr, metricNames)
 		return
 	}
 
 	// Handle metric_name on right side: 'value' = metric_name
 	if rightCol == MetricNameColumn {
-		e.extractMetricFromBinaryOp(op, op.LeftExpr, metricNames)
+		e.fillMetricWithBinaryOpConditions(op, op.LeftExpr, metricNames)
 		return
 	}
 }
 
-// extractMetricFromBinaryOp extracts metric names from the value side of a binary operation
+// fillMetricWithBinaryOpConditions extracts metric names from the value side of a binary operation
 //
 // Supported operators:
 //   - "=", "==": Extracts literal string values or values from any() function
@@ -128,7 +132,7 @@ func (e *ClickHouseFilterExtractor) extractFromBinaryOp(op *clickhouse.BinaryOpe
 //   - "NOT LIKE", "NOT ILIKE": Negative pattern matching filters
 //   - "OR", "AND": Boolean operators as the Walk function will automatically traverse both sides
 //     of OR/AND operations and extract metrics from each branch. (e.g., metric_name='a' OR metric_name='b')
-func (e *ClickHouseFilterExtractor) extractMetricFromBinaryOp(op *clickhouse.BinaryOperation, valueExpr clickhouse.Expr, metricNames map[string]bool) {
+func (e *ClickHouseFilterExtractor) fillMetricWithBinaryOpConditions(op *clickhouse.BinaryOperation, valueExpr clickhouse.Expr, metricNames map[string]bool) {
 	switch op.Operation {
 	case "=", "==":
 		// metric_name = 'value' or metric_name = any(['a', 'b'])
@@ -152,8 +156,93 @@ func (e *ClickHouseFilterExtractor) extractMetricFromBinaryOp(op *clickhouse.Bin
 	}
 }
 
-// extractGroupFromGroupByClause extracts GROUP BY columns from a specific GroupByClause
-func (e *ClickHouseFilterExtractor) extractGroupFromGroupByClause(groupByClause *clickhouse.GroupByClause, groupBy map[string]bool) {
+// extractStringLiteral extracts a string literal value from an expression
+func (e *ClickHouseFilterExtractor) extractStringLiteral(expr clickhouse.Expr) string {
+	switch ex := expr.(type) {
+	case *clickhouse.StringLiteral:
+		return ex.Literal
+	}
+	return ""
+}
+
+// extractInValues extracts values from IN expressions
+func (e *ClickHouseFilterExtractor) extractInValues(expr clickhouse.Expr, metricNames map[string]bool) {
+	// Find all string literals in the expression
+	strLits := clickhouse.FindAll(expr, func(node clickhouse.Expr) bool {
+		// metric_name passed in `in` condition will be string literal.
+		_, ok := node.(*clickhouse.StringLiteral)
+		return ok
+	})
+
+	for _, strLitNode := range strLits {
+		if strLit, ok := strLitNode.(*clickhouse.StringLiteral); ok {
+			// Unquote the string literal
+			val := e.extractStringLiteral(strLit)
+			if val != "" {
+				metricNames[val] = true
+			}
+		}
+	}
+}
+
+// ========================================
+// GROUP BY Column Extraction
+// ========================================
+
+// extractGroupByColumns extracts the GROUP BY columns from a query
+// It follows the top-down approach where outer GROUP BY overrides inner GROUP BY in subqueries and CTEs.
+// Returns a slice of ColumnInfo with column names, aliases, and origins
+func (e *ClickHouseFilterExtractor) extractGroupByColumns(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery, visited map[*clickhouse.SelectQuery]bool) []ColumnInfo {
+	if visited[query] {
+		return nil
+	}
+
+	// Mark this query as visited to prevent cycles
+	visited[query] = true
+
+	// First, check if this query has its own GROUP BY using direct field access
+	hasGroupBy := query.GroupBy != nil
+
+	// If this query has GROUP BY, use it (outer overrides inner)
+	if hasGroupBy {
+		// Extract GROUP BY columns
+		tempGroupBy := make(map[string]bool)
+		e.fillGroupsFromGroupByClause(query.GroupBy, tempGroupBy)
+
+		// Extract SELECT columns and their aliases from the same query level
+		selectAliases := e.extractSelectColumns(query)
+
+		// Build ColumnInfo array by matching GROUP BY with SELECT aliases and origins
+		result := []ColumnInfo{}
+		originVisited := make(map[*clickhouse.SelectQuery]bool)
+
+		for groupByCol := range tempGroupBy {
+			alias := selectAliases[groupByCol] // Will be "" if not in SELECT
+
+			// Extract origin by tracing back through queries
+			origin := e.extractColumnOrigin(groupByCol, query, cteMap, originVisited)
+
+			result = append(result, ColumnInfo{
+				Name:       groupByCol,
+				Alias:      alias,
+				OriginExpr: origin,
+			})
+		}
+		return result
+	}
+
+	// If no GROUP BY in this query, follow CTE/subquery references
+	// It might have grouping inside the CTE/subquery
+	sourceQuery := e.extractSourceQuery(query, cteMap)
+	if sourceQuery != nil {
+		return e.extractGroupByColumns(sourceQuery, cteMap, visited)
+	}
+
+	return nil
+}
+
+// fillGroupsFromGroupByClause extracts GROUP BY columns from a specific GroupByClause and fills the map with the column names
+func (e *ClickHouseFilterExtractor) fillGroupsFromGroupByClause(groupByClause *clickhouse.GroupByClause, groupBy map[string]bool) {
 
 	// Extract GROUP BY expressions properly
 	// Find only the direct child ColumnExprList, not nested ones
@@ -257,239 +346,6 @@ func (e *ClickHouseFilterExtractor) getColumnName(expr clickhouse.Expr) string {
 		return ""
 	}
 	return ""
-}
-
-// extractStringLiteral extracts a string literal value from an expression
-func (e *ClickHouseFilterExtractor) extractStringLiteral(expr clickhouse.Expr) string {
-	switch ex := expr.(type) {
-	case *clickhouse.StringLiteral:
-		return ex.Literal
-	}
-	return ""
-}
-
-// extractInValues extracts values from IN expressions
-func (e *ClickHouseFilterExtractor) extractInValues(expr clickhouse.Expr, metricNames map[string]bool) {
-	// Find all string literals in the expression
-	strLits := clickhouse.FindAll(expr, func(node clickhouse.Expr) bool {
-		// metric_name passed in `in` condition will be string literal.
-		_, ok := node.(*clickhouse.StringLiteral)
-		return ok
-	})
-
-	for _, strLitNode := range strLits {
-		if strLit, ok := strLitNode.(*clickhouse.StringLiteral); ok {
-			// Unquote the string literal
-			val := e.extractStringLiteral(strLit)
-			if val != "" {
-				metricNames[val] = true
-			}
-		}
-	}
-}
-
-// ========================================
-// SELECT Column Alias Extraction
-// ========================================
-
-// extractSelectColumns extracts column names and their aliases from SELECT clause of a specific query
-// Returns a map where key is normalized column name and value is the alias
-// For duplicate columns with different aliases, the last alias wins
-// This follows the same pattern as extractGroupFromGroupByClause - finding direct children only
-func (e *ClickHouseFilterExtractor) extractSelectColumns(query *clickhouse.SelectQuery) map[string]string {
-	aliasMap := make(map[string]string)
-
-	if query == nil {
-		return aliasMap
-	}
-
-	// Find SelectItem nodes which represent columns in the SELECT clause
-	// SelectItem has an Expr field (the column/expression) and an Alias field
-	selectItems := clickhouse.FindAll(query, func(node clickhouse.Expr) bool {
-		_, ok := node.(*clickhouse.SelectItem)
-		return ok
-	})
-
-	// Process each SelectItem and extract column name and alias
-	for _, itemNode := range selectItems {
-		if selectItem, ok := itemNode.(*clickhouse.SelectItem); ok {
-			// Extract the column name/expression from SelectItem.Expr
-			columnName := e.extractSelectItemName(selectItem)
-			if columnName == "" {
-				continue
-			}
-
-			// Normalize column name (strip table alias)
-			normalizedName := e.stripTableAlias(columnName)
-
-			// Extract alias from SelectItem.Alias
-			alias := e.extractSelectItemAlias(selectItem)
-
-			// Store in map - last alias wins for duplicates
-			aliasMap[normalizedName] = alias
-		}
-	}
-
-	return aliasMap
-}
-
-// extractSelectItemName extracts the column name or expression from a SelectItem
-func (e *ClickHouseFilterExtractor) extractSelectItemName(selectItem *clickhouse.SelectItem) string {
-	if selectItem == nil || selectItem.Expr == nil {
-		return ""
-	}
-
-	return e.extractColumnStrByExpr(selectItem.Expr)
-}
-
-// extractSelectItemAlias extracts the alias from a SelectItem
-// Returns empty string if no alias is present
-func (e *ClickHouseFilterExtractor) extractSelectItemAlias(selectItem *clickhouse.SelectItem) string {
-	if selectItem == nil || selectItem.Alias == nil {
-		return ""
-	}
-
-	// The Alias field is an *Ident (pointer type)
-	if selectItem.Alias.Name != "" {
-		return selectItem.Alias.Name
-	}
-
-	return ""
-}
-
-// ========================================
-// CTE and Subquery GROUP BY Support
-// ========================================
-
-// buildCTEMap builds a map of CTE names to their SelectQuery nodes by recursively
-// traversing all queries and their nested expressions
-func (e *ClickHouseFilterExtractor) buildCTEMap(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery) {
-	if query == nil {
-		return
-	}
-
-	// Access CTEs directly from WithClause if it exists
-	if query.With != nil && query.With.CTEs != nil {
-		for _, cte := range query.With.CTEs {
-			cteName := e.extractCTEName(cte)
-			cteQuery := e.extractCTEQuery(cte)
-			if cteName != "" && cteQuery != nil {
-				cteMap[cteName] = cteQuery
-				// Recursively build CTE map for nested CTEs
-				e.buildCTEMap(cteQuery, cteMap)
-			}
-		}
-	}
-
-	// Also check for CTEs in subqueries and other expressions
-	e.buildCTEMapFromExpr(query, cteMap)
-}
-
-// extractCTEName extracts the CTE name from a CTEStmt, the Expr field is the name of the CTE
-func (e *ClickHouseFilterExtractor) extractCTEName(cte *clickhouse.CTEStmt) string {
-	if cte == nil || cte.Expr == nil {
-		return ""
-	}
-
-	switch name := cte.Expr.(type) {
-	case *clickhouse.Ident:
-		return name.Name
-	default:
-		return cte.Expr.String()
-	}
-}
-
-// extractCTEQuery extracts the SelectQuery from a CTEStmt, the Alias field is the SelectQuery
-func (e *ClickHouseFilterExtractor) extractCTEQuery(cte *clickhouse.CTEStmt) *clickhouse.SelectQuery {
-	if cte == nil || cte.Alias == nil {
-		return nil
-	}
-
-	// The Alias field should contain a SelectQuery
-	if selectQuery, ok := cte.Alias.(*clickhouse.SelectQuery); ok {
-		return selectQuery
-	}
-
-	return nil
-}
-
-// buildCTEMapFromExpr recursively extracts CTEs from various expression types
-func (e *ClickHouseFilterExtractor) buildCTEMapFromExpr(expr clickhouse.Expr, cteMap map[string]*clickhouse.SelectQuery) {
-	if expr == nil {
-		return
-	}
-
-	// Walk through all nodes to find SelectQuery nodes that might contain CTEs
-	clickhouse.Walk(expr, func(node clickhouse.Expr) bool {
-		switch n := node.(type) {
-		case *clickhouse.SelectQuery:
-			// Don't process the same query we started with to avoid infinite recursion
-			if n != expr {
-				e.buildCTEMap(n, cteMap)
-			}
-		case *clickhouse.TableExpr:
-			if n.Expr != nil {
-				e.buildCTEMapFromExpr(n.Expr, cteMap)
-			}
-		case *clickhouse.JoinTableExpr:
-			if n.Table != nil {
-				e.buildCTEMapFromExpr(n.Table, cteMap)
-			}
-		}
-		return true // Continue traversal
-	})
-}
-
-// extractGroupByRecursive implements the recursive GROUP BY extraction logic with alias tracking
-// It follows the top-down approach where outer GROUP BY overrides inner GROUP BY
-// Returns a slice of ColumnInfo with column names, aliases, and origins
-func (e *ClickHouseFilterExtractor) extractGroupByRecursive(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery, visited map[*clickhouse.SelectQuery]bool) []ColumnInfo {
-	if visited[query] {
-		return nil
-	}
-
-	// Mark this query as visited to prevent cycles
-	visited[query] = true
-
-	// First, check if this query has its own GROUP BY using direct field access
-	hasGroupBy := query.GroupBy != nil
-
-	// If this query has GROUP BY, use it (outer overrides inner)
-	if hasGroupBy {
-		// Extract GROUP BY columns
-		tempGroupBy := make(map[string]bool)
-		e.extractGroupFromGroupByClause(query.GroupBy, tempGroupBy)
-
-		// Extract SELECT columns and their aliases from the same query level
-		selectAliases := e.extractSelectColumns(query)
-
-		// Build ColumnInfo array by matching GROUP BY with SELECT aliases and origins
-		result := []ColumnInfo{}
-		originVisited := make(map[*clickhouse.SelectQuery]bool)
-
-		for groupByCol := range tempGroupBy {
-			alias := selectAliases[groupByCol] // Will be "" if not in SELECT
-
-			// Extract origin by tracing back through queries
-			origin := e.extractColumnOrigin(groupByCol, query, cteMap, originVisited)
-
-			result = append(result, ColumnInfo{
-				Name:       groupByCol,
-				Alias:      alias,
-				OriginExpr: origin,
-			})
-		}
-		return result
-	}
-
-	// If no GROUP BY in this query, follow CTE/subquery references
-	// It might have grouping inside the CTE/subquery
-	sourceQuery := e.extractSourceQuery(query, cteMap)
-	if sourceQuery != nil {
-		return e.extractGroupByRecursive(sourceQuery, cteMap, visited)
-	}
-
-	return nil
 }
 
 // extractSourceQuery extracts the SelectQuery from FROM expressions
@@ -667,4 +523,156 @@ func (e *ClickHouseFilterExtractor) isSimpleColumnReference(expr clickhouse.Expr
 		}
 	}
 	return false
+}
+
+// ========================================
+// SELECT Column Alias Extraction
+// ========================================
+
+// extractSelectColumns extracts column names and their aliases from SELECT clause of a specific query
+// Returns a map where key is normalized column name and value is the alias
+// For duplicate columns with different aliases, the last alias wins
+// This follows the same pattern as extractGroupFromGroupByClause - finding direct children only
+func (e *ClickHouseFilterExtractor) extractSelectColumns(query *clickhouse.SelectQuery) map[string]string {
+	aliasMap := make(map[string]string)
+
+	if query == nil {
+		return aliasMap
+	}
+
+	// Find SelectItem nodes which represent columns in the SELECT clause
+	// SelectItem has an Expr field (the column/expression) and an Alias field
+	selectItems := clickhouse.FindAll(query, func(node clickhouse.Expr) bool {
+		_, ok := node.(*clickhouse.SelectItem)
+		return ok
+	})
+
+	// Process each SelectItem and extract column name and alias
+	for _, itemNode := range selectItems {
+		if selectItem, ok := itemNode.(*clickhouse.SelectItem); ok {
+			// Extract the column name/expression from SelectItem.Expr
+			columnName := e.extractSelectItemName(selectItem)
+			if columnName == "" {
+				continue
+			}
+
+			// Normalize column name (strip table alias)
+			normalizedName := e.stripTableAlias(columnName)
+
+			// Extract alias from SelectItem.Alias
+			alias := e.extractSelectItemAlias(selectItem)
+
+			// Store in map - last alias wins for duplicates
+			aliasMap[normalizedName] = alias
+		}
+	}
+
+	return aliasMap
+}
+
+// extractSelectItemName extracts the column name or expression from a SelectItem
+func (e *ClickHouseFilterExtractor) extractSelectItemName(selectItem *clickhouse.SelectItem) string {
+	if selectItem == nil || selectItem.Expr == nil {
+		return ""
+	}
+
+	return e.extractColumnStrByExpr(selectItem.Expr)
+}
+
+// extractSelectItemAlias extracts the alias from a SelectItem
+// Returns empty string if no alias is present
+func (e *ClickHouseFilterExtractor) extractSelectItemAlias(selectItem *clickhouse.SelectItem) string {
+	if selectItem == nil || selectItem.Alias == nil {
+		return ""
+	}
+
+	// The Alias field is an *Ident (pointer type)
+	if selectItem.Alias.Name != "" {
+		return selectItem.Alias.Name
+	}
+
+	return ""
+}
+
+// ========================================
+// CTE and Subquery Extraction
+// ========================================
+
+// buildCTEMap builds a map of CTE names to their SelectQuery nodes by recursively
+// traversing all queries and their nested expressions
+func (e *ClickHouseFilterExtractor) buildCTEMap(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery) {
+	if query == nil {
+		return
+	}
+
+	// Access CTEs directly from WithClause if it exists
+	if query.With != nil && query.With.CTEs != nil {
+		for _, cte := range query.With.CTEs {
+			cteName := e.extractCTEName(cte)
+			cteQuery := e.extractCTEQuery(cte)
+			if cteName != "" && cteQuery != nil {
+				cteMap[cteName] = cteQuery
+				// Recursively build CTE map for nested CTEs
+				e.buildCTEMap(cteQuery, cteMap)
+			}
+		}
+	}
+
+	// Also check for CTEs in subqueries and other expressions
+	e.buildCTEMapFromExpr(query, cteMap)
+}
+
+// extractCTEName extracts the CTE name from a CTEStmt, the Expr field is the name of the CTE
+func (e *ClickHouseFilterExtractor) extractCTEName(cte *clickhouse.CTEStmt) string {
+	if cte == nil || cte.Expr == nil {
+		return ""
+	}
+
+	switch name := cte.Expr.(type) {
+	case *clickhouse.Ident:
+		return name.Name
+	default:
+		return cte.Expr.String()
+	}
+}
+
+// extractCTEQuery extracts the SelectQuery from a CTEStmt, the Alias field is the SelectQuery
+func (e *ClickHouseFilterExtractor) extractCTEQuery(cte *clickhouse.CTEStmt) *clickhouse.SelectQuery {
+	if cte == nil || cte.Alias == nil {
+		return nil
+	}
+
+	// The Alias field should contain a SelectQuery
+	if selectQuery, ok := cte.Alias.(*clickhouse.SelectQuery); ok {
+		return selectQuery
+	}
+
+	return nil
+}
+
+// buildCTEMapFromExpr recursively extracts CTEs from various expression types
+func (e *ClickHouseFilterExtractor) buildCTEMapFromExpr(expr clickhouse.Expr, cteMap map[string]*clickhouse.SelectQuery) {
+	if expr == nil {
+		return
+	}
+
+	// Walk through all nodes to find SelectQuery nodes that might contain CTEs
+	clickhouse.Walk(expr, func(node clickhouse.Expr) bool {
+		switch n := node.(type) {
+		case *clickhouse.SelectQuery:
+			// Don't process the same query we started with to avoid infinite recursion
+			if n != expr {
+				e.buildCTEMap(n, cteMap)
+			}
+		case *clickhouse.TableExpr:
+			if n.Expr != nil {
+				e.buildCTEMapFromExpr(n.Expr, cteMap)
+			}
+		case *clickhouse.JoinTableExpr:
+			if n.Table != nil {
+				e.buildCTEMapFromExpr(n.Table, cteMap)
+			}
+		}
+		return true // Continue traversal
+	})
 }
