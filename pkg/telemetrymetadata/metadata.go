@@ -1434,7 +1434,7 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 	}
 
 	// no values are surfaced for intrinsic boolean fields.
-	if fieldValueSelector.Name == "__normalized" || fieldValueSelector.Name == "is_monotonic" {
+	if slices.Contains([]string{"__normalized", "is_monotonic"}, fieldValueSelector.Name) {
 		return &telemetrytypes.TelemetryFieldValues{}, true, true, nil
 	}
 
