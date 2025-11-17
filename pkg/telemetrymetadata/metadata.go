@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -32,63 +31,36 @@ var (
 	ErrFailedToGetRelatedValues = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get related values")
 )
 
-type intrinsicValueKind int
-
-const (
-	intrinsicValueKindString intrinsicValueKind = iota
-	intrinsicValueKindBool
-)
-
-type intrinsicMetricFieldDefinition struct {
-	key       telemetrytypes.TelemetryFieldKey
-	valueKind intrinsicValueKind
-}
-
-var intrinsicMetricFieldDefinitions = map[string]intrinsicMetricFieldDefinition{
+var intrinsicMetricFields = map[string]telemetrytypes.TelemetryFieldKey{
 	"metric_name": {
-		key: telemetrytypes.TelemetryFieldKey{
-			Name:          "metric_name",
-			Signal:        telemetrytypes.SignalMetrics,
-			FieldContext:  telemetrytypes.FieldContextMetric,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		},
-		valueKind: intrinsicValueKindString,
+		Name:          "metric_name",
+		Signal:        telemetrytypes.SignalMetrics,
+		FieldContext:  telemetrytypes.FieldContextMetric,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},
 	"type": {
-		key: telemetrytypes.TelemetryFieldKey{
-			Name:          "type",
-			Signal:        telemetrytypes.SignalMetrics,
-			FieldContext:  telemetrytypes.FieldContextMetric,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		},
-		valueKind: intrinsicValueKindString,
+		Name:          "type",
+		Signal:        telemetrytypes.SignalMetrics,
+		FieldContext:  telemetrytypes.FieldContextMetric,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},
 	"temporality": {
-		key: telemetrytypes.TelemetryFieldKey{
-			Name:          "temporality",
-			Signal:        telemetrytypes.SignalMetrics,
-			FieldContext:  telemetrytypes.FieldContextMetric,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		},
-		valueKind: intrinsicValueKindString,
+		Name:          "temporality",
+		Signal:        telemetrytypes.SignalMetrics,
+		FieldContext:  telemetrytypes.FieldContextMetric,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},
 	"is_monotonic": {
-		key: telemetrytypes.TelemetryFieldKey{
-			Name:          "is_monotonic",
-			Signal:        telemetrytypes.SignalMetrics,
-			FieldContext:  telemetrytypes.FieldContextMetric,
-			FieldDataType: telemetrytypes.FieldDataTypeBool,
-		},
-		valueKind: intrinsicValueKindBool,
+		Name:          "is_monotonic",
+		Signal:        telemetrytypes.SignalMetrics,
+		FieldContext:  telemetrytypes.FieldContextMetric,
+		FieldDataType: telemetrytypes.FieldDataTypeBool,
 	},
 	"__normalized": {
-		key: telemetrytypes.TelemetryFieldKey{
-			Name:          "__normalized",
-			Signal:        telemetrytypes.SignalMetrics,
-			FieldContext:  telemetrytypes.FieldContextMetric,
-			FieldDataType: telemetrytypes.FieldDataTypeBool,
-		},
-		valueKind: intrinsicValueKindBool,
+		Name:          "__normalized",
+		Signal:        telemetrytypes.SignalMetrics,
+		FieldContext:  telemetrytypes.FieldContextMetric,
+		FieldDataType: telemetrytypes.FieldDataTypeBool,
 	},
 }
 
@@ -874,11 +846,11 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 			continue
 		}
 
-		for name, definition := range intrinsicMetricFieldDefinitions {
-			if !selectorMatchesIntrinsicField(selector, definition.key, name) {
+		for name, key := range intrinsicMetricFields {
+			if !selectorMatchesIntrinsicField(selector, key, name) {
 				continue
 			}
-			keyCopy := definition.key
+			keyCopy := key
 			keys[name] = append(keys[name], &keyCopy)
 		}
 	}
@@ -1444,7 +1416,7 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 		return nil, false, false, nil
 	}
 
-	definition, ok := intrinsicMetricFieldDefinitions[fieldValueSelector.Name]
+	key, ok := intrinsicMetricFields[fieldValueSelector.Name]
 	if !ok {
 		return nil, false, false, nil
 	}
@@ -1453,15 +1425,20 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 		return nil, false, false, nil
 	}
 
-	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified && fieldValueSelector.FieldContext != definition.key.FieldContext {
+	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified && fieldValueSelector.FieldContext != key.FieldContext {
 		return &telemetrytypes.TelemetryFieldValues{}, true, true, nil
 	}
 
-	if fieldValueSelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified && fieldValueSelector.FieldDataType != definition.key.FieldDataType {
+	if fieldValueSelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified && fieldValueSelector.FieldDataType != key.FieldDataType {
 		return &telemetrytypes.TelemetryFieldValues{}, true, true, nil
 	}
 
-	sb := sqlbuilder.Select(fmt.Sprintf("DISTINCT %s", sqlbuilder.Escape(definition.key.Name))).
+	// no values are surfaced for intrinsic boolean fields.
+	if fieldValueSelector.Name == "__normalized" || fieldValueSelector.Name == "is_monotonic" {
+		return &telemetrytypes.TelemetryFieldValues{}, true, true, nil
+	}
+
+	sb := sqlbuilder.Select(fmt.Sprintf("DISTINCT %s", sqlbuilder.Escape(key.Name))).
 		From(t.metricsDBName + "." + telemetrymetrics.TimeseriesV4TableName)
 
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricName != "" {
@@ -1477,17 +1454,10 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 	}
 
 	if fieldValueSelector.Value != "" {
-		switch definition.valueKind {
-		case intrinsicValueKindBool:
-			if boolVal, ok := parseBoolValue(fieldValueSelector.Value); ok {
-				sb.Where(sb.E(definition.key.Name, boolVal))
-			}
-		default:
-			if fieldValueSelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
-				sb.Where(sb.E(definition.key.Name, fieldValueSelector.Value))
-			} else {
-				sb.Where(sb.ILike(definition.key.Name, "%"+escapeForLike(fieldValueSelector.Value)+"%"))
-			}
+		if fieldValueSelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
+			sb.Where(sb.E(key.Name, fieldValueSelector.Value))
+		} else {
+			sb.Where(sb.ILike(key.Name, "%"+escapeForLike(fieldValueSelector.Value)+"%"))
 		}
 	}
 
@@ -1512,37 +1482,15 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 			break
 		}
 
-		switch definition.valueKind {
-		case intrinsicValueKindBool:
-			var raw uint8
-			if err := rows.Scan(&raw); err != nil {
-				return nil, false, true, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
-			}
-			boolVal := raw != 0
-			values.BoolValues = append(values.BoolValues, boolVal)
-			values.StringValues = append(values.StringValues, strconv.FormatBool(boolVal))
-		default:
-			var str string
-			if err := rows.Scan(&str); err != nil {
-				return nil, false, true, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
-			}
-			values.StringValues = append(values.StringValues, str)
+		var str string
+		if err := rows.Scan(&str); err != nil {
+			return nil, false, true, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 		}
+		values.StringValues = append(values.StringValues, str)
 	}
 
 	complete := rowCount <= limit
 	return values, complete, true, nil
-}
-
-func parseBoolValue(input string) (bool, bool) {
-	switch strings.ToLower(strings.TrimSpace(input)) {
-	case "true", "1", "t", "yes":
-		return true, true
-	case "false", "0", "f", "no":
-		return false, true
-	default:
-		return false, false
-	}
 }
 
 func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {

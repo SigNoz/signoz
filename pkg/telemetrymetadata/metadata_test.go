@@ -377,9 +377,8 @@ func TestGetMetricFieldValuesIntrinsicMetricName(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestGetMetricFieldValuesIntrinsicBool(t *testing.T) {
+func TestGetMetricFieldValuesIntrinsicBoolReturnsEmpty(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
-	mock := mockTelemetryStore.Mock()
 
 	metadata := NewTelemetryMetaStore(
 		instrumentationtest.New().ToProviderSettings(),
@@ -401,16 +400,6 @@ func TestGetMetricFieldValuesIntrinsicBool(t *testing.T) {
 		AttributesMetadataLocalTableName,
 	)
 
-	boolRows := cmock.NewRows([]cmock.ColumnType{
-		{Name: "__normalized", Type: "UInt8"},
-	}, [][]any{{uint8(1)}})
-
-	query := `SELECT DISTINCT .*__normalized.*` + telemetrymetrics.TimeseriesV4TableName
-
-	mock.ExpectQuery(query).
-		WithArgs(true, 11).
-		WillReturnRows(boolRows)
-
 	values, complete, err := metadata.(*telemetryMetaStore).getMetricFieldValues(context.Background(), &telemetrytypes.FieldValueSelector{
 		FieldKeySelector: &telemetrytypes.FieldKeySelector{
 			Signal:            telemetrytypes.SignalMetrics,
@@ -423,7 +412,6 @@ func TestGetMetricFieldValuesIntrinsicBool(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.True(t, complete)
-	assert.Equal(t, []bool{true}, values.BoolValues)
-	assert.Equal(t, []string{"true"}, values.StringValues)
-	require.NoError(t, mock.ExpectationsWereMet())
+	assert.Empty(t, values.StringValues)
+	assert.Empty(t, values.BoolValues)
 }
