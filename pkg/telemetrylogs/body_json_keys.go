@@ -128,7 +128,7 @@ func ExtractBodyPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 	return paths, complete, highestLastSeen, nil
 }
 
-func ListIndexedPaths(ctx context.Context, cluster string, conn clickhouse.Conn) ([]schemamigrator.Index, error) {
+func ListIndexes(ctx context.Context, cluster string, conn clickhouse.Conn) ([]schemamigrator.Index, error) {
 	query := fmt.Sprintf(`SELECT name, type_full, expr, granularity FROM 
 	clusterAllReplicas('%s', %s) 
 	WHERE database = '%s' AND table = '%s'

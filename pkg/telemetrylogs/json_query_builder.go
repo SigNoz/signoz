@@ -168,27 +168,16 @@ func (b *JSONQueryBuilder) syncPathTypes(ctx context.Context, fullLoad bool) err
 
 // TODO: change this to use ListIndexedPaths function
 func (b *JSONQueryBuilder) syncStringIndexedColumns(ctx context.Context) error {
-	query := fmt.Sprintf(`SELECT type, expr FROM 
-	clusterAllReplicas('%s', %s) 
-	WHERE database = '%s' AND table = '%s' AND type = 'ngrambf_v1'
-	AND (expr LIKE '%%body_v2.%%' OR expr LIKE '%%promoted.%%')`,
-		b.telemetryStore.Cluster(), SkipIndexTableName, DBName, LogsV2LocalTableName)
-	rows, err := b.telemetryStore.ClickhouseDB().Query(ctx, query)
+	indexes, err := ListIndexes(ctx, b.telemetryStore.Cluster(), b.telemetryStore.ClickhouseDB())
 	if err != nil {
 		return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to load string indexed columns")
 	}
-	defer rows.Close()
 
 	next := make(map[string]string)
-	for rows.Next() {
-		var typ string
-		var expr string
-		if err := rows.Scan(&typ, &expr); err != nil {
-			return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to scan string indexed column")
-		}
-		subColumn, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(expr)
+	for _, index := range indexes {
+		subColumn, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
 		if err != nil {
-			return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("failed to unfold JSON sub column index expression for %s", expr))
+			return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("failed to unfold JSON sub column index expression for %s", index.Expression))
 		}
 		// adding only assumeNotNull to the expression because
 		// 	"github.com/huandu/go-sqlbuilder" uses LOWER to simulate string matching cases
@@ -236,7 +225,7 @@ func (b *JSONQueryBuilder) syncPromoted(ctx context.Context) error {
 	return nil
 }
 
-// BuildCondition builds the full WHERE condition for body_v2 JSON paths
+// BuildCondition builds the full WHERE condition for body_json JSON paths
 func (b *JSONQueryBuilder) BuildCondition(ctx context.Context, key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 
@@ -509,7 +498,8 @@ func (b *JSONQueryBuilder) BuildGroupBy(ctx context.Context, key *telemetrytypes
 					"plan length is less than 2 for promoted path: %s", path)
 			}
 
-			// promoted column first then body_v2 column
+			// promoted column first then body_json column
+			// TODO(Piyush): Change this in future for better performance
 			expr = fmt.Sprintf("coalesce(%s, %s)",
 				fmt.Sprintf("dynamicElement(%s, '%s')", plan[1].FieldPath(), plan[1].TerminalConfig.ElemType.StringValue()),
 				expr,

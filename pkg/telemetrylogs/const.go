@@ -1,6 +1,7 @@
 package telemetrylogs
 
 import (
+	collectorConstants "github.com/SigNoz/signoz-otel-collector/constants"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -16,8 +17,8 @@ const (
 	LogsV2TimestampColumn         = "timestamp"
 	LogsV2ObservedTimestampColumn = "observed_timestamp"
 	LogsV2BodyColumn              = "body"
-	LogsV2BodyV2Column            = "body_v2"
-	LogsV2PromotedColumn          = "promoted"
+	LogsV2BodyJSONColumn          = collectorConstants.BodyJSONColumn
+	LogsV2BodyPromotedColumn      = collectorConstants.BodyPromotedColumn
 	LogsV2TraceIDColumn           = "trace_id"
 	LogsV2SpanIDColumn            = "span_id"
 	LogsV2TraceFlagsColumn        = "trace_flags"
@@ -32,6 +33,9 @@ const (
 	LogsV2AttributesBoolColumn   = "attributes_bool"
 	LogsV2ResourcesStringColumn  = "resources_string"
 	LogsV2ScopeStringColumn      = "scope_string"
+
+	BodyJSONColumnPrefix     = collectorConstants.BodyJSONColumnPrefix
+	BodyPromotedColumnPrefix = collectorConstants.BodyPromotedColumnPrefix
 )
 
 var (
@@ -42,7 +46,6 @@ var (
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	}
 	BodyJSONStringSearchPrefix = `body.`
-	BodyV2Column               = `body_v2`
 	IntrinsicFields            = map[string]telemetrytypes.TelemetryFieldKey{
 		"body": {
 			Name:          "body",

@@ -9,7 +9,7 @@ var LicenseAPIKey = GetOrDefaultEnv("SIGNOZ_LICENSE_API_KEY", "")
 var SaasSegmentKey = GetOrDefaultEnv("SIGNOZ_SAAS_SEGMENT_KEY", "")
 var FetchFeatures = GetOrDefaultEnv("FETCH_FEATURES", "false")
 var ZeusFeaturesURL = GetOrDefaultEnv("ZEUS_FEATURES_URL", "ZeusFeaturesURL")
-var BodyV2QueryEnabled = GetOrDefaultEnv("BODY_V2_QUERY_ENABLED", "false") == "true"
+var BodyJSONQueryEnabled = GetOrDefaultEnv("BODY_JSON_QUERY_ENABLED", "false") == "true"
 
 func GetOrDefaultEnv(key string, fallback string) string {
 	v := os.Getenv(key)

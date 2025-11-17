@@ -241,8 +241,8 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(LogsV2ScopeNameColumn)
 		sb.SelectMore(LogsV2ScopeVersionColumn)
 		sb.SelectMore(LogsV2BodyColumn)
-		sb.SelectMore(LogsV2BodyV2Column)
-		sb.SelectMore(LogsV2PromotedColumn)
+		sb.SelectMore(LogsV2BodyJSONColumn)
+		sb.SelectMore(LogsV2BodyPromotedColumn)
 		sb.SelectMore(LogsV2AttributesStringColumn)
 		sb.SelectMore(LogsV2AttributesNumberColumn)
 		sb.SelectMore(LogsV2AttributesBoolColumn)
@@ -255,13 +255,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			if query.SelectFields[index].Name == LogsV2TimestampColumn || query.SelectFields[index].Name == LogsV2IDColumn {
 				continue
 			}
-			// Keep SELECT projection raw for body JSON paths unless narrower typing is required by agg/filter
-			// Here, for plain SELECT, emit raw body_v2.path
-			if b.jsonBodyPrefix != "" && strings.HasPrefix(query.SelectFields[index].Name, b.jsonBodyPrefix) {
-				path := strings.TrimPrefix(query.SelectFields[index].Name, b.jsonBodyPrefix)
-				sb.SelectMore("body_v2." + path)
-				continue
-			}
+
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
 			colExpr, err := b.fm.ColumnExpressionFor(ctx, &query.SelectFields[index], keys)
 			if err != nil {
@@ -361,7 +355,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		var err error
 
 		// For body JSON fields with feature flag enabled, use array join logic
-		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && constants.BodyV2QueryEnabled {
+		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && constants.BodyJSONQueryEnabled {
 			// Build array join info for this field
 			groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
 			if err != nil {
@@ -533,7 +527,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		var err error
 
 		// For body JSON fields with feature flag enabled, use array join logic
-		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && constants.BodyV2QueryEnabled {
+		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && constants.BodyJSONQueryEnabled {
 			// Build array join info for this field
 			groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
 			if err != nil {
@@ -664,7 +658,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			JsonBodyPrefix:     b.jsonBodyPrefix,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
-        }, start, end)
+		}, start, end)
 
 		if err != nil {
 			return nil, err

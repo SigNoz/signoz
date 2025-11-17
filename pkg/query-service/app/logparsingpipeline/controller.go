@@ -137,7 +137,7 @@ func (ic *LogParsingPipelineController) ValidatePipelines(
 
 func (ic *LogParsingPipelineController) getDefaultPipelines() ([]pipelinetypes.GettablePipeline, error) {
 	defaultPipelines := []pipelinetypes.GettablePipeline{}
-	if constants.BodyV2QueryEnabled {
+	if constants.BodyJSONQueryEnabled {
 		preprocessingPipeline := pipelinetypes.GettablePipeline{
 			StoreablePipeline: pipelinetypes.StoreablePipeline{
 				Name:    "Default Pipeline - PreProcessing Body",

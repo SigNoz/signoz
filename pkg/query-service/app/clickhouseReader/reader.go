@@ -239,7 +239,7 @@ func NewReaderFromClickhouseConnection(
 }
 
 func (r *ClickHouseReader) ListBodySkipIndexes(ctx context.Context) ([]schemamigrator.Index, error) {
-	return telemetrylogs.ListIndexedPaths(ctx, r.cluster, r.db)
+	return telemetrylogs.ListIndexes(ctx, r.cluster, r.db)
 }
 
 func (r *ClickHouseReader) ListPromotedPaths(ctx context.Context) ([]string, error) {
@@ -1485,6 +1485,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 	}
 
 	// TTL query for path_types table to follow the same TTL as logs
+	pathTypesLocal := fmt.Sprintf("%s.%s", r.logsDB, r.pathTypesLocalTable)
 	ttlPathTypes := fmt.Sprintf(
 		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(last_seen / 1000000000) + "+
 			"INTERVAL %v SECOND DELETE", pathTypesLocal, r.cluster, params.DelDuration)

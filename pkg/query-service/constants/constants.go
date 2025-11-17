@@ -217,7 +217,7 @@ const (
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string," +
 		"CAST((scope_string_key, scope_string_value), 'Map(String, String)') as scope "
 	LogsSQLSelectV2 = "SELECT " +
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, " +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, " +
 		"attributes_string, " +
 		"attributes_number, " +
 		"attributes_bool, " +
@@ -692,7 +692,7 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{}
 var IsDotMetricsEnabled = false
 var PreferSpanMetrics = false
 var MaxJSONFlatteningDepth = 1
-var BodyV2QueryEnabled = GetOrDefaultEnv("BODY_V2_QUERY_ENABLED", "false") == "true"
+var BodyJSONQueryEnabled = GetOrDefaultEnv("BODY_JSON_QUERY_ENABLED", "false") == "true"
 
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)

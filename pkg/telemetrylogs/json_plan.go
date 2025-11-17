@@ -16,6 +16,21 @@ var (
 	arrayAnyIndex = "[*]."
 )
 
+type BranchType string
+
+const (
+	BranchJSON    BranchType = "json"
+	BranchDynamic BranchType = "dynamic"
+)
+
+type TerminalConfig struct {
+	PreferArrayAtEnd bool
+	ElemType         telemetrytypes.JSONDataType
+	ValueType        telemetrytypes.JSONDataType
+	Operator         qbtypes.FilterOperator
+	Value            any
+}
+
 // Node is now a tree structure representing the complete JSON path traversal
 // that precomputes all possible branches and their types
 type Node struct {
@@ -23,7 +38,7 @@ type Node struct {
 	Name       string
 	IsArray    bool
 	IsTerminal bool
-	isRoot     bool // marked true for only body_v2 and promoted
+	isRoot     bool // marked true for only body_json and body_json_promoted
 
 	// Precomputed type information (single source of truth)
 	AvailableTypes []telemetrytypes.JSONDataType
@@ -66,21 +81,6 @@ func (n *Node) FieldPath() string {
 	}
 
 	return n.Parent.Alias() + "." + key
-}
-
-type BranchType string
-
-const (
-	BranchJSON    BranchType = "json"
-	BranchDynamic BranchType = "dynamic"
-)
-
-type TerminalConfig struct {
-	PreferArrayAtEnd bool
-	ElemType         telemetrytypes.JSONDataType
-	ValueType        telemetrytypes.JSONDataType
-	Operator         qbtypes.FilterOperator
-	Value            any
 }
 
 // chooseArrayPreference decides whether to search scalar or array at the terminal
@@ -281,7 +281,7 @@ func (pb *PlanBuilder) buildPlan(index int, parent *Node, isDynArrChild bool) *N
 // PlanJSON builds a tree structure representing the complete JSON path traversal
 // that precomputes all possible branches and their types
 func PlanJSON(path string, operator qbtypes.FilterOperator, value any, isPromoted bool, getTypes func(path string) []telemetrytypes.JSONDataType) []*Node {
-	// TODO: PlanJSON requires the Start and End of the Query to select correct column between promoted and body_v2 using
+	// TODO: PlanJSON requires the Start and End of the Query to select correct column between promoted and body_json using
 	// creation time in distributed_promoted_paths
 	path = strings.ReplaceAll(path, arrayAnyIndex, arraySep)
 	parts := strings.Split(path, arraySep)
@@ -295,7 +295,7 @@ func PlanJSON(path string, operator qbtypes.FilterOperator, value any, isPromote
 	}
 	plans := []*Node{
 		pb.buildPlan(0, &Node{
-			Name:            "body_v2",
+			Name:            LogsV2BodyJSONColumn,
 			isRoot:          true,
 			MaxDynamicTypes: 32,
 			MaxDynamicPaths: 0,
@@ -304,7 +304,7 @@ func PlanJSON(path string, operator qbtypes.FilterOperator, value any, isPromote
 
 	if isPromoted {
 		plans = append(plans, pb.buildPlan(0, &Node{
-			Name:            "promoted",
+			Name:            LogsV2BodyPromotedColumn,
 			isRoot:          true,
 			MaxDynamicTypes: 32,
 			MaxDynamicPaths: 1024,

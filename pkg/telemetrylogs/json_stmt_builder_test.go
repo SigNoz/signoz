@@ -17,9 +17,9 @@ import (
 )
 
 func TestStmtBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
-	constants.BodyV2QueryEnabled = true
+	constants.BodyJSONQueryEnabled = true
 	defer func() {
-		constants.BodyV2QueryEnabled = false
+		constants.BodyJSONQueryEnabled = false
 	}()
 
 	cases := []struct {
@@ -125,9 +125,9 @@ func TestStmtBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
 }
 
 func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
-	constants.BodyV2QueryEnabled = true
+	constants.BodyJSONQueryEnabled = true
 	defer func() {
-		constants.BodyV2QueryEnabled = false
+		constants.BodyJSONQueryEnabled = false
 	}()
 
 	cases := []struct {
@@ -214,9 +214,9 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBody(t *testing.T) {
-	constants.BodyV2QueryEnabled = true
+	constants.BodyJSONQueryEnabled = true
 	defer func() {
-		constants.BodyV2QueryEnabled = false
+		constants.BodyJSONQueryEnabled = false
 	}()
 
 	jqb := buildTestJSONQueryBuilder()
@@ -438,9 +438,9 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
-	constants.BodyV2QueryEnabled = true
+	constants.BodyJSONQueryEnabled = true
 	defer func() {
-		constants.BodyV2QueryEnabled = false
+		constants.BodyJSONQueryEnabled = false
 	}()
 
 	jqb := buildTestJSONQueryBuilder()
@@ -623,9 +623,9 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
-	constants.BodyV2QueryEnabled = true
+	constants.BodyJSONQueryEnabled = true
 	defer func() {
-		constants.BodyV2QueryEnabled = false
+		constants.BodyJSONQueryEnabled = false
 	}()
 
 	jqb := buildTestJSONQueryBuilder()

@@ -599,8 +599,8 @@ type SignozLog struct {
 	SeverityText       string             `json:"severity_text" ch:"severity_text"`
 	SeverityNumber     uint8              `json:"severity_number" ch:"severity_number"`
 	Body               any                `json:"body" ch:"body"`
-	BodyV2             map[string]any     `json:"-" ch:"body_v2"`
-	Promoted           map[string]any     `json:"-" ch:"promoted"`
+	BodyJSON           map[string]any     `json:"-" ch:"body_json"`
+	BodyPromoted       map[string]any     `json:"-" ch:"body_json_promoted"`
 	Resources_string   map[string]string  `json:"resources_string" ch:"resources_string"`
 	Attributes_string  map[string]string  `json:"attributes_string" ch:"attributes_string"`
 	Attributes_int64   map[string]int64   `json:"attributes_int" ch:"attributes_int64"`
