@@ -182,7 +182,7 @@ func (provider *provider) Config() tokenizer.Config {
 func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
 	stats := make(map[string]any)
 
-	userIDToLastObservedAts := provider.listLastObservedAtDesc(ctx, orgID)
+	userIDToLastObservedAts := provider.listLastObservedAtDesc(orgID)
 
 	if len(userIDToLastObservedAts) > 0 {
 		userIDToLastObservedAtMax := userIDToLastObservedAts[0]
@@ -222,7 +222,7 @@ func (provider *provider) Stop(ctx context.Context) error {
 }
 
 func (provider *provider) ListMaxLastObservedAtByOrgID(ctx context.Context, orgID valuer.UUID) (map[valuer.UUID]time.Time, error) {
-	userIDToLastObservedAts := provider.listLastObservedAtDesc(ctx, orgID)
+	userIDToLastObservedAts := provider.listLastObservedAtDesc(orgID)
 
 	maxLastObservedAtPerUserID := make(map[valuer.UUID]time.Time)
 
@@ -271,7 +271,7 @@ func (provider *provider) getOrSetIdentity(ctx context.Context, orgID, userID va
 	return identity, nil
 }
 
-func (provider *provider) listLastObservedAtDesc(ctx context.Context, orgID valuer.UUID) []map[valuer.UUID]time.Time {
+func (provider *provider) listLastObservedAtDesc(orgID valuer.UUID) []map[valuer.UUID]time.Time {
 	var userIDToLastObservedAt []map[valuer.UUID]time.Time
 
 	cachedLastObservedAts, ok := provider.lastObservedAtCache.Get(orgID.String())
