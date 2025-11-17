@@ -48,7 +48,6 @@ func (store *store) CreatePublic(ctx context.Context, storable *dashboardtypes.S
 
 func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.StorableDashboard, error) {
 	storableDashboard := new(dashboardtypes.StorableDashboard)
-
 	err := store.
 		sqlstore.
 		BunDB().
@@ -66,7 +65,6 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 
 func (store *store) GetPublic(ctx context.Context, dashboardID string) (*dashboardtypes.StorablePublicDashboard, error) {
 	storable := new(dashboardtypes.StorablePublicDashboard)
-
 	err := store.
 		sqlstore.
 		BunDB().
@@ -83,7 +81,6 @@ func (store *store) GetPublic(ctx context.Context, dashboardID string) (*dashboa
 
 func (store *store) GetDashboardByOrgsAndPublicID(ctx context.Context, orgIDs []string, id string) (*dashboardtypes.StorableDashboard, error) {
 	storable := new(dashboardtypes.StorableDashboard)
-
 	err := store.
 		sqlstore.
 		BunDB().
@@ -101,9 +98,26 @@ func (store *store) GetDashboardByOrgsAndPublicID(ctx context.Context, orgIDs []
 	return storable, nil
 }
 
+func (store *store) GetDashboardByPublicID(ctx context.Context, id string) (*dashboardtypes.StorableDashboard, error) {
+	storable := new(dashboardtypes.StorableDashboard)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(storable).
+		Join("JOIN public_dashboard").
+		JoinOn("public_dashboard.dashboard_id = dashboard.id").
+		Where("public_dashboard.id = ?", id).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodePublicDashboardNotFound, "couldn't find dashboard with id %s ", id)
+	}
+
+	return storable, nil
+}
+
 func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.StorableDashboard, error) {
 	storableDashboards := make([]*dashboardtypes.StorableDashboard, 0)
-
 	err := store.
 		sqlstore.
 		BunDB().

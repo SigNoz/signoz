@@ -108,18 +108,7 @@ func (module *module) GetPublic(ctx context.Context, orgID valuer.UUID, dashboar
 }
 
 func (module *module) GetDashboardByPublicID(ctx context.Context, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
-	// get orgs for the current instance
-	orgs, err := module.orgGetter.ListByOwnedKeyRange(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	orgIDs := make([]string, len(orgs))
-	for idx, org := range orgs {
-		orgIDs[idx] = org.ID.StringValue()
-	}
-
-	storableDashboard, err := module.store.GetDashboardByOrgsAndPublicID(ctx, orgIDs, id.StringValue())
+	storableDashboard, err := module.store.GetDashboardByPublicID(ctx, id.StringValue())
 	if err != nil {
 		return nil, err
 	}

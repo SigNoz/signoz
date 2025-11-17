@@ -142,7 +142,6 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relatio
 func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, translation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithoutClaimsFn) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
-
 		orgs, err := middleware.orgGetter.ListByOwnedKeyRange(ctx)
 		if err != nil {
 			render.Error(rw, err)
@@ -155,7 +154,7 @@ func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation auth
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreationWithoutClaims(req.Context(), orgID, relation, translation, typeable, selectors)
+		err = middleware.authzService.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, translation, typeable, selectors)
 		if err != nil {
 			render.Error(rw, err)
 			return
