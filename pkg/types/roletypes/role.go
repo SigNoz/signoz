@@ -32,6 +32,11 @@ var (
 )
 
 var (
+	AnonymousUserRoleName        = "signoz-anonymous"
+	AnonymousUserRoleDescription = "Role assigned to anonymous users for access to public resources."
+)
+
+var (
 	TypeableResourcesRoles = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("roles"))
 )
 

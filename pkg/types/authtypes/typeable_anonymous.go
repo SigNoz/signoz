@@ -7,6 +7,10 @@ import (
 
 var _ Typeable = new(typeableAnonymous)
 
+var (
+	AnonymousUser = valuer.UUID{}
+)
+
 type typeableAnonymous struct{}
 
 func (typeableAnonymous *typeableAnonymous) Tuples(subject string, relation Relation, selector []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
