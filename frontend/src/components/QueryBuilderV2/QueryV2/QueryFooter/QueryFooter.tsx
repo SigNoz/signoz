@@ -1,6 +1,7 @@
 /* eslint-disable react/require-default-props */
 import { Button, Tooltip, Typography } from 'antd';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DraftingCompass, Plus, Sigma } from 'lucide-react';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';
@@ -11,21 +12,24 @@ function TraceOperatorSection({
 }: {
 	addTraceOperator?: () => void;
 }): JSX.Element {
-	const { currentQuery } = useQueryBuilder();
+	const { currentQuery, panelType } = useQueryBuilder();
 
 	const showTraceOperatorWarning = useMemo(() => {
 		try {
+			const isListViewPanel =
+				panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE;
 			const hasMultipleQueries = currentQuery.builder.queryData.length > 1;
 			const hasTraceOperator =
 				currentQuery.builder.queryTraceOperator &&
 				currentQuery.builder.queryTraceOperator.length > 0;
-			return hasMultipleQueries && !hasTraceOperator;
+			return isListViewPanel && hasMultipleQueries && !hasTraceOperator;
 		} catch (error) {
 			return false;
 		}
 	}, [
 		currentQuery?.builder?.queryData,
 		currentQuery?.builder?.queryTraceOperator,
+		panelType,
 	]);
 
 	const traceOperatorWarning = useMemo(() => {
