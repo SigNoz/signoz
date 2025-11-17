@@ -13,7 +13,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 		name               string
 		query              string
 		wantMetrics        []string
-		wantGroupBy        []string
 		wantGroupByColumns []ColumnInfo
 		wantError          bool
 	}{
@@ -21,7 +20,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "CH64 - Only select query get's extracted and parsed",
 			query:       `SELECT avg(value) FROM metrics WHERE 'cpu' = metric_name GROUP BY region;CREATE DATABASE mydb; DELETE FROM metrics WHERE metric_name = 'memory';`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "region", Alias: ""},
 			},
@@ -30,7 +28,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "Alias1 - Simple alias",
 			query:       `SELECT region as new_region FROM metrics WHERE metric_name='cpu' GROUP BY region`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "region", Alias: "new_region"},
 			},
@@ -39,7 +36,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "Alias2 - No alias",
 			query:       `SELECT region FROM metrics WHERE metric_name='cpu' GROUP BY region`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "region", Alias: ""},
 			},
@@ -48,7 +44,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "Alias3 - Mixed aliases",
 			query:       `SELECT region as r, zone FROM metrics WHERE metric_name='cpu' GROUP BY region, zone`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "region", Alias: "r"},
 				{Name: "zone", Alias: ""},
@@ -58,7 +53,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "Alias4 - GROUP BY not in SELECT",
 			query:       `SELECT sum(value) FROM metrics WHERE metric_name='cpu' GROUP BY region`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "region", Alias: ""},
 			},
@@ -67,7 +61,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "Alias5 - Duplicate column with different aliases (last wins)",
 			query:       `SELECT region as r1, region as r2 FROM metrics WHERE metric_name='cpu' GROUP BY region`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "region", Alias: "r2"},
 			},
@@ -76,7 +69,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "Alias6 - Function expression with alias",
 			query:       `SELECT toDate(timestamp) as day FROM metrics WHERE metric_name='cpu' GROUP BY toDate(timestamp)`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "toDate(timestamp)", Alias: "day"},
 			},
@@ -85,7 +77,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "Alias7 - Table alias in SELECT",
 			query:       `SELECT m.region as r FROM metrics m WHERE metric_name='cpu' GROUP BY m.region`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "region", Alias: "r"},
 			},
@@ -94,7 +85,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "Alias8 - Multiple GROUP BY columns with mixed aliases",
 			query:       `SELECT region as r, zone as z, toDate(timestamp) as day FROM metrics WHERE metric_name='cpu' GROUP BY region, zone, toDate(timestamp)`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "region", Alias: "r"},
 				{Name: "zone", Alias: "z"},
@@ -105,7 +95,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "Alias9 - CTE with GROUP BY and alias",
 			query:       `WITH cte AS (SELECT region as r FROM metrics WHERE metric_name='cpu' GROUP BY region) SELECT r FROM cte`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "region", Alias: "r"},
 			},
@@ -114,7 +103,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "Alias10 - Subquery with GROUP BY and alias",
 			query:       `SELECT r FROM (SELECT region as r FROM metrics WHERE metric_name='cpu' GROUP BY region)`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "region", Alias: "r"},
 			},
@@ -123,7 +111,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "Alias11 - Multiple columns, some with GROUP BY",
 			query:       `SELECT region as r, zone, sum(value) as total FROM metrics WHERE metric_name='cpu' GROUP BY region, zone`,
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "region", Alias: "r"},
 				{Name: "zone", Alias: ""},
@@ -133,7 +120,6 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			name:        "Alias12 - Backtick column with alias",
 			query:       "SELECT `os.type` as os_type FROM metrics WHERE metric_name='cpu' GROUP BY `os.type`",
 			wantMetrics: []string{"cpu"},
-			wantGroupBy: []string{},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "os.type", Alias: "os_type"},
 			},
@@ -155,14 +141,9 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			// Sort for comparison
 			gotMetrics := sortStrings(result.MetricNames)
 			wantMetrics := sortStrings(tt.wantMetrics)
-			gotGroupBy := sortStrings(result.GroupBy)
-			wantGroupBy := sortStrings(tt.wantGroupBy)
 
 			if !reflect.DeepEqual(gotMetrics, wantMetrics) {
 				t.Errorf("Extract() MetricNames = %v, want %v, query %s", gotMetrics, wantMetrics, tt.query)
-			}
-			if !reflect.DeepEqual(gotGroupBy, wantGroupBy) {
-				t.Errorf("Extract() GroupBy = %v, want %v, query %s", gotGroupBy, wantGroupBy, tt.query)
 			}
 
 			// Test GroupByColumns - need to normalize for comparison (order may vary)
@@ -171,7 +152,7 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 				wantGroupByColumns := sortColumnInfo(tt.wantGroupByColumns)
 
 				if !reflect.DeepEqual(gotGroupByColumns, wantGroupByColumns) {
-					t.Errorf("Extract() GroupByColumns = %v, want %v, query %s", gotGroupByColumns, wantGroupByColumns, tt.query)
+					t.Errorf("Extract() GroupByColumns = %#v, want %#v, query %s", gotGroupByColumns, wantGroupByColumns, tt.query)
 				}
 			}
 		})
@@ -721,15 +702,15 @@ func TestClickHouseFilterExtractor_SimpleCTEGroupByQueries(t *testing.T) {
 			},
 		},
 		{
-			name: "Nested subquery",
+			name: "Nested subquery with different origin",
 			query: `SELECT ts, value
 			FROM (
 				SELECT le, ts, sum(per_series_value) AS value
 				FROM (
-					SELECT le, ts, value AS per_series_value
+					SELECT le, timestamp as ts, value AS per_series_value
 					FROM metrics
 					WHERE metric_name = 'histogram'
-					GROUP BY le, ts, value
+					GROUP BY le, timestamp, value
 				)
 				GROUP BY le, ts
 			)
@@ -801,34 +782,34 @@ func TestClickHouseFilterExtractor_NestedComplexCTEGroupByQueries(t *testing.T) 
 		{
 			name: "TC1 - CTE with GROUP BY, outer SELECT without GROUP BY",
 			query: `
-WITH __spatial_aggregation_cte AS    (
-        SELECT            
-        toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,
-            service,
-            op,
-            sum(value) / 60 AS value        
-            FROM signoz_metrics.distributed_samples_v4 AS points
-        INNER JOIN   (
-            SELECT                
-            fingerprint,
-                JSONExtractString(labels, 'service.name') AS service,
-                JSONExtractString(labels, 'operation') AS op
-            FROM signoz_metrics.time_series_v4
-            WHERE (metric_name IN ('app_requests_total')) AND (unix_milli >= 1731340800000) AND (unix_milli <= 1731344400000) AND (LOWER(temporality) LIKE LOWER('delta')) AND (__normalized = false)
-            GROUP BY                
-            fingerprint,
-                service,
-                op
-        ) AS filtered_time_series 
-        ON points.fingerprint = filtered_time_series.fingerprint
-        WHERE (metric_name IN ('app_requests_total')) AND (unix_milli >= 1731340800000) AND (unix_milli < 1731344400000)
-        GROUP BY            
-        ts,
-            service,
-            op
-    )
-SELECT ts, service, value FROM __spatial_aggregation_cte
-			`,
+		WITH __spatial_aggregation_cte AS    (
+		        SELECT
+		        toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,
+		            service,
+		            op,
+		            sum(value) / 60 AS value
+		            FROM signoz_metrics.distributed_samples_v4 AS points
+		        INNER JOIN   (
+		            SELECT
+		            fingerprint,
+		                JSONExtractString(labels, 'service.name') AS service,
+		                JSONExtractString(labels, 'operation') AS op
+		            FROM signoz_metrics.time_series_v4
+		            WHERE (metric_name IN ('app_requests_total')) AND (unix_milli >= 1731340800000) AND (unix_milli <= 1731344400000) AND (LOWER(temporality) LIKE LOWER('delta')) AND (__normalized = false)
+		            GROUP BY
+		            fingerprint,
+		                service,
+		                op
+		        ) AS filtered_time_series
+		        ON points.fingerprint = filtered_time_series.fingerprint
+		        WHERE (metric_name IN ('app_requests_total')) AND (unix_milli >= 1731340800000) AND (unix_milli < 1731344400000)
+		        GROUP BY
+		        ts,
+		            service,
+		            op
+		    )
+		SELECT ts, service, value FROM __spatial_aggregation_cte
+					`,
 			wantMetrics: []string{"app_requests_total"},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "ts", Alias: ""},
@@ -839,37 +820,37 @@ SELECT ts, service, value FROM __spatial_aggregation_cte
 		{
 			name: "TC2 - CTE chain with multiple CTEs",
 			query: `
-		WITH    __temporal_aggregation_cte AS    (
-		        SELECT
-		        fingerprint,
-		            toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,
-		            avg(value) AS per_series_value
-		        FROM signoz_metrics.distributed_samples_v4 AS points
-		        INNER JOIN        (
-		            SELECT fingerprint
-		            FROM signoz_metrics.time_series_v4
-		            WHERE (metric_name IN ('node.cpu.usage')) AND (unix_milli >= 1731427200000) AND (unix_milli <= 1731430800000) AND (LOWER(temporality) LIKE LOWER('cumulative')) AND (__normalized = false)
-		            GROUP BY fingerprint
-		        ) AS filtered_time_series
-		        ON points.fingerprint = filtered_time_series.fingerprint
-		        WHERE (metric_name IN ('node.cpu.usage')) AND (unix_milli >= 1731427200000) AND (unix_milli < 1731430800000)
-		        GROUP BY
-		        fingerprint,
-		            ts
-		        ORDER BY
-		        fingerprint ASC,
-		            ts ASC
-		            ),
-		    __spatial_aggregation_cte AS    (
-		        SELECT
-		        ts,
-		            avg(per_series_value) AS value
-		            FROM __temporal_aggregation_cte
-		        WHERE isNaN(per_series_value) = 0
-		        GROUP BY ts
-		    )
-		SELECT * FROM __spatial_aggregation_cte;
-					`,
+				WITH    __temporal_aggregation_cte AS    (
+				        SELECT
+				        fingerprint,
+				            toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,
+				            avg(value) AS per_series_value
+				        FROM signoz_metrics.distributed_samples_v4 AS points
+				        INNER JOIN        (
+				            SELECT fingerprint
+				            FROM signoz_metrics.time_series_v4
+				            WHERE (metric_name IN ('node.cpu.usage')) AND (unix_milli >= 1731427200000) AND (unix_milli <= 1731430800000) AND (LOWER(temporality) LIKE LOWER('cumulative')) AND (__normalized = false)
+				            GROUP BY fingerprint
+				        ) AS filtered_time_series
+				        ON points.fingerprint = filtered_time_series.fingerprint
+				        WHERE (metric_name IN ('node.cpu.usage')) AND (unix_milli >= 1731427200000) AND (unix_milli < 1731430800000)
+				        GROUP BY
+				        fingerprint,
+				            ts
+				        ORDER BY
+				        fingerprint ASC,
+				            ts ASC
+				            ),
+				    __spatial_aggregation_cte AS    (
+				        SELECT
+				        ts,
+				            avg(per_series_value) AS value
+				            FROM __temporal_aggregation_cte
+				        WHERE isNaN(per_series_value) = 0
+				        GROUP BY ts
+				    )
+				SELECT * FROM __spatial_aggregation_cte;
+							`,
 			wantMetrics: []string{"node.cpu.usage"},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "ts", Alias: ""},
@@ -878,52 +859,52 @@ SELECT ts, service, value FROM __spatial_aggregation_cte
 		{
 			name: "TC3 - Outer GROUP BY overrides CTE GROUP BY",
 			query: `
-		WITH __spatial_aggregation_cte AS (
-		    SELECT
-		        toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,
-		        svc,
-		        le,
-		        sum(value)/60 AS value
-		        FROM signoz_metrics.distributed_samples_v4 AS points
-		    INNER JOIN (
-		        SELECT
-		            fingerprint,
-		            JSONExtractString(labels, 'service.name') AS svc,
-		            JSONExtractString(labels, 'le') AS le
-		        FROM signoz_metrics.time_series_v4
-		        WHERE
-		            metric_name IN ('http_request_duration.bucket')
-		            AND unix_milli >= 1731513600000
-		            AND unix_milli <= 1731518880000
-		            AND LOWER(temporality) LIKE LOWER('delta')
-		            AND __normalized = false
-		            GROUP BY
-		            fingerprint,
-		            svc,
-		            le
-		    ) AS filtered_time_series
-		    ON points.fingerprint = filtered_time_series.fingerprint
-		    WHERE
-		        metric_name IN ('http_request_duration.bucket')
-		        AND unix_milli >= 1731517140000
-		        AND unix_milli < 1731518880000
-		        GROUP BY
-		        ts,
-		        svc,
-		        le
-		)
-		SELECT
-		    ts,
-		    svc,
-		    histogramQuantile(
-		        arrayMap(x -> toFloat64(x), groupArray(le)),
-		        groupArray(value),
-		        0.900    ) AS value
-		        FROM __spatial_aggregation_cte
-		GROUP BY
-		    svc,
-		    ts
-					`,
+				WITH __spatial_aggregation_cte AS (
+				    SELECT
+				        toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,
+				        svc,
+				        le,
+				        sum(value)/60 AS value
+				        FROM signoz_metrics.distributed_samples_v4 AS points
+				    INNER JOIN (
+				        SELECT
+				            fingerprint,
+				            JSONExtractString(labels, 'service.name') AS svc,
+				            JSONExtractString(labels, 'le') AS le
+				        FROM signoz_metrics.time_series_v4
+				        WHERE
+				            metric_name IN ('http_request_duration.bucket')
+				            AND unix_milli >= 1731513600000
+				            AND unix_milli <= 1731518880000
+				            AND LOWER(temporality) LIKE LOWER('delta')
+				            AND __normalized = false
+				            GROUP BY
+				            fingerprint,
+				            svc,
+				            le
+				    ) AS filtered_time_series
+				    ON points.fingerprint = filtered_time_series.fingerprint
+				    WHERE
+				        metric_name IN ('http_request_duration.bucket')
+				        AND unix_milli >= 1731517140000
+				        AND unix_milli < 1731518880000
+				        GROUP BY
+				        ts,
+				        svc,
+				        le
+				)
+				SELECT
+				    ts,
+				    svc,
+				    histogramQuantile(
+				        arrayMap(x -> toFloat64(x), groupArray(le)),
+				        groupArray(value),
+				        0.900    ) AS value
+				        FROM __spatial_aggregation_cte
+				GROUP BY
+				    svc,
+				    ts
+							`,
 			wantMetrics: []string{"http_request_duration.bucket"},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "svc", Alias: ""},
@@ -1167,6 +1148,78 @@ SELECT ts, service, value FROM __spatial_aggregation_cte
 		ORDER BY curr.ts;
 					`,
 			wantMetrics: []string{"k8s.job.successful_pods", "k8s.job.desired_successful_pods"},
+			wantGroupByColumns: []ColumnInfo{
+				{Name: "ts", Alias: ""},
+			},
+		},
+
+		{
+			name: "TC8 - Nested subquery with outer GROUP BY and multi level change in column value",
+			query: `
+		SELECT
+		    ts,
+		    histogramQuantile(
+		        arrayMap(x -> toFloat64(x), groupArray(le)),
+		        groupArray(value),
+		        0.990    ) AS value
+		    FROM (
+		    SELECT
+		        le,
+		        ts,
+		        sum(per_series_value) AS value    FROM (
+		        SELECT
+		            le,
+		            ts,
+		            If(
+		                (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0,
+		                nan,
+		                If(
+		                    (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400,
+		                    nan,
+		                    (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) /
+		                    (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)
+		                )
+		            ) AS per_series_value
+		        FROM (
+		            SELECT
+		                fingerprint,
+		                any(le) AS le,
+		                toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) AS ts,
+		                max(value) AS per_series_value
+		            FROM signoz_metrics.distributed_samples_v4
+		            INNER JOIN (
+		                SELECT DISTINCT
+		                    JSONExtractString(labels, 'le') AS le,
+		                    fingerprint
+		                FROM signoz_metrics.time_series_v4_1day
+		                WHERE
+		                    metric_name IN ['signoz_latency_bucket']
+		                    AND temporality = 'Cumulative'                    AND __normalized = false                    AND unix_milli >= 1650931200000                    AND unix_milli < 1651078380000                    AND like(JSONExtractString(labels, 'service_name'), '%frontend%')
+		            ) AS filtered_time_series
+		            USING fingerprint
+		            WHERE
+		                metric_name IN ['signoz_latency_bucket']
+		                AND unix_milli >= 1650991980000                AND unix_milli < 1651078380000                AND bitAnd(flags, 1) = 0            GROUP BY
+		                fingerprint,
+		                ts
+		            ORDER BY
+		                fingerprint,
+		                ts
+		        )
+		        WINDOW rate_window AS (
+		            PARTITION BY fingerprint
+		            ORDER BY fingerprint, ts
+		        )
+		    )
+		    WHERE isNaN(per_series_value) = 0
+		    GROUP BY
+		        le,
+		        ts
+		    ORDER BY
+		        le ASC,
+		        ts ASC)
+					`,
+			wantMetrics: []string{"signoz_latency_bucket"},
 			wantGroupByColumns: []ColumnInfo{
 				{Name: "ts", Alias: ""},
 			},

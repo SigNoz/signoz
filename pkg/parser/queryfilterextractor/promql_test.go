@@ -28,13 +28,10 @@ func TestPromQLFilterExtractor_Extract(t *testing.T) {
 			wantGroupByColumns: []ColumnInfo{},
 		},
 		{
-			name:        "P3 - Aggregation with by()",
-			query:       `sum by (pod,region) (rate(http_requests_total[5m]))`,
-			wantMetrics: []string{"http_requests_total"},
-			wantGroupByColumns: []ColumnInfo{
-				{Name: "pod", Alias: ""},
-				{Name: "region", Alias: ""},
-			},
+			name:               "P3 - Aggregation with by()",
+			query:              `sum by (pod,region) (rate(http_requests_total[5m]))`,
+			wantMetrics:        []string{"http_requests_total"},
+			wantGroupByColumns: []ColumnInfo{{Name: "pod"}, {Name: "region"}},
 		},
 		{
 			name:               "P4 - Aggregation with without()",
@@ -56,12 +53,10 @@ func TestPromQLFilterExtractor_Extract(t *testing.T) {
 			wantGroupByColumns: []ColumnInfo{},
 		},
 		{
-			name:        "P7 - Nested aggregations",
-			query:       `sum by (region) (max by (pod, region) (cpu_usage_total{env="prod"}))`,
-			wantMetrics: []string{"cpu_usage_total"},
-			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: ""},
-			}, // Only outermost grouping
+			name:               "P7 - Nested aggregations",
+			query:              `sum by (region) (max by (pod, region) (cpu_usage_total{env="prod"}))`,
+			wantMetrics:        []string{"cpu_usage_total"},
+			wantGroupByColumns: []ColumnInfo{{Name: "region"}}, // Only outermost grouping
 		},
 		{
 			name:               "P7a - Nested aggregation: inner grouping ignored",
@@ -76,20 +71,16 @@ func TestPromQLFilterExtractor_Extract(t *testing.T) {
 			wantGroupByColumns: []ColumnInfo{},
 		},
 		{
-			name:        "P9 - Mix of positive metric & exclusion label",
-			query:       `sum by (region)(rate(foo{job!="db"}[5m]))`,
-			wantMetrics: []string{"foo"},
-			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: ""},
-			},
+			name:               "P9 - Mix of positive metric & exclusion label",
+			query:              `sum by (region)(rate(foo{job!="db"}[5m]))`,
+			wantMetrics:        []string{"foo"},
+			wantGroupByColumns: []ColumnInfo{{Name: "region"}},
 		},
 		{
-			name:        "P10 - Function + aggregation",
-			query:       `histogram_quantile(0.9, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`,
-			wantMetrics: []string{"http_request_duration_seconds_bucket"},
-			wantGroupByColumns: []ColumnInfo{
-				{Name: "le", Alias: ""},
-			},
+			name:               "P10 - Function + aggregation",
+			query:              `histogram_quantile(0.9, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`,
+			wantMetrics:        []string{"http_request_duration_seconds_bucket"},
+			wantGroupByColumns: []ColumnInfo{{Name: "le"}},
 		},
 		{
 			name:               "P11 - Subquery",
@@ -110,12 +101,10 @@ func TestPromQLFilterExtractor_Extract(t *testing.T) {
 			wantGroupByColumns: []ColumnInfo{},
 		},
 		{
-			name:        "P14 - Simple meta-metric",
-			query:       `sum by (pod) (up)`,
-			wantMetrics: []string{"up"},
-			wantGroupByColumns: []ColumnInfo{
-				{Name: "pod", Alias: ""},
-			},
+			name:               "P14 - Simple meta-metric",
+			query:              `sum by (pod) (up)`,
+			wantMetrics:        []string{"up"},
+			wantGroupByColumns: []ColumnInfo{{Name: "pod"}},
 		},
 		{
 			name:               "P15 - Binary operator unless",
@@ -130,12 +119,10 @@ func TestPromQLFilterExtractor_Extract(t *testing.T) {
 			wantGroupByColumns: []ColumnInfo{},
 		},
 		{
-			name:        "P17 - Offset modifier with aggregation",
-			query:       `sum by (env)(rate(cpu_usage_seconds_total{job="api"}[5m] offset 1h))`,
-			wantMetrics: []string{"cpu_usage_seconds_total"},
-			wantGroupByColumns: []ColumnInfo{
-				{Name: "env", Alias: ""},
-			},
+			name:               "P17 - Offset modifier with aggregation",
+			query:              `sum by (env)(rate(cpu_usage_seconds_total{job="api"}[5m] offset 1h))`,
+			wantMetrics:        []string{"cpu_usage_seconds_total"},
+			wantGroupByColumns: []ColumnInfo{{Name: "env"}},
 		},
 		{
 			name:               "P18 - Invalid syntax",

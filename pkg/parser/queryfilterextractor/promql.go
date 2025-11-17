@@ -21,8 +21,8 @@ func (e *PromQLFilterExtractor) Extract(query string) (*FilterResult, error) {
 	}
 
 	result := &FilterResult{
-		MetricNames: []string{},
-		GroupBy:     []string{},
+		MetricNames:    []string{},
+		GroupByColumns: []ColumnInfo{},
 	}
 
 	// Use a visitor to traverse the AST
@@ -41,7 +41,7 @@ func (e *PromQLFilterExtractor) Extract(query string) (*FilterResult, error) {
 		result.MetricNames = append(result.MetricNames, metric)
 	}
 	for groupKey := range visitor.groupBy {
-		result.GroupBy = append(result.GroupBy, groupKey)
+		result.GroupByColumns = append(result.GroupByColumns, ColumnInfo{Name: groupKey})
 	}
 
 	return result, nil

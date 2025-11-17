@@ -27,7 +27,7 @@ func (e *ClickHouseFilterExtractor) Extract(query string) (*FilterResult, error)
 		return nil, err
 	}
 
-	result := &FilterResult{MetricNames: []string{}, GroupBy: []string{}, GroupByColumns: []ColumnInfo{}}
+	result := &FilterResult{MetricNames: []string{}, GroupByColumns: []ColumnInfo{}}
 
 	metricNames := make(map[string]bool)
 
@@ -173,7 +173,7 @@ func (e *ClickHouseFilterExtractor) extractGroupFromGroupByClause(groupByClause 
 		// Extract each expression from the list - these are top-level only
 		if exprList.Items != nil {
 			for _, item := range exprList.Items {
-				groupKey := e.extractGroupByExpr(item)
+				groupKey := e.extractColumnStrByExpr(item)
 				if groupKey != "" {
 					// Strip table alias if present (e.g., "m.region" -> "region")
 					groupKey = e.stripTableAlias(groupKey)
@@ -185,8 +185,18 @@ func (e *ClickHouseFilterExtractor) extractGroupFromGroupByClause(groupByClause 
 
 }
 
-// extractGroupByExpr extracts a single GROUP BY expression as a string
-func (e *ClickHouseFilterExtractor) extractGroupByExpr(expr clickhouse.Expr) string {
+// extractColumnStrByExpr extracts the complete string representation of different expression types
+// Supports:
+//   - Ident: Simple identifier like "region" or "timestamp"
+//   - FunctionExpr: Function call like "toDate(timestamp)"
+//   - ColumnExpr: Column expression like "m.region", "toDate(timestamp)"
+//   - Other expression types: Return the string representation of the expression
+//
+// For example:
+//   - "region" -> "region"
+//   - "toDate(timestamp)" -> "toDate(timestamp)"
+//   - "`m.region`" -> "`m.region`"
+func (e *ClickHouseFilterExtractor) extractColumnStrByExpr(expr clickhouse.Expr) string {
 	if expr == nil {
 		return ""
 	}
@@ -208,7 +218,7 @@ func (e *ClickHouseFilterExtractor) extractGroupByExpr(expr clickhouse.Expr) str
 	case *clickhouse.ColumnExpr:
 		// ColumnExpr wraps another expression - extract the underlying expression
 		if ex.Expr != nil {
-			return e.extractGroupByExpr(ex.Expr)
+			return e.extractColumnStrByExpr(ex.Expr)
 		}
 		return ex.String()
 	default:
@@ -329,7 +339,7 @@ func (e *ClickHouseFilterExtractor) extractSelectItemName(selectItem *clickhouse
 		return ""
 	}
 
-	return e.extractGroupByExpr(selectItem.Expr)
+	return e.extractColumnStrByExpr(selectItem.Expr)
 }
 
 // extractSelectItemAlias extracts the alias from a SelectItem
