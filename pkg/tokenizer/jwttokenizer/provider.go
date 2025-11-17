@@ -21,7 +21,7 @@ var (
 )
 
 const (
-	expectedLastObservedAtCacheEntries int64  = 5000
+	expectedLastObservedAtCacheEntries int64 = 5000
 )
 
 type provider struct {
@@ -114,7 +114,7 @@ func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (
 	}
 
 	// check claimed role
-	identity, err := provider.getOrSetIdentity(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
+	identity, err := provider.getOrSetIdentity(ctx, emptyOrgID, valuer.MustNewUUID(claims.UserID))
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +257,7 @@ func (provider *provider) ListMaxLastObservedAtByOrgID(ctx context.Context, orgI
 func (provider *provider) getOrSetIdentity(ctx context.Context, orgID, userID valuer.UUID) (*authtypes.Identity, error) {
 	identity := new(authtypes.Identity)
 
-	err := provider.cache.Get(ctx, emptyOrgID, identityCacheKey(userID), identity)
+	err := provider.cache.Get(ctx, orgID, identityCacheKey(userID), identity)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		provider.settings.Logger().ErrorContext(ctx, "failed to get identity from cache", "error", err)
 	}
@@ -271,7 +271,7 @@ func (provider *provider) getOrSetIdentity(ctx context.Context, orgID, userID va
 		return nil, err
 	}
 
-	err = provider.cache.Set(ctx, emptyOrgID, identityCacheKey(identity.UserID), identity, -1)
+	err = provider.cache.Set(ctx, orgID, identityCacheKey(identity.UserID), identity, -1)
 	if err != nil {
 		provider.settings.Logger().ErrorContext(ctx, "failed to cache identity", "error", err)
 	}
