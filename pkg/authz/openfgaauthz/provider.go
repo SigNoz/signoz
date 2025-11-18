@@ -2,6 +2,7 @@ package openfgaauthz
 
 import (
 	"context"
+	"strconv"
 	"sync"
 
 	authz "github.com/SigNoz/signoz/pkg/authz"
@@ -121,13 +122,15 @@ func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.TupleKe
 func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.TupleKey) error {
 	storeID, modelID := provider.getStoreIDandModelID()
 	batchCheckItems := make([]*openfgav1.BatchCheckItem, 0)
-	for _, tuple := range tupleReq {
+	for idx, tuple := range tupleReq {
 		batchCheckItems = append(batchCheckItems, &openfgav1.BatchCheckItem{
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     tuple.User,
 				Relation: tuple.Relation,
 				Object:   tuple.Object,
 			},
+			// the batch check response is map[string] keyed by correlationID.
+			CorrelationId: strconv.Itoa(idx),
 		})
 	}
 
@@ -153,7 +156,26 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.
 }
 
 func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, _ authtypes.Relation, translation authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector) error {
-	subject, err := authtypes.NewSubject(authtypes.TypeUser, claims.UserID, authtypes.Relation{})
+	subject, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
+	if err != nil {
+		return err
+	}
+
+	tuples, err := authtypes.TypeableOrganization.Tuples(subject, translation, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeOrganization, orgID.StringValue())}, orgID)
+	if err != nil {
+		return err
+	}
+
+	err = provider.BatchCheck(ctx, tuples)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, _ authtypes.Relation, translation authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector) error {
+	subject, err := authtypes.NewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), orgID, nil)
 	if err != nil {
 		return err
 	}
@@ -186,7 +208,8 @@ func (provider *provider) Write(ctx context.Context, additions []*openfgav1.Tupl
 				return nil
 			}
 			return &openfgav1.WriteRequestWrites{
-				TupleKeys: additions,
+				TupleKeys:   additions,
+				OnDuplicate: "ignore",
 			}
 		}(),
 		Deletes: func() *openfgav1.WriteRequestDeletes {
@@ -195,6 +218,7 @@ func (provider *provider) Write(ctx context.Context, additions []*openfgav1.Tupl
 			}
 			return &openfgav1.WriteRequestDeletes{
 				TupleKeys: deletionTuplesWithoutCondition,
+				OnMissing: "ignore",
 			}
 		}(),
 	})
