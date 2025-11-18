@@ -93,9 +93,10 @@ func (b *JSONQueryBuilder) init() {
 
 // syncPathTypes loads the top 10k paths ordered by last_seen DESC at startup
 func (b *JSONQueryBuilder) loadPathTypes(ctx context.Context) error {
-	// Load top 10k paths ordered by latest (last_seen DESC)
-	const limit = 10000
-	bodyJSONPaths, _, highestLastSeen, err := ExtractBodyPaths(ctx, b.telemetryStore, nil, limit, 0)
+	// Load top 10k unique paths ordered by latest (last_seen DESC)
+	// Note: Due to duplicates, we may fetch more rows but stop once we have 10k unique paths
+	const uniquePathLimit = 10000
+	bodyJSONPaths, err := ExtractBodyPaths(ctx, b.telemetryStore, nil, uniquePathLimit, qbtypes.FilterOperatorLike)
 	if err != nil {
 		return err
 	}
@@ -106,18 +107,9 @@ func (b *JSONQueryBuilder) loadPathTypes(ctx context.Context) error {
 
 	// Load paths into LRU cache
 	for path, types := range bodyJSONPaths {
-		setTyped := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		types.Iter(func(dataType telemetrytypes.JSONDataType) bool {
-			setTyped.Insert(dataType)
-			return true
-		})
-		b.cache.Add(path, setTyped)
+		b.cache.Add(path, types)
 	}
 
-	// Update lastSeen to the highest last_seen from the results
-	if highestLastSeen > 0 {
-		b.lastSeen = highestLastSeen
-	}
 	return nil
 }
 
@@ -152,19 +144,20 @@ func (b *JSONQueryBuilder) getTypeSet(ctx context.Context, path string) ([]telem
 		}
 	}
 
-	// Not in cache, fetch from table immediately
-	bodyJSONPaths, _, _, err := ExtractBodyPaths(ctx, b.telemetryStore, []string{path}, 0, 0)
+	// Not in cache, fetch from table immediately using exact match
+	// No unique path limit needed for single path lookup (uses default limit)
+	bodyJSONPaths, err := ExtractBodyPaths(ctx, b.telemetryStore, []string{path}, 0, qbtypes.FilterOperatorEqual)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch path types from table")
 	}
 
-	// Create set and load into cache
-	setTyped := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
+	// Get types for the path and load into cache
+	var setTyped *utils.ConcurrentSet[telemetrytypes.JSONDataType]
 	if types, found := bodyJSONPaths[path]; found {
-		types.Iter(func(dataType telemetrytypes.JSONDataType) bool {
-			setTyped.Insert(dataType)
-			return true
-		})
+		setTyped = types
+	} else {
+		// Path not found, create empty set
+		setTyped = utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
 	}
 
 	// Store in cache (LRU will handle eviction if needed)

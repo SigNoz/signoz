@@ -583,11 +583,12 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 	}
 
-	bodyJSONPaths, bodyJSONComplete, _, err := telemetrylogs.ExtractBodyPaths(ctx, t.telemetrystore, bodyJSONSearchTexts, bodyJSONLimit, 0) // 0 for full sync in metadata
+	bodyJSONPaths, err := telemetrylogs.ExtractBodyPaths(ctx, t.telemetrystore, bodyJSONSearchTexts, bodyJSONLimit, qbtypes.FilterOperatorLike) // LIKE for pattern matching
 	if err != nil {
 		t.logger.Error("failed to extract body JSON paths", "error", err)
 	} else {
 		// Add body JSON keys to results
+		// Note: bodyJSONComplete is no longer returned, pagination completeness is handled by the limit
 		for path, types := range bodyJSONPaths {
 			types.Iter(func(dataType telemetrytypes.JSONDataType) bool {
 				keys = append(keys, &telemetrytypes.TelemetryFieldKey{
@@ -601,8 +602,12 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			})
 		}
 
-		// Update completeness - if body JSON extraction was incomplete, overall result is incomplete
-		complete = complete && bodyJSONComplete
+		// Note: Completeness is now determined by whether we got fewer results than the limit
+		// If we got exactly bodyJSONLimit results, there might be more (incomplete)
+		// If we got fewer, we've exhausted all results (complete)
+		if len(bodyJSONPaths) >= bodyJSONLimit {
+			complete = false // Might have more results
+		}
 	}
 
 	return keys, complete, nil
