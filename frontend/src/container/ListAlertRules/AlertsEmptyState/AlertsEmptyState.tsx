@@ -36,9 +36,13 @@ export function AlertsEmptyState(): JSX.Element {
 
 	const [loading, setLoading] = useState(false);
 
-	const onClickNewAlertHandler = useCallback(() => {
+	const onClickNewAlertHandler = useCallback((event: React.MouseEvent): void => {
 		setLoading(false);
-		history.push(ROUTES.ALERTS_NEW);
+		if (event && (event.ctrlKey || event.metaKey)) {
+			window.open(ROUTES.ALERTS_NEW, '_blank');
+		} else {
+			history.push(ROUTES.ALERTS_NEW);
+		}
 	}, []);
 
 	return (
@@ -70,7 +74,9 @@ export function AlertsEmptyState(): JSX.Element {
 						<div className="action-container">
 							<Button
 								className="add-alert-btn"
-								onClick={onClickNewAlertHandler}
+								onClick={(event: React.MouseEvent): void =>
+									onClickNewAlertHandler(event)
+								}
 								icon={<PlusOutlined />}
 								disabled={!addNewAlert}
 								loading={loading}

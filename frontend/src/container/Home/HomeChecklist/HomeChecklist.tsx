@@ -86,18 +86,26 @@ function HomeChecklist({
 												<Button
 													type="default"
 													className="periscope-btn secondary"
-													onClick={(): void => {
+													onClick={(event: React.MouseEvent): void => {
 														logEvent('Welcome Checklist: Get started clicked', {
 															step: item.id,
 														});
 
+														const checkForNewTabAndNavigate = (): void => {
+															if (event && (event.ctrlKey || event.metaKey)) {
+																window.open(item.toRoute || '', '_blank');
+															} else {
+																history.push(item.toRoute || '');
+															}
+														};
+
 														if (item.toRoute !== ROUTES.GET_STARTED_WITH_CLOUD) {
-															history.push(item.toRoute || '');
+															checkForNewTabAndNavigate();
 														} else if (
 															activeLicense &&
 															activeLicense.platform === LicensePlatform.CLOUD
 														) {
-															history.push(item.toRoute || '');
+															checkForNewTabAndNavigate();
 														} else {
 															window?.open(
 																item.docsLink || '',

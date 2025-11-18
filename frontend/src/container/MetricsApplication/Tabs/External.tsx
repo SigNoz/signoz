@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-identical-functions */
 import { Col } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -244,22 +245,26 @@ function External(): JSX.Element {
 				<Col span={12}>
 					<GraphControlsPanel
 						id="external_call_error_percentage_button"
-						onViewTracesClick={onViewTracePopupClick({
-							servicename,
-							selectedTraceTags,
-							timestamp: selectedTimeStamp,
-							apmToTraceQuery: errorApmToTraceQuery,
-							stepInterval,
-							safeNavigate,
-						})}
-						onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
-							servicename,
-							timestamp: selectedTimeStamp,
-							domainName: selectedData?.address || '',
-							isError: true,
-							stepInterval: 300,
-							safeNavigate,
-						})}
+						onViewTracesClick={(event: React.MouseEvent): void =>
+							onViewTracePopupClick({
+								servicename,
+								selectedTraceTags,
+								timestamp: selectedTimeStamp,
+								apmToTraceQuery: errorApmToTraceQuery,
+								stepInterval,
+								safeNavigate,
+							})(event)
+						}
+						onViewAPIMonitoringClick={(event: React.MouseEvent): void =>
+							onViewAPIMonitoringPopupClick({
+								servicename,
+								timestamp: selectedTimeStamp,
+								domainName: selectedData?.address || '',
+								isError: true,
+								stepInterval: 300,
+								safeNavigate,
+							})(event)
+						}
 					/>
 					<Card data-testid="external_call_error_percentage">
 						<GraphContainer>
@@ -286,22 +291,26 @@ function External(): JSX.Element {
 				<Col span={12}>
 					<GraphControlsPanel
 						id="external_call_duration_button"
-						onViewTracesClick={onViewTracePopupClick({
-							servicename,
-							selectedTraceTags,
-							timestamp: selectedTimeStamp,
-							apmToTraceQuery,
-							stepInterval,
-							safeNavigate,
-						})}
-						onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
-							servicename,
-							timestamp: selectedTimeStamp,
-							domainName: selectedData?.address,
-							isError: false,
-							stepInterval: 300,
-							safeNavigate,
-						})}
+						onViewTracesClick={(event: React.MouseEvent): void =>
+							onViewTracePopupClick({
+								servicename,
+								selectedTraceTags,
+								timestamp: selectedTimeStamp,
+								apmToTraceQuery,
+								stepInterval,
+								safeNavigate,
+							})(event)
+						}
+						onViewAPIMonitoringClick={(event: React.MouseEvent): void =>
+							onViewAPIMonitoringPopupClick({
+								servicename,
+								timestamp: selectedTimeStamp,
+								domainName: selectedData?.address,
+								isError: false,
+								stepInterval: 300,
+								safeNavigate,
+							})(event)
+						}
 					/>
 
 					<Card data-testid="external_call_duration">
@@ -331,22 +340,26 @@ function External(): JSX.Element {
 				<Col span={12}>
 					<GraphControlsPanel
 						id="external_call_rps_by_address_button"
-						onViewTracesClick={onViewTracePopupClick({
-							servicename,
-							selectedTraceTags,
-							timestamp: selectedTimeStamp,
-							apmToTraceQuery,
-							stepInterval,
-							safeNavigate,
-						})}
-						onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
-							servicename,
-							timestamp: selectedTimeStamp,
-							domainName: selectedData?.address,
-							isError: false,
-							stepInterval: 300,
-							safeNavigate,
-						})}
+						onViewTracesClick={(event: React.MouseEvent): void =>
+							onViewTracePopupClick({
+								servicename,
+								selectedTraceTags,
+								timestamp: selectedTimeStamp,
+								apmToTraceQuery,
+								stepInterval,
+								safeNavigate,
+							})(event)
+						}
+						onViewAPIMonitoringClick={(event: React.MouseEvent): void =>
+							onViewAPIMonitoringPopupClick({
+								servicename,
+								timestamp: selectedTimeStamp,
+								domainName: selectedData?.address,
+								isError: false,
+								stepInterval: 300,
+								safeNavigate,
+							})(event)
+						}
 					/>
 					<Card data-testid="external_call_rps_by_address">
 						<GraphContainer>
@@ -373,22 +386,26 @@ function External(): JSX.Element {
 				<Col span={12}>
 					<GraphControlsPanel
 						id="external_call_duration_by_address_button"
-						onViewTracesClick={onViewTracePopupClick({
-							servicename,
-							selectedTraceTags,
-							timestamp: selectedTimeStamp,
-							apmToTraceQuery,
-							stepInterval,
-							safeNavigate,
-						})}
-						onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
-							servicename,
-							timestamp: selectedTimeStamp,
-							domainName: selectedData?.address,
-							isError: false,
-							stepInterval: 300,
-							safeNavigate,
-						})}
+						onViewTracesClick={(event: React.MouseEvent): void =>
+							onViewTracePopupClick({
+								servicename,
+								selectedTraceTags,
+								timestamp: selectedTimeStamp,
+								apmToTraceQuery,
+								stepInterval,
+								safeNavigate,
+							})(event)
+						}
+						onViewAPIMonitoringClick={(event: React.MouseEvent): void =>
+							onViewAPIMonitoringPopupClick({
+								servicename,
+								timestamp: selectedTimeStamp,
+								domainName: selectedData?.address,
+								isError: false,
+								stepInterval: 300,
+								safeNavigate,
+							})(event)
+						}
 					/>
 
 					<Card data-testid="external_call_duration_by_address">

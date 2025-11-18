@@ -192,7 +192,7 @@ function ExplorerOptions({
 	);
 
 	const onCreateAlertsHandler = useCallback(
-		(defaultQuery: Query | null) => {
+		(defaultQuery: Query | null, event?: React.MouseEvent) => {
 			if (sourcepage === DataSource.TRACES) {
 				logEvent('Traces Explorer: Create alert', {
 					panelType,
@@ -211,11 +211,20 @@ function ExplorerOptions({
 
 			const stringifiedQuery = handleConditionalQueryModification(defaultQuery);
 
-			history.push(
-				`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-					stringifiedQuery,
-				)}`,
-			);
+			if (event && (event.ctrlKey || event.metaKey)) {
+				window.open(
+					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+						stringifiedQuery,
+					)}`,
+					'_blank',
+				);
+			} else {
+				history.push(
+					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+						stringifiedQuery,
+					)}`,
+				);
+			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleConditionalQueryModification, history],
@@ -741,7 +750,9 @@ function ExplorerOptions({
 			<Button
 				disabled={disabled}
 				shape="round"
-				onClick={(): void => onCreateAlertsHandler(query)}
+				onClick={(event: React.MouseEvent): void =>
+					onCreateAlertsHandler(query, event)
+				}
 				icon={<ConciergeBell size={16} />}
 			>
 				Create an Alert

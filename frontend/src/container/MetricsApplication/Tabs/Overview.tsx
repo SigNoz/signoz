@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-identical-functions */
 import logEvent from 'api/common/logEvent';
 import getTopLevelOperations, {
 	ServiceDataProps,
@@ -235,7 +236,7 @@ function Application(): JSX.Element {
 			timestamp: number,
 			apmToTraceQuery: Query,
 			isViewLogsClicked?: boolean,
-		): (() => void) => (): void => {
+		): ((event: React.MouseEvent) => void) => (event: React.MouseEvent): void => {
 			const endTime = secondsToMilliseconds(timestamp);
 			const startTime = secondsToMilliseconds(timestamp - stepInterval);
 
@@ -259,7 +260,11 @@ function Application(): JSX.Element {
 				queryString,
 			);
 
-			history.push(newPath);
+			if (event && (event.ctrlKey || event.metaKey)) {
+				window.open(newPath, '_blank');
+			} else {
+				history.push(newPath);
+			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stepInterval],
@@ -319,14 +324,16 @@ function Application(): JSX.Element {
 						type="default"
 						size="small"
 						id="Rate_button"
-						onClick={onViewTracePopupClick({
-							servicename,
-							selectedTraceTags,
-							timestamp: selectedTimeStamp,
-							apmToTraceQuery,
-							stepInterval,
-							safeNavigate,
-						})}
+						onClick={(event: React.MouseEvent): void =>
+							onViewTracePopupClick({
+								servicename,
+								selectedTraceTags,
+								timestamp: selectedTimeStamp,
+								apmToTraceQuery,
+								stepInterval,
+								safeNavigate,
+							})(event)
+						}
 					>
 						View Traces
 					</Button>
@@ -349,14 +356,16 @@ function Application(): JSX.Element {
 							type="default"
 							size="small"
 							id="ApDex_button"
-							onClick={onViewTracePopupClick({
-								servicename,
-								selectedTraceTags,
-								timestamp: selectedTimeStamp,
-								apmToTraceQuery,
-								stepInterval,
-								safeNavigate,
-							})}
+							onClick={(event: React.MouseEvent): void =>
+								onViewTracePopupClick({
+									servicename,
+									selectedTraceTags,
+									timestamp: selectedTimeStamp,
+									apmToTraceQuery,
+									stepInterval,
+									safeNavigate,
+								})(event)
+							}
 						>
 							View Traces
 						</Button>
@@ -370,15 +379,12 @@ function Application(): JSX.Element {
 					<ColErrorContainer>
 						<GraphControlsPanel
 							id="Error_button"
-							onViewLogsClick={onErrorTrackHandler(
-								selectedTimeStamp,
-								logErrorQuery,
-								true,
-							)}
-							onViewTracesClick={onErrorTrackHandler(
-								selectedTimeStamp,
-								errorTrackQuery,
-							)}
+							onViewLogsClick={(event: React.MouseEvent): void =>
+								onErrorTrackHandler(selectedTimeStamp, logErrorQuery, true)(event)
+							}
+							onViewTracesClick={(event: React.MouseEvent): void =>
+								onErrorTrackHandler(selectedTimeStamp, errorTrackQuery)(event)
+							}
 						/>
 
 						<TopLevelOperation
