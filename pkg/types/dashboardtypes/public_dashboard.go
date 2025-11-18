@@ -17,7 +17,7 @@ var (
 )
 
 type StorablePublicDashboard struct {
-	bun.BaseModel `bun:"table:public_dashboard"`
+	bun.BaseModel `bun:"table:public_dashboard,alias:public_dashboard"`
 
 	types.Identifiable
 	types.TimeAuditable
@@ -262,4 +262,11 @@ func (typ *UpdatablePublicDashboard) UnmarshalJSON(data []byte) error {
 
 	*typ = UpdatablePublicDashboard(temp)
 	return nil
+}
+
+func NewStatsFromStorablePublicDashboards(publicDashboards []*StorablePublicDashboard) map[string]any {
+	stats := make(map[string]any)
+
+	stats["public_dashboard.count"] = int64(len(publicDashboards))
+	return stats
 }
