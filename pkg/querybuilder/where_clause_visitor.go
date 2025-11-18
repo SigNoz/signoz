@@ -856,17 +856,23 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 		} else if !v.ignoreNotFoundKeys {
 			// TODO(srikanthccv): do we want to return an error here?
 			// should we infer the type and auto-magically build a key for expression?
-			v.errors = append(v.errors, fmt.Sprintf("key `%s` not found", fieldKey.Name))
+			v.errors = append(v.errors, fmt.Sprintf("key `%s` is not a valid field, consider removing it from filters", fieldKey.Name))
 			v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found"
 		}
 	}
 
 	if len(fieldKeysForName) > 1 {
+
+		keys := []string{}
+		for _, item := range fieldKeysForName {
+			keys = append(keys, fmt.Sprintf("%s.%s:%s", item.FieldContext.StringValue(), item.Name, item.FieldDataType.StringValue()))
+		}
 		warnMsg := fmt.Sprintf(
-			"Key `%s` is ambiguous, found %d different combinations of field context / data type: %v.",
+			"Key `%s` is ambiguous, found %d different combinations of field context / data type. \n"+
+				"Please specify one from these [ %s ] to disambiguate. \n",
 			fieldKey.Name,
 			len(fieldKeysForName),
-			fieldKeysForName,
+			strings.Join(keys, ", "),
 		)
 		mixedFieldContext := map[string]bool{}
 		for _, item := range fieldKeysForName {
