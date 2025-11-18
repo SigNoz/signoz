@@ -110,7 +110,6 @@ function QuerySearch({
 	});
 	const isProgrammaticChangeRef = useRef(false);
 	const [isEditorReady, setIsEditorReady] = useState(false);
-	// Reference to the editor view for programmatic autocompletion
 	const editorRef = useRef<EditorView | null>(null);
 
 	const handleQueryValidation = useCallback((newQuery: string): void => {
@@ -126,11 +125,9 @@ function QuerySearch({
 		}
 	}, []);
 
-	// Track if the query was changed externally (from queryData) vs internally (user input)
 	const [isExternalQueryChange, setIsExternalQueryChange] = useState(false);
 	const [lastExternalQuery, setLastExternalQuery] = useState<string>('');
 
-	// Helper function to get current editor value
 	const getCurrentQuery = useCallback(
 		(): string => editorRef.current?.state.doc.toString() || '',
 		[],
