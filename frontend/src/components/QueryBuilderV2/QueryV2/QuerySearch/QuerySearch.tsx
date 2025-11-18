@@ -110,6 +110,7 @@ function QuerySearch({
 	});
 	const isProgrammaticChangeRef = useRef(false);
 	const [isEditorReady, setIsEditorReady] = useState(false);
+	const [isFocused, setIsFocused] = useState(false);
 	const editorRef = useRef<EditorView | null>(null);
 
 	const handleQueryValidation = useCallback((newQuery: string): void => {
@@ -124,9 +125,6 @@ function QuerySearch({
 			});
 		}
 	}, []);
-
-	const [isExternalQueryChange, setIsExternalQueryChange] = useState(false);
-	const [lastExternalQuery, setLastExternalQuery] = useState<string>('');
 
 	const getCurrentQuery = useCallback(
 		(): string => editorRef.current?.state.doc.toString() || '',
@@ -159,46 +157,34 @@ function QuerySearch({
 		[],
 	);
 
-	const handleEditorCreate = useCallback(
-		(view: EditorView): EditorView => {
-			editorRef.current = view;
-			setIsEditorReady(true);
-			// Only runs once on editor creation, initialize with queryData
-			const initialQuery = queryData.filter?.expression || '';
-			updateEditorValue(initialQuery, { skipOnChange: true });
-			return view;
+	const handleEditorCreate = useCallback((view: EditorView): void => {
+		editorRef.current = view;
+		setIsEditorReady(true);
+	}, []);
+
+	useEffect(
+		() => {
+			if (!isEditorReady) return;
+
+			const newQuery = queryData.filter?.expression || '';
+			const currentQuery = getCurrentQuery();
+
+			/* eslint-disable-next-line sonarjs/no-collapsible-if */
+			if (newQuery !== currentQuery && !isFocused) {
+				// Prevent clearing a non-empty editor when queryData becomes empty temporarily
+				// Only update if newQuery has a value, or if both are empty (initial state)
+				if (newQuery || !currentQuery) {
+					updateEditorValue(newQuery, { skipOnChange: true });
+
+					if (newQuery) {
+						handleQueryValidation(newQuery);
+					}
+				}
+			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[],
+		[isEditorReady, queryData.filter?.expression, isFocused],
 	);
-
-	useEffect(() => {
-		const newQuery = queryData.filter?.expression || '';
-		// Only mark as external change if the query actually changed from external source
-		if (newQuery !== lastExternalQuery) {
-			setIsExternalQueryChange(true);
-			setLastExternalQuery(newQuery);
-		}
-	}, [lastExternalQuery, queryData.filter?.expression]);
-
-	useEffect(() => {
-		if (!isExternalQueryChange || !isEditorReady) return;
-
-		const newQuery = queryData.filter?.expression || '';
-		updateEditorValue(newQuery, { skipOnChange: true });
-
-		if (newQuery) {
-			handleQueryValidation(newQuery);
-		}
-
-		setIsExternalQueryChange(false);
-	}, [
-		handleQueryValidation,
-		isEditorReady,
-		isExternalQueryChange,
-		queryData.filter?.expression,
-		updateEditorValue,
-	]);
 
 	const [keySuggestions, setKeySuggestions] = useState<
 		QueryKeyDataSuggestionsProps[] | null
@@ -207,7 +193,6 @@ function QuerySearch({
 	const [showExamples] = useState(false);
 
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
-	const [isFocused, setIsFocused] = useState(false);
 
 	const [
 		isFetchingCompleteValuesList,
@@ -612,13 +597,10 @@ function QuerySearch({
 	const handleChange = (value: string): void => {
 		if (isProgrammaticChangeRef.current) {
 			isProgrammaticChangeRef.current = false;
-			setIsExternalQueryChange(false);
 			return;
 		}
 
 		onChange(value);
-		setIsExternalQueryChange(false);
-		setLastExternalQuery(value);
 	};
 
 	const handleBlur = (): void => {
