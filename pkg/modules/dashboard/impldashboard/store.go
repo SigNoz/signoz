@@ -142,7 +142,6 @@ func (store *store) ListPublic(ctx context.Context, orgID valuer.UUID) ([]*dashb
 		Join("JOIN dashboard").
 		JoinOn("public_dashboard.dashboard_id = dashboard.id").
 		Where("dashboard.org_id = ?", orgID).
-		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
