@@ -5,38 +5,20 @@ import requests
 from typing import Callable
 from fixtures import types
 
-def test_change_role(signoz: types.SigNoz, get_tokens: Callable[[str, str], Tuple[str, str]]):
-    admin_token, _ = get_tokens("admin@integration.test", "password123Z$")
+def test_change_role(signoz: types.SigNoz, get_token: Callable[[str, str], str], get_tokens: Callable[[str, str], Tuple[str, str]]):
+    admin_token = get_token("admin@integration.test", "password123Z$")
 
-    # Create a new user
+    # Create a new user as VIEWER
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": "admin+rolechange@integration.test", "role": "ADMIN"},
+        json={"email": "admin+rolechange@integration.test", "role": "VIEWER"},
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == HTTPStatus.CREATED
 
-    # Get the invite of the new user
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-
-    invite_response = response.json()["data"]
-
-    found_invite = next(
-        (
-            invite
-            for invite in invite_response
-            if invite["email"] == "admin+rolechange@integration.test"
-        ),
-        None,
-    )
-
-    assert found_invite is not None
+    invite_token = response.json()["data"]["token"]
 
     # Accept the invite of the new user
     response = requests.post(
@@ -44,7 +26,7 @@ def test_change_role(signoz: types.SigNoz, get_tokens: Callable[[str, str], Tupl
         json={
             "password": "password123Z$",
             "displayName": "role change user",
-            "token": f"{found_invite['token']}",
+            "token": f"{invite_token}",
         },
         timeout=2,
     )
@@ -63,13 +45,22 @@ def test_change_role(signoz: types.SigNoz, get_tokens: Callable[[str, str], Tupl
     assert response.status_code == HTTPStatus.OK
 
     new_user_id = response.json()["data"]["id"]
+
+    # Make some API call which is protected
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/org/preferences"),
+        timeout=2,
+        headers={"Authorization": f"Bearer {new_user_token}"},
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
     
-    # Change the new user's role
+    # Change the new user's role - move to ADMIN
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/user/{new_user_id}"),
         json={
             "displayName": "role change user",
-            "role": "VIEWER",
+            "role": "ADMIN",
         },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
@@ -98,12 +89,12 @@ def test_change_role(signoz: types.SigNoz, get_tokens: Callable[[str, str], Tupl
 
     assert response.status_code == HTTPStatus.OK
 
-    # Make some API calls again
+    # Make some API call again which is protected
     rotate_response = response.json()["data"]
     new_user_token, new_user_refresh_token = rotate_response["accessToken"], rotate_response["refreshToken"]
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user/me"),
+        signoz.self.host_configs["8080"].get("/api/v1/org/preferences"),
         timeout=2,
         headers={"Authorization": f"Bearer {new_user_token}"},
     )
