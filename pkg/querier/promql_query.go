@@ -59,8 +59,190 @@ func (q *promqlQuery) Window() (uint64, uint64) {
 	return q.tr.From, q.tr.To
 }
 
+// stripAllSelectors removes label matchers from PromQL queries when the variable has __all__ value.
+// This function finds all label selectors (inside {...}) and removes matchers that reference
+// dynamic variables with __all__ value, similar to how other query types handle this.
+func stripAllSelectors(query string, vars map[string]qbv5.VariableItem) string {
+	// Find all variables that have __all__ value
+	allVars := make(map[string]bool)
+	for k, v := range vars {
+		if v.Type == qbv5.DynamicVariableType {
+			if allVal, ok := v.Value.(string); ok && allVal == "__all__" {
+				allVars[k] = true
+			}
+		}
+	}
+
+	if len(allVars) == 0 {
+		return query
+	}
+
+	// Find all label selectors { ... } and process them. PromQL does not allow nested selectors,
+	// so we just look for the next closing brace that isn't inside a quoted string.
+	var result strings.Builder
+	i := 0
+	for i < len(query) {
+		if query[i] != '{' {
+			result.WriteByte(query[i])
+			i++
+			continue
+		}
+
+		start := i
+		j := i + 1
+		inQuotes := false // this tells us if our current traversal is within quotes (inQuotes=true)
+		for j < len(query) {
+			if query[j] == '"' {
+				inQuotes = !inQuotes // flip inQuotes
+				j++
+				continue
+			}
+			if !inQuotes && query[j] == '}' {
+				break
+			}
+			j++
+		}
+
+		if j >= len(query) || query[j] != '}' {
+			// No matching brace found - copy the rest and stop processing.
+			result.WriteString(query[start:])
+			break
+		}
+
+		selector := query[start+1 : j]
+		cleanedSelector := removeMatchersWithAllVars(selector, allVars)
+		if cleanedSelector != "" {
+			result.WriteByte('{')
+			result.WriteString(cleanedSelector)
+			result.WriteByte('}')
+		}
+
+		i = j + 1
+	}
+
+	if i < len(query) {
+		result.WriteString(query[i:])
+	}
+
+	return result.String()
+}
+
+// removeMatchersWithAllVars removes matchers from a label selector that reference variables with __all__ value.
+func removeMatchersWithAllVars(selector string, allVars map[string]bool) string {
+	// Parse matchers by splitting on commas, but respect quoted strings
+	matchers := parseMatchers(selector)
+	var keptMatchers []string
+
+	for _, matcher := range matchers {
+		matcher = strings.TrimSpace(matcher)
+		if matcher == "" {
+			continue
+		}
+
+		// Check if this matcher contains a variable reference with __all__ value
+		// Variables can be: $var, {{var}}, [[var]]
+		shouldRemove := false
+
+		// Check for $var pattern
+		if strings.Contains(matcher, "$") {
+			for varName := range allVars {
+				// Check for $varName in the matcher (can be in quotes or not)
+				if strings.Contains(matcher, "$"+varName) {
+					shouldRemove = true
+					break
+				}
+			}
+		}
+
+		// Check for {{var}} pattern
+		if !shouldRemove && strings.Contains(matcher, "{{") {
+			for varName := range allVars {
+				if strings.Contains(matcher, "{{"+varName+"}}") {
+					shouldRemove = true
+					break
+				}
+			}
+		}
+
+		// Check for [[var]] pattern
+		if !shouldRemove && strings.Contains(matcher, "[[") {
+			for varName := range allVars {
+				if strings.Contains(matcher, "[["+varName+"]]") {
+					shouldRemove = true
+					break
+				}
+			}
+		}
+
+		if !shouldRemove {
+			keptMatchers = append(keptMatchers, matcher)
+		}
+	}
+
+	if len(keptMatchers) == 0 {
+		return ""
+	}
+
+	return strings.Join(keptMatchers, ", ")
+}
+
+// parseMatchers splits a label selector string into individual matchers, handling quoted strings.
+func parseMatchers(selector string) []string {
+	var matchers []string
+	var current strings.Builder
+	inQuotes := false
+	i := 0
+
+	for i < len(selector) {
+		char := selector[i]
+
+		if !inQuotes {
+			if char == '"' {
+				inQuotes = true
+				current.WriteByte(char)
+				i++
+			} else if char == ',' {
+				// End of matcher
+				matcher := strings.TrimSpace(current.String())
+				if matcher != "" {
+					matchers = append(matchers, matcher)
+				}
+				current.Reset()
+				i++
+				// Skip whitespace after comma
+				for i < len(selector) && selector[i] == ' ' {
+					i++
+				}
+			} else {
+				current.WriteByte(char)
+				i++
+			}
+		} else {
+			// Inside quoted string - just copy until closing quote
+			current.WriteByte(char)
+			if char == '"' {
+				inQuotes = false
+			}
+			i++
+		}
+	}
+
+	// Add last matcher
+	matcher := strings.TrimSpace(current.String())
+	if matcher != "" {
+		matchers = append(matchers, matcher)
+	}
+
+	return matchers
+}
+
 // TODO(srikanthccv): cleanup the templating logic
 func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem, start, end uint64) (string, error) {
+	// First, remove label matchers that use variables with __all__ value
+	// This must happen before variable substitution
+	fmt.Printf("===> query received: %s\n", query)
+	query = stripAllSelectors(query, vars)
+	fmt.Printf("===> query post stripping all: %s\n", query)
 	varsData := map[string]any{}
 	for k, v := range vars {
 		varsData[k] = formatValueForProm(v.Value)
@@ -94,6 +276,8 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 	if err != nil {
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while replacing template variables")
 	}
+
+	fmt.Printf("===> newQuery: %s\n", newQuery.String())
 	return newQuery.String(), nil
 }
 
