@@ -147,6 +147,10 @@ func ListIndexes(ctx context.Context, cluster string, conn clickhouse.Conn) ([]s
 		})
 	}
 
+	if rows.Err() != nil {
+		return nil, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, "error iterating indexed paths")
+	}
+
 	return indexes, nil
 }
 
@@ -165,6 +169,10 @@ func ListPromotedPaths(ctx context.Context, conn clickhouse.Conn) (map[string]st
 			return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to scan promoted path")
 		}
 		next[path] = struct{}{}
+	}
+
+	if rows.Err() != nil {
+		return nil, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, "error iterating promoted paths")
 	}
 
 	return next, nil

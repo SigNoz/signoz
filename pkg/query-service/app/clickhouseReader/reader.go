@@ -5,19 +5,24 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math"
 	"math/rand"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -43,6 +48,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
+
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -156,6 +162,9 @@ type ClickHouseReader struct {
 	cache                      cache.Cache
 	metadataDB                 string
 	metadataTable              string
+
+	pathTypesLocalTable string
+	pathTypesTable      string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -223,7 +232,148 @@ func NewReaderFromClickhouseConnection(
 		cache:                      cache,
 		metadataDB:                 options.primary.MetadataDB,
 		metadataTable:              options.primary.MetadataTable,
+		pathTypesLocalTable:        options.primary.PathTypesLocalTable,
+		pathTypesTable:             options.primary.PathTypesTable,
 	}
+}
+
+func (r *ClickHouseReader) ListBodySkipIndexes(ctx context.Context) ([]schemamigrator.Index, error) {
+	return telemetrylogs.ListIndexedPaths(ctx, r.cluster, r.db)
+}
+
+func (r *ClickHouseReader) ListPromotedPaths(ctx context.Context) ([]string, error) {
+	paths, err := telemetrylogs.ListPromotedPaths(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	return slices.Collect(maps.Keys(paths)), nil
+}
+
+// PromotePaths inserts provided JSON paths into the promoted paths table for logs queries.
+func (r *ClickHouseReader) PromotePaths(ctx context.Context, paths []string) error {
+	if len(paths) == 0 {
+		return errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "paths cannot be empty")
+	}
+
+	// Table: signoz_logs.distributed_promoted_paths with columns: path, created_at (UInt64 epoch ms)
+	batch, err := r.db.PrepareBatch(ctx, "INSERT INTO signoz_logs.distributed_promoted_paths (path, created_at) VALUES")
+	if err != nil {
+		return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to prepare batch: %w", err)
+	}
+
+	nowMs := uint64(time.Now().UnixMilli())
+	for _, p := range paths {
+		trimmed := strings.TrimSpace(p)
+		if trimmed == "" {
+			continue
+		}
+		if err := batch.Append(trimmed, nowMs); err != nil {
+			_ = batch.Abort()
+			return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to append path: %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to send batch: %w", err)
+	}
+	return nil
+}
+
+// CreateLogsTableIndexes creates given indexes on the given expressions
+func (r *ClickHouseReader) CreateLogsTableIndexes(ctx context.Context, indexes []schemamigrator.Index) error {
+	if len(indexes) == 0 {
+		return nil
+	}
+
+	for _, index := range indexes {
+		alterStmt := schemamigrator.AlterTableAddIndex{
+			Database: r.logsDB,
+			Table:    r.logsLocalTableV2,
+			Index:    index,
+		}
+		op := alterStmt.OnCluster(r.cluster)
+		if err := r.db.Exec(ctx, op.ToSQL()); err != nil {
+			return errorsV2.NewInternalf(errorsV2.CodeInternal, "failed to create index: %s", err)
+		}
+	}
+	return nil
+}
+
+// PromoteAndIndexPaths handles promoting paths and creating indexes in one call.
+func (r *ClickHouseReader) PromoteAndIndexPaths(
+	ctx context.Context,
+	_ string,
+	paths ...model.PromotePathItem,
+) error {
+	if len(paths) == 0 {
+		return errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "paths cannot be empty")
+	}
+
+	// Load existing promoted paths once
+	existing := make(map[string]struct{})
+	rows, qerr := r.db.Query(ctx, "SELECT path FROM signoz_logs.distributed_promoted_paths")
+	if qerr == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var p string
+			if err := rows.Scan(&p); err == nil {
+				existing[p] = struct{}{}
+			}
+		}
+	}
+
+	var toInsert []string
+	indexes := []schemamigrator.Index{}
+	for _, it := range paths {
+		if err := it.Validate(); err != nil {
+			return err
+		}
+		// remove the "body." prefix from the path
+		trimmedPath := strings.TrimPrefix(it.Path, telemetrylogs.BodyJSONStringSearchPrefix)
+		if it.Promote {
+			if _, promoted := existing[trimmedPath]; !promoted {
+				toInsert = append(toInsert, trimmedPath)
+			}
+		}
+		if it.Index {
+			parentColumn := telemetrylogs.LogsV2BodyJSONColumn
+			// if the path is already promoted or is being promoted, add it to the promoted column
+			if _, promoted := existing[trimmedPath]; promoted || it.Promote {
+				parentColumn = telemetrylogs.LogsV2BodyPromotedColumn
+			}
+
+			for _, index := range it.Indexes {
+				var indexType schemamigrator.IndexType
+				switch {
+				case strings.HasPrefix(index.Type, "ngrambf_v1"):
+					indexType = schemamigrator.IndexTypeNGramBF
+				case strings.HasPrefix(index.Type, "tokenbf_v1"):
+					indexType = schemamigrator.IndexTypeTokenBF
+				default:
+					return errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "invalid index type: %s", index.Type)
+				}
+
+				index.Name = schemamigrator.JSONSubColumnIndexName(parentColumn, trimmedPath, indexType)
+				index.Expression = schemamigrator.JSONSubColumnIndexExpr(parentColumn, trimmedPath)
+				indexes = append(indexes, index)
+			}
+		}
+	}
+
+	if len(toInsert) > 0 {
+		err := r.PromotePaths(ctx, toInsert)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(indexes) > 0 {
+		if err := r.CreateLogsTableIndexes(ctx, indexes); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
