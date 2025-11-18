@@ -218,7 +218,7 @@ func Test_getSelectLabels(t *testing.T) {
 			args: args{
 				groupBy: []v3.AttributeKey{
 					{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-					{Key: "kind", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					{Key: "kind", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag},
 				},
 			},
 			want: " name as `name`, kind as `kind`",

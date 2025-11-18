@@ -364,7 +364,7 @@ var NewStaticFieldsTraces = map[string]v3.AttributeKey{
 	},
 	"kind": {
 		Key:      "kind",
-		DataType: v3.AttributeKeyDataTypeString,
+		DataType: v3.AttributeKeyDataTypeInt64,
 		IsColumn: true,
 	},
 	"kind_string": {
@@ -521,7 +521,7 @@ var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
 	},
 	"kind": {
 		Key:      "kind",
-		DataType: v3.AttributeKeyDataTypeString,
+		DataType: v3.AttributeKeyDataTypeInt64,
 		IsColumn: true,
 	},
 	"spanKind": {
