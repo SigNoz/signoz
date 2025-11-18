@@ -92,16 +92,22 @@ describe('AllEndpointsWidget - V5 Migration Validation', () => {
 
 			const [queryA, queryB, queryC, queryD] = widget.query.builder.queryData;
 
-			const baseExpression = `(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}') AND kind_string = 'Client' AND (http.url EXISTS OR url.full EXISTS)`;
+			const baseExpression = `(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}') AND kind_string = 'Client'`;
 
 			// Queries A, B, C have identical base filter
-			expect(queryA.filter?.expression).toBe(baseExpression);
-			expect(queryB.filter?.expression).toBe(baseExpression);
-			expect(queryC.filter?.expression).toBe(baseExpression);
+			expect(queryA.filter?.expression).toBe(
+				`${baseExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+			);
+			expect(queryB.filter?.expression).toBe(
+				`${baseExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+			);
+			expect(queryC.filter?.expression).toBe(
+				`${baseExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+			);
 
 			// Query D has additional has_error filter
 			expect(queryD.filter?.expression).toBe(
-				`${baseExpression} AND has_error = true`,
+				`${baseExpression} AND has_error = true AND (http.url EXISTS OR url.full EXISTS)`,
 			);
 		});
 	});
