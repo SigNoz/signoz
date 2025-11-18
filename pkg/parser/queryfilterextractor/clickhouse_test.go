@@ -21,7 +21,7 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       `SELECT avg(value) FROM metrics WHERE 'cpu' = metric_name GROUP BY region;CREATE DATABASE mydb; DELETE FROM metrics WHERE metric_name = 'memory';`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -29,7 +29,7 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       `SELECT region as new_region FROM metrics WHERE metric_name='cpu' GROUP BY region`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "new_region", OriginExpr: "region"},
+				{Name: "region", Alias: "new_region", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -37,7 +37,7 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       `SELECT region FROM metrics WHERE metric_name='cpu' GROUP BY region`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -45,8 +45,8 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       `SELECT region as r, zone FROM metrics WHERE metric_name='cpu' GROUP BY region, zone`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "r", OriginExpr: "region"},
-				{Name: "zone", Alias: "", OriginExpr: "zone"},
+				{Name: "region", Alias: "r", OriginExpr: "region", OriginField: "region"},
+				{Name: "zone", Alias: "", OriginExpr: "zone", OriginField: "zone"},
 			},
 		},
 		{
@@ -54,7 +54,7 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       `SELECT sum(value) FROM metrics WHERE metric_name='cpu' GROUP BY region`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       `SELECT region as r1, region as r2 FROM metrics WHERE metric_name='cpu' GROUP BY region`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "r2", OriginExpr: "region"},
+				{Name: "region", Alias: "r2", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -70,7 +70,8 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       `SELECT toDate(timestamp) as day FROM metrics WHERE metric_name='cpu' GROUP BY toDate(timestamp)`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "toDate(timestamp)", Alias: "day", OriginExpr: "toDate(timestamp)"},
+				// ignore time related functions from origin field
+				{Name: "toDate(timestamp)", Alias: "day", OriginExpr: "toDate(timestamp)", OriginField: ""},
 			},
 		},
 		{
@@ -78,7 +79,7 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       `SELECT m.region as r FROM metrics m WHERE metric_name='cpu' GROUP BY m.region`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "r", OriginExpr: "region"},
+				{Name: "region", Alias: "r", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -86,9 +87,9 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       `SELECT region as r, zone as z, toDate(timestamp) as day FROM metrics WHERE metric_name='cpu' GROUP BY region, zone, toDate(timestamp)`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "r", OriginExpr: "region"},
-				{Name: "zone", Alias: "z", OriginExpr: "zone"},
-				{Name: "toDate(timestamp)", Alias: "day", OriginExpr: "toDate(timestamp)"},
+				{Name: "region", Alias: "r", OriginExpr: "region", OriginField: "region"},
+				{Name: "zone", Alias: "z", OriginExpr: "zone", OriginField: "zone"},
+				{Name: "toDate(timestamp)", Alias: "day", OriginExpr: "toDate(timestamp)", OriginField: ""},
 			},
 		},
 		{
@@ -96,7 +97,7 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       `WITH cte AS (SELECT region as r FROM metrics WHERE metric_name='cpu' GROUP BY region) SELECT r FROM cte`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "r", OriginExpr: "region"},
+				{Name: "region", Alias: "r", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -104,7 +105,7 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       `SELECT r FROM (SELECT region as r FROM metrics WHERE metric_name='cpu' GROUP BY region)`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "r", OriginExpr: "region"},
+				{Name: "region", Alias: "r", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -112,8 +113,8 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       `SELECT region as r, zone, sum(value) as total FROM metrics WHERE metric_name='cpu' GROUP BY region, zone`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "r", OriginExpr: "region"},
-				{Name: "zone", Alias: "", OriginExpr: "zone"},
+				{Name: "region", Alias: "r", OriginExpr: "region", OriginField: "region"},
+				{Name: "zone", Alias: "", OriginExpr: "zone", OriginField: "zone"},
 			},
 		},
 		{
@@ -121,7 +122,7 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 			query:       "SELECT `os.type` as os_type FROM metrics WHERE metric_name='cpu' GROUP BY `os.type`",
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "os.type", Alias: "os_type", OriginExpr: "os.type"},
+				{Name: "os.type", Alias: "os_type", OriginExpr: "`os.type`", OriginField: "os.type"},
 			},
 		},
 	}
@@ -198,7 +199,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT avg(value) FROM metrics WHERE metric_name='cpu' GROUP BY region`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -206,7 +207,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region, avg(value) FROM metrics WHERE metric_name='cpu' AND region='us' GROUP BY region`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -226,8 +227,8 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region as new_region, sum(value) FROM metrics WHERE metric_name='cpu' GROUP BY region,zone`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "new_region", OriginExpr: "region"},
-				{Name: "zone", Alias: "", OriginExpr: "zone"},
+				{Name: "region", Alias: "new_region", OriginExpr: "region", OriginField: "region"},
+				{Name: "zone", Alias: "", OriginExpr: "zone", OriginField: "zone"},
 			},
 		},
 		{
@@ -235,8 +236,8 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region, sum(value) FROM metrics WHERE metric_name='cpu' GROUP BY region, toDate(timestamp)`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
-				{Name: "toDate(timestamp)", Alias: "", OriginExpr: "toDate(timestamp)"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
+				{Name: "toDate(timestamp)", Alias: "", OriginExpr: "toDate(timestamp)", OriginField: ""},
 			},
 		},
 		{
@@ -262,7 +263,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region as new_region, avg(value) FROM (SELECT * FROM metrics WHERE metric_name IN ('cpu','mem')) GROUP BY region`,
 			wantMetrics: []string{"cpu", "mem"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "new_region", OriginExpr: "region"},
+				{Name: "region", Alias: "new_region", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -336,7 +337,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region, count() FROM metrics WHERE metric_name='cpu' GROUP BY region HAVING region!='us'`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -350,8 +351,8 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT avg(value) FROM metrics WHERE metric_name='cpu' GROUP BY region, team ORDER BY avg(value)`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
-				{Name: "team", Alias: "", OriginExpr: "team"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
+				{Name: "team", Alias: "", OriginExpr: "team", OriginField: "team"},
 			},
 		},
 		{
@@ -372,7 +373,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT m.region, avg(m.value) FROM metrics AS m WHERE m.metric_name='cpu' GROUP BY m.region`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -386,7 +387,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region, avg(value) FROM metrics WHERE metric_name IN ('cpu','mem') AND region IN ('us','eu') GROUP BY region WITH TOTALS`,
 			wantMetrics: []string{"cpu", "mem"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -394,7 +395,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region, sum(value) FROM metrics WHERE metric_name='cpu' GROUP BY region FORMAT JSON`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -402,7 +403,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region, avg(value) FROM metrics PREWHERE metric_name='cpu' GROUP BY region`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -416,8 +417,8 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT metric_name as cpu_metric, count() FROM metrics WHERE metric_name='cpu' GROUP BY metric_name,region`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "metric_name", Alias: "cpu_metric", OriginExpr: "metric_name"},
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "metric_name", Alias: "cpu_metric", OriginExpr: "metric_name", OriginField: "metric_name"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -437,7 +438,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region, sumIf(value, metric_name='cpu') FROM metrics GROUP BY region`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -445,7 +446,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region, sumIf(value, metric_name IN ('cpu','mem')) FROM metrics GROUP BY region`,
 			wantMetrics: []string{"cpu", "mem"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -465,7 +466,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region, avg(value) FROM metrics WHERE metric_name='cpu' GROUP BY region SETTINGS allow_experimental_parallel_reading=1`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -516,7 +517,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT avg(value) FROM metrics WHERE metric_name='cpu' GROUP BY region HAVING count() > 10`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -530,7 +531,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT metric_name FROM metrics WHERE metric_name IN ('cpu','mem') GROUP BY metric_name WITH ROLLUP`,
 			wantMetrics: []string{"cpu", "mem"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "metric_name", Alias: "", OriginExpr: "metric_name"},
+				{Name: "metric_name", Alias: "", OriginExpr: "metric_name", OriginField: "metric_name"},
 			},
 		},
 		{
@@ -538,7 +539,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region, sum(value) FROM metrics WHERE metric_name='cpu' GROUP BY region WITH CUBE`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -552,7 +553,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT region, avg(value) FROM metrics WHERE metric_name IN ('cpu','mem') GROUP BY region ORDER BY region DESC LIMIT 10 OFFSET 5`,
 			wantMetrics: []string{"cpu", "mem"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -590,7 +591,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT avg(value) FROM metrics WHERE 'cpu' = metric_name GROUP BY region`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -598,7 +599,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			query:       `SELECT avg(value) FROM metrics WHERE 'cpu' = metric_name GROUP BY region;CREATE DATABASE mydb; DELETE FROM metrics WHERE metric_name = 'memory';`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 	}
@@ -649,7 +650,7 @@ func TestClickHouseFilterExtractor_SimpleCTEGroupByQueries(t *testing.T) {
 			query:       `SELECT * FROM metrics WHERE metric_name = 'cpu_usage' GROUP BY region`,
 			wantMetrics: []string{"cpu_usage"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "region"},
+				{Name: "region", Alias: "", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -663,7 +664,7 @@ func TestClickHouseFilterExtractor_SimpleCTEGroupByQueries(t *testing.T) {
 			SELECT * FROM aggregated`,
 			wantMetrics: []string{"cpu_usage"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "region_alias", OriginExpr: "region"},
+				{Name: "region", Alias: "region_alias", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -682,7 +683,7 @@ func TestClickHouseFilterExtractor_SimpleCTEGroupByQueries(t *testing.T) {
 			SELECT * FROM step2`,
 			wantMetrics: []string{"requests"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "ts", Alias: "", OriginExpr: "timestamp"},
+				{Name: "ts", Alias: "", OriginExpr: "timestamp", OriginField: "timestamp"},
 			},
 		},
 		{
@@ -698,7 +699,7 @@ func TestClickHouseFilterExtractor_SimpleCTEGroupByQueries(t *testing.T) {
 			GROUP BY region`,
 			wantMetrics: []string{"memory"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "region_alias", OriginExpr: "region"},
+				{Name: "region", Alias: "region_alias", OriginExpr: "region", OriginField: "region"},
 			},
 		},
 		{
@@ -717,7 +718,7 @@ func TestClickHouseFilterExtractor_SimpleCTEGroupByQueries(t *testing.T) {
 			GROUP BY ts`,
 			wantMetrics: []string{"histogram"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "ts", Alias: "", OriginExpr: "timestamp"},
+				{Name: "ts", Alias: "", OriginExpr: "timestamp", OriginField: "timestamp"},
 			},
 		},
 		{
@@ -732,7 +733,7 @@ func TestClickHouseFilterExtractor_SimpleCTEGroupByQueries(t *testing.T) {
 			GROUP BY region`,
 			wantMetrics: []string{"disk"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "region", Alias: "", OriginExpr: "r"},
+				{Name: "region", Alias: "", OriginExpr: "r", OriginField: "r"},
 			},
 		},
 	}
@@ -812,9 +813,9 @@ func TestClickHouseFilterExtractor_NestedComplexCTEGroupByQueries(t *testing.T) 
 					`,
 			wantMetrics: []string{"app_requests_total"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60))"},
-				{Name: "service", Alias: "", OriginExpr: "JSONExtractString(labels, 'service.name')"},
-				{Name: "op", Alias: "", OriginExpr: "JSONExtractString(labels, 'operation')"},
+				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60))", OriginField: ""},
+				{Name: "service", Alias: "", OriginExpr: "JSONExtractString(labels, 'service.name')", OriginField: "service.name"},
+				{Name: "op", Alias: "", OriginExpr: "JSONExtractString(labels, 'operation')", OriginField: "operation"},
 			},
 		},
 		{
@@ -853,7 +854,7 @@ func TestClickHouseFilterExtractor_NestedComplexCTEGroupByQueries(t *testing.T) 
 							`,
 			wantMetrics: []string{"node.cpu.usage"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60))"},
+				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60))", OriginField: ""},
 			},
 		},
 		{
@@ -907,8 +908,8 @@ func TestClickHouseFilterExtractor_NestedComplexCTEGroupByQueries(t *testing.T) 
 							`,
 			wantMetrics: []string{"http_request_duration.bucket"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "svc", Alias: "", OriginExpr: "JSONExtractString(labels, 'service.name')"},
-				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60))"},
+				{Name: "svc", Alias: "", OriginExpr: "JSONExtractString(labels, 'service.name')", OriginField: "service.name"},
+				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60))", OriginField: ""},
 			},
 		},
 		{
@@ -981,7 +982,7 @@ func TestClickHouseFilterExtractor_NestedComplexCTEGroupByQueries(t *testing.T) 
 					`,
 			wantMetrics: []string{"signoz_latency_bucket"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND)"},
+				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND)", OriginField: ""},
 			},
 		},
 		{
@@ -1051,7 +1052,7 @@ func TestClickHouseFilterExtractor_NestedComplexCTEGroupByQueries(t *testing.T) 
 					`,
 			wantMetrics: []string{"k8s.job.failed_pods", "k8s.job.successful_pods", "k8s.job.desired_successful_pods"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(s.unix_milli, 1000)), toIntervalSecond(bucket_s))"},
+				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(s.unix_milli, 1000)), toIntervalSecond(bucket_s))", OriginField: ""},
 			},
 		},
 		{
@@ -1105,10 +1106,10 @@ func TestClickHouseFilterExtractor_NestedComplexCTEGroupByQueries(t *testing.T) 
 					`,
 			wantMetrics: []string{"system.memory.usage"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "os.type", Alias: "", OriginExpr: "JSONExtractString(labels, 'os.type')"},
-				{Name: "state", Alias: "", OriginExpr: "JSONExtractString(labels, 'state')"},
-				{Name: "host_name", Alias: "", OriginExpr: "JSONExtractString(labels, 'host_name')"},
-				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND)"},
+				{Name: "os.type", Alias: "", OriginExpr: "JSONExtractString(labels, 'os.type')", OriginField: "os.type"},
+				{Name: "state", Alias: "", OriginExpr: "JSONExtractString(labels, 'state')", OriginField: "state"},
+				{Name: "host_name", Alias: "", OriginExpr: "JSONExtractString(labels, 'host_name')", OriginField: "host_name"},
+				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND)", OriginField: ""},
 			},
 		},
 		{
@@ -1149,7 +1150,7 @@ func TestClickHouseFilterExtractor_NestedComplexCTEGroupByQueries(t *testing.T) 
 					`,
 			wantMetrics: []string{"k8s.job.successful_pods", "k8s.job.desired_successful_pods"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(s.unix_milli, 1000)), toIntervalSecond(bucket_s))"},
+				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(s.unix_milli, 1000)), toIntervalSecond(bucket_s))", OriginField: ""},
 			},
 		},
 
@@ -1221,8 +1222,8 @@ func TestClickHouseFilterExtractor_NestedComplexCTEGroupByQueries(t *testing.T) 
 					`,
 			wantMetrics: []string{"signoz_latency_bucket"},
 			wantGroupByColumns: []ColumnInfo{
-				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND)"},
-				{Name: "le", Alias: "", OriginExpr: "JSONExtractString(labels, 'le')"},
+				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND)", OriginField: ""},
+				{Name: "le", Alias: "", OriginExpr: "JSONExtractString(labels, 'le')", OriginField: "le"},
 			},
 		},
 	}
@@ -1244,7 +1245,7 @@ func TestClickHouseFilterExtractor_NestedComplexCTEGroupByQueries(t *testing.T) 
 			wantMetrics := sortStrings(tt.wantMetrics)
 
 			if !reflect.DeepEqual(gotMetrics, wantMetrics) {
-				t.Errorf("Extract() MetricNames = %v, want %v", gotMetrics, wantMetrics)
+				t.Errorf("Extract() MetricNames = %#v, want %#v", gotMetrics, wantMetrics)
 			}
 
 			// Test GroupByColumns - need to normalize for comparison (order may vary)
@@ -1252,7 +1253,7 @@ func TestClickHouseFilterExtractor_NestedComplexCTEGroupByQueries(t *testing.T) 
 			wantGroupByColumns := sortColumnInfo(tt.wantGroupByColumns)
 
 			if !reflect.DeepEqual(gotGroupByColumns, wantGroupByColumns) {
-				t.Errorf("Extract() GroupByColumns = %v, want %v", gotGroupByColumns, wantGroupByColumns)
+				t.Errorf("Extract() GroupByColumns = %#v, want %#v", gotGroupByColumns, wantGroupByColumns)
 			}
 		})
 	}

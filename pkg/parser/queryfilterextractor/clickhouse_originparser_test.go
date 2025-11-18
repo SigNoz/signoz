@@ -233,7 +233,7 @@ func TestExtractOriginField(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := ExtractOriginField(tt.query)
+			result, err := extractCHOriginFieldFromQuery(tt.query)
 
 			if tt.expectError {
 				if err == nil {

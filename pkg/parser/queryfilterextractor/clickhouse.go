@@ -1,6 +1,7 @@
 package queryfilterextractor
 
 import (
+	"fmt"
 	"strings"
 
 	clickhouse "github.com/AfterShip/clickhouse-sql-parser/parser"
@@ -65,7 +66,10 @@ func (e *ClickHouseFilterExtractor) Extract(query string) (*FilterResult, error)
 	groupByColumnsMap := make(map[string]ColumnInfo) // column name -> ColumnInfo
 	visited := make(map[*clickhouse.SelectQuery]bool)
 	for query := range topLevelQueries {
-		columns := e.extractGroupByColumns(query, cteMap, visited)
+		columns, err := e.extractGroupByColumns(query, cteMap, visited)
+		if err != nil {
+			return nil, err
+		}
 		for _, col := range columns {
 			// Last column info wins for duplicate columns across multiple queries
 			groupByColumnsMap[col.Name] = col
@@ -192,9 +196,9 @@ func (e *ClickHouseFilterExtractor) extractInValues(expr clickhouse.Expr, metric
 // extractGroupByColumns extracts the GROUP BY columns from a query
 // It follows the top-down approach where outer GROUP BY overrides inner GROUP BY in subqueries and CTEs.
 // Returns a slice of ColumnInfo with column names, aliases, and origins
-func (e *ClickHouseFilterExtractor) extractGroupByColumns(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery, visited map[*clickhouse.SelectQuery]bool) []ColumnInfo {
+func (e *ClickHouseFilterExtractor) extractGroupByColumns(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery, visited map[*clickhouse.SelectQuery]bool) ([]ColumnInfo, error) {
 	if visited[query] {
-		return nil
+		return nil, nil
 	}
 
 	// Mark this query as visited to prevent cycles
@@ -219,16 +223,21 @@ func (e *ClickHouseFilterExtractor) extractGroupByColumns(query *clickhouse.Sele
 		for groupByCol := range tempGroupBy {
 			alias := selectAliases[groupByCol] // Will be "" if not in SELECT
 
-			// Extract origin by tracing back through queries
-			origin := e.extractColumnOrigin(groupByCol, query, cteMap, originVisited)
+			// Extract originExpr by tracing back through queries
+			originExpr := e.extractColumnOrigin(groupByCol, query, cteMap, originVisited)
+			originField, err := extractCHOriginFieldFromQuery(fmt.Sprintf("SELECT %s", originExpr))
+			if err != nil {
+				return nil, err
+			}
 
 			result = append(result, ColumnInfo{
-				Name:       groupByCol,
-				Alias:      alias,
-				OriginExpr: origin,
+				Name:        groupByCol,
+				Alias:       alias,
+				OriginExpr:  originExpr,
+				OriginField: originField,
 			})
 		}
-		return result
+		return result, nil
 	}
 
 	// If no GROUP BY in this query, follow CTE/subquery references
@@ -238,7 +247,7 @@ func (e *ClickHouseFilterExtractor) extractGroupByColumns(query *clickhouse.Sele
 		return e.extractGroupByColumns(sourceQuery, cteMap, visited)
 	}
 
-	return nil
+	return nil, nil
 }
 
 // fillGroupsFromGroupByClause extracts GROUP BY columns from a specific GroupByClause and fills the map with the column names
@@ -514,7 +523,15 @@ func (e *ClickHouseFilterExtractor) isSimpleColumnReference(expr clickhouse.Expr
 		return false
 	}
 	switch ex := expr.(type) {
-	case *clickhouse.Ident, *clickhouse.Path:
+	case *clickhouse.Ident:
+		// backticks are treated as non simple column reference
+		// so that we can return the origin expression with backticks
+		// origin parser will handle the backticks and extract the column name from it
+		if ex.QuoteType == clickhouse.BackTicks {
+			return false
+		}
+		return true
+	case *clickhouse.Path:
 		return true
 	case *clickhouse.ColumnExpr:
 		// Check if it wraps a simple reference

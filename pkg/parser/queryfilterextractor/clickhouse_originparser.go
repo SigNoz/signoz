@@ -94,9 +94,9 @@ func isReservedSelectKeyword(keyword string) bool {
 	return strings.ToUpper(keyword) == parser.KeywordSelect || strings.ToUpper(keyword) == parser.KeywordFrom
 }
 
-// ExtractOriginField extracts the origin field (column name) from a query string
+// extractCHOriginField extracts the origin field (column name) from a query string
 // or fields getting extracted in case of JSON extraction functions.
-func ExtractOriginField(query string) (string, error) {
+func extractCHOriginFieldFromQuery(query string) (string, error) {
 	// Parse the query string
 	p := parser.NewParser(query)
 	stmts, err := p.ParseStmts()
