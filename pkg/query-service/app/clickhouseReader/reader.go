@@ -279,31 +279,10 @@ func (r *ClickHouseReader) PromotePaths(ctx context.Context, paths []string) err
 	return nil
 }
 
-// CreateJSONPathIndexes creates string ngram + token filter indexes on JSON path subcolumns for LIKE queries.
-func (r *ClickHouseReader) CreateJSONPathIndexes(ctx context.Context, expressions []string) error {
-	if len(expressions) == 0 {
+// CreateLogsTableIndexes creates given indexes on the given expressions
+func (r *ClickHouseReader) CreateLogsTableIndexes(ctx context.Context, indexes []schemamigrator.Index) error {
+	if len(indexes) == 0 {
 		return nil
-	}
-	indexes := []schemamigrator.Index{}
-	// We'll add indexes on the local logs table across cluster
-	// Index expression: lower(assumeNotNull(dynamicElement(body_json.<path>, 'String')))
-	for _, expression := range expressions {
-		split := strings.Split(expression, ".")
-		parentColumn := split[0] // body_json or body_json_promoted
-		path := strings.Join(split[1:], ".")
-		ngramIndex := schemamigrator.Index{
-			Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, path, schemamigrator.IndexTypeNGramBF),
-			Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, path),
-			Type:        "ngrambf_v1(4, 60000, 5, 0)",
-			Granularity: 1,
-		}
-		tokenIndex := schemamigrator.Index{
-			Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, path, schemamigrator.IndexTypeTokenBF),
-			Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, path),
-			Type:        "tokenbf_v1(10000, 2, 0)",
-			Granularity: 1,
-		}
-		indexes = append(indexes, ngramIndex, tokenIndex)
 	}
 
 	for _, index := range indexes {
@@ -344,7 +323,7 @@ func (r *ClickHouseReader) PromoteAndIndexPaths(
 	}
 
 	var toInsert []string
-	indexes := []string{}
+	indexes := []schemamigrator.Index{}
 	for _, it := range paths {
 		if err := it.Validate(); err != nil {
 			return err
@@ -363,7 +342,21 @@ func (r *ClickHouseReader) PromoteAndIndexPaths(
 				parentColumn = telemetrylogs.LogsV2BodyPromotedColumn
 			}
 
-			indexes = append(indexes, parentColumn+"."+trimmedPath)
+			for _, index := range it.Indexes {
+				var indexType schemamigrator.IndexType
+				switch {
+				case strings.HasPrefix(index.Type, "ngrambf_v1"):
+					indexType = schemamigrator.IndexTypeNGramBF
+				case strings.HasPrefix(index.Type, "tokenbf_v1"):
+					indexType = schemamigrator.IndexTypeTokenBF
+				default:
+					return errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "invalid index type: %s", index.Type)
+				}
+
+				index.Name = schemamigrator.JSONSubColumnIndexName(parentColumn, trimmedPath, indexType)
+				index.Expression = schemamigrator.JSONSubColumnIndexExpr(parentColumn, trimmedPath)
+				indexes = append(indexes, index)
+			}
 		}
 	}
 
@@ -375,7 +368,7 @@ func (r *ClickHouseReader) PromoteAndIndexPaths(
 	}
 
 	if len(indexes) > 0 {
-		if err := r.CreateJSONPathIndexes(ctx, indexes); err != nil {
+		if err := r.CreateLogsTableIndexes(ctx, indexes); err != nil {
 			return err
 		}
 	}
