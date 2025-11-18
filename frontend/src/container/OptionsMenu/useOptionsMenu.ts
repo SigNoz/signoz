@@ -50,6 +50,8 @@ interface UseOptionsMenu {
 	handleOptionsChange: (newQueryData: OptionsQuery) => void;
 }
 
+const HIDDEN_OPTIONS = ['body', 'isRoot', 'isEntryPoint'];
+
 const useOptionsMenu = ({
 	dataSource,
 	// aggregateOperator,
@@ -201,7 +203,7 @@ const useOptionsMenu = ({
 				return [
 					...logsSelectedColumns,
 					...searchedAttributesDataList
-						.filter((attribute) => attribute.name !== 'body')
+						.filter((attribute) => !HIDDEN_OPTIONS.includes(attribute.name))
 						// eslint-disable-next-line sonarjs/no-identical-functions
 						.map((e) => ({
 							...e,
@@ -267,6 +269,10 @@ const useOptionsMenu = ({
 
 	const optionsFromAttributeKeys = useMemo(() => {
 		const filteredAttributeKeys = searchedAttributeKeys.filter((item) => {
+			if (dataSource === DataSource.TRACES) {
+				// Hide isRoot and isEntryPoint for traces
+				return !['isRoot', 'isEntryPoint'].includes(item.name);
+			}
 			if (dataSource !== DataSource.LOGS) {
 				return item.name !== 'body';
 			}

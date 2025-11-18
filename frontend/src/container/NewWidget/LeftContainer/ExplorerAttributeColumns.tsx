@@ -9,6 +9,8 @@ type ExplorerAttributeColumnsProps = {
 	handleCheckboxChange: (key: string) => void;
 };
 
+const HIDDEN_OPTIONS = ['isRoot', 'isEntryPoint'];
+
 function ExplorerAttributeColumns({
 	isLoading,
 	data,
@@ -27,8 +29,10 @@ function ExplorerAttributeColumns({
 	const filteredAttributeKeys =
 		Object.values(data?.data?.data?.keys || {})
 			?.flat()
-			?.filter((attributeKey: any) =>
-				attributeKey.name.toLowerCase().includes(searchText.toLowerCase()),
+			?.filter(
+				(attributeKey: any) =>
+					attributeKey.name.toLowerCase().includes(searchText.toLowerCase()) &&
+					!HIDDEN_OPTIONS.includes(attributeKey.name),
 			) || [];
 	if (filteredAttributeKeys.length === 0) {
 		return (
