@@ -403,7 +403,7 @@ func isValidOperator(op PipelineOperator) error {
 		!isValidOtelValue(op.To) ||
 		!isValidOtelValue(op.Field) {
 		valueErrStr := "value should have prefix of body, attributes, resource"
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s for operator[%s]; idx[%d]; id[%s]", valueErrStr, op.Type, op.OrderId-1, op.ID)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s for operator: %s in position: %d with id: %s", valueErrStr, op.Type, op.OrderId, op.ID)
 	}
 	return nil
 }
