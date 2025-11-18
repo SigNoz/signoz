@@ -8,7 +8,6 @@ import {
 	endPointStatusCodeColumns,
 	extractPortAndEndpoint,
 	formatDataForTable,
-	getAllEndpointsWidgetData,
 	getCustomFiltersForBarChart,
 	getFormattedEndPointDropDownData,
 	getFormattedEndPointStatusCodeChartData,
@@ -44,119 +43,13 @@ jest.mock('../utils', () => {
 });
 
 describe('API Monitoring Utils', () => {
-	describe('getAllEndpointsWidgetData', () => {
-		it('should create a widget with correct configuration', () => {
-			// Arrange
-			const groupBy = [
-				{
-					dataType: DataTypes.String,
-					// eslint-disable-next-line sonarjs/no-duplicate-string
-					key: 'http.method',
-					type: '',
-				},
-			];
-			// eslint-disable-next-line sonarjs/no-duplicate-string
-			const domainName = 'test-domain';
-			const filters = {
-				items: [
-					{
-						// eslint-disable-next-line sonarjs/no-duplicate-string
-						id: 'test-filter',
-						key: {
-							dataType: DataTypes.String,
-							key: 'test-key',
-							type: '',
-						},
-						op: '=',
-						// eslint-disable-next-line sonarjs/no-duplicate-string
-						value: 'test-value',
-					},
-				],
-				op: 'AND',
-			};
-
-			// Act
-			const result = getAllEndpointsWidgetData(
-				groupBy as BaseAutocompleteData[],
-				domainName,
-				filters as IBuilderQuery['filters'],
-			);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result.id).toBeDefined();
-			// Title is a React component, not a string
-			expect(result.title).toBeDefined();
-			expect(result.panelTypes).toBe(PANEL_TYPES.TABLE);
-
-			// Check that each query includes the domainName filter
-			result.query.builder.queryData.forEach((query) => {
-				const serverNameFilter = query.filters?.items?.find(
-					(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
-				);
-				expect(serverNameFilter).toBeDefined();
-				expect(serverNameFilter?.value).toBe(domainName);
-
-				// Check that the custom filters were included
-				const testFilter = query.filters?.items?.find(
-					(item) => item.id === 'test-filter',
-				);
-				expect(testFilter).toBeDefined();
-			});
-
-			// Verify groupBy was included in queries
-			if (result.query.builder.queryData[0].groupBy) {
-				const hasCustomGroupBy = result.query.builder.queryData[0].groupBy.some(
-					(item) => item && item.key === 'http.method',
-				);
-				expect(hasCustomGroupBy).toBe(true);
-			}
-		});
-
-		it('should handle empty groupBy correctly', () => {
-			// Arrange
-			const groupBy: any[] = [];
-			const domainName = 'test-domain';
-			const filters = { items: [], op: 'AND' };
-
-			// Act
-			const result = getAllEndpointsWidgetData(groupBy, domainName, filters);
-
-			// Assert
-			expect(result).toBeDefined();
-			// Should only include default groupBy
-			if (result.query.builder.queryData[0].groupBy) {
-				expect(result.query.builder.queryData[0].groupBy.length).toBeGreaterThan(0);
-				// Check that it doesn't have extra group by fields (only defaults)
-				const defaultGroupByLength =
-					result.query.builder.queryData[0].groupBy.length;
-				const resultWithCustomGroupBy = getAllEndpointsWidgetData(
-					[
-						{
-							dataType: DataTypes.String,
-							key: 'custom.field',
-							type: '',
-						},
-					] as BaseAutocompleteData[],
-					domainName,
-					filters,
-				);
-				// Custom groupBy should have more fields than default
-				if (resultWithCustomGroupBy.query.builder.queryData[0].groupBy) {
-					expect(
-						resultWithCustomGroupBy.query.builder.queryData[0].groupBy.length,
-					).toBeGreaterThan(defaultGroupByLength);
-				}
-			}
-		});
-	});
-
 	// New tests for formatDataForTable
 	describe('formatDataForTable', () => {
 		it('should format rows correctly with valid data', () => {
 			const columns = APIMonitoringColumnsMock;
 			const data = [
 				[
+					// eslint-disable-next-line sonarjs/no-duplicate-string
 					'test-domain', // domainName
 					'10', // endpoints
 					'25', // rps
@@ -214,6 +107,7 @@ describe('API Monitoring Utils', () => {
 			const groupBy = [
 				{
 					id: 'group-by-1',
+					// eslint-disable-next-line sonarjs/no-duplicate-string
 					key: 'http.method',
 					dataType: DataTypes.String,
 					type: '',

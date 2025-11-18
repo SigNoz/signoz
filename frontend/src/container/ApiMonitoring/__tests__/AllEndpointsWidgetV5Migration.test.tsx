@@ -92,7 +92,7 @@ describe('AllEndpointsWidget - V5 Migration Validation', () => {
 
 			const [queryA, queryB, queryC, queryD] = widget.query.builder.queryData;
 
-			const baseExpression = `(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}') AND kind_string = 'Client'`;
+			const baseExpression = `(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}') AND kind_string = 'Client' AND (http.url EXISTS OR url.full EXISTS)`;
 
 			// Queries A, B, C have identical base filter
 			expect(queryA.filter?.expression).toBe(baseExpression);
