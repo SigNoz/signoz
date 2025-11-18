@@ -4140,7 +4140,7 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID valuer.UUID) 
 	// get lateset agent config
 	latestVersion := -1
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, orgID, opamptypes.ElementTypeLogPipelines)
-	if err != nil && errorsV2.Ast(err, errorsV2.TypeNotFound) {
+	if err != nil && !errorsV2.Ast(err, errorsV2.TypeNotFound) {
 		return nil, err
 	}
 

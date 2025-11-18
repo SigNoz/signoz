@@ -108,7 +108,7 @@ func (m *Manager) RecommendAgentConfig(orgId valuer.UUID, currentConfYaml []byte
 	for _, feature := range m.agentFeatures {
 		featureType := opamptypes.NewElementType(string(feature.AgentFeatureType()))
 		latestConfig, err := GetLatestVersion(context.Background(), orgId, featureType)
-		if err != nil && errors.Ast(err, errors.TypeNotFound) {
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return nil, "", err
 		}
 
