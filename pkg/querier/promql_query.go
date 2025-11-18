@@ -79,6 +79,8 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 		return query, nil
 	}
 
+	// TODO(nikhilmantri0902, srikanthccv): should we return error if we fail to parse the query?
+	// or allow it for further processing?
 	// Parse the query into an AST
 	expr, err := parser.ParseExpr(query)
 	if err != nil {
