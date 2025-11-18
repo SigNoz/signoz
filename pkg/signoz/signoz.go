@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authn/authnstore/sqlauthnstore"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -51,6 +52,7 @@ type SigNoz struct {
 	Sharder         sharder.Sharder
 	StatsReporter   statsreporter.StatsReporter
 	Tokenizer       pkgtokenizer.Tokenizer
+	Authz           authz.AuthZ
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -69,6 +71,7 @@ func New(
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
+	authzCallback func(context.Context, sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -243,6 +246,13 @@ func New(
 		return nil, err
 	}
 
+	// Initialize authz
+	authzProviderFactory := authzCallback(ctx, sqlstore)
+	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 
@@ -300,10 +310,10 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, authNs)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, authNs, authz)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings)
+	handlers := NewHandlers(modules, providerSettings, querier, licensing)
 
 	// Create a list of all stats collectors
 	statsCollectors := []statsreporter.StatsCollector{
@@ -337,6 +347,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
 		factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizer),
+		factory.NewNamedService(factory.MustNewName("authz"), authz),
 	)
 	if err != nil {
 		return nil, err
@@ -358,6 +369,7 @@ func New(
 		Emailing:        emailing,
 		Sharder:         sharder,
 		Tokenizer:       tokenizer,
+		Authz:           authz,
 		Modules:         modules,
 		Handlers:        handlers,
 	}, nil
