@@ -271,7 +271,8 @@ func TestConditionFor(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	jqb := buildTestJSONQueryBuilder()
+	conditionBuilder := NewConditionBuilder(fm, jqb)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -324,7 +325,8 @@ func TestConditionForMultipleKeys(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	jqb := buildTestJSONQueryBuilder()
+	conditionBuilder := NewConditionBuilder(fm, jqb)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -523,7 +525,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	jqb := buildTestJSONQueryBuilder()
+	conditionBuilder := NewConditionBuilder(fm, jqb)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()

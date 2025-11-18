@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz-otel-collector/utils"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -28,6 +30,11 @@ var (
 		"severity_text":      {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
 		"severity_number":    {Name: "severity_number", Type: schema.ColumnTypeUInt8},
 		"body":               {Name: "body", Type: schema.ColumnTypeString},
+		LogsV2BodyJSONColumn: {Name: LogsV2BodyJSONColumn, Type: schema.JSONColumnType{
+			MaxDynamicTypes: utils.ToPointer(uint(32)),
+			MaxDynamicPaths: utils.ToPointer(uint(0)),
+		}},
+		LogsV2BodyPromotedColumn: {Name: LogsV2BodyPromotedColumn, Type: schema.JSONColumnType{}},
 		"attributes_string": {Name: "attributes_string", Type: schema.MapColumnType{
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
@@ -61,7 +68,7 @@ func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
 
-func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		return logsV2Columns["resource"], nil
@@ -87,6 +94,11 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		if !ok {
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+				// Use body_json if feature flag is enabled and we have a body condition builder
+				if constants.BodyJSONQueryEnabled {
+					return logsV2Columns[LogsV2BodyJSONColumn], nil
+				}
+				// Fall back to legacy body column
 				return logsV2Columns["body"], nil
 			}
 			return nil, qbtypes.ErrColumnNotFound
@@ -122,6 +134,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		}
 	}
+
 	switch column.Type {
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
