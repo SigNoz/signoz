@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	nameRegex = regexp.MustCompile("^[a-z]{1,35}$")
+	nameRegex = regexp.MustCompile("^[a-z-]{1,50}$")
 
 	_ json.Marshaler   = new(Name)
 	_ json.Unmarshaler = new(Name)

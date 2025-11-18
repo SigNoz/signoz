@@ -35,13 +35,13 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := handler.module.Create(ctx, valuer.MustNewUUID(claims.OrgID), req.DisplayName, req.Description)
+	err = handler.module.Create(ctx, roletypes.NewRole(req.Name, req.Description, roletypes.RoleTypeCustom.StringValue(), valuer.MustNewUUID(claims.OrgID)))
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, role.ID.StringValue())
+	render.Success(rw, http.StatusCreated, nil)
 }
 
 func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
@@ -150,12 +150,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, ok := mux.Vars(r)["id"]
-	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
-		return
-	}
-	roleID, err := valuer.NewUUID(id)
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -167,7 +162,14 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.Patch(ctx, valuer.MustNewUUID(claims.OrgID), roleID, req.DisplayName, req.Description)
+	role, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	role.PatchMetadata(req.Name, req.Description)
+	err = handler.module.Patch(ctx, valuer.MustNewUUID(claims.OrgID), role)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -184,23 +186,13 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, ok := mux.Vars(r)["id"]
-	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
-		return
-	}
-	roleID, err := valuer.NewUUID(id)
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	relationStr, ok := mux.Vars(r)["relation"]
-	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "relation is missing from the request"))
-		return
-	}
-	relation, err := authtypes.NewRelation(relationStr)
+	relation, err := authtypes.NewRelation(mux.Vars(r)["relation"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -218,7 +210,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, relation, patchableObjects.Additions, patchableObjects.Deletions)
+	err = handler.module.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), id, relation, patchableObjects.Additions, patchableObjects.Deletions)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -235,18 +227,13 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, ok := mux.Vars(r)["id"]
-	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
-		return
-	}
-	roleID, err := valuer.NewUUID(id)
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.module.Delete(ctx, valuer.MustNewUUID(claims.OrgID), roleID)
+	err = handler.module.Delete(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
