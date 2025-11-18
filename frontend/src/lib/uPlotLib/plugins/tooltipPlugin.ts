@@ -415,7 +415,11 @@ ToolTipPluginProps): any => {
 					}
 					// Clear and set new content in one operation
 					overlay.replaceChildren(content);
-					placement(overlay, anchor, 'right', 'start', { bound });
+					placement(overlay, anchor, 'right', 'start', {
+						bound,
+						followCursor: { x: anchor.left, y: anchor.top, offset: 4 },
+					});
+
 					showOverlay();
 				} else {
 					hideOverlay();

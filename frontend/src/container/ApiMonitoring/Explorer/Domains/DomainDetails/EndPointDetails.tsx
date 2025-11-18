@@ -1,5 +1,6 @@
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
@@ -178,18 +179,33 @@ function EndPointDetails({
 		[domainName, filters, minTime, maxTime],
 	);
 
+	const V5_QUERIES = [
+		REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_DATA,
+		REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_BAR_CHARTS_DATA,
+		REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_LATENCY_BAR_CHARTS_DATA,
+		REACT_QUERY_KEY.GET_ENDPOINT_METRICS_DATA,
+		REACT_QUERY_KEY.GET_ENDPOINT_DEPENDENT_SERVICES_DATA,
+		REACT_QUERY_KEY.GET_ENDPOINT_DROPDOWN_DATA,
+	] as const;
+
 	const endPointDetailsDataQueries = useQueries(
-		endPointDetailsQueryPayload.map((payload, index) => ({
-			queryKey: [
-				END_POINT_DETAILS_QUERY_KEYS_ARRAY[index],
-				payload,
-				filters?.items, // Include filters.items in queryKey for better caching
-				ENTITY_VERSION_V4,
-			],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
-			enabled: !!payload,
-		})),
+		endPointDetailsQueryPayload.map((payload, index) => {
+			const queryKey = END_POINT_DETAILS_QUERY_KEYS_ARRAY[index];
+			const version = (V5_QUERIES as readonly string[]).includes(queryKey)
+				? ENTITY_VERSION_V5
+				: ENTITY_VERSION_V4;
+			return {
+				queryKey: [
+					END_POINT_DETAILS_QUERY_KEYS_ARRAY[index],
+					payload,
+					...(filters?.items?.length ? filters.items : []), // Include filters.items in queryKey for better caching
+					version,
+				],
+				queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
+					GetMetricQueryRange(payload, version),
+				enabled: !!payload,
+			};
+		}),
 	);
 
 	const [

@@ -49,15 +49,27 @@ function GridTableComponent({
 	panelType,
 	queryRangeRequest,
 	decimalPrecision,
+	hiddenColumns = [],
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
 
 	// create columns and dataSource in the ui friendly structure
 	// use the query from the widget here to extract the legend information
-	const { columns, dataSource: originalDataSource } = useMemo(
+	const { columns: allColumns, dataSource: originalDataSource } = useMemo(
 		() => createColumnsAndDataSource((data as unknown) as TableData, query),
 		[query, data],
+	);
+
+	// Filter out hidden columns from being displayed
+	const columns = useMemo(
+		() =>
+			allColumns.filter(
+				(column) =>
+					!('dataIndex' in column) ||
+					!hiddenColumns.includes(column.dataIndex as string),
+			),
+		[allColumns, hiddenColumns],
 	);
 
 	const createDataInCorrectFormat = useCallback(
@@ -88,17 +100,13 @@ function GridTableComponent({
 					const newValue = { ...val };
 					Object.keys(val).forEach((k) => {
 						const unit = getColumnUnit(k, columnUnits);
-						// Apply formatting if:
-						// 1. Column has a unit defined, OR
-						// 2. decimalPrecision is specified (format all values)
-						const shouldFormat = unit || decimalPrecision !== undefined;
 
-						if (shouldFormat) {
+						if (unit) {
 							// the check below takes care of not adding units for rows that have n/a or null values
 							if (val[k] !== 'n/a' && val[k] !== null) {
 								newValue[k] = getYAxisFormattedValue(
 									String(val[k]),
-									unit || 'none',
+									unit,
 									decimalPrecision,
 								);
 							} else if (val[k] === null) {

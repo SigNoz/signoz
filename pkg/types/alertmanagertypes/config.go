@@ -93,10 +93,13 @@ func NewConfigFromStoreableConfig(sc *StoreableConfig) (*Config, error) {
 }
 
 func NewDefaultConfig(globalConfig GlobalConfig, routeConfig RouteConfig, orgID string) (*Config, error) {
+	// Mergo treats an explicit false as zero-value and overwrites it to true, so we save it in smtpRequireTLS and restore the user-specified value.
+	smtpRequireTLS := globalConfig.SMTPRequireTLS
 	err := mergo.Merge(&globalConfig, config.DefaultGlobalConfig())
 	if err != nil {
 		return nil, err
 	}
+	globalConfig.SMTPRequireTLS = smtpRequireTLS
 
 	route, err := NewRouteFromRouteConfig(nil, routeConfig)
 	if err != nil {
@@ -167,10 +170,13 @@ func (c *Config) CopyWithReset() (*Config, error) {
 }
 
 func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) error {
+	// Mergo treats an explicit false as zero-value and overwrites it to true, so we save it in smtpRequireTLS and restore the user-specified value.
+	smtpRequireTLS := globalConfig.SMTPRequireTLS
 	err := mergo.Merge(&globalConfig, config.DefaultGlobalConfig())
 	if err != nil {
 		return err
 	}
+	globalConfig.SMTPRequireTLS = smtpRequireTLS
 
 	c.alertmanagerConfig.Global = &globalConfig
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
