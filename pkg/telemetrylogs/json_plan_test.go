@@ -1,6 +1,7 @@
 package telemetrylogs
 
 import (
+	"context"
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -640,7 +641,7 @@ func TestPlanBuilder_buildPlan(t *testing.T) {
 		parts         []string
 		operator      qbtypes.FilterOperator
 		value         any
-		getTypes      func(path string) []telemetrytypes.JSONDataType
+		getTypes      func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error)
 		isDynArrChild bool
 		parent        *Node
 		validate      func(t *testing.T, node *Node)
@@ -657,11 +658,11 @@ func TestPlanBuilder_buildPlan(t *testing.T) {
 				MaxDynamicTypes: 32,
 				MaxDynamicPaths: 0,
 			},
-			getTypes: func(path string) []telemetrytypes.JSONDataType {
+			getTypes: func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
 				if path == "user" {
-					return []telemetrytypes.JSONDataType{telemetrytypes.String}
+					return []telemetrytypes.JSONDataType{telemetrytypes.String}, nil
 				}
-				return nil
+				return nil, nil
 			},
 			validate: func(t *testing.T, node *Node) {
 				require.NotNil(t, node)
@@ -683,14 +684,14 @@ func TestPlanBuilder_buildPlan(t *testing.T) {
 				MaxDynamicTypes: 32,
 				MaxDynamicPaths: 0,
 			},
-			getTypes: func(path string) []telemetrytypes.JSONDataType {
+			getTypes: func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
 				switch path {
 				case "education":
-					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON}
+					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON}, nil
 				case "education[].name":
-					return []telemetrytypes.JSONDataType{telemetrytypes.String}
+					return []telemetrytypes.JSONDataType{telemetrytypes.String}, nil
 				}
-				return nil
+				return nil, nil
 			},
 			validate: func(t *testing.T, node *Node) {
 				require.NotNil(t, node)
@@ -719,14 +720,14 @@ func TestPlanBuilder_buildPlan(t *testing.T) {
 				MaxDynamicTypes: 32,
 				MaxDynamicPaths: 0,
 			},
-			getTypes: func(path string) []telemetrytypes.JSONDataType {
+			getTypes: func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
 				switch path {
 				case "education":
-					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayDynamic}
+					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayDynamic}, nil
 				case "education[].name":
-					return []telemetrytypes.JSONDataType{telemetrytypes.String}
+					return []telemetrytypes.JSONDataType{telemetrytypes.String}, nil
 				}
-				return nil
+				return nil, nil
 			},
 			validate: func(t *testing.T, node *Node) {
 				require.NotNil(t, node)
@@ -749,14 +750,14 @@ func TestPlanBuilder_buildPlan(t *testing.T) {
 				MaxDynamicTypes: 32,
 				MaxDynamicPaths: 0,
 			},
-			getTypes: func(path string) []telemetrytypes.JSONDataType {
+			getTypes: func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
 				switch path {
 				case "education":
-					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON, telemetrytypes.ArrayDynamic}
+					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON, telemetrytypes.ArrayDynamic}, nil
 				case "education[].name":
-					return []telemetrytypes.JSONDataType{telemetrytypes.String}
+					return []telemetrytypes.JSONDataType{telemetrytypes.String}, nil
 				}
-				return nil
+				return nil, nil
 			},
 			validate: func(t *testing.T, node *Node) {
 				require.NotNil(t, node)
@@ -772,7 +773,7 @@ func TestPlanBuilder_buildPlan(t *testing.T) {
 			value:         "test",
 			isDynArrChild: false,
 			parent:        nil,
-			getTypes:      func(path string) []telemetrytypes.JSONDataType { return nil },
+			getTypes:      func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) { return nil, nil },
 			validate: func(t *testing.T, node *Node) {
 				// buildPlan with index >= len(parts) returns nil
 				// Here we call with index=0 and parts=["user"], so index < len(parts), so it won't be nil
@@ -795,16 +796,16 @@ func TestPlanBuilder_buildPlan(t *testing.T) {
 				MaxDynamicTypes: 32,
 				MaxDynamicPaths: 0,
 			},
-			getTypes: func(path string) []telemetrytypes.JSONDataType {
+			getTypes: func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
 				switch path {
 				case "education":
-					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON}
+					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON}, nil
 				case "education[].awards":
-					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON}
+					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON}, nil
 				case "education[].awards[].type":
-					return []telemetrytypes.JSONDataType{telemetrytypes.String}
+					return []telemetrytypes.JSONDataType{telemetrytypes.String}, nil
 				}
-				return nil
+				return nil, nil
 			},
 			validate: func(t *testing.T, node *Node) {
 				require.NotNil(t, node)
@@ -832,7 +833,8 @@ func TestPlanBuilder_buildPlan(t *testing.T) {
 				value:    c.value,
 				getTypes: c.getTypes,
 			}
-			result := pb.buildPlan(0, c.parent, c.isDynArrChild)
+			result, err := pb.buildPlan(context.Background(), 0, c.parent, c.isDynArrChild)
+			require.NoError(t, err)
 			c.validate(t, result)
 		})
 	}
@@ -878,6 +880,7 @@ func TestPlanJSON(t *testing.T) {
 			operator   qbtypes.FilterOperator
 			value      any
 			isPromoted bool
+			expectErr  bool
 			validate   func(t *testing.T, plans []*Node)
 		}{
 			{
@@ -915,6 +918,7 @@ func TestPlanJSON(t *testing.T) {
 				operator:   qbtypes.FilterOperatorEqual,
 				value:      "test",
 				isPromoted: false,
+				expectErr:  true,
 				validate: func(t *testing.T, plans []*Node) {
 					require.Nil(t, plans)
 				},
@@ -923,7 +927,13 @@ func TestPlanJSON(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				plans := PlanJSON(c.path, c.operator, c.value, c.isPromoted, getTypes)
+				plans, err := PlanJSON(context.Background(), c.path, c.operator, c.value, c.isPromoted, getTypes)
+				if c.expectErr {
+					require.Error(t, err)
+					c.validate(t, plans)
+					return
+				}
+				require.NoError(t, err)
 				c.validate(t, plans)
 			})
 		}
@@ -1129,7 +1139,8 @@ func TestPlanJSON(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				plans := PlanJSON(c.path, c.operator, c.value, false, getTypes)
+				plans, err := PlanJSON(context.Background(), c.path, c.operator, c.value, false, getTypes)
+				require.NoError(t, err)
 				require.NotNil(t, plans)
 				require.Len(t, plans, 1)
 				c.validate(t, plans)
@@ -1240,7 +1251,8 @@ func TestPlanJSON(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				plans := PlanJSON(c.path, c.operator, "test_value", false, getTypes)
+				plans, err := PlanJSON(context.Background(), c.path, c.operator, "test_value", false, getTypes)
+				require.NoError(t, err)
 				require.NotNil(t, plans)
 				require.Len(t, plans, 1)
 				c.validate(t, plans)
@@ -1328,7 +1340,8 @@ func TestPlanJSON(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				plans := PlanJSON(c.path, c.operator, c.value, false, getTypes)
+				plans, err := PlanJSON(context.Background(), c.path, c.operator, c.value, false, getTypes)
+				require.NoError(t, err)
 				require.NotNil(t, plans)
 				require.Len(t, plans, 1)
 				c.validate(t, plans)
@@ -1342,13 +1355,15 @@ func TestPlanJSON(t *testing.T) {
 		value := "sports"
 
 		t.Run("Non-promoted plan", func(t *testing.T) {
-			plans := PlanJSON(path, operator, value, false, getTypes)
+			plans, err := PlanJSON(context.Background(), path, operator, value, false, getTypes)
+			require.NoError(t, err)
 			require.Len(t, plans, 1)
 			validateRoot(t, plans[0], LogsV2BodyJSONColumn, 0)
 		})
 
 		t.Run("Promoted plan", func(t *testing.T) {
-			plans := PlanJSON(path, operator, value, true, getTypes)
+			plans, err := PlanJSON(context.Background(), path, operator, value, true, getTypes)
+			require.NoError(t, err)
 			require.Len(t, plans, 2)
 			validateRoot(t, plans[0], LogsV2BodyJSONColumn, 0)
 			validateRoot(t, plans[1], LogsV2BodyPromotedColumn, 1024)
@@ -1458,7 +1473,8 @@ func TestPlanJSON(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				plans := PlanJSON(c.path, c.operator, c.value, false, getTypes)
+				plans, err := PlanJSON(context.Background(), c.path, c.operator, c.value, false, getTypes)
+				require.NoError(t, err)
 				c.validate(t, plans)
 			})
 		}
@@ -1466,7 +1482,8 @@ func TestPlanJSON(t *testing.T) {
 
 	t.Run("Tree Structure Validation", func(t *testing.T) {
 		path := "education[].awards[].participated[].team[].branch"
-		plans := PlanJSON(path, qbtypes.FilterOperatorEqual, "Civil", false, getTypes)
+		plans, err := PlanJSON(context.Background(), path, qbtypes.FilterOperatorEqual, "Civil", false, getTypes)
+		require.NoError(t, err)
 		require.Len(t, plans, 1)
 
 		node := plans[0]
@@ -1676,7 +1693,7 @@ func TestPlanJSON(t *testing.T) {
 	  ]
 	}
 */
-func testTypeSet() (map[string][]telemetrytypes.JSONDataType, func(path string) []telemetrytypes.JSONDataType) {
+func testTypeSet() (map[string][]telemetrytypes.JSONDataType, func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error)) {
 	types := map[string][]telemetrytypes.JSONDataType{
 		"user.name":                                           {telemetrytypes.String},
 		"user.age":                                            {telemetrytypes.Int64},
@@ -1735,7 +1752,7 @@ func testTypeSet() (map[string][]telemetrytypes.JSONDataType, func(path string) 
 		"message": {telemetrytypes.String},
 	}
 
-	return types, func(path string) []telemetrytypes.JSONDataType {
-		return types[path]
+	return types, func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
+		return types[path], nil
 	}
 }

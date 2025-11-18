@@ -2,7 +2,6 @@ package telemetrylogs
 
 import (
 	"context"
-	"sync"
 	"testing"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/stretchr/testify/require"
 )
 
@@ -738,10 +738,13 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 	}
 }
 
-
 func buildTestJSONQueryBuilder() *JSONQueryBuilder {
+	lruCache, err := lru.New[string, *utils.ConcurrentSet[telemetrytypes.JSONDataType]](10000)
+	if err != nil {
+		panic(err)
+	}
 	b := &JSONQueryBuilder{
-		cache:    sync.Map{},
+		cache:    lruCache,
 		lastSeen: 1747945619,
 	}
 
@@ -751,7 +754,7 @@ func buildTestJSONQueryBuilder() *JSONQueryBuilder {
 		for _, t := range types {
 			typesSet.Insert(t)
 		}
-		b.cache.Store(path, typesSet)
+		b.cache.Add(path, typesSet)
 	}
 
 	b.stringIndexedColumns.Store(map[string]string{})

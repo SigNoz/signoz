@@ -1,19 +1,22 @@
 package telemetrylogs
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
 	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 var (
-	arraySep      = jsontypeexporter.ArraySeparator
-	arrayAnyIndex = "[*]."
+	arraySep                 = jsontypeexporter.ArraySeparator
+	arrayAnyIndex            = "[*]."
+	CodePlanIndexOutOfBounds = errors.MustNewCode("plan_index_out_of_bounds")
 )
 
 type BranchType string
@@ -214,14 +217,14 @@ type PlanBuilder struct {
 	parts      []string
 	operator   qbtypes.FilterOperator
 	value      any
-	getTypes   func(path string) []telemetrytypes.JSONDataType
+	getTypes   func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error)
 	isPromoted bool
 }
 
 // buildPlan recursively builds the path plan tree
-func (pb *PlanBuilder) buildPlan(index int, parent *Node, isDynArrChild bool) *Node {
+func (pb *PlanBuilder) buildPlan(ctx context.Context, index int, parent *Node, isDynArrChild bool) (*Node, error) {
 	if index >= len(pb.parts) {
-		return nil
+		return nil, errors.NewInvalidInputf(CodePlanIndexOutOfBounds, "index is out of bounds")
 	}
 
 	part := pb.parts[index]
@@ -247,11 +250,16 @@ func (pb *PlanBuilder) buildPlan(index int, parent *Node, isDynArrChild bool) *N
 		}
 	}
 
+	types, err := pb.getTypes(ctx, pathSoFar)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create node for this path segment
 	node := &Node{
 		Name:            part,
 		IsTerminal:      isTerminal,
-		AvailableTypes:  pb.getTypes(pathSoFar),
+		AvailableTypes:  types,
 		Branches:        make(map[BranchType]*Node),
 		Parent:          parent,
 		MaxDynamicTypes: maxTypes,
@@ -266,22 +274,31 @@ func (pb *PlanBuilder) buildPlan(index int, parent *Node, isDynArrChild bool) *N
 		node.configureTerminal(pb.operator, pb.value)
 	} else {
 		if hasJSON {
-			node.Branches[BranchJSON] = pb.buildPlan(index+1, node, false)
+			node.Branches[BranchJSON], err = pb.buildPlan(ctx, index+1, node, false)
+			if err != nil {
+				return nil, err
+			}
 		}
 		if hasDynamic {
-			node.Branches[BranchDynamic] = pb.buildPlan(index+1, node, true)
+			node.Branches[BranchDynamic], err = pb.buildPlan(ctx, index+1, node, true)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	return node
+	return node, nil
 }
 
 // PlanJSON builds a tree structure representing the complete JSON path traversal
 // that precomputes all possible branches and their types
-func PlanJSON(path string, operator qbtypes.FilterOperator, value any, isPromoted bool, getTypes func(path string) []telemetrytypes.JSONDataType) []*Node {
+func PlanJSON(ctx context.Context, path string,
+	operator qbtypes.FilterOperator, value any, isPromoted bool,
+	getTypes func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error),
+	) ([]*Node, error) {
 	// if path is empty, return nil
 	if path == "" {
-		return nil
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "path is empty")
 	}
 
 	// TODO: PlanJSON requires the Start and End of the Query to select correct column between promoted and body_json using
@@ -296,25 +313,33 @@ func PlanJSON(path string, operator qbtypes.FilterOperator, value any, isPromote
 		getTypes:   getTypes,
 		isPromoted: isPromoted,
 	}
-	plans := []*Node{
-		pb.buildPlan(0, &Node{
-			Name:            LogsV2BodyJSONColumn,
-			isRoot:          true,
-			MaxDynamicTypes: 32,
-			MaxDynamicPaths: 0,
-		}, false),
+	plans := []*Node{}
+
+	node, err := pb.buildPlan(ctx, 0, &Node{
+		Name:            LogsV2BodyJSONColumn,
+		isRoot:          true,
+		MaxDynamicTypes: 32,
+		MaxDynamicPaths: 0,
+	}, false)
+	if err != nil {
+		return nil, err
 	}
+	plans = append(plans, node)
 
 	if isPromoted {
-		plans = append(plans, pb.buildPlan(0, &Node{
+		node, err := pb.buildPlan(ctx, 0, &Node{
 			Name:            LogsV2BodyPromotedColumn,
 			isRoot:          true,
 			MaxDynamicTypes: 32,
 			MaxDynamicPaths: 1024,
-		}, true))
+		}, true)
+		if err != nil {
+			return nil, err
+		}
+		plans = append(plans, node)
 	}
 
-	return plans
+	return plans, nil
 }
 
 // Operator intent helpers

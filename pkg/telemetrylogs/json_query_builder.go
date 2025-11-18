@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -26,6 +27,7 @@ var (
 	CodeGroupByPlanEmpty         = errors.MustNewCode("group_by_plan_empty")
 	CodeArrayMapExpressionsEmpty = errors.MustNewCode("array_map_expressions_empty")
 	CodePromotedPlanMissing      = errors.MustNewCode("promoted_plan_missing")
+	CodeLRUCacheCreateFailed     = errors.MustNewCode("lru_cache_create_failed")
 )
 
 type PathType struct {
@@ -36,7 +38,7 @@ type PathType struct {
 
 type JSONQueryBuilder struct {
 	telemetryStore       telemetrystore.TelemetryStore
-	cache                sync.Map // map[string]*utils.ConcurrentSet[telemetrytypes.JSONDataType]
+	cache                *lru.Cache[string, *utils.ConcurrentSet[telemetrytypes.JSONDataType]] // map[string]*utils.ConcurrentSet[telemetrytypes.JSONDataType]
 	lastSeen             uint64
 	promotedPaths        sync.Map     // map[string]struct{} of promoted JSON paths
 	stringIndexedColumns atomic.Value // map[string]string of string indexed columns
@@ -46,7 +48,12 @@ type JSONQueryBuilder struct {
 
 func NewJSONQueryBuilder(ctx context.Context,
 	telemetryStore telemetrystore.TelemetryStore, logger *slog.Logger) (*JSONQueryBuilder, error) {
-	builder := &JSONQueryBuilder{telemetryStore: telemetryStore, cache: sync.Map{}, logger: logger}
+	lruCache, err := lru.New[string, *utils.ConcurrentSet[telemetrytypes.JSONDataType]](10000)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, CodeLRUCacheCreateFailed, "failed to create LRU cache: %s", err)
+	}
+
+	builder := &JSONQueryBuilder{telemetryStore: telemetryStore, cache: lruCache, logger: logger}
 
 	builder.init()
 	builder.stringIndexedColumns.Store(make(map[string]string))
@@ -56,36 +63,10 @@ func NewJSONQueryBuilder(ctx context.Context,
 		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to load promoted paths")
 	}
 
-	return builder, builder.syncPathTypes(ctx, true)
+	return builder, builder.loadPathTypes(ctx)
 }
 
 func (b *JSONQueryBuilder) init() {
-	// full load the metadata every hour
-	go func() {
-		ticker := time.NewTicker(time.Hour)
-		defer ticker.Stop()
-
-		for range ticker.C {
-			err := b.syncPathTypes(context.Background(), true)
-			if err != nil {
-				b.logger.Error("error full loading path metadata", slog.Any("error", err))
-			}
-		}
-	}()
-
-	// incremental sync every minute
-	go func() {
-		ticker := time.NewTicker(time.Minute)
-		defer ticker.Stop()
-
-		for range ticker.C {
-			err := b.syncPathTypes(context.Background(), false)
-			if err != nil {
-				b.logger.Error("error fetching updates for path metadata", slog.Any("error", err))
-			}
-		}
-	}()
-
 	// refresh promoted paths every minute
 	go func() {
 		ticker := time.NewTicker(time.Minute)
@@ -110,21 +91,11 @@ func (b *JSONQueryBuilder) init() {
 	}()
 }
 
-func (b *JSONQueryBuilder) syncPathTypes(ctx context.Context, fullLoad bool) error {
-	var lastSeen uint64
-	if !fullLoad {
-		lastSeen = b.lastSeen
-	}
-
-	// Use the shared function to extract body JSON keys
-	// For full sync: limit=0 (no limit), for incremental sync: limit=10000 (reasonable limit)
-	var limit int
-	if fullLoad {
-		limit = 0 // No limit for full sync
-	} else {
-		limit = 10000 // Reasonable limit for incremental sync
-	}
-	bodyJSONPaths, _, highestLastSeen, err := ExtractBodyPaths(ctx, b.telemetryStore, nil, limit, lastSeen)
+// syncPathTypes loads the top 10k paths ordered by last_seen DESC at startup
+func (b *JSONQueryBuilder) loadPathTypes(ctx context.Context) error {
+	// Load top 10k paths ordered by latest (last_seen DESC)
+	const limit = 10000
+	bodyJSONPaths, _, highestLastSeen, err := ExtractBodyPaths(ctx, b.telemetryStore, nil, limit, 0)
 	if err != nil {
 		return err
 	}
@@ -133,21 +104,14 @@ func (b *JSONQueryBuilder) syncPathTypes(ctx context.Context, fullLoad bool) err
 		return nil
 	}
 
-	if fullLoad {
-		b.cache = sync.Map{}
-	}
-
+	// Load paths into LRU cache
 	for path, types := range bodyJSONPaths {
 		setTyped := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-
-		set, loaded := b.cache.LoadOrStore(path, setTyped)
-		if loaded {
-			setTyped = set.(*utils.ConcurrentSet[telemetrytypes.JSONDataType])
-		}
 		types.Iter(func(dataType telemetrytypes.JSONDataType) bool {
 			setTyped.Insert(dataType)
 			return true
 		})
+		b.cache.Add(path, setTyped)
 	}
 
 	// Update lastSeen to the highest last_seen from the results
@@ -179,13 +143,34 @@ func (b *JSONQueryBuilder) syncStringIndexedColumns(ctx context.Context) error {
 	return nil
 }
 
-func (b *JSONQueryBuilder) getTypeSet(path string) []telemetrytypes.JSONDataType {
-	if cachedSet, exists := b.cache.Load(path); exists {
-		if set, ok := cachedSet.(*utils.ConcurrentSet[telemetrytypes.JSONDataType]); ok && set.Len() > 0 {
-			return set.ToSlice()
+// getTypeSet checks cache first, then fetches from DB synchronously if not found
+func (b *JSONQueryBuilder) getTypeSet(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
+	// Check cache first
+	if cachedSet, exists := b.cache.Get(path); exists {
+		if cachedSet != nil && cachedSet.Len() > 0 {
+			return cachedSet.ToSlice(), nil
 		}
 	}
-	return nil
+
+	// Not in cache, fetch from table immediately
+	bodyJSONPaths, _, _, err := ExtractBodyPaths(ctx, b.telemetryStore, []string{path}, 0, 0)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch path types from table")
+	}
+
+	// Create set and load into cache
+	setTyped := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
+	if types, found := bodyJSONPaths[path]; found {
+		types.Iter(func(dataType telemetrytypes.JSONDataType) bool {
+			setTyped.Insert(dataType)
+			return true
+		})
+	}
+
+	// Store in cache (LRU will handle eviction if needed)
+	b.cache.Add(path, setTyped)
+
+	return setTyped.ToSlice(), nil
 }
 
 // IsPromoted reports whether a JSON path is present in the promoted paths set.
@@ -221,7 +206,10 @@ func (b *JSONQueryBuilder) BuildCondition(ctx context.Context, key *telemetrytyp
 	operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 
 	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
-	plan := PlanJSON(path, operator, value, b.IsPromoted(path), b.getTypeSet)
+	plan, err := PlanJSON(ctx, path, operator, value, b.IsPromoted(path), b.getTypeSet)
+	if err != nil {
+		return "", err
+	}
 
 	conditions := []string{}
 	for _, plan := range plan {
@@ -473,7 +461,10 @@ type GroupByArrayJoinInfo struct {
 func (b *JSONQueryBuilder) BuildGroupBy(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*GroupByArrayJoinInfo, error) {
 	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
 
-	plan := PlanJSON(path, qbtypes.FilterOperatorExists, nil, b.IsPromoted(path), b.getTypeSet)
+	plan, err := PlanJSON(ctx, path, qbtypes.FilterOperatorExists, nil, b.IsPromoted(path), b.getTypeSet)
+	if err != nil {
+		return nil, err
+	}
 	if len(plan) == 0 {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
 			"Could not find any valid paths for: %s", path)
