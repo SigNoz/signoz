@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -17,15 +18,16 @@ const (
 
 type AuthZ struct {
 	logger       *slog.Logger
+	orgGetter    organization.Getter
 	authzService authz.AuthZ
 }
 
-func NewAuthZ(logger *slog.Logger) *AuthZ {
+func NewAuthZ(logger *slog.Logger, orgGetter organization.Getter, authzService authz.AuthZ) *AuthZ {
 	if logger == nil {
 		panic("cannot build authz middleware, logger is empty")
 	}
 
-	return &AuthZ{logger: logger}
+	return &AuthZ{logger: logger, orgGetter: orgGetter, authzService: authzService}
 }
 
 func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
@@ -107,7 +109,7 @@ func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relation, translation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackFn) http.HandlerFunc {
+func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relation, translation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithClaimsFn) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		claims, err := authtypes.ClaimsFromContext(req.Context())
 		if err != nil {
@@ -121,13 +123,38 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relatio
 			return
 		}
 
-		selectors, err := cb(req.Context(), claims)
+		selectors, err := cb(req, claims)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
 		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, relation, translation, typeable, selectors)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		next(rw, req)
+	})
+}
+
+func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, translation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithoutClaimsFn) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		orgs, err := middleware.orgGetter.ListByOwnedKeyRange(ctx)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		selectors, orgID, err := cb(req, orgs)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		err = middleware.authzService.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, translation, typeable, selectors)
 		if err != nil {
 			render.Error(rw, err)
 			return
