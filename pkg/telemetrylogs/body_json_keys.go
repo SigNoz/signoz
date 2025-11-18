@@ -24,7 +24,6 @@ var (
 
 // ExtractBodyPaths extracts body JSON paths from the path_types table
 // This function can be used by both JSONQueryBuilder and metadata extraction
-// lastSeen: 0 for full sync, >0 for incremental sync (only records newer than lastSeen)
 // uniquePathLimit: 0 for no limit, >0 for maximum number of unique paths to return
 //   - For startup load: set to 10000 to get top 10k unique paths
 //   - For lookup: set to 0 (no limit needed for single path)
