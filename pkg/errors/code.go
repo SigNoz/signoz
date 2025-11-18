@@ -18,8 +18,6 @@ var (
 	CodeTimeout                 = Code{"timeout"}
 	CodeUnknown                 = Code{"unknown"}
 	CodeLicenseUnavailable      = Code{"license_unavailable"}
-	CodeBadRequest              = Code{"bad_request"}
-	CodeUnavailable             = Code{"unavailable"}
 )
 
 var (

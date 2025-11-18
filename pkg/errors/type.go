@@ -8,7 +8,6 @@ var (
 	TypeMethodNotAllowed       = typ{"method-not-allowed"}
 	TypeAlreadyExists          = typ{"already-exists"}
 	TypeUnauthenticated        = typ{"unauthenticated"}
-	TypeUnauthorized           = typ{"unauthorized"}
 	TypeForbidden              = typ{"forbidden"}
 	TypeCanceled               = typ{"canceled"}
 	TypeTimeout                = typ{"timeout"}

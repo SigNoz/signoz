@@ -129,7 +129,7 @@ func (r *Repo) insertConfig(
 		// in a monotonically increasing order starting with 1. hence, we reject insert
 		// requests with version anything other than 0. here, 0 indicates un-assigned
 		zap.L().Error("invalid version assignment while inserting agent config", zap.Int("version", c.Version), zap.String("ElementType", c.ElementType.StringValue()))
-		return errors.New(errors.TypeInvalidInput, errors.CodeBadRequest, "user defined versions are not supported in the agent config")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "user defined versions are not supported in the agent config")
 	}
 
 	configVersion, err := r.GetLatestVersion(ctx, orgId, c.ElementType)

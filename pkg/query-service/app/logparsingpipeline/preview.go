@@ -66,9 +66,9 @@ func SimulatePipelinesProcessing(ctx context.Context, pipelines []pipelinetypes.
 	)
 	if simulationErr != nil {
 		if errors.Is(simulationErr, collectorsimulator.ErrInvalidConfig) {
-			return nil, nil, errors.Wrap(simulationErr, errors.TypeInvalidInput, errors.CodeBadRequest, "invalid config")
+			return nil, nil, errors.WrapInvalidInputf(simulationErr, errors.CodeInvalidInput, "invalid config")
 		}
-		return nil, nil, errors.Wrap(simulationErr, errors.TypeInternal, errors.CodeInternal, "could not simulate log pipelines processing")
+		return nil, nil, errors.WrapInternalf(simulationErr, errors.CodeInternal, "could not simulate log pipelines processing")
 	}
 
 	outputSignozLogs := PLogsToSignozLogs(outputPLogs)
