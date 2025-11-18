@@ -35,9 +35,9 @@ func TestNewHandlers(t *testing.T) {
 	require.NoError(t, err)
 	tokenizer := tokenizertest.New()
 	emailing := emailingtest.New()
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil)
 
-	handlers := NewHandlers(modules, providerSettings)
+	handlers := NewHandlers(modules, providerSettings, nil, nil)
 
 	reflectVal := reflect.ValueOf(handlers)
 	for i := 0; i < reflectVal.NumField(); i++ {
