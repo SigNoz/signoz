@@ -4121,9 +4121,9 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 
 	var payload *logparsingpipeline.PipelinesResponse
 	if version != -1 {
-		payload, err = aH.listLogsPipelinesByVersion(context.Background(), orgID, version)
+		payload, err = aH.listLogsPipelinesByVersion(r.Context(), orgID, version)
 	} else {
-		payload, err = aH.listLogsPipelines(context.Background(), orgID)
+		payload, err = aH.listLogsPipelines(r.Context(), orgID)
 	}
 	if err != nil {
 		render.Error(w, err)

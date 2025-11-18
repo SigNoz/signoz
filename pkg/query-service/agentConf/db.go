@@ -24,6 +24,7 @@ var (
 	CodeConfigVersionInsertFailed      = errors.MustNewCode("config_version_insert_failed")
 	CodeConfigElementInsertFailed      = errors.MustNewCode("config_element_insert_failed")
 	CodeConfigDeployStatusUpdateFailed = errors.MustNewCode("config_deploy_status_update_failed")
+	CodeConfigHistoryGetFailed         = errors.MustNewCode("config_history_get_failed")
 )
 
 // Repo handles DDL and DML ops on ingestion rules
@@ -33,7 +34,7 @@ type Repo struct {
 
 func (r *Repo) GetConfigHistory(
 	ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType, limit int,
-) ([]opamptypes.AgentConfigVersion, *model.ApiError) {
+) ([]opamptypes.AgentConfigVersion, error) {
 	var c []opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
@@ -48,7 +49,7 @@ func (r *Repo) GetConfigHistory(
 		Scan(ctx)
 
 	if err != nil {
-		return nil, model.InternalError(err)
+		return nil, errors.WrapInternalf(err, CodeConfigHistoryGetFailed, "failed to get config history")
 	}
 
 	incompleteStatuses := []opamptypes.DeployStatus{opamptypes.DeployInitiated, opamptypes.Deploying}
