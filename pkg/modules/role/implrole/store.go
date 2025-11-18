@@ -48,6 +48,23 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return role, nil
 }
 
+func (store *store) GetByNameAndOrgID(ctx context.Context, name string, orgID valuer.UUID) (*roletypes.StorableRole, error) {
+	role := new(roletypes.StorableRole)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(role).
+		Where("org_id = ?", orgID).
+		Where("name = ?", name).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, roletypes.ErrCodeRoleNotFound, "role with name: %s doesn't exist", name)
+	}
+
+	return role, nil
+}
+
 func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.StorableRole, error) {
 	roles := make([]*roletypes.StorableRole, 0)
 	err := store.

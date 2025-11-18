@@ -48,7 +48,26 @@ func (provider *provider) Check(ctx context.Context, tuple *openfgav1.TupleKey) 
 }
 
 func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, _ authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector) error {
-	subject, err := authtypes.NewSubject(authtypes.TypeUser, claims.UserID, authtypes.Relation{})
+	subject, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
+	if err != nil {
+		return err
+	}
+
+	tuples, err := typeable.Tuples(subject, relation, selectors, orgID)
+	if err != nil {
+		return err
+	}
+
+	err = provider.BatchCheck(ctx, tuples)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, _ authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector) error {
+	subject, err := authtypes.NewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), orgID, nil)
 	if err != nil {
 		return err
 	}

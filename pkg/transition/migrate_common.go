@@ -17,7 +17,13 @@ type migrateCommon struct {
 	logger    *slog.Logger
 }
 
-func (migration *migrateCommon) wrapInV5Envelope(name string, queryMap map[string]any, queryType string) map[string]any {
+func NewMigrateCommon(logger *slog.Logger) *migrateCommon {
+	return &migrateCommon{
+		logger: logger,
+	}
+}
+
+func (migration *migrateCommon) WrapInV5Envelope(name string, queryMap map[string]any, queryType string) map[string]any {
 	// Create a properly structured v5 query
 	v5Query := map[string]any{
 		"name":     name,
