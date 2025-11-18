@@ -716,7 +716,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "key `greater` not found",
+			expectedErrorContains: "key `greater` is not a valid field, consider removing it from filters",
 		},
 		{
 			category:              "Key-operator-value boundary",
@@ -732,7 +732,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "key `less` not found",
+			expectedErrorContains: "key `less` is not a valid field, consider removing it from filters",
 		},
 		{
 			category:              "Key-operator-value boundary",
@@ -788,7 +788,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "key `user` not found",
+			expectedErrorContains: "key `user` is not a valid field, consider removing it from filters",
 		},
 		{
 			category:              "Key-operator-value boundary",
@@ -1999,7 +1999,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "key `response.body.data.items[].id` not found",
+			expectedErrorContains: "key `response.body.data.items[].id` is not a valid field, consider removing it from filters",
 		},
 		{
 			category:              "Nested object paths",
@@ -2236,7 +2236,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "key `user_id` not found",
+			expectedErrorContains: "key `user_id` is not a valid field, consider removing it from filters",
 		},
 
 		// More common filter patterns
@@ -2387,7 +2387,7 @@ func TestFilterExprLogs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-            clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
 
 			if tc.shouldPass {
 				if err != nil {
@@ -2506,7 +2506,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-            clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
 
 			if tc.shouldPass {
 				if err != nil {
