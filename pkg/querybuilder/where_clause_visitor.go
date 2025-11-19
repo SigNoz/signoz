@@ -868,8 +868,8 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 			keys = append(keys, fmt.Sprintf("%s.%s:%s", item.FieldContext.StringValue(), item.Name, item.FieldDataType.StringValue()))
 		}
 		warnMsg := fmt.Sprintf(
-			"Key `%s` is ambiguous, found %d different combinations of field context / data type. \n"+
-				"Please specify one from these [ %s ] to disambiguate. \n",
+			"Key `%s` is ambiguous, found %d different combinations of field context / data type."+
+				"Please specify one from these [ %s ] to disambiguate.",
 			fieldKey.Name,
 			len(fieldKeysForName),
 			strings.Join(keys, ", "),
