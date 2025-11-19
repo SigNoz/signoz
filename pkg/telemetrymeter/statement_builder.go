@@ -123,7 +123,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", []any{}, errors.WithAdditionalf(err, "consider removing field %s from groupBy", g.TelemetryFieldKey.Name)
+			return "", []any{}, errors.WithAppendf(err, ", consider removing field %s from groupBy", g.TelemetryFieldKey.Name)
 		}
 		sb.SelectMore(col)
 	}
@@ -203,7 +203,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", nil, errors.WithAdditionalf(err, "consider removing field %s from groupBy", g.TelemetryFieldKey.Name)
+			return "", nil, errors.WithAppendf(err, ", consider removing field %s from groupBy", g.TelemetryFieldKey.Name)
 		}
 		sb.SelectMore(col)
 	}
@@ -273,7 +273,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", nil, errors.WithAdditionalf(err, "consider removing field %s from groupBy", g.TelemetryFieldKey.Name)
+			return "", nil, errors.WithAppendf(err, ", consider removing field %s from groupBy", g.TelemetryFieldKey.Name)
 		}
 		baseSb.SelectMore(col)
 	}
