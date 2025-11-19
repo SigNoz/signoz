@@ -85,6 +85,8 @@ func (v *promQLVisitor) Visit(node parser.Node, path []parser.Node) (parser.Visi
 	return v, nil
 }
 
+// visitVectorSelector will be called whenever the Visitor encounters a VectorSelector node.
+// in the case we'll be extracting the metric names from the vector selector.
 func (v *promQLVisitor) visitVectorSelector(vs *parser.VectorSelector) {
 	// Check if metric name is specified directly
 	if vs.Name != "" {
@@ -104,6 +106,8 @@ func (v *promQLVisitor) visitVectorSelector(vs *parser.VectorSelector) {
 	}
 }
 
+// visitAggregateExpr will be called whenever the Visitor encounters an AggregateExpr node.
+// in the case we'll be extracting the grouping keys from the outermost aggregation.
 func (v *promQLVisitor) visitAggregateExpr(ae *parser.AggregateExpr, path []parser.Node) {
 	// Count how many AggregateExpr nodes are in the path (excluding current node)
 	// This tells us the nesting level
