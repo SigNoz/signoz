@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBuildExtractBodyPathsQuery(t *testing.T) {
+func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 	testCases := []struct {
 		name            string
 		searchTexts     []string
@@ -33,7 +33,7 @@ func TestBuildExtractBodyPathsQuery(t *testing.T) {
 				"max(last_seen) AS last_seen",
 				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
 				"GROUP BY path",
-				"ORDER BY max(last_seen) DESC",
+				"ORDER BY last_seen DESC",
 				"LIMIT ?",
 			},
 			notExpectedSQL: []string{
@@ -54,7 +54,7 @@ func TestBuildExtractBodyPathsQuery(t *testing.T) {
 				"max(last_seen) AS last_seen",
 				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
 				"GROUP BY path",
-				"ORDER BY max(last_seen) DESC",
+				"ORDER BY last_seen DESC",
 				"LIMIT ?",
 			},
 			notExpectedSQL: []string{
@@ -77,7 +77,7 @@ func TestBuildExtractBodyPathsQuery(t *testing.T) {
 				"WHERE",
 				"path = ?",
 				"GROUP BY path",
-				"ORDER BY max(last_seen) DESC",
+				"ORDER BY last_seen DESC",
 				"LIMIT ?",
 			},
 			notExpectedSQL: []string{
@@ -101,7 +101,7 @@ func TestBuildExtractBodyPathsQuery(t *testing.T) {
 				"WHERE",
 				"LOWER(path) LIKE LOWER(?)",
 				"GROUP BY path",
-				"ORDER BY max(last_seen) DESC",
+				"ORDER BY last_seen DESC",
 				"LIMIT ?",
 			},
 			notExpectedSQL: []string{
@@ -125,7 +125,7 @@ func TestBuildExtractBodyPathsQuery(t *testing.T) {
 				"OR",
 				"path = ?",
 				"GROUP BY path",
-				"ORDER BY max(last_seen) DESC",
+				"ORDER BY last_seen DESC",
 				"LIMIT ?",
 			},
 			notExpectedSQL: []string{
@@ -150,7 +150,7 @@ func TestBuildExtractBodyPathsQuery(t *testing.T) {
 				"OR",
 				"LOWER(path) LIKE LOWER(?)",
 				"GROUP BY path",
-				"ORDER BY max(last_seen) DESC",
+				"ORDER BY last_seen DESC",
 				"LIMIT ?",
 			},
 			notExpectedSQL: []string{
@@ -171,7 +171,7 @@ func TestBuildExtractBodyPathsQuery(t *testing.T) {
 				"max(last_seen) AS last_seen",
 				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
 				"GROUP BY path",
-				"ORDER BY max(last_seen) DESC",
+				"ORDER BY last_seen DESC",
 				"LIMIT ?",
 			},
 			notExpectedSQL: []string{
@@ -192,7 +192,7 @@ func TestBuildExtractBodyPathsQuery(t *testing.T) {
 				"max(last_seen) AS last_seen",
 				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
 				"GROUP BY path",
-				"ORDER BY max(last_seen) DESC",
+				"ORDER BY last_seen DESC",
 				"LIMIT ?",
 			},
 			expectedArgs:  []any{50000},
@@ -217,7 +217,7 @@ func TestBuildExtractBodyPathsQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			query, args := buildExtractBodyPathsQuery(tc.searchTexts, tc.uniquePathLimit, tc.operator)
+			query, args := buildGetBodyJSONPathsQuery(tc.searchTexts, tc.uniquePathLimit, tc.operator)
 
 			// Verify query is not empty
 			require.NotEmpty(t, query, "Query should not be empty")
@@ -253,7 +253,7 @@ func TestBuildExtractBodyPathsQuery(t *testing.T) {
 
 			// Verify ORDER BY is present
 			assert.Contains(t, queryUpper, "ORDER BY", "Query should contain ORDER BY")
-			assert.Contains(t, queryUpper, "MAX(LAST_SEEN) DESC", "Query should order by max(last_seen) DESC")
+			assert.Contains(t, queryUpper, "LAST_SEEN DESC", "Query should ORDER BY last_seen DESC")
 
 			// Verify SELECT columns
 			assert.Contains(t, queryUpper, "PATH", "Query should select path")

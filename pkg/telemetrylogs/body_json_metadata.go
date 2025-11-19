@@ -22,7 +22,7 @@ var (
 	CodeUnknownJSONDataType = errors.MustNewCode("unknown_json_data_type")
 )
 
-// ExtractBodyPaths extracts body JSON paths from the path_types table
+// GetBodyJSONPaths extracts body JSON paths from the path_types table
 // This function can be used by both JSONQueryBuilder and metadata extraction
 // uniquePathLimit: 0 for no limit, >0 for maximum number of unique paths to return
 //   - For startup load: set to 10000 to get top 10k unique paths
@@ -31,10 +31,10 @@ var (
 //
 // searchOperator: LIKE for pattern matching, EQUAL for exact match
 // Returns: (paths, error)
-func ExtractBodyPaths(ctx context.Context, telemetryStore telemetrystore.TelemetryStore,
+func GetBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.TelemetryStore,
 	searchTexts []string, uniquePathLimit int, operator qbtypes.FilterOperator) (map[string]*utils.ConcurrentSet[telemetrytypes.JSONDataType], error) {
 
-	query, args := buildExtractBodyPathsQuery(searchTexts, uniquePathLimit, operator)
+	query, args := buildGetBodyJSONPathsQuery(searchTexts, uniquePathLimit, operator)
 	rows, err := telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to extract body JSON keys")
@@ -72,7 +72,7 @@ func ExtractBodyPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 	return paths, nil
 }
 
-func buildExtractBodyPathsQuery(searchTexts []string, uniquePathLimit int, operator qbtypes.FilterOperator) (string, []any) {
+func buildGetBodyJSONPathsQuery(searchTexts []string, uniquePathLimit int, operator qbtypes.FilterOperator) (string, []any) {
 	from := fmt.Sprintf("%s.%s", DBName, PathTypesTableName)
 
 	// Build a better query using GROUP BY to deduplicate at database level
@@ -102,7 +102,7 @@ func buildExtractBodyPathsQuery(searchTexts []string, uniquePathLimit int, opera
 	sb.GroupBy("path")
 
 	// Order by max last_seen to get most recent paths first
-	sb.OrderBy("max(last_seen) DESC")
+	sb.OrderBy("last_seen DESC")
 
 	// Apply limit on unique paths (not rows)
 	// Always set a default limit to prevent full table scans
