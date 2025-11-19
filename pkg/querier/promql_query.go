@@ -87,7 +87,8 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 	// Create visitor and walk the AST
 	visitor := &allVarRemover{allVars: allVars}
 	if err := parser.Walk(visitor, expr, nil); err != nil {
-		return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid promql query %q", query)
+		q.logger.ErrorContext(context.TODO(), "unexpected error while removing __all__ variable matchers", "error", err, "query", query)
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while removing __all__ variable matchers")
 	}
 
 	// Convert the modified AST back to a string
