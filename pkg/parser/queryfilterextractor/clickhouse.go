@@ -218,12 +218,12 @@ func (e *ClickHouseFilterExtractor) extractGroupByColumns(query *clickhouse.Sele
 
 		// Build ColumnInfo array by matching GROUP BY with SELECT aliases and origins
 		result := []ColumnInfo{}
-		originVisited := make(map[*clickhouse.SelectQuery]bool)
 
 		for groupByCol := range tempGroupBy {
 			alias := selectAliases[groupByCol] // Will be "" if not in SELECT
 
 			// Extract originExpr by tracing back through queries
+			originVisited := make(map[*clickhouse.SelectQuery]bool)
 			originExpr := e.extractColumnOrigin(groupByCol, query, cteMap, originVisited)
 			originField, err := extractCHOriginFieldFromQuery(fmt.Sprintf("SELECT %s", originExpr))
 			if err != nil {
