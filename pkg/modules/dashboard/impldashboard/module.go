@@ -2,6 +2,7 @@ package impldashboard
 
 import (
 	"context"
+	"maps"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -58,6 +59,14 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 }
 
 func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
+	storablePublicDashboard, err := module.store.GetPublic(ctx, publicDashboard.DashboardID.StringValue())
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return err
+	}
+	if storablePublicDashboard != nil {
+		return errors.Newf(errors.TypeAlreadyExists, dashboardtypes.ErrCodePublicDashboardAlreadyExists, "dashboard with id %s is already public", storablePublicDashboard.DashboardID)
+	}
+
 	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.AnonymousUserRoleName, roletypes.AnonymousUserRoleDescription, roletypes.RoleTypeManaged.StringValue(), orgID))
 	if err != nil {
 		return err
@@ -203,19 +212,14 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err := module.store.Delete(ctx, orgID, id)
-		if err != nil {
+		err := module.DeletePublic(ctx, orgID, id)
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return err
 		}
 
-		err = module.store.DeletePublic(ctx, id.StringValue())
+		err = module.store.Delete(ctx, orgID, id)
 		if err != nil {
-			// do not do anything if no public config exists.
-			if !errors.Ast(err, errors.TypeNotFound) {
-				return err
-			}
-
-			return nil
+			return err
 		}
 
 		return nil
@@ -343,7 +347,15 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 		return nil, err
 	}
 
-	return dashboardtypes.NewStatsFromStorableDashboards(dashboards), nil
+	publicDashboards, err := module.store.ListPublic(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	stats := make(map[string]any)
+	maps.Copy(stats, dashboardtypes.NewStatsFromStorableDashboards(dashboards))
+	maps.Copy(stats, dashboardtypes.NewStatsFromStorablePublicDashboards(publicDashboards))
+	return stats, nil
 }
 
 func (module *module) MustGetTypeables() []authtypes.Typeable {

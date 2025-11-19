@@ -132,6 +132,24 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardty
 	return storableDashboards, nil
 }
 
+func (store *store) ListPublic(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.StorablePublicDashboard, error) {
+	storable := make([]*dashboardtypes.StorablePublicDashboard, 0)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&storable).
+		Join("JOIN dashboard").
+		JoinOn("public_dashboard.dashboard_id = dashboard.id").
+		Where("dashboard.org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return storable, nil
+}
+
 func (store *store) Update(ctx context.Context, orgID valuer.UUID, storableDashboard *dashboardtypes.StorableDashboard) error {
 	_, err := store.
 		sqlstore.
