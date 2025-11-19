@@ -362,7 +362,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", nil, errors.WithAppendf(err, ", consider removing field %s from groupBy", g.TelemetryFieldKey.Name)
+			return "", nil, errors.WithAppendf(err, ", consider removing %s from AGGREGATE BY options", g.TelemetryFieldKey.Name)
 		}
 		sb.SelectMore(col)
 	}

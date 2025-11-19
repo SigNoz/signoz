@@ -716,7 +716,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "key `greater` is not a valid field, consider removing it from filters",
+			expectedErrorContains: "key `greater` is not a valid field, consider removing it from filter query",
 		},
 		{
 			category:              "Key-operator-value boundary",
@@ -732,7 +732,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "key `less` is not a valid field, consider removing it from filters",
+			expectedErrorContains: "key `less` is not a valid field, consider removing it from filter query",
 		},
 		{
 			category:              "Key-operator-value boundary",
@@ -788,7 +788,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "key `user` is not a valid field, consider removing it from filters",
+			expectedErrorContains: "key `user` is not a valid field, consider removing it from filter query",
 		},
 		{
 			category:              "Key-operator-value boundary",
@@ -1999,7 +1999,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "key `response.body.data.items[].id` is not a valid field, consider removing it from filters",
+			expectedErrorContains: "key `response.body.data.items[].id` is not a valid field, consider removing it from filter query",
 		},
 		{
 			category:              "Nested object paths",
@@ -2236,7 +2236,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "key `user_id` is not a valid field, consider removing it from filters",
+			expectedErrorContains: "key `user_id` is not a valid field, consider removing it from filter query",
 		},
 
 		// More common filter patterns

@@ -856,7 +856,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 		} else if !v.ignoreNotFoundKeys {
 			// TODO(srikanthccv): do we want to return an error here?
 			// should we infer the type and auto-magically build a key for expression?
-			v.errors = append(v.errors, fmt.Sprintf("key `%s` is not a valid field, consider removing it from filters", fieldKey.Name))
+			v.errors = append(v.errors, fmt.Sprintf("key `%s` is not a valid field, consider removing it from filter query", fieldKey.Name))
 			v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found"
 		}
 	}

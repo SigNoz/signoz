@@ -249,7 +249,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
 			colExpr, err := b.fm.ColumnExpressionFor(ctx, &query.SelectFields[index], keys)
 			if err != nil {
-				return nil, errors.WithAppendf(err, ", consider removing field %s from selectFields", query.SelectFields[index].Name)
+				return nil, errors.WithAppendf(err, ", consider removing field %s from columns by clicking options and then removing the column", query.SelectFields[index].Name)
 			}
 			sb.SelectMore(colExpr)
 		}
@@ -269,7 +269,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	for _, orderBy := range query.Order {
 		colExpr, err := b.fm.ColumnExpressionFor(ctx, &orderBy.Key.TelemetryFieldKey, keys)
 		if err != nil {
-			return nil, errors.WithAppendf(err, ", consider removing field %s from orderBy", orderBy.Key.TelemetryFieldKey.Name)
+			return nil, errors.WithAppendf(err, ", consider removing field %s and chosing a different field in Order by menu", orderBy.Key.TelemetryFieldKey.Name)
 		}
 		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
 	}
