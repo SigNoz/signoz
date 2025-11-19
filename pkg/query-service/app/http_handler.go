@@ -78,6 +78,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/version"
 
+	"github.com/SigNoz/signoz/pkg/parser/queryfilterextractor"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 )
 
@@ -297,6 +298,18 @@ type ApiResponse struct {
 	Data      interface{}     `json:"data,omitempty"`
 	ErrorType model.ErrorType `json:"errorType,omitempty"`
 	Error     string          `json:"error,omitempty"`
+}
+
+// QueryFilterAnalyzeRequest represents the request body for query filter analysis
+type QueryFilterAnalyzeRequest struct {
+	Query     string `json:"query"`
+	QueryType string `json:"queryType"`
+}
+
+// QueryFilterAnalyzeResponse represents the response body for query filter analysis
+type QueryFilterAnalyzeResponse struct {
+	MetricNames []string `json:"metricNames"`
+	Groups      []string `json:"groups"`
 }
 
 // todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
@@ -632,6 +645,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/span_percentile", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetSpanPercentileDetails)).Methods(http.MethodPost)
 
+	// Query Filter Analyzer api used to extract metric names and grouping columns from a query
+	router.HandleFunc("/api/v1/query_filter/analyze", am.ViewAccess(aH.analyzeQueryFilter)).Methods(http.MethodPost)
 }
 
 func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.AuthZ) {
@@ -5526,4 +5541,82 @@ func (aH *APIHandler) handleFunnelErrorTracesWithPayload(w http.ResponseWriter, 
 		return
 	}
 	aH.Respond(w, results)
+}
+
+// analyzeQueryFilter analyzes a query and extracts metric names and grouping columns
+func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request) {
+	// Limit request body size to 100 KB
+	r.Body = http.MaxBytesReader(w, r.Body, 100*1024)
+
+	var req QueryFilterAnalyzeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: fmt.Errorf("cannot parse the request body: %v", err),
+		}, nil)
+		return
+	}
+
+	// Validate query is not empty
+	query := strings.TrimSpace(req.Query)
+	if query == "" {
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: errors.New("query is required and cannot be empty"),
+		}, nil)
+		return
+	}
+
+	// Normalize queryType to lowercase and map to extractor constants
+	queryType := strings.ToLower(strings.TrimSpace(req.QueryType))
+	var extractorType string
+	switch queryType {
+	case "promql":
+		extractorType = queryfilterextractor.ExtractorPromQL
+	case "clickhouse":
+		extractorType = queryfilterextractor.ExtractorCH
+	default:
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: fmt.Errorf("unsupported queryType: %s. Supported values are 'promql' and 'clickhouse'", req.QueryType),
+		}, nil)
+		return
+	}
+
+	// Create extractor
+	extractor, err := queryfilterextractor.NewExtractor(extractorType)
+	if err != nil {
+		zap.L().Error("failed to create extractor", zap.String("extractorType", extractorType), zap.Error(err))
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: fmt.Errorf("failed to create extractor: %v", err),
+		}, nil)
+		return
+	}
+
+	// Extract filter results
+	result, err := extractor.Extract(query)
+	if err != nil {
+		zap.L().Debug("query filter extraction failed", zap.String("queryType", queryType), zap.Error(err))
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: fmt.Errorf("failed to parse %s query: %v", queryType, err),
+		}, nil)
+		return
+	}
+
+	// prepare the response
+	var resp QueryFilterAnalyzeResponse
+
+	for _, group := range result.GroupByColumns {
+		// the column alias is the group name from resulting queries
+		groupName := group.Alias
+		// If no alias was used, use the column name as the group name
+		if groupName == "" {
+			groupName = group.Name
+		}
+		resp.Groups = append(resp.Groups, groupName) // add the group name to the response
+	}
+	resp.MetricNames = append(resp.MetricNames, result.MetricNames...) // add the metric names to the response
+	aH.Respond(w, resp)
 }
