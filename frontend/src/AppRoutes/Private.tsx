@@ -245,8 +245,18 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			history.replace(newLocation);
 			return;
 		}
+
+		const isPublicDashboard = pathname.startsWith('/public/dashboard/');
+
+		console.log('isPublicDashboard', isPublicDashboard);
+
+		if (isPublicDashboard) {
+			history.push(pathname);
+			return;
+		}
+
 		// if the current route
-		if (currentRoute) {
+		if (currentRoute && !isPublicDashboard) {
 			const { isPrivate, key } = currentRoute;
 			if (isPrivate) {
 				if (isLoggedInState) {
