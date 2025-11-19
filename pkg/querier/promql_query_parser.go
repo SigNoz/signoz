@@ -15,6 +15,9 @@ type allVarRemover struct {
 
 // Visit implements the parser.Visitor interface to traverse and modify the PromQL AST.
 func (v *allVarRemover) Visit(node parser.Node, path []parser.Node) (parser.Visitor, error) {
+	if node == nil {
+		return v, nil
+	}
 	switch n := node.(type) {
 	case *parser.VectorSelector:
 		// Remove matchers that reference variables with __all__ value
