@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	arraySep                 = jsontypeexporter.ArraySeparator
+	ArraySep                 = jsontypeexporter.ArraySeparator
 	arrayAnyIndex            = "[*]."
 	CodePlanIndexOutOfBounds = errors.MustNewCode("plan_index_out_of_bounds")
 )
@@ -69,7 +69,7 @@ func (n *Node) Alias() string {
 	parentAlias := strings.TrimLeft(n.Parent.Alias(), "`")
 	parentAlias = strings.TrimRight(parentAlias, "`")
 
-	sep := arraySep
+	sep := ArraySep
 	if n.Parent.isRoot {
 		sep = "."
 	}
@@ -228,7 +228,7 @@ func (pb *PlanBuilder) buildPlan(ctx context.Context, index int, parent *Node, i
 	}
 
 	part := pb.parts[index]
-	pathSoFar := strings.Join(pb.parts[:index+1], arraySep)
+	pathSoFar := strings.Join(pb.parts[:index+1], ArraySep)
 	isTerminal := index == len(pb.parts)-1
 
 	// Calculate progression parameters based on parent's values
@@ -295,7 +295,7 @@ func (pb *PlanBuilder) buildPlan(ctx context.Context, index int, parent *Node, i
 func PlanJSON(ctx context.Context, path string,
 	operator qbtypes.FilterOperator, value any, isPromoted bool,
 	getTypes func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error),
-	) ([]*Node, error) {
+) ([]*Node, error) {
 	// if path is empty, return nil
 	if path == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "path is empty")
@@ -303,8 +303,8 @@ func PlanJSON(ctx context.Context, path string,
 
 	// TODO: PlanJSON requires the Start and End of the Query to select correct column between promoted and body_json using
 	// creation time in distributed_promoted_paths
-	path = strings.ReplaceAll(path, arrayAnyIndex, arraySep)
-	parts := strings.Split(path, arraySep)
+	path = strings.ReplaceAll(path, arrayAnyIndex, ArraySep)
+	parts := strings.Split(path, ArraySep)
 
 	pb := &PlanBuilder{
 		parts:      parts,

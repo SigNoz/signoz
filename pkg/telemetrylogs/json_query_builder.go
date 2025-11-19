@@ -8,9 +8,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
-	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -55,84 +53,9 @@ func NewJSONQueryBuilder(ctx context.Context,
 
 	builder := &JSONQueryBuilder{telemetryStore: telemetryStore, cache: lruCache, logger: logger}
 
-	builder.init()
 	builder.stringIndexedColumns.Store(make(map[string]string))
 
-	// load promoted paths initially
-	if err := builder.syncPromoted(context.Background()); err != nil {
-		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to load promoted paths")
-	}
-
-	return builder, builder.loadPathTypes(ctx)
-}
-
-func (b *JSONQueryBuilder) init() {
-	// refresh promoted paths every minute
-	go func() {
-		ticker := time.NewTicker(time.Minute)
-		defer ticker.Stop()
-
-		for range ticker.C {
-			if err := b.syncPromoted(context.Background()); err != nil {
-				b.logger.Error("error refreshing promoted paths", slog.Any("error", err))
-			}
-		}
-	}()
-
-	// sync string indexed columns every 30 minutes
-	go func() {
-		ticker := time.NewTicker(30 * time.Minute)
-		defer ticker.Stop()
-		for range ticker.C {
-			if err := b.syncStringIndexedColumns(context.Background()); err != nil {
-				b.logger.Error("error syncing string indexed columns", slog.Any("error", err))
-			}
-		}
-	}()
-}
-
-// syncPathTypes loads the top 10k paths ordered by last_seen DESC at startup
-func (b *JSONQueryBuilder) loadPathTypes(ctx context.Context) error {
-	// Load top 10k unique paths ordered by latest (last_seen DESC)
-	// Note: Due to duplicates, we may fetch more rows but stop once we have 10k unique paths
-	const uniquePathLimit = 10000
-	bodyJSONPaths, err := ExtractBodyPaths(ctx, b.telemetryStore, nil, uniquePathLimit, qbtypes.FilterOperatorLike)
-	if err != nil {
-		return err
-	}
-
-	if len(bodyJSONPaths) == 0 {
-		return nil
-	}
-
-	// Load paths into LRU cache
-	for path, types := range bodyJSONPaths {
-		b.cache.Add(path, types)
-	}
-
-	return nil
-}
-
-// TODO: change this to use ListIndexedPaths function
-func (b *JSONQueryBuilder) syncStringIndexedColumns(ctx context.Context) error {
-	indexes, err := ListIndexes(ctx, b.telemetryStore.Cluster(), b.telemetryStore.ClickhouseDB())
-	if err != nil {
-		return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to load string indexed columns")
-	}
-
-	next := make(map[string]string)
-	for _, index := range indexes {
-		subColumn, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
-		if err != nil {
-			return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("failed to unfold JSON sub column index expression for %s", index.Expression))
-		}
-		// adding only assumeNotNull to the expression because
-		// 	"github.com/huandu/go-sqlbuilder" uses LOWER to simulate string matching cases
-		next[subColumn] = assumeNotNull(subColumn)
-	}
-
-	b.stringIndexedColumns.Store(next)
-	return nil
+	return builder, nil
 }
 
 // getTypeSet checks cache first, then fetches from DB synchronously if not found
@@ -144,54 +67,14 @@ func (b *JSONQueryBuilder) getTypeSet(ctx context.Context, path string) ([]telem
 		}
 	}
 
-	// Not in cache, fetch from table immediately using exact match
-	// No unique path limit needed for single path lookup (uses default limit)
-	bodyJSONPaths, err := ExtractBodyPaths(ctx, b.telemetryStore, []string{path}, 0, qbtypes.FilterOperatorEqual)
-	if err != nil {
-		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch path types from table")
-	}
-
-	// Get types for the path and load into cache
-	var setTyped *utils.ConcurrentSet[telemetrytypes.JSONDataType]
-	if types, found := bodyJSONPaths[path]; found {
-		setTyped = types
-	} else {
-		// Path not found, create empty set
-		setTyped = utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-	}
-
-	// Store in cache (LRU will handle eviction if needed)
-	b.cache.Add(path, setTyped)
-
-	return setTyped.ToSlice(), nil
+	return nil, nil
 }
 
 // IsPromoted reports whether a JSON path is present in the promoted paths set.
 func (b *JSONQueryBuilder) IsPromoted(path string) bool {
-	firstLeafNode := strings.Split(path, arraySep)[0]
+	firstLeafNode := strings.Split(path, ArraySep)[0]
 	_, ok := b.promotedPaths.Load(firstLeafNode)
 	return ok
-}
-
-// syncPromoted refreshes the promoted paths from ClickHouse and reconciles the set.
-func (b *JSONQueryBuilder) syncPromoted(ctx context.Context) error {
-	next, err := ListPromotedPaths(ctx, b.telemetryStore.ClickhouseDB())
-	if err != nil {
-		return err
-	}
-	// Delete stale
-	b.promotedPaths.Range(func(k, _ any) bool {
-		key, _ := k.(string)
-		if _, ok := next[key]; !ok {
-			b.promotedPaths.Delete(key)
-		}
-		return true
-	})
-	// Add new
-	for k := range next {
-		b.promotedPaths.Store(k, struct{}{})
-	}
-	return nil
 }
 
 // BuildCondition builds the full WHERE condition for body_json JSON paths

@@ -1,4 +1,4 @@
-package telemetrylogs
+package telemetrymetadata
 
 import (
 	"fmt"
