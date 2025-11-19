@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
@@ -122,7 +123,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", []any{}, err
+			return "", []any{}, errors.WithAdditionalf(err, "consider removing field %s from groupBy", g.TelemetryFieldKey.Name)
 		}
 		sb.SelectMore(col)
 	}
@@ -202,7 +203,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", nil, err
+			return "", nil, errors.WithAdditionalf(err, "consider removing field %s from groupBy", g.TelemetryFieldKey.Name)
 		}
 		sb.SelectMore(col)
 	}
@@ -231,7 +232,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-        }, start, end)
+		}, start, end)
 		if err != nil {
 			return "", nil, err
 		}
@@ -272,7 +273,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", nil, err
+			return "", nil, errors.WithAdditionalf(err, "consider removing field %s from groupBy", g.TelemetryFieldKey.Name)
 		}
 		baseSb.SelectMore(col)
 	}
@@ -295,7 +296,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-        }, start, end)
+		}, start, end)
 		if err != nil {
 			return "", nil, err
 		}

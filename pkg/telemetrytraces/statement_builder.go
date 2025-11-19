@@ -295,7 +295,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	for _, field := range selectedFields {
 		colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithAdditionalf(err, "consider removing field %s from selectFields", field.Name)
 		}
 		sb.SelectMore(colExpr)
 	}
@@ -313,7 +313,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	for _, orderBy := range query.Order {
 		colExpr, err := b.fm.ColumnExpressionFor(ctx, &orderBy.Key.TelemetryFieldKey, keys)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithAdditionalf(err, "consider removing field %s from orderBy", orderBy.Key.TelemetryFieldKey.Name)
 		}
 		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
 	}

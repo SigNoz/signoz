@@ -249,7 +249,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
 			colExpr, err := b.fm.ColumnExpressionFor(ctx, &query.SelectFields[index], keys)
 			if err != nil {
-				return nil, err
+				return nil, errors.WithAdditionalf(err, "consider removing field %s from selectFields", query.SelectFields[index].Name)
 			}
 			sb.SelectMore(colExpr)
 		}
@@ -269,7 +269,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	for _, orderBy := range query.Order {
 		colExpr, err := b.fm.ColumnExpressionFor(ctx, &orderBy.Key.TelemetryFieldKey, keys)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithAdditionalf(err, "consider removing field %s from orderBy", orderBy.Key.TelemetryFieldKey.Name)
 		}
 		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
 	}
@@ -592,7 +592,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			JsonBodyPrefix:     b.jsonBodyPrefix,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
-        }, start, end)
+		}, start, end)
 
 		if err != nil {
 			return nil, err

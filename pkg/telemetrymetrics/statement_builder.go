@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -361,7 +362,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", nil, err
+			return "", nil, errors.WithAdditionalf(err, "consider removing field %s from groupBy", g.TelemetryFieldKey.Name)
 		}
 		sb.SelectMore(col)
 	}
