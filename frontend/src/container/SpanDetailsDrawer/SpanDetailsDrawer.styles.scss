@@ -51,9 +51,12 @@
 		padding: 10px 12px;
 
 		.item {
-			display: flex;
-			flex-direction: column;
-			gap: 8px;
+			&,
+			.attribute-container {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
 
 			.span-name-wrapper {
 				display: flex;
@@ -413,6 +416,7 @@
 				text-transform: uppercase;
 			}
 
+			.attribute-container .wrapper,
 			.value-wrapper {
 				display: flex;
 				align-items: center;
