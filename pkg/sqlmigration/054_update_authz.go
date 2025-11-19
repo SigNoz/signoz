@@ -71,6 +71,13 @@ func (migration *updateAuthz) Up(ctx context.Context, db *bun.DB) error {
 		dropTableSQLS = migration.sqlschema.Operator().DropTable(table)
 		sqls = append(sqls, dropTableSQLS...)
 
+		table, _, err = migration.sqlschema.GetTable(ctx, sqlschema.TableName("assertion"))
+		if err != nil {
+			return err
+		}
+		dropTableSQLS = migration.sqlschema.Operator().DropTable(table)
+		sqls = append(sqls, dropTableSQLS...)
+
 		tableSQLs := migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
 			Name: "tuple",
 			Columns: []*sqlschema.Column{
@@ -118,6 +125,17 @@ func (migration *updateAuthz) Up(ctx context.Context, db *bun.DB) error {
 				{Name: "condition_context", DataType: sqlschema.DataTypeText, Nullable: true},
 			},
 			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"store", "ulid", "object_type"}},
+		})
+		sqls = append(sqls, tableSQLs...)
+
+		tableSQLs = migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
+			Name: "assertion",
+			Columns: []*sqlschema.Column{
+				{Name: "store", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "authorization_model_id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "assertions", DataType: sqlschema.DataTypeBytea, Nullable: true},
+			},
+			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"store", "authorization_model_id"}},
 		})
 		sqls = append(sqls, tableSQLs...)
 
