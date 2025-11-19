@@ -192,7 +192,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 
 func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*http.Server, error) {
 	r := baseapp.NewRouter()
-	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger())
+	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz)
 
 	r.Use(otelmux.Middleware(
 		"apiserver",
