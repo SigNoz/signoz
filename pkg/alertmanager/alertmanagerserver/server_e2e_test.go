@@ -169,19 +169,20 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 		require.Len(t, alerts, 3, "Expected 3 active alerts")
 
 		for _, alert := range alerts {
-			require.Equal(t, "high-cpu-usage", alert.Alert.Labels["ruleId"])
-			require.NotEmpty(t, alert.Alert.Labels["severity"])
-			require.Contains(t, []string{"critical", "warning"}, alert.Alert.Labels["severity"])
-			require.Equal(t, "prod-cluster", alert.Alert.Labels["cluster"])
-			require.NotEmpty(t, alert.Alert.Labels["instance"])
+			require.Equal(t, "high-cpu-usage", alert.Labels["ruleId"])
+			require.NotEmpty(t, alert.Labels["severity"])
+			require.Contains(t, []string{"critical", "warning"}, alert.Labels["severity"])
+			require.Equal(t, "prod-cluster", alert.Labels["cluster"])
+			require.NotEmpty(t, alert.Labels["instance"])
 		}
 
 		criticalAlerts := 0
 		warningAlerts := 0
 		for _, alert := range alerts {
-			if alert.Alert.Labels["severity"] == "critical" {
+			switch alert.Labels["severity"] {
+			case "critical":
 				criticalAlerts++
-			} else if alert.Alert.Labels["severity"] == "warning" {
+			case "warning":
 				warningAlerts++
 			}
 		}

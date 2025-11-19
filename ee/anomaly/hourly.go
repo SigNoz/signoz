@@ -16,7 +16,7 @@ func (hp *HourlyProvider) GetBaseSeasonalProvider() *BaseSeasonalProvider {
 	return &hp.BaseSeasonalProvider
 }
 
-// NewHourlyProvider now uses the generic option type
+// NewHourlyProvider now uses the generic option type.
 func NewHourlyProvider(opts ...GenericProviderOption[*HourlyProvider]) *HourlyProvider {
 	hp := &HourlyProvider{
 		BaseSeasonalProvider: BaseSeasonalProvider{},

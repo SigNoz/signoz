@@ -10,7 +10,7 @@ func toStrArrayString(strs ...string) string {
 	return fmt.Sprintf("[%s]", strings.Join(strs, ","))
 }
 
-// formatValue formats the value to be used in clickhouse query
+// formatValue formats the value to be used in clickhouse query.
 func formatValueForCH(v any) string {
 	// if it's pointer convert it to a value
 	v = getPointerValue(v)
@@ -149,7 +149,7 @@ func quoteEscapedString(str string) string {
 	return str
 }
 
-// formatValueForProm formats the value to be used in promql
+// formatValueForProm formats the value to be used in promql.
 func formatValueForProm(v any) string {
 	switch x := v.(type) {
 	case int:

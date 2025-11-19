@@ -38,7 +38,7 @@ const (
 	RuleDataKindJson RuleDataKind = "json"
 )
 
-// PostableRule is used to create alerting rule from HTTP api
+// PostableRule is used to create alerting rule from HTTP api.
 type PostableRule struct {
 	AlertName   string    `json:"alert,omitempty"`
 	AlertType   AlertType `json:"alertType,omitempty"`
@@ -53,7 +53,7 @@ type PostableRule struct {
 
 	Disabled bool `json:"disabled"`
 
-	// Source captures the source url where rule has been created
+	// Source captures the source url where rule has been created.
 	Source string `json:"source,omitempty"`
 
 	PreferredChannels []string `json:"preferredChannels,omitempty"`
@@ -170,7 +170,7 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Validate states after unmarshaling
+	// Validate states after unmarshaling.
 	for _, state := range ns.Renotify.AlertStates {
 		if state != model.StateFiring && state != model.StateNoData {
 			return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid alert state: %s", state)
@@ -291,7 +291,11 @@ func isValidLabelName(ln string) bool {
 		return false
 	}
 	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || b == '.' || (b >= '0' && b <= '9' && i > 0)) {
+		if (b < 'a' || b > 'z') &&
+			(b < 'A' || b > 'Z') &&
+			b != '_' &&
+			b != '.' &&
+			(b < '0' || b > '9' || i <= 0) {
 			return false
 		}
 	}

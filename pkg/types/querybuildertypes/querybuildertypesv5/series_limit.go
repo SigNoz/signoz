@@ -14,7 +14,7 @@ const (
 )
 
 // ApplyLimit applies limit and ordering to a list of time series
-// This function sorts the series based on the provided order criteria and applies the limit
+// This function sorts the series based on the provided order criteria and applies the limit.
 func ApplySeriesLimit(series []*TimeSeries, orderBy []OrderBy, limit int) []*TimeSeries {
 	if len(series) == 0 {
 		return series
@@ -74,7 +74,7 @@ func ApplySeriesLimit(series []*TimeSeries, orderBy []OrderBy, limit int) []*Tim
 }
 
 // compareSeries compares two time series based on the order criteria
-// Returns true if series i should come before series j
+// Returns true if series i should come before series j.
 func compareSeries(seriesI, seriesJ *TimeSeries, orderBy []OrderBy, seriesValues map[*TimeSeries]float64, seriesLabels map[*TimeSeries]map[string]string) bool {
 	for _, order := range orderBy {
 		columnName := order.Key.Name
@@ -119,7 +119,7 @@ func compareSeries(seriesI, seriesJ *TimeSeries, orderBy []OrderBy, seriesValues
 
 // calculateSeriesValue calculates the representative value for a time series
 // For single-point series (like table queries), returns that value
-// For multi-point series, returns the average of non-NaN/non-Inf values
+// For multi-point series, returns the average of non-NaN/non-Inf values.
 func calculateSeriesValue(series *TimeSeries) float64 {
 	if len(series.Values) == 0 {
 		return 0.0
@@ -154,7 +154,7 @@ func calculateSeriesValue(series *TimeSeries) float64 {
 	return sum / count
 }
 
-// convertValueToString converts various types to string for comparison
+// convertValueToString converts various types to string for comparison.
 func convertValueToString(value any) string {
 	switch v := value.(type) {
 	case string:

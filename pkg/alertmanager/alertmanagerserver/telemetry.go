@@ -9,7 +9,7 @@ type DispatcherMetrics struct {
 }
 
 // NewDispatcherMetrics returns a new registered DispatchMetrics.
-// todo(aniketio-ctrl): change prom metrics to otel metrics
+// Todo(aniketio-ctrl): change prom metrics to otel metrics.
 func NewDispatcherMetrics(registerLimitMetrics bool, r prometheus.Registerer) *DispatcherMetrics {
 	m := DispatcherMetrics{
 		aggrGroups: prometheus.NewGauge(

@@ -49,7 +49,7 @@ func (q *promqlQuery) Fingerprint() string {
 	parts := []string{
 		"promql",
 		query,
-		q.query.Step.Duration.String(),
+		q.query.Step.String(),
 	}
 
 	return strings.Join(parts, "&")
@@ -59,7 +59,7 @@ func (q *promqlQuery) Window() (uint64, uint64) {
 	return q.tr.From, q.tr.To
 }
 
-// TODO(srikanthccv): cleanup the templating logic
+// TODO(srikanthccv): cleanup the templating logic.
 func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem, start, end uint64) (string, error) {
 	varsData := map[string]any{}
 	for k, v := range vars {
@@ -77,9 +77,9 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 	})
 
 	for _, k := range keys {
-		query = strings.Replace(query, fmt.Sprintf("{{%s}}", k), fmt.Sprint(varsData[k]), -1)
-		query = strings.Replace(query, fmt.Sprintf("[[%s]]", k), fmt.Sprint(varsData[k]), -1)
-		query = strings.Replace(query, fmt.Sprintf("$%s", k), fmt.Sprint(varsData[k]), -1)
+		query = strings.ReplaceAll(query, fmt.Sprintf("{{%s}}", k), fmt.Sprint(varsData[k]))
+		query = strings.ReplaceAll(query, fmt.Sprintf("[[%s]]", k), fmt.Sprint(varsData[k]))
+		query = strings.ReplaceAll(query, fmt.Sprintf("$%s", k), fmt.Sprint(varsData[k]))
 	}
 
 	tmpl := template.New("promql-query")
