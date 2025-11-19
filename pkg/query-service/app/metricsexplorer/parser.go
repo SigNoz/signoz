@@ -3,16 +3,15 @@ package metricsexplorer
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/mux"
+
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 func ParseFilterKeySuggestions(r *http.Request) (*metrics_explorer.FilterKeyRequest, *model.ApiError) {
@@ -152,4 +151,36 @@ func ParseUpdateMetricsMetadataParams(r *http.Request) (*metrics_explorer.Update
 		}
 	}
 	return &updateMetricsMetadataReq, nil
+}
+
+// ParseMetricAttributesParams parses query parameters for the metric attributes endpoint.
+// Supports optional start, end (as query params) and filters (as JSON body).
+func ParseMetricAttributesParams(r *http.Request) (*metrics_explorer.MetricAttributesRequest, *model.ApiError) {
+	metricName := mux.Vars(r)["metric_name"]
+	if metricName == "" {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("metric_name is required")}
+	}
+
+	request := &metrics_explorer.MetricAttributesRequest{
+		MetricName: metricName,
+	}
+
+	// Parse start and end from query parameters
+	if startStr := r.URL.Query().Get("start"); startStr != "" {
+		startVal, err := strconv.ParseInt(startStr, 10, 64)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid start parameter: %v", err)}
+		}
+		request.Start = startVal
+	}
+
+	if endStr := r.URL.Query().Get("end"); endStr != "" {
+		endVal, err := strconv.ParseInt(endStr, 10, 64)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid end parameter: %v", err)}
+		}
+		request.End = endVal
+	}
+
+	return request, nil
 }

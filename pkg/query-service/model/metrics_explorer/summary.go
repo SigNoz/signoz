@@ -171,3 +171,9 @@ type UpdateMetricsMetadataRequest struct {
 	Temporality v3.Temporality `json:"temporality"`
 	IsMonotonic bool           `json:"isMonotonic"`
 }
+
+type MetricAttributesRequest struct {
+	MetricName string `json:"metricName"`
+	Start      int64  `json:"start,omitempty"`
+	End        int64  `json:"end,omitempty"`
+}
