@@ -1,3 +1,4 @@
+from typing import Tuple
 from http import HTTPStatus
 from typing import Callable, List
 
@@ -105,6 +106,39 @@ def get_token(signoz: types.SigNoz) -> Callable[[str, str], str]:
         return response.json()["data"]["accessToken"]
 
     return _get_token
+
+
+@pytest.fixture(name="get_tokens", scope="function")
+def get_tokens(signoz: types.SigNoz) -> Callable[[str, str], Tuple[str, str]]:
+    def _get_tokens(email: str, password: str) -> str:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
+            params={
+                "email": email,
+                "ref": f"{signoz.self.host_configs['8080'].base()}",
+            },
+            timeout=5,
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        org_id = response.json()["data"]["orgs"][0]["id"]
+
+        response = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v2/sessions/email_password"),
+            json={
+                "email": email,
+                "password": password,
+                "orgId": org_id,
+            },
+            timeout=5,
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        accessToken = response.json()["data"]["accessToken"]
+        refreshToken = response.json()["data"]["refreshToken"]
+        return accessToken, refreshToken
+
+    return _get_tokens
 
 
 # This is not a fixture purposefully, we just want to add a license to the signoz instance.
