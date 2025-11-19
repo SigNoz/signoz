@@ -41,7 +41,7 @@ func (e *PromQLFilterExtractor) Extract(query string) (*FilterResult, error) {
 		result.MetricNames = append(result.MetricNames, metric)
 	}
 	for groupKey := range visitor.groupBy {
-		result.GroupByColumns = append(result.GroupByColumns, ColumnInfo{Name: groupKey})
+		result.GroupByColumns = append(result.GroupByColumns, ColumnInfo{Name: groupKey, OriginExpr: groupKey, OriginField: groupKey})
 	}
 
 	return result, nil
