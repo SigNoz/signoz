@@ -38,16 +38,16 @@ func (migration *updateAuthz) Register(migrations *migrate.Migrations) error {
 }
 
 func (migration *updateAuthz) Up(ctx context.Context, db *bun.DB) error {
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		_ = tx.Rollback()
-	}()
-
 	if migration.sqlstore.BunDB().Dialect().Name() == dialect.PG {
+		tx, err := db.BeginTx(ctx, nil)
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			_ = tx.Rollback()
+		}()
+
 		sqls := [][]byte{}
 
 		table, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("tuple"))
@@ -126,11 +126,11 @@ func (migration *updateAuthz) Up(ctx context.Context, db *bun.DB) error {
 				return err
 			}
 		}
-	}
 
-	err = tx.Commit()
-	if err != nil {
-		return err
+		err = tx.Commit()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
