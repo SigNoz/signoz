@@ -122,6 +122,8 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		traceId,
 	]);
 
+	const spread = useMemo(() => endTime - startTime, [endTime, startTime]);
+
 	return (
 		<div className="flamegraph">
 			<div
@@ -132,14 +134,14 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 				<div className="stats">
 					{Object.keys(serviceExecTime)
 						.sort((a, b) => {
-							const spread = endTime - startTime;
+							if (spread <= 0) return 0;
 							const aValue = (serviceExecTime[a] * 100) / spread;
 							const bValue = (serviceExecTime[b] * 100) / spread;
 							return bValue - aValue;
 						})
 						.map((service) => {
-							const spread = endTime - startTime;
-							const value = (serviceExecTime[service] * 100) / spread;
+							const value =
+								spread <= 0 ? 0 : (serviceExecTime[service] * 100) / spread;
 							const color = generateColor(service, themeColors.traceDetailColors);
 							return (
 								<div key={service} className="value-row">
