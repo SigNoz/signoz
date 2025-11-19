@@ -194,7 +194,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 					GROUP BY region
 				)
 				SELECT * FROM aggregated`,
-				QueryType: "clickhouse",
+				QueryType: "clickhouse_sql",
 			},
 			expectedStatus:    http.StatusOK,
 			expectedStatusStr: "success",
@@ -217,7 +217,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 					GROUP BY ts
 				)
 				SELECT * FROM step2`,
-				QueryType: "clickhouse",
+				QueryType: "clickhouse_sql",
 			},
 			expectedStatus:    http.StatusOK,
 			expectedStatusStr: "success",
@@ -237,7 +237,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 				SELECT region as region_alias, sum(value) as total
 				FROM cte
 				GROUP BY region`,
-				QueryType: "clickhouse",
+				QueryType: "clickhouse_sql",
 			},
 			expectedStatus:    http.StatusOK,
 			expectedStatusStr: "success",

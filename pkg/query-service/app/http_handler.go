@@ -5570,15 +5570,16 @@ func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request)
 	// Normalize queryType to lowercase and map to extractor constants
 	queryType := strings.ToLower(strings.TrimSpace(req.QueryType))
 	var extractorType string
-	switch queryType {
-	case "promql":
+
+	switch v3.QueryType(queryType) {
+	case v3.QueryTypePromQL:
 		extractorType = queryfilterextractor.ExtractorPromQL
-	case "clickhouse":
+	case v3.QueryTypeClickHouseSQL:
 		extractorType = queryfilterextractor.ExtractorCH
 	default:
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorBadData,
-			Err: fmt.Errorf("unsupported queryType: %s. Supported values are 'promql' and 'clickhouse'", req.QueryType),
+			Err: fmt.Errorf("unsupported queryType: %s. Supported values are '%s' and '%s'", req.QueryType, v3.QueryTypePromQL, v3.QueryTypeClickHouseSQL),
 		}, nil)
 		return
 	}
