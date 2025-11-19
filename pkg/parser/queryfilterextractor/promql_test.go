@@ -31,7 +31,7 @@ func TestPromQLFilterExtractor_Extract(t *testing.T) {
 			name:               "P3 - Aggregation with by()",
 			query:              `sum by (pod,region) (rate(http_requests_total[5m]))`,
 			wantMetrics:        []string{"http_requests_total"},
-			wantGroupByColumns: []ColumnInfo{{Name: "pod"}, {Name: "region"}},
+			wantGroupByColumns: []ColumnInfo{{Name: "pod", OriginExpr: "pod", OriginField: "pod"}, {Name: "region", OriginExpr: "region", OriginField: "region"}},
 		},
 		{
 			name:               "P4 - Aggregation with without()",
@@ -56,7 +56,7 @@ func TestPromQLFilterExtractor_Extract(t *testing.T) {
 			name:               "P7 - Nested aggregations",
 			query:              `sum by (region) (max by (pod, region) (cpu_usage_total{env="prod"}))`,
 			wantMetrics:        []string{"cpu_usage_total"},
-			wantGroupByColumns: []ColumnInfo{{Name: "region"}}, // Only outermost grouping
+			wantGroupByColumns: []ColumnInfo{{Name: "region", OriginExpr: "region", OriginField: "region"}}, // Only outermost grouping
 		},
 		{
 			name:               "P7a - Nested aggregation: inner grouping ignored",
@@ -74,13 +74,13 @@ func TestPromQLFilterExtractor_Extract(t *testing.T) {
 			name:               "P9 - Mix of positive metric & exclusion label",
 			query:              `sum by (region)(rate(foo{job!="db"}[5m]))`,
 			wantMetrics:        []string{"foo"},
-			wantGroupByColumns: []ColumnInfo{{Name: "region"}},
+			wantGroupByColumns: []ColumnInfo{{Name: "region", OriginExpr: "region", OriginField: "region"}},
 		},
 		{
 			name:               "P10 - Function + aggregation",
 			query:              `histogram_quantile(0.9, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`,
 			wantMetrics:        []string{"http_request_duration_seconds_bucket"},
-			wantGroupByColumns: []ColumnInfo{{Name: "le"}},
+			wantGroupByColumns: []ColumnInfo{{Name: "le", OriginExpr: "le", OriginField: "le"}},
 		},
 		{
 			name:               "P11 - Subquery",
@@ -104,7 +104,7 @@ func TestPromQLFilterExtractor_Extract(t *testing.T) {
 			name:               "P14 - Simple meta-metric",
 			query:              `sum by (pod) (up)`,
 			wantMetrics:        []string{"up"},
-			wantGroupByColumns: []ColumnInfo{{Name: "pod"}},
+			wantGroupByColumns: []ColumnInfo{{Name: "pod", OriginExpr: "pod", OriginField: "pod"}},
 		},
 		{
 			name:               "P15 - Binary operator unless",
@@ -122,7 +122,7 @@ func TestPromQLFilterExtractor_Extract(t *testing.T) {
 			name:               "P17 - Offset modifier with aggregation",
 			query:              `sum by (env)(rate(cpu_usage_seconds_total{job="api"}[5m] offset 1h))`,
 			wantMetrics:        []string{"cpu_usage_seconds_total"},
-			wantGroupByColumns: []ColumnInfo{{Name: "env"}},
+			wantGroupByColumns: []ColumnInfo{{Name: "env", OriginExpr: "env", OriginField: "env"}},
 		},
 		{
 			name:               "P18 - Invalid syntax",
@@ -141,31 +141,31 @@ func TestPromQLFilterExtractor_Extract(t *testing.T) {
 			name:               "P20 - Aggregation inside subquery with deriv",
 			query:              `deriv(sum by (instance)(rate(node_network_receive_bytes_total[5m]))[30m:5m])`,
 			wantMetrics:        []string{"node_network_receive_bytes_total"},
-			wantGroupByColumns: []ColumnInfo{{Name: "instance"}}, // Aggregation is inside subquery, not outermost
+			wantGroupByColumns: []ColumnInfo{{Name: "instance", OriginExpr: "instance", OriginField: "instance"}}, // Aggregation is inside subquery, not outermost
 		},
 		{
 			name:               "P21 - Aggregation inside subquery with avg_over_time",
 			query:              `avg_over_time(sum by (job)(rate(http_requests_total[1m]))[30m:1m])`,
 			wantMetrics:        []string{"http_requests_total"},
-			wantGroupByColumns: []ColumnInfo{{Name: "job"}}, // Aggregation is inside subquery, not outermost
+			wantGroupByColumns: []ColumnInfo{{Name: "job", OriginExpr: "job", OriginField: "job"}}, // Aggregation is inside subquery, not outermost
 		},
 		{
 			name:               "P22 - Aggregation inside subquery with max_over_time",
 			query:              `max_over_time(sum by (pod)(rate(container_restarts_total[5m]))[1h:5m])`,
 			wantMetrics:        []string{"container_restarts_total"},
-			wantGroupByColumns: []ColumnInfo{{Name: "pod"}}, // Aggregation is inside subquery, not outermost
+			wantGroupByColumns: []ColumnInfo{{Name: "pod", OriginExpr: "pod", OriginField: "pod"}}, // Aggregation is inside subquery, not outermost
 		},
 		{
 			name:               "P23 - Aggregation inside subquery with deriv (no rate)",
 			query:              `deriv(sum by (namespace)(container_memory_working_set_bytes)[1h:10m])`,
 			wantMetrics:        []string{"container_memory_working_set_bytes"},
-			wantGroupByColumns: []ColumnInfo{{Name: "namespace"}}, // Aggregation is inside subquery, not outermost
+			wantGroupByColumns: []ColumnInfo{{Name: "namespace", OriginExpr: "namespace", OriginField: "namespace"}}, // Aggregation is inside subquery, not outermost
 		},
 		{
 			name:               "P24 - Aggregation inside subquery with histogram_quantile",
 			query:              `histogram_quantile(0.95, avg_over_time(sum by (le, service)(rate(http_request_duration_seconds_bucket[5m]))[1h:5m]))`,
 			wantMetrics:        []string{"http_request_duration_seconds_bucket"},
-			wantGroupByColumns: []ColumnInfo{{Name: "le"}, {Name: "service"}}, // Aggregation is inside subquery, not outermost
+			wantGroupByColumns: []ColumnInfo{{Name: "le", OriginExpr: "le", OriginField: "le"}, {Name: "service", OriginExpr: "service", OriginField: "service"}}, // Aggregation is inside subquery, not outermost
 		},
 	}
 
