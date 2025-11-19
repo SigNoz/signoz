@@ -16,6 +16,7 @@ var (
 
 var (
 	TypeUser          = Type{valuer.NewString("user")}
+	TypeAnonymous     = Type{valuer.NewString("anonymous")}
 	TypeRole          = Type{valuer.NewString("role")}
 	TypeOrganization  = Type{valuer.NewString("organization")}
 	TypeMetaResource  = Type{valuer.NewString("metaresource")}
@@ -24,6 +25,7 @@ var (
 
 var (
 	TypeableUser         = &typeableUser{}
+	TypeableAnonymous    = &typeableAnonymous{}
 	TypeableRole         = &typeableRole{}
 	TypeableOrganization = &typeableOrganization{}
 )

@@ -15,7 +15,7 @@ type anonymous
 
 type role 
   relations
-    define assignee: [user]
+    define assignee: [user, anonymous]
 
     define read: [user, role#assignee]
     define update: [user, role#assignee]
@@ -37,4 +37,4 @@ type metaresource
 
 type telemetryresource
   relations
-      define read: [user, anonymous, role#assignee]
+      define read: [user, role#assignee]
