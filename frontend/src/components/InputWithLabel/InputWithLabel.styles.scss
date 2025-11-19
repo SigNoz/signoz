@@ -47,7 +47,7 @@
 		font-size: 12px !important;
 		line-height: 27px;
 		&::placeholder {
-			color: #888 !important;
+			color: var(--bg-vanilla-400) !important;
 			font-size: 12px !important;
 		}
 	}

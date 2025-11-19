@@ -21,7 +21,7 @@
 				flex: 1;
 				min-width: 0;
 				font-size: 12px;
-				color: #888 !important;
+				color: var(--bg-vanilla-400) !important;
 
 				&.error {
 					.cm-editor {
@@ -234,7 +234,7 @@
 					input {
 						max-width: 120px;
 						&::placeholder {
-							color: #888;
+							color: var(--bg-vanilla-400);
 						}
 					}
 				}
