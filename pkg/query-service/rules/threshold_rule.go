@@ -596,6 +596,17 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		return nil, err
 	}
 
+	// Filter out new series if newGroupEvalDelay is configured
+	filteredRes, skippedCount, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, res)
+	if filterErr != nil {
+		// log error but continue with original series
+		r.logger.WarnContext(ctx, "Error filtering new series, continuing with all series", "error", filterErr, "rule_name", r.Name())
+		filteredRes = res
+	} else if skippedCount > 0 {
+		r.logger.InfoContext(ctx, "Filtered new series from evaluation", "rule_name", r.Name(), "skipped_count", skippedCount, "total_count", len(res))
+	}
+	res = filteredRes
+
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 

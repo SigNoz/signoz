@@ -70,6 +70,8 @@ type NotificationSettings struct {
 	GroupBy   []string `json:"groupBy,omitempty"`
 	Renotify  Renotify `json:"renotify,omitempty"`
 	UsePolicy bool     `json:"usePolicy,omitempty"`
+	// NewGroupEvalDelay is the grace period for new series to be excluded from alerts evaluation
+	NewGroupEvalDelay *Duration `json:"newGroupEvalDelay,omitempty"`
 }
 
 type Renotify struct {

@@ -9,11 +9,14 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/parser/queryfilterextractor"
+	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
@@ -88,6 +91,15 @@ type BaseRule struct {
 	sqlstore sqlstore.SQLStore
 
 	evaluation ruletypes.Evaluation
+
+	// newGroupEvalDelay is the grace period for new alert groups
+	newGroupEvalDelay *time.Duration
+	// cachedMetricAndGroupedFileds caches the extracted metric names and groupBy keys
+	cachedMetricAndGroupedFileds struct {
+		metricNames   []string
+		groupedFields []string
+		initialized   bool
+	}
 }
 
 type RuleOption func(*BaseRule)
@@ -152,6 +164,12 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
 		Threshold:         threshold,
 		evaluation:        evaluation,
+	}
+
+	// Store newGroupEvalDelay and groupBy keys from NotificationSettings
+	if p.NotificationSettings != nil && p.NotificationSettings.NewGroupEvalDelay != nil {
+		newGroupEvalDelay := time.Duration(*p.NotificationSettings.NewGroupEvalDelay)
+		baseRule.newGroupEvalDelay = &newGroupEvalDelay
 	}
 
 	if baseRule.evalWindow == 0 {
@@ -507,4 +525,236 @@ func (r *BaseRule) PopulateTemporality(ctx context.Context, orgID valuer.UUID, q
 		}
 	}
 	return nil
+}
+
+// ShouldSkipNewGroups returns true if new group filtering should be applied
+func (r *BaseRule) ShouldSkipNewGroups() bool {
+	return r.newGroupEvalDelay != nil && *r.newGroupEvalDelay > 0
+}
+
+// ExtractMetricAndGroupBys extracts metric names and groupBy keys from the rule's query.
+// Results are cached after first extraction.
+func (r *BaseRule) ExtractMetricAndGroupBys(ctx context.Context) ([]string, []string, error) {
+	// Return cached result if available
+	if r.cachedMetricAndGroupedFileds.initialized {
+		return r.cachedMetricAndGroupedFileds.metricNames, r.cachedMetricAndGroupedFileds.groupedFields, nil
+	}
+	// return error if rule condition or composite query is nil
+	if r.ruleCondition == nil || r.ruleCondition.CompositeQuery == nil {
+		return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "rule condition or composite query is nil")
+	}
+
+	var metricNames []string
+	var groupedFields []string
+
+	compositeQuery := r.ruleCondition.CompositeQuery
+
+	for _, query := range compositeQuery.Queries {
+		switch query.Type {
+		case qbtypes.QueryTypeBuilder:
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				// extract group by fields
+				for _, groupBy := range spec.GroupBy {
+					if groupBy.Name != "" {
+						groupedFields = append(groupedFields, groupBy.Name)
+					}
+				}
+				// extract metric names
+				for _, aggregation := range spec.Aggregations {
+					if aggregation.MetricName != "" {
+						metricNames = append(metricNames, aggregation.MetricName)
+					}
+				}
+			default:
+				// TODO: add support for Traces and Logs Aggregation types
+				if r.logger != nil {
+					r.logger.WarnContext(ctx, "unsupported QueryBuilderQuery type: %T", spec)
+				}
+				continue
+			}
+		case qbtypes.QueryTypePromQL:
+			spec, ok := query.Spec.(qbtypes.PromQuery)
+			if !ok || spec.Query == "" {
+				continue
+			}
+			// use queryfilterextractor to extract metric names and group by fields
+			extractor, extractErr := queryfilterextractor.NewExtractor(queryfilterextractor.ExtractorPromQL)
+			if extractErr != nil {
+				return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error while creating PromQL extractor: %s", extractErr.Error())
+			}
+			result, extractErr := extractor.Extract(spec.Query)
+			if extractErr != nil {
+				return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "error while extracting metric names and group by fields: %s", extractErr.Error())
+			}
+			metricNames = append(metricNames, result.MetricNames...)
+			for _, col := range result.GroupByColumns {
+				groupedFields = append(groupedFields, col.OriginField)
+			}
+		case qbtypes.QueryTypeClickHouseSQL:
+			spec, ok := query.Spec.(qbtypes.ClickHouseQuery)
+			if !ok || spec.Query == "" {
+				continue
+			}
+			// use queryfilterextractor to extract metric names and group by fields
+			extractor, extractErr := queryfilterextractor.NewExtractor(queryfilterextractor.ExtractorCH)
+			if extractErr != nil {
+				return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error while creating ClickHouse extractor: %s", extractErr.Error())
+			}
+			result, extractErr := extractor.Extract(spec.Query)
+			if extractErr != nil {
+				return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "error while extracting metric names and group by fields: %s", extractErr.Error())
+			}
+			metricNames = append(metricNames, result.MetricNames...)
+			for _, col := range result.GroupByColumns {
+				groupedFields = append(groupedFields, col.OriginField)
+			}
+		default:
+			return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported query type: %s", query.Type)
+		}
+	}
+
+	// Cache the result
+	r.cachedMetricAndGroupedFileds = struct {
+		metricNames   []string
+		groupedFields []string
+		initialized   bool
+	}{metricNames, groupedFields, true}
+
+	return metricNames, groupedFields, nil
+}
+
+// FilterNewSeries filters out series that are too new based on metadata first_seen timestamps.
+// Returns the filtered vector and the number of series that were skipped.
+func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series ruletypes.Vector) (ruletypes.Vector, int, error) {
+	if !r.ShouldSkipNewGroups() {
+		return series, 0, nil
+	}
+
+	// Extract metric names and groupBy keys
+	metricNames, groupedFields, err := r.ExtractMetricAndGroupBys(ctx)
+	if err != nil {
+		// log error but continue with original series
+		if r.logger != nil {
+			r.logger.WarnContext(ctx, "Failed to extract metric and groupBy keys, skipping new group filter", "error", err, "rule_name", r.Name())
+		}
+		return series, 0, nil
+	}
+
+	if len(metricNames) == 0 || len(groupedFields) == 0 {
+		// No metrics or groupBy keys, nothing to filter
+		return series, 0, nil
+	}
+
+	// Build lookup keys from series
+	lookupKeys := make([]model.MetricMetadataLookupKey, 0)
+	seriesToKeys := make(map[int][]string) // series index -> lookup key strings
+
+	for i, smpl := range series {
+		metricLabelMap := make(map[string]string)
+		for _, lbl := range smpl.Metric {
+			metricLabelMap[lbl.Name] = lbl.Value
+		}
+
+		// Collect groupBy attribute-value pairs for this series
+		seriesKeys := make([]string, 0)
+
+		for _, metricName := range metricNames {
+			for _, groupByKey := range groupedFields {
+				if attrValue, ok := metricLabelMap[groupByKey]; ok {
+					lookupKey := model.MetricMetadataLookupKey{
+						MetricName:     metricName,
+						AttributeName:  groupByKey,
+						AttributeValue: attrValue,
+					}
+					lookupKeys = append(lookupKeys, lookupKey)
+					keyStr := fmt.Sprintf("%s|%s|%s", metricName, groupByKey, attrValue)
+					seriesKeys = append(seriesKeys, keyStr)
+				}
+			}
+		}
+
+		if len(seriesKeys) > 0 {
+			seriesToKeys[i] = seriesKeys
+		}
+	}
+
+	if len(lookupKeys) == 0 {
+		// No lookup keys to query, return original series
+		return series, 0, nil
+	}
+
+	// Query metadata for first_seen timestamps
+	// We need to cast reader to ClickHouseReader - check if it implements the method
+	// For now, we'll need to add this to the interfaces.Reader interface or use type assertion
+	// Let's use type assertion with a helper function
+	firstSeenMap, err := r.getMetadataFirstSeen(ctx, lookupKeys)
+	if err != nil {
+		// log error but continue with original series
+		if r.logger != nil {
+			r.logger.WarnContext(ctx, "Failed to query metadata for first_seen, skipping new group filter", "error", err, "rule_name", r.Name())
+		}
+		return series, 0, nil
+	}
+
+	// Filter series based on first_seen + delay
+	filteredSeries := make(ruletypes.Vector, 0, len(series))
+	skippedCount := 0
+	evalTimeMs := ts.UnixMilli()
+	delayMs := r.newGroupEvalDelay.Milliseconds()
+
+	for i, smpl := range series {
+		keys, ok := seriesToKeys[i]
+		if !ok {
+			// No groupBy keys for this series, include it
+			filteredSeries = append(filteredSeries, smpl)
+			continue
+		}
+
+		// Find the maximum first_seen across all groupBy attributes for this series
+		maxFirstSeen := int64(0)
+		foundAny := false
+		for _, keyStr := range keys {
+			if firstSeen, exists := firstSeenMap[keyStr]; exists {
+				foundAny = true
+				if firstSeen > maxFirstSeen {
+					maxFirstSeen = firstSeen
+				}
+			}
+		}
+
+		if !foundAny {
+			// No metadata found - treat as new, skip it
+			skippedCount++
+			continue
+		}
+
+		// Check if first_seen + delay has passed
+		if maxFirstSeen+delayMs > evalTimeMs {
+			// Still within grace period, skip this series
+			skippedCount++
+			continue
+		}
+
+		// Old enough, include it
+		filteredSeries = append(filteredSeries, smpl)
+	}
+
+	if r.logger != nil && skippedCount > 0 {
+		r.logger.InfoContext(ctx, "Filtered new series", "rule_name", r.Name(), "skipped_count", skippedCount, "total_count", len(series), "delay_ms", delayMs)
+	}
+
+	return filteredSeries, skippedCount, nil
+}
+
+// getMetadataFirstSeen is a helper that accesses ClickHouseReader through type assertion
+func (r *BaseRule) getMetadataFirstSeen(ctx context.Context, lookupKeys []model.MetricMetadataLookupKey) (map[string]int64, error) {
+	// Use type assertion to access ClickHouseReader methods
+	// The reader interface is typically implemented by ClickHouseReader
+	if chReader, ok := r.reader.(*clickhouseReader.ClickHouseReader); ok {
+		return chReader.GetMetadataFirstSeen(ctx, lookupKeys)
+	}
+
+	// If type assertion fails, return error (fail-open behavior handled by caller)
+	return nil, fmt.Errorf("reader does not implement ClickHouseReader, cannot query metadata")
 }
