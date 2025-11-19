@@ -1,10 +1,10 @@
 package queryfilterextractor
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/AfterShip/clickhouse-sql-parser/parser"
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 // excludedFunctions contains functions that should cause ExtractOriginField to return empty string.
@@ -105,13 +105,13 @@ func extractCHOriginFieldFromQuery(query string) (string, error) {
 	}
 
 	if len(stmts) == 0 {
-		return "", fmt.Errorf("no statements found in query")
+		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no statements found in query")
 	}
 
 	// Get the first statement which should be a SELECT
 	selectStmt, ok := stmts[0].(*parser.SelectQuery)
 	if !ok {
-		return "", fmt.Errorf("first statement is not a SELECT query")
+		return "", errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "statement is not a SELECT query")
 	}
 
 	// If query has multiple select items, return blank string as we don't expect multiple select items
@@ -120,7 +120,7 @@ func extractCHOriginFieldFromQuery(query string) (string, error) {
 	}
 
 	if len(selectStmt.SelectItems) == 0 {
-		return "", fmt.Errorf("SELECT query has no select items")
+		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "SELECT query has no select items")
 	}
 
 	// Extract origin field from the first (and only) select item's expression
@@ -131,7 +131,7 @@ func extractCHOriginFieldFromQuery(query string) (string, error) {
 // This is the internal helper function that contains the original logic.
 func extractOriginFieldFromExpr(expr parser.Expr) (string, error) {
 	if expr == nil {
-		return "", fmt.Errorf("expression is nil")
+		return "", errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "expression is nil")
 	}
 
 	// Check if expression contains excluded functions or IF/CASE
@@ -176,7 +176,7 @@ func extractOriginFieldFromExpr(expr parser.Expr) (string, error) {
 
 	// If the expression contains reserved keywords, return error
 	if hasReservedKeyword {
-		return "", fmt.Errorf("reserved keyword found in query")
+		return "", errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "reserved keyword found in query")
 	}
 
 	// If the expression contains excluded expressions, return empty string

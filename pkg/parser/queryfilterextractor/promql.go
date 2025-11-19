@@ -56,10 +56,6 @@ type promQLVisitor struct {
 }
 
 func (v *promQLVisitor) Visit(node parser.Node, path []parser.Node) (parser.Visitor, error) {
-	if node == nil {
-		return nil, nil
-	}
-
 	switch n := node.(type) {
 	case *parser.VectorSelector:
 		v.visitVectorSelector(n)

@@ -4,7 +4,7 @@
 // This is useful for metrics discovery, and query analysis.
 package queryfilterextractor
 
-import "fmt"
+import "github.com/SigNoz/signoz/pkg/errors"
 
 const (
 	ExtractorCH     = "qfe_ch"
@@ -37,6 +37,6 @@ func NewExtractor(extractorType string) (FilterExtractor, error) {
 	case ExtractorPromQL:
 		return NewPromQLFilterExtractor(), nil
 	default:
-		return nil, fmt.Errorf("invalid extractor type: %s", extractorType)
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid extractor type: %s", extractorType)
 	}
 }
