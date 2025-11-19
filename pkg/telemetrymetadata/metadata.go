@@ -31,39 +31,6 @@ var (
 	ErrFailedToGetRelatedValues = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get related values")
 )
 
-var intrinsicMetricFields = map[string]telemetrytypes.TelemetryFieldKey{
-	"metric_name": {
-		Name:          "metric_name",
-		Signal:        telemetrytypes.SignalMetrics,
-		FieldContext:  telemetrytypes.FieldContextMetric,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-	},
-	"type": {
-		Name:          "type",
-		Signal:        telemetrytypes.SignalMetrics,
-		FieldContext:  telemetrytypes.FieldContextMetric,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-	},
-	"temporality": {
-		Name:          "temporality",
-		Signal:        telemetrytypes.SignalMetrics,
-		FieldContext:  telemetrytypes.FieldContextMetric,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-	},
-	"is_monotonic": {
-		Name:          "is_monotonic",
-		Signal:        telemetrytypes.SignalMetrics,
-		FieldContext:  telemetrytypes.FieldContextMetric,
-		FieldDataType: telemetrytypes.FieldDataTypeBool,
-	},
-	"__normalized": {
-		Name:          "__normalized",
-		Signal:        telemetrytypes.SignalMetrics,
-		FieldContext:  telemetrytypes.FieldContextMetric,
-		FieldDataType: telemetrytypes.FieldDataTypeBool,
-	},
-}
-
 type telemetryMetaStore struct {
 	logger                    *slog.Logger
 	telemetrystore            telemetrystore.TelemetryStore
@@ -834,20 +801,14 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 	if len(selectors) == 0 {
 		return keys
 	}
-	if keys == nil {
-		keys = make(map[string][]*telemetrytypes.TelemetryFieldKey)
-	}
 
 	for _, selector := range selectors {
-		if selector == nil {
-			continue
-		}
 		if selector.Signal != telemetrytypes.SignalMetrics && selector.Signal != telemetrytypes.SignalUnspecified {
 			continue
 		}
 
-		for name, key := range intrinsicMetricFields {
-			if !selectorMatchesIntrinsicField(selector, key, name) {
+		for name, key := range telemetrymetrics.IntrinsicMetricFieldDefinitions {
+			if !selectorMatchesIntrinsicField(selector, key) {
 				continue
 			}
 			keyCopy := key
@@ -858,11 +819,7 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 	return keys
 }
 
-func selectorMatchesIntrinsicField(selector *telemetrytypes.FieldKeySelector, definition telemetrytypes.TelemetryFieldKey, intrinsicName string) bool {
-	if selector == nil {
-		return false
-	}
-
+func selectorMatchesIntrinsicField(selector *telemetrytypes.FieldKeySelector, definition telemetrytypes.TelemetryFieldKey) bool {
 	if selector.FieldContext != telemetrytypes.FieldContextUnspecified && selector.FieldContext != definition.FieldContext {
 		return false
 	}
@@ -871,7 +828,7 @@ func selectorMatchesIntrinsicField(selector *telemetrytypes.FieldKeySelector, de
 		return false
 	}
 
-	return matchesSelectorName(selector.Name, intrinsicName, selector.SelectorMatchType)
+	return matchesSelectorName(selector.Name, definition.Name, selector.SelectorMatchType)
 }
 
 func matchesSelectorName(selectorName, target string, matchType telemetrytypes.FieldSelectorMatchType) bool {
@@ -1412,11 +1369,7 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 }
 
 func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, bool, error) {
-	if fieldValueSelector == nil {
-		return nil, false, false, nil
-	}
-
-	key, ok := intrinsicMetricFields[fieldValueSelector.Name]
+	key, ok := telemetrymetrics.IntrinsicMetricFieldDefinitions[fieldValueSelector.Name]
 	if !ok {
 		return nil, false, false, nil
 	}
@@ -1435,7 +1388,7 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 	}
 
 	// no values are surfaced for intrinsic boolean fields.
-	if slices.Contains([]string{"__normalized", "is_monotonic"}, fieldValueSelector.Name) {
+	if key.FieldDataType == telemetrytypes.FieldDataTypeBool {
 		return &telemetrytypes.TelemetryFieldValues{}, true, true, nil
 	}
 

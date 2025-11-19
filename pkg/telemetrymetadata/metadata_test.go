@@ -19,6 +19,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) telemetrytypes.MetadataStore {
+	return NewTelemetryMetaStore(
+		instrumentationtest.New().ToProviderSettings(),
+		store,
+		telemetrytraces.DBName,
+		telemetrytraces.TagAttributesV2TableName,
+		telemetrytraces.SpanAttributesKeysTblName,
+		telemetrytraces.SpanIndexV3TableName,
+		telemetrymetrics.DBName,
+		telemetrymetrics.AttributesMetadataTableName,
+		telemetrymeter.DBName,
+		telemetrymeter.SamplesAgg1dTableName,
+		telemetrylogs.DBName,
+		telemetrylogs.LogsV2TableName,
+		telemetrylogs.TagAttributesV2TableName,
+		telemetrylogs.LogAttributeKeysTblName,
+		telemetrylogs.LogResourceKeysTblName,
+		DBName,
+		AttributesMetadataLocalTableName,
+	)
+}
+
 type regexMatcher struct {
 }
 
@@ -37,25 +59,7 @@ func TestGetKeys(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := NewTelemetryMetaStore(
-		instrumentationtest.New().ToProviderSettings(),
-		mockTelemetryStore,
-		telemetrytraces.DBName,
-		telemetrytraces.TagAttributesV2TableName,
-		telemetrytraces.SpanAttributesKeysTblName,
-		telemetrytraces.SpanIndexV3TableName,
-		telemetrymetrics.DBName,
-		telemetrymetrics.AttributesMetadataTableName,
-		telemetrymeter.DBName,
-		telemetrymeter.SamplesAgg1dTableName,
-		telemetrylogs.DBName,
-		telemetrylogs.LogsV2TableName,
-		telemetrylogs.TagAttributesV2TableName,
-		telemetrylogs.LogAttributeKeysTblName,
-		telemetrylogs.LogResourceKeysTblName,
-		DBName,
-		AttributesMetadataLocalTableName,
-	)
+	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
 
 	rows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "statement", Type: "String"},
@@ -165,25 +169,7 @@ func TestApplyBackwardCompatibleKeys(t *testing.T) {
 			mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 			mock := mockTelemetryStore.Mock()
 
-			metadata := NewTelemetryMetaStore(
-				instrumentationtest.New().ToProviderSettings(),
-				mockTelemetryStore,
-				telemetrytraces.DBName,
-				telemetrytraces.TagAttributesV2TableName,
-				telemetrytraces.SpanAttributesKeysTblName,
-				telemetrytraces.SpanIndexV3TableName,
-				telemetrymetrics.DBName,
-				telemetrymetrics.AttributesMetadataTableName,
-				telemetrymeter.DBName,
-				telemetrymeter.SamplesAgg1dTableName,
-				telemetrylogs.DBName,
-				telemetrylogs.LogsV2TableName,
-				telemetrylogs.TagAttributesV2TableName,
-				telemetrylogs.LogAttributeKeysTblName,
-				telemetrylogs.LogResourceKeysTblName,
-				DBName,
-				AttributesMetadataLocalTableName,
-			)
+			metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
 
 			hasTraces := false
 			hasLogs := false
@@ -332,25 +318,7 @@ func TestGetMetricFieldValuesIntrinsicMetricName(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := NewTelemetryMetaStore(
-		instrumentationtest.New().ToProviderSettings(),
-		mockTelemetryStore,
-		telemetrytraces.DBName,
-		telemetrytraces.TagAttributesV2TableName,
-		telemetrytraces.SpanAttributesKeysTblName,
-		telemetrytraces.SpanIndexV3TableName,
-		telemetrymetrics.DBName,
-		telemetrymetrics.AttributesMetadataTableName,
-		telemetrymeter.DBName,
-		telemetrymeter.SamplesAgg1dTableName,
-		telemetrylogs.DBName,
-		telemetrylogs.LogsV2TableName,
-		telemetrylogs.TagAttributesV2TableName,
-		telemetrylogs.LogAttributeKeysTblName,
-		telemetrylogs.LogResourceKeysTblName,
-		DBName,
-		AttributesMetadataLocalTableName,
-	)
+	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
 
 	valueRows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "metric_name", Type: "String"},
@@ -380,30 +348,13 @@ func TestGetMetricFieldValuesIntrinsicMetricName(t *testing.T) {
 func TestGetMetricFieldValuesIntrinsicBoolReturnsEmpty(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 
-	metadata := NewTelemetryMetaStore(
-		instrumentationtest.New().ToProviderSettings(),
-		mockTelemetryStore,
-		telemetrytraces.DBName,
-		telemetrytraces.TagAttributesV2TableName,
-		telemetrytraces.SpanAttributesKeysTblName,
-		telemetrytraces.SpanIndexV3TableName,
-		telemetrymetrics.DBName,
-		telemetrymetrics.AttributesMetadataTableName,
-		telemetrymeter.DBName,
-		telemetrymeter.SamplesAgg1dTableName,
-		telemetrylogs.DBName,
-		telemetrylogs.LogsV2TableName,
-		telemetrylogs.TagAttributesV2TableName,
-		telemetrylogs.LogAttributeKeysTblName,
-		telemetrylogs.LogResourceKeysTblName,
-		DBName,
-		AttributesMetadataLocalTableName,
-	)
+	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
 
 	values, complete, err := metadata.(*telemetryMetaStore).getMetricFieldValues(context.Background(), &telemetrytypes.FieldValueSelector{
 		FieldKeySelector: &telemetrytypes.FieldKeySelector{
 			Signal:            telemetrytypes.SignalMetrics,
-			Name:              "__normalized",
+			Name:              "is_monotonic",
+			FieldDataType:     telemetrytypes.FieldDataTypeBool,
 			Limit:             10,
 			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
 		},
