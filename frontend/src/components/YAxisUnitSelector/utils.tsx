@@ -44,7 +44,7 @@ export function isUniversalUnit(format: string): boolean {
 	);
 }
 
-function mergeCategories(
+export function mergeCategories(
 	categories1: YAxisCategory[],
 	categories2: YAxisCategory[],
 ): YAxisCategory[] {
@@ -72,7 +72,7 @@ function mergeCategories(
 }
 
 export function getYAxisCategories(source: YAxisSource): YAxisCategory[] {
-	if (source !== YAxisSource.ALERTS) {
+	if (source !== YAxisSource.DASHBOARDS) {
 		return BASE_Y_AXIS_CATEGORIES;
 	}
 
