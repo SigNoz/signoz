@@ -79,18 +79,15 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 		return query, nil
 	}
 
-	// TODO(nikhilmantri0902, srikanthccv): should we return error if we fail to parse the query?
-	// or allow it for further processing?
-	// Parse the query into an AST
 	expr, err := parser.ParseExpr(query)
 	if err != nil {
-		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to parse PromQL query for __all__ removal")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query %q", query)
 	}
 
 	// Create visitor and walk the AST
 	visitor := &allVarRemover{allVars: allVars}
 	if err := parser.Walk(visitor, expr, nil); err != nil {
-		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed in removing __all__ variable matchers")
+		return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid promql query %q", query)
 	}
 
 	// Convert the modified AST back to a string

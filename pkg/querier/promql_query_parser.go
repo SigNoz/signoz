@@ -32,30 +32,30 @@ func (v *allVarRemover) Visit(node parser.Node, path []parser.Node) (parser.Visi
 
 // shouldRemoveMatcher checks if a matcher value contains a variable reference that has __all__ value.
 func (v *allVarRemover) shouldRemoveMatcher(value string) bool {
+
 	// Check for $var pattern
 	if strings.Contains(value, "$") {
-		for varName := range v.allVars {
-			if strings.Contains(value, "$"+varName) {
-				return true
-			}
+		keyValue := strings.TrimPrefix(value, "$")
+		if _, ok := v.allVars[keyValue]; ok {
+			return true
 		}
 	}
 
 	// Check for {{var}} pattern
 	if strings.Contains(value, "{{") {
-		for varName := range v.allVars {
-			if strings.Contains(value, "{{"+varName+"}}") {
-				return true
-			}
+		keyValue := strings.TrimPrefix(value, "{{")
+		keyValue = strings.TrimSuffix(keyValue, "}}")
+		if _, ok := v.allVars[keyValue]; ok {
+			return true
 		}
 	}
 
 	// Check for [[var]] pattern
 	if strings.Contains(value, "[[") {
-		for varName := range v.allVars {
-			if strings.Contains(value, "[["+varName+"]]") {
-				return true
-			}
+		keyValue := strings.TrimPrefix(value, "[[")
+		keyValue = strings.TrimSuffix(keyValue, "]]")
+		if _, ok := v.allVars[keyValue]; ok {
+			return true
 		}
 	}
 
