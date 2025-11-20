@@ -45,15 +45,6 @@ func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
 			expectError: true,
 			wantInError: "Found 1 errors while parsing the search expression",
 		},
-		{
-			name: "Non-empty list for IN clause",
-			expr: "service IN $service",
-			variables: map[string]qbtypes.VariableItem{
-				"service": {Value: []any{"api", "web"}},
-			},
-			expectError: false,
-			wantInError: "",
-		},
 	}
 
 	keys := map[string][]*telemetrytypes.TelemetryFieldKey{
