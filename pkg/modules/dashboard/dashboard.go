@@ -70,4 +70,6 @@ type Handler interface {
 	LockUnlock(http.ResponseWriter, *http.Request)
 
 	Delete(http.ResponseWriter, *http.Request)
+
+	GetDashboardsForMetric(http.ResponseWriter, *http.Request)
 }
