@@ -730,3 +730,66 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 
 	return entries, nil
 }
+
+func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.MetricAttributesRequest) (*metricsmoduletypes.MetricAttributesResponse, error) {
+	if req == nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.MetricName == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required")
+	}
+
+	var args []any
+	args = append(args, req.MetricName)
+
+	// Add time range filtering if provided
+	timeFilter := ""
+	if req.Start > 0 && req.End > 0 {
+		// Filter by time range using first_reported_unix_milli and last_reported_unix_milli
+		// We want attributes that were active during this time range
+		timeFilter = " AND (last_reported_unix_milli >= ? AND first_reported_unix_milli <= ?)"
+		args = append(args, req.Start, req.End)
+	}
+
+	// Query the metadata table
+	// We use FINAL to ensure we get the aggregated results from AggregatingMergeTree
+	query := fmt.Sprintf(`
+		SELECT 
+			attr_name AS key,
+			groupUniqArray(1000)(attr_string_value) AS values,
+			count(DISTINCT attr_string_value) AS valueCount
+		FROM %s.%s FINAL
+		WHERE metric_name = ? 
+		AND NOT startsWith(attr_name, '__')
+		%s
+		GROUP BY attr_name
+		ORDER BY valueCount DESC;`,
+		metricDatabaseName,
+		telemetrymetrics.AttributesMetadataTableName,
+		timeFilter)
+
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch metric attributes")
+	}
+	defer rows.Close()
+
+	attributes := make([]metricsmoduletypes.MetricAttribute, 0)
+	for rows.Next() {
+		var attr metricsmoduletypes.MetricAttribute
+		if err := rows.Scan(&attr.Key, &attr.Value, &attr.ValueCount); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metric attribute row")
+		}
+		attributes = append(attributes, attr)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metric attribute rows")
+	}
+
+	return &metricsmoduletypes.MetricAttributesResponse{
+		Attributes: attributes,
+	}, nil
+}

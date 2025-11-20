@@ -12,6 +12,7 @@ import (
 type Handler interface {
 	GetStats(http.ResponseWriter, *http.Request)
 	GetTreemap(http.ResponseWriter, *http.Request)
+	GetMetricAttributes(http.ResponseWriter, *http.Request)
 }
 
 // Module represents the metrics module interface.
@@ -19,4 +20,5 @@ type Module interface {
 	GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.StatsRequest) (*metricsmoduletypes.StatsResponse, error)
 	GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.TreemapRequest) (*metricsmoduletypes.TreemapResponse, error)
 	GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error)
+	GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.MetricAttributesRequest) (*metricsmoduletypes.MetricAttributesResponse, error)
 }
