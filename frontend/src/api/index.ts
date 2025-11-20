@@ -86,8 +86,9 @@ const interceptorRejected = async (
 
 			if (
 				response.status === 401 &&
-				// if the session rotate call errors out with 401 or the delete sessions call returns 401 then we do not retry!
+				// if the session rotate call or the create session errors out with 401 or the delete sessions call returns 401 then we do not retry!
 				response.config.url !== '/sessions/rotate' &&
+				response.config.url !== '/sessions/email_password' &&
 				!(
 					response.config.url === '/sessions' && response.config.method === 'delete'
 				)
@@ -199,15 +200,15 @@ ApiV5Instance.interceptors.request.use(interceptorsRequestResponse);
 //
 
 // axios Base
-export const ApiBaseInstance = axios.create({
+export const LogEventAxiosInstance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
 });
 
-ApiBaseInstance.interceptors.response.use(
+LogEventAxiosInstance.interceptors.response.use(
 	interceptorsResponse,
 	interceptorRejectedBase,
 );
-ApiBaseInstance.interceptors.request.use(interceptorsRequestResponse);
+LogEventAxiosInstance.interceptors.request.use(interceptorsRequestResponse);
 //
 
 // gateway Api V1

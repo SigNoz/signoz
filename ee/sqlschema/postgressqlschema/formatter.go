@@ -30,6 +30,8 @@ func (formatter Formatter) DataTypeOf(dataType string) sqlschema.DataType {
 		return sqlschema.DataTypeBoolean
 	case "VARCHAR", "CHARACTER VARYING", "CHARACTER":
 		return sqlschema.DataTypeText
+	case "BYTEA":
+		return sqlschema.DataTypeBytea
 	}
 
 	return formatter.Formatter.DataTypeOf(dataType)
