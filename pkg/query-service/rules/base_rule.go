@@ -10,7 +10,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/parser/queryfilterextractor"
-	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -94,12 +93,6 @@ type BaseRule struct {
 
 	// newGroupEvalDelay is the grace period for new alert groups
 	newGroupEvalDelay *time.Duration
-	// cachedMetricAndGroupedFileds caches the extracted metric names and groupBy keys
-	cachedMetricAndGroupedFileds struct {
-		metricNames   []string
-		groupedFields []string
-		initialized   bool
-	}
 }
 
 type RuleOption func(*BaseRule)
@@ -533,17 +526,8 @@ func (r *BaseRule) ShouldSkipNewGroups() bool {
 }
 
 // ExtractMetricAndGroupBys extracts metric names and groupBy keys from the rule's query.
-// Results are cached after first extraction.
+// TODO: implement caching for query parsing results to avoid re-parsing the query + cache invalidation
 func (r *BaseRule) ExtractMetricAndGroupBys(ctx context.Context) ([]string, []string, error) {
-	// Return cached result if available
-	if r.cachedMetricAndGroupedFileds.initialized {
-		return r.cachedMetricAndGroupedFileds.metricNames, r.cachedMetricAndGroupedFileds.groupedFields, nil
-	}
-	// return error if rule condition or composite query is nil
-	if r.ruleCondition == nil || r.ruleCondition.CompositeQuery == nil {
-		return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "rule condition or composite query is nil")
-	}
-
 	var metricNames []string
 	var groupedFields []string
 
@@ -610,16 +594,11 @@ func (r *BaseRule) ExtractMetricAndGroupBys(ctx context.Context) ([]string, []st
 				groupedFields = append(groupedFields, col.OriginField)
 			}
 		default:
-			return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported query type: %s", query.Type)
+			if r.logger != nil {
+				r.logger.WarnContext(ctx, fmt.Sprintf("unsupported query type: %s", query.Type), "rule_name", r.Name())
+			}
 		}
 	}
-
-	// Cache the result
-	r.cachedMetricAndGroupedFileds = struct {
-		metricNames   []string
-		groupedFields []string
-		initialized   bool
-	}{metricNames, groupedFields, true}
 
 	return metricNames, groupedFields, nil
 }
@@ -630,21 +609,17 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 	// Extract metric names and groupBy keys
 	metricNames, groupedFields, err := r.ExtractMetricAndGroupBys(ctx)
 	if err != nil {
-		// log error but continue with original series
-		if r.logger != nil {
-			r.logger.WarnContext(ctx, "Failed to extract metric and groupBy keys, skipping new group filter", "error", err, "rule_name", r.Name())
-		}
-		return series, 0, nil
+		return nil, 0, err
 	}
 
 	if len(metricNames) == 0 || len(groupedFields) == 0 {
-		// No metrics or groupBy keys, nothing to filter
+		// No metrics or groupBy keys, nothing to filter (non-ideal case, return early)
 		return series, 0, nil
 	}
 
 	// Build lookup keys from series
 	lookupKeys := make([]model.MetricMetadataLookupKey, 0)
-	seriesToKeys := make(map[int][]string) // series index -> lookup key strings
+	seriesIdxToLookupKeys := make(map[int][]model.MetricMetadataLookupKey) // series index -> lookup keys
 
 	for i := 0; i < series.Len(); i++ {
 		labels := series.GetItem(i).GetLabels()
@@ -654,7 +629,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 		}
 
 		// Collect groupBy attribute-value pairs for this series
-		seriesKeys := make([]string, 0)
+		seriesKeys := make([]model.MetricMetadataLookupKey, 0)
 
 		for _, metricName := range metricNames {
 			for _, groupByKey := range groupedFields {
@@ -665,14 +640,13 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 						AttributeValue: attrValue,
 					}
 					lookupKeys = append(lookupKeys, lookupKey)
-					keyStr := fmt.Sprintf("%s|%s|%s", metricName, groupByKey, attrValue)
-					seriesKeys = append(seriesKeys, keyStr)
+					seriesKeys = append(seriesKeys, lookupKey)
 				}
 			}
 		}
 
 		if len(seriesKeys) > 0 {
-			seriesToKeys[i] = seriesKeys
+			seriesIdxToLookupKeys[i] = seriesKeys
 		}
 	}
 
@@ -682,34 +656,31 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 	}
 
 	// Query metadata for first_seen timestamps
-	firstSeenMap, err := r.getMetadataFirstSeen(ctx, lookupKeys)
+	firstSeenMap, err := r.reader.GetFirstSeenFromMetricMetadata(ctx, lookupKeys)
 	if err != nil {
-		// log error but continue with original series
-		if r.logger != nil {
-			r.logger.WarnContext(ctx, "Failed to query metadata for first_seen, skipping new group filter", "error", err, "rule_name", r.Name())
-		}
-		return series, 0, nil
+		return nil, 0, err
 	}
 
 	// Filter series based on first_seen + delay
-	filteredIndices := make([]int, 0)
+	preservedIndices := make([]int, 0)
 	skippedCount := 0
 	evalTimeMs := ts.UnixMilli()
 	newGroupEvalDelayMs := r.newGroupEvalDelay.Milliseconds()
 
 	for i := 0; i < series.Len(); i++ {
-		keys, ok := seriesToKeys[i]
+		seriesKeys, ok := seriesIdxToLookupKeys[i]
 		if !ok {
-			// No groupBy keys for this series, include it
-			filteredIndices = append(filteredIndices, i)
+			// No matching lables used in groupBy from this series, include it
+			preservedIndices = append(preservedIndices, i)
 			continue
 		}
 
 		// Find the maximum first_seen across all groupBy attributes for this series
+		// if the lastest is old enought we're good, if latest is new we need to skip it
 		maxFirstSeen := int64(0)
 		foundAny := false
-		for _, keyStr := range keys {
-			if firstSeen, exists := firstSeenMap[keyStr]; exists {
+		for _, lookupKey := range seriesKeys {
+			if firstSeen, exists := firstSeenMap[lookupKey]; exists {
 				foundAny = true
 				if firstSeen > maxFirstSeen {
 					maxFirstSeen = firstSeen
@@ -731,24 +702,12 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 		}
 
 		// Old enough, include it
-		filteredIndices = append(filteredIndices, i)
+		preservedIndices = append(preservedIndices, i)
 	}
 
 	if r.logger != nil && skippedCount > 0 {
 		r.logger.InfoContext(ctx, "Filtered new series", "rule_name", r.Name(), "skipped_count", skippedCount, "total_count", series.Len(), "delay_ms", newGroupEvalDelayMs)
 	}
 
-	return series.Filter(filteredIndices), skippedCount, nil
-}
-
-// getMetadataFirstSeen is a helper that accesses ClickHouseReader through type assertion
-func (r *BaseRule) getMetadataFirstSeen(ctx context.Context, lookupKeys []model.MetricMetadataLookupKey) (map[string]int64, error) {
-	// Use type assertion to access ClickHouseReader methods
-	// The reader interface is typically implemented by ClickHouseReader
-	if chReader, ok := r.reader.(*clickhouseReader.ClickHouseReader); ok {
-		return chReader.GetMetadataFirstSeen(ctx, lookupKeys)
-	}
-
-	// If type assertion fails, return error (fail-open behavior handled by caller)
-	return nil, fmt.Errorf("reader does not implement ClickHouseReader, cannot query metadata")
+	return series.Filter(preservedIndices), skippedCount, nil
 }

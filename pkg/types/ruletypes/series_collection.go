@@ -20,7 +20,7 @@ type SeriesCollection interface {
 	GetItem(index int) SeriesItem
 
 	// Filter returns a new filtered collection containing only items at the given indices
-	Filter(indices []int) SeriesCollection
+	Filter(preservedIndices []int) SeriesCollection
 }
 
 // VectorCollection wraps ruletypes.Vector to implement SeriesCollection

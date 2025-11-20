@@ -6392,17 +6392,13 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 	return cachedMetadata, nil
 }
 
-// GetMetadataFirstSeen queries the metadata table to get the first_seen timestamp
+// GetFirstSeenFromMetricMetadata queries the metadata table to get the first_seen timestamp
 // for each metric-attribute-value combination.
-// Returns a map where key is "metric_name|attr_name|attr_value" and value is first_seen in unix milliseconds.
-func (r *ClickHouseReader) GetMetadataFirstSeen(ctx context.Context, lookupKeys []model.MetricMetadataLookupKey) (map[string]int64, error) {
-	if len(lookupKeys) == 0 {
-		return make(map[string]int64), nil
-	}
-
+// Returns a map where key is `model.MetricMetadataLookupKey` and value is first_seen in milliseconds.
+func (r *ClickHouseReader) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []model.MetricMetadataLookupKey) (map[model.MetricMetadataLookupKey]int64, error) {
 	// Chunk the lookup keys to avoid overly large queries (max 300 tuples per query)
 	const chunkSize = 300
-	result := make(map[string]int64)
+	result := make(map[model.MetricMetadataLookupKey]int64)
 
 	for i := 0; i < len(lookupKeys); i += chunkSize {
 		end := i + chunkSize
@@ -6436,7 +6432,7 @@ func (r *ClickHouseReader) GetMetadataFirstSeen(ctx context.Context, lookupKeys 
 		rows, err := r.db.Query(valueCtx, query, args...)
 		if err != nil {
 			zap.L().Error("Error querying metadata for first_seen", zap.Error(err))
-			return nil, fmt.Errorf("error querying metadata for first_seen: %v", err)
+			return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metadata for first_seen: %v", err)}
 		}
 		defer rows.Close()
 
@@ -6445,14 +6441,17 @@ func (r *ClickHouseReader) GetMetadataFirstSeen(ctx context.Context, lookupKeys 
 			var firstSeen int64
 			if err := rows.Scan(&metricName, &attrName, &attrValue, &firstSeen); err != nil {
 				rows.Close()
-				return nil, fmt.Errorf("error scanning metadata first_seen result: %v", err)
+				return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error scanning metadata first_seen result: %v", err)}
 			}
-			key := fmt.Sprintf("%s|%s|%s", metricName, attrName, attrValue)
-			result[key] = firstSeen
+			result[model.MetricMetadataLookupKey{
+				MetricName:     metricName,
+				AttributeName:  attrName,
+				AttributeValue: attrValue,
+			}] = firstSeen
 		}
 
 		if err := rows.Err(); err != nil {
-			return nil, fmt.Errorf("error iterating metadata first_seen results: %v", err)
+			return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error iterating metadata first_seen results: %v", err)}
 		}
 	}
 
