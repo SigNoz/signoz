@@ -319,10 +319,7 @@ func (q *QueryFilterAnalyzeRequest) UnmarshalJSON(data []byte) error {
 	// Trim and validate query is not empty
 	q.Query = strings.TrimSpace(aux.Query)
 	if q.Query == "" {
-		return &model.ApiError{
-			Typ: model.ErrorBadData,
-			Err: errors.New("query is required and cannot be empty"),
-		}
+		return errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "query is required and cannot be empty")
 	}
 
 	// Normalize queryType to lowercase and trim

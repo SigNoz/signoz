@@ -246,6 +246,17 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 			expectedGroups:    []string{"region_alias"},
 		},
 		{
+			name: "ClickHouse - Invalid query should return error",
+			requestBody: QueryFilterAnalyzeRequest{
+				Query:     `SELECT WHERE metric_name = 'memory' GROUP BY region, service`,
+				QueryType: "clickhouse_sql",
+			},
+			expectedStatus:    http.StatusBadRequest,
+			expectedStatusStr: "error",
+			expectedError:     true,
+			errorContains:     "failed to parse clickhouse query",
+		},
+		{
 			name: "Empty query should return error",
 			requestBody: QueryFilterAnalyzeRequest{
 				Query:     "",
@@ -315,10 +326,13 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 			}
 
 			if tt.expectedError {
-				// Check error response
-				errorMsg, ok := resp["error"].(string)
+				errorObj, ok := resp["error"].(map[string]interface{})
 				if !ok {
-					t.Fatalf("expected error to be a string, got %T", resp["error"])
+					t.Fatalf("expected error to be a map, got %T", resp["error"])
+				}
+				errorMsg, ok := errorObj["message"].(string)
+				if !ok {
+					t.Fatalf("expected error message to be a string, got %T", errorObj["message"])
 				}
 				if !strings.Contains(errorMsg, tt.errorContains) {
 					t.Errorf("expected error message to contain '%s', got '%s'", tt.errorContains, errorMsg)
