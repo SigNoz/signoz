@@ -525,9 +525,9 @@ func (r *BaseRule) ShouldSkipNewGroups() bool {
 	return r.newGroupEvalDelay != nil && *r.newGroupEvalDelay > 0
 }
 
-// ExtractMetricAndGroupBys extracts metric names and groupBy keys from the rule's query.
+// extractMetricAndGroupBys extracts metric names and groupBy keys from the rule's query.
 // TODO: implement caching for query parsing results to avoid re-parsing the query + cache invalidation
-func (r *BaseRule) ExtractMetricAndGroupBys(ctx context.Context) ([]string, []string, error) {
+func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) ([]string, []string, error) {
 	var metricNames []string
 	var groupedFields []string
 
@@ -607,7 +607,7 @@ func (r *BaseRule) ExtractMetricAndGroupBys(ctx context.Context) ([]string, []st
 // Returns the filtered series and the number of series that were skipped.
 func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series ruletypes.SeriesCollection) (ruletypes.SeriesCollection, int, error) {
 	// Extract metric names and groupBy keys
-	metricNames, groupedFields, err := r.ExtractMetricAndGroupBys(ctx)
+	metricNames, groupedFields, err := r.extractMetricAndGroupBys(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
