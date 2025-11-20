@@ -153,10 +153,20 @@ func NewFormulaEvaluator(expressionStr string, canDefaultZero map[string]bool) (
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse expression")
 	}
 
+	normalizedCanDefaultZero := make(map[string]bool, len(canDefaultZero)*3)
+	for k, v := range canDefaultZero {
+		if k == "" {
+			continue
+		}
+		normalizedCanDefaultZero[k] = v
+		normalizedCanDefaultZero[strings.ToUpper(k)] = v
+		normalizedCanDefaultZero[strings.ToLower(k)] = v
+	}
+
 	evaluator := &FormulaEvaluator{
 		expression:     expression,
 		variables:      expression.Vars(),
-		canDefaultZero: canDefaultZero,
+		canDefaultZero: normalizedCanDefaultZero,
 		aggRefs:        make(map[string]aggregationRef),
 	}
 
