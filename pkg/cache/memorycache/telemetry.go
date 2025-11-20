@@ -32,52 +32,52 @@ func newTelemetry(meter metric.Meter) (*telemetry, error) {
 		errs = errors.Join(errs, err)
 	}
 
-	cacheMisses, err := meter.Int64ObservableGauge("signoz.cache.misses", metric.WithDescription("Misses is the number of Get calls where a value was not found for the corresponding key"), metric.WithUnit("1"))
+	cacheMisses, err := meter.Int64ObservableGauge("signoz.cache.misses", metric.WithDescription("Misses is the number of Get calls where a value was not found for the corresponding key"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	costAdded, err := meter.Int64ObservableGauge("signoz.cache.cost.added", metric.WithDescription("CostAdded is the sum of costs that have been added (successful Set calls)"), metric.WithUnit("1"))
+	costAdded, err := meter.Int64ObservableGauge("signoz.cache.cost.added", metric.WithDescription("CostAdded is the sum of costs that have been added (successful Set calls)"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	costEvicted, err := meter.Int64ObservableGauge("signoz.cache.cost.evicted", metric.WithDescription("CostEvicted is the sum of all costs that have been evicted"), metric.WithUnit("1"))
+	costEvicted, err := meter.Int64ObservableGauge("signoz.cache.cost.evicted", metric.WithDescription("CostEvicted is the sum of all costs that have been evicted"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	keysAdded, err := meter.Int64ObservableGauge("signoz.cache.keys.added", metric.WithDescription("KeysAdded is the total number of Set calls where a new key-value item was added"), metric.WithUnit("1"))
+	keysAdded, err := meter.Int64ObservableGauge("signoz.cache.keys.added", metric.WithDescription("KeysAdded is the total number of Set calls where a new key-value item was added"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	keysEvicted, err := meter.Int64ObservableGauge("signoz.cache.keys.evicted", metric.WithDescription("KeysEvicted is the total number of keys evicted"), metric.WithUnit("1"))
+	keysEvicted, err := meter.Int64ObservableGauge("signoz.cache.keys.evicted", metric.WithDescription("KeysEvicted is the total number of keys evicted"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	keysUpdated, err := meter.Int64ObservableGauge("signoz.cache.keys.updated", metric.WithDescription("KeysUpdated is the total number of Set calls where the value was updated"), metric.WithUnit("1"))
+	keysUpdated, err := meter.Int64ObservableGauge("signoz.cache.keys.updated", metric.WithDescription("KeysUpdated is the total number of Set calls where the value was updated"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	setsDropped, err := meter.Int64ObservableGauge("signoz.cache.sets.dropped", metric.WithDescription("SetsDropped is the number of Set calls that don't make it into internal buffers (due to contention or some other reason)"), metric.WithUnit("1"))
+	setsDropped, err := meter.Int64ObservableGauge("signoz.cache.sets.dropped", metric.WithDescription("SetsDropped is the number of Set calls that don't make it into internal buffers (due to contention or some other reason)"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	setsRejected, err := meter.Int64ObservableGauge("signoz.cache.sets.rejected", metric.WithDescription("SetsRejected is the number of Set calls rejected by the policy (TinyLFU)"), metric.WithUnit("1"))
+	setsRejected, err := meter.Int64ObservableGauge("signoz.cache.sets.rejected", metric.WithDescription("SetsRejected is the number of Set calls rejected by the policy (TinyLFU)"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	getsDropped, err := meter.Int64ObservableGauge("signoz.cache.gets.dropped", metric.WithDescription("GetsDropped is the number of Get calls that don't make it into internal buffers (due to contention or some other reason)"), metric.WithUnit("1"))
+	getsDropped, err := meter.Int64ObservableGauge("signoz.cache.gets.dropped", metric.WithDescription("GetsDropped is the number of Get calls that don't make it into internal buffers (due to contention or some other reason)"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	getsKept, err := meter.Int64ObservableGauge("signoz.cache.gets.kept", metric.WithDescription("GetsKept is the number of Get calls that make it into internal buffers"), metric.WithUnit("1"))
+	getsKept, err := meter.Int64ObservableGauge("signoz.cache.gets.kept", metric.WithDescription("GetsKept is the number of Get calls that make it into internal buffers"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
