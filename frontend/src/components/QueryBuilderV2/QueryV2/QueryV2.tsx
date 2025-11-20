@@ -41,9 +41,11 @@ export const QueryV2 = forwardRef(function QueryV2(
 		isMultiQueryAllowed = false,
 		onSignalSourceChange,
 		signalSourceChangeEnabled = false,
+		queriesCount = 1,
 	}: QueryProps & {
 		onSignalSourceChange: (value: string) => void;
 		signalSourceChangeEnabled: boolean;
+		queriesCount: number;
 	},
 	ref: ForwardedRef<HTMLDivElement>,
 ): JSX.Element {
@@ -199,12 +201,16 @@ export const QueryV2 = forwardRef(function QueryV2(
 												icon: <Copy size={14} />,
 												onClick: handleCloneEntity,
 											},
-											{
-												label: 'Delete',
-												key: 'delete-query',
-												icon: <Trash size={14} />,
-												onClick: handleDeleteQuery,
-											},
+											...(queriesCount && queriesCount > 1
+												? [
+														{
+															label: 'Delete',
+															key: 'delete-query',
+															icon: <Trash size={14} />,
+															onClick: handleDeleteQuery,
+														},
+												  ]
+												: []),
 										],
 									}}
 									placement="bottomRight"
