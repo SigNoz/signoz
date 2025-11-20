@@ -58,7 +58,7 @@ function PublicDashboardSetting(): JSX.Element {
 	const [publidDashboardData, setPublidDashboardData] = useState<
 		PublicDashboardProps | undefined
 	>(undefined);
-	const [timeRangeEnabled, setTimeRangeEnabled] = useState(false);
+	const [timeRangeEnabled, setTimeRangeEnabled] = useState(true);
 	const [defaultTimeRange, setDefaultTimeRange] = useState('30m');
 	const [, setCopyPublicDashboardURL] = useCopyToClipboard();
 
@@ -89,6 +89,8 @@ function PublicDashboardSetting(): JSX.Element {
 		if (errorPublicDashboard) {
 			console.error('Error getting public dashboard', errorPublicDashboard);
 			setPublidDashboardData(undefined);
+			setTimeRangeEnabled(true);
+			setDefaultTimeRange('30m');
 		}
 	}, [publicDashboardResponse, errorPublicDashboard]);
 
