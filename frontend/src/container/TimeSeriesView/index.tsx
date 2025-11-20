@@ -5,7 +5,13 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Dispatch, SetStateAction, useEffect, useMemo } from 'react';
+import {
+	Dispatch,
+	MutableRefObject,
+	SetStateAction,
+	useEffect,
+	useMemo,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -21,6 +27,7 @@ function TimeSeriesViewContainer({
 	isFilterApplied,
 	setWarning,
 	setIsLoadingQueries,
+	queryKeyRef,
 }: TimeSeriesViewProps): JSX.Element {
 	const { stagedQuery, currentQuery, panelType } = useQueryBuilder();
 
@@ -48,6 +55,22 @@ function TimeSeriesViewContainer({
 		return isValid.every(Boolean);
 	}, [currentQuery]);
 
+	const queryKey = useMemo(
+		() => [
+			REACT_QUERY_KEY.GET_QUERY_RANGE,
+			globalSelectedTime,
+			maxTime,
+			minTime,
+			stagedQuery,
+		],
+		[globalSelectedTime, maxTime, minTime, stagedQuery],
+	);
+
+	if (queryKeyRef) {
+		// eslint-disable-next-line no-param-reassign
+		queryKeyRef.current = queryKey;
+	}
+
 	const { data, isLoading, isFetching, isError, error } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap[dataSource],
@@ -61,13 +84,7 @@ function TimeSeriesViewContainer({
 		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
 		{
-			queryKey: [
-				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				globalSelectedTime,
-				maxTime,
-				minTime,
-				stagedQuery,
-			],
+			queryKey,
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.TIME_SERIES,
 		},
 	);
@@ -111,10 +128,12 @@ interface TimeSeriesViewProps {
 	isFilterApplied: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
+	queryKeyRef?: MutableRefObject<any>;
 }
 
 TimeSeriesViewContainer.defaultProps = {
 	dataSource: DataSource.TRACES,
+	queryKeyRef: undefined,
 };
 
 export default TimeSeriesViewContainer;
