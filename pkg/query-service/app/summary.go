@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -87,6 +88,24 @@ func (aH *APIHandler) GetMetricsDetails(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	aH.Respond(w, metricsDetail)
+}
+
+func (aH *APIHandler) GetMetricAlerts(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	metricName := mux.Vars(r)["metric_name"]
+	if metricName == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("metric_name is required")}, nil)
+		return
+	}
+
+	alerts, apiError := aH.SummaryService.GetMetricAlerts(ctx, metricName)
+	if apiError != nil {
+		zap.L().Error("error getting metric alerts", zap.Error(apiError.Err))
+		RespondError(w, apiError, nil)
+		return
+	}
+
+	aH.Respond(w, alerts)
 }
 
 func (aH *APIHandler) ListMetrics(w http.ResponseWriter, r *http.Request) {
