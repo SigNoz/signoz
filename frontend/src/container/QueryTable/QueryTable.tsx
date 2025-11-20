@@ -4,6 +4,7 @@ import cx from 'classnames';
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
+import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
 import {
 	createTableColumnsFromQuery,
 	RowData,
@@ -130,10 +131,18 @@ export function QueryTable({
 		[tableColumns, isQueryTypeBuilder, enableDrillDown, handleColumnClick],
 	);
 
+	const [pageSize, setPageSize] = useState(10);
+
 	const paginationConfig = {
-		pageSize: 10,
-		showSizeChanger: false,
-		hideOnSinglePage: true,
+		pageSize,
+		showSizeChanger: true,
+		pageSizeOptions: DEFAULT_PER_PAGE_OPTIONS,
+		hideOnSinglePage: false,
+		onChange: (_page: number, newPageSize: number): void => {
+			if (newPageSize !== pageSize) {
+				setPageSize(newPageSize);
+			}
+		},
 	};
 
 	const [filterTable, setFilterTable] = useState<RowData[] | null>(null);
@@ -159,16 +168,16 @@ export function QueryTable({
 
 	return (
 		<>
+			{isDownloadEnabled && (
+				<div className="query-table--download">
+					<Download
+						data={downloadableData}
+						fileName={`${fileName}-${servicename}`}
+						isLoading={loading as boolean}
+					/>
+				</div>
+			)}
 			<div className="query-table">
-				{isDownloadEnabled && (
-					<div className="query-table--download">
-						<Download
-							data={downloadableData}
-							fileName={`${fileName}-${servicename}`}
-							isLoading={loading as boolean}
-						/>
-					</div>
-				)}
 				<ResizeTable
 					columns={columnsWithClickHandlers}
 					tableLayout="fixed"
