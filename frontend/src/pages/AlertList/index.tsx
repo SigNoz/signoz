@@ -13,8 +13,10 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
 import AlertDetails from 'pages/AlertDetails';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
+
+import { AlertListSubTabs, AlertListTabs } from './types';
 
 function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();
@@ -22,32 +24,42 @@ function AllAlertList(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 
 	const tab = urlQuery.get('tab');
+	const subTab = urlQuery.get('subTab');
 	const isAlertHistory = location.pathname === ROUTES.ALERT_HISTORY;
 	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
 
-	const search = urlQuery.get('search');
+	const handleConfigurationTabChange = useCallback(
+		(subTab: string): void => {
+			urlQuery.set('tab', AlertListTabs.CONFIGURATION);
+			urlQuery.set('subTab', subTab);
+			urlQuery.delete('search');
+			safeNavigate(`/alerts?${urlQuery.toString()}`);
+		},
+		[safeNavigate, urlQuery],
+	);
 
 	const configurationTab = useMemo(() => {
 		const tabs = [
 			{
 				label: 'Planned Downtime',
-				key: 'planned-downtime',
+				key: AlertListSubTabs.PLANNED_DOWNTIME,
 				children: <PlannedDowntime />,
 			},
 			{
 				label: 'Routing Policies',
-				key: 'routing-policies',
+				key: AlertListSubTabs.ROUTING_POLICIES,
 				children: <RoutingPolicies />,
 			},
 		];
 		return (
 			<Tabs
 				className="configuration-tabs"
-				defaultActiveKey="planned-downtime"
+				activeKey={subTab || AlertListSubTabs.PLANNED_DOWNTIME}
 				items={tabs}
+				onChange={handleConfigurationTabChange}
 			/>
 		);
-	}, []);
+	}, [subTab, handleConfigurationTabChange]);
 
 	const items: TabsProps['items'] = [
 		{
@@ -57,7 +69,7 @@ function AllAlertList(): JSX.Element {
 					Triggered Alerts
 				</div>
 			),
-			key: 'TriggeredAlerts',
+			key: AlertListTabs.TRIGGERED_ALERTS,
 			children: <TriggeredAlerts />,
 		},
 		{
@@ -67,7 +79,7 @@ function AllAlertList(): JSX.Element {
 					Alert Rules
 				</div>
 			),
-			key: 'AlertRules',
+			key: AlertListTabs.ALERT_RULES,
 			children: (
 				<div className="alert-rules-container">
 					{isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />}
@@ -81,7 +93,7 @@ function AllAlertList(): JSX.Element {
 					Configuration
 				</div>
 			),
-			key: 'Configuration',
+			key: AlertListTabs.CONFIGURATION,
 			children: configurationTab,
 		},
 	];
@@ -90,15 +102,23 @@ function AllAlertList(): JSX.Element {
 		<Tabs
 			destroyInactiveTabPane
 			items={items}
-			activeKey={tab || 'AlertRules'}
+			activeKey={tab || AlertListTabs.ALERT_RULES}
 			onChange={(tab): void => {
 				urlQuery.set('tab', tab);
-				let params = `tab=${tab}`;
 
-				if (search) {
-					params += `&search=${search}`;
+				// If navigating to Configuration tab, set default subTab
+				if (tab === AlertListTabs.CONFIGURATION) {
+					const currentSubTab = subTab || AlertListSubTabs.PLANNED_DOWNTIME;
+					urlQuery.set('subTab', currentSubTab);
+				} else {
+					// Clear subTab when navigating out of Configuration tab
+					urlQuery.delete('subTab');
 				}
-				safeNavigate(`/alerts?${params}`);
+
+				// Clear search when navigating to any tab
+				urlQuery.delete('search');
+
+				safeNavigate(`/alerts?${urlQuery.toString()}`);
 			}}
 			className={`alerts-container ${
 				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''
