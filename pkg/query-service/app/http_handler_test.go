@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types"
 )
 
 func TestPrepareQuery(t *testing.T) {
@@ -140,7 +141,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 
 	tests := []struct {
 		name              string
-		requestBody       QueryFilterAnalyzeRequest
+		requestBody       types.QueryFilterAnalyzeRequest
 		expectedStatus    int
 		expectedStatusStr string
 		expectedError     bool
@@ -150,7 +151,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 	}{
 		{
 			name: "PromQL - Nested aggregation inside subquery",
-			requestBody: QueryFilterAnalyzeRequest{
+			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     `max_over_time(sum(rate(cpu_usage_total[5m]))[1h:5m])`,
 				QueryType: "promql",
 			},
@@ -162,7 +163,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 		},
 		{
 			name: "PromQL - Subquery with multiple metrics",
-			requestBody: QueryFilterAnalyzeRequest{
+			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     `avg_over_time((foo + bar)[10m:1m])`,
 				QueryType: "promql",
 			},
@@ -174,7 +175,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 		},
 		{
 			name: "PromQL - Simple meta-metric with grouping",
-			requestBody: QueryFilterAnalyzeRequest{
+			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     `sum by (pod) (up)`,
 				QueryType: "promql",
 			},
@@ -186,7 +187,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 		},
 		{
 			name: "ClickHouse - Simple CTE with GROUP BY",
-			requestBody: QueryFilterAnalyzeRequest{
+			requestBody: types.QueryFilterAnalyzeRequest{
 				Query: `WITH aggregated AS (
 					SELECT region as region_alias, sum(value) AS total
 					FROM metrics
@@ -204,7 +205,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 		},
 		{
 			name: "ClickHouse - CTE chain with last GROUP BY + Alias should be returned if exists",
-			requestBody: QueryFilterAnalyzeRequest{
+			requestBody: types.QueryFilterAnalyzeRequest{
 				Query: `WITH step1 AS (
 					SELECT service as service_alias, timestamp as ts, value
 					FROM metrics
@@ -227,7 +228,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 		},
 		{
 			name: "ClickHouse - Outer GROUP BY overrides CTE GROUP BY + Alias should be returned if exists",
-			requestBody: QueryFilterAnalyzeRequest{
+			requestBody: types.QueryFilterAnalyzeRequest{
 				Query: `WITH cte AS (
 					SELECT region, service, value
 					FROM metrics
@@ -247,7 +248,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 		},
 		{
 			name: "ClickHouse - Invalid query should return error",
-			requestBody: QueryFilterAnalyzeRequest{
+			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     `SELECT WHERE metric_name = 'memory' GROUP BY region, service`,
 				QueryType: "clickhouse_sql",
 			},
@@ -258,7 +259,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 		},
 		{
 			name: "Empty query should return error",
-			requestBody: QueryFilterAnalyzeRequest{
+			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     "",
 				QueryType: "promql",
 			},
@@ -269,7 +270,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 		},
 		{
 			name: "Invalid queryType should return error",
-			requestBody: QueryFilterAnalyzeRequest{
+			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     `sum(rate(cpu_usage[5m]))`,
 				QueryType: "invalid_type",
 			},
@@ -280,7 +281,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 		},
 		{
 			name: "Invalid PromQL syntax should return error",
-			requestBody: QueryFilterAnalyzeRequest{
+			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     `sum by ((foo)(bar))(http_requests_total)`,
 				QueryType: "promql",
 			},
@@ -350,7 +351,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 					t.Fatalf("failed to marshal data: %v", err)
 				}
 
-				var responseData QueryFilterAnalyzeResponse
+				var responseData types.QueryFilterAnalyzeResponse
 				if err := json.Unmarshal(dataBytes, &responseData); err != nil {
 					t.Fatalf("failed to unmarshal data into QueryFilterAnalyzeResponse: %v", err)
 				}

@@ -300,40 +300,6 @@ type ApiResponse struct {
 	Error     string          `json:"error,omitempty"`
 }
 
-// QueryFilterAnalyzeRequest represents the request body for query filter analysis
-type QueryFilterAnalyzeRequest struct {
-	Query     string `json:"query"`
-	QueryType string `json:"queryType"`
-}
-
-// UnmarshalJSON implements custom JSON unmarshaling with validation and normalization
-func (q *QueryFilterAnalyzeRequest) UnmarshalJSON(data []byte) error {
-	// Use a temporary struct to avoid infinite recursion
-	type tempQueryFilterAnalyzeRequest QueryFilterAnalyzeRequest
-	aux := &tempQueryFilterAnalyzeRequest{}
-
-	if err := json.Unmarshal(data, aux); err != nil {
-		return errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "failed to parse json: %v", err)
-	}
-
-	// Trim and validate query is not empty
-	q.Query = strings.TrimSpace(aux.Query)
-	if q.Query == "" {
-		return errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "query is required and cannot be empty")
-	}
-
-	// Normalize queryType to lowercase and trim
-	q.QueryType = strings.ToLower(strings.TrimSpace(aux.QueryType))
-
-	return nil
-}
-
-// QueryFilterAnalyzeResponse represents the response body for query filter analysis
-type QueryFilterAnalyzeResponse struct {
-	MetricNames []string `json:"metricNames"`
-	Groups      []string `json:"groups"`
-}
-
 // todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
@@ -5570,7 +5536,7 @@ func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request)
 	// Limit request body size to 100 KB
 	r.Body = http.MaxBytesReader(w, r.Body, 100*1024)
 
-	var req QueryFilterAnalyzeRequest
+	var req types.QueryFilterAnalyzeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(w, err)
 		return
@@ -5608,7 +5574,7 @@ func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request)
 	}
 
 	// prepare the response
-	var resp QueryFilterAnalyzeResponse
+	var resp types.QueryFilterAnalyzeResponse
 
 	for _, group := range result.GroupByColumns {
 		resp.Groups = append(resp.Groups, group.GroupName()) // add the group name to the response
