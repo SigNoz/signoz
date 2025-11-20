@@ -65,6 +65,14 @@ type (
 	ListableDashboard []*GettableDashboard
 )
 
+// MetricDashboard represents a dashboard/widget referencing a metric.
+type MetricDashboard struct {
+	DashboardName string `json:"dashboard_name"`
+	DashboardID   string `json:"dashboard_id"`
+	WidgetID      string `json:"widget_id"`
+	WidgetName    string `json:"widget_name"`
+}
+
 func NewStorableDashboardFromDashboard(dashboard *Dashboard) (*StorableDashboard, error) {
 	dashboardID, err := valuer.NewUUID(dashboard.ID)
 	if err != nil {

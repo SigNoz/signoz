@@ -155,10 +155,21 @@ func (handler *handler) GetDashboardsForMetric(rw http.ResponseWriter, r *http.R
 
 	dashboards, ok := data[metricName]
 	if !ok {
-		dashboards = []map[string]string{}
+		render.Success(rw, http.StatusOK, []dashboardtypes.MetricDashboard{})
+		return
 	}
 
-	render.Success(rw, http.StatusOK, dashboards)
+	resp := make([]dashboardtypes.MetricDashboard, 0, len(dashboards))
+	for _, item := range dashboards {
+		resp = append(resp, dashboardtypes.MetricDashboard{
+			DashboardName: item["dashboard_name"],
+			DashboardID:   item["dashboard_id"],
+			WidgetID:      item["widget_id"],
+			WidgetName:    item["widget_name"],
+		})
+	}
+
+	render.Success(rw, http.StatusOK, resp)
 }
 
 func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
