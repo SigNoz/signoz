@@ -9,11 +9,13 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/parser/queryfilterextractor"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
@@ -88,6 +90,9 @@ type BaseRule struct {
 	sqlstore sqlstore.SQLStore
 
 	evaluation ruletypes.Evaluation
+
+	// newGroupEvalDelay is the grace period for new alert groups
+	newGroupEvalDelay *time.Duration
 }
 
 type RuleOption func(*BaseRule)
@@ -152,6 +157,12 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
 		Threshold:         threshold,
 		evaluation:        evaluation,
+	}
+
+	// Store newGroupEvalDelay and groupBy keys from NotificationSettings
+	if p.NotificationSettings != nil && p.NotificationSettings.NewGroupEvalDelay != nil {
+		newGroupEvalDelay := time.Duration(*p.NotificationSettings.NewGroupEvalDelay)
+		baseRule.newGroupEvalDelay = &newGroupEvalDelay
 	}
 
 	if baseRule.evalWindow == 0 {
@@ -507,4 +518,196 @@ func (r *BaseRule) PopulateTemporality(ctx context.Context, orgID valuer.UUID, q
 		}
 	}
 	return nil
+}
+
+// ShouldSkipNewGroups returns true if new group filtering should be applied
+func (r *BaseRule) ShouldSkipNewGroups() bool {
+	return r.newGroupEvalDelay != nil && *r.newGroupEvalDelay > 0
+}
+
+// extractMetricAndGroupBys extracts metric names and groupBy keys from the rule's query.
+// TODO: implement caching for query parsing results to avoid re-parsing the query + cache invalidation
+func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) ([]string, []string, error) {
+	var metricNames []string
+	var groupedFields []string
+
+	compositeQuery := r.ruleCondition.CompositeQuery
+
+	for _, query := range compositeQuery.Queries {
+		switch query.Type {
+		case qbtypes.QueryTypeBuilder:
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				// extract group by fields
+				for _, groupBy := range spec.GroupBy {
+					if groupBy.Name != "" {
+						groupedFields = append(groupedFields, groupBy.Name)
+					}
+				}
+				// extract metric names
+				for _, aggregation := range spec.Aggregations {
+					if aggregation.MetricName != "" {
+						metricNames = append(metricNames, aggregation.MetricName)
+					}
+				}
+			default:
+				// TODO: add support for Traces and Logs Aggregation types
+				if r.logger != nil {
+					r.logger.WarnContext(ctx, "unsupported QueryBuilderQuery type: %T", spec)
+				}
+				continue
+			}
+		case qbtypes.QueryTypePromQL:
+			spec, ok := query.Spec.(qbtypes.PromQuery)
+			if !ok || spec.Query == "" {
+				continue
+			}
+			// use queryfilterextractor to extract metric names and group by fields
+			extractor, extractErr := queryfilterextractor.NewExtractor(queryfilterextractor.ExtractorPromQL)
+			if extractErr != nil {
+				return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error while creating PromQL extractor: %s", extractErr.Error())
+			}
+			result, extractErr := extractor.Extract(spec.Query)
+			if extractErr != nil {
+				return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "error while extracting metric names and group by fields: %s", extractErr.Error())
+			}
+			metricNames = append(metricNames, result.MetricNames...)
+			for _, col := range result.GroupByColumns {
+				groupedFields = append(groupedFields, col.OriginField)
+			}
+		case qbtypes.QueryTypeClickHouseSQL:
+			spec, ok := query.Spec.(qbtypes.ClickHouseQuery)
+			if !ok || spec.Query == "" {
+				continue
+			}
+			// use queryfilterextractor to extract metric names and group by fields
+			extractor, extractErr := queryfilterextractor.NewExtractor(queryfilterextractor.ExtractorCH)
+			if extractErr != nil {
+				return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error while creating ClickHouse extractor: %s", extractErr.Error())
+			}
+			result, extractErr := extractor.Extract(spec.Query)
+			if extractErr != nil {
+				return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "error while extracting metric names and group by fields: %s", extractErr.Error())
+			}
+			metricNames = append(metricNames, result.MetricNames...)
+			for _, col := range result.GroupByColumns {
+				groupedFields = append(groupedFields, col.OriginField)
+			}
+		default:
+			if r.logger != nil {
+				r.logger.WarnContext(ctx, fmt.Sprintf("unsupported query type: %s", query.Type), "rule_name", r.Name())
+			}
+		}
+	}
+
+	return metricNames, groupedFields, nil
+}
+
+// FilterNewSeries filters out series that are too new based on metadata first_seen timestamps.
+// Returns the filtered series and the number of series that were skipped.
+func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series ruletypes.SeriesCollection) (ruletypes.SeriesCollection, int, error) {
+	// Extract metric names and groupBy keys
+	metricNames, groupedFields, err := r.extractMetricAndGroupBys(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if len(metricNames) == 0 || len(groupedFields) == 0 {
+		// No metrics or groupBy keys, nothing to filter (non-ideal case, return early)
+		return series, 0, nil
+	}
+
+	// Build lookup keys from series
+	lookupKeys := make([]model.MetricMetadataLookupKey, 0)
+	seriesIdxToLookupKeys := make(map[int][]model.MetricMetadataLookupKey) // series index -> lookup keys
+
+	for i := 0; i < series.Len(); i++ {
+		labels := series.GetItem(i).GetLabels()
+		metricLabelMap := make(map[string]string)
+		for _, lbl := range labels {
+			metricLabelMap[lbl.Name] = lbl.Value
+		}
+
+		// Collect groupBy attribute-value pairs for this series
+		seriesKeys := make([]model.MetricMetadataLookupKey, 0)
+
+		for _, metricName := range metricNames {
+			for _, groupByKey := range groupedFields {
+				if attrValue, ok := metricLabelMap[groupByKey]; ok {
+					lookupKey := model.MetricMetadataLookupKey{
+						MetricName:     metricName,
+						AttributeName:  groupByKey,
+						AttributeValue: attrValue,
+					}
+					lookupKeys = append(lookupKeys, lookupKey)
+					seriesKeys = append(seriesKeys, lookupKey)
+				}
+			}
+		}
+
+		if len(seriesKeys) > 0 {
+			seriesIdxToLookupKeys[i] = seriesKeys
+		}
+	}
+
+	if len(lookupKeys) == 0 {
+		// No lookup keys to query, return original series
+		return series, 0, nil
+	}
+
+	// Query metadata for first_seen timestamps
+	firstSeenMap, err := r.reader.GetFirstSeenFromMetricMetadata(ctx, lookupKeys)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Filter series based on first_seen + delay
+	preservedIndices := make([]int, 0)
+	skippedCount := 0
+	evalTimeMs := ts.UnixMilli()
+	newGroupEvalDelayMs := r.newGroupEvalDelay.Milliseconds()
+
+	for i := 0; i < series.Len(); i++ {
+		seriesKeys, ok := seriesIdxToLookupKeys[i]
+		if !ok {
+			// No matching lables used in groupBy from this series, include it
+			preservedIndices = append(preservedIndices, i)
+			continue
+		}
+
+		// Find the maximum first_seen across all groupBy attributes for this series
+		// if the lastest is old enought we're good, if latest is new we need to skip it
+		maxFirstSeen := int64(0)
+		foundAny := false
+		for _, lookupKey := range seriesKeys {
+			if firstSeen, exists := firstSeenMap[lookupKey]; exists {
+				foundAny = true
+				if firstSeen > maxFirstSeen {
+					maxFirstSeen = firstSeen
+				}
+			}
+		}
+
+		if !foundAny {
+			// No metadata found - treat as new, skip it
+			skippedCount++
+			continue
+		}
+
+		// Check if first_seen + delay has passed
+		if maxFirstSeen+newGroupEvalDelayMs > evalTimeMs {
+			// Still within grace period, skip this series
+			skippedCount++
+			continue
+		}
+
+		// Old enough, include it
+		preservedIndices = append(preservedIndices, i)
+	}
+
+	if r.logger != nil && skippedCount > 0 {
+		r.logger.InfoContext(ctx, "Filtered new series", "rule_name", r.Name(), "skipped_count", skippedCount, "total_count", series.Len(), "delay_ms", newGroupEvalDelayMs)
+	}
+
+	return series.Filter(preservedIndices), skippedCount, nil
 }
