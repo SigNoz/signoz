@@ -29,6 +29,8 @@ import {
 	mockEmptyLogsResponse,
 	mockSpan,
 	mockSpanLogsResponse,
+	mockSpanWithLongStatusMessage,
+	mockSpanWithShortStatusMessage,
 } from './mockData';
 
 // Get typed mocks
@@ -127,6 +129,26 @@ jest.mock('lib/dashboard/getQueryResults', () => ({
 jest.mock('lib/uPlotLib/utils/generateColor', () => ({
 	generateColor: jest.fn().mockReturnValue('#1f77b4'),
 }));
+
+// Mock Antd Popover to render content immediately (avoids async portal issues)
+jest.mock('antd', () => {
+	const originalModule = jest.requireActual('antd');
+	return {
+		...originalModule,
+		Popover: ({
+			content,
+			children,
+		}: {
+			content: React.ReactNode;
+			children: React.ReactNode;
+		}): JSX.Element => (
+			<div>
+				{children}
+				<div data-testid="popover-content">{content}</div>
+			</div>
+		),
+	};
+});
 
 // Mock getSpanPercentiles API
 jest.mock('api/trace/getSpanPercentiles', () => ({
@@ -1151,5 +1173,116 @@ describe('SpanDetailsDrawer - Search Visibility User Flows', () => {
 		) as HTMLInputElement;
 		expect(searchInput).toBeInTheDocument();
 		expect(searchInput).toHaveFocus();
+	});
+});
+
+describe('SpanDetailsDrawer - Status Message Truncation User Flows', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		mockSafeNavigate.mockClear();
+		mockWindowOpen.mockClear();
+		mockUpdateAllQueriesOperators.mockClear();
+
+		(GetMetricQueryRange as jest.Mock).mockImplementation(() =>
+			Promise.resolve(mockEmptyLogsResponse),
+		);
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	it('should display expandable popover with Expand button for long status message', () => {
+		render(
+			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
+				<SpanDetailsDrawer
+					isSpanDetailsDocked={false}
+					setIsSpanDetailsDocked={jest.fn()}
+					selectedSpan={mockSpanWithLongStatusMessage}
+					traceStartTime={1640995200000}
+					traceEndTime={1640995260000}
+				/>
+			</QueryBuilderContext.Provider>,
+		);
+
+		// User sees status message label
+		expect(screen.getByText('status message')).toBeInTheDocument();
+
+		// User sees the status message value (appears in both original element and popover preview)
+		const statusMessageElements = screen.getAllByText(
+			mockSpanWithLongStatusMessage.statusMessage,
+		);
+		expect(statusMessageElements.length).toBeGreaterThan(0);
+
+		// User sees Expand button in popover (popover is mocked to render immediately)
+		const expandButton = screen.getByRole('button', { name: /expand/i });
+		expect(expandButton).toBeInTheDocument();
+	});
+
+	it('should open modal with full status message when user clicks Expand button', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		render(
+			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
+				<SpanDetailsDrawer
+					isSpanDetailsDocked={false}
+					setIsSpanDetailsDocked={jest.fn()}
+					selectedSpan={mockSpanWithLongStatusMessage}
+					traceStartTime={1640995200000}
+					traceEndTime={1640995260000}
+				/>
+			</QueryBuilderContext.Provider>,
+		);
+
+		// User clicks the Expand button (popover is mocked to render immediately)
+		const expandButton = screen.getByRole('button', { name: /expand/i });
+		await user.click(expandButton);
+
+		// User sees modal with the full status message content
+		await waitFor(() => {
+			// Modal should be visible with the title
+			const modalTitle = document.querySelector('.ant-modal-title');
+			expect(modalTitle).toBeInTheDocument();
+			expect(modalTitle?.textContent).toBe('status message');
+			// Modal content should contain the full message in a pre tag
+			const preElement = document.querySelector(
+				'.attribute-with-expandable-popover__full-view',
+			);
+			expect(preElement).toBeInTheDocument();
+			expect(preElement?.textContent).toBe(
+				mockSpanWithLongStatusMessage.statusMessage,
+			);
+		});
+	});
+
+	it('should display short status message as simple text without popover', () => {
+		render(
+			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
+				<SpanDetailsDrawer
+					isSpanDetailsDocked={false}
+					setIsSpanDetailsDocked={jest.fn()}
+					selectedSpan={mockSpanWithShortStatusMessage}
+					traceStartTime={1640995200000}
+					traceEndTime={1640995260000}
+				/>
+			</QueryBuilderContext.Provider>,
+		);
+
+		// User sees status message label and value
+		expect(screen.getByText('status message')).toBeInTheDocument();
+		expect(
+			screen.getByText(mockSpanWithShortStatusMessage.statusMessage),
+		).toBeInTheDocument();
+
+		// User hovers over the status message value
+		const statusMessageValue = screen.getByText(
+			mockSpanWithShortStatusMessage.statusMessage,
+		);
+		fireEvent.mouseEnter(statusMessageValue);
+
+		// No Expand button should appear (no expandable popover for short messages)
+		expect(
+			screen.queryByRole('button', { name: /expand/i }),
+		).not.toBeInTheDocument();
 	});
 });

@@ -35,6 +35,19 @@ export const mockSpan: Span = {
 	level: 0,
 };
 
+// Mock span with long status message (> 100 characters) for testing truncation
+export const mockSpanWithLongStatusMessage: Span = {
+	...mockSpan,
+	statusMessage:
+		'Error: Connection timeout occurred while trying to reach the database server. The connection pool was exhausted and all retry attempts failed after 30 seconds.',
+};
+
+// Mock span with short status message (<= 100 characters)
+export const mockSpanWithShortStatusMessage: Span = {
+	...mockSpan,
+	statusMessage: 'Connection successful',
+};
+
 // Mock logs with proper relationships
 export const mockSpanLogs: ILog[] = [
 	{
