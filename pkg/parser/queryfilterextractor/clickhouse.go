@@ -95,9 +95,6 @@ func (e *ClickHouseFilterExtractor) Extract(query string) (*FilterResult, error)
 
 // fillMetricNamesFromExpr extracts metric names from various node types
 func (e *ClickHouseFilterExtractor) fillMetricNamesFromExpr(node clickhouse.Expr, metricNames map[string]bool) {
-	if node == nil {
-		return
-	}
 
 	switch n := node.(type) {
 	case *clickhouse.BinaryOperation:
@@ -138,22 +135,22 @@ func (e *ClickHouseFilterExtractor) fillMetricFromBinaryOp(op *clickhouse.Binary
 //     of OR/AND operations and extract metrics from each branch. (e.g., metric_name='a' OR metric_name='b')
 func (e *ClickHouseFilterExtractor) fillMetricWithBinaryOpConditions(op *clickhouse.BinaryOperation, valueExpr clickhouse.Expr, metricNames map[string]bool) {
 	switch op.Operation {
-	case "=", "==":
+	case clickhouse.TokenKindSingleEQ, clickhouse.TokenKindDoubleEQ:
 		// metric_name = 'value' or metric_name = any(['a', 'b'])
-		// Skip if value side is a function call (per spec - function-wrapped literals are ignored, CH59)
+		// Skip if value side is a function call (function-wrapped literals are ignored, test case: CH59)
 		if fn, ok := valueExpr.(*clickhouse.FunctionExpr); ok {
 			// Only handle any() function, skip others like lowercase('cpu')
 			if fn.Name != nil && fn.Name.Name == "any" {
 				e.extractInValues(valueExpr, metricNames)
 			}
-			// Otherwise skip function-wrapped literals per spec
+			// Otherwise skip function-wrapped literals
 		} else if val := e.extractStringLiteral(valueExpr); val != "" {
 			metricNames[val] = true
 		}
 	case "IN", "GLOBAL IN":
 		// metric_name IN ('a', 'b', 'c')
 		// GLOBAL IN behaves the same as IN for metric extraction purposes
-		// Skip if value side is a function call (per spec - function-wrapped literals are ignored, CH59)
+		// Skip if value side is a function call (function-wrapped literals are ignored, test case: CH59)
 		if _, ok := valueExpr.(*clickhouse.FunctionExpr); !ok {
 			e.extractInValues(valueExpr, metricNames)
 		}
@@ -618,9 +615,6 @@ func (e *ClickHouseFilterExtractor) extractSelectItemAlias(selectItem *clickhous
 // buildCTEMap builds a map of CTE names to their SelectQuery nodes by recursively
 // traversing all queries and their nested expressions
 func (e *ClickHouseFilterExtractor) buildCTEMap(query *clickhouse.SelectQuery, cteMap map[string]*clickhouse.SelectQuery) {
-	if query == nil {
-		return
-	}
 
 	// Access CTEs directly from WithClause if it exists
 	if query.With != nil && query.With.CTEs != nil {
@@ -669,9 +663,6 @@ func (e *ClickHouseFilterExtractor) extractCTEQuery(cte *clickhouse.CTEStmt) *cl
 
 // buildCTEMapFromExpr recursively extracts CTEs from various expression types
 func (e *ClickHouseFilterExtractor) buildCTEMapFromExpr(expr clickhouse.Expr, cteMap map[string]*clickhouse.SelectQuery) {
-	if expr == nil {
-		return
-	}
 
 	// Walk through all nodes to find SelectQuery nodes that might contain CTEs
 	clickhouse.Walk(expr, func(node clickhouse.Expr) bool {

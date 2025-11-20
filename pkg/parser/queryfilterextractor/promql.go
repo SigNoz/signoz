@@ -61,21 +61,6 @@ func (v *promQLVisitor) Visit(node parser.Node, path []parser.Node) (parser.Visi
 		v.visitVectorSelector(n)
 	case *parser.AggregateExpr:
 		v.visitAggregateExpr(n, path)
-	case *parser.Call:
-		// Function calls may contain VectorSelectors, continue traversal
-		return v, nil
-	case *parser.BinaryExpr:
-		// Binary expressions may contain VectorSelectors on both sides
-		return v, nil
-	case *parser.SubqueryExpr:
-		// Subqueries may contain VectorSelectors
-		return v, nil
-	case *parser.ParenExpr:
-		// Parentheses don't change semantics, continue traversal
-		return v, nil
-	case *parser.MatrixSelector:
-		// Matrix selectors wrap VectorSelectors
-		return v, nil
 	}
 
 	return v, nil
