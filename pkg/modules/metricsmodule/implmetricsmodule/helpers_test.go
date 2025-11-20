@@ -48,18 +48,6 @@ func TestResolveOrderBy(t *testing.T) {
 			},
 		},
 		{
-			name: "metric_name default direction (desc)",
-			order: &metricsmoduletypes.OrderBy{
-				ColumnName: orderByColNameMetricName,
-				// Order omitted
-			},
-			wantCfg: orderConfig{
-				sqlColumn:      orderByColNameMetricName,
-				direction:      orderByDirectionDesc,
-				orderBySamples: false,
-			},
-		},
-		{
 			name: "invalid column",
 			order: &metricsmoduletypes.OrderBy{
 				ColumnName: "unknown_col",

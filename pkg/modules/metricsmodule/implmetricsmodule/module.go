@@ -302,7 +302,7 @@ func (m *module) fetchTimeseriesCounts(
 		AND __normalized = ?
 		AND (%s)
 		GROUP BY t.metric_name
-		ORDER BY %s %s
+		ORDER BY %s %s, metric_name ASC
 		LIMIT ? OFFSET ?`,
 		metricDatabaseName, tsTable,
 		filterSQL,
@@ -489,9 +489,17 @@ func (m *module) postProcessStatsResp(resp *metricsmoduletypes.StatsResponse, up
 	if orderBySamples {
 		sort.Slice(resp.Metrics, func(i, j int) bool {
 			if orderByDirection == orderByDirectionAsc {
-				return resp.Metrics[i].Samples < resp.Metrics[j].Samples
+				if resp.Metrics[i].Samples != resp.Metrics[j].Samples {
+					return resp.Metrics[i].Samples < resp.Metrics[j].Samples
+				}
+				// Tiebreaker: sort by metric_name lexicographically
+				return resp.Metrics[i].MetricName < resp.Metrics[j].MetricName
 			}
-			return resp.Metrics[i].Samples > resp.Metrics[j].Samples
+			if resp.Metrics[i].Samples != resp.Metrics[j].Samples {
+				return resp.Metrics[i].Samples > resp.Metrics[j].Samples
+			}
+			// Tiebreaker: sort by metric_name lexicographically
+			return resp.Metrics[i].MetricName < resp.Metrics[j].MetricName
 		})
 	}
 }

@@ -32,8 +32,6 @@ func resolveOrderBy(order *metricsmoduletypes.OrderBy) (orderConfig, error) {
 	case orderByColNameSamples:
 		cfg.orderBySamples = true
 		cfg.sqlColumn = orderByColNameTimeSeries // defer true ordering until samples computed
-	case orderByColNameMetricName: // TODO(nikhilmantri0902, srikanthccv): we should provide ordering by metric_name also in my opinion
-		cfg.sqlColumn = orderByColNameMetricName
 	default:
 		return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order column %q", order.ColumnName)
 	}
