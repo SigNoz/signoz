@@ -1,10 +1,10 @@
 package queryfilterextractor
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/AfterShip/clickhouse-sql-parser/parser"
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 // excludedFunctions contains functions that should cause ExtractOriginField to return empty string.
@@ -105,13 +105,13 @@ func extractCHOriginFieldFromQuery(query string) (string, error) {
 	}
 
 	if len(stmts) == 0 {
-		return "", fmt.Errorf("no statements found in query")
+		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no statements found in query")
 	}
 
 	// Get the first statement which should be a SELECT
 	selectStmt, ok := stmts[0].(*parser.SelectQuery)
 	if !ok {
-		return "", fmt.Errorf("first statement is not a SELECT query")
+		return "", errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "statement is not a SELECT query")
 	}
 
 	// If query has multiple select items, return blank string as we don't expect multiple select items
@@ -120,7 +120,7 @@ func extractCHOriginFieldFromQuery(query string) (string, error) {
 	}
 
 	if len(selectStmt.SelectItems) == 0 {
-		return "", fmt.Errorf("SELECT query has no select items")
+		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "SELECT query has no select items")
 	}
 
 	// Extract origin field from the first (and only) select item's expression
@@ -131,7 +131,7 @@ func extractCHOriginFieldFromQuery(query string) (string, error) {
 // This is the internal helper function that contains the original logic.
 func extractOriginFieldFromExpr(expr parser.Expr) (string, error) {
 	if expr == nil {
-		return "", fmt.Errorf("expression is nil")
+		return "", errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "expression is nil")
 	}
 
 	// Check if expression contains excluded functions or IF/CASE
@@ -141,13 +141,14 @@ func extractOriginFieldFromExpr(expr parser.Expr) (string, error) {
 	parser.Walk(expr, func(node parser.Expr) bool {
 		// exclude reserved keywords because the parser will treat them as valid SQL
 		// example: SELECT FROM table here the "FROM" is a reserved keyword,
-		// but the parser will treat it as valid SQL
+		// but the parser will treat it as valid column to be extracted.
 		if ident, ok := node.(*parser.Ident); ok {
 			if ident.QuoteType == parser.Unquoted && isReservedSelectKeyword(ident.Name) {
 				hasReservedKeyword = true
 				return false
 			}
 		}
+		// for functions, we need to check if the function is excluded function or a JSON extraction function with nested JSON extraction
 		if funcExpr, ok := node.(*parser.FunctionExpr); ok {
 			if isFunctionPresentInStore(funcExpr.Name.Name, excludedFunctions) {
 				hasExcludedExpressions = true
@@ -175,7 +176,7 @@ func extractOriginFieldFromExpr(expr parser.Expr) (string, error) {
 
 	// If the expression contains reserved keywords, return error
 	if hasReservedKeyword {
-		return "", fmt.Errorf("reserved keyword found in query")
+		return "", errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "reserved keyword found in query")
 	}
 
 	// If the expression contains excluded expressions, return empty string
@@ -218,9 +219,6 @@ func containsJSONExtractFunction(expr parser.Expr) bool {
 // extractColumns recursively extracts all unique column names from an expression.
 // Note: String literals are also considered as origin fields and will be included in the result.
 func extractColumns(expr parser.Expr) []string {
-	if expr == nil {
-		return nil
-	}
 
 	columnMap := make(map[string]bool)
 	extractColumnsHelper(expr, columnMap)
@@ -237,15 +235,13 @@ func extractColumns(expr parser.Expr) []string {
 // extractColumnsHelper is a recursive helper that finds all column references.
 // Note: String literals are also considered as origin fields and will be added to the columnMap.
 func extractColumnsHelper(expr parser.Expr, columnMap map[string]bool) {
-	if expr == nil {
-		return
-	}
-
 	switch n := expr.(type) {
+	// Ident is a simple identifier like "region" or "timestamp"
 	case *parser.Ident:
 		// Add identifiers as column references
 		columnMap[n.Name] = true
 
+	// FunctionExpr is a function call like "toDate(timestamp)", "JSONExtractString(labels, 'service.name')"
 	case *parser.FunctionExpr:
 		// Special handling for JSON extraction functions
 		// In case of nested JSON extraction, we return blank values (handled at top level)
@@ -267,21 +263,23 @@ func extractColumnsHelper(expr parser.Expr, columnMap map[string]bool) {
 			return
 		}
 
-		// For regular functions, recursively process all arguments
-		// Don't mark the function name itself as a column
+		// For regular functions, recursively process all arguments, ex: lower(name)
 		if n.Params != nil && n.Params.Items != nil {
 			for _, item := range n.Params.Items.Items {
 				extractColumnsHelper(item, columnMap)
 			}
 		}
 
+	// BinaryOperation is a binary operation like "region = 'us-east-1'" or "unix_milli / 1000"
 	case *parser.BinaryOperation:
 		extractColumnsHelper(n.LeftExpr, columnMap)
 		extractColumnsHelper(n.RightExpr, columnMap)
 
+	// ColumnExpr is a column expression like "m.region", "service.name"
 	case *parser.ColumnExpr:
 		extractColumnsHelper(n.Expr, columnMap)
 
+	// CastExpr is a cast expression like "CAST(unix_milli AS String)"
 	case *parser.CastExpr:
 		extractColumnsHelper(n.Expr, columnMap)
 
@@ -290,11 +288,13 @@ func extractColumnsHelper(expr parser.Expr, columnMap map[string]bool) {
 			extractColumnsHelper(n.Items, columnMap)
 		}
 
+		// Ex: coalesce(cpu_usage, 0) + coalesce(mem_usage, 0)
 	case *parser.ColumnExprList:
 		for _, item := range n.Items {
 			extractColumnsHelper(item, columnMap)
 		}
 
+	// StringLiteral is a string literal like "us-east-1" or "cpu.usage"
 	case *parser.StringLiteral:
 		// String literals are considered as origin fields
 		columnMap[n.Literal] = true

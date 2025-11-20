@@ -41,7 +41,7 @@ func (e *PromQLFilterExtractor) Extract(query string) (*FilterResult, error) {
 		result.MetricNames = append(result.MetricNames, metric)
 	}
 	for groupKey := range visitor.groupBy {
-		result.GroupByColumns = append(result.GroupByColumns, ColumnInfo{Name: groupKey})
+		result.GroupByColumns = append(result.GroupByColumns, ColumnInfo{Name: groupKey, OriginExpr: groupKey, OriginField: groupKey})
 	}
 
 	return result, nil
@@ -56,35 +56,18 @@ type promQLVisitor struct {
 }
 
 func (v *promQLVisitor) Visit(node parser.Node, path []parser.Node) (parser.Visitor, error) {
-	if node == nil {
-		return nil, nil
-	}
-
 	switch n := node.(type) {
 	case *parser.VectorSelector:
 		v.visitVectorSelector(n)
 	case *parser.AggregateExpr:
 		v.visitAggregateExpr(n, path)
-	case *parser.Call:
-		// Function calls may contain VectorSelectors, continue traversal
-		return v, nil
-	case *parser.BinaryExpr:
-		// Binary expressions may contain VectorSelectors on both sides
-		return v, nil
-	case *parser.SubqueryExpr:
-		// Subqueries may contain VectorSelectors
-		return v, nil
-	case *parser.ParenExpr:
-		// Parentheses don't change semantics, continue traversal
-		return v, nil
-	case *parser.MatrixSelector:
-		// Matrix selectors wrap VectorSelectors
-		return v, nil
 	}
 
 	return v, nil
 }
 
+// visitVectorSelector will be called whenever the Visitor encounters a VectorSelector node.
+// in the case we'll be extracting the metric names from the vector selector.
 func (v *promQLVisitor) visitVectorSelector(vs *parser.VectorSelector) {
 	// Check if metric name is specified directly
 	if vs.Name != "" {
@@ -104,6 +87,8 @@ func (v *promQLVisitor) visitVectorSelector(vs *parser.VectorSelector) {
 	}
 }
 
+// visitAggregateExpr will be called whenever the Visitor encounters an AggregateExpr node.
+// in the case we'll be extracting the grouping keys from the outermost aggregation.
 func (v *promQLVisitor) visitAggregateExpr(ae *parser.AggregateExpr, path []parser.Node) {
 	// Count how many AggregateExpr nodes are in the path (excluding current node)
 	// This tells us the nesting level
