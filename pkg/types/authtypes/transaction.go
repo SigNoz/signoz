@@ -32,6 +32,15 @@ func NewObject(resource Resource, selector Selector) (*Object, error) {
 	return &Object{Resource: resource, Selector: selector}, nil
 }
 
+func MustNewObject(resource Resource, selector Selector) *Object {
+	object, err := NewObject(resource, selector)
+	if err != nil {
+		panic(err)
+	}
+
+	return object
+}
+
 func MustNewObjectFromString(input string) *Object {
 	parts := strings.Split(input, "/")
 	if len(parts) != 4 {

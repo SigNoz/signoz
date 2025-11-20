@@ -41,6 +41,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/tokenizer/jwttokenizer"
 	"github.com/SigNoz/signoz/pkg/tokenizer/opaquetokenizer"
+	"github.com/SigNoz/signoz/pkg/tokenizer/tokenizerstore/sqltokenizerstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
@@ -139,6 +140,9 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddRoutePolicyFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddAuthTokenFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddAuthzFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddPublicDashboardsFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddRoleFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateAuthzFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -207,9 +211,9 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 }
 
 func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.NamedMap[factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config]] {
-	tokenStore := opaquetokenizer.NewStore(sqlstore)
+	tokenStore := sqltokenizerstore.NewStore(sqlstore)
 	return factory.MustNewNamedMap(
 		opaquetokenizer.NewFactory(cache, tokenStore, orgGetter),
-		jwttokenizer.NewFactory(),
+		jwttokenizer.NewFactory(cache, tokenStore),
 	)
 }
