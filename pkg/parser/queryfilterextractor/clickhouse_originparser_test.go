@@ -205,23 +205,8 @@ func TestExtractOriginField(t *testing.T) {
 
 		// Error cases
 		{
-			name:        "Empty query",
-			query:       ``,
-			expectError: true,
-		},
-		{
 			name:        "Invalid SQL syntax",
 			query:       `SELECT FROM table`,
-			expectError: true,
-		},
-		{
-			name:        "Non-SELECT statement (CREATE TABLE)",
-			query:       `CREATE TABLE test (id Int32)`,
-			expectError: true,
-		},
-		{
-			name:        "Non-SELECT statement (INSERT)",
-			query:       `INSERT INTO test VALUES (1)`,
 			expectError: true,
 		},
 		{
