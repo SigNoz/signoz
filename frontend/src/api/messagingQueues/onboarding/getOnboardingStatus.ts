@@ -1,4 +1,4 @@
-import { ApiBaseInstance } from 'api';
+import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -20,7 +20,7 @@ const getOnboardingStatus = async (props: {
 }): Promise<SuccessResponse<OnboardingStatusResponse> | ErrorResponse> => {
 	const { endpointService, ...rest } = props;
 	try {
-		const response = await ApiBaseInstance.post(
+		const response = await axios.post(
 			`/messaging-queues/kafka/onboarding/${endpointService || 'consumers'}`,
 			rest,
 		);

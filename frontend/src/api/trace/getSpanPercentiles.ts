@@ -1,4 +1,4 @@
-import { ApiBaseInstance } from 'api';
+import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
@@ -11,7 +11,7 @@ const getSpanPercentiles = async (
 	props: GetSpanPercentilesProps,
 ): Promise<SuccessResponseV2<GetSpanPercentilesResponseDataProps>> => {
 	try {
-		const response = await ApiBaseInstance.post('/span_percentile', {
+		const response = await axios.post('/span_percentile', {
 			...props,
 		});
 
