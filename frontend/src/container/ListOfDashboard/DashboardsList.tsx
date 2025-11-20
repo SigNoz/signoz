@@ -7,10 +7,9 @@ import './DashboardList.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
-	Dropdown,
 	Flex,
 	Input,
-	MenuProps,
+	// MenuProps,
 	Modal,
 	Popover,
 	Skeleton,
@@ -47,14 +46,14 @@ import {
 	Ellipsis,
 	EllipsisVertical,
 	Expand,
-	ExternalLink,
+	// ExternalLink,
 	FileJson,
-	Github,
+	// Github,
 	HdmiPort,
-	LayoutGrid,
+	// LayoutGrid,
 	Link2,
 	Plus,
-	Radius,
+	// Radius,
 	RotateCw,
 	Search,
 	SquareArrowOutUpRight,
@@ -71,7 +70,6 @@ import {
 	Key,
 	useCallback,
 	useEffect,
-	useMemo,
 	useRef,
 	useState,
 } from 'react';
@@ -597,61 +595,61 @@ function DashboardsList(): JSX.Element {
 		},
 	];
 
-	const getCreateDashboardItems = useMemo(() => {
-		const menuItems: MenuProps['items'] = [
-			{
-				label: (
-					<div
-						className="create-dashboard-menu-item"
-						onClick={(): void => onModalHandler(false)}
-					>
-						<Radius size={14} /> Import JSON
-					</div>
-				),
-				key: '1',
-			},
-			{
-				label: (
-					<a
-						href="https://signoz.io/docs/dashboards/dashboard-templates/overview/"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<Flex
-							justify="space-between"
-							align="center"
-							style={{ width: '100%' }}
-							gap="small"
-						>
-							<div className="create-dashboard-menu-item">
-								<Github size={14} /> View templates
-							</div>
-							<ExternalLink size={14} />
-						</Flex>
-					</a>
-				),
-				key: '2',
-			},
-		];
+	// const getCreateDashboardItems = useMemo(() => {
+	// 	const menuItems: MenuProps['items'] = [
+	// 		{
+	// 			label: (
+	// 				<div
+	// 					className="create-dashboard-menu-item"
+	// 					onClick={(): void => onModalHandler(false)}
+	// 				>
+	// 					<Radius size={14} /> Import JSON
+	// 				</div>
+	// 			),
+	// 			key: '1',
+	// 		},
+	// 		{
+	// 			label: (
+	// 				<a
+	// 					href="https://signoz.io/docs/dashboards/dashboard-templates/overview/"
+	// 					target="_blank"
+	// 					rel="noopener noreferrer"
+	// 				>
+	// 					<Flex
+	// 						justify="space-between"
+	// 						align="center"
+	// 						style={{ width: '100%' }}
+	// 						gap="small"
+	// 					>
+	// 						<div className="create-dashboard-menu-item">
+	// 							<Github size={14} /> View templates
+	// 						</div>
+	// 						<ExternalLink size={14} />
+	// 					</Flex>
+	// 				</a>
+	// 			),
+	// 			key: '2',
+	// 		},
+	// 	];
 
-		if (createNewDashboard) {
-			menuItems.unshift({
-				label: (
-					<div
-						className="create-dashboard-menu-item"
-						onClick={(): void => {
-							onNewDashboardHandler();
-						}}
-					>
-						<LayoutGrid size={14} /> Create dashboard
-					</div>
-				),
-				key: '0',
-			});
-		}
+	// 	if (createNewDashboard) {
+	// 		menuItems.unshift({
+	// 			label: (
+	// 				<div
+	// 					className="create-dashboard-menu-item"
+	// 					onClick={(): void => {
+	// 						onNewDashboardHandler();
+	// 					}}
+	// 				>
+	// 					<LayoutGrid size={14} /> Create dashboard
+	// 				</div>
+	// 			),
+	// 			key: '0',
+	// 		});
+	// 	}
 
-		return menuItems;
-	}, [createNewDashboard, onNewDashboardHandler]);
+	// 	return menuItems;
+	// }, [createNewDashboard, onNewDashboardHandler]);
 
 	const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 		<>
@@ -763,23 +761,16 @@ function DashboardsList(): JSX.Element {
 
 						{createNewDashboard && (
 							<section className="actions">
-								<Dropdown
-									overlayClassName="new-dashboard-menu"
-									menu={{ items: getCreateDashboardItems }}
-									placement="bottomRight"
-									trigger={['click']}
+								<Button
+									type="text"
+									className="new-dashboard"
+									icon={<Plus size={14} />}
+									onClick={(): void => {
+										logEvent('Dashboard List: New dashboard clicked', {});
+									}}
 								>
-									<Button
-										type="text"
-										className="new-dashboard"
-										icon={<Plus size={14} />}
-										onClick={(): void => {
-											logEvent('Dashboard List: New dashboard clicked', {});
-										}}
-									>
-										New Dashboard
-									</Button>
-								</Dropdown>
+									New Dashboard
+								</Button>
 								<Button
 									type="text"
 									className="learn-more"
@@ -807,23 +798,17 @@ function DashboardsList(): JSX.Element {
 								onChange={handleSearch}
 							/>
 							{createNewDashboard && (
-								<Dropdown
-									overlayClassName="new-dashboard-menu"
-									menu={{ items: getCreateDashboardItems }}
-									placement="bottomRight"
-									trigger={['click']}
+								<Button
+									type="primary"
+									className="periscope-btn primary btn"
+									icon={<Plus size={14} />}
+									onClick={(): void => {
+										logEvent('Dashboard List: New dashboard clicked', {});
+										setShowNewDashboardTemplatesModal(true);
+									}}
 								>
-									<Button
-										type="primary"
-										className="periscope-btn primary btn"
-										icon={<Plus size={14} />}
-										onClick={(): void => {
-											logEvent('Dashboard List: New dashboard clicked', {});
-										}}
-									>
-										New dashboard
-									</Button>
-								</Dropdown>
+									New dashboard
+								</Button>
 							)}
 						</div>
 

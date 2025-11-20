@@ -68,7 +68,7 @@
 				.template-list-item {
 					display: flex;
 					gap: 8px;
-					padding: 4px 12px;
+					padding: 8px 12px;
 					align-items: center;
 					cursor: pointer;
 					height: 32px;
@@ -76,8 +76,10 @@
 
 					.template-icon {
 						display: flex;
-						height: 14px;
-						width: 14px;
+						height: 20px;
+						width: 20px;
+						border-radius: 2px;
+						padding: 4px;
 						align-items: center;
 						justify-content: center;
 					}
@@ -97,6 +99,17 @@
 					&.active {
 						border-radius: 3px;
 						background: rgba(171, 189, 255, 0.08);
+						position: relative;
+
+						&::before {
+							content: '';
+							position: absolute;
+							top: 0;
+							bottom: 0;
+							left: 0;
+							width: 2px;
+							background: var(--bg-robin-500);
+						}
 					}
 				}
 			}
@@ -159,18 +172,38 @@
 				display: flex;
 				justify-content: center;
 				align-items: center;
-				margin: 24px;
+				padding: 16px;
 				height: calc(100% - 144px);
 				position: relative;
 
-				img {
+				&-container {
+					position: relative;
 					width: 100%;
 					max-width: 100%;
-					padding: 24px;
+					padding: 48px 24px;
+					border-radius: 4px;
 					border: 1px solid var(--bg-ink-50);
-					background: var(--bg-ink-300);
+					background: linear-gradient(98.66deg, #7a97fa 4.42%, #f977ff 96.6%);
 					max-height: 100%;
+
+					&::before {
+						content: '';
+						position: absolute;
+						inset: 0;
+						background: url('/public/Images/grains.png');
+						background-size: contain;
+						background-repeat: repeat;
+						opacity: 0.1;
+					}
+				}
+
+				img {
+					position: relative;
+					width: 100%;
+					max-width: 100%;
+					max-height: 540px;
 					object-fit: contain;
+					border-radius: 4px;
 				}
 			}
 		}

@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import './DashboardTemplatesModal.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Modal, Typography } from 'antd';
 import ApacheIcon from 'assets/CustomIcons/ApacheIcon';
 import DockerIcon from 'assets/CustomIcons/DockerIcon';
@@ -16,7 +17,14 @@ import NginxIcon from 'assets/CustomIcons/NginxIcon';
 import PostgreSQLIcon from 'assets/CustomIcons/PostgreSQLIcon';
 import RedisIcon from 'assets/CustomIcons/RedisIcon';
 import cx from 'classnames';
-import { ConciergeBell, DraftingCompass, Drill, Plus, X } from 'lucide-react';
+import {
+	ConciergeBell,
+	DraftingCompass,
+	Drill,
+	Plus,
+	Search,
+	X,
+} from 'lucide-react';
 import { ChangeEvent, useState } from 'react';
 import { DashboardTemplate } from 'types/api/dashboard/getAll';
 
@@ -162,7 +170,9 @@ export default function DashboardTemplatesModal({
 					<div className="new-dashboard-templates-list">
 						<Input
 							className="new-dashboard-templates-search"
-							placeholder="🔍 Search..."
+							placeholder="Search..."
+							size="middle"
+							prefix={<Search size={12} color={Color.TEXT_VANILLA_400} />}
 							onChange={handleDashboardTemplateSearch}
 						/>
 
@@ -212,10 +222,12 @@ export default function DashboardTemplatesModal({
 						</div>
 
 						<div className="template-preview-image">
-							<img
-								src={selectedDashboardTemplate.previewImage}
-								alt={`${selectedDashboardTemplate.name}-preview`}
-							/>
+							<div className="template-preview-image-container">
+								<img
+									src={selectedDashboardTemplate.previewImage}
+									alt={`${selectedDashboardTemplate.name}-preview`}
+								/>
+							</div>
 						</div>
 					</div>
 				</div>
