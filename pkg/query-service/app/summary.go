@@ -180,26 +180,6 @@ func (aH *APIHandler) GetInspectMetricsData(w http.ResponseWriter, r *http.Reque
 
 }
 
-func (aH *APIHandler) GetMetricAttributes(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	params, apiError := explorer.ParseMetricAttributesParams(r)
-	if apiError != nil {
-		zap.L().Error("error parsing metric attributes params", zap.Error(apiError.Err))
-		RespondError(w, apiError, nil)
-		return
-	}
-
-	attributes, apiError := aH.SummaryService.GetMetricAttributes(ctx, params)
-	if apiError != nil {
-		zap.L().Error("error getting metric attributes", zap.Error(apiError.Err))
-		RespondError(w, apiError, nil)
-		return
-	}
-
-	aH.Respond(w, attributes)
-}
-
 func (aH *APIHandler) UpdateMetricsMetadata(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(r.Context())

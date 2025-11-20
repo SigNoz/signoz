@@ -143,12 +143,6 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, orgID val
 		return nil
 	})
 
-	// Attributes are now fetched via separate API endpoint /api/v1/metrics/{metric_name}/metadata/attributes
-	// Setting empty array for backward compatibility
-	metricDetailsDTO.Attributes = []metrics_explorer.Attribute{}
-
-	// TODO(nikhilmantri0902, srikanthccv): remove this following block after frontend
-	// implements the new endpoint /api/v1/metrics/{metric_name}/metadata/attributes
 	g.Go(func() error {
 		attributes, err := receiver.reader.GetAttributesForMetricName(ctx, metricName, nil, nil, nil)
 		if err != nil {
@@ -555,28 +549,6 @@ func (receiver *SummaryService) GetInspectMetrics(ctx context.Context, params *m
 	}
 
 	return baseResponse, nil
-}
-
-// GetMetricAttributes retrieves attributes for a metric using the optimized metadata table.
-// This is the new endpoint that replaces the expensive time_series_v4 query.
-func (receiver *SummaryService) GetMetricAttributes(ctx context.Context, params *metrics_explorer.MetricAttributesRequest) (*[]metrics_explorer.Attribute, *model.ApiError) {
-	var start, end *int64
-	if params.Start > 0 {
-		start = &params.Start
-	}
-	if params.End > 0 {
-		end = &params.End
-	}
-
-	attributes, err := receiver.reader.GetAttributesForMetricNameFromMetadata(ctx, params.MetricName, start, end)
-	if err != nil {
-		return nil, err
-	}
-	if attributes == nil {
-		empty := []metrics_explorer.Attribute{}
-		return &empty, nil
-	}
-	return attributes, nil
 }
 
 func (receiver *SummaryService) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, params *metrics_explorer.UpdateMetricsMetadataRequest) *model.ApiError {

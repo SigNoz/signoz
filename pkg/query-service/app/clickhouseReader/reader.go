@@ -48,7 +48,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 )
 
 const (
@@ -5286,66 +5285,6 @@ WHERE metric_name = ? AND __normalized=? %s`
 	}
 
 	query += "\nGROUP BY kv.1\nORDER BY valueCount DESC;"
-
-	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-	rows, err := r.db.Query(valueCtx, query, args...)
-	if err != nil {
-		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
-	}
-	defer rows.Close()
-
-	var attributesList []metrics_explorer.Attribute
-	for rows.Next() {
-		var attr metrics_explorer.Attribute
-		if err := rows.Scan(&attr.Key, &attr.Value, &attr.ValueCount); err != nil {
-			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
-		}
-		attributesList = append(attributesList, attr)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
-	}
-
-	return &attributesList, nil
-}
-
-// GetAttributesForMetricNameFromMetadata retrieves attributes for a metric from the metadata table.
-// This is an optimized version that queries the distributed_metadata table instead of time_series_v4,
-// avoiding expensive JSON parsing operations.
-func (r *ClickHouseReader) GetAttributesForMetricNameFromMetadata(ctx context.Context, metricName string, start, end *int64) (*[]metrics_explorer.Attribute, *model.ApiError) {
-	var args []interface{}
-
-	// Build base query
-	args = append(args, metricName)
-
-	// Add time range filtering if provided
-	timeFilter := ""
-	if start != nil && end != nil {
-		// Filter by time range using first_reported_unix_milli and last_reported_unix_milli
-		// We want attributes that were active during this time range
-		timeFilter = " AND (last_reported_unix_milli >= ? AND first_reported_unix_milli <= ?)"
-		args = append(args, *start, *end)
-	}
-
-	// Query the metadata table
-	// We use FINAL to ensure we get the aggregated results from AggregatingMergeTree
-	const queryTemplate = `
-		SELECT 
-			attr_name AS key,
-			groupUniqArray(1000)(attr_string_value) AS values,
-			count(DISTINCT attr_string_value) AS valueCount
-		FROM %s.%s FINAL
-		WHERE metric_name = ? 
-		AND NOT startsWith(attr_name, '__')
-		%s
-		GROUP BY attr_name
-		ORDER BY valueCount DESC;`
-
-	query := fmt.Sprintf(queryTemplate,
-		signozMetricDBName,
-		telemetrymetrics.AttributesMetadataTableName,
-		timeFilter)
 
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	rows, err := r.db.Query(valueCtx, query, args...)
