@@ -37,16 +37,19 @@ func NewInstrumentation(ctx context.Context, providerSettings factory.ProviderSe
 }
 
 func (hook *instrumentation) BeforeQuery(ctx context.Context, event *telemetrystore.QueryEvent) context.Context {
-	ctx, _ = hook.tracer.Start(ctx, "clickhouse.query", trace.WithSpanKind(trace.SpanKindClient))
+	ctx, _ = hook.tracer.Start(ctx, "", trace.WithSpanKind(trace.SpanKindClient))
 	return ctx
 }
 
 func (hook *instrumentation) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {
+	operation := event.Operation()
+
 	span := trace.SpanFromContext(ctx)
 	if !span.IsRecording() {
 		return
 	}
 
+	span.SetName(operation)
 	defer span.End()
 
 	attrs := make([]attribute.KeyValue, 0, 2)
