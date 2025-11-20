@@ -82,7 +82,7 @@ const stopEventsExtension = EditorView.domEventHandlers({
 
 interface QuerySearchProps {
 	placeholder?: string;
-	onChange: (value: string, syncExpression?: boolean) => void;
+	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
 	signalSource?: string;
