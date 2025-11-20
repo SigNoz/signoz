@@ -97,7 +97,7 @@ func TestCloneableSetGet(t *testing.T) {
 	assert.IsType(t, &CloneableA{}, insideCache)
 
 	cached := new(CloneableA)
-	assert.NoError(t, cache.Get(context.Background(), orgID, "key", cached, false))
+	assert.NoError(t, cache.Get(context.Background(), orgID, "key", cached))
 
 	assert.Equal(t, cloneable, cached)
 	// confirm that the cached cloneable is a different pointer
@@ -127,7 +127,7 @@ func TestCacheableSetGet(t *testing.T) {
 	assert.Equal(t, "{\"Key\":\"some-random-key\",\"Value\":1,\"Expiry\":1000}", string(insideCache.([]byte)))
 
 	cached := new(CacheableB)
-	assert.NoError(t, cache.Get(context.Background(), orgID, "key", cached, false))
+	assert.NoError(t, cache.Get(context.Background(), orgID, "key", cached))
 
 	assert.Equal(t, cacheable, cached)
 	assert.NotSame(t, cacheable, cached)
@@ -141,7 +141,7 @@ func TestGetWithNilPointer(t *testing.T) {
 	require.NoError(t, err)
 
 	var cloneable *CloneableA
-	assert.Error(t, cache.Get(context.Background(), valuer.GenerateUUID(), "key", cloneable, false))
+	assert.Error(t, cache.Get(context.Background(), valuer.GenerateUUID(), "key", cloneable))
 }
 
 func TestSetGetWithDifferentTypes(t *testing.T) {
@@ -161,7 +161,7 @@ func TestSetGetWithDifferentTypes(t *testing.T) {
 	assert.NoError(t, cache.Set(context.Background(), orgID, "key", cloneable, 10*time.Second))
 
 	cachedCacheable := new(CacheableB)
-	err = cache.Get(context.Background(), orgID, "key", cachedCacheable, false)
+	err = cache.Get(context.Background(), orgID, "key", cachedCacheable)
 	assert.Error(t, err)
 }
 
@@ -197,7 +197,7 @@ func TestCloneableConcurrentSetGet(t *testing.T) {
 	for i := 0; i < numGoroutines; i++ {
 		go func(id int) {
 			cachedCloneable := new(CloneableA)
-			err := cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", id), cachedCloneable, false)
+			err := cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", id), cachedCloneable)
 			// Some keys might not exist due to concurrent access, which is expected
 			_ = err
 			done <- true
@@ -210,7 +210,7 @@ func TestCloneableConcurrentSetGet(t *testing.T) {
 
 	for i := 0; i < numGoroutines; i++ {
 		cachedCloneable := new(CloneableA)
-		assert.NoError(t, cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", i), cachedCloneable, false))
+		assert.NoError(t, cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", i), cachedCloneable))
 		assert.Equal(t, fmt.Sprintf("key-%d", i), cachedCloneable.Key)
 		assert.Equal(t, i, cachedCloneable.Value)
 		// confirm that the cached cacheable is a different pointer

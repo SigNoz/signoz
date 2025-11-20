@@ -84,10 +84,9 @@ go-run-enterprise: ## Runs the enterprise go backend server
 	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
+	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
 	go run -race \
-		$(GO_BUILD_CONTEXT_ENTERPRISE)/*.go \
-		--config ./conf/prometheus.yml \
-		--cluster cluster
+		$(GO_BUILD_CONTEXT_ENTERPRISE)/*.go
 
 .PHONY: go-test
 go-test: ## Runs go unit tests
@@ -102,10 +101,9 @@ go-run-community: ## Runs the community go backend server
 	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
+	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
 	go run -race \
-		$(GO_BUILD_CONTEXT_COMMUNITY)/*.go server \
-		--config ./conf/prometheus.yml \
-		--cluster cluster
+		$(GO_BUILD_CONTEXT_COMMUNITY)/*.go server
 
 .PHONY: go-build-community $(GO_BUILD_ARCHS_COMMUNITY)
 go-build-community: ## Builds the go backend server for community
