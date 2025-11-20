@@ -19,7 +19,6 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql"
 )
 
@@ -141,61 +140,16 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		return nil, err
 	}
 
-	// Convert PromQL Matrix to ruletypes.Vector for filtering
-	// Then convert back after filtering
-	var promVector ruletypes.Vector
-	for _, series := range res {
-		if len(series.Floats) == 0 {
-			continue
-		}
-		// Use the last point for threshold evaluation
-		lastPoint := series.Floats[len(series.Floats)-1]
-		// Convert prometheus labels to ruletypes labels
-		metricLabels := make(qslabels.Labels, 0, len(series.Metric))
-		for _, lbl := range series.Metric {
-			metricLabels = append(metricLabels, qslabels.Label{Name: lbl.Name, Value: lbl.Value})
-		}
-		promVector = append(promVector, ruletypes.Sample{
-			Metric: metricLabels,
-			Point: ruletypes.Point{
-				T: lastPoint.T,
-				V: lastPoint.F,
-			},
-		})
-	}
-
 	// Filter out new series if newGroupEvalDelay is configured
-	filteredVector, skippedCount, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, promVector)
-	if filterErr != nil {
-		// Fail-open: log error but continue with original series
-		r.logger.WarnContext(ctx, "Error filtering new series, continuing with all series", "error", filterErr, "rule_name", r.Name())
-		filteredVector = promVector
-	} else if skippedCount > 0 {
-		r.logger.InfoContext(ctx, "Filtered new series from evaluation", "rule_name", r.Name(), "skipped_count", skippedCount, "total_count", len(promVector))
-	}
-
-	// Convert filtered vector back to PromQL Matrix format
-	// Create a map of filtered metric label hashes for quick lookup
-	filteredLabelsMap := make(map[uint64]bool)
-	for _, smpl := range filteredVector {
-		// Convert ruletypes labels to prometheus labels for comparison
-		// promql.Series.Metric is of type labels.Labels from prometheus/prometheus/model/labels
-		promLabels := make([]labels.Label, 0, len(smpl.Metric))
-		for _, lbl := range smpl.Metric {
-			promLabels = append(promLabels, labels.Label{Name: lbl.Name, Value: lbl.Value})
+	if r.ShouldSkipNewGroups() {
+		collection := ruletypes.NewPromMatrixCollection(res)
+		filteredCollection, _, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, collection)
+		if filterErr != nil {
+			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
+			return nil, filterErr
 		}
-		labelSet := labels.New(promLabels...)
-		filteredLabelsMap[labelSet.Hash()] = true
+		res = filteredCollection.(*ruletypes.PromMatrixCollection).Matrix()
 	}
-
-	// Filter the original PromQL Matrix to only include filtered series
-	filteredRes := make(promql.Matrix, 0, len(res))
-	for _, series := range res {
-		if filteredLabelsMap[series.Metric.Hash()] {
-			filteredRes = append(filteredRes, series)
-		}
-	}
-	res = filteredRes
 
 	r.mtx.Lock()
 	defer r.mtx.Unlock()

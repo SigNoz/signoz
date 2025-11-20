@@ -625,12 +625,8 @@ func (r *BaseRule) ExtractMetricAndGroupBys(ctx context.Context) ([]string, []st
 }
 
 // FilterNewSeries filters out series that are too new based on metadata first_seen timestamps.
-// Returns the filtered vector and the number of series that were skipped.
-func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series ruletypes.Vector) (ruletypes.Vector, int, error) {
-	if !r.ShouldSkipNewGroups() {
-		return series, 0, nil
-	}
-
+// Returns the filtered series and the number of series that were skipped.
+func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series ruletypes.SeriesCollection) (ruletypes.SeriesCollection, int, error) {
 	// Extract metric names and groupBy keys
 	metricNames, groupedFields, err := r.ExtractMetricAndGroupBys(ctx)
 	if err != nil {
@@ -650,9 +646,10 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 	lookupKeys := make([]model.MetricMetadataLookupKey, 0)
 	seriesToKeys := make(map[int][]string) // series index -> lookup key strings
 
-	for i, smpl := range series {
+	for i := 0; i < series.Len(); i++ {
+		labels := series.GetItem(i).GetLabels()
 		metricLabelMap := make(map[string]string)
-		for _, lbl := range smpl.Metric {
+		for _, lbl := range labels {
 			metricLabelMap[lbl.Name] = lbl.Value
 		}
 
@@ -685,9 +682,6 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 	}
 
 	// Query metadata for first_seen timestamps
-	// We need to cast reader to ClickHouseReader - check if it implements the method
-	// For now, we'll need to add this to the interfaces.Reader interface or use type assertion
-	// Let's use type assertion with a helper function
 	firstSeenMap, err := r.getMetadataFirstSeen(ctx, lookupKeys)
 	if err != nil {
 		// log error but continue with original series
@@ -698,16 +692,16 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 	}
 
 	// Filter series based on first_seen + delay
-	filteredSeries := make(ruletypes.Vector, 0, len(series))
+	filteredIndices := make([]int, 0)
 	skippedCount := 0
 	evalTimeMs := ts.UnixMilli()
-	delayMs := r.newGroupEvalDelay.Milliseconds()
+	newGroupEvalDelayMs := r.newGroupEvalDelay.Milliseconds()
 
-	for i, smpl := range series {
+	for i := 0; i < series.Len(); i++ {
 		keys, ok := seriesToKeys[i]
 		if !ok {
 			// No groupBy keys for this series, include it
-			filteredSeries = append(filteredSeries, smpl)
+			filteredIndices = append(filteredIndices, i)
 			continue
 		}
 
@@ -730,21 +724,21 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 		}
 
 		// Check if first_seen + delay has passed
-		if maxFirstSeen+delayMs > evalTimeMs {
+		if maxFirstSeen+newGroupEvalDelayMs > evalTimeMs {
 			// Still within grace period, skip this series
 			skippedCount++
 			continue
 		}
 
 		// Old enough, include it
-		filteredSeries = append(filteredSeries, smpl)
+		filteredIndices = append(filteredIndices, i)
 	}
 
 	if r.logger != nil && skippedCount > 0 {
-		r.logger.InfoContext(ctx, "Filtered new series", "rule_name", r.Name(), "skipped_count", skippedCount, "total_count", len(series), "delay_ms", delayMs)
+		r.logger.InfoContext(ctx, "Filtered new series", "rule_name", r.Name(), "skipped_count", skippedCount, "total_count", series.Len(), "delay_ms", newGroupEvalDelayMs)
 	}
 
-	return filteredSeries, skippedCount, nil
+	return series.Filter(filteredIndices), skippedCount, nil
 }
 
 // getMetadataFirstSeen is a helper that accesses ClickHouseReader through type assertion
