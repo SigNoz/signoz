@@ -306,6 +306,31 @@ type QueryFilterAnalyzeRequest struct {
 	QueryType string `json:"queryType"`
 }
 
+// UnmarshalJSON implements custom JSON unmarshaling with validation and normalization
+func (q *QueryFilterAnalyzeRequest) UnmarshalJSON(data []byte) error {
+	// Use a temporary struct to avoid infinite recursion
+	type tempQueryFilterAnalyzeRequest QueryFilterAnalyzeRequest
+	aux := &tempQueryFilterAnalyzeRequest{}
+
+	if err := json.Unmarshal(data, aux); err != nil {
+		return errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "failed to parse json: %v", err)
+	}
+
+	// Trim and validate query is not empty
+	q.Query = strings.TrimSpace(aux.Query)
+	if q.Query == "" {
+		return &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: errors.New("query is required and cannot be empty"),
+		}
+	}
+
+	// Normalize queryType to lowercase and trim
+	q.QueryType = strings.ToLower(strings.TrimSpace(aux.QueryType))
+
+	return nil
+}
+
 // QueryFilterAnalyzeResponse represents the response body for query filter analysis
 type QueryFilterAnalyzeResponse struct {
 	MetricNames []string `json:"metricNames"`
@@ -5550,25 +5575,13 @@ func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request)
 
 	var req QueryFilterAnalyzeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorBadData,
-			Err: fmt.Errorf("cannot parse the request body: %v", err),
-		}, nil)
+		render.Error(w, err)
 		return
 	}
 
-	// Validate query is not empty
-	query := strings.TrimSpace(req.Query)
-	if query == "" {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorBadData,
-			Err: errors.New("query is required and cannot be empty"),
-		}, nil)
-		return
-	}
-
-	// Normalize queryType to lowercase and map to extractor constants
-	queryType := strings.ToLower(strings.TrimSpace(req.QueryType))
+	// Query and QueryType are already validated and normalized by UnmarshalJSON
+	query := req.Query
+	queryType := req.QueryType
 	var extractorType string
 
 	switch v3.QueryType(queryType) {
@@ -5577,10 +5590,7 @@ func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request)
 	case v3.QueryTypeClickHouseSQL:
 		extractorType = queryfilterextractor.ExtractorCH
 	default:
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorBadData,
-			Err: fmt.Errorf("unsupported queryType: %s. Supported values are '%s' and '%s'", req.QueryType, v3.QueryTypePromQL, v3.QueryTypeClickHouseSQL),
-		}, nil)
+		render.Error(w, errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "unsupported queryType: %s. Supported values are '%s' and '%s'", req.QueryType, v3.QueryTypePromQL, v3.QueryTypeClickHouseSQL))
 		return
 	}
 
@@ -5588,10 +5598,7 @@ func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request)
 	extractor, err := queryfilterextractor.NewExtractor(extractorType)
 	if err != nil {
 		zap.L().Error("failed to create extractor", zap.String("extractorType", extractorType), zap.Error(err))
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: fmt.Errorf("failed to create extractor: %v", err),
-		}, nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -5599,10 +5606,7 @@ func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request)
 	result, err := extractor.Extract(query)
 	if err != nil {
 		zap.L().Debug("query filter extraction failed", zap.String("queryType", queryType), zap.Error(err))
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorBadData,
-			Err: fmt.Errorf("failed to parse %s query: %v", queryType, err),
-		}, nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -5610,13 +5614,7 @@ func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request)
 	var resp QueryFilterAnalyzeResponse
 
 	for _, group := range result.GroupByColumns {
-		// the column alias is the group name from resulting queries
-		groupName := group.Alias
-		// If no alias was used, use the column name as the group name
-		if groupName == "" {
-			groupName = group.Name
-		}
-		resp.Groups = append(resp.Groups, groupName) // add the group name to the response
+		resp.Groups = append(resp.Groups, group.GroupName()) // add the group name to the response
 	}
 	resp.MetricNames = append(resp.MetricNames, result.MetricNames...) // add the metric names to the response
 	aH.Respond(w, resp)
