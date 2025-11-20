@@ -4,7 +4,7 @@ import { toast } from '@signozhq/sonner';
 import { Button, Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { Check, Send, X } from 'lucide-react';
+import { Check, Loader, Send, X } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 
 import { useCreateAlertState } from '../context';
@@ -150,7 +150,11 @@ function Footer(): JSX.Element {
 				onClick={handleSaveAlert}
 				disabled={disableButtons || Boolean(alertValidationMessage)}
 			>
-				<Check size={14} />
+				{isCreatingAlertRule || isUpdatingAlertRule ? (
+					<Loader size={14} />
+				) : (
+					<Check size={14} />
+				)}
 				<Typography.Text>Save Alert Rule</Typography.Text>
 			</Button>
 		);
@@ -158,7 +162,13 @@ function Footer(): JSX.Element {
 			button = <Tooltip title={alertValidationMessage}>{button}</Tooltip>;
 		}
 		return button;
-	}, [alertValidationMessage, disableButtons, handleSaveAlert]);
+	}, [
+		alertValidationMessage,
+		disableButtons,
+		handleSaveAlert,
+		isCreatingAlertRule,
+		isUpdatingAlertRule,
+	]);
 
 	const testAlertButton = useMemo(() => {
 		let button = (
@@ -167,7 +177,7 @@ function Footer(): JSX.Element {
 				onClick={handleTestNotification}
 				disabled={disableButtons || Boolean(alertValidationMessage)}
 			>
-				<Send size={14} />
+				{isTestingAlertRule ? <Loader size={14} /> : <Send size={14} />}
 				<Typography.Text>Test Notification</Typography.Text>
 			</Button>
 		);
@@ -175,7 +185,12 @@ function Footer(): JSX.Element {
 			button = <Tooltip title={alertValidationMessage}>{button}</Tooltip>;
 		}
 		return button;
-	}, [alertValidationMessage, disableButtons, handleTestNotification]);
+	}, [
+		alertValidationMessage,
+		disableButtons,
+		handleTestNotification,
+		isTestingAlertRule,
+	]);
 
 	return (
 		<div className="create-alert-v2-footer">
