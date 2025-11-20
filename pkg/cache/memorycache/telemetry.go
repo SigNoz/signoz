@@ -27,7 +27,7 @@ func newTelemetry(meter metric.Meter) (*telemetry, error) {
 		errs = errors.Join(errs, err)
 	}
 
-	cacheHits, err := meter.Int64ObservableGauge("signoz.cache.hits", metric.WithDescription("Hits is the number of Get calls where a value was found for the corresponding key."), metric.WithUnit("1"))
+	cacheHits, err := meter.Int64ObservableGauge("signoz.cache.hits", metric.WithDescription("Hits is the number of Get calls where a value was found for the corresponding key."))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
