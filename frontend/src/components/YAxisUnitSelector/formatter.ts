@@ -1,16 +1,12 @@
 import { formattedValueToString, getValueFormat } from '@grafana/data';
+import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
+import { formatDecimalWithLeadingZeros } from 'components/Graph/utils';
 import {
 	AdditionalLabelsMappingForGrafanaUnits,
 	CUSTOM_SCALING_FAMILIES,
 	UniversalUnitToGrafanaUnit,
 } from 'components/YAxisUnitSelector/constants';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
-
-const format = (
-	formatStr: string,
-	value: number,
-): ReturnType<ReturnType<typeof getValueFormat>> =>
-	getValueFormat(formatStr)(value, undefined, undefined, undefined);
 
 function scaleValue(
 	value: number,
@@ -47,6 +43,8 @@ function scaleValue(
 export function formatUniversalUnit(
 	value: number,
 	unit: UniversalYAxisUnit,
+	precision: PrecisionOption = PrecisionOptionsEnum.FULL,
+	decimals: number | undefined = undefined,
 ): string {
 	// Check if this unit belongs to a family that needs custom scaling
 	const family = CUSTOM_SCALING_FAMILIES.find((family) =>
@@ -54,17 +52,39 @@ export function formatUniversalUnit(
 	);
 	if (family) {
 		const scaled = scaleValue(value, unit, family.units, family.scaleFactor);
-		const formatted = format('none', scaled.value);
+		const formatter = getValueFormat(scaled.label);
+		const formatted = formatter(scaled.value, decimals);
+		if (formatted.text && formatted.text.includes('.')) {
+			formatted.text = formatDecimalWithLeadingZeros(
+				parseFloat(formatted.text),
+				precision,
+			);
+		}
 		return `${formatted.text} ${scaled.label}`;
 	}
 
 	// Use Grafana formatting with custom label mappings
 	const grafanaFormat = UniversalUnitToGrafanaUnit[unit];
 	if (grafanaFormat) {
-		const formatted = format(grafanaFormat, value);
+		const formatter = getValueFormat(grafanaFormat);
+		const formatted = formatter(value, decimals);
+		if (formatted.text && formatted.text.includes('.')) {
+			formatted.text = formatDecimalWithLeadingZeros(
+				parseFloat(formatted.text),
+				precision,
+			);
+		}
 		return formattedValueToString(formatted);
 	}
 
 	// Fallback to short format for other units
-	return `${format('short', value).text} ${unit}`;
+	const formatter = getValueFormat('short');
+	const formatted = formatter(value, decimals);
+	if (formatted.text && formatted.text.includes('.')) {
+		formatted.text = formatDecimalWithLeadingZeros(
+			parseFloat(formatted.text),
+			precision,
+		);
+	}
+	return `${formatted.text} ${unit}`;
 }
