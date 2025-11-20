@@ -319,9 +319,6 @@ func (r *BaseRule) GetEvaluationTimestamp() time.Time {
 }
 
 func (r *BaseRule) State() model.AlertState {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
 	maxState := model.StateInactive
 	for _, a := range r.Active {
 		if a.State > maxState {
