@@ -21,6 +21,8 @@ type Store interface {
 
 	List(context.Context, valuer.UUID) ([]*StorableDashboard, error)
 
+	ListPublic(context.Context, valuer.UUID) ([]*StorablePublicDashboard, error)
+
 	Update(context.Context, valuer.UUID, *StorableDashboard) error
 
 	UpdatePublic(context.Context, *StorablePublicDashboard) error
