@@ -19,7 +19,6 @@ export function createDownloadableData(
 		}
 	});
 
-	console.log(inputData);
 	return inputData.map((row) => {
 		const downloadableRow: Record<string, string> = {};
 
@@ -45,4 +44,12 @@ export function createDownloadableData(
 
 		return downloadableRow;
 	});
+}
+
+export function getFormattedTimestamp(): string {
+	const now = new Date();
+	const pad = (n: number): string => n.toString().padStart(2, '0');
+	return `${now.getFullYear()}_${pad(now.getMonth() + 1)}_${pad(
+		now.getDate(),
+	)}_${pad(now.getHours())}_${pad(now.getMinutes())}_${pad(now.getSeconds())}`;
 }

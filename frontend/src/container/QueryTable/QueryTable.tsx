@@ -15,7 +15,7 @@ import { useParams } from 'react-router-dom';
 
 import useTableContextMenu from './Drilldown/useTableContextMenu';
 import { QueryTableProps } from './QueryTable.intefaces';
-import { createDownloadableData } from './utils';
+import { createDownloadableData, getFormattedTimestamp } from './utils';
 
 export function QueryTable({
 	queryTableData,
@@ -172,7 +172,7 @@ export function QueryTable({
 				<div className="query-table--download">
 					<Download
 						data={downloadableData}
-						fileName={`${fileName}-${servicename}`}
+						fileName={`${fileName}-${servicename}-${getFormattedTimestamp()}`}
 						isLoading={loading as boolean}
 					/>
 				</div>
