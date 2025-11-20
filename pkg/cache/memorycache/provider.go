@@ -2,6 +2,7 @@ package memorycache
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"strings"
 	"time"
@@ -11,14 +12,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	gocache "github.com/patrickmn/go-cache"
+	"github.com/dgraph-io/ristretto/v2"
 	semconv "go.opentelemetry.io/collector/semconv/v1.6.1"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type provider struct {
-	cc       *gocache.Cache
+	cc       *ristretto.Cache[string, any]
 	config   cache.Config
 	settings factory.ScopedProviderSettings
 }
@@ -30,8 +32,62 @@ func NewFactory() factory.ProviderFactory[cache.Cache, cache.Config] {
 func New(ctx context.Context, settings factory.ProviderSettings, config cache.Config) (cache.Cache, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/cache/memorycache")
 
+	cc, err := ristretto.NewCache(&ristretto.Config[string, any]{
+		NumCounters:        10 * 10000, // 100k to support 10k entries
+		MaxCost:            1 << 26,    // 64 MB
+		BufferItems:        64,
+		Metrics:            true,
+		IgnoreInternalCost: true,
+		Cost:               calculateObjectCacheCost,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	meter := scopedProviderSettings.Meter()
+	telemetry, err := newTelemetry(meter)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = meter.RegisterCallback(func(ctx context.Context, o metric.Observer) error {
+		metrics := cc.Metrics
+		attributes := []attribute.KeyValue{
+			attribute.String("provider", "memorycache"),
+		}
+		o.ObserveFloat64(telemetry.cacheRatio, metrics.Ratio(), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.cacheHits, int64(metrics.Hits()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.cacheMisses, int64(metrics.Misses()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.costAdded, int64(metrics.CostAdded()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.costEvicted, int64(metrics.CostEvicted()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.keysAdded, int64(metrics.KeysAdded()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.keysEvicted, int64(metrics.KeysEvicted()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.keysUpdated, int64(metrics.KeysUpdated()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.setsDropped, int64(metrics.SetsDropped()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.setsRejected, int64(metrics.SetsRejected()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.getsDropped, int64(metrics.GetsDropped()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.getsKept, int64(metrics.GetsKept()), metric.WithAttributes(attributes...))
+		return nil
+	},
+		telemetry.cacheRatio,
+		telemetry.cacheHits,
+		telemetry.cacheMisses,
+		telemetry.costAdded,
+		telemetry.costEvicted,
+		telemetry.keysAdded,
+		telemetry.keysEvicted,
+		telemetry.keysUpdated,
+		telemetry.setsDropped,
+		telemetry.setsRejected,
+		telemetry.getsDropped,
+		telemetry.getsKept,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &provider{
-		cc:       gocache.New(config.Memory.TTL, config.Memory.CleanupInterval),
+		cc:       cc,
 		settings: scopedProviderSettings,
 		config:   config,
 	}, nil
@@ -53,7 +109,7 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	if cloneable, ok := data.(cachetypes.Cloneable); ok {
 		span.SetAttributes(attribute.Bool("db.cloneable", true))
 		toCache := cloneable.Clone()
-		provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, ttl)
+		provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 0, ttl)
 		return nil
 	}
 
@@ -63,7 +119,7 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 		return err
 	}
 
-	provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, ttl)
+	provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 0, ttl)
 	return nil
 }
 
@@ -126,11 +182,29 @@ func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, cacheKe
 	))
 	defer span.End()
 
-	provider.cc.Delete(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
+	provider.cc.Del(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 }
 
 func (provider *provider) DeleteMany(_ context.Context, orgID valuer.UUID, cacheKeys []string) {
 	for _, cacheKey := range cacheKeys {
-		provider.cc.Delete(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
+		provider.cc.Del(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 	}
+}
+
+func calculateObjectCacheCost(o any) int64 {
+	if o == nil {
+		return 0
+	}
+
+	if cacheable, ok := o.(cachetypes.Cacheable); ok {
+		if marshaled, err := cacheable.MarshalBinary(); err == nil {
+			return int64(len(marshaled))
+		}
+	}
+
+	if jsonBytes, err := json.Marshal(o); err == nil {
+		return int64(len(jsonBytes))
+	}
+
+	return 1024 // fallback: 1 KB
 }
