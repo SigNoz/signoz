@@ -244,6 +244,10 @@
 			}
 		}
 	}
+	// Add border-bottom to table cells when pagination is not present
+	.ant-spin-container:not(:has(.ant-pagination)) .ant-table-cell {
+		border-bottom: 1px solid var(--bg-slate-500) !important;
+	}
 
 	.endpoints-table-container {
 		display: flex;
@@ -1277,5 +1281,9 @@
 				}
 			}
 		}
+	}
+	// Add border-bottom to table cells when pagination is not present
+	.ant-spin-container:not(:has(.ant-pagination)) .ant-table-cell {
+		border-bottom: 1px solid var(--bg-vanilla-300) !important;
 	}
 }
