@@ -98,13 +98,6 @@ export const DashboardPage = Loadable(
 		import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardsListPage'),
 );
 
-export const PublicDashboardPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "Public Dashboard Page" */ 'pages/PublicDashboard'
-		),
-);
-
 export const NewDashboardPage = Loadable(
 	() => import(/* webpackChunkName: "New DashboardPage" */ 'pages/NewDashboard'),
 );

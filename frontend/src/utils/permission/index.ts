@@ -126,5 +126,4 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	METER_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	METER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	METER_EXPLORER_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
-	PUBLIC_DASHBOARD: ['ADMIN', 'EDITOR', 'VIEWER'],
 };

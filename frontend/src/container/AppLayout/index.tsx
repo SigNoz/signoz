@@ -387,15 +387,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [pathname]);
 
-	const isToDisplayLayout =
-		isLoggedIn || pathname.startsWith('/public/dashboard/');
+	const isToDisplayLayout = isLoggedIn;
 
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED ||
 		pathname === ROUTES.ONBOARDING ||
-		pathname.startsWith('/public/dashboard/') ||
 		pathname === ROUTES.GET_STARTED_WITH_CLOUD ||
 		pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING ||
 		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||

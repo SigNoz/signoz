@@ -21,7 +21,6 @@ const ROUTES = {
 	APPLICATION: '/services',
 	ALL_DASHBOARD: '/dashboard',
 	DASHBOARD: '/dashboard/:dashboardId',
-	PUBLIC_DASHBOARD: '/public/dashboard/:dashboardId',
 	DASHBOARD_WIDGET: '/dashboard/:dashboardId/:widgetId',
 	EDIT_ALERTS: '/alerts/edit',
 	LIST_ALL_ALERT: '/alerts',

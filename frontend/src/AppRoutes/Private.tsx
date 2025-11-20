@@ -245,7 +245,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			history.replace(newLocation);
 			return;
 		}
-
 		// if the current route
 		if (currentRoute) {
 			const { isPrivate, key } = currentRoute;
