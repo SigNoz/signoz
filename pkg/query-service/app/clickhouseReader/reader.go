@@ -6434,7 +6434,6 @@ func (r *ClickHouseReader) GetFirstSeenFromMetricMetadata(ctx context.Context, l
 			zap.L().Error("Error querying metadata for first_seen", zap.Error(err))
 			return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metadata for first_seen: %v", err)}
 		}
-		defer rows.Close()
 
 		for rows.Next() {
 			var metricName, attrName, attrValue string
@@ -6451,8 +6450,10 @@ func (r *ClickHouseReader) GetFirstSeenFromMetricMetadata(ctx context.Context, l
 		}
 
 		if err := rows.Err(); err != nil {
+			rows.Close()
 			return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error iterating metadata first_seen results: %v", err)}
 		}
+		rows.Close()
 	}
 
 	return result, nil
