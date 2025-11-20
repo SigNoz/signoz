@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	clickhouse "github.com/AfterShip/clickhouse-sql-parser/parser"
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 const (
@@ -25,7 +26,7 @@ func (e *ClickHouseFilterExtractor) Extract(query string) (*FilterResult, error)
 	p := clickhouse.NewParser(query)
 	stmts, err := p.ParseStmts()
 	if err != nil {
-		return nil, err
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse clickhouse query: %s", err.Error())
 	}
 
 	result := &FilterResult{MetricNames: []string{}, GroupByColumns: []ColumnInfo{}}
