@@ -12,7 +12,6 @@ import {
 	Typography,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
-import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -44,7 +43,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
-import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { DashboardData, IDashboardVariable } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
@@ -301,55 +299,11 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		safeNavigate(generatedUrl);
 	}
 
-	const {
-		data: publicDashboardResponse,
-		isLoading: isLoadingPublicDashboard,
-	} = useGetPublicDashboard(selectedDashboard?.id || '');
-
-	console.log(
-		'publicDashboardResponse',
-		publicDashboardResponse,
-		isLoadingPublicDashboard,
+	const { data: publicDashboardResponse } = useGetPublicDashboard(
+		selectedDashboard?.id || '',
 	);
 
-	const {
-		mutate: createPublicDashboard,
-		isLoading: isLoadingCreatePublicDashboard,
-	} = useMutation(createPublicDashboardAPI, {
-		onSuccess: () => {
-			notifications.success({
-				message: 'Public dashboard created successfully',
-			});
-		},
-		onError: () => {
-			notifications.error({
-				message: 'Failed to create public dashboard',
-			});
-		},
-	});
-
-	const handleCreatePublicDashboard = (): void => {
-		if (!selectedDashboard) return;
-
-		// only support seconds, minutes , hours
-
-		createPublicDashboard({
-			dashboardId: selectedDashboard.id,
-			timeRangeEnabled: true,
-			defaultTimeRange: '30m',
-		});
-	};
-
 	const isPublicDashboard = !!publicDashboardResponse?.data?.publicPath;
-
-	const handleOpenPublicDashboard = (): void => {
-		if (!isPublicDashboard) return;
-
-		window.open(
-			`${window.location.origin}${publicDashboardResponse?.data?.publicPath}`,
-			'_blank',
-		);
-	};
 
 	return (
 		<Card className="dashboard-description-container">
@@ -387,11 +341,21 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							className="dashboard-title"
 							data-testid="dashboard-title"
 						>
-							{' '}
 							{title}
 						</Typography.Text>
 					</Tooltip>
-					{isDashboardLocked && <LockKeyhole size={14} />}
+
+					{isPublicDashboard && (
+						<Tooltip title="This dashboard is publicly accessible">
+							<Globe size={14} className="public-dashboard-icon" />
+						</Tooltip>
+					)}
+
+					{isDashboardLocked && (
+						<Tooltip title="This dashboard is locked">
+							<LockKeyhole size={14} className="lock-dashboard-icon" />
+						</Tooltip>
+					)}
 				</div>
 				<div className="right-section">
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
@@ -517,24 +481,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						>
 							New Panel
 						</Button>
-					)}
-					<Button
-						type="default"
-						className="periscope-btn secondary"
-						icon={<Globe size={14} />}
-						onClick={handleCreatePublicDashboard}
-						disabled={isLoadingCreatePublicDashboard}
-					>
-						Share
-					</Button>
-
-					{isPublicDashboard && (
-						<Button
-							type="text"
-							icon={<Globe size={14} />}
-							onClick={handleOpenPublicDashboard}
-							className="periscope-btn ghost open-public-dashboard-btn"
-						/>
 					)}
 				</div>
 			</section>

@@ -246,17 +246,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			return;
 		}
 
-		const isPublicDashboard = pathname.startsWith('/public/dashboard/');
-
-		console.log('isPublicDashboard', isPublicDashboard);
-
-		if (isPublicDashboard) {
-			history.push(pathname);
-			return;
-		}
-
 		// if the current route
-		if (currentRoute && !isPublicDashboard) {
+		if (currentRoute) {
 			const { isPrivate, key } = currentRoute;
 			if (isPrivate) {
 				if (isLoggedInState) {

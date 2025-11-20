@@ -1,17 +1,17 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorV2Resp, 	 SuccessResponseV2 } from 'types/api';
-import { CreatePublicDashboardProps } from 'types/api/dashboard/public/create';
+import {  ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import { UpdatePublicDashboardProps } from 'types/api/dashboard/public/update';
 
-const createPublicDashboard = async (
-	props: CreatePublicDashboardProps,
-): Promise<SuccessResponseV2<CreatePublicDashboardProps>> => {
+const updatePublicDashboard = async (
+	props: UpdatePublicDashboardProps,
+): Promise<SuccessResponseV2<UpdatePublicDashboardProps>> => {
 
     const { dashboardId, timeRangeEnabled = false, defaultTimeRange = '30m' } = props;
 
 	try {
-		const response = await axios.post(
+		const response = await axios.put(
 			`/dashboards/${dashboardId}/public`,
 			{ timeRangeEnabled, defaultTimeRange },
 		);
@@ -25,4 +25,4 @@ const createPublicDashboard = async (
 	}
 };
 
-export default createPublicDashboard;
+export default updatePublicDashboard;

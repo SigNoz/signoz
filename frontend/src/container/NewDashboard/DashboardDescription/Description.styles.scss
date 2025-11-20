@@ -68,7 +68,7 @@
 			display: flex;
 			gap: 6px;
 			align-items: center;
-			max-width: 100%;
+			max-width: 80%;
 
 			.dashboard-btn {
 				display: flex;
@@ -130,7 +130,6 @@
 
 		.left-section {
 			display: flex;
-
 			align-items: center;
 			gap: 8px;
 			width: 45%;
@@ -148,15 +147,17 @@
 				font-weight: 500;
 				line-height: 24px; /* 150% */
 				letter-spacing: -0.08px;
-				flex-shrink: 0;
-
-				flex: 1;
-				min-width: fit-content;
+				max-width: 80%;
 
 				display: -webkit-box;
-				-webkit-line-clamp: 3;
+				-webkit-line-clamp: 1;
 				-webkit-box-orient: vertical;
 				overflow: hidden;
+			}
+
+			.public-dashboard-icon {
+				color: var(--bg-forest-500);
+				margin-right: 4px;
 			}
 		}
 

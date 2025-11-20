@@ -390,10 +390,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isToDisplayLayout =
 		isLoggedIn || pathname.startsWith('/public/dashboard/');
 
-	console.log('isToDisplayLayout', pathname === ROUTES.PUBLIC_DASHBOARD);
-	console.log('pathname', pathname);
-	console.log('ROUTES.PUBLIC_DASHBOARD', ROUTES.PUBLIC_DASHBOARD);
-
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
 	const renderFullScreen =
