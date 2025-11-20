@@ -24,7 +24,7 @@ import {
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
-import { unquote } from 'utils/stringUtils';
+import { isQuoted, unquote } from 'utils/stringUtils';
 import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -38,11 +38,30 @@ const isArrayOperator = (operator: string): boolean => {
 	return arrayOperators.includes(operator);
 };
 
-const isVariable = (value: string | string[] | number | boolean): boolean => {
+const isVariable = (
+	value: (string | number | boolean)[] | string | number | boolean,
+): boolean => {
 	if (Array.isArray(value)) {
 		return value.some((v) => typeof v === 'string' && v.trim().startsWith('$'));
 	}
 	return typeof value === 'string' && value.trim().startsWith('$');
+};
+
+const formatSingleValue = (
+	v: string | number | boolean,
+	shouldQuote = true,
+): string => {
+	if (typeof v === 'string') {
+		if (isQuoted(v)) {
+			return v;
+		}
+		if (!Number.isNaN(Number(v)) && v.trim() !== '') {
+			return v.trim();
+		}
+
+		return shouldQuote ? `'${v.replace(/'/g, "\\'")}'` : unquote(v);
+	}
+	return String(v);
 };
 
 /**
@@ -51,36 +70,25 @@ const isVariable = (value: string | string[] | number | boolean): boolean => {
  * @param operator - The operator being used (to determine if array is needed)
  * @returns Formatted value string
  */
-const formatValueForExpression = (
-	value: string[] | string | number | boolean,
+export const formatValueForExpression = (
+	value: (string | number | boolean)[] | string | number | boolean,
 	operator?: string,
 ): string => {
 	if (isVariable(value)) {
 		return String(value);
 	}
 
-	// For IN operators, ensure value is always an array
 	if (isArrayOperator(operator || '')) {
 		const arrayValue = Array.isArray(value) ? value : [value];
-		return `[${arrayValue
-			.map((v) =>
-				typeof v === 'string' ? `'${v.replace(/'/g, "\\'")}'` : String(v),
-			)
-			.join(', ')}]`;
+		return `[${arrayValue.map((v) => formatSingleValue(v)).join(', ')}]`;
 	}
 
 	if (Array.isArray(value)) {
-		// Handle array values (e.g., for IN operations)
-		return `[${value
-			.map((v) =>
-				typeof v === 'string' ? `'${v.replace(/'/g, "\\'")}'` : String(v),
-			)
-			.join(', ')}]`;
+		return `[${value.map((v) => formatSingleValue(v)).join(', ')}]`;
 	}
 
 	if (typeof value === 'string') {
-		// Add single quotes around all string values and escape internal single quotes
-		return `'${value.replace(/'/g, "\\'")}'`;
+		return formatSingleValue(value);
 	}
 
 	return String(value);
@@ -138,10 +146,12 @@ export const convertFiltersToExpression = (
 
 const formatValuesForFilter = (value: string | string[]): string | string[] => {
 	if (Array.isArray(value)) {
-		return value.map((v) => (typeof v === 'string' ? unquote(v) : String(v)));
+		return value.map((v) =>
+			typeof v === 'string' ? formatSingleValue(v, false) : String(v),
+		);
 	}
 	if (typeof value === 'string') {
-		return unquote(value);
+		return formatSingleValue(value, false);
 	}
 	return String(value);
 };
