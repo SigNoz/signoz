@@ -37,6 +37,7 @@ type MetricMetadata struct {
 	Description string `json:"description"`
 	MetricType  string `json:"type"`
 	MetricUnit  string `json:"unit"`
+	Temporality string `json:"temporality"`
 }
 
 // TreemapMode indicates which treemap variant the caller requests.
