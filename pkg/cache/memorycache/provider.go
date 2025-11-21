@@ -110,7 +110,11 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 		span.SetAttributes(attribute.Int64("memory.cost", 1))
 		toCache := cloneable.Clone()
 		// In case of contention we are choosing to evict the cloneable entries first hence cost is set to 1
-		provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 1, ttl)
+		if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 1, ttl); !ok {
+			return errors.New(errors.TypeInternal, errors.CodeInternal, "error writing to cache")
+		}
+		
+		provider.cc.Wait()
 		return nil
 	}
 
@@ -123,7 +127,11 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	span.SetAttributes(attribute.Bool("memory.cloneable", false))
 	span.SetAttributes(attribute.Int64("memory.cost", cost))
 
-	provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, cost, ttl)
+	if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 1, ttl); !ok {
+		return errors.New(errors.TypeInternal, errors.CodeInternal, "error writing to cache")
+	}
+
+	provider.cc.Wait()
 	return nil
 }
 
@@ -146,7 +154,7 @@ func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey s
 	}
 
 	if cloneable, ok := cachedData.(cachetypes.Cloneable); ok {
-		span.SetAttributes(attribute.Bool("db.cloneable", true))
+		span.SetAttributes(attribute.Bool("memory.cloneable", true))
 		// check if the destination value is settable
 		dstv := reflect.ValueOf(dest)
 		if !dstv.Elem().CanSet() {
@@ -167,7 +175,7 @@ func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey s
 	}
 
 	if fromCache, ok := cachedData.([]byte); ok {
-		span.SetAttributes(attribute.Bool("db.cloneable", false))
+		span.SetAttributes(attribute.Bool("memory.cloneable", false))
 		if err = dest.UnmarshalBinary(fromCache); err != nil {
 			return err
 		}
