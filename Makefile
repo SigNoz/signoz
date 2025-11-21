@@ -86,7 +86,7 @@ go-run-enterprise: ## Runs the enterprise go backend server
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
 	go run -race \
-		$(GO_BUILD_CONTEXT_ENTERPRISE)/*.go
+		$(GO_BUILD_CONTEXT_ENTERPRISE)/*.go server
 
 .PHONY: go-test
 go-test: ## Runs go unit tests
