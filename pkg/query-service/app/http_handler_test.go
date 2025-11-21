@@ -10,8 +10,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 func TestPrepareQuery(t *testing.T) {
@@ -137,7 +140,11 @@ func TestPrepareQuery(t *testing.T) {
 func TestAnalyzeQueryFilter(t *testing.T) {
 	// Create a minimal APIHandler for testing
 	// The analyzeQueryFilter handler doesn't use any APIHandler fields, so we can use an empty struct
-	aH := &APIHandler{}
+	aH := &APIHandler{
+		Signoz: &signoz.SigNoz{
+			Instrumentation: instrumentationtest.New(),
+		},
+	}
 
 	tests := []struct {
 		name              string
@@ -147,43 +154,43 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 		expectedError     bool
 		errorContains     string
 		expectedMetrics   []string
-		expectedGroups    []string
+		expectedGroups    []types.ColumnInfoResponse
 	}{
 		{
 			name: "PromQL - Nested aggregation inside subquery",
 			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     `max_over_time(sum(rate(cpu_usage_total[5m]))[1h:5m])`,
-				QueryType: "promql",
+				QueryType: querybuildertypesv5.QueryTypePromQL,
 			},
 			expectedStatus:    http.StatusOK,
 			expectedStatusStr: "success",
 			expectedError:     false,
 			expectedMetrics:   []string{"cpu_usage_total"},
-			expectedGroups:    []string{},
+			expectedGroups:    []types.ColumnInfoResponse{},
 		},
 		{
 			name: "PromQL - Subquery with multiple metrics",
 			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     `avg_over_time((foo + bar)[10m:1m])`,
-				QueryType: "promql",
+				QueryType: querybuildertypesv5.QueryTypePromQL,
 			},
 			expectedStatus:    http.StatusOK,
 			expectedStatusStr: "success",
 			expectedError:     false,
 			expectedMetrics:   []string{"bar", "foo"},
-			expectedGroups:    []string{},
+			expectedGroups:    []types.ColumnInfoResponse{},
 		},
 		{
 			name: "PromQL - Simple meta-metric with grouping",
 			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     `sum by (pod) (up)`,
-				QueryType: "promql",
+				QueryType: querybuildertypesv5.QueryTypePromQL,
 			},
 			expectedStatus:    http.StatusOK,
 			expectedStatusStr: "success",
 			expectedError:     false,
 			expectedMetrics:   []string{"up"},
-			expectedGroups:    []string{"pod"},
+			expectedGroups:    []types.ColumnInfoResponse{{Name: "pod", Alias: ""}},
 		},
 		{
 			name: "ClickHouse - Simple CTE with GROUP BY",
@@ -195,13 +202,13 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 					GROUP BY region
 				)
 				SELECT * FROM aggregated`,
-				QueryType: "clickhouse_sql",
+				QueryType: querybuildertypesv5.QueryTypeClickHouseSQL,
 			},
 			expectedStatus:    http.StatusOK,
 			expectedStatusStr: "success",
 			expectedError:     false,
 			expectedMetrics:   []string{"cpu_usage"},
-			expectedGroups:    []string{"region_alias"},
+			expectedGroups:    []types.ColumnInfoResponse{{Name: "region", Alias: "region_alias"}},
 		},
 		{
 			name: "ClickHouse - CTE chain with last GROUP BY + Alias should be returned if exists",
@@ -218,13 +225,13 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 					GROUP BY ts
 				)
 				SELECT * FROM step2`,
-				QueryType: "clickhouse_sql",
+				QueryType: querybuildertypesv5.QueryTypeClickHouseSQL,
 			},
 			expectedStatus:    http.StatusOK,
 			expectedStatusStr: "success",
 			expectedError:     false,
 			expectedMetrics:   []string{"requests"},
-			expectedGroups:    []string{"ts"},
+			expectedGroups:    []types.ColumnInfoResponse{{Name: "ts", Alias: ""}},
 		},
 		{
 			name: "ClickHouse - Outer GROUP BY overrides CTE GROUP BY + Alias should be returned if exists",
@@ -238,19 +245,19 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 				SELECT region as region_alias, sum(value) as total
 				FROM cte
 				GROUP BY region`,
-				QueryType: "clickhouse_sql",
+				QueryType: querybuildertypesv5.QueryTypeClickHouseSQL,
 			},
 			expectedStatus:    http.StatusOK,
 			expectedStatusStr: "success",
 			expectedError:     false,
 			expectedMetrics:   []string{"memory"},
-			expectedGroups:    []string{"region_alias"},
+			expectedGroups:    []types.ColumnInfoResponse{{Name: "region", Alias: "region_alias"}},
 		},
 		{
 			name: "ClickHouse - Invalid query should return error",
 			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     `SELECT WHERE metric_name = 'memory' GROUP BY region, service`,
-				QueryType: "clickhouse_sql",
+				QueryType: querybuildertypesv5.QueryTypeClickHouseSQL,
 			},
 			expectedStatus:    http.StatusBadRequest,
 			expectedStatusStr: "error",
@@ -261,7 +268,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 			name: "Empty query should return error",
 			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     "",
-				QueryType: "promql",
+				QueryType: querybuildertypesv5.QueryTypePromQL,
 			},
 			expectedStatus:    http.StatusBadRequest,
 			expectedStatusStr: "error",
@@ -272,7 +279,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 			name: "Invalid queryType should return error",
 			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     `sum(rate(cpu_usage[5m]))`,
-				QueryType: "invalid_type",
+				QueryType: querybuildertypesv5.QueryTypeUnknown,
 			},
 			expectedStatus:    http.StatusBadRequest,
 			expectedStatusStr: "error",
@@ -283,7 +290,7 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 			name: "Invalid PromQL syntax should return error",
 			requestBody: types.QueryFilterAnalyzeRequest{
 				Query:     `sum by ((foo)(bar))(http_requests_total)`,
-				QueryType: "promql",
+				QueryType: querybuildertypesv5.QueryTypePromQL,
 			},
 			expectedStatus:    http.StatusBadRequest,
 			expectedStatusStr: "error",
@@ -361,9 +368,8 @@ func TestAnalyzeQueryFilter(t *testing.T) {
 				copy(gotMetrics, responseData.MetricNames)
 				sort.Strings(gotMetrics)
 
-				gotGroups := make([]string, len(responseData.Groups))
+				gotGroups := make([]types.ColumnInfoResponse, len(responseData.Groups))
 				copy(gotGroups, responseData.Groups)
-				sort.Strings(gotGroups)
 
 				// Compare using deep equal
 				if !reflect.DeepEqual(gotMetrics, tt.expectedMetrics) {

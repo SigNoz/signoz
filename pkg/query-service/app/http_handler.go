@@ -65,6 +65,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
@@ -5533,8 +5534,8 @@ func (aH *APIHandler) handleFunnelErrorTracesWithPayload(w http.ResponseWriter, 
 
 // analyzeQueryFilter analyzes a query and extracts metric names and grouping columns
 func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request) {
-	// Limit request body size to 100 KB
-	r.Body = http.MaxBytesReader(w, r.Body, 100*1024)
+	// Limit request body size to 255 KB (CH query limit is 256 KB)
+	r.Body = http.MaxBytesReader(w, r.Body, 255*1024)
 
 	var req types.QueryFilterAnalyzeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -5544,23 +5545,22 @@ func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request)
 
 	// Query and QueryType are already validated and normalized by UnmarshalJSON
 	query := req.Query
-	queryType := req.QueryType
-	var extractorType string
+	var extractorType queryfilterextractor.ExtractorType
 
-	switch v3.QueryType(queryType) {
-	case v3.QueryTypePromQL:
-		extractorType = queryfilterextractor.ExtractorPromQL
-	case v3.QueryTypeClickHouseSQL:
-		extractorType = queryfilterextractor.ExtractorCH
+	switch req.QueryType {
+	case querybuildertypesv5.QueryTypePromQL:
+		extractorType = queryfilterextractor.ExtractorTypePromQL
+	case querybuildertypesv5.QueryTypeClickHouseSQL:
+		extractorType = queryfilterextractor.ExtractorTypeClickHouseSQL
 	default:
-		render.Error(w, errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "unsupported queryType: %s. Supported values are '%s' and '%s'", req.QueryType, v3.QueryTypePromQL, v3.QueryTypeClickHouseSQL))
+		render.Error(w, errorsV2.NewInvalidInputf(errorsV2.CodeInvalidInput, "unsupported queryType: %s. Supported values are '%s' and '%s'", req.QueryType, querybuildertypesv5.QueryTypePromQL, querybuildertypesv5.QueryTypeClickHouseSQL))
 		return
 	}
 
 	// Create extractor
 	extractor, err := queryfilterextractor.NewExtractor(extractorType)
 	if err != nil {
-		zap.L().Error("failed to create extractor", zap.String("extractorType", extractorType), zap.Error(err))
+		aH.Signoz.Instrumentation.Logger().Error("failed to create extractor", "extractorType", extractorType, "error", err)
 		render.Error(w, err)
 		return
 	}
@@ -5568,7 +5568,7 @@ func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request)
 	// Extract filter results
 	result, err := extractor.Extract(query)
 	if err != nil {
-		zap.L().Debug("query filter extraction failed", zap.String("queryType", queryType), zap.Error(err))
+		aH.Signoz.Instrumentation.Logger().Error("query filter extraction failed", "queryType", req.QueryType, "error", err)
 		render.Error(w, err)
 		return
 	}
@@ -5577,7 +5577,10 @@ func (aH *APIHandler) analyzeQueryFilter(w http.ResponseWriter, r *http.Request)
 	var resp types.QueryFilterAnalyzeResponse
 
 	for _, group := range result.GroupByColumns {
-		resp.Groups = append(resp.Groups, group.GroupName()) // add the group name to the response
+		resp.Groups = append(resp.Groups, types.ColumnInfoResponse{
+			Name:  group.Name,
+			Alias: group.Alias,
+		}) // add the group name and alias to the response
 	}
 	resp.MetricNames = append(resp.MetricNames, result.MetricNames...) // add the metric names to the response
 	aH.Respond(w, resp)
