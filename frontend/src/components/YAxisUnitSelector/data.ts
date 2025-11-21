@@ -76,6 +76,10 @@ export const BASE_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 				id: UniversalYAxisUnit.YOTTABYTES,
 			},
 			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.BYTES_IEC],
+				id: UniversalYAxisUnit.BYTES_IEC,
+			},
+			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.KIBIBYTES],
 				id: UniversalYAxisUnit.KIBIBYTES,
 			},
@@ -110,6 +114,10 @@ export const BASE_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.BITS],
 				id: UniversalYAxisUnit.BITS,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.BITS_IEC],
+				id: UniversalYAxisUnit.BITS_IEC,
 			},
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.KILOBITS],

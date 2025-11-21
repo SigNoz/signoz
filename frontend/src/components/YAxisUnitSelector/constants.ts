@@ -494,14 +494,14 @@ export const Y_AXIS_UNIT_NAMES: Record<UniversalYAxisUnit, string> = {
 	[UniversalYAxisUnit.YOTTABITS_SECOND]: 'Yottabits/sec',
 
 	// Binary (IEC) Bit Rate
-	[UniversalYAxisUnit.KIBIBITS_SECOND]: 'Kibibits/sec (Kibit/s)',
-	[UniversalYAxisUnit.MEBIBITS_SECOND]: 'Mebibits/sec (Mibit/s)',
-	[UniversalYAxisUnit.GIBIBITS_SECOND]: 'Gibibits/sec (Gibit/s)',
-	[UniversalYAxisUnit.TEBIBITS_SECOND]: 'Tebibits/sec (Tibit/s)',
-	[UniversalYAxisUnit.PEBIBITS_SECOND]: 'Pebibits/sec (Pibit/s)',
-	[UniversalYAxisUnit.EXBIBITS_SECOND]: 'Exbibits/sec (Eibit/s)',
-	[UniversalYAxisUnit.ZEBIBITS_SECOND]: 'Zebibits/sec (Zibit/s)',
-	[UniversalYAxisUnit.YOBIBITS_SECOND]: 'Yobibits/sec (Yibit/s)',
+	[UniversalYAxisUnit.KIBIBITS_SECOND]: 'Kibibits/sec',
+	[UniversalYAxisUnit.MEBIBITS_SECOND]: 'Mebibits/sec',
+	[UniversalYAxisUnit.GIBIBITS_SECOND]: 'Gibibits/sec',
+	[UniversalYAxisUnit.TEBIBITS_SECOND]: 'Tebibits/sec',
+	[UniversalYAxisUnit.PEBIBITS_SECOND]: 'Pebibits/sec',
+	[UniversalYAxisUnit.EXBIBITS_SECOND]: 'Exbibits/sec',
+	[UniversalYAxisUnit.ZEBIBITS_SECOND]: 'Zebibits/sec',
+	[UniversalYAxisUnit.YOBIBITS_SECOND]: 'Yobibits/sec',
 
 	// Count
 	[UniversalYAxisUnit.COUNT]: 'Count',
