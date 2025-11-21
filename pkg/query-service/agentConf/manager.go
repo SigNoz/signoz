@@ -8,6 +8,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	filterprocessor "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
 	tsp "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
@@ -16,12 +17,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	yaml "gopkg.in/yaml.v3"
 )
 
 var m *Manager
+
+var (
+	CodeConfigVersionNoConfig = errors.MustNewCode("config_version_no_config")
+)
 
 func init() {
 	m = &Manager{}
@@ -103,16 +107,14 @@ func (m *Manager) RecommendAgentConfig(orgId valuer.UUID, currentConfYaml []byte
 
 	for _, feature := range m.agentFeatures {
 		featureType := opamptypes.NewElementType(string(feature.AgentFeatureType()))
-		latestConfig, apiErr := GetLatestVersion(context.Background(), orgId, featureType)
-		if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
-			return nil, "", errors.Wrap(apiErr.ToError(), "failed to get latest agent config version")
+		latestConfig, err := GetLatestVersion(context.Background(), orgId, featureType)
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return nil, "", err
 		}
 
-		updatedConf, serializedSettingsUsed, apiErr := feature.RecommendAgentConfig(orgId, recommendation, latestConfig)
-		if apiErr != nil {
-			return nil, "", errors.Wrap(apiErr.ToError(), fmt.Sprintf(
-				"failed to generate agent config recommendation for %s", featureType,
-			))
+		updatedConf, serializedSettingsUsed, err := feature.RecommendAgentConfig(orgId, recommendation, latestConfig)
+		if err != nil {
+			return nil, "", errors.WithAdditionalf(err, "agent config recommendation for %s failed", featureType)
 		}
 		recommendation = updatedConf
 
@@ -178,26 +180,26 @@ func (m *Manager) ReportConfigDeploymentStatus(
 
 func GetLatestVersion(
 	ctx context.Context, orgId valuer.UUID, elementType opamptypes.ElementType,
-) (*opamptypes.AgentConfigVersion, *model.ApiError) {
+) (*opamptypes.AgentConfigVersion, error) {
 	return m.GetLatestVersion(ctx, orgId, elementType)
 }
 
 func GetConfigVersion(
 	ctx context.Context, orgId valuer.UUID, elementType opamptypes.ElementType, version int,
-) (*opamptypes.AgentConfigVersion, *model.ApiError) {
+) (*opamptypes.AgentConfigVersion, error) {
 	return m.GetConfigVersion(ctx, orgId, elementType, version)
 }
 
 func GetConfigHistory(
 	ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType, limit int,
-) ([]opamptypes.AgentConfigVersion, *model.ApiError) {
+) ([]opamptypes.AgentConfigVersion, error) {
 	return m.GetConfigHistory(ctx, orgId, typ, limit)
 }
 
 // StartNewVersion launches a new config version for given set of elements
 func StartNewVersion(
 	ctx context.Context, orgId valuer.UUID, userId valuer.UUID, eleType opamptypes.ElementType, elementIds []string,
-) (*opamptypes.AgentConfigVersion, *model.ApiError) {
+) (*opamptypes.AgentConfigVersion, error) {
 
 	// create a new version
 	cfg := opamptypes.NewAgentConfigVersion(orgId, userId, eleType)
@@ -217,17 +219,16 @@ func NotifyConfigUpdate(ctx context.Context) {
 	m.notifyConfigUpdateSubscribers()
 }
 
-func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType, version int) *model.ApiError {
-
+func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType, version int) error {
 	configVersion, err := GetConfigVersion(ctx, orgId, typ, version)
 	if err != nil {
 		zap.L().Error("failed to fetch config version during redeploy", zap.Error(err))
-		return model.WrapApiError(err, "failed to fetch details of the config version")
+		return err
 	}
 
 	if configVersion == nil || (configVersion != nil && configVersion.Config == "") {
 		zap.L().Debug("config version has no conf yaml", zap.Any("configVersion", configVersion))
-		return model.BadRequest(fmt.Errorf("the config version can not be redeployed"))
+		return errors.NewInvalidInputf(CodeConfigVersionNoConfig, "the config version can not be redeployed")
 	}
 	switch typ {
 	case opamptypes.ElementTypeSamplingRules:
@@ -246,7 +247,7 @@ func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType
 		configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
 		if err != nil {
 			zap.L().Error("failed to call agent config update for trace processor", zap.Error(err))
-			return model.InternalError(fmt.Errorf("failed to deploy the config"))
+			return errors.WithAdditionalf(err, "failed to deploy the config")
 		}
 
 		m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeSamplingRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, configVersion.Config)
