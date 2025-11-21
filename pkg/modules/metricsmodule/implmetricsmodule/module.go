@@ -181,7 +181,7 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 
 	placeholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
 	query := fmt.Sprintf(`
-			SELECT metric_name, description, type, unit 
+			SELECT metric_name, description, type, unit, temporality 
 				FROM %s.%s 
 				WHERE metric_name IN (%s)`,
 		metricDatabaseName,
@@ -207,7 +207,7 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 			metricMetadata metricsmoduletypes.MetricMetadata
 		)
 
-		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit); err != nil {
+		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
 		}
 
@@ -215,6 +215,7 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 			Description: metricMetadata.Description,
 			MetricType:  metricMetadata.MetricType,
 			MetricUnit:  metricMetadata.MetricUnit,
+			Temporality: metricMetadata.Temporality,
 		}
 	}
 
