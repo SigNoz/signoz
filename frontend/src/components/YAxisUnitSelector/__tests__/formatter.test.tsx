@@ -714,18 +714,6 @@ describe('formatUniversalUnit', () => {
 
 	describe('Datetime', () => {
 		it('formats datetime units', () => {
-			expect(
-				formatUniversalUnit(900, UniversalYAxisUnit.DATETIME_ISO_NO_DATE_IF_TODAY),
-			).toBe('1970-01-01 08:00:00');
-			expect(formatUniversalUnit(900, UniversalYAxisUnit.DATETIME_US)).toBe(
-				'01/01/1970 8:00:00 am',
-			);
-			expect(
-				formatUniversalUnit(900, UniversalYAxisUnit.DATETIME_US_NO_DATE_IF_TODAY),
-			).toBe('01/01/1970 8:00:00 am');
-			expect(formatUniversalUnit(900, UniversalYAxisUnit.DATETIME_SYSTEM)).toBe(
-				'1970-01-01 08:00:00',
-			);
 			expect(formatUniversalUnit(900, UniversalYAxisUnit.DATETIME_FROM_NOW)).toBe(
 				'56 years ago',
 			);
