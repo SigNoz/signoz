@@ -24,7 +24,11 @@ type TelemetryFieldKey struct {
 	Signal        Signal        `json:"signal,omitempty"`
 	FieldContext  FieldContext  `json:"fieldContext,omitempty"`
 	FieldDataType FieldDataType `json:"fieldDataType,omitempty"`
-	Materialized  bool          `json:"-"`
+
+	// TODO(Piyush): Remove this once we have a better way to handle multiple data types
+	// JSONDataTypes []JSONDataType `json:"-,omitempty"`
+	JSONDataType *JSONDataType `json:"-,omitempty"`
+	Materialized bool          `json:"-"` // refers to promoted in case of body.... fields
 }
 
 func (f TelemetryFieldKey) String() string {

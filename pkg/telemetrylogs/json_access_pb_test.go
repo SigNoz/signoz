@@ -308,11 +308,8 @@ func TestNode_configureTerminal(t *testing.T) {
 			operator: qbtypes.FilterOperatorEqual,
 			value:    "test",
 			expected: &TerminalConfig{
-				PreferArrayAtEnd: false,
-				ElemType:         telemetrytypes.String,
-				ValueType:        telemetrytypes.String,
-				Operator:         qbtypes.FilterOperatorEqual,
-				Value:            "test",
+				ElemType:  telemetrytypes.String,
+				ValueType: telemetrytypes.String,
 			},
 		},
 		{
@@ -323,11 +320,8 @@ func TestNode_configureTerminal(t *testing.T) {
 			operator: qbtypes.FilterOperatorEqual,
 			value:    int64(42),
 			expected: &TerminalConfig{
-				PreferArrayAtEnd: false,
-				ElemType:         telemetrytypes.Int64,
-				ValueType:        telemetrytypes.Int64,
-				Operator:         qbtypes.FilterOperatorEqual,
-				Value:            int64(42),
+				ElemType:  telemetrytypes.Int64,
+				ValueType: telemetrytypes.Int64,
 			},
 		},
 		{
@@ -338,11 +332,8 @@ func TestNode_configureTerminal(t *testing.T) {
 			operator: qbtypes.FilterOperatorContains,
 			value:    "test",
 			expected: &TerminalConfig{
-				PreferArrayAtEnd: true,
-				ElemType:         telemetrytypes.ArrayString,
-				ValueType:        telemetrytypes.String,
-				Operator:         qbtypes.FilterOperatorContains,
-				Value:            "test",
+				ElemType:  telemetrytypes.ArrayString,
+				ValueType: telemetrytypes.String,
 			},
 		},
 		{
@@ -353,11 +344,8 @@ func TestNode_configureTerminal(t *testing.T) {
 			operator: qbtypes.FilterOperatorExists,
 			value:    nil,
 			expected: &TerminalConfig{
-				PreferArrayAtEnd: false,
-				ElemType:         telemetrytypes.String,
-				ValueType:        telemetrytypes.String,
-				Operator:         qbtypes.FilterOperatorExists,
-				Value:            nil,
+				ElemType:  telemetrytypes.String,
+				ValueType: telemetrytypes.String,
 			},
 		},
 		{
@@ -368,11 +356,8 @@ func TestNode_configureTerminal(t *testing.T) {
 			operator: qbtypes.FilterOperatorExists,
 			value:    nil,
 			expected: &TerminalConfig{
-				PreferArrayAtEnd: false,
-				ElemType:         telemetrytypes.ArrayString,
-				ValueType:        telemetrytypes.ArrayString,
-				Operator:         qbtypes.FilterOperatorExists,
-				Value:            nil,
+				ElemType:  telemetrytypes.ArrayString,
+				ValueType: telemetrytypes.ArrayString,
 			},
 		},
 	}
@@ -381,93 +366,81 @@ func TestNode_configureTerminal(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			c.node.configureTerminal(c.operator, c.value)
 			require.NotNil(t, c.node.TerminalConfig)
-			require.Equal(t, c.expected.PreferArrayAtEnd, c.node.TerminalConfig.PreferArrayAtEnd)
 			require.Equal(t, c.expected.ElemType, c.node.TerminalConfig.ElemType)
 			require.Equal(t, c.expected.ValueType, c.node.TerminalConfig.ValueType)
-			require.Equal(t, c.expected.Operator, c.node.TerminalConfig.Operator)
-			require.Equal(t, c.expected.Value, c.node.TerminalConfig.Value)
 		})
 	}
 }
 
 func TestNode_determineValueType(t *testing.T) {
 	cases := []struct {
-		name           string
-		node           *Node
-		availableTypes []telemetrytypes.JSONDataType
-		operator       qbtypes.FilterOperator
-		value          any
-		expected       telemetrytypes.JSONDataType
+		name     string
+		node     *Node
+		operator qbtypes.FilterOperator
+		value    any
+		expected telemetrytypes.JSONDataType
 	}{
 		{
-			name:           "String value",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{},
-			operator:       qbtypes.FilterOperatorEqual,
-			value:          "test",
-			expected:       telemetrytypes.String,
+			name:     "String value",
+			node:     &Node{},
+			operator: qbtypes.FilterOperatorEqual,
+			value:    "test",
+			expected: telemetrytypes.String,
 		},
 		{
-			name:           "Int64 value",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{},
-			operator:       qbtypes.FilterOperatorEqual,
-			value:          int64(42),
-			expected:       telemetrytypes.Int64,
+			name:     "Int64 value",
+			node:     &Node{},
+			operator: qbtypes.FilterOperatorEqual,
+			value:    int64(42),
+			expected: telemetrytypes.Int64,
 		},
 		{
-			name:           "Float64 value",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{},
-			operator:       qbtypes.FilterOperatorEqual,
-			value:          float64(3.14),
-			expected:       telemetrytypes.Float64,
+			name:     "Float64 value",
+			node:     &Node{},
+			operator: qbtypes.FilterOperatorEqual,
+			value:    float64(3.14),
+			expected: telemetrytypes.Float64,
 		},
 		{
-			name:           "Bool value",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{},
-			operator:       qbtypes.FilterOperatorEqual,
-			value:          true,
-			expected:       telemetrytypes.Bool,
+			name:     "Bool value",
+			node:     &Node{},
+			operator: qbtypes.FilterOperatorEqual,
+			value:    true,
+			expected: telemetrytypes.Bool,
 		},
 		{
-			name:           "Exists with nil value - uses first scalar type",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{telemetrytypes.String, telemetrytypes.Int64},
-			operator:       qbtypes.FilterOperatorExists,
-			value:          nil,
-			expected:       telemetrytypes.String,
+			name:     "Exists with nil value - uses first scalar type",
+			node:     &Node{},
+			operator: qbtypes.FilterOperatorExists,
+			value:    nil,
+			expected: telemetrytypes.String,
 		},
 		{
-			name:           "Exists with nil value - only arrays available",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{telemetrytypes.ArrayString},
-			operator:       qbtypes.FilterOperatorExists,
-			value:          nil,
-			expected:       telemetrytypes.ArrayString,
+			name:     "Exists with nil value - only arrays available",
+			node:     &Node{},
+			operator: qbtypes.FilterOperatorExists,
+			value:    nil,
+			expected: telemetrytypes.ArrayString,
 		},
 		{
-			name:           "Exists with nil value - no types available",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{},
-			operator:       qbtypes.FilterOperatorExists,
-			value:          nil,
-			expected:       telemetrytypes.String, // fallback
+			name:     "Exists with nil value - no types available",
+			node:     &Node{},
+			operator: qbtypes.FilterOperatorExists,
+			value:    nil,
+			expected: telemetrytypes.String, // fallback
 		},
 		{
-			name:           "Float that is actually int",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{},
-			operator:       qbtypes.FilterOperatorEqual,
-			value:          float64(42.0),
-			expected:       telemetrytypes.Int64,
+			name:     "Float that is actually int",
+			node:     &Node{},
+			operator: qbtypes.FilterOperatorEqual,
+			value:    float64(42.0),
+			expected: telemetrytypes.Int64,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			result := c.node.determineValueType(c.availableTypes, c.operator, c.value)
+			result := c.node.determineValueType(c.operator, c.value)
 			require.Equal(t, c.expected, result)
 		})
 	}
@@ -479,7 +452,7 @@ func TestNode_inferDataType(t *testing.T) {
 		node          *Node
 		value         any
 		operator      qbtypes.FilterOperator
-		expectedType  telemetrytypes.JSONDataType
+		expected      telemetrytypes.JSONDataType
 		expectedValue any
 	}{
 		{
@@ -487,7 +460,7 @@ func TestNode_inferDataType(t *testing.T) {
 			node:          &Node{},
 			value:         "test",
 			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.String,
+			expected:      telemetrytypes.String,
 			expectedValue: "test",
 		},
 		{
@@ -495,7 +468,7 @@ func TestNode_inferDataType(t *testing.T) {
 			node:          &Node{},
 			value:         int64(42),
 			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Int64,
+			expected:      telemetrytypes.Int64,
 			expectedValue: int64(42),
 		},
 		{
@@ -503,7 +476,7 @@ func TestNode_inferDataType(t *testing.T) {
 			node:          &Node{},
 			value:         int(42),
 			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Int64,
+			expected:      telemetrytypes.Int64,
 			expectedValue: int(42),
 		},
 		{
@@ -511,7 +484,7 @@ func TestNode_inferDataType(t *testing.T) {
 			node:          &Node{},
 			value:         float64(3.14),
 			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Float64,
+			expected:      telemetrytypes.Float64,
 			expectedValue: float64(3.14),
 		},
 		{
@@ -519,7 +492,7 @@ func TestNode_inferDataType(t *testing.T) {
 			node:          &Node{},
 			value:         float64(42.0),
 			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Int64,
+			expected:      telemetrytypes.Int64,
 			expectedValue: int64(42),
 		},
 		{
@@ -527,7 +500,7 @@ func TestNode_inferDataType(t *testing.T) {
 			node:          &Node{},
 			value:         float32(3.14),
 			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Float64,
+			expected:      telemetrytypes.Float64,
 			expectedValue: float32(3.14), // Function infers Float64 type but doesn't convert the value
 		},
 		{
@@ -535,7 +508,7 @@ func TestNode_inferDataType(t *testing.T) {
 			node:          &Node{},
 			value:         true,
 			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Bool,
+			expected:      telemetrytypes.Bool,
 			expectedValue: true,
 		},
 		{
@@ -543,7 +516,7 @@ func TestNode_inferDataType(t *testing.T) {
 			node:          &Node{},
 			value:         []any{"test"},
 			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.String,
+			expected:      telemetrytypes.String,
 			expectedValue: []any{"test"},
 		},
 		{
@@ -551,7 +524,7 @@ func TestNode_inferDataType(t *testing.T) {
 			node:          &Node{},
 			value:         []any{},
 			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Dynamic,
+			expected:      telemetrytypes.Dynamic,
 			expectedValue: []any{},
 		},
 		{
@@ -559,7 +532,7 @@ func TestNode_inferDataType(t *testing.T) {
 			node:          &Node{},
 			value:         "test",
 			operator:      qbtypes.FilterOperatorContains,
-			expectedType:  telemetrytypes.String,
+			expected:      telemetrytypes.String,
 			expectedValue: "test",
 		},
 		{
@@ -567,7 +540,7 @@ func TestNode_inferDataType(t *testing.T) {
 			node:          &Node{},
 			value:         "42",
 			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Int64,
+			expected:      telemetrytypes.Int64,
 			expectedValue: int64(42),
 		},
 		{
@@ -575,7 +548,7 @@ func TestNode_inferDataType(t *testing.T) {
 			node:          &Node{},
 			value:         "3.14",
 			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Float64,
+			expected:      telemetrytypes.Float64,
 			expectedValue: float64(3.14),
 		},
 	}
@@ -583,7 +556,7 @@ func TestNode_inferDataType(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			resultType, resultValue := c.node.inferDataType(c.value, c.operator)
-			require.Equal(t, c.expectedType, resultType)
+			require.Equal(t, c.expected, resultType)
 			require.Equal(t, c.expectedValue, resultValue)
 		})
 	}
@@ -956,11 +929,9 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorEqual, terminal.TerminalConfig.Operator)
-					require.Equal(t, "John", terminal.TerminalConfig.Value)
 					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ValueType)
 					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ElemType)
-					require.False(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.False(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayString)
 				},
 			},
 			{
@@ -972,8 +943,6 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorNotEqual, terminal.TerminalConfig.Operator)
-					require.Equal(t, int64(30), terminal.TerminalConfig.Value)
 					require.Equal(t, telemetrytypes.Int64, terminal.TerminalConfig.ValueType)
 				},
 			},
@@ -986,11 +955,9 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorContains, terminal.TerminalConfig.Operator)
-					require.Equal(t, "IIT", terminal.TerminalConfig.Value)
 					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ValueType)
 					// Since education[].name is String (not array), PreferArrayAtEnd should be false
-					require.False(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.False(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayString)
 				},
 			},
 			{
@@ -1002,9 +969,8 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorContains, terminal.TerminalConfig.Operator)
 					// Should prefer array since ArrayFloat64 is available
-					require.True(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.True(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayFloat64)
 					require.Equal(t, telemetrytypes.ArrayFloat64, terminal.TerminalConfig.ElemType)
 					require.Equal(t, telemetrytypes.Float64, terminal.TerminalConfig.ValueType)
 				},
@@ -1018,7 +984,6 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorNotContains, terminal.TerminalConfig.Operator)
 				},
 			},
 			{
@@ -1030,7 +995,6 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorLike, terminal.TerminalConfig.Operator)
 				},
 			},
 			{
@@ -1042,7 +1006,6 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorILike, terminal.TerminalConfig.Operator)
 				},
 			},
 			{
@@ -1054,8 +1017,6 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorGreaterThan, terminal.TerminalConfig.Operator)
-					require.Equal(t, int64(18), terminal.TerminalConfig.Value)
 				},
 			},
 			{
@@ -1067,7 +1028,6 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorGreaterThanOrEq, terminal.TerminalConfig.Operator)
 				},
 			},
 			{
@@ -1079,7 +1039,6 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorIn, terminal.TerminalConfig.Operator)
 					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ValueType)
 				},
 			},
@@ -1092,7 +1051,6 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorNotIn, terminal.TerminalConfig.Operator)
 				},
 			},
 			{
@@ -1104,8 +1062,6 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorExists, terminal.TerminalConfig.Operator)
-					require.Nil(t, terminal.TerminalConfig.Value)
 					// Should pick first scalar type from available types
 					require.Equal(t, telemetrytypes.Int64, terminal.TerminalConfig.ValueType)
 					require.Equal(t, telemetrytypes.Int64, terminal.TerminalConfig.ElemType)
@@ -1120,7 +1076,6 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorRegexp, terminal.TerminalConfig.Operator)
 				},
 			},
 			{
@@ -1132,7 +1087,6 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorNotRegexp, terminal.TerminalConfig.Operator)
 				},
 			},
 		}
@@ -1277,7 +1231,7 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.True(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.True(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayFloat64)
 					require.Equal(t, telemetrytypes.ArrayFloat64, terminal.TerminalConfig.ElemType)
 					require.Equal(t, telemetrytypes.Float64, terminal.TerminalConfig.ValueType)
 				},
@@ -1292,7 +1246,7 @@ func TestPlanJSON(t *testing.T) {
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
 					// ArrayDynamic is available, so should prefer array
-					require.True(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.True(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayString)
 					require.Equal(t, telemetrytypes.ArrayString, terminal.TerminalConfig.ElemType)
 				},
 			},
@@ -1305,7 +1259,7 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.True(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.True(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayInt64)
 					require.Equal(t, telemetrytypes.ArrayInt64, terminal.TerminalConfig.ElemType)
 				},
 			},
@@ -1318,7 +1272,7 @@ func TestPlanJSON(t *testing.T) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.True(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.True(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayString)
 					require.Equal(t, telemetrytypes.ArrayString, terminal.TerminalConfig.ElemType)
 				},
 			},
@@ -1332,7 +1286,7 @@ func TestPlanJSON(t *testing.T) {
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
 					// Only String scalar available, no array
-					require.False(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.False(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayString)
 					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ElemType)
 				},
 			},
@@ -1374,8 +1328,6 @@ func TestPlanJSON(t *testing.T) {
 			require.NotNil(t, terminal1)
 			require.NotNil(t, terminal2)
 			require.Equal(t, terminal1.Name, terminal2.Name)
-			require.Equal(t, terminal1.TerminalConfig.Operator, terminal2.TerminalConfig.Operator)
-			require.Equal(t, terminal1.TerminalConfig.Value, terminal2.TerminalConfig.Value)
 
 			// But promoted plan should have different MaxDynamicPaths progression
 			// Check that promoted plan has different MaxDynamicPaths at each level

@@ -1,9 +1,18 @@
 package telemetrytypes
 
+type JSONIndexType string
+
+const (
+	IndexTypeString JSONIndexType = "string"
+	IndexTypeNumber JSONIndexType = "number"
+)
+
 type JSONDataType struct {
-	str        string // Store the correct case for ClickHouse
-	IsArray    bool
-	ScalerType string
+	str            string // Store the correct case for ClickHouse
+	IsArray        bool
+	ScalerType     string
+	IndexSupported bool
+	IndexType      JSONIndexType
 }
 
 // Override StringValue to return the correct case
@@ -12,17 +21,17 @@ func (jdt JSONDataType) StringValue() string {
 }
 
 var (
-	String       = JSONDataType{"String", false, ""}
-	Int64        = JSONDataType{"Int64", false, ""}
-	Float64      = JSONDataType{"Float64", false, ""}
-	Bool         = JSONDataType{"Bool", false, ""}
-	Dynamic      = JSONDataType{"Dynamic", false, ""}
-	ArrayString  = JSONDataType{"Array(Nullable(String))", true, "String"}
-	ArrayInt64   = JSONDataType{"Array(Nullable(Int64))", true, "Int64"}
-	ArrayFloat64 = JSONDataType{"Array(Nullable(Float64))", true, "Float64"}
-	ArrayBool    = JSONDataType{"Array(Nullable(Bool))", true, "Bool"}
-	ArrayDynamic = JSONDataType{"Array(Dynamic)", true, "Dynamic"}
-	ArrayJSON    = JSONDataType{"Array(JSON)", true, "JSON"}
+	String       = JSONDataType{"String", false, "", true, IndexTypeString}
+	Int64        = JSONDataType{"Int64", false, "", true, IndexTypeNumber}
+	Float64      = JSONDataType{"Float64", false, "", true, IndexTypeNumber}
+	Bool         = JSONDataType{"Bool", false, "", false, ""}
+	Dynamic      = JSONDataType{"Dynamic", false, "", false, ""}
+	ArrayString  = JSONDataType{"Array(Nullable(String))", true, "String", false, ""}
+	ArrayInt64   = JSONDataType{"Array(Nullable(Int64))", true, "Int64", false, ""}
+	ArrayFloat64 = JSONDataType{"Array(Nullable(Float64))", true, "Float64", false, ""}
+	ArrayBool    = JSONDataType{"Array(Nullable(Bool))", true, "Bool", false, ""}
+	ArrayDynamic = JSONDataType{"Array(Dynamic)", true, "Dynamic", false, ""}
+	ArrayJSON    = JSONDataType{"Array(JSON)", true, "JSON", false, ""}
 )
 
 var MappingStringToJSONDataType = map[string]JSONDataType{

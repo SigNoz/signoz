@@ -20,7 +20,6 @@ type logQueryStatementBuilder struct {
 	metadataStore             telemetrytypes.MetadataStore
 	fm                        qbtypes.FieldMapper
 	cb                        qbtypes.ConditionBuilder
-	jsonQueryBuilder          *JSONQueryBuilder
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
 
@@ -36,7 +35,6 @@ func NewLogQueryStatementBuilder(
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	jsonQueryBuilder *JSONQueryBuilder,
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
@@ -50,7 +48,6 @@ func NewLogQueryStatementBuilder(
 		metadataStore:             metadataStore,
 		fm:                        fieldMapper,
 		cb:                        conditionBuilder,
-		jsonQueryBuilder:          jsonQueryBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
 		fullTextColumn:            fullTextColumn,

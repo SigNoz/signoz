@@ -18,12 +18,12 @@ import (
 )
 
 type conditionBuilder struct {
-	fm  qbtypes.FieldMapper
-	jqb *JSONQueryBuilder
+	fm            qbtypes.FieldMapper
+	metadataStore telemetrytypes.MetadataStore
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper, jqb *JSONQueryBuilder) *conditionBuilder {
-	return &conditionBuilder{fm: fm, jqb: jqb}
+func NewConditionBuilder(fm qbtypes.FieldMapper, metadataStore telemetrytypes.MetadataStore) *conditionBuilder {
+	return &conditionBuilder{fm: fm, metadataStore: metadataStore}
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -33,7 +33,6 @@ func (c *conditionBuilder) conditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-
 	column, err := c.fm.ColumnFor(ctx, key)
 	if err != nil {
 		return "", err
@@ -55,7 +54,7 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	if isJSONColumn {
-		cond, err := c.jqb.BuildCondition(ctx, key, operator, value, sb)
+		cond, err := c.buildJSONCondition(ctx, key, operator, value, sb)
 		if err != nil {
 			return "", err
 		}

@@ -10,12 +10,10 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/constants"
-	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 )
@@ -43,18 +41,18 @@ var (
 //
 // searchOperator: LIKE for pattern matching, EQUAL for exact match
 // Returns: (paths, error)
-func GetBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.TelemetryStore,
-	searchTexts []string, uniquePathLimit int, operator qbtypes.FilterOperator) (map[string]*utils.ConcurrentSet[telemetrytypes.JSONDataType], error) {
+func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.TelemetryStore,
+	fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 
-	query, args := buildGetBodyJSONPathsQuery(searchTexts, uniquePathLimit, operator)
+	query, limit, args := buildGetBodyJSONPathsQuery(fieldKeySelectors)
 	rows, err := telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to extract body JSON keys")
+		return nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to extract body JSON keys")
 	}
 	defer rows.Close()
 
-	paths := map[string]*utils.ConcurrentSet[telemetrytypes.JSONDataType]{}
-
+	paths := []*telemetrytypes.TelemetryFieldKey{}
+	rowCount := 0
 	for rows.Next() {
 		var path string
 		var typesArray []string // ClickHouse returns array as []string
@@ -62,29 +60,40 @@ func GetBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 
 		err = rows.Scan(&path, &typesArray, &lastSeen)
 		if err != nil {
-			return nil, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to scan body JSON key row")
+			return nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to scan body JSON key row")
 		}
 
-		set := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
+		promoted, err := IsPathPromoted(ctx, telemetryStore.ClickhouseDB(), path)
+		if err != nil {
+			return nil, false, err
+		}
+
 		for _, typ := range typesArray {
 			mapping, found := telemetrytypes.MappingStringToJSONDataType[typ]
 			if !found {
-				return nil, errors.NewInternalf(CodeUnknownJSONDataType, "failed to map type string to JSON data type: %s", typ)
+				return nil, false, errors.NewInternalf(CodeUnknownJSONDataType, "failed to map type string to JSON data type: %s", typ)
 			}
-			set.Insert(mapping)
+			paths = append(paths, &telemetrytypes.TelemetryFieldKey{
+				Name:          path,
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[mapping],
+				JSONDataType:  &mapping,
+				Materialized:  promoted,
+			})
 		}
 
-		paths[path] = set
+		rowCount++
 	}
 
 	if rows.Err() != nil {
-		return nil, errors.WrapInternalf(rows.Err(), CodeFailIterateBodyJSONKeys, "error iterating body JSON keys")
+		return nil, false, errors.WrapInternalf(rows.Err(), CodeFailIterateBodyJSONKeys, "error iterating body JSON keys")
 	}
 
-	return paths, nil
+	return paths, rowCount <= limit, nil
 }
 
-func buildGetBodyJSONPathsQuery(searchTexts []string, uniquePathLimit int, operator qbtypes.FilterOperator) (string, []any) {
+func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySelector) (string, int, []any) {
 	from := fmt.Sprintf("%s.%s", DBName, PathTypesTableName)
 
 	// Build a better query using GROUP BY to deduplicate at database level
@@ -95,39 +104,59 @@ func buildGetBodyJSONPathsQuery(searchTexts []string, uniquePathLimit int, opera
 		"max(last_seen) AS last_seen",
 	).From(from)
 
+	limit := 0
 	// Add search filter if provided
-	if len(searchTexts) > 0 {
-		orClauses := []string{}
-		for _, searchText := range searchTexts {
-			if operator == qbtypes.FilterOperatorEqual {
-				// Exact match for lookup
-				orClauses = append(orClauses, sb.E("path", searchText))
-			} else {
-				// Pattern matching for metadata API (defaults to LIKE behavior for other operators)
-				orClauses = append(orClauses, sb.ILike("path", querybuilder.FormatValueForContains(searchText)))
-			}
+	orClauses := []string{}
+	for _, fieldKeySelector := range fieldKeySelectors {
+		// replace [*] with []
+		fieldKeySelector.Name = strings.ReplaceAll(fieldKeySelector.Name, telemetrylogs.ArrayAnyIndex, telemetrylogs.ArraySep)
+		// Extract search text for body JSON keys
+		keyName := CleanPathPrefixes(fieldKeySelector.Name)
+		if fieldKeySelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
+			orClauses = append(orClauses, sb.Equal("path", keyName))
+		} else {
+			// Pattern matching for metadata API (defaults to LIKE behavior for other operators)
+			orClauses = append(orClauses, sb.Like("path", querybuilder.FormatValueForContains(keyName)))
+			limit += fieldKeySelector.Limit
 		}
-		sb.Where(sb.Or(orClauses...))
 	}
+	sb.Where(sb.Or(orClauses...))
 
 	// Group by path to get unique paths with aggregated types
 	sb.GroupBy("path")
 
 	// Order by max last_seen to get most recent paths first
 	sb.OrderBy("last_seen DESC")
-
-	// Apply limit on unique paths (not rows)
-	// Always set a default limit to prevent full table scans
-	var pathLimit int
-	if uniquePathLimit > 0 {
-		pathLimit = uniquePathLimit
-	} else {
-		pathLimit = defaultPathLimit
-	}
-	sb.Limit(pathLimit)
+	sb.Limit(limit)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return query, args
+	return query, limit, args
+}
+
+func listLogsIndexesClean(ctx context.Context, cluster string, conn clickhouse.Conn) ([]string, error) {
+	indexes, err := ListLogsJSONIndexes(ctx, cluster, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	cleanIndexes := []string{}
+	for _, index := range indexes {
+		if !strings.HasPrefix(index.Expression, telemetrylogs.BodyJSONColumnPrefix) && !strings.HasPrefix(index.Expression, telemetrylogs.BodyPromotedColumnPrefix) {
+			continue
+		}
+
+		expr, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
+		if err != nil {
+			return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to unfold JSON sub column index expression: %s", index.Expression)
+		}
+
+		expr = strings.TrimPrefix(expr, telemetrylogs.BodyJSONColumnPrefix)
+		expr = strings.TrimPrefix(expr, telemetrylogs.BodyPromotedColumnPrefix)
+
+		cleanIndexes = append(cleanIndexes, expr)
+	}
+
+	return cleanIndexes, nil
 }
 
 func ListLogsJSONIndexes(ctx context.Context, cluster string, conn clickhouse.Conn) ([]schemamigrator.Index, error) {
@@ -183,9 +212,9 @@ func ListPromotedPaths(ctx context.Context, conn clickhouse.Conn) (map[string]st
 }
 
 func ListJSONValues(ctx context.Context, conn clickhouse.Conn, path string, limit int) (*telemetrytypes.TelemetryFieldValues, bool, error) {
-	path = strings.TrimPrefix(path, telemetrylogs.BodyJSONStringSearchPrefix)
+	path = CleanPathPrefixes(path)
 
-	if strings.Contains(path, telemetrylogs.ArraySep) {
+	if strings.Contains(path, telemetrylogs.ArraySep) || strings.Contains(path, telemetrylogs.ArrayAnyIndex) {
 		return nil, false, errors.NewInvalidInputf(errors.CodeInvalidInput, "array paths are not supported")
 	}
 
@@ -340,4 +369,11 @@ func IsPathPromoted(ctx context.Context, conn clickhouse.Conn, path string) (boo
 	defer rows.Close()
 
 	return rows.Next(), nil
+}
+
+func CleanPathPrefixes(path string) string {
+	path = strings.TrimPrefix(path, telemetrylogs.BodyJSONStringSearchPrefix)
+	path = strings.TrimPrefix(path, telemetrylogs.BodyJSONColumnPrefix)
+	path = strings.TrimPrefix(path, telemetrylogs.BodyPromotedColumnPrefix)
+	return path
 }
