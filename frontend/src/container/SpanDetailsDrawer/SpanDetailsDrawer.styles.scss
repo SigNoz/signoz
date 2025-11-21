@@ -471,6 +471,22 @@
 					}
 				}
 			}
+
+			.related-signals-section {
+				.view-title {
+					display: flex;
+					gap: 8px;
+					align-items: center;
+					font-size: 12px;
+					line-height: 30px;
+				}
+				.ant-btn.ant-btn-default {
+					padding: 0 15px;
+					&:not(:hover) {
+						border: 1px solid var(--bg-slate-400);
+					}
+				}
+			}
 		}
 	}
 
@@ -605,6 +621,12 @@
 }
 
 .lightMode {
+	.ant-tabs-content-holder {
+		.bg-border {
+			background: var(--bg-vanilla-300);
+			border-color: var(--bg-vanilla-300);
+		}
+	}
 	.span-details-drawer {
 		border-left: 1px solid var(--bg-vanilla-300);
 
@@ -810,6 +832,16 @@
 
 						.service-value {
 							color: var(--bg-ink-400);
+						}
+					}
+				}
+
+				.related-signals-section {
+					.related-signals-button-group {
+						.ant-btn.ant-btn-default {
+							&:not(:hover) {
+								border: 1px solid var(--bg-vanilla-400);
+							}
 						}
 					}
 				}
