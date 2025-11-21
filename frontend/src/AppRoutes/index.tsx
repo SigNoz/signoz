@@ -27,6 +27,7 @@ import { IUser } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { KBarCommandPaletteProvider } from 'providers/KBarCommandPaletteProvider';
+import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
@@ -273,7 +274,7 @@ function App(): JSX.Element {
 					chat_settings: {
 						app_id: process.env.PYLON_APP_ID,
 						email: user.email,
-						name: user.displayName,
+						name: user.displayName || user.email,
 					},
 				};
 			}
@@ -382,20 +383,22 @@ function App(): JSX.Element {
 													<KeyboardHotkeysProvider>
 														<AlertRuleProvider>
 															<AppLayout>
-																<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																	<Switch>
-																		{routes.map(({ path, component, exact }) => (
-																			<Route
-																				key={`${path}`}
-																				exact={exact}
-																				path={path}
-																				component={component}
-																			/>
-																		))}
-																		<Route exact path="/" component={Home} />
-																		<Route path="*" component={NotFound} />
-																	</Switch>
-																</Suspense>
+																<PreferenceContextProvider>
+																	<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+																		<Switch>
+																			{routes.map(({ path, component, exact }) => (
+																				<Route
+																					key={`${path}`}
+																					exact={exact}
+																					path={path}
+																					component={component}
+																				/>
+																			))}
+																			<Route exact path="/" component={Home} />
+																			<Route path="*" component={NotFound} />
+																		</Switch>
+																	</Suspense>
+																</PreferenceContextProvider>
 															</AppLayout>
 														</AlertRuleProvider>
 													</KeyboardHotkeysProvider>

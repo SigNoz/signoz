@@ -3,10 +3,9 @@ package types
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/uptrace/bun"
 )
 
@@ -45,7 +44,7 @@ func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
 	case string:
 		data = []byte(v)
 	default:
-		return fmt.Errorf("tried to scan from %T instead of string or bytes", src)
+		return errors.NewInternalf(errors.CodeInternal, "tried to scan from %T instead of string or bytes", src)
 	}
 
 	return json.Unmarshal(data, c)
@@ -55,7 +54,7 @@ func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
 func (c *InstalledIntegrationConfig) Value() (driver.Value, error) {
 	filterSetJson, err := json.Marshal(c)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not serialize integration config to JSON")
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "could not serialize integration config to JSON")
 	}
 	return filterSetJson, nil
 }
@@ -136,7 +135,7 @@ func (c *AccountConfig) Scan(src any) error {
 	case string:
 		data = []byte(v)
 	default:
-		return fmt.Errorf("tried to scan from %T instead of string or bytes", src)
+		return errors.NewInternalf(errors.CodeInternal, "tried to scan from %T instead of string or bytes", src)
 	}
 
 	return json.Unmarshal(data, c)
@@ -145,12 +144,12 @@ func (c *AccountConfig) Scan(src any) error {
 // For serializing to db
 func (c *AccountConfig) Value() (driver.Value, error) {
 	if c == nil {
-		return nil, fmt.Errorf("cloud account config is nil")
+		return nil, errors.NewInternalf(errors.CodeInternal, "cloud account config is nil")
 	}
 
 	serialized, err := json.Marshal(c)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't serialize cloud account config to JSON: %w", err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't serialize cloud account config to JSON")
 	}
 	return serialized, nil
 }
@@ -169,7 +168,7 @@ func (r *AgentReport) Scan(src any) error {
 	case string:
 		data = []byte(v)
 	default:
-		return fmt.Errorf("tried to scan from %T instead of string or bytes", src)
+		return errors.NewInternalf(errors.CodeInternal, "tried to scan from %T instead of string or bytes", src)
 	}
 
 	return json.Unmarshal(data, r)
@@ -178,13 +177,13 @@ func (r *AgentReport) Scan(src any) error {
 // For serializing to db
 func (r *AgentReport) Value() (driver.Value, error) {
 	if r == nil {
-		return nil, fmt.Errorf("agent report is nil")
+		return nil, errors.NewInternalf(errors.CodeInternal, "agent report is nil")
 	}
 
 	serialized, err := json.Marshal(r)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't serialize agent report to JSON: %w", err,
+		return nil, errors.WrapInternalf(
+			err, errors.CodeInternal, "couldn't serialize agent report to JSON",
 		)
 	}
 	return serialized, nil
@@ -223,7 +222,7 @@ func (c *CloudServiceConfig) Scan(src any) error {
 	case string:
 		data = []byte(src)
 	default:
-		return fmt.Errorf("tried to scan from %T instead of string or bytes", src)
+		return errors.NewInternalf(errors.CodeInternal, "tried to scan from %T instead of string or bytes", src)
 	}
 
 	return json.Unmarshal(data, c)
@@ -232,13 +231,13 @@ func (c *CloudServiceConfig) Scan(src any) error {
 // For serializing to db
 func (c *CloudServiceConfig) Value() (driver.Value, error) {
 	if c == nil {
-		return nil, fmt.Errorf("cloud service config is nil")
+		return nil, errors.NewInternalf(errors.CodeInternal, "cloud service config is nil")
 	}
 
 	serialized, err := json.Marshal(c)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't serialize cloud service config to JSON: %w", err,
+		return nil, errors.WrapInternalf(
+			err, errors.CodeInternal, "couldn't serialize cloud service config to JSON",
 		)
 	}
 	return serialized, nil

@@ -33,7 +33,15 @@ export const QueryV2 = memo(function QueryV2({
 	showOnlyWhereClause = false,
 	signalSource = '',
 	isMultiQueryAllowed = false,
-}: QueryProps & { ref: React.RefObject<HTMLDivElement> }): JSX.Element {
+	onSignalSourceChange,
+	signalSourceChangeEnabled = false,
+	queriesCount = 1,
+}: QueryProps & {
+	ref: React.RefObject<HTMLDivElement>;
+	onSignalSourceChange: (value: string) => void;
+	signalSourceChangeEnabled: boolean;
+	queriesCount: number;
+}): JSX.Element {
 	const { cloneQuery, panelType } = useQueryBuilder();
 
 	const showFunctions = query?.functions?.length > 0;
@@ -186,12 +194,16 @@ export const QueryV2 = memo(function QueryV2({
 												icon: <Copy size={14} />,
 												onClick: handleCloneEntity,
 											},
-											{
-												label: 'Delete',
-												key: 'delete-query',
-												icon: <Trash size={14} />,
-												onClick: handleDeleteQuery,
-											},
+											...(queriesCount && queriesCount > 1
+												? [
+														{
+															label: 'Delete',
+															key: 'delete-query',
+															icon: <Trash size={14} />,
+															onClick: handleDeleteQuery,
+														},
+												  ]
+												: []),
 										],
 									}}
 									placement="bottomRight"
@@ -207,12 +219,14 @@ export const QueryV2 = memo(function QueryV2({
 					<div className="qb-elements-container">
 						<div className="qb-search-container">
 							{dataSource === DataSource.METRICS && (
-								<div className="metrics-select-container">
+								<div className="metrics-container">
 									<MetricsSelect
 										query={query}
 										index={index}
 										version={ENTITY_VERSION_V5}
 										signalSource={signalSource as 'meter' | ''}
+										onSignalSourceChange={onSignalSourceChange}
+										signalSourceChangeEnabled={signalSourceChangeEnabled}
 									/>
 								</div>
 							)}
@@ -258,7 +272,7 @@ export const QueryV2 = memo(function QueryV2({
 								panelType={panelType}
 								query={query}
 								index={index}
-								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}`}
+								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}-${signalSource}`}
 								version="v4"
 								signalSource={signalSource as 'meter' | ''}
 							/>

@@ -40,10 +40,10 @@ func (rws readerWithServer) Shutdown(ctx context.Context) error {
 func prometheusReaderWithCustomRegistry(ctx context.Context, prometheusConfig *contribsdkconfig.Prometheus, customRegistry *prometheus.Registry) (sdkmetric.Reader, error) {
 	var opts []otelprom.Option
 	if prometheusConfig.Host == nil {
-		return nil, fmt.Errorf("host must be specified")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "host must be specified")
 	}
 	if prometheusConfig.Port == nil {
-		return nil, fmt.Errorf("port must be specified")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "port must be specified")
 	}
 	if prometheusConfig.WithoutScopeInfo != nil && *prometheusConfig.WithoutScopeInfo {
 		opts = append(opts, otelprom.WithoutScopeInfo())

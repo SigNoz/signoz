@@ -129,11 +129,20 @@ func (f FilterOperator) IsNegativeOperator() bool {
 		FilterOperatorILike,
 		FilterOperatorBetween,
 		FilterOperatorIn,
+		FilterOperatorExists,
 		FilterOperatorRegexp,
 		FilterOperatorContains:
 		return false
 	}
 	return true
+}
+
+func (f FilterOperator) IsComparisonOperator() bool {
+	switch f {
+	case FilterOperatorGreaterThan, FilterOperatorGreaterThanOrEq, FilterOperatorLessThan, FilterOperatorLessThanOrEq:
+		return true
+	}
+	return false
 }
 
 type OrderDirection struct {

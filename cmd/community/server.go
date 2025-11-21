@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"log/slog"
-	"time"
 
 	"github.com/SigNoz/signoz/cmd"
+	"github.com/SigNoz/signoz/ee/authz/openfgaauthz"
+	"github.com/SigNoz/signoz/ee/authz/openfgaschema"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/authn"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
@@ -56,12 +59,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		return err
 	}
 
-	jwt := authtypes.NewJWT(cmd.NewJWTSecret(ctx, logger), 30*time.Minute, 30*24*time.Hour)
-
 	signoz, err := signoz.New(
 		ctx,
 		config,
-		jwt,
 		zeus.Config{},
 		noopzeus.NewProviderFactory(),
 		licensing.Config{},
@@ -76,13 +76,19 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		},
 		signoz.NewSQLStoreProviderFactories(),
 		signoz.NewTelemetryStoreProviderFactories(),
+		func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error) {
+			return signoz.NewAuthNs(ctx, providerSettings, store, licensing)
+		},
+		func(ctx context.Context, sqlstore sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx))
+		},
 	)
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create signoz", "error", err)
 		return err
 	}
 
-	server, err := app.NewServer(config, signoz, jwt)
+	server, err := app.NewServer(config, signoz)
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create server", "error", err)
 		return err

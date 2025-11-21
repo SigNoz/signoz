@@ -4,6 +4,7 @@ export interface YAxisUnitSelectorProps {
 	placeholder?: string;
 	loading?: boolean;
 	disabled?: boolean;
+	'data-testid'?: string;
 }
 
 export enum UniversalYAxisUnit {

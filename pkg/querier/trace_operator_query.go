@@ -87,4 +87,3 @@ func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query strin
 		},
 	}, nil
 }
-

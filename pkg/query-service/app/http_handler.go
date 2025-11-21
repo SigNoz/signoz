@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
+
 	"io"
 	"math"
 	"net/http"
-	"net/url"
 	"regexp"
 	"slices"
 	"sort"
@@ -37,7 +38,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 
 	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
@@ -45,7 +46,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
 	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
 	logsv4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
@@ -257,11 +257,12 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 	// if the first org with the first user is created then the setup is complete.
 	if len(orgs) == 1 {
-		users, err := opts.Signoz.Modules.User.ListUsers(context.Background(), orgs[0].ID.String())
+		count, err := opts.Signoz.Modules.UserGetter.CountByOrgID(context.Background(), orgs[0].ID)
 		if err != nil {
 			zap.L().Warn("unexpected error while fetch user count while initializing base api handler", zap.Error(err))
 		}
-		if len(users) > 0 {
+
+		if count > 0 {
 			aH.SetupCompleted = true
 		}
 	}
@@ -490,6 +491,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/channels", am.EditAccess(aH.AlertmanagerAPI.CreateChannel)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/testChannel", am.EditAccess(aH.AlertmanagerAPI.TestReceiver)).Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/route_policies", am.ViewAccess(aH.AlertmanagerAPI.GetAllRoutePolicies)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/route_policies/{id}", am.ViewAccess(aH.AlertmanagerAPI.GetRoutePolicyByID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/route_policies", am.AdminAccess(aH.AlertmanagerAPI.CreateRoutePolicy)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/route_policies/{id}", am.AdminAccess(aH.AlertmanagerAPI.DeleteRoutePolicyByID)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/route_policies/{id}", am.AdminAccess(aH.AlertmanagerAPI.UpdateRoutePolicy)).Methods(http.MethodPut)
+
 	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.AlertmanagerAPI.GetAlerts)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
@@ -525,10 +532,15 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Delete)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost) // Deprecated Usage, use the below endpoint /v2/services
+	router.HandleFunc("/api/v2/services", am.ViewAccess(aH.Signoz.Handlers.Services.Get)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v2/service/top_operations", am.ViewAccess(aH.Signoz.Handlers.Services.GetTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_operations", am.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", am.ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v2/service/entry_point_operations", am.ViewAccess(aH.Signoz.Handlers.Services.GetEntryPointOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/entry_point_operations", am.ViewAccess(aH.getEntryPointOps)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", am.ViewAccess(aH.getUsage)).Methods(http.MethodGet)
@@ -578,14 +590,17 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(aH.Signoz.Handlers.User.AcceptInvite)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.Signoz.Handlers.User.Login)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(aH.Signoz.Handlers.User.LoginPrecheck)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/complete/google", am.OpenAccess(aH.receiveGoogleAuth)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.Signoz.Handlers.Session.DeprecatedCreateSessionByEmailPassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/sessions/email_password", am.OpenAccess(aH.Signoz.Handlers.Session.CreateSessionByEmailPassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/sessions/context", am.OpenAccess(aH.Signoz.Handlers.Session.GetSessionContext)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/sessions/rotate", am.OpenAccess(aH.Signoz.Handlers.Session.RotateSession)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/sessions", am.OpenAccess(aH.Signoz.Handlers.Session.DeleteSession)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/complete/google", am.OpenAccess(aH.Signoz.Handlers.Session.CreateSessionByGoogleCallback)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.User.ListDomains)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.User.CreateDomain)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.User.UpdateDomain)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteDomain)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.List)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.Create)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.Update)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.Delete)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/pats", am.AdminAccess(aH.Signoz.Handlers.User.CreateAPIKey)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/pats", am.AdminAccess(aH.Signoz.Handlers.User.ListAPIKeys)).Methods(http.MethodGet)
@@ -593,7 +608,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(aH.Signoz.Handlers.User.RevokeAPIKey)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.Signoz.Handlers.User.ListUsers)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/me", am.OpenAccess(aH.Signoz.Handlers.User.GetCurrentUserFromJWT)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/me", am.OpenAccess(aH.Signoz.Handlers.User.GetMyUser)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.GetUser)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.UpdateUser)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/user/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteUser)).Methods(http.MethodDelete)
@@ -614,6 +629,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	// Export
 	router.HandleFunc("/api/v1/export_raw_data", am.ViewAccess(aH.Signoz.Handlers.RawDataExport.ExportRawData)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/span_percentile", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetSpanPercentileDetails)).Methods(http.MethodPost)
+
 }
 
 func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.AuthZ) {
@@ -2074,74 +2092,6 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	aH.SetupCompleted = true
 
 	aH.Respond(w, user)
-}
-
-func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {
-	ssoError := []byte("Login failed. Please contact your system administrator")
-	dst := make([]byte, base64.StdEncoding.EncodedLen(len(ssoError)))
-	base64.StdEncoding.Encode(dst, ssoError)
-
-	http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectURL, string(dst)), http.StatusSeeOther)
-}
-
-// receiveGoogleAuth completes google OAuth response and forwards a request
-// to front-end to sign user in
-func (aH *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) {
-	redirectUri := constants.GetDefaultSiteURL()
-	ctx := context.Background()
-
-	q := r.URL.Query()
-	if errType := q.Get("error"); errType != "" {
-		zap.L().Error("[receiveGoogleAuth] failed to login with google auth", zap.String("error", errType), zap.String("error_description", q.Get("error_description")))
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to login through SSO"), http.StatusMovedPermanently)
-		return
-	}
-
-	relayState := q.Get("state")
-	zap.L().Debug("[receiveGoogleAuth] relay state received", zap.String("state", relayState))
-
-	parsedState, err := url.Parse(relayState)
-	if err != nil || relayState == "" {
-		zap.L().Error("[receiveGoogleAuth] failed to process response - invalid response from IDP", zap.Error(err), zap.Any("request", r))
-		handleSsoError(w, r, redirectUri)
-		return
-	}
-
-	// upgrade redirect url from the relay state for better accuracy
-	redirectUri = fmt.Sprintf("%s://%s%s", parsedState.Scheme, parsedState.Host, "/login")
-
-	// fetch domain by parsing relay state.
-	domain, err := aH.Signoz.Modules.User.GetDomainFromSsoResponse(ctx, parsedState)
-	if err != nil {
-		handleSsoError(w, r, redirectUri)
-		return
-	}
-
-	// now that we have domain, use domain to fetch sso settings.
-	// prepare google callback handler using parsedState -
-	// which contains redirect URL (front-end endpoint)
-	callbackHandler, err := domain.PrepareGoogleOAuthProvider(parsedState)
-	if err != nil {
-		zap.L().Error("[receiveGoogleAuth] failed to prepare google oauth provider", zap.String("domain", domain.String()), zap.Error(err))
-		handleSsoError(w, r, redirectUri)
-		return
-	}
-
-	identity, err := callbackHandler.HandleCallback(r)
-	if err != nil {
-		zap.L().Error("[receiveGoogleAuth] failed to process HandleCallback", zap.String("domain", domain.String()), zap.Error(err))
-		handleSsoError(w, r, redirectUri)
-		return
-	}
-
-	nextPage, err := aH.Signoz.Modules.User.PrepareSsoRedirect(ctx, redirectUri, identity.Email)
-	if err != nil {
-		zap.L().Error("[receiveGoogleAuth] failed to generate redirect URI after successful login ", zap.String("domain", domain.String()), zap.Error(err))
-		handleSsoError(w, r, redirectUri)
-		return
-	}
-
-	http.Redirect(w, r, nextPage, http.StatusSeeOther)
 }
 
 func (aH *APIHandler) HandleError(w http.ResponseWriter, err error, statusCode int) bool {
@@ -5022,114 +4972,116 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
+	// Extract claims from context for organization ID
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
+
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
+	// Parse the request body to get third-party query parameters
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
-		RespondError(w, apiErr, nil)
+		zap.L().Error("Failed to parse request body", zap.Error(apiErr))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
 		return
 	}
 
-	queryRangeParams, err := thirdPartyApi.BuildDomainList(thirdPartyQueryRequest)
+	// Build the v5 query range request for domain listing
+	queryRangeRequest, err := thirdpartyapi.BuildDomainList(thirdPartyQueryRequest)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		zap.L().Error("Failed to build domain list query", zap.Error(err))
+		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		render.Error(w, apiErrObj)
 		return
 	}
 
-	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	var result []*v3.Result
-	var errQuriesByName map[string]error
-
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	// Execute the query using the v5 querier
+	result, err := aH.Signoz.Querier.QueryRange(r.Context(), orgID, queryRangeRequest)
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		zap.L().Error("Query execution failed", zap.Error(err))
+		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		render.Error(w, apiErrObj)
 		return
 	}
 
-	result, err = postprocess.PostProcessResult(result, queryRangeParams)
-	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
-		return
-	}
+	result = thirdpartyapi.MergeSemconvColumns(result)
+	result = thirdpartyapi.FilterIntermediateColumns(result)
 
+	// Filter IP addresses if ShowIp is false
+	var finalResult = result
 	if !thirdPartyQueryRequest.ShowIp {
-		result = thirdPartyApi.FilterResponse(result)
+		filteredResults := thirdpartyapi.FilterResponse([]*qbtypes.QueryRangeResponse{result})
+		if len(filteredResults) > 0 {
+			finalResult = filteredResults[0]
+		}
 	}
 
-	resp := v3.QueryRangeResponse{
-		Result: result,
-	}
-	aH.Respond(w, resp)
+	// Send the response
+	aH.Respond(w, finalResult)
 }
 
+// getDomainInfo handles requests for domain information using v5 query builder
 func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
+	// Extract claims from context for organization ID
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
+
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
+	// Parse the request body to get third-party query parameters
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
-		RespondError(w, apiErr, nil)
+		zap.L().Error("Failed to parse request body", zap.Error(apiErr))
+		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
 		return
 	}
 
-	queryRangeParams, err := thirdPartyApi.BuildDomainInfo(thirdPartyQueryRequest)
+	// Build the v5 query range request for domain info
+	queryRangeRequest, err := thirdpartyapi.BuildDomainInfo(thirdPartyQueryRequest)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		zap.L().Error("Failed to build domain info query", zap.Error(err))
+		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		render.Error(w, apiErrObj)
 		return
 	}
 
-	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	var result []*v3.Result
-	var errQuriesByName map[string]error
-
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	// Execute the query using the v5 querier
+	result, err := aH.Signoz.Querier.QueryRange(r.Context(), orgID, queryRangeRequest)
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		zap.L().Error("Query execution failed", zap.Error(err))
+		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		render.Error(w, apiErrObj)
 		return
 	}
 
-	result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+	result = thirdpartyapi.MergeSemconvColumns(result)
+	result = thirdpartyapi.FilterIntermediateColumns(result)
 
+	// Filter IP addresses if ShowIp is false
+	var finalResult *qbtypes.QueryRangeResponse = result
 	if !thirdPartyQueryRequest.ShowIp {
-		result = thirdPartyApi.FilterResponse(result)
+		filteredResults := thirdpartyapi.FilterResponse([]*qbtypes.QueryRangeResponse{result})
+		if len(filteredResults) > 0 {
+			finalResult = filteredResults[0]
+		}
 	}
 
-	resp := v3.QueryRangeResponse{
-		Result: result,
-	}
-	aH.Respond(w, resp)
+	// Send the response
+	aH.Respond(w, finalResult)
 }
 
 // RegisterTraceFunnelsRoutes adds trace funnels routes

@@ -1,10 +1,10 @@
 package clickhouse
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/AfterShip/clickhouse-sql-parser/parser"
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 // FilterAction represents what to do with a filter containing a variable
@@ -37,7 +37,7 @@ func (qp *QueryProcessor) ProcessQuery(query string, transformer FilterTransform
 	p := parser.NewParser(query)
 	stmts, err := p.ParseStmts()
 	if err != nil {
-		return "", fmt.Errorf("failed to parse query: %w", err)
+		return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to parse query")
 	}
 
 	if len(stmts) == 0 {

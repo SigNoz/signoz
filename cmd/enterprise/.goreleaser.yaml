@@ -12,12 +12,6 @@ builds:
   - id: signoz
     binary: bin/signoz
     main: ./cmd/enterprise
-    env:
-      - CGO_ENABLED=1
-      - >-
-        {{- if eq .Os "linux" }}
-          {{- if eq .Arch "arm64" }}CC=aarch64-linux-gnu-gcc{{- end }}
-        {{- end }}
     goos:
       - linux
       - darwin
@@ -37,11 +31,8 @@ builds:
       - -X github.com/SigNoz/signoz/pkg/version.branch={{ .Branch }}
       - -X github.com/SigNoz/signoz/ee/zeus.url=https://api.signoz.cloud
       - -X github.com/SigNoz/signoz/ee/zeus.deprecatedURL=https://license.signoz.io
-      - -X github.com/SigNoz/signoz/ee/query-service/constants.ZeusURL=https://api.signoz.cloud
       - -X github.com/SigNoz/signoz/ee/query-service/constants.LicenseSignozIo=https://license.signoz.io/api/v1
       - -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr
-      - >-
-        {{- if eq .Os "linux" }}-linkmode external -extldflags '-static'{{- end }}
     mod_timestamp: "{{ .CommitTimestamp }}"
     tags:
       - timetzdata

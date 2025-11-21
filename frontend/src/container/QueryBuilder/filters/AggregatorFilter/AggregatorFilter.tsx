@@ -37,6 +37,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	onSelect,
 	index,
 	signalSource,
+	setAttributeKeys,
 }: AgregatorFilterProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
@@ -50,6 +51,10 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	const [searchText, setSearchText] = useState<string>(
 		(query.aggregations?.[0] as MetricAggregation)?.metricName || '',
 	);
+
+	useEffect(() => {
+		setSearchText('');
+	}, [signalSource]);
 
 	const debouncedSearchText = useMemo(() => {
 		// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
@@ -66,6 +71,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			queryAggregation.timeAggregation,
 			query.dataSource,
 			index,
+			signalSource,
 		],
 		async () =>
 			getAggregateAttribute({
@@ -97,7 +103,9 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 					})) || [];
 
 				setOptionsData(options);
+				setAttributeKeys?.(data?.payload?.attributeKeys || []);
 			},
+			keepPreviousData: false,
 		},
 	);
 
@@ -135,6 +143,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		onChange,
 		index,
 		query,
+		setAttributeKeys,
 	]);
 
 	const handleSearchText = useCallback((text: string): void => {
@@ -153,23 +162,29 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		return 'Aggregate attribute';
 	}, [signalSource, query.dataSource]);
 
-	const getAttributesData = useCallback(
-		(): BaseAutocompleteData[] =>
+	const getAttributesData = useCallback((): BaseAutocompleteData[] => {
+		const attributeKeys =
 			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>([
 				QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
 				debouncedValue,
 				queryAggregation.timeAggregation,
 				query.dataSource,
 				index,
-			])?.payload?.attributeKeys || [],
-		[
-			debouncedValue,
-			queryAggregation.timeAggregation,
-			query.dataSource,
-			queryClient,
-			index,
-		],
-	);
+				signalSource,
+			])?.payload?.attributeKeys || [];
+
+		setAttributeKeys?.(attributeKeys);
+
+		return attributeKeys;
+	}, [
+		debouncedValue,
+		queryAggregation.timeAggregation,
+		query.dataSource,
+		queryClient,
+		index,
+		signalSource,
+		setAttributeKeys,
+	]);
 
 	const getResponseAttributes = useCallback(async () => {
 		const response = await queryClient.fetchQuery(
@@ -188,6 +203,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				}),
 		);
 
+		setAttributeKeys?.(response.payload?.attributeKeys || []);
 		return response.payload?.attributeKeys || [];
 	}, [
 		queryAggregation.timeAggregation,
@@ -195,6 +211,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		queryClient,
 		searchText,
 		index,
+		setAttributeKeys,
 	]);
 
 	const handleChangeCustomValue = useCallback(

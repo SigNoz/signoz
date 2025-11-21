@@ -7,6 +7,7 @@ import { LabelInputState, LabelsInputProps } from './types';
 function LabelsInput({
 	labels,
 	onLabelsChange,
+	validateLabelsKey,
 }: LabelsInputProps): JSX.Element {
 	const { notifications } = useNotifications();
 	const [inputState, setInputState] = useState<LabelInputState>({
@@ -38,6 +39,13 @@ function LabelsInput({
 								});
 								return;
 							}
+							const error = validateLabelsKey(key.trim());
+							if (error) {
+								notifications.error({
+									message: error,
+								});
+								return;
+							}
 							// Add the label immediately
 							const newLabels = {
 								...labels,
@@ -52,6 +60,13 @@ function LabelsInput({
 						if (labels[inputState.key.trim()]) {
 							notifications.error({
 								message: 'Label with this key already exists',
+							});
+							return;
+						}
+						const error = validateLabelsKey(inputState.key.trim());
+						if (error) {
+							notifications.error({
+								message: error,
 							});
 							return;
 						}
@@ -74,7 +89,7 @@ function LabelsInput({
 				setInputState({ key: '', value: '', isKeyInput: true });
 			}
 		},
-		[inputState, labels, notifications, onLabelsChange],
+		[inputState, labels, notifications, onLabelsChange, validateLabelsKey],
 	);
 
 	const handleInputChange = useCallback(
@@ -109,7 +124,11 @@ function LabelsInput({
 			{Object.keys(labels).length > 0 && (
 				<div className="labels-input__existing-labels">
 					{Object.entries(labels).map(([key, value]) => (
-						<span key={key} className="labels-input__label-pill">
+						<span
+							key={key}
+							className="labels-input__label-pill"
+							data-testid={`label-pill-${key}-${value}`}
+						>
 							{key}: {value}
 							<button
 								type="button"
@@ -128,6 +147,7 @@ function LabelsInput({
 					className="labels-input__add-button"
 					type="button"
 					onClick={handleAddLabelsClick}
+					data-testid="alert-add-label-button"
 				>
 					+ Add labels
 				</button>
@@ -143,6 +163,7 @@ function LabelsInput({
 						placeholder={inputState.isKeyInput ? 'Enter key' : 'Enter value'}
 						// eslint-disable-next-line jsx-a11y/no-autofocus
 						autoFocus
+						data-testid="alert-add-label-input"
 					/>
 				</div>
 			)}

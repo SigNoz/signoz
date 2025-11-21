@@ -12,13 +12,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func getVectorValues(vectors []ruletypes.Sample) []float64 {
+	if len(vectors) == 0 {
+		return []float64{} // Return empty slice instead of nil
+	}
+	var values []float64
+	for _, v := range vectors {
+		values = append(values, v.V)
+	}
+	return values
+}
+
 func TestPromRuleShouldAlert(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName:  "Test Rule",
-		AlertType:  ruletypes.AlertTypeMetric,
-		RuleType:   ruletypes.RuleTypeProm,
-		EvalWindow: ruletypes.Duration(5 * time.Minute),
-		Frequency:  ruletypes.Duration(1 * time.Minute),
+		AlertName: "Test Rule",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeProm,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypePromQL,
@@ -32,12 +45,13 @@ func TestPromRuleShouldAlert(t *testing.T) {
 	}
 
 	cases := []struct {
-		values              pql.Series
-		expectAlert         bool
-		compareOp           string
-		matchType           string
-		target              float64
-		expectedAlertSample v3.Point
+		values               pql.Series
+		expectAlert          bool
+		compareOp            string
+		matchType            string
+		target               float64
+		expectedAlertSample  v3.Point
+		expectedVectorValues []float64 // Expected values in result vector
 	}{
 		// Test cases for Equals Always
 		{
@@ -50,11 +64,12 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 0.0},
 				},
 			},
-			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "2", // Always
-			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 0.0},
+			expectAlert:          true,
+			compareOp:            "3", // Equals
+			matchType:            "2", // Always
+			target:               0.0,
+			expectedAlertSample:  v3.Point{Value: 0.0},
+			expectedVectorValues: []float64{0.0},
 		},
 		{
 			values: pql.Series{
@@ -66,10 +81,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 1.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "2", // Always
-			target:      0.0,
+			expectAlert:          false,
+			compareOp:            "3", // Equals
+			matchType:            "2", // Always
+			target:               0.0,
+			expectedVectorValues: []float64{},
 		},
 		{
 			values: pql.Series{
@@ -81,10 +97,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 1.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "2", // Always
-			target:      0.0,
+			expectAlert:          false,
+			compareOp:            "3", // Equals
+			matchType:            "2", // Always
+			target:               0.0,
+			expectedVectorValues: []float64{},
 		},
 		{
 			values: pql.Series{
@@ -112,11 +129,12 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 0.0},
 				},
 			},
-			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "1", // Once
-			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 0.0},
+			expectAlert:          true,
+			compareOp:            "3", // Equals
+			matchType:            "1", // Once
+			target:               0.0,
+			expectedAlertSample:  v3.Point{Value: 0.0},
+			expectedVectorValues: []float64{0.0},
 		},
 		{
 			values: pql.Series{
@@ -160,10 +178,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 1.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:          false,
+			compareOp:            "3", // Equals
+			matchType:            "1", // Once
+			target:               0.0,
+			expectedVectorValues: []float64{},
 		},
 		// Test cases for Greater Than Always
 		{
@@ -176,11 +195,12 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert:         true,
-			compareOp:           "1", // Greater Than
-			matchType:           "2", // Always
-			target:              1.5,
-			expectedAlertSample: v3.Point{Value: 2.0},
+			expectAlert:          true,
+			compareOp:            "1", // Greater Than
+			matchType:            "2", // Always
+			target:               1.5,
+			expectedAlertSample:  v3.Point{Value: 2.0},
+			expectedVectorValues: []float64{2.0},
 		},
 		{
 			values: pql.Series{
@@ -240,11 +260,12 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert:         true,
-			compareOp:           "1", // Greater Than
-			matchType:           "1", // Once
-			target:              4.5,
-			expectedAlertSample: v3.Point{Value: 10.0},
+			expectAlert:          true,
+			compareOp:            "1", // Greater Than
+			matchType:            "1", // Once
+			target:               4.5,
+			expectedAlertSample:  v3.Point{Value: 10.0},
+			expectedVectorValues: []float64{10.0},
 		},
 		{
 			values: pql.Series{
@@ -659,13 +680,49 @@ func TestPromRuleShouldAlert(t *testing.T) {
 		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
 		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
+		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					TargetValue: &c.target,
+					MatchType:   ruletypes.MatchType(c.matchType),
+					CompareOp:   ruletypes.CompareOp(c.compareOp),
+				},
+			},
+		}
 
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, nil, nil)
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		_, shoulAlert := rule.ShouldAlert(toCommonSeries(c.values))
-		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
+		resultVectors, err := rule.Threshold.ShouldAlert(toCommonSeries(c.values), rule.Unit())
+		assert.NoError(t, err)
+
+		// Compare full result vector with expected vector
+		actualValues := getVectorValues(resultVectors)
+		if c.expectedVectorValues != nil {
+			// If expected vector values are specified, compare them exactly
+			assert.Equal(t, c.expectedVectorValues, actualValues, "Result vector values don't match expected for case %d", idx)
+		} else {
+			// Fallback to the old logic for cases without expectedVectorValues
+			if c.expectAlert {
+				assert.NotEmpty(t, resultVectors, "Expected alert but got no result vectors for case %d", idx)
+				// Verify at least one of the result vectors matches the expected alert sample
+				if len(resultVectors) > 0 {
+					found := false
+					for _, sample := range resultVectors {
+						if sample.V == c.expectedAlertSample.Value {
+							found = true
+							break
+						}
+					}
+					assert.True(t, found, "Expected alert sample value %.2f not found in result vectors for case %d. Got values: %v", c.expectedAlertSample.Value, idx, actualValues)
+				}
+			} else {
+				assert.Empty(t, resultVectors, "Expected no alert but got result vectors for case %d", idx)
+			}
+		}
+
 	}
 }

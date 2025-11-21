@@ -45,6 +45,13 @@ function UplotPanelWrapper({
 	const isDarkMode = useIsDarkMode();
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const { currentQuery } = useQueryBuilder();
@@ -117,15 +124,23 @@ function UplotPanelWrapper({
 		queryResponse.data.payload.data.result = sortedSeriesData;
 	}
 
+	const stackedBarChart = useMemo(
+		() =>
+			(selectedGraph
+				? selectedGraph === PANEL_TYPES.BAR
+				: widget?.panelTypes === PANEL_TYPES.BAR) && widget?.stackedBarChart,
+		[selectedGraph, widget?.panelTypes, widget?.stackedBarChart],
+	);
+
 	const chartData = getUPlotChartData(
 		queryResponse?.data?.payload,
 		widget.fillSpans,
-		widget?.stackedBarChart,
+		stackedBarChart,
 		hiddenGraph,
 	);
 
 	useEffect(() => {
-		if (widget.panelTypes === PANEL_TYPES.BAR && widget?.stackedBarChart) {
+		if (widget.panelTypes === PANEL_TYPES.BAR && stackedBarChart) {
 			const graphV = cloneDeep(graphVisibility)?.slice(1);
 			const isSomeSelectedLegend = graphV?.some((v) => v === false);
 			if (isSomeSelectedLegend) {
@@ -138,7 +153,7 @@ function UplotPanelWrapper({
 				}
 			}
 		}
-	}, [graphVisibility, hiddenGraph, widget.panelTypes, widget?.stackedBarChart]);
+	}, [graphVisibility, hiddenGraph, widget.panelTypes, stackedBarChart]);
 
 	const { timezone } = useTimezone();
 
@@ -214,7 +229,7 @@ function UplotPanelWrapper({
 				setGraphsVisibilityStates: setGraphVisibility,
 				panelType: selectedGraph || widget.panelTypes,
 				currentQuery,
-				stackBarChart: widget?.stackedBarChart,
+				stackBarChart: stackedBarChart,
 				hiddenGraph,
 				setHiddenGraph,
 				customTooltipElement,
@@ -227,6 +242,14 @@ function UplotPanelWrapper({
 				enhancedLegend: true, // Enable enhanced legend
 				legendPosition: widget?.legendPosition,
 				query: widget?.query || currentQuery,
+				legendScrollPosition: legendScrollPositionRef.current,
+				setLegendScrollPosition: (position: {
+					scrollTop: number;
+					scrollLeft: number;
+				}) => {
+					legendScrollPositionRef.current = position;
+				},
+				decimalPrecision: widget.decimalPrecision,
 			}),
 		[
 			queryResponse.data?.payload,
@@ -247,6 +270,7 @@ function UplotPanelWrapper({
 			enableDrillDown,
 			onClickHandler,
 			widget,
+			stackedBarChart,
 		],
 	);
 
@@ -260,14 +284,14 @@ function UplotPanelWrapper({
 				items={menuItemsConfig.items}
 				onClose={onClose}
 			/>
-			{widget?.stackedBarChart && isFullViewMode && (
+			{stackedBarChart && isFullViewMode && (
 				<Alert
 					message="Selecting multiple legends is currently not supported in case of stacked bar charts"
 					type="info"
 					className="info-text"
 				/>
 			)}
-			{isFullViewMode && setGraphVisibility && !widget?.stackedBarChart && (
+			{isFullViewMode && setGraphVisibility && !stackedBarChart && (
 				<GraphManager
 					data={getUPlotChartData(queryResponse?.data?.payload, widget.fillSpans)}
 					name={widget.id}

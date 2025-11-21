@@ -14,11 +14,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
 	"github.com/uptrace/bun"
 )
 
 const (
 	DefaultReceiverName string = "default-receiver"
+	DefaultGroupBy      string = "ruleId"
+	DefaultGroupByAll   string = "__all__"
 )
 
 var (
@@ -90,10 +93,13 @@ func NewConfigFromStoreableConfig(sc *StoreableConfig) (*Config, error) {
 }
 
 func NewDefaultConfig(globalConfig GlobalConfig, routeConfig RouteConfig, orgID string) (*Config, error) {
+	// Mergo treats an explicit false as zero-value and overwrites it to true, so we save it in smtpRequireTLS and restore the user-specified value.
+	smtpRequireTLS := globalConfig.SMTPRequireTLS
 	err := mergo.Merge(&globalConfig, config.DefaultGlobalConfig())
 	if err != nil {
 		return nil, err
 	}
+	globalConfig.SMTPRequireTLS = smtpRequireTLS
 
 	route, err := NewRouteFromRouteConfig(nil, routeConfig)
 	if err != nil {
@@ -164,10 +170,13 @@ func (c *Config) CopyWithReset() (*Config, error) {
 }
 
 func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) error {
+	// Mergo treats an explicit false as zero-value and overwrites it to true, so we save it in smtpRequireTLS and restore the user-specified value.
+	smtpRequireTLS := globalConfig.SMTPRequireTLS
 	err := mergo.Merge(&globalConfig, config.DefaultGlobalConfig())
 	if err != nil {
 		return err
 	}
+	globalConfig.SMTPRequireTLS = smtpRequireTLS
 
 	c.alertmanagerConfig.Global = &globalConfig
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
@@ -183,6 +192,20 @@ func (c *Config) SetRouteConfig(routeConfig RouteConfig) error {
 		return err
 	}
 	c.alertmanagerConfig.Route = route
+
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
+}
+
+func (c *Config) AddInhibitRules(rules []config.InhibitRule) error {
+	if c.alertmanagerConfig == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "config is nil")
+	}
+
+	c.alertmanagerConfig.InhibitRules = append(c.alertmanagerConfig.InhibitRules, rules...)
 
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
 	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
@@ -302,6 +325,27 @@ func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) erro
 	return nil
 }
 
+func (c *Config) DeleteRuleIDInhibitor(ruleID string) error {
+	if c.alertmanagerConfig.InhibitRules == nil {
+		return nil // already nil
+	}
+
+	var filteredRules []config.InhibitRule
+	for _, inhibitor := range c.alertmanagerConfig.InhibitRules {
+		sourceContainsRuleID := matcherContainsRuleID(inhibitor.SourceMatchers, ruleID)
+		targetContainsRuleID := matcherContainsRuleID(inhibitor.TargetMatchers, ruleID)
+		if !sourceContainsRuleID && !targetContainsRuleID {
+			filteredRules = append(filteredRules, inhibitor)
+		}
+	}
+	c.alertmanagerConfig.InhibitRules = filteredRules
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
+}
+
 func (c *Config) UpdateRuleIDMatcher(ruleID string, receiverNames []string) error {
 	err := c.DeleteRuleIDMatcher(ruleID)
 	if err != nil {
@@ -397,4 +441,63 @@ type ConfigStore interface {
 func init() {
 	commoncfg.MarshalSecretValue = true
 	config.MarshalSecretValue = true
+}
+
+// NotificationConfig holds configuration for alert notifications timing.
+type NotificationConfig struct {
+	NotificationGroup map[model.LabelName]struct{}
+	Renotify          ReNotificationConfig
+	UsePolicy         bool
+	GroupByAll        bool
+}
+
+func (nc *NotificationConfig) DeepCopy() NotificationConfig {
+	deepCopy := *nc
+	deepCopy.NotificationGroup = make(map[model.LabelName]struct{})
+	deepCopy.Renotify.NoDataInterval = nc.Renotify.NoDataInterval
+	deepCopy.Renotify.RenotifyInterval = nc.Renotify.RenotifyInterval
+	for k, v := range nc.NotificationGroup {
+		deepCopy.NotificationGroup[k] = v
+	}
+	deepCopy.UsePolicy = nc.UsePolicy
+	return deepCopy
+}
+
+type ReNotificationConfig struct {
+	NoDataInterval   time.Duration
+	RenotifyInterval time.Duration
+}
+
+func NewNotificationConfig(groups []string, renotifyInterval time.Duration, noDataRenotifyInterval time.Duration, policy bool) NotificationConfig {
+	notificationConfig := GetDefaultNotificationConfig()
+
+	if renotifyInterval != 0 {
+		notificationConfig.Renotify.RenotifyInterval = renotifyInterval
+	}
+
+	if noDataRenotifyInterval != 0 {
+		notificationConfig.Renotify.NoDataInterval = noDataRenotifyInterval
+	}
+	for _, group := range groups {
+		notificationConfig.NotificationGroup[model.LabelName(group)] = struct{}{}
+		if group == DefaultGroupByAll {
+			notificationConfig.GroupByAll = true
+		}
+	}
+
+	notificationConfig.UsePolicy = policy
+
+	return notificationConfig
+}
+
+func GetDefaultNotificationConfig() NotificationConfig {
+	defaultGroups := make(map[model.LabelName]struct{})
+	defaultGroups[model.LabelName(DefaultGroupBy)] = struct{}{}
+	return NotificationConfig{
+		NotificationGroup: defaultGroups,
+		Renotify: ReNotificationConfig{
+			RenotifyInterval: 4 * time.Hour,
+			NoDataInterval:   4 * time.Hour,
+		}, //substitute for no - notify
+	}
 }

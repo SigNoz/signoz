@@ -8,6 +8,8 @@ import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
+import { INITIAL_CRITICAL_THRESHOLD } from 'container/CreateAlertV2/context/constants';
+import { Threshold } from 'container/CreateAlertV2/context/types';
 import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
@@ -51,7 +53,7 @@ import { getTimeRange } from 'utils/getTimeRange';
 
 import { AlertDetectionTypes } from '..';
 import { ChartContainer } from './styles';
-import { getThresholdLabel } from './utils';
+import { getThresholds } from './utils';
 
 export interface ChartPreviewProps {
 	name: string;
@@ -66,6 +68,7 @@ export interface ChartPreviewProps {
 	yAxisUnit: string;
 	setQueryStatus?: (status: string) => void;
 	showSideLegend?: boolean;
+	additionalThresholds?: Threshold[];
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -82,13 +85,36 @@ function ChartPreview({
 	yAxisUnit,
 	setQueryStatus,
 	showSideLegend = false,
+	additionalThresholds,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const dispatch = useDispatch();
-	const threshold = alertDef?.condition.target || 0;
+	const thresholds: Threshold[] = useMemo(
+		() =>
+			additionalThresholds || [
+				{
+					...INITIAL_CRITICAL_THRESHOLD,
+					thresholdValue: alertDef?.condition.target || 0,
+					unit: alertDef?.condition.targetUnit || '',
+				},
+			],
+		[
+			additionalThresholds,
+			alertDef?.condition.target,
+			alertDef?.condition.targetUnit,
+		],
+	);
+
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>([]);
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
 	const { currentQuery } = useQueryBuilder();
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
@@ -264,24 +290,7 @@ function ChartPreview({
 				maxTimeScale,
 				isDarkMode,
 				onDragSelect,
-				thresholds: [
-					{
-						index: '0', // no impact
-						keyIndex: 0,
-						moveThreshold: (): void => {},
-						selectedGraph: PANEL_TYPES.TIME_SERIES, // no impact
-						thresholdValue: threshold,
-						thresholdLabel: `${t(
-							'preview_chart_threshold_label',
-						)} (y=${getThresholdLabel(
-							optionName,
-							threshold,
-							alertDef?.condition.targetUnit,
-							yAxisUnit,
-						)})`,
-						thresholdUnit: alertDef?.condition.targetUnit,
-					},
-				],
+				thresholds: getThresholds(thresholds, t, optionName, yAxisUnit),
 				softMax: null,
 				softMin: null,
 				panelType: graphType,
@@ -294,6 +303,13 @@ function ChartPreview({
 				setGraphsVisibilityStates: setGraphVisibility,
 				enhancedLegend: true,
 				legendPosition,
+				legendScrollPosition: legendScrollPositionRef.current,
+				setLegendScrollPosition: (position: {
+					scrollTop: number;
+					scrollLeft: number;
+				}) => {
+					legendScrollPositionRef.current = position;
+				},
 			}),
 		[
 			yAxisUnit,
@@ -303,10 +319,9 @@ function ChartPreview({
 			maxTimeScale,
 			isDarkMode,
 			onDragSelect,
-			threshold,
+			thresholds,
 			t,
 			optionName,
-			alertDef?.condition.targetUnit,
 			graphType,
 			timezone.value,
 			currentQuery,
@@ -386,6 +401,7 @@ ChartPreview.defaultProps = {
 	alertDef: undefined,
 	setQueryStatus: (): void => {},
 	showSideLegend: false,
+	additionalThresholds: undefined,
 };
 
 export default ChartPreview;

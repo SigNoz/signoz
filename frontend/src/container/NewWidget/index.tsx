@@ -4,6 +4,10 @@ import './NewWidget.styles.scss';
 import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import {
+	PrecisionOption,
+	PrecisionOptionsEnum,
+} from 'components/Graph/yAxisConfig';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { adjustQueryForV5 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
@@ -178,6 +182,10 @@ function NewWidget({
 		selectedWidget?.yAxisUnit || 'none',
 	);
 
+	const [decimalPrecision, setDecimalPrecision] = useState<PrecisionOption>(
+		selectedWidget?.decimalPrecision ?? PrecisionOptionsEnum.TWO,
+	);
+
 	const [stackedBarChart, setStackedBarChart] = useState<boolean>(
 		selectedWidget?.stackedBarChart || false,
 	);
@@ -257,6 +265,7 @@ function NewWidget({
 				opacity,
 				nullZeroValues: selectedNullZeroValue,
 				yAxisUnit,
+				decimalPrecision,
 				thresholds,
 				softMin,
 				softMax,
@@ -290,6 +299,7 @@ function NewWidget({
 		thresholds,
 		title,
 		yAxisUnit,
+		decimalPrecision,
 		bucketWidth,
 		bucketCount,
 		combineHistogram,
@@ -493,6 +503,8 @@ function NewWidget({
 								title: selectedWidget?.title,
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
+								decimalPrecision:
+									selectedWidget?.decimalPrecision || PrecisionOptionsEnum.TWO,
 								panelTypes: graphType,
 								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,
@@ -522,6 +534,8 @@ function NewWidget({
 								title: selectedWidget?.title,
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
+								decimalPrecision:
+									selectedWidget?.decimalPrecision || PrecisionOptionsEnum.TWO,
 								panelTypes: graphType,
 								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,
@@ -595,6 +609,13 @@ function NewWidget({
 			selectedGraph,
 		);
 		setGraphType(type);
+
+		// with a single source of truth for stacking, we can use the saved stacking value as a default value
+		const savedStackingValue = getWidget()?.stackedBarChart;
+		setStackedBarChart(
+			type === PANEL_TYPES.BAR ? savedStackingValue || false : false,
+		);
+
 		redirectWithQueryBuilderData(
 			updatedQuery,
 			{ [QueryParams.graphType]: type },
@@ -829,6 +850,8 @@ function NewWidget({
 							setSelectedTime={setSelectedTime}
 							selectedTime={selectedTime}
 							setYAxisUnit={setYAxisUnit}
+							decimalPrecision={decimalPrecision}
+							setDecimalPrecision={setDecimalPrecision}
 							thresholds={thresholds}
 							setThresholds={setThresholds}
 							selectedWidget={selectedWidget}

@@ -7,14 +7,28 @@ import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { BarChart2, DraftingCompass, FileText, ScrollText } from 'lucide-react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 import { useCreateAlertState } from '../context';
 import Stepper from '../Stepper';
 import ChartPreview from './ChartPreview';
+import { buildAlertDefForChartPreview } from './utils';
 
 function QuerySection(): JSX.Element {
-	const { currentQuery, handleRunQuery } = useQueryBuilder();
-	const { alertType, setAlertType, alertDef } = useCreateAlertState();
+	const {
+		currentQuery,
+		handleRunQuery,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
+	const { alertType, setAlertType, thresholdState } = useCreateAlertState();
+
+	const alertDef = buildAlertDefForChartPreview({ alertType, thresholdState });
+
+	const onQueryCategoryChange = (queryType: EQueryType): void => {
+		const query: Query = { ...currentQuery, queryType };
+		redirectWithQueryBuilderData(query);
+	};
 
 	const tabs = [
 		{
@@ -41,11 +55,8 @@ function QuerySection(): JSX.Element {
 
 	return (
 		<div className="query-section">
-			<Stepper
-				stepNumber={1}
-				label="Define the query you want to set an alert on"
-			/>
-			<ChartPreview />
+			<Stepper stepNumber={1} label="Define the query" />
+			<ChartPreview alertDef={alertDef} />
 			<div className="query-section-tabs">
 				<div className="query-section-query-actions">
 					{tabs.map((tab) => (
@@ -66,7 +77,7 @@ function QuerySection(): JSX.Element {
 			</div>
 			<QuerySectionComponent
 				queryCategory={currentQuery.queryType}
-				setQueryCategory={(): void => {}}
+				setQueryCategory={onQueryCategoryChange}
 				alertType={alertType}
 				runQuery={handleRunQuery}
 				alertDef={alertDef}

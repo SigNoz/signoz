@@ -696,7 +696,7 @@ var MaxJSONFlatteningDepth = 1
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
 	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
-	if GetOrDefaultEnv(DotMetricsEnabled, "false") == "true" {
+	if GetOrDefaultEnv(DotMetricsEnabled, "true") == "true" {
 		IsDotMetricsEnabled = true
 	}
 	if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
@@ -729,10 +729,6 @@ var MaterializedDataTypeMap = map[string]string{
 }
 
 const InspectMetricsMaxTimeDiff = 1800000
-
-func GetDefaultSiteURL() string {
-	return GetOrDefaultEnv("SIGNOZ_SITE_URL", HTTPHostPort)
-}
 
 const DotMetricsEnabled = "DOT_METRICS_ENABLED"
 const maxJSONFlatteningDepth = "MAX_JSON_FLATTENING_DEPTH"

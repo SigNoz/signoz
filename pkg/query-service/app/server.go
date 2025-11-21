@@ -7,6 +7,9 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
+	"slices"
+
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 
 	"github.com/gorilla/handlers"
 
@@ -28,7 +31,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
@@ -39,6 +41,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	"go.opentelemetry.io/otel/propagation"
 	"go.uber.org/zap"
 )
 
@@ -46,7 +50,6 @@ import (
 type Server struct {
 	config      signoz.Config
 	signoz      *signoz.SigNoz
-	jwt         *authtypes.JWT
 	ruleManager *rules.Manager
 
 	// public http router
@@ -60,7 +63,7 @@ type Server struct {
 }
 
 // NewServer creates and initializes Server
-func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) (*Server, error) {
+func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	integrationsController, err := integrations.NewController(signoz.SQLStore)
 	if err != nil {
 		return nil, err
@@ -123,7 +126,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 	s := &Server{
 		config:             config,
 		signoz:             signoz,
-		jwt:                jwt,
 		ruleManager:        rm,
 		httpHostPort:       constants.HTTPHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
@@ -168,7 +170,17 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
 	r := NewRouter()
 
-	r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
+	r.Use(otelmux.Middleware(
+		"apiserver",
+		otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()),
+		otelmux.WithTracerProvider(s.signoz.Instrumentation.TracerProvider()),
+		otelmux.WithPropagators(propagation.NewCompositeTextMapPropagator(propagation.Baggage{}, propagation.TraceContext{})),
+		otelmux.WithFilter(func(r *http.Request) bool {
+			return !slices.Contains([]string{"/api/v1/health"}, r.URL.Path)
+		}),
+		otelmux.WithPublicEndpoint(),
+	))
+	r.Use(middleware.NewAuthN([]string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Tokenizer, s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
 		s.config.APIServer.Timeout.ExcludedRoutes,
 		s.config.APIServer.Timeout.Default,
@@ -178,7 +190,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
 	r.Use(middleware.NewComment().Wrap)
 
-	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger())
+	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz)
 
 	api.RegisterRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
@@ -308,20 +320,24 @@ func makeRulesManager(
 	querier querier.Querier,
 	logger *slog.Logger,
 ) (*rules.Manager, error) {
+	ruleStore := sqlrulestore.NewRuleStore(sqlstore)
+	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		TelemetryStore: telemetryStore,
-		Prometheus:     prometheus,
-		Context:        context.Background(),
-		Logger:         zap.L(),
-		Reader:         ch,
-		Querier:        querier,
-		SLogger:        logger,
-		Cache:          cache,
-		EvalDelay:      constants.GetEvalDelay(),
-		SQLStore:       sqlstore,
-		OrgGetter:      orgGetter,
-		Alertmanager:   alertmanager,
+		TelemetryStore:   telemetryStore,
+		Prometheus:       prometheus,
+		Context:          context.Background(),
+		Logger:           zap.L(),
+		Reader:           ch,
+		Querier:          querier,
+		SLogger:          logger,
+		Cache:            cache,
+		EvalDelay:        constants.GetEvalDelay(),
+		OrgGetter:        orgGetter,
+		Alertmanager:     alertmanager,
+		RuleStore:        ruleStore,
+		MaintenanceStore: maintenanceStore,
+		SqlStore:         sqlstore,
 	}
 
 	// create Manager

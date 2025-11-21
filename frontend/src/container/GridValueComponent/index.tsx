@@ -99,7 +99,11 @@ function GridValueComponent({
 					rawValue={value}
 					value={
 						yAxisUnit
-							? getYAxisFormattedValue(String(value), yAxisUnit)
+							? getYAxisFormattedValue(
+									String(value),
+									yAxisUnit,
+									widget?.decimalPrecision,
+							  )
 							: value.toString()
 					}
 				/>

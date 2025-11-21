@@ -82,9 +82,9 @@ func (b *traceQueryStatementBuilder) Build(
 		if found && len(traceIDs) > 0 {
 			finder := NewTraceTimeRangeFinder(b.telemetryStore)
 
-			traceStart, traceEnd, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
-			if err != nil {
-				b.logger.DebugContext(ctx, "failed to get trace time range", "trace_ids", traceIDs, "error", err)
+			traceStart, traceEnd, ok := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
+			if !ok {
+				b.logger.DebugContext(ctx, "failed to get trace time range", "trace_ids", traceIDs)
 			} else if traceStart > 0 && traceEnd > 0 {
 				start = uint64(traceStart)
 				end = uint64(traceEnd)
@@ -107,7 +107,7 @@ func (b *traceQueryStatementBuilder) Build(
 		return b.buildTraceQuery(ctx, q, query, start, end, keys, variables)
 	}
 
-	return nil, fmt.Errorf("unsupported request type: %s", requestType)
+	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 }
 
 func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) []*telemetrytypes.FieldKeySelector {
@@ -390,6 +390,11 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	innerSB.Select("trace_id", "duration_nano", sqlbuilder.Escape("resource_string_service$$name as `service.name`"), "name")
 	innerSB.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 	innerSB.Where("parent_span_id = ''")
+
+	// this only helps when there is a filter
+	if query.Filter != nil && query.Filter.Expression != "" {
+		innerSB.Where("trace_id GLOBAL IN __toe")
+	}
 
 	// Add time filter to inner query
 	innerSB.Where(
@@ -741,7 +746,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
 			Variables:          variables,
-		})
+        }, start, end)
 
 		if err != nil {
 			return nil, err

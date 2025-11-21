@@ -64,17 +64,21 @@ function SpanOverview({
 	span,
 	isSpanCollapsed,
 	handleCollapseUncollapse,
-	setSelectedSpan,
+	handleSpanClick,
 	handleAddSpanToFunnel,
 	selectedSpan,
+	filteredSpanIds,
+	isFilterActive,
 	traceMetadata,
 }: {
 	span: Span;
 	isSpanCollapsed: boolean;
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	selectedSpan: Span | undefined;
-	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+	handleSpanClick: (span: Span) => void;
 	handleAddSpanToFunnel: (span: Span) => void;
+	filteredSpanIds: string[];
+	isFilterActive: boolean;
 	traceMetadata: ITraceMetadata;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
@@ -85,13 +89,23 @@ function SpanOverview({
 		color = `var(--bg-cherry-500)`;
 	}
 
+	// Smart highlighting logic
+	const isMatching =
+		isFilterActive && (filteredSpanIds || []).includes(span.spanId);
+	const isSelected = selectedSpan?.spanId === span.spanId;
+	const isDimmed = isFilterActive && !isMatching && !isSelected;
+	const isHighlighted = isFilterActive && isMatching && !isSelected;
+	const isSelectedNonMatching = isSelected && isFilterActive && !isMatching;
+
 	return (
 		<SpanHoverCard span={span} traceMetadata={traceMetadata}>
 			<div
-				className={cx(
-					'span-overview',
-					selectedSpan?.spanId === span.spanId ? 'interested-span' : '',
-				)}
+				className={cx('span-overview', {
+					'interested-span': isSelected && (!isFilterActive || isMatching),
+					'highlighted-span': isHighlighted,
+					'selected-non-matching-span': isSelectedNonMatching,
+					'dimmed-span': isDimmed,
+				})}
 				style={{
 					paddingLeft: `${
 						isRootSpan
@@ -102,9 +116,7 @@ function SpanOverview({
 					backgroundRepeat: 'repeat',
 					backgroundSize: `${CONNECTOR_WIDTH + 1}px 54px`,
 				}}
-				onClick={(): void => {
-					setSelectedSpan(span);
-				}}
+				onClick={(): void => handleSpanClick(span)}
 			>
 				{!isRootSpan && (
 					<div className="connector-lines">
@@ -197,13 +209,17 @@ function SpanOverview({
 export function SpanDuration({
 	span,
 	traceMetadata,
-	setSelectedSpan,
+	handleSpanClick,
 	selectedSpan,
+	filteredSpanIds,
+	isFilterActive,
 }: {
 	span: Span;
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
-	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+	handleSpanClick: (span: Span) => void;
+	filteredSpanIds: string[];
+	isFilterActive: boolean;
 }): JSX.Element {
 	const { time, timeUnitName } = convertTimeToRelevantUnit(
 		span.durationNano / 1e6,
@@ -213,9 +229,6 @@ export function SpanDuration({
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.durationNano * 1e2) / (spread * 1e6);
 
-	const urlQuery = useUrlQuery();
-	const { safeNavigate } = useSafeNavigate();
-
 	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 
 	if (span.hasError) {
@@ -223,6 +236,13 @@ export function SpanDuration({
 	}
 
 	const [hasActionButtons, setHasActionButtons] = useState(false);
+
+	const isMatching =
+		isFilterActive && (filteredSpanIds || []).includes(span.spanId);
+	const isSelected = selectedSpan?.spanId === span.spanId;
+	const isDimmed = isFilterActive && !isMatching && !isSelected;
+	const isHighlighted = isFilterActive && isMatching && !isSelected;
+	const isSelectedNonMatching = isSelected && isFilterActive && !isMatching;
 
 	const handleMouseEnter = (): void => {
 		setHasActionButtons(true);
@@ -256,20 +276,15 @@ export function SpanDuration({
 	return (
 		<SpanHoverCard span={span} traceMetadata={traceMetadata}>
 			<div
-				className={cx(
-					'span-duration',
-					selectedSpan?.spanId === span.spanId ? 'interested-span' : '',
-				)}
+				className={cx('span-duration', {
+					'interested-span': isSelected && (!isFilterActive || isMatching),
+					'highlighted-span': isHighlighted,
+					'selected-non-matching-span': isSelectedNonMatching,
+					'dimmed-span': isDimmed,
+				})}
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
-				onClick={(): void => {
-					setSelectedSpan(span);
-					if (span?.spanId) {
-						urlQuery.set('spanId', span?.spanId);
-					}
-
-					safeNavigate({ search: urlQuery.toString() });
-				}}
+				onClick={(): void => handleSpanClick(span)}
 			>
 				<div
 					className="span-line"
@@ -323,16 +338,19 @@ function getWaterfallColumns({
 	uncollapsedNodes,
 	traceMetadata,
 	selectedSpan,
-	setSelectedSpan,
+	handleSpanClick,
 	handleAddSpanToFunnel,
+	filteredSpanIds,
+	isFilterActive,
 }: {
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	uncollapsedNodes: string[];
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
-	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-
+	handleSpanClick: (span: Span) => void;
 	handleAddSpanToFunnel: (span: Span) => void;
+	filteredSpanIds: string[];
+	isFilterActive: boolean;
 }): ColumnDef<Span, any>[] {
 	const waterfallColumns: ColumnDef<Span, any>[] = [
 		columnDefHelper.display({
@@ -344,9 +362,11 @@ function getWaterfallColumns({
 					handleCollapseUncollapse={handleCollapseUncollapse}
 					isSpanCollapsed={!uncollapsedNodes.includes(props.row.original.spanId)}
 					selectedSpan={selectedSpan}
-					setSelectedSpan={setSelectedSpan}
+					handleSpanClick={handleSpanClick}
 					handleAddSpanToFunnel={handleAddSpanToFunnel}
 					traceMetadata={traceMetadata}
+					filteredSpanIds={filteredSpanIds}
+					isFilterActive={isFilterActive}
 				/>
 			),
 			size: 450,
@@ -370,7 +390,9 @@ function getWaterfallColumns({
 					span={props.row.original}
 					traceMetadata={traceMetadata}
 					selectedSpan={selectedSpan}
-					setSelectedSpan={setSelectedSpan}
+					handleSpanClick={handleSpanClick}
+					filteredSpanIds={filteredSpanIds}
+					isFilterActive={isFilterActive}
 				/>
 			),
 		}),
@@ -390,7 +412,18 @@ function Success(props: ISuccessProps): JSX.Element {
 		setSelectedSpan,
 		selectedSpan,
 	} = props;
+
+	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
+	const [isFilterActive, setIsFilterActive] = useState<boolean>(false);
 	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
+
+	const handleFilteredSpansChange = useCallback(
+		(spanIds: string[], isActive: boolean) => {
+			setFilteredSpanIds(spanIds);
+			setIsFilterActive(isActive);
+		},
+		[],
+	);
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
@@ -434,6 +467,21 @@ function Success(props: ISuccessProps): JSX.Element {
 		setSelectedSpanToAddToFunnel(span);
 	}, []);
 
+	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
+
+	const handleSpanClick = useCallback(
+		(span: Span): void => {
+			setSelectedSpan(span);
+			if (span?.spanId) {
+				urlQuery.set('spanId', span?.spanId);
+			}
+
+			safeNavigate({ search: urlQuery.toString() });
+		},
+		[setSelectedSpan, urlQuery, safeNavigate],
+	);
+
 	const columns = useMemo(
 		() =>
 			getWaterfallColumns({
@@ -441,16 +489,20 @@ function Success(props: ISuccessProps): JSX.Element {
 				uncollapsedNodes,
 				traceMetadata,
 				selectedSpan,
-				setSelectedSpan,
+				handleSpanClick,
 				handleAddSpanToFunnel,
+				filteredSpanIds,
+				isFilterActive,
 			}),
 		[
 			handleCollapseUncollapse,
 			uncollapsedNodes,
 			traceMetadata,
 			selectedSpan,
-			setSelectedSpan,
+			handleSpanClick,
 			handleAddSpanToFunnel,
+			filteredSpanIds,
+			isFilterActive,
 		],
 	);
 
@@ -508,6 +560,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				startTime={traceMetadata.startTime / 1e3}
 				endTime={traceMetadata.endTime / 1e3}
 				traceID={traceMetadata.traceId}
+				onFilteredSpansChange={handleFilteredSpansChange}
 			/>
 			<TableV3
 				columns={columns}
