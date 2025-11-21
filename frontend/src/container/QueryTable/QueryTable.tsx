@@ -1,5 +1,6 @@
 import './QueryTable.styles.scss';
 
+import type { TablePaginationConfig } from 'antd/es/table';
 import cx from 'classnames';
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
@@ -143,6 +144,7 @@ export function QueryTable({
 		showSizeChanger: true,
 		pageSizeOptions: PER_PAGE_OPTIONS,
 		hideOnSinglePage: false,
+		position: ['topRight'] as TablePaginationConfig['position'],
 		onChange: (_page: number, newPageSize: number): void => {
 			if (newPageSize !== pageSize) {
 				setPageSize(newPageSize);
@@ -174,7 +176,7 @@ export function QueryTable({
 	return (
 		<>
 			{isDownloadEnabled && (
-				<div className="query-table--download">
+				<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
 					<Download
 						data={downloadableData}
 						fileName={`${fileName}-${servicename}-${getFormattedTimestamp()}`}

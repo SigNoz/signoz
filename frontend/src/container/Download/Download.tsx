@@ -1,8 +1,8 @@
 import './Download.styles.scss';
 
-import { CloudDownloadOutlined } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps } from 'antd';
+import { Button, Dropdown, MenuProps, Tooltip } from 'antd';
 import { Excel } from 'antd-table-saveas-excel';
+import { DownloadIcon } from 'lucide-react';
 import { unparse } from 'papaparse';
 
 import { DownloadProps } from './Download.types';
@@ -56,17 +56,18 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 	};
 
 	return (
-		<Dropdown menu={menu} trigger={['click']}>
-			<Button
-				className="download-button"
-				loading={isLoading}
-				size="small"
-				type="link"
-			>
-				<CloudDownloadOutlined />
-				Download
-			</Button>
-		</Dropdown>
+		<Tooltip title="Download" placement="top">
+			<Dropdown menu={menu} trigger={['click']}>
+				<Button
+					className="download-button"
+					loading={isLoading}
+					size="small"
+					type="link"
+				>
+					<DownloadIcon size={20} />
+				</Button>
+			</Dropdown>
+		</Tooltip>
 	);
 }
 
