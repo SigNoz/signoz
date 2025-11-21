@@ -58,6 +58,9 @@ describe('formatUniversalUnit', () => {
 			expect(formatUniversalUnit(900, UniversalYAxisUnit.YOTTABYTES)).toBe(
 				'900 YB',
 			);
+			expect(formatUniversalUnit(1000, UniversalYAxisUnit.BITS_IEC)).toBe(
+				'1000 b',
+			);
 		});
 
 		it('formats data values above conversion threshold with scaling', () => {
@@ -71,6 +74,7 @@ describe('formatUniversalUnit', () => {
 			expect(formatUniversalUnit(1000, UniversalYAxisUnit.ZETTABYTES)).toBe(
 				'1 YB',
 			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.BITS_IEC)).toBe('1 Kib');
 		});
 
 		it('formats data values above conversion threshold with decimals', () => {

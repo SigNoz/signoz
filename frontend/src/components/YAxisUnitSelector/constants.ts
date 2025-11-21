@@ -822,7 +822,7 @@ export const UniversalUnitToGrafanaUnit: Partial<
 	[UniversalYAxisUnit.PEBIBYTES_SECOND]: 'PiBs',
 
 	// Bits
-	[UniversalYAxisUnit.BITS]: 'bits',
+	[UniversalYAxisUnit.BITS]: 'decbits',
 	[UniversalYAxisUnit.BITS_IEC]: 'bits',
 
 	// Bit Rate
