@@ -5,12 +5,84 @@ import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as UseQBModule from 'hooks/queryBuilder/useQueryBuilder';
-import React from 'react';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
 import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 
 import QuerySearch from '../QuerySearch/QuerySearch';
+
+const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
+
+// Mock DOM APIs that CodeMirror needs
+beforeAll(() => {
+	// Mock getClientRects and getBoundingClientRect for Range objects
+	const mockRect: DOMRect = {
+		width: 100,
+		height: 20,
+		top: 0,
+		left: 0,
+		right: 100,
+		bottom: 20,
+		x: 0,
+		y: 0,
+		toJSON: (): DOMRect => mockRect,
+	} as DOMRect;
+
+	// Create a minimal Range mock with only what CodeMirror actually uses
+	const createMockRange = (): Range => {
+		let startContainer: Node = document.createTextNode('');
+		let endContainer: Node = document.createTextNode('');
+		let startOffset = 0;
+		let endOffset = 0;
+
+		const mockRange = {
+			// CodeMirror uses these for text measurement
+			getClientRects: (): DOMRectList =>
+				(({
+					length: 1,
+					item: (index: number): DOMRect | null => (index === 0 ? mockRect : null),
+					0: mockRect,
+					*[Symbol.iterator](): Generator<DOMRect> {
+						yield mockRect;
+					},
+				} as unknown) as DOMRectList),
+			getBoundingClientRect: (): DOMRect => mockRect,
+			// CodeMirror calls these to set up text ranges
+			setStart: (node: Node, offset: number): void => {
+				startContainer = node;
+				startOffset = offset;
+			},
+			setEnd: (node: Node, offset: number): void => {
+				endContainer = node;
+				endOffset = offset;
+			},
+			// Minimal Range properties (TypeScript requires these)
+			get startContainer(): Node {
+				return startContainer;
+			},
+			get endContainer(): Node {
+				return endContainer;
+			},
+			get startOffset(): number {
+				return startOffset;
+			},
+			get endOffset(): number {
+				return endOffset;
+			},
+			get collapsed(): boolean {
+				return startContainer === endContainer && startOffset === endOffset;
+			},
+			commonAncestorContainer: document.body,
+		};
+		return (mockRange as unknown) as Range;
+	};
+
+	// Mock document.createRange to return a new Range instance each time
+	document.createRange = (): Range => createMockRange();
+
+	// Mock getBoundingClientRect for elements
+	Element.prototype.getBoundingClientRect = (): DOMRect => mockRect;
+});
 
 jest.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
@@ -31,24 +103,6 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
 	};
 });
 
-jest.mock('@codemirror/autocomplete', () => ({
-	autocompletion: (): Record<string, unknown> => ({}),
-	closeCompletion: (): boolean => true,
-	completionKeymap: [] as unknown[],
-	startCompletion: (): boolean => true,
-}));
-
-jest.mock('@codemirror/lang-javascript', () => ({
-	javascript: (): Record<string, unknown> => ({}),
-}));
-
-jest.mock('@uiw/codemirror-theme-copilot', () => ({
-	copilot: {},
-}));
-
-jest.mock('@uiw/codemirror-theme-github', () => ({
-	githubLight: {},
-}));
 jest.mock('api/querySuggestions/getKeySuggestions', () => ({
 	getKeySuggestions: jest.fn().mockResolvedValue({
 		data: {
@@ -63,153 +117,19 @@ jest.mock('api/querySuggestions/getValueSuggestion', () => ({
 	}),
 }));
 
-// Mock CodeMirror to a simple textarea to make it testable and call onUpdate
-jest.mock(
-	'@uiw/react-codemirror',
-	(): Record<string, unknown> => {
-		// Minimal EditorView shape used by the component
-		class EditorViewMock {}
-		(EditorViewMock as any).domEventHandlers = (): unknown => ({} as unknown);
-		(EditorViewMock as any).lineWrapping = {} as unknown;
-		(EditorViewMock as any).editable = { of: () => ({}) } as unknown;
+// Note: We're NOT mocking CodeMirror here - using the real component
+// This provides integration testing with the actual CodeMirror editor
 
-		const keymap = { of: (arr: unknown) => arr } as unknown;
-		const Prec = { highest: (ext: unknown) => ext } as unknown;
-
-		type CodeMirrorProps = {
-			value?: string;
-			onChange?: (v: string) => void;
-			onFocus?: () => void;
-			onBlur?: () => void;
-			placeholder?: string;
-			onCreateEditor?: (view: unknown) => unknown;
-			onUpdate?: (arg: {
-				view: {
-					state: {
-						selection: { main: { head: number } };
-						doc: {
-							toString: () => string;
-							lineAt: (
-								_pos: number,
-							) => { number: number; from: number; to: number; text: string };
-						};
-					};
-				};
-			}) => void;
-			'data-testid'?: string;
-			extensions?: unknown[];
-		};
-
-		function CodeMirrorMock({
-			value,
-			onChange,
-			onFocus,
-			onBlur,
-			placeholder,
-			onCreateEditor,
-			onUpdate,
-			'data-testid': dataTestId,
-			extensions,
-		}: CodeMirrorProps): JSX.Element {
-			const [localValue, setLocalValue] = React.useState<string>(value ?? '');
-
-			// Provide a fake editor instance
-			React.useEffect(() => {
-				if (onCreateEditor) {
-					onCreateEditor(new EditorViewMock() as any);
-				}
-				// eslint-disable-next-line react-hooks/exhaustive-deps
-			}, []);
-
-			// Call onUpdate whenever localValue changes to simulate cursor and doc
-			React.useEffect(() => {
-				if (onUpdate) {
-					const text = String(localValue ?? '');
-					const head = text.length;
-					onUpdate({
-						view: {
-							state: {
-								selection: { main: { head } },
-								doc: {
-									toString: (): string => text,
-									lineAt: () => ({
-										number: 1,
-										from: 0,
-										to: text.length,
-										text,
-									}),
-								},
-							},
-						},
-					});
-				}
-				// eslint-disable-next-line react-hooks/exhaustive-deps
-			}, [localValue]);
-
-			const handleKeyDown = (
-				e: React.KeyboardEvent<HTMLTextAreaElement>,
-			): void => {
-				const isModEnter = e.key === 'Enter' && (e.metaKey || e.ctrlKey);
-				if (!isModEnter) return;
-				const exts: unknown[] = Array.isArray(extensions) ? extensions : [];
-				const flat: unknown[] = exts.flatMap((x: unknown) =>
-					Array.isArray(x) ? x : [x],
-				);
-				const keyBindings = flat.filter(
-					(x) =>
-						Boolean(x) &&
-						typeof x === 'object' &&
-						'key' in (x as Record<string, unknown>),
-				) as Array<{ key?: string; run?: () => boolean | void }>;
-				keyBindings
-					.filter((b) => b.key === 'Mod-Enter' && typeof b.run === 'function')
-					.forEach((b) => {
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						b.run!();
-					});
-			};
-
-			return (
-				<textarea
-					data-testid={dataTestId || 'query-where-clause-editor'}
-					placeholder={placeholder}
-					value={localValue}
-					onChange={(e): void => {
-						setLocalValue(e.target.value);
-						if (onChange) {
-							onChange(e.target.value);
-						}
-					}}
-					onFocus={onFocus}
-					onBlur={onBlur}
-					onKeyDown={handleKeyDown}
-					style={{ width: '100%', minHeight: 80 }}
-				/>
-			);
-		}
-
-		return {
-			__esModule: true,
-			default: CodeMirrorMock,
-			EditorView: EditorViewMock,
-			keymap,
-			Prec,
-		};
-	},
-);
 const handleRunQueryMock = ((UseQBModule as unknown) as {
 	handleRunQuery: jest.MockedFunction<() => void>;
 }).handleRunQuery;
 
-const PLACEHOLDER_TEXT =
-	"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')";
-const TESTID_EDITOR = 'query-where-clause-editor';
 const SAMPLE_KEY_TYPING = 'http.';
-const SAMPLE_VALUE_TYPING_INCOMPLETE = " service.name = '";
-const SAMPLE_VALUE_TYPING_COMPLETE = " service.name = 'frontend'";
-const SAMPLE_STATUS_QUERY = " status_code = '200'";
+const SAMPLE_VALUE_TYPING_INCOMPLETE = "service.name = '";
+const SAMPLE_VALUE_TYPING_COMPLETE = "service.name = 'frontend'";
+const SAMPLE_STATUS_QUERY = "http.status_code = '200'";
 
-describe('QuerySearch', () => {
+describe('QuerySearch (Integration with Real CodeMirror)', () => {
 	it('renders with placeholder', () => {
 		render(
 			<QuerySearch
@@ -219,21 +139,19 @@ describe('QuerySearch', () => {
 			/>,
 		);
 
-		expect(screen.getByPlaceholderText(PLACEHOLDER_TEXT)).toBeInTheDocument();
+		// CodeMirror renders a contenteditable div, so we check for the container
+		const editorContainer = document.querySelector('.query-where-clause-editor');
+		expect(editorContainer).toBeInTheDocument();
 	});
 
 	it('fetches key suggestions when typing a key (debounced)', async () => {
-		jest.useFakeTimers();
-		const advance = (ms: number): void => {
-			jest.advanceTimersByTime(ms);
-		};
-		const user = userEvent.setup({
-			advanceTimers: advance,
-			pointerEventsCheck: 0,
-		});
+		// Use real timers for CodeMirror integration tests
 		const mockedGetKeys = getKeySuggestions as jest.MockedFunction<
 			typeof getKeySuggestions
 		>;
+		mockedGetKeys.mockClear();
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		render(
 			<QuerySearch
@@ -243,28 +161,33 @@ describe('QuerySearch', () => {
 			/>,
 		);
 
-		const editor = screen.getByTestId(TESTID_EDITOR);
-		await user.type(editor, SAMPLE_KEY_TYPING);
-		advance(1000);
-
-		await waitFor(() => expect(mockedGetKeys).toHaveBeenCalled(), {
-			timeout: 3000,
+		// Wait for CodeMirror to initialize
+		await waitFor(() => {
+			const editor = document.querySelector(CM_EDITOR_SELECTOR);
+			expect(editor).toBeInTheDocument();
 		});
-		jest.useRealTimers();
+
+		// Find the CodeMirror editor contenteditable element
+		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
+
+		// Focus and type into the editor
+		await user.click(editor);
+		await user.type(editor, SAMPLE_KEY_TYPING);
+
+		// Wait for debounced API call (300ms debounce + some buffer)
+		await waitFor(() => expect(mockedGetKeys).toHaveBeenCalled(), {
+			timeout: 2000,
+		});
 	});
 
 	it('fetches value suggestions when editing value context', async () => {
-		jest.useFakeTimers();
-		const advance = (ms: number): void => {
-			jest.advanceTimersByTime(ms);
-		};
-		const user = userEvent.setup({
-			advanceTimers: advance,
-			pointerEventsCheck: 0,
-		});
+		// Use real timers for CodeMirror integration tests
 		const mockedGetValues = getValueSuggestions as jest.MockedFunction<
 			typeof getValueSuggestions
 		>;
+		mockedGetValues.mockClear();
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		render(
 			<QuerySearch
@@ -274,21 +197,28 @@ describe('QuerySearch', () => {
 			/>,
 		);
 
-		const editor = screen.getByTestId(TESTID_EDITOR);
-		await user.type(editor, SAMPLE_VALUE_TYPING_INCOMPLETE);
-		advance(1000);
-
-		await waitFor(() => expect(mockedGetValues).toHaveBeenCalled(), {
-			timeout: 3000,
+		// Wait for CodeMirror to initialize
+		await waitFor(() => {
+			const editor = document.querySelector(CM_EDITOR_SELECTOR);
+			expect(editor).toBeInTheDocument();
 		});
-		jest.useRealTimers();
+
+		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
+		await user.click(editor);
+		await user.type(editor, SAMPLE_VALUE_TYPING_INCOMPLETE);
+
+		// Wait for debounced API call (300ms debounce + some buffer)
+		await waitFor(() => expect(mockedGetValues).toHaveBeenCalled(), {
+			timeout: 2000,
+		});
 	});
 
 	it('fetches key suggestions on mount for LOGS', async () => {
-		jest.useFakeTimers();
+		// Use real timers for CodeMirror integration tests
 		const mockedGetKeysOnMount = getKeySuggestions as jest.MockedFunction<
 			typeof getKeySuggestions
 		>;
+		mockedGetKeysOnMount.mockClear();
 
 		render(
 			<QuerySearch
@@ -298,17 +228,15 @@ describe('QuerySearch', () => {
 			/>,
 		);
 
-		jest.advanceTimersByTime(1000);
-
+		// Wait for debounced API call (300ms debounce + some buffer)
 		await waitFor(() => expect(mockedGetKeysOnMount).toHaveBeenCalled(), {
-			timeout: 3000,
+			timeout: 2000,
 		});
 
 		const lastArgs = mockedGetKeysOnMount.mock.calls[
 			mockedGetKeysOnMount.mock.calls.length - 1
 		]?.[0] as { signal: unknown; searchText: string };
 		expect(lastArgs).toMatchObject({ signal: DataSource.LOGS, searchText: '' });
-		jest.useRealTimers();
 	});
 
 	it('calls provided onRun on Mod-Enter', async () => {
@@ -324,12 +252,26 @@ describe('QuerySearch', () => {
 			/>,
 		);
 
-		const editor = screen.getByTestId(TESTID_EDITOR);
+		// Wait for CodeMirror to initialize
+		await waitFor(() => {
+			const editor = document.querySelector(CM_EDITOR_SELECTOR);
+			expect(editor).toBeInTheDocument();
+		});
+
+		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
 		await user.click(editor);
 		await user.type(editor, SAMPLE_STATUS_QUERY);
-		await user.keyboard('{Meta>}{Enter}{/Meta}');
 
-		await waitFor(() => expect(onRun).toHaveBeenCalled());
+		// Use fireEvent for keyboard shortcuts as userEvent might not work well with CodeMirror
+		const modKey = navigator.platform.includes('Mac') ? 'metaKey' : 'ctrlKey';
+		fireEvent.keyDown(editor, {
+			key: 'Enter',
+			code: 'Enter',
+			[modKey]: true,
+			keyCode: 13,
+		});
+
+		await waitFor(() => expect(onRun).toHaveBeenCalled(), { timeout: 2000 });
 	});
 
 	it('calls handleRunQuery when Mod-Enter without onRun', async () => {
@@ -348,11 +290,62 @@ describe('QuerySearch', () => {
 			/>,
 		);
 
-		const editor = screen.getByTestId(TESTID_EDITOR);
+		// Wait for CodeMirror to initialize
+		await waitFor(() => {
+			const editor = document.querySelector(CM_EDITOR_SELECTOR);
+			expect(editor).toBeInTheDocument();
+		});
+
+		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
 		await user.click(editor);
 		await user.type(editor, SAMPLE_VALUE_TYPING_COMPLETE);
-		await user.keyboard('{Meta>}{Enter}{/Meta}');
 
-		await waitFor(() => expect(mockedHandleRunQuery).toHaveBeenCalled());
+		// Use fireEvent for keyboard shortcuts as userEvent might not work well with CodeMirror
+		const modKey = navigator.platform.includes('Mac') ? 'metaKey' : 'ctrlKey';
+		fireEvent.keyDown(editor, {
+			key: 'Enter',
+			code: 'Enter',
+			[modKey]: true,
+			keyCode: 13,
+		});
+
+		await waitFor(() => expect(mockedHandleRunQuery).toHaveBeenCalled(), {
+			timeout: 2000,
+		});
+	});
+
+	it('initializes CodeMirror with expression from queryData.filter.expression on mount', async () => {
+		const testExpression =
+			"http.status_code >= 500 AND service.name = 'frontend'";
+		const queryDataWithExpression = {
+			...initialQueriesMap.logs.builder.queryData[0],
+			filter: {
+				expression: testExpression,
+			},
+		};
+
+		render(
+			<QuerySearch
+				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				queryData={queryDataWithExpression}
+				dataSource={DataSource.LOGS}
+			/>,
+		);
+
+		// Wait for CodeMirror to initialize and the expression to be set
+		await waitFor(
+			() => {
+				// CodeMirror stores content in .cm-content, check the text content
+				const editorContent = document.querySelector(
+					CM_EDITOR_SELECTOR,
+				) as HTMLElement;
+				expect(editorContent).toBeInTheDocument();
+				// CodeMirror may render the text in multiple ways, check if it contains our expression
+				const textContent = editorContent.textContent || '';
+				expect(textContent).toContain('http.status_code');
+				expect(textContent).toContain('service.name');
+			},
+			{ timeout: 3000 },
+		);
 	});
 });

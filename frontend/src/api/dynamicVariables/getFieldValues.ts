@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { ApiBaseInstance } from 'api';
+import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
@@ -47,7 +47,7 @@ export const getFieldValues = async (
 	}
 
 	try {
-		const response = await ApiBaseInstance.get('/fields/values', { params });
+		const response = await axios.get('/fields/values', { params });
 
 		// Normalize values from different types (stringValues, boolValues, etc.)
 		if (response.data?.data?.values) {

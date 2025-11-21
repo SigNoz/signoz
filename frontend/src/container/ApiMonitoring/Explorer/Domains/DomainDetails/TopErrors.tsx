@@ -1,8 +1,10 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Switch, Table, Tooltip, Typography } from 'antd';
+import { getQueryRangeV5 } from 'api/v5/queryRange/getQueryRange';
+import { MetricRangePayloadV5, ScalarData } from 'api/v5/v5';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { withErrorBoundary } from 'components/ErrorBoundaryHOC';
-import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
@@ -11,13 +13,12 @@ import {
 	getTopErrorsColumnsConfig,
 	getTopErrorsCoRelationQueryFilters,
 	getTopErrorsQueryPayload,
-	TopErrorsResponseRow,
 } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { Info } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useQueries } from 'react-query';
-import { SuccessResponse } from 'types/api';
+import { QueryFunctionContext, useQueries, useQuery } from 'react-query';
+import { SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -46,7 +47,7 @@ function TopErrors({
 		true,
 	);
 
-	const queryPayloads = useMemo(
+	const queryPayload = useMemo(
 		() =>
 			getTopErrorsQueryPayload(
 				domainName,
@@ -55,6 +56,10 @@ function TopErrors({
 				{
 					items: endPointName
 						? [
+								// Remove any existing http.url filters from initialFilters to avoid duplicates
+								...(initialFilters?.items?.filter(
+									(item) => item.key?.key !== SPAN_ATTRIBUTES.URL_PATH,
+								) || []),
 								{
 									id: '92b8a1c1',
 									key: {
@@ -65,7 +70,6 @@ function TopErrors({
 									op: '=',
 									value: endPointName,
 								},
-								...(initialFilters?.items || []),
 						  ]
 						: [...(initialFilters?.items || [])],
 					op: 'AND',
@@ -82,37 +86,34 @@ function TopErrors({
 		],
 	);
 
-	const topErrorsDataQueries = useQueries(
-		queryPayloads.map((payload) => ({
-			queryKey: [
-				REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN,
-				payload,
-				DEFAULT_ENTITY_VERSION,
-				showStatusCodeErrors,
-			],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, DEFAULT_ENTITY_VERSION),
-			enabled: !!payload,
-			staleTime: 0,
-			cacheTime: 0,
-		})),
-	);
-
-	const topErrorsDataQuery = topErrorsDataQueries[0];
 	const {
 		data: topErrorsData,
 		isLoading,
 		isRefetching,
 		isError,
 		refetch,
-	} = topErrorsDataQuery;
+	} = useQuery({
+		queryKey: [
+			REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN,
+			queryPayload,
+			ENTITY_VERSION_V5,
+			showStatusCodeErrors,
+		],
+		queryFn: ({
+			signal,
+		}: QueryFunctionContext): Promise<SuccessResponseV2<MetricRangePayloadV5>> =>
+			getQueryRangeV5(queryPayload, ENTITY_VERSION_V5, signal),
+		enabled: !!queryPayload,
+		staleTime: 0,
+		cacheTime: 0,
+	});
 
 	const topErrorsColumnsConfig = useMemo(() => getTopErrorsColumnsConfig(), []);
 
 	const formattedTopErrorsData = useMemo(
 		() =>
 			formatTopErrorsDataForTable(
-				topErrorsData?.payload?.data?.result as TopErrorsResponseRow[],
+				topErrorsData?.data?.data?.data?.results[0] as ScalarData,
 			),
 		[topErrorsData],
 	);
@@ -130,12 +131,12 @@ function TopErrors({
 	const endPointDropDownDataQueries = useQueries(
 		endPointDropDownQueryPayload.map((payload) => ({
 			queryKey: [
-				END_POINT_DETAILS_QUERY_KEYS_ARRAY[4],
+				END_POINT_DETAILS_QUERY_KEYS_ARRAY[2],
 				payload,
-				ENTITY_VERSION_V4,
+				ENTITY_VERSION_V5,
 			],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
+				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
 			enabled: !!payload,
 			staleTime: 60 * 1000,
 		})),
