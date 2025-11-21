@@ -9,7 +9,11 @@ import { useMemo } from 'react';
 
 import { UniversalYAxisUnitMappings } from './constants';
 import { UniversalYAxisUnit, YAxisUnitSelectorProps } from './types';
-import { getYAxisCategories, mapMetricUnitToUniversalUnit } from './utils';
+import {
+	getUniversalNameFromMetricUnit,
+	getYAxisCategories,
+	mapMetricUnitToUniversalUnit,
+} from './utils';
 
 function YAxisUnitSelector({
 	value,
@@ -25,7 +29,9 @@ function YAxisUnitSelector({
 	const incompatibleUnitMessage = useMemo(() => {
 		if (!initialValue) return '';
 		if (initialValue !== value) {
-			return `Unit mismatch. Saved unit is ${initialValue}, but ${value} is selected.`;
+			const initialUniversalUnit = getUniversalNameFromMetricUnit(initialValue);
+			const currentUniversalUnit = getUniversalNameFromMetricUnit(value);
+			return `Unit mismatch. Saved unit is ${initialUniversalUnit}, but ${currentUniversalUnit} is selected.`;
 		}
 		return '';
 	}, [initialValue, value]);
