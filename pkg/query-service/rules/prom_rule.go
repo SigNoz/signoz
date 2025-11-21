@@ -203,44 +203,84 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			return result
 		}
 
-		lb := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel)
-		resultLabels := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel).Labels()
-
-		for name, value := range r.labels.Map() {
-			lb.Set(name, expand(value))
-		}
-
-		lb.Set(qslabels.AlertNameLabel, r.Name())
-		lb.Set(qslabels.AlertRuleIdLabel, r.ID())
-		lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
-
-		annotations := make(qslabels.Labels, 0, len(r.annotations.Map()))
-		for name, value := range r.annotations.Map() {
-			annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
-		}
-
-		lbs := lb.Labels()
-		h := lbs.Hash()
-		resultFPs[h] = struct{}{}
-
-		if _, ok := alerts[h]; ok {
-			err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
-			// We have already acquired the lock above hence using SetHealth and
-			// SetLastError will deadlock.
-			r.health = ruletypes.HealthBad
-			r.lastError = err
+		results, err := r.Threshold.Eval(toCommonSeries(series), r.Unit(), ruletypes.EvalData{
+			ActiveAlerts: r.ActiveAlertsLabelFP(),
+		})
+		if err != nil {
 			return nil, err
 		}
-		alerts[h] = &ruletypes.Alert{
-			Labels:            lbs,
-			QueryResultLables: resultLabels,
-			Annotations:       annotations,
-			ActiveAt:          ts,
-			State:             model.StatePending,
-			Value:             result.V,
-			GeneratorURL:      r.GeneratorURL(),
-			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
-			IsRecovering:      result.IsRecovering,
+
+		for _, result := range results {
+			l := make(map[string]string, len(series.Metric))
+			for _, lbl := range series.Metric {
+				l[lbl.Name] = lbl.Value
+			}
+			r.logger.DebugContext(ctx, "alerting for series", "rule_name", r.Name(), "series", series)
+
+			threshold := valueFormatter.Format(result.Target, result.TargetUnit)
+
+			tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(result.V, r.Unit()), threshold)
+			// Inject some convenience variables that are easier to remember for users
+			// who are not used to Go's templating system.
+			defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
+
+			expand := func(text string) string {
+
+				tmpl := ruletypes.NewTemplateExpander(
+					ctx,
+					defs+text,
+					"__alert_"+r.Name(),
+					tmplData,
+					times.Time(timestamp.FromTime(ts)),
+					nil,
+				)
+				result, err := tmpl.Expand()
+				if err != nil {
+					result = fmt.Sprintf("<error expanding template: %s>", err)
+					r.logger.WarnContext(ctx, "Expanding alert template failed", "rule_name", r.Name(), "error", err, "data", tmplData)
+				}
+				return result
+			}
+
+			lb := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel)
+			resultLabels := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel).Labels()
+
+			for name, value := range r.labels.Map() {
+				lb.Set(name, expand(value))
+			}
+
+			lb.Set(qslabels.AlertNameLabel, r.Name())
+			lb.Set(qslabels.AlertRuleIdLabel, r.ID())
+			lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
+
+			annotations := make(qslabels.Labels, 0, len(r.annotations.Map()))
+			for name, value := range r.annotations.Map() {
+				annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
+			}
+
+			lbs := lb.Labels()
+			h := lbs.Hash()
+			resultFPs[h] = struct{}{}
+
+			if _, ok := alerts[h]; ok {
+				err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
+				// We have already acquired the lock above hence using SetHealth and
+				// SetLastError will deadlock.
+				r.health = ruletypes.HealthBad
+				r.lastError = err
+				return nil, err
+			}
+			alerts[h] = &ruletypes.Alert{
+				Labels:            lbs,
+				QueryResultLables: resultLabels,
+				Annotations:       annotations,
+				ActiveAt:          ts,
+				State:             model.StatePending,
+				Value:             result.V,
+				GeneratorURL:      r.GeneratorURL(),
+				Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
+				IsRecovering:      result.IsRecovering,
+			}
 		}
 	}
 
