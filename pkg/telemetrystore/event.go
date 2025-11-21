@@ -10,6 +10,7 @@ type QueryEvent struct {
 	Query     string
 	QueryArgs []any
 	StartTime time.Time
+	Operation string
 	Err       error
 }
 
@@ -18,11 +19,8 @@ func NewQueryEvent(query string, args []any) *QueryEvent {
 		Query:     query,
 		QueryArgs: args,
 		StartTime: time.Now(),
+		Operation: queryOperation(query),
 	}
-}
-
-func (e *QueryEvent) Operation() string {
-	return queryOperation(e.Query)
 }
 
 func queryOperation(query string) string {

@@ -2,7 +2,6 @@ package memorycache
 
 import (
 	"context"
-	"encoding/json"
 	"reflect"
 	"strings"
 	"time"
@@ -33,12 +32,10 @@ func New(ctx context.Context, settings factory.ProviderSettings, config cache.Co
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/cache/memorycache")
 
 	cc, err := ristretto.NewCache(&ristretto.Config[string, any]{
-		NumCounters:        10 * 10000, // 100k to support 10k entries
-		MaxCost:            1 << 26,    // 64 MB
-		BufferItems:        64,
-		Metrics:            true,
-		IgnoreInternalCost: true,
-		Cost:               calculateObjectCacheCost,
+		NumCounters: 10 * 10000, // 100k to support 10k entries
+		MaxCost:     1 << 26,    // 64 MB
+		BufferItems: 64,
+		Metrics:     true,
 	})
 	if err != nil {
 		return nil, err
@@ -109,7 +106,11 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	if cloneable, ok := data.(cachetypes.Cloneable); ok {
 		span.SetAttributes(attribute.Bool("db.cloneable", true))
 		toCache := cloneable.Clone()
-		provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 0, ttl)
+		toCacheB, err := toCache.MarshalBinary()
+		if err != nil {
+			return err
+		}
+		provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, int64(len(toCacheB)), ttl)
 		return nil
 	}
 
@@ -119,7 +120,7 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 		return err
 	}
 
-	provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 0, ttl)
+	provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, int64(len(toCache)), ttl)
 	return nil
 }
 
@@ -189,22 +190,4 @@ func (provider *provider) DeleteMany(_ context.Context, orgID valuer.UUID, cache
 	for _, cacheKey := range cacheKeys {
 		provider.cc.Del(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 	}
-}
-
-func calculateObjectCacheCost(o any) int64 {
-	if o == nil {
-		return 0
-	}
-
-	if cacheable, ok := o.(cachetypes.Cacheable); ok {
-		if marshaled, err := cacheable.MarshalBinary(); err == nil {
-			return int64(len(marshaled))
-		}
-	}
-
-	if jsonBytes, err := json.Marshal(o); err == nil {
-		return int64(len(jsonBytes))
-	}
-
-	return 1024 // fallback: 1 KB
 }

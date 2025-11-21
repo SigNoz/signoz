@@ -42,22 +42,22 @@ func (hook *instrumentation) BeforeQuery(ctx context.Context, event *telemetryst
 }
 
 func (hook *instrumentation) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {
-	operation := event.Operation()
-
 	span := trace.SpanFromContext(ctx)
 	if !span.IsRecording() {
 		return
 	}
 
-	span.SetName(operation)
+	span.SetName(event.Operation)
 	defer span.End()
 
-	attrs := make([]attribute.KeyValue, 0, 2)
-	attrs = append(attrs,
+	var attrs []attribute.KeyValue
+	attrs = append(
+		attrs,
 		semconv.DBStatementKey.String(event.Query),
 		attribute.String("db.version", hook.clickhouseVersion),
 		semconv.DBSystemKey.String("clickhouse"),
-		attribute.String("db.cluster", hook.clickhouseCluster),
+		semconv.DBOperationKey.String(event.Operation),
+		attribute.String("clickhouse.cluster", hook.clickhouseCluster),
 	)
 
 	if event.Err != nil {
