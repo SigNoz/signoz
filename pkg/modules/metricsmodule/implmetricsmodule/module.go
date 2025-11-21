@@ -8,10 +8,13 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -33,10 +36,11 @@ type module struct {
 	fieldMapper            qbtypes.FieldMapper
 	condBuilder            qbtypes.ConditionBuilder
 	logger                 *slog.Logger
+	cache                  cache.Cache
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings) metricsmodule.Module {
+func NewModule(ts telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings, cache cache.Cache) metricsmodule.Module {
 	// TODO(nikhilmantri0902, srikanthccv): the three following dependencies are they rightly getting passed
 	// basically is this a good design. Alternatively, we can also take telemetrymetadatastore from newModules
 	// where all the modules are initialized, but there also this will be needed as today its not initialized there.
@@ -67,6 +71,7 @@ func NewModule(ts telemetrystore.TelemetryStore, providerSettings factory.Provid
 		condBuilder:            condBuilder,
 		logger:                 providerSettings.Logger,
 		telemetryMetadataStore: telemetryMetadataStore,
+		cache:                  cache,
 	}
 }
 
@@ -179,7 +184,33 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
 	}
 
-	placeholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
+	cachedMetadata := make(map[string]*metricsmoduletypes.MetricMetadata)
+	var missingMetrics []string
+
+	// 1. Try cache
+	for _, metricName := range metricNames {
+		cachedMeta := new(model.UpdateMetricsMetadata)
+		cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metricName
+		err := m.cache.Get(ctx, orgID, cacheKey, cachedMeta)
+		if err == nil {
+			// Convert from model.UpdateMetricsMetadata to metricsmoduletypes.MetricMetadata
+			cachedMetadata[metricName] = &metricsmoduletypes.MetricMetadata{
+				Description: cachedMeta.Description,
+				MetricType:  string(cachedMeta.MetricType),
+				MetricUnit:  cachedMeta.Unit,
+				Temporality: string(cachedMeta.Temporality),
+			}
+		} else {
+			missingMetrics = append(missingMetrics, metricName)
+		}
+	}
+
+	// 2. Query database for missing metrics
+	if len(missingMetrics) == 0 {
+		return cachedMetadata, nil
+	}
+
+	placeholders := strings.TrimRight(strings.Repeat("?,", len(missingMetrics)), ",")
 	query := fmt.Sprintf(`
 			SELECT metric_name, description, type, unit, temporality 
 				FROM %s.%s 
@@ -188,19 +219,18 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 		distributedUpdatedMetadataTableName,
 		placeholders)
 
-	args := make([]any, len(metricNames))
-	for i := range metricNames {
-		args[i] = metricNames[i]
+	args := make([]any, len(missingMetrics))
+	for i := range missingMetrics {
+		args[i] = missingMetrics[i]
 	}
 
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
+		return cachedMetadata, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
 	}
 	defer rows.Close()
 
-	updatedMeta := make(map[string]*metricsmoduletypes.MetricMetadata, len(metricNames))
 	for rows.Next() {
 		var (
 			metricName     string
@@ -208,10 +238,23 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 		)
 
 		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality); err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
+			return cachedMetadata, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
 		}
 
-		updatedMeta[metricName] = &metricsmoduletypes.MetricMetadata{
+		// Store in cache
+		cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metricName
+		cachedMeta := &model.UpdateMetricsMetadata{
+			MetricName:  metricName,
+			Description: metricMetadata.Description,
+			MetricType:  v3.MetricType(metricMetadata.MetricType),
+			Unit:        metricMetadata.MetricUnit,
+			Temporality: v3.Temporality(metricMetadata.Temporality),
+		}
+		if cacheErr := m.cache.Set(ctx, orgID, cacheKey, cachedMeta, 0); cacheErr != nil {
+			m.logger.Warn("Failed to store metrics metadata in cache", "metric_name", metricName, "error", cacheErr)
+		}
+
+		cachedMetadata[metricName] = &metricsmoduletypes.MetricMetadata{
 			Description: metricMetadata.Description,
 			MetricType:  metricMetadata.MetricType,
 			MetricUnit:  metricMetadata.MetricUnit,
@@ -220,10 +263,10 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating updated metrics metadata rows")
+		return cachedMetadata, errors.WrapInternalf(err, errors.CodeInternal, "error iterating updated metrics metadata rows")
 	}
 
-	return updatedMeta, nil
+	return cachedMetadata, nil
 }
 
 func (m *module) buildFilterClause(ctx context.Context, expression string, startMillis, endMillis int64) (string, []any, error) {
