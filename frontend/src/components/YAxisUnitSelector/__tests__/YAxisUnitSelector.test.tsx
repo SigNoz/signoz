@@ -100,15 +100,13 @@ describe('YAxisUnitSelector', () => {
 		expect(warningIcon).toBeInTheDocument();
 		fireEvent.mouseOver(warningIcon);
 		return screen
-			.findByText(
-				'Incompatible unit selected. Please select a unit from the Time category.',
-			)
+			.findByText('Unit mismatch. Saved unit is s, but By is selected.')
 			.then((el) => expect(el).toBeInTheDocument());
 	});
 
 	it('does not show warning message when compatible unit is selected', () => {
 		render(
-			<YAxisUnitSelector value="s" onChange={mockOnChange} initialValue="ms" />,
+			<YAxisUnitSelector value="s" onChange={mockOnChange} initialValue="s" />,
 		);
 		const warningIcon = screen.queryByLabelText('warning');
 		expect(warningIcon).not.toBeInTheDocument();

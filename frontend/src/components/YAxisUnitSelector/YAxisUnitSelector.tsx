@@ -22,33 +22,13 @@ function YAxisUnitSelector({
 }: YAxisUnitSelectorProps): JSX.Element {
 	const universalUnit = mapMetricUnitToUniversalUnit(value);
 
-	const initialCategory = useMemo(() => {
-		const initialUniversalUnit = mapMetricUnitToUniversalUnit(initialValue);
-		const unit = Y_AXIS_CATEGORIES.find((category) =>
-			category.units.some((unit) => unit.id === initialUniversalUnit),
-		);
-		return unit?.name;
-	}, [initialValue]);
-
-	const currentCategory = useMemo(() => {
-		const currentUniversalUnit = mapMetricUnitToUniversalUnit(value);
-		const unit = Y_AXIS_CATEGORIES.find((category) =>
-			category.units.some((unit) => unit.id === currentUniversalUnit),
-		);
-		return unit?.name;
-	}, [value]);
-
 	const incompatibleUnitMessage = useMemo(() => {
 		if (!initialValue) return '';
-		if (
-			initialCategory &&
-			currentCategory &&
-			initialCategory !== currentCategory
-		) {
-			return `Incompatible unit selected. Please select a unit from the ${initialCategory} category.`;
+		if (initialValue !== value) {
+			return `Unit mismatch. Saved unit is ${initialValue}, but ${value} is selected.`;
 		}
 		return '';
-	}, [initialCategory, currentCategory, initialValue]);
+	}, [initialValue, value]);
 
 	const handleSearch = (
 		searchTerm: string,
