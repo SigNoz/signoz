@@ -32,8 +32,8 @@ func New(ctx context.Context, settings factory.ProviderSettings, config cache.Co
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/cache/memorycache")
 
 	cc, err := ristretto.NewCache(&ristretto.Config[string, any]{
-		NumCounters: 10 * 10000, // 100k to support 10k entries
-		MaxCost:     1 << 26,    // 64 MB
+		NumCounters: config.Memory.NumCounters,
+		MaxCost:     config.Memory.MaxCost,
 		BufferItems: 64,
 		Metrics:     true,
 	})
@@ -108,11 +108,8 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	if cloneable, ok := data.(cachetypes.Cloneable); ok {
 		span.SetAttributes(attribute.Bool("db.cloneable", true))
 		toCache := cloneable.Clone()
-		toCacheB, err := toCache.MarshalBinary()
-		if err != nil {
-			return err
-		}
-		provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, int64(len(toCacheB)), ttl)
+		// In case of contention we are choosing to evict the cloneable entries first hence cost is set to 1
+		provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 1, ttl)
 		return nil
 	}
 
