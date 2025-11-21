@@ -5,9 +5,14 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	expr "github.com/antonmedv/expr"
 	"go.uber.org/zap"
+)
+
+var (
+	CodeExprCompilationFailed = errors.MustNewCode("expr_compilation_failed")
 )
 
 var logOperatorsToExpr = map[v3.FilterOperator]string{
@@ -50,7 +55,7 @@ func Parse(filters *v3.FilterSet) (string, error) {
 	var res []string
 	for _, v := range filters.Items {
 		if _, ok := logOperatorsToExpr[v.Operator]; !ok {
-			return "", fmt.Errorf("operator not supported")
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "operator not supported: %s", v.Operator)
 		}
 
 		name := getName(v.Key)
@@ -108,7 +113,7 @@ func Parse(filters *v3.FilterSet) (string, error) {
 	q := strings.Join(res, " "+strings.ToLower(filters.Operator)+" ")
 	_, err := expr.Compile(q)
 	if err != nil {
-		return "", err
+		return "", errors.WrapInternalf(err, CodeExprCompilationFailed, "failed to compile expression: %s", q)
 	}
 
 	return q, nil

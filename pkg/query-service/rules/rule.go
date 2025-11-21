@@ -24,6 +24,8 @@ type Rule interface {
 	HoldDuration() time.Duration
 	State() model.AlertState
 	ActiveAlerts() []*ruletypes.Alert
+	// ActiveAlertsLabelFP returns a map of active alert labels fingerprint
+	ActiveAlertsLabelFP() map[uint64]struct{}
 
 	PreferredChannels() []string
 

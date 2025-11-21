@@ -1,8 +1,9 @@
 package rules
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -74,7 +75,7 @@ func TestBaseRule_RequireMinPoints(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := test.rule.Threshold.ShouldAlert(*test.series, "")
+			_, err := test.rule.Threshold.Eval(*test.series, "", ruletypes.EvalData{})
 			require.NoError(t, err)
 			require.Equal(t, len(test.series.Points) >= test.rule.ruleCondition.RequiredNumPoints, test.shouldAlert)
 		})
