@@ -18,6 +18,7 @@ type telemetry struct {
 	setsRejected metric.Int64ObservableGauge
 	getsDropped  metric.Int64ObservableGauge
 	getsKept     metric.Int64ObservableGauge
+	totalCost    metric.Int64ObservableGauge
 }
 
 func newTelemetry(meter metric.Meter) (*telemetry, error) {
@@ -82,6 +83,11 @@ func newTelemetry(meter metric.Meter) (*telemetry, error) {
 		errs = errors.Join(errs, err)
 	}
 
+	totalCost, err := meter.Int64ObservableGauge("signoz.cache.total.cost", metric.WithDescription("TotalCost is the available cost configured for the cache"))
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+
 	if errs != nil {
 		return nil, errs
 	}
@@ -99,5 +105,6 @@ func newTelemetry(meter metric.Meter) (*telemetry, error) {
 		setsRejected: setsRejected,
 		getsDropped:  getsDropped,
 		getsKept:     getsKept,
+		totalCost:    totalCost,
 	}, nil
 }
