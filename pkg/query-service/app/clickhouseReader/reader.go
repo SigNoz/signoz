@@ -1664,7 +1664,14 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		getLocalTableName(r.logsDB + "." + r.logsResourceKeys),
 	}
 
-	for _, tableName := range tableNames {
+	// Distributed tables also need updated default expressions because all inserts go through them.
+	distTableNames := []string{
+		r.logsDB + "." + r.logsTableV2,
+		r.logsDB + "." + r.logsResourceTableV2,
+	}
+
+	allTableNames := append(append([]string{}, tableNames...), distTableNames...)
+	for _, tableName := range allTableNames {
 		statusItem, err := r.checkCustomRetentionTTLStatusItem(ctx, orgID, tableName)
 		if err != nil {
 			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing custom_retention_ttl_status check sql query")
@@ -1726,6 +1733,33 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			tableNames[3], r.cluster, maxRetentionTTL),
 	}
 
+	// -------------------------------------------------------------------
+	// Distributed tables: ensure defaults are aligned with local tables.
+	// Note: TTL clauses are NOT applied on distributed tables as they
+	// hold no data, but default expressions must match because writes
+	// happen through them.
+	// -------------------------------------------------------------------
+
+	distQueries := []string{
+		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
+			distTableNames[0], r.cluster, multiIfExpr),
+	}
+	if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
+		distQueries = append(distQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
+			distTableNames[0], r.cluster, coldStorageDuration))
+	}
+	ttlPayload[distTableNames[0]] = distQueries
+
+	resourceDistQueries := []string{
+		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
+			distTableNames[1], r.cluster, resourceMultiIfExpr),
+	}
+	if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
+		resourceDistQueries = append(resourceDistQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
+			distTableNames[1], r.cluster, coldStorageDuration))
+	}
+	ttlPayload[distTableNames[1]] = resourceDistQueries
+
 	ttlConditionsJSON, err := json.Marshal(params.TTLConditions)
 	if err != nil {
 		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error marshalling TTL condition")
@@ -1757,11 +1791,14 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		}
 
 		if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
-			err := r.setColdStorage(ctx, tableName, params.ColdStorageVolume)
-			if err != nil {
-				zap.L().Error("error in setting cold storage", zap.Error(err))
-				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
-				return nil, errorsV2.Wrapf(err.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting cold storage for table %s", tableName)
+			// Only local tables require cold storage configuration. Skip distributed tables.
+			if tableName == tableNames[0] || tableName == tableNames[1] {
+				err := r.setColdStorage(ctx, tableName, params.ColdStorageVolume)
+				if err != nil {
+					zap.L().Error("error in setting cold storage", zap.Error(err))
+					r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
+					return nil, errorsV2.Wrapf(err.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting cold storage for table %s", tableName)
+				}
 			}
 		}
 
