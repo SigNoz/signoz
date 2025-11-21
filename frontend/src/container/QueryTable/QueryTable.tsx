@@ -5,6 +5,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
+import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
 import {
 	createTableColumnsFromQuery,
 	RowData,
@@ -16,6 +17,9 @@ import { useParams } from 'react-router-dom';
 import useTableContextMenu from './Drilldown/useTableContextMenu';
 import { QueryTableProps } from './QueryTable.intefaces';
 import { createDownloadableData, getFormattedTimestamp } from './utils';
+
+// I saw this done in other places
+const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];
 
 export function QueryTable({
 	queryTableData,
@@ -131,12 +135,13 @@ export function QueryTable({
 		[tableColumns, isQueryTypeBuilder, enableDrillDown, handleColumnClick],
 	);
 
-	const [pageSize, setPageSize] = useState(10);
-
+	const [pageSize, setPageSize] = useState(
+		getDefaultPaginationConfig(PER_PAGE_OPTIONS).limit,
+	);
 	const paginationConfig = {
 		pageSize,
 		showSizeChanger: true,
-		pageSizeOptions: DEFAULT_PER_PAGE_OPTIONS,
+		pageSizeOptions: PER_PAGE_OPTIONS,
 		hideOnSinglePage: false,
 		onChange: (_page: number, newPageSize: number): void => {
 			if (newPageSize !== pageSize) {
