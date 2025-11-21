@@ -106,20 +106,24 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	}
 
 	if cloneable, ok := data.(cachetypes.Cloneable); ok {
-		span.SetAttributes(attribute.Bool("db.cloneable", true))
+		span.SetAttributes(attribute.Bool("memory.cloneable", true))
+		span.SetAttributes(attribute.Int64("memory.cost", 1))
 		toCache := cloneable.Clone()
 		// In case of contention we are choosing to evict the cloneable entries first hence cost is set to 1
 		provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 1, ttl)
 		return nil
 	}
 
-	span.SetAttributes(attribute.Bool("db.cloneable", false))
 	toCache, err := data.MarshalBinary()
+	cost := int64(len(toCache))
 	if err != nil {
 		return err
 	}
 
-	provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, int64(len(toCache)), ttl)
+	span.SetAttributes(attribute.Bool("memory.cloneable", false))
+	span.SetAttributes(attribute.Int64("memory.cost", cost))
+
+	provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, cost, ttl)
 	return nil
 }
 
