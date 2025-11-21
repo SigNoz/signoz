@@ -21,7 +21,7 @@ type telemetry struct {
 	totalCost    metric.Int64ObservableGauge
 }
 
-func newTelemetry(meter metric.Meter) (*telemetry, error) {
+func newMetrics(meter metric.Meter) (*telemetry, error) {
 	var errs error
 	cacheRatio, err := meter.Float64ObservableGauge("signoz.cache.ratio", metric.WithDescription("Ratio is the number of Hits over all accesses (Hits + Misses). This is the percentage of successful Get calls."), metric.WithUnit("1"))
 	if err != nil {

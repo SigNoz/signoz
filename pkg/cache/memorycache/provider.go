@@ -42,7 +42,7 @@ func New(ctx context.Context, settings factory.ProviderSettings, config cache.Co
 	}
 
 	meter := scopedProviderSettings.Meter()
-	telemetry, err := newTelemetry(meter)
+	telemetry, err := newMetrics(meter)
 	if err != nil {
 		return nil, err
 	}
