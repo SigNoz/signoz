@@ -112,7 +112,7 @@ func (b *base) WithUrl(u string) *base {
 	}
 }
 
-// WithUrl adds additional messages to the base error and returns a new base error.
+// WithAdditional adds additional messages to the base error and returns a new base error.
 func (b *base) WithAdditional(a ...string) *base {
 	return &base{
 		t: b.t,
@@ -120,6 +120,32 @@ func (b *base) WithAdditional(a ...string) *base {
 		m: b.m,
 		e: b.e,
 		u: b.u,
+		a: a,
+	}
+}
+
+// WithAppendf adds an additional message to the existing message and returns a new base error.
+func WithAppendf(cause error, format string, args ...any) *base {
+	t, c, m, e, u, a := Unwrapb(cause)
+	return &base{
+		t: t,
+		c: c,
+		m: m + fmt.Sprintf(format, args...),
+		e: e,
+		u: u,
+		a: a,
+	}
+}
+
+// WithAppend adds an additional message to the existing message and returns a new base error.
+func WithAppend(cause error, msg string) *base {
+	t, c, m, e, u, a := Unwrapb(cause)
+	return &base{
+		t: t,
+		c: c,
+		m: m + msg,
+		e: e,
+		u: u,
 		a: a,
 	}
 }
