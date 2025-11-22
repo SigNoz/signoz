@@ -1,9 +1,12 @@
 import './QueryTable.styles.scss';
 
+import type { TablePaginationConfig } from 'antd/es/table';
 import cx from 'classnames';
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
+import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
+import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
 import {
 	createTableColumnsFromQuery,
 	RowData,
@@ -14,7 +17,10 @@ import { useParams } from 'react-router-dom';
 
 import useTableContextMenu from './Drilldown/useTableContextMenu';
 import { QueryTableProps } from './QueryTable.intefaces';
-import { createDownloadableData } from './utils';
+import { createDownloadableData, getFormattedTimestamp } from './utils';
+
+// I saw this done in other places
+const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];
 
 export function QueryTable({
 	queryTableData,
@@ -130,10 +136,20 @@ export function QueryTable({
 		[tableColumns, isQueryTypeBuilder, enableDrillDown, handleColumnClick],
 	);
 
+	const [pageSize, setPageSize] = useState(
+		getDefaultPaginationConfig(PER_PAGE_OPTIONS).limit,
+	);
 	const paginationConfig = {
-		pageSize: 10,
-		showSizeChanger: false,
-		hideOnSinglePage: true,
+		pageSize,
+		showSizeChanger: true,
+		pageSizeOptions: PER_PAGE_OPTIONS,
+		hideOnSinglePage: false,
+		position: ['topRight'] as TablePaginationConfig['position'],
+		onChange: (_page: number, newPageSize: number): void => {
+			if (newPageSize !== pageSize) {
+				setPageSize(newPageSize);
+			}
+		},
 	};
 
 	const [filterTable, setFilterTable] = useState<RowData[] | null>(null);
@@ -159,16 +175,16 @@ export function QueryTable({
 
 	return (
 		<>
+			{isDownloadEnabled && (
+				<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+					<Download
+						data={downloadableData}
+						fileName={`${fileName}-${servicename}-${getFormattedTimestamp()}`}
+						isLoading={loading as boolean}
+					/>
+				</div>
+			)}
 			<div className="query-table">
-				{isDownloadEnabled && (
-					<div className="query-table--download">
-						<Download
-							data={downloadableData}
-							fileName={`${fileName}-${servicename}`}
-							isLoading={loading as boolean}
-						/>
-					</div>
-				)}
 				<ResizeTable
 					columns={columnsWithClickHandlers}
 					tableLayout="fixed"
