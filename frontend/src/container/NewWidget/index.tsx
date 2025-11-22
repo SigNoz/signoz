@@ -504,7 +504,7 @@ function NewWidget({
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								decimalPrecision:
-									selectedWidget?.decimalPrecision || PrecisionOptionsEnum.TWO,
+									selectedWidget?.decimalPrecision ?? PrecisionOptionsEnum.TWO,
 								panelTypes: graphType,
 								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,
@@ -535,7 +535,7 @@ function NewWidget({
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								decimalPrecision:
-									selectedWidget?.decimalPrecision || PrecisionOptionsEnum.TWO,
+									selectedWidget?.decimalPrecision ?? PrecisionOptionsEnum.TWO,
 								panelTypes: graphType,
 								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,
