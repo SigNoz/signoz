@@ -28,9 +28,14 @@ import { EVALUATION_WINDOW_TIMEFRAME } from './EvaluationSettings/constants';
 import { GetCreateAlertLocalStateFromAlertDefReturn } from './types';
 
 export function Spinner(): JSX.Element | null {
-	const { isCreatingAlertRule, isUpdatingAlertRule } = useCreateAlertState();
+	const {
+		isCreatingAlertRule,
+		isUpdatingAlertRule,
+		isTestingAlertRule,
+	} = useCreateAlertState();
 
-	if (!isCreatingAlertRule && !isUpdatingAlertRule) return null;
+	if (!isCreatingAlertRule && !isUpdatingAlertRule && !isTestingAlertRule)
+		return null;
 
 	return createPortal(
 		<div className="sticky-page-spinner">
