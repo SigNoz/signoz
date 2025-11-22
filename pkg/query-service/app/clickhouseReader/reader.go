@@ -2240,8 +2240,8 @@ func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, orgID string,
 	return ttl, nil
 }
 
-// setTTLQueryStatus fetches ttl_status table status from DB
-func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, orgID string, tableNameArray []string) (string, *model.ApiError) {
+// getTTLQueryStatus fetches ttl_status table status from DB
+func (r *ClickHouseReader) getTTLQueryStatus(ctx context.Context, orgID string, tableNameArray []string) (string, *model.ApiError) {
 	failFlag := false
 	status := constants.StatusSuccess
 	for _, tableName := range tableNameArray {
@@ -2394,10 +2394,16 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 
 	switch ttlParams.Type {
 	case constants.TraceTTL:
-		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + signozUsageExplorerTable, signozTraceDBName + "." + defaultDependencyGraphTable}
-
+		tableNameArray := []string{
+			r.TraceDB + "." + r.traceTableName,
+			r.TraceDB + "." + r.traceResourceTableV3,
+			r.TraceDB + "." + signozErrorIndexTable,
+			r.TraceDB + "." + signozUsageExplorerTable,
+			r.TraceDB + "." + defaultDependencyGraphTable,
+			r.TraceDB + "." + r.traceSummaryTable,
+		}
 		tableNameArray = getLocalTableNameArray(tableNameArray)
-		status, err := r.setTTLQueryStatus(ctx, orgID, tableNameArray)
+		status, err := r.getTTLQueryStatus(ctx, orgID, tableNameArray)
 		if err != nil {
 			return nil, err
 		}
@@ -2420,7 +2426,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 	case constants.MetricsTTL:
 		tableNameArray := []string{signozMetricDBName + "." + signozSampleTableName}
 		tableNameArray = getLocalTableNameArray(tableNameArray)
-		status, err := r.setTTLQueryStatus(ctx, orgID, tableNameArray)
+		status, err := r.getTTLQueryStatus(ctx, orgID, tableNameArray)
 		if err != nil {
 			return nil, err
 		}
@@ -2443,7 +2449,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 	case constants.LogsTTL:
 		tableNameArray := []string{r.logsDB + "." + r.logsTableName}
 		tableNameArray = getLocalTableNameArray(tableNameArray)
-		status, err := r.setTTLQueryStatus(ctx, orgID, tableNameArray)
+		status, err := r.getTTLQueryStatus(ctx, orgID, tableNameArray)
 		if err != nil {
 			return nil, err
 		}
@@ -2636,19 +2642,19 @@ func (r *ClickHouseReader) GetNextPrevErrorIDs(ctx context.Context, queryParams 
 		zap.L().Error("errorId missing from params")
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("ErrorID missing from params")}
 	}
-	var err *model.ApiError
+	var apiErr *model.ApiError
 	getNextPrevErrorIDsResponse := model.NextPrevErrorIDs{
 		GroupID: queryParams.GroupID,
 	}
-	getNextPrevErrorIDsResponse.NextErrorID, getNextPrevErrorIDsResponse.NextTimestamp, err = r.getNextErrorID(ctx, queryParams)
-	if err != nil {
-		zap.L().Error("Unable to get next error ID due to err: ", zap.Error(err))
-		return nil, err
+	getNextPrevErrorIDsResponse.NextErrorID, getNextPrevErrorIDsResponse.NextTimestamp, apiErr = r.getNextErrorID(ctx, queryParams)
+	if apiErr != nil {
+		zap.L().Error("Unable to get next error ID due to err: ", zap.Error(apiErr))
+		return nil, apiErr
 	}
-	getNextPrevErrorIDsResponse.PrevErrorID, getNextPrevErrorIDsResponse.PrevTimestamp, err = r.getPrevErrorID(ctx, queryParams)
-	if err != nil {
-		zap.L().Error("Unable to get prev error ID due to err: ", zap.Error(err))
-		return nil, err
+	getNextPrevErrorIDsResponse.PrevErrorID, getNextPrevErrorIDsResponse.PrevTimestamp, apiErr = r.getPrevErrorID(ctx, queryParams)
+	if apiErr != nil {
+		zap.L().Error("Unable to get prev error ID due to err: ", zap.Error(apiErr))
+		return nil, apiErr
 	}
 	return &getNextPrevErrorIDsResponse, nil
 
