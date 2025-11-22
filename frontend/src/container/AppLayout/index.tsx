@@ -391,6 +391,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
+
+	const isPublicDashboard = pathname.startsWith('/public/dashboard/');
+
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED ||
 		pathname === ROUTES.ONBOARDING ||
@@ -399,7 +402,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
 		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
 		pathname === ROUTES.GET_STARTED_AWS_MONITORING ||
-		pathname === ROUTES.GET_STARTED_AZURE_MONITORING;
+		pathname === ROUTES.GET_STARTED_AZURE_MONITORING ||
+		isPublicDashboard;
 
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 

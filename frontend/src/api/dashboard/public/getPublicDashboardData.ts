@@ -2,11 +2,11 @@ import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { GetPublicDashboardProps, PayloadProps,PublicDashboardProps } from 'types/api/dashboard/public/get';
+import { GetPublicDashboardDataProps, PayloadProps,PublicDashboardDataProps } from 'types/api/dashboard/public/get';
 
-const getPublicDashboard = async (props: GetPublicDashboardProps): Promise<SuccessResponseV2<PublicDashboardProps>> => {
+const getPublicDashboardData = async (props: GetPublicDashboardDataProps): Promise<SuccessResponseV2<PublicDashboardDataProps>> => {
 	try {
-		const response = await axios.get<PayloadProps>(`/dashboards/${props.id}/public`);
+		const response = await axios.get<PayloadProps>(`/public/dashboards/${props.id}`);
         
 		return {
 			httpStatusCode: response.status,
@@ -17,4 +17,4 @@ const getPublicDashboard = async (props: GetPublicDashboardProps): Promise<Succe
 	}
 };
 
-export default getPublicDashboard;
+export default getPublicDashboardData;

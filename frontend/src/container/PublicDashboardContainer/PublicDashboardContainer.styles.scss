@@ -1,0 +1,61 @@
+.public-dashboard-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	width: 100%;
+
+	.public-dashboard-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+		padding: 8px 16px;
+		border-bottom: 1px solid var(--bg-slate-400);
+
+		.public-dashboard-header-left {
+			display: flex;
+			align-items: center;
+			gap: 16px;
+		}
+
+		.public-dashboard-header-right {
+			display: flex;
+			align-items: center;
+			gap: 16px;
+		}
+
+		.brand-logo {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.brand-logo-name {
+			font-family: 'Work Sans', sans-serif;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 18px;
+		}
+
+		.brand-logo-img {
+			height: 24px;
+			width: 24px;
+		}
+	}
+
+	.public-dashboard-content {
+		width: 100%;
+		height: 100%;
+
+		.react-grid-item {
+			background-color: var(--bg-ink-400);
+		}
+	}
+
+	.fullscreen-grid-container {
+		margin: 0px 8px;
+	}
+}

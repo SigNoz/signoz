@@ -17,7 +17,7 @@ import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { useGetPublicDashboard } from 'hooks/dashboard/useGetPublicDashboard';
+import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
@@ -299,7 +299,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		safeNavigate(generatedUrl);
 	}
 
-	const { data: publicDashboardResponse } = useGetPublicDashboard(
+	const { data: publicDashboardResponse } = useGetPublicDashboardMeta(
 		selectedDashboard?.id || '',
 	);
 

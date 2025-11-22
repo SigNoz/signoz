@@ -7,13 +7,13 @@ import { Button, Select, Typography } from 'antd';
 import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard';
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
 import updatePublicDashboardAPI from 'api/dashboard/public/updatePublicDashboard';
-import { useGetPublicDashboard } from 'hooks/dashboard/useGetPublicDashboard';
+import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
 import { ExternalLink, Globe, Share, Trash } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { PublicDashboardProps } from 'types/api/dashboard/public/get';
+import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';
 
 const TIME_RANGE_PRESETS_OPTIONS = [
 	{
@@ -56,7 +56,7 @@ const TIME_RANGE_PRESETS_OPTIONS = [
 
 function PublicDashboardSetting(): JSX.Element {
 	const [publidDashboardData, setPublidDashboardData] = useState<
-		PublicDashboardProps | undefined
+		PublicDashboardMetaProps | undefined
 	>(undefined);
 	const [timeRangeEnabled, setTimeRangeEnabled] = useState(true);
 	const [defaultTimeRange, setDefaultTimeRange] = useState('30m');
@@ -77,7 +77,7 @@ function PublicDashboardSetting(): JSX.Element {
 		isLoading: isLoadingPublicDashboard,
 		refetch: refetchPublicDashboard,
 		error: errorPublicDashboard,
-	} = useGetPublicDashboard(selectedDashboard?.id || '');
+	} = useGetPublicDashboardMeta(selectedDashboard?.id || '');
 
 	const isPublicDashboardEnabled = !!publidDashboardData?.publicPath;
 

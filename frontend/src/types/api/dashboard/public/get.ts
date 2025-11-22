@@ -1,14 +1,16 @@
-export interface PublicDashboardProps {
-	timeRangeEnabled: boolean;
-	defaultTimeRange: string;
-    publicPath: string;
+import { Dashboard } from "../getAll";
+import { PublicDashboardMetaProps } from "./getMeta";
+
+export interface PublicDashboardDataProps {
+	dashboard: Dashboard;
+	publicDashboard: PublicDashboardMetaProps;
 }
 
-export type GetPublicDashboardProps = {
+export type GetPublicDashboardDataProps = {
 	id: string;
 };
 
 export interface PayloadProps {
-	data: PublicDashboardProps;
+	data: PublicDashboardDataProps;
 	status: string;
 }
