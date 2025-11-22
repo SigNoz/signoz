@@ -1,9 +1,10 @@
 import './DashboardSettingsContent.styles.scss';
 
 import { Button, Tabs } from 'antd';
-import { Braces, Table } from 'lucide-react';
+import { Braces, Globe, Table } from 'lucide-react';
 
 import GeneralDashboardSettings from './General';
+import PublicDashboardSetting from './PublicDashboard';
 import VariablesSetting from './Variables';
 
 function DashboardSettingsContent({
@@ -29,6 +30,19 @@ function DashboardSettingsContent({
 			),
 			key: 'variables',
 			children: <VariablesSetting variableViewModeRef={variableViewModeRef} />,
+		},
+		{
+			label: (
+				<Button
+					type="text"
+					icon={<Globe size={14} />}
+					className="public-dashboard-btn"
+				>
+					Public Dashboard
+				</Button>
+			),
+			key: 'public-dashboard',
+			children: <PublicDashboardSetting />,
 		},
 	];
 
