@@ -75,8 +75,6 @@ function WidgetGraphComponent({
 
 	const isFullViewOpen = params.get(QueryParams.expandedWidgetId) === widget.id;
 
-	console.log('queryResponse', queryResponse);
-
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
 		Array(queryResponse.data?.payload?.data?.result?.length || 0).fill(true),

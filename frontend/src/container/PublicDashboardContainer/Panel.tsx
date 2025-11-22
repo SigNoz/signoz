@@ -1,11 +1,13 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import EmptyWidget from 'container/GridCardLayout/EmptyWidget';
 import WidgetGraphComponent from 'container/GridCardLayout/GridCard/WidgetGraphComponent';
+import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { useGetPublicDashboardWidgetData } from 'hooks/dashboard/useGetPublicDashboardWidgetData';
-import { memo } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
-const formatQueryResponse = () => {
-	console.log('formatQueryResponse');
-};
+import { transformPublicDashboardDataToQueryResponse } from './transformPublicDashboardData';
 
 function Panel({
 	widget,
@@ -20,9 +22,6 @@ function Panel({
 	startTime: number;
 	endTime: number;
 }): JSX.Element {
-	console.log('widget', widget);
-	console.log('index', index);
-
 	const {
 		data: publicDashboardWidgetData,
 		isLoading: isLoadingPublicDashboardWidgetData,
@@ -33,19 +32,56 @@ function Panel({
 		endTime * 1000, // convert to milliseconds
 	);
 
-	console.log('publicDashboardWidgetData', publicDashboardWidgetData);
-	console.log(
-		'isLoadingPublicDashboardWidgetData',
-		isLoadingPublicDashboardWidgetData,
+	const graphRef = useRef<HTMLDivElement>(null);
+
+	const queryResponse = useMemo(
+		() =>
+			transformPublicDashboardDataToQueryResponse(
+				publicDashboardWidgetData,
+				isLoadingPublicDashboardWidgetData,
+			),
+		[publicDashboardWidgetData, isLoadingPublicDashboardWidgetData],
 	);
 
-	// const queryResponse = formatQueryResponse(publicDashboardWidgetData?);
+	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 
-	// const queryResponse = publicDashboardWidgetData?.data?.payload?.data?.result;
+	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.BAR) {
+		const sortedSeriesData = getSortedSeriesData(
+			queryResponse.data?.payload.data.result,
+		);
+		queryResponse.data.payload.data.result = sortedSeriesData;
+	}
+
+	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.PIE) {
+		const transformedData = populateMultipleResults(queryResponse?.data);
+		// eslint-disable-next-line no-param-reassign
+		queryResponse.data = transformedData;
+	}
+
+	const onDragSelect = useCallback((_start: number, _end: number): void => {
+		// Handle drag select if needed
+		console.log('onDragSelect', _start, _end);
+	}, []);
 
 	return (
-		<div className="panel-container">
-			{/* <WidgetGraphComponent widget={widget} queryResponse={queryResponse} /> */}
+		<div
+			className="panel-container"
+			style={{ height: '100%', width: '100%' }}
+			ref={graphRef}
+		>
+			{isEmptyLayout ? (
+				<EmptyWidget />
+			) : (
+				<WidgetGraphComponent
+					widget={widget}
+					queryResponse={queryResponse}
+					errorMessage={undefined}
+					headerMenuList={[]}
+					isWarning={false}
+					isFetchingResponse={isLoadingPublicDashboardWidgetData}
+					onDragSelect={onDragSelect}
+				/>
+			)}
 		</div>
 	);
 }

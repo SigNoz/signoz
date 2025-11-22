@@ -3,12 +3,10 @@ import './PublicDashboardContainer.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Typography } from 'antd';
 import cx from 'classnames';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
-import GridCard from 'container/GridCardLayout/GridCard';
-import WidgetGraphComponent from 'container/GridCardLayout/GridCard/WidgetGraphComponent';
 import { Card, CardContainer } from 'container/GridCardLayout/styles';
+import { WidgetRowHeader } from 'container/GridCardLayout/WidgetRow';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
@@ -17,8 +15,8 @@ import {
 import dayjs from 'dayjs';
 import { useGetPublicDashboardData } from 'hooks/dashboard/useGetPublicDashboardData';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import RGL, { Layout, WidthProvider } from 'react-grid-layout';
 import { useParams } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -39,17 +37,30 @@ function PublicDashboardContainer(): JSX.Element {
 		isLoading: isLoadingPublicDashboardData,
 	} = useGetPublicDashboardData(dashboardId || '');
 
-	const { dashboard, publicDashboard } = publicDashboardData?.data || {};
-	const { widgets, variables } = dashboard?.data || {};
+	const { dashboard } = publicDashboardData?.data || {};
+	const { widgets } = dashboard?.data || {};
 	const defaultTimeRange = 30 as number;
 
-	const startTime = dayjs().subtract(defaultTimeRange, 'minutes').unix();
-	const endTime = dayjs().unix();
+	// Memoize startTime and endTime to prevent unnecessary re-renders
+	const { startTime, endTime } = useMemo(() => {
+		const start = dayjs().subtract(defaultTimeRange, 'minutes').unix();
+		const end = dayjs().unix();
+		return { startTime: start, endTime: end };
+	}, [defaultTimeRange]);
 
 	console.log('startTime', startTime);
 	console.log('endTime', endTime);
 
-	const dashboardLayout = dashboard?.data?.layout || [];
+	// Memoize dashboardLayout to prevent array recreation on every render
+	const dashboardLayout = useMemo(() => dashboard?.data?.layout || [], [
+		dashboard?.data?.layout,
+	]);
+
+	// Memoize widgets map for O(1) lookup and stable references
+	const widgetsMap = useMemo(() => {
+		if (!widgets) return new Map<string, Widgets>();
+		return new Map(widgets.map((widget) => [widget.id, widget]));
+	}, [widgets]);
 
 	const [currentPanelMap, setCurrentPanelMap] = useState<
 		Record<string, { widgets: Layout[]; collapsed: boolean }>
@@ -58,17 +69,21 @@ function PublicDashboardContainer(): JSX.Element {
 	console.log('publicDashboardData', publicDashboardData);
 	console.log('isLoadingPublicDashboardData', isLoadingPublicDashboardData);
 
-	const handleRowCollapse = (id: string): void => {
+	const handleRowCollapse = useCallback((id: string): void => {
 		console.log('handleRowCollapse id', id);
-	};
+	}, []);
 
-	const handleTimeRangeChange = (
-		interval: Time | CustomTimeType,
-		dateTimeRange?: [number, number],
-	): void => {
-		console.log('handleTimeRangeChange interval', interval);
-		console.log('handleTimeRangeChange dateTimeRange', dateTimeRange);
-	};
+	useEffect(() => {
+		setCurrentPanelMap(dashboard?.data?.panelMap || {});
+	}, [dashboard?.data?.panelMap]);
+
+	const handleTimeRangeChange = useCallback(
+		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
+			console.log('handleTimeRangeChange interval', interval);
+			console.log('handleTimeRangeChange dateTimeRange', dateTimeRange);
+		},
+		[],
+	);
 
 	return (
 		<div className="public-dashboard-container">
@@ -114,7 +129,7 @@ function PublicDashboardContainer(): JSX.Element {
 				>
 					{dashboardLayout.map((layout, index) => {
 						const { i: id } = layout;
-						const currentWidget = (widgets || [])?.find((e) => e.id === id);
+						const currentWidget = widgetsMap.get(id);
 
 						if (currentWidget?.panelTypes === PANEL_GROUP_TYPES.ROW) {
 							const rowWidgetProperties = currentPanelMap[id] || {};
@@ -128,9 +143,22 @@ function PublicDashboardContainer(): JSX.Element {
 							}
 
 							return (
-								<div className="row-card" key={id}>
+								<CardContainer
+									isDarkMode={isDarkMode}
+									className="row-card"
+									key={id}
+									data-grid={JSON.stringify(currentWidget)}
+								>
 									<div className={cx('row-panel')}>
 										<div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+											{rowWidgetProperties.collapsed && (
+												<GripVertical
+													size={14}
+													className="drag-handle"
+													color={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_300}
+													cursor="move"
+												/>
+											)}
 											<Typography.Text className="section-title">{title}</Typography.Text>
 											{rowWidgetProperties.collapsed ? (
 												<ChevronDown
@@ -146,44 +174,41 @@ function PublicDashboardContainer(): JSX.Element {
 												/>
 											)}
 										</div>
+										<WidgetRowHeader
+											id={id}
+											rowWidgetProperties={rowWidgetProperties}
+											editWidget={false}
+											deleteWidget={false}
+											setCurrentSelectRowId={(): void => {}}
+											setIsDeleteModalOpen={(): void => {}}
+											setIsSettingsModalOpen={(): void => {}}
+										/>
 									</div>
-								</div>
+								</CardContainer>
 							);
 						}
 
 						return (
-							<div key={id}>
-								<CardContainer
+							<CardContainer
+								isDarkMode={isDarkMode}
+								key={id}
+								data-grid={JSON.stringify(currentWidget)}
+							>
+								<Card
+									className="grid-item"
 									isDarkMode={isDarkMode}
-									key={id}
-									data-grid={JSON.stringify(currentWidget)}
+									$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
 								>
-									<Card
-										className="grid-item"
-										isDarkMode={isDarkMode}
-										$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
-									>
-										{/* <GridCard
-											widget={(currentWidget as Widgets) || ({ id, query: {} } as Widgets)}
-											headerMenuList={[]}
-											variables={variables}
-											// version={selectedDashboard?.data?.version}
-											version={ENTITY_VERSION_V5}
-											enableDrillDown={false}
-											widgetsHavingDynamicVariables={undefined}
-										/> */}
-
-										<Panel
-											key={id}
-											dashboardId={dashboardId}
-											widget={(currentWidget as Widgets) || ({ id, query: {} } as Widgets)}
-											index={index}
-											startTime={startTime}
-											endTime={endTime}
-										/>
-									</Card>
-								</CardContainer>
-							</div>
+									<Panel
+										key={id}
+										dashboardId={dashboardId}
+										widget={(currentWidget as Widgets) || ({ id, query: {} } as Widgets)}
+										index={index}
+										startTime={startTime}
+										endTime={endTime}
+									/>
+								</Card>
+							</CardContainer>
 						);
 					})}
 				</ReactGridLayoutComponent>
