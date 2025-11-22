@@ -5,6 +5,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
@@ -13,6 +14,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
+	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
+	"github.com/SigNoz/signoz/pkg/modules/metricsmodule/implmetricsmodule"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -58,6 +61,7 @@ type Modules struct {
 	Session        session.Module
 	Services       services.Module
 	SpanPercentile spanpercentile.Module
+	Metrics        metricsmodule.Module
 }
 
 func NewModules(
@@ -72,6 +76,7 @@ func NewModules(
 	telemetryStore telemetrystore.TelemetryStore,
 	authNs map[authtypes.AuthNProvider]authn.AuthN,
 	authz authz.AuthZ,
+	cache cache.Cache,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -94,5 +99,6 @@ func NewModules(
 		Session:        implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
 		SpanPercentile: implspanpercentile.NewModule(querier, providerSettings),
 		Services:       implservices.NewModule(querier, telemetryStore),
+		Metrics:        implmetricsmodule.NewModule(telemetryStore, providerSettings, cache),
 	}
 }
