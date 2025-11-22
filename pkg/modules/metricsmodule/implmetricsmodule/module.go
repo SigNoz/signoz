@@ -532,7 +532,8 @@ func (m *module) postProcessStatsResp(resp *metricsmoduletypes.StatsResponse, up
 
 	if orderBySamples {
 		sort.Slice(resp.Metrics, func(i, j int) bool {
-			if orderByDirection == orderByDirectionAsc {
+			// orderByDirection is in SQL format (uppercase: "ASC" or "DESC")
+			if orderByDirection == strings.ToUpper(qbtypes.OrderDirectionAsc.StringValue()) {
 				if resp.Metrics[i].Samples != resp.Metrics[j].Samples {
 					return resp.Metrics[i].Samples < resp.Metrics[j].Samples
 				}

@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 // helper struct just for the implementation way we chose
@@ -14,11 +14,11 @@ type orderConfig struct {
 	orderBySamples bool
 }
 
-func resolveOrderBy(order *metricsmoduletypes.OrderBy) (orderConfig, error) {
+func resolveOrderBy(order *qbtypes.OrderBy) (orderConfig, error) {
 	// default orderBy
 	cfg := orderConfig{
-		sqlColumn:      orderByColNameTimeSeries,
-		direction:      orderByDirectionDesc,
+		sqlColumn:      qbtypes.OrderByTimeSeries.StringValue(),
+		direction:      strings.ToUpper(qbtypes.OrderDirectionDesc.StringValue()),
 		orderBySamples: false,
 	}
 
@@ -26,26 +26,26 @@ func resolveOrderBy(order *metricsmoduletypes.OrderBy) (orderConfig, error) {
 		return cfg, nil
 	}
 
-	switch strings.ToLower(order.ColumnName) {
-	case orderByColNameTimeSeries:
-		cfg.sqlColumn = orderByColNameTimeSeries
-	case orderByColNameSamples:
+	// Extract column name from OrderByKey (which wraps TelemetryFieldKey)
+	columnName := strings.ToLower(order.Key.Name)
+
+	switch columnName {
+	case qbtypes.OrderByTimeSeries.StringValue():
+		cfg.sqlColumn = qbtypes.OrderByTimeSeries.StringValue()
+	case qbtypes.OrderBySamples.StringValue():
 		cfg.orderBySamples = true
-		cfg.sqlColumn = orderByColNameTimeSeries // defer true ordering until samples computed
+		cfg.sqlColumn = qbtypes.OrderByTimeSeries.StringValue() // defer true ordering until samples computed
 	default:
-		return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order column %q", order.ColumnName)
+		return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order column %q", columnName)
 	}
 
-	if order.Order != "" {
-		switch strings.ToUpper(order.Order) {
-		case orderByDirectionAsc:
-			cfg.direction = orderByDirectionAsc
-		case orderByDirectionDesc:
-			cfg.direction = orderByDirectionDesc
-		default:
-			return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order direction %q", order.Order)
-		}
+	// Extract direction from OrderDirection and convert to SQL format (uppercase)
+	direction := strings.ToUpper(order.Direction.StringValue())
+	// Validate direction using OrderDirectionMap
+	if _, ok := qbtypes.OrderDirectionMap[strings.ToLower(direction)]; !ok {
+		return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order direction %q, should be one of %s, %s", direction, qbtypes.OrderDirectionAsc, qbtypes.OrderDirectionDesc)
 	}
+	cfg.direction = direction
 
 	return cfg, nil
 }

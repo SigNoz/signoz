@@ -1,19 +1,15 @@
 package metricsmoduletypes
 
-// Order specifies column ordering preferences for stats queries.
-type OrderBy struct {
-	ColumnName string `json:"columnName"`
-	Order      string `json:"order"`
-}
+import qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 
 // StatsRequest represents the payload accepted by the metrics stats endpoint.
 type StatsRequest struct {
-	Expression string   `json:"expression"`
-	Start      int64    `json:"start"`
-	End        int64    `json:"end"`
-	Limit      int      `json:"limit"`
-	Offset     int      `json:"offset"`
-	OrderBy    *OrderBy `json:"orderBy,omitempty"`
+	Expression string           `json:"expression"`
+	Start      int64            `json:"start"`
+	End        int64            `json:"end"`
+	Limit      int              `json:"limit"`
+	Offset     int              `json:"offset"`
+	OrderBy    *qbtypes.OrderBy `json:"orderBy,omitempty"`
 }
 
 // MetricStat represents the summary information returned per metric.

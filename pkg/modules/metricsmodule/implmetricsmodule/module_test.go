@@ -2,9 +2,11 @@ package implmetricsmodule
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 func TestPostProcessStatsResp_FiltersEnrichesAndOrders(t *testing.T) {
@@ -56,7 +58,7 @@ func TestPostProcessStatsResp_FiltersEnrichesAndOrders(t *testing.T) {
 			},
 			samplesCount:     map[string]uint64{"a": 10, "b": 1, "c": 3},
 			orderBySamples:   true,
-			orderByDirection: orderByDirectionAsc,
+			orderByDirection: strings.ToUpper(qbtypes.OrderDirectionAsc.StringValue()),
 			want: []metricsmoduletypes.MetricStat{
 				{MetricName: "b", TimeSeries: 5, Samples: 1},
 				{MetricName: "c", TimeSeries: 3, Samples: 3},
@@ -74,7 +76,7 @@ func TestPostProcessStatsResp_FiltersEnrichesAndOrders(t *testing.T) {
 			},
 			samplesCount:     map[string]uint64{"a": 10, "b": 1, "c": 3},
 			orderBySamples:   true,
-			orderByDirection: orderByDirectionDesc,
+			orderByDirection: strings.ToUpper(qbtypes.OrderDirectionDesc.StringValue()),
 			want: []metricsmoduletypes.MetricStat{
 				{MetricName: "a", TimeSeries: 2, Samples: 10},
 				{MetricName: "c", TimeSeries: 3, Samples: 3},

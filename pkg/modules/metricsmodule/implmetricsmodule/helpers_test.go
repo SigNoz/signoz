@@ -1,15 +1,18 @@
 package implmetricsmodule
 
 import (
+	"strings"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func TestResolveOrderBy(t *testing.T) {
 	tests := []struct {
 		name    string
-		order   *metricsmoduletypes.OrderBy
+		order   *qbtypes.OrderBy
 		wantCfg orderConfig
 		wantErr bool
 	}{
@@ -17,49 +20,65 @@ func TestResolveOrderBy(t *testing.T) {
 			name:  "nil order uses defaults",
 			order: nil,
 			wantCfg: orderConfig{
-				sqlColumn:      orderByColNameTimeSeries,
-				direction:      orderByDirectionDesc,
+				sqlColumn:      qbtypes.OrderByTimeSeries.StringValue(),
+				direction:      strings.ToUpper(qbtypes.OrderDirectionDesc.StringValue()),
 				orderBySamples: false,
 			},
 		},
 		{
 			name: "timeseries asc",
-			order: &metricsmoduletypes.OrderBy{
-				ColumnName: orderByColNameTimeSeries,
-				Order:      orderByDirectionAsc,
+			order: &qbtypes.OrderBy{
+				Key: qbtypes.OrderByKey{
+					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+						Name: qbtypes.OrderByTimeSeries.StringValue(),
+					},
+				},
+				Direction: qbtypes.OrderDirectionAsc,
 			},
 			wantCfg: orderConfig{
-				sqlColumn:      orderByColNameTimeSeries,
-				direction:      orderByDirectionAsc,
+				sqlColumn:      qbtypes.OrderByTimeSeries.StringValue(),
+				direction:      strings.ToUpper(qbtypes.OrderDirectionAsc.StringValue()),
 				orderBySamples: false,
 			},
 		},
 		{
 			name: "samples desc (defer real ordering until samples computed)",
-			order: &metricsmoduletypes.OrderBy{
-				ColumnName: orderByColNameSamples,
-				Order:      orderByDirectionDesc,
+			order: &qbtypes.OrderBy{
+				Key: qbtypes.OrderByKey{
+					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+						Name: qbtypes.OrderBySamples.StringValue(),
+					},
+				},
+				Direction: qbtypes.OrderDirectionDesc,
 			},
 			wantCfg: orderConfig{
 				// Note: sqlColumn remains timeSeries; real ordering done after sample counts exist
-				sqlColumn:      orderByColNameTimeSeries,
-				direction:      orderByDirectionDesc,
+				sqlColumn:      qbtypes.OrderByTimeSeries.StringValue(),
+				direction:      strings.ToUpper(qbtypes.OrderDirectionDesc.StringValue()),
 				orderBySamples: true,
 			},
 		},
 		{
 			name: "invalid column",
-			order: &metricsmoduletypes.OrderBy{
-				ColumnName: "unknown_col",
-				Order:      orderByDirectionAsc,
+			order: &qbtypes.OrderBy{
+				Key: qbtypes.OrderByKey{
+					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+						Name: "unknown_col",
+					},
+				},
+				Direction: qbtypes.OrderDirectionAsc,
 			},
 			wantErr: true,
 		},
 		{
 			name: "invalid direction",
-			order: &metricsmoduletypes.OrderBy{
-				ColumnName: orderByColNameTimeSeries,
-				Order:      "SIDEWAYS",
+			order: &qbtypes.OrderBy{
+				Key: qbtypes.OrderByKey{
+					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+						Name: qbtypes.OrderByTimeSeries.StringValue(),
+					},
+				},
+				Direction: qbtypes.OrderDirection{valuer.NewString("SIDEWAYS")},
 			},
 			wantErr: true,
 		},
