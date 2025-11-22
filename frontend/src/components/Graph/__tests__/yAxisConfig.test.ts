@@ -232,7 +232,7 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 		).toBe('1%');
 		expect(
 			testFullPrecisionGetYAxisFormattedValue('1.00555555559595876', 'percent'),
-		).toBe('1.005555555595958%');
+		).toBe('1.005555555595959%');
 	});
 
 	test('ratio', () => {
@@ -359,7 +359,7 @@ describe('getYAxisFormattedValue - precision option tests', () => {
 				's',
 				PrecisionOptionsEnum.FULL,
 			),
-		).toBe('26254299141484417000000 µs');
+		).toBe('26.254299141484417 µs');
 
 		expect(
 			getYAxisFormattedValue('4353.81', 'ms', PrecisionOptionsEnum.FULL),
