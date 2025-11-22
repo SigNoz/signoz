@@ -134,6 +134,11 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 		return err
 	}
 
+	// Validate GroupBy
+	if err := q.validateGroupByFields(); err != nil {
+		return err
+	}
+
 	if requestType != RequestTypeRaw && requestType != RequestTypeTrace && len(q.Aggregations) > 0 {
 		if err := q.validateOrderByForAggregation(); err != nil {
 			return err
@@ -166,6 +171,27 @@ func (q *QueryBuilderQuery[T]) validateSelectFields() error {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"isRoot and isEntryPoint fields are not supported in selectFields",
+			)
+		}
+
+		// for logs the selectFields is not present.
+		// in traces, timestamp is added by default, so it will conflict with timestamp attribute.
+		if v.Name == "timestamp" {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"timestamp field is not supported in selectFields, it's added by default where needed",
+			)
+		}
+	}
+	return nil
+}
+
+func (q *QueryBuilderQuery[T]) validateGroupByFields() error {
+	for _, v := range q.GroupBy {
+		if v.Name == "timestamp" {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"timestamp field is not supported in groupBy, it's added by default where needed",
 			)
 		}
 	}
