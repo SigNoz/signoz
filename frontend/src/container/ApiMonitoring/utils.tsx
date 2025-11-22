@@ -2,7 +2,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
-import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
+import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/queryProcessor';
 import {
 	FiltersType,
 	IQuickFiltersConfig,
