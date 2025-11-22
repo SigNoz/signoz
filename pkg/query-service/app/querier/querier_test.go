@@ -238,8 +238,8 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 	}
 
 	opts := cache.Memory{
-		TTL:             5 * time.Minute,
-		CleanupInterval: 10 * time.Minute,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}
 	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
@@ -458,8 +458,8 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 	}
 
 	opts := cache.Memory{
-		TTL:             5 * time.Minute,
-		CleanupInterval: 10 * time.Minute,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}
 	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
@@ -631,8 +631,8 @@ func TestQueryRange(t *testing.T) {
 		},
 	}
 	cacheOpts := cache.Memory{
-		TTL:             5 * time.Minute,
-		CleanupInterval: 10 * time.Minute,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}
 	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
 	require.NoError(t, err)
@@ -748,8 +748,8 @@ func TestQueryRangeValueType(t *testing.T) {
 		},
 	}
 	cacheOpts := cache.Memory{
-		TTL:             5 * time.Minute,
-		CleanupInterval: 10 * time.Minute,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}
 	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
 	require.NoError(t, err)
@@ -911,8 +911,8 @@ func TestQueryRangeTimeShiftWithCache(t *testing.T) {
 		},
 	}
 	cacheOpts := cache.Memory{
-		TTL:             5 * time.Minute,
-		CleanupInterval: 10 * time.Minute,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}
 	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
 	require.NoError(t, err)
@@ -1017,8 +1017,8 @@ func TestQueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 		},
 	}
 	cacheOpts := cache.Memory{
-		TTL:             5 * time.Minute,
-		CleanupInterval: 10 * time.Minute,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}
 	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
 	require.NoError(t, err)
@@ -1094,8 +1094,8 @@ func TestQueryRangeValueTypePromQL(t *testing.T) {
 		},
 	}
 	cacheOpts := cache.Memory{
-		TTL:             5 * time.Minute,
-		CleanupInterval: 10 * time.Minute,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}
 	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
 	require.NoError(t, err)
