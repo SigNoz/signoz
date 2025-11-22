@@ -231,6 +231,7 @@ export function CreateAlertProvider(
 			updateAlertRule,
 			isUpdatingAlertRule,
 			isEditMode: isEditMode || false,
+			initialAlertState,
 		}),
 		[
 			alertState,
@@ -248,6 +249,7 @@ export function CreateAlertProvider(
 			updateAlertRule,
 			isUpdatingAlertRule,
 			isEditMode,
+			initialAlertState,
 		],
 	);
 

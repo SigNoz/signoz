@@ -5,6 +5,7 @@ export interface YAxisUnitSelectorProps {
 	loading?: boolean;
 	disabled?: boolean;
 	'data-testid'?: string;
+	initialValue?: string;
 }
 
 export enum UniversalYAxisUnit {
