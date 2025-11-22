@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -407,6 +408,31 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 	}
 
 	return &response, nil
+}
+
+// GetMetricAlerts returns alerts referencing the provided metric name.
+func (receiver *SummaryService) GetMetricAlerts(ctx context.Context, metricName string) ([]metrics_explorer.Alert, *model.ApiError) {
+	if metricName == "" {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("metric_name is required")}
+	}
+
+	data, apiErr := receiver.rulesManager.GetAlertDetailsForMetricNames(ctx, []string{metricName})
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	alerts := make([]metrics_explorer.Alert, 0)
+	if rulesList, ok := data[metricName]; ok {
+		alerts = make([]metrics_explorer.Alert, 0, len(rulesList))
+		for _, rule := range rulesList {
+			alerts = append(alerts, metrics_explorer.Alert{
+				AlertName: rule.AlertName,
+				AlertID:   rule.Id,
+			})
+		}
+	}
+
+	return alerts, nil
 }
 
 func getQueryRangeForRelateMetricsList(metricName string, scores metrics_explorer.RelatedMetricsScore) *v3.BuilderQuery {

@@ -644,6 +644,9 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.Au
 	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
 		am.ViewAccess(ah.GetMetricsDetails)).
 		Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/metrics/{metric_name}/alerts",
+		am.ViewAccess(ah.GetMetricAlerts)).
+		Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/metrics",
 		am.ViewAccess(ah.ListMetrics)).
 		Methods(http.MethodPost)
