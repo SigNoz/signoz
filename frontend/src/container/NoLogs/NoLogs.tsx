@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './NoLogs.styles.scss';
 
 import { Typography } from 'antd';
@@ -38,7 +39,11 @@ export default function NoLogs({
 			} else {
 				link = ROUTES.GET_STARTED_LOGS_MANAGEMENT;
 			}
-			history.push(link);
+			if (e && (e.ctrlKey || e.metaKey)) {
+				window.open(link, '_blank');
+			} else {
+				history.push(link);
+			}
 		} else if (dataSource === 'traces') {
 			window.open(DOCLINKS.TRACES_EXPLORER_EMPTY_STATE, '_blank');
 		} else if (dataSource === DataSource.METRICS) {
@@ -59,7 +64,12 @@ export default function NoLogs({
 					</span>
 				</Typography>
 
-				<Typography.Link className="send-logs-link" onClick={handleLinkClick}>
+				<Typography.Link
+					className="send-logs-link"
+					onClick={(e: React.MouseEvent<HTMLAnchorElement, MouseEvent>): void =>
+						handleLinkClick(e)
+					}
+				>
 					Sending {dataSource} to SigNoz <ArrowUpRight size={16} />
 				</Typography.Link>
 			</div>

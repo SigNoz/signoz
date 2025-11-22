@@ -64,7 +64,7 @@ const EmptyState = memo(
 						<Button
 							type="default"
 							className="periscope-btn secondary"
-							onClick={(): void => {
+							onClick={(event: React.MouseEvent): void => {
 								logEvent('Homepage: Get Started clicked', {
 									source: 'Service Metrics',
 								});
@@ -73,7 +73,11 @@ const EmptyState = memo(
 									activeLicenseV3 &&
 									activeLicenseV3.platform === LicensePlatform.CLOUD
 								) {
-									history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+									if (event && (event.ctrlKey || event.metaKey)) {
+										window.open(ROUTES.GET_STARTED_WITH_CLOUD, '_blank');
+									} else {
+										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+									}
 								} else {
 									window?.open(
 										DOCS_LINKS.ADD_DATA_SOURCE,
@@ -116,7 +120,7 @@ const ServicesListTable = memo(
 		onRowClick,
 	}: {
 		services: ServicesList[];
-		onRowClick: (record: ServicesList) => void;
+		onRowClick: (record: ServicesList, event: React.MouseEvent) => void;
 	}): JSX.Element => (
 		<div className="services-list-container home-data-item-container metrics-services-list">
 			<div className="services-list">
@@ -125,8 +129,8 @@ const ServicesListTable = memo(
 					dataSource={services}
 					pagination={false}
 					className="services-table"
-					onRow={(record): { onClick: () => void } => ({
-						onClick: (): void => onRowClick(record),
+					onRow={(record): { onClick: (event: React.MouseEvent) => void } => ({
+						onClick: (event: React.MouseEvent): void => onRowClick(record, event),
 					})}
 				/>
 			</div>
@@ -284,11 +288,15 @@ function ServiceMetrics({
 	}, [onUpdateChecklistDoneItem, loadingUserPreferences, servicesExist]);
 
 	const handleRowClick = useCallback(
-		(record: ServicesList) => {
+		(record: ServicesList, event: React.MouseEvent) => {
 			logEvent('Homepage: Service clicked', {
 				serviceName: record.serviceName,
 			});
-			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+			if (event && (event.ctrlKey || event.metaKey)) {
+				window.open(`${ROUTES.APPLICATION}/${record.serviceName}`, '_blank');
+			} else {
+				safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+			}
 		},
 		[safeNavigate],
 	);

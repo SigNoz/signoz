@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
+/* eslint-disable sonarjs/cognitive-complexity */
 import { Button, Skeleton, Tag, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -84,20 +85,22 @@ function DataSourceInfo({
 								icon={<img src="/Icons/container-plus.svg" alt="plus" />}
 								role="button"
 								tabIndex={0}
-								onClick={(): void => {
+								onClick={(event: React.MouseEvent): void => {
 									logEvent('Homepage: Connect dataSource clicked', {});
 
 									if (
 										activeLicense &&
 										activeLicense.platform === LicensePlatform.CLOUD
 									) {
-										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+										if (event && (event.ctrlKey || event.metaKey)) {
+											window.open(ROUTES.GET_STARTED_WITH_CLOUD, '_blank');
+										} else {
+											history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+										}
+									} else if (event && (event.ctrlKey || event.metaKey)) {
+										window.open(DOCS_LINKS.ADD_DATA_SOURCE, '_blank');
 									} else {
-										window?.open(
-											DOCS_LINKS.ADD_DATA_SOURCE,
-											'_blank',
-											'noopener noreferrer',
-										);
+										history.push(DOCS_LINKS.ADD_DATA_SOURCE);
 									}
 								}}
 								onKeyDown={(e): void => {
