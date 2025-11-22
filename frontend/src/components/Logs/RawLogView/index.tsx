@@ -73,16 +73,25 @@ function RawLogView({
 	);
 
 	const attributesValues = updatedSelecedFields
-		.filter((field) => !['timestamp', 'body'].includes(field.name))
-		.map((field) => flattenLogData[field.name])
-		.filter((attribute) => {
+		.filter(
+			(field) => !['log.timestamp:string', 'log.body:string'].includes(field.key),
+		)
+		.map((field) => {
+			const value = flattenLogData[field.key];
+			const label = field.displayName;
+
 			// loadash isEmpty doesnot work with numbers
-			if (isNumber(attribute)) {
-				return true;
+			if (isNumber(value)) {
+				return `${label}: ${value}`;
 			}
 
-			return !isUndefined(attribute) && !isEmpty(attribute);
-		});
+			if (!isUndefined(value) && !isEmpty(value)) {
+				return `${label}: ${value}`;
+			}
+
+			return null;
+		})
+		.filter((attribute) => attribute !== null);
 
 	let attributesText = attributesValues.join(' | ');
 

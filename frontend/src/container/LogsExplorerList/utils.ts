@@ -13,7 +13,9 @@ export const convertKeysToColumnFields = (
 		.filter((item) => !isEmpty(item.name))
 		.map((item) => ({
 			dataType: item.fieldDataType ?? '',
-			name: item.name,
+			name: item.name ?? '',
+			key: item.key ?? '',
+			displayName: item.displayName ?? '',
 			type: item.fieldContext ?? '',
 		}));
 /**
