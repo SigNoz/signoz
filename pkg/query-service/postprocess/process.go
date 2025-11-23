@@ -47,6 +47,14 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 		canDefaultZero[query.QueryName] = query.CanDefaultZero()
 	}
 
+	// Fill gaps before formula processing to ensure aligned timestamps
+	// This is critical when timeshift is used with formulas, as formula evaluation
+	// requires exact timestamp matches. Without this, if step > shift, the shifted
+	// series won't have matching timestamps with other series.
+	if queryRangeParams.CompositeQuery.FillGaps {
+		FillGaps(result, queryRangeParams)
+	}
+
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
 		// The way we distinguish between a formula and a query is by checking if the expression
 		// is the same as the query name
@@ -83,9 +91,8 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		result = removeDisabledQueries(result)
 	}
-	if queryRangeParams.CompositeQuery.FillGaps {
-		FillGaps(result, queryRangeParams)
-	}
+	// FillGaps is now called earlier, before formula processing
+	// to ensure aligned timestamps for timeshift+formula scenarios
 
 	if queryRangeParams.FormatForWeb &&
 		queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder &&
