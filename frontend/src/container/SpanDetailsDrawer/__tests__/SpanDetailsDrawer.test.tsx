@@ -1220,8 +1220,6 @@ describe('SpanDetailsDrawer - Status Message Truncation User Flows', () => {
 	});
 
 	it('should open modal with full status message when user clicks Expand button', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(
 			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
 				<SpanDetailsDrawer
@@ -1236,7 +1234,7 @@ describe('SpanDetailsDrawer - Status Message Truncation User Flows', () => {
 
 		// User clicks the Expand button (popover is mocked to render immediately)
 		const expandButton = screen.getByRole('button', { name: /expand/i });
-		await user.click(expandButton);
+		await fireEvent.click(expandButton);
 
 		// User sees modal with the full status message content
 		await waitFor(() => {
