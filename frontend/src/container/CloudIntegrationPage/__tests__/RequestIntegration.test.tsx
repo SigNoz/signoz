@@ -58,6 +58,7 @@ describe('Request AWS integration', () => {
 			screen: 'AWS integration details',
 			integration: 's3 sync',
 			deployment_url: 'localhost',
+			user_email: null,
 		});
 	});
 });
