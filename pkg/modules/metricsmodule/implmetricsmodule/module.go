@@ -153,7 +153,7 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 
 	placeholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
 	query := fmt.Sprintf(`
-			SELECT metric_name, description, type, unit, temporality 
+			SELECT metric_name, description, type, unit, temporality, is_monotonic
 				FROM %s.%s 
 				WHERE metric_name IN (%s)`,
 		telemetrymetrics.DBName,
@@ -174,23 +174,15 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 
 	for rows.Next() {
 		var (
-			metricName  string
-			description string
-			metricType  metrictypes.Type
-			unit        string
-			temporality metrictypes.Temporality
+			metricMetadata metricsmoduletypes.MetricMetadata
+			metricName     string
 		)
 
-		if err := rows.Scan(&metricName, &description, &metricType, &unit, &temporality); err != nil {
+		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality, &metricMetadata.IsMonotonic); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
 		}
 
-		metadata[metricName] = &metricsmoduletypes.MetricMetadata{
-			Description: description,
-			MetricType:  metricType,
-			MetricUnit:  unit,
-			Temporality: temporality,
-		}
+		metadata[metricName] = &metricMetadata
 	}
 
 	if err := rows.Err(); err != nil {

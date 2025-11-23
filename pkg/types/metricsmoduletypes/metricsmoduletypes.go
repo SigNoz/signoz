@@ -37,6 +37,7 @@ type MetricMetadata struct {
 	MetricType  metrictypes.Type        `json:"type"`
 	MetricUnit  string                  `json:"unit"`
 	Temporality metrictypes.Temporality `json:"temporality"`
+	IsMonotonic bool                    `json:"isMonotonic"`
 }
 
 // TreemapRequest represents the payload for the metrics treemap endpoint.
