@@ -168,7 +168,7 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(ctx, query, args...)
 	if err != nil {
-		return metadata, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
 	}
 	defer rows.Close()
 
@@ -182,7 +182,7 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 		)
 
 		if err := rows.Scan(&metricName, &description, &metricType, &unit, &temporality); err != nil {
-			return metadata, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
 		}
 
 		metadata[metricName] = &metricsmoduletypes.MetricMetadata{
@@ -194,7 +194,7 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 	}
 
 	if err := rows.Err(); err != nil {
-		return metadata, errors.WrapInternalf(err, errors.CodeInternal, "error iterating updated metrics metadata rows")
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating updated metrics metadata rows")
 	}
 
 	return metadata, nil
@@ -347,8 +347,12 @@ func (m *module) deleteMetricsMetadata(ctx context.Context, metricName string) e
 }
 
 func (m *module) insertMetricsMetadata(ctx context.Context, req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
-	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, temporality, is_monotonic, type, description, unit, created_at)
-VALUES (?, ?, ?, ?, ?, ?, ?);`, metricDatabaseName, distributedUpdatedMetadataTableName)
+	insertQuery := fmt.Sprintf(`
+				INSERT INTO %s.%s 
+				(metric_name, temporality, is_monotonic, type, description, unit, created_at)
+				VALUES (?, ?, ?, ?, ?, ?, ?);`,
+		metricDatabaseName,
+		distributedUpdatedMetadataTableName)
 
 	createdAt := time.Now().UnixMilli()
 	db := m.telemetryStore.ClickhouseDB()
