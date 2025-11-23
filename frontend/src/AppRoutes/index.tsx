@@ -12,6 +12,8 @@ import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
+import Hex from 'crypto-js/enc-hex';
+import HmacSHA256 from 'crypto-js/hmac-sha256';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -270,11 +272,20 @@ function App(): JSX.Element {
 				!showAddCreditCardModal &&
 				(isCloudUser || isEnterpriseSelfHostedUser)
 			) {
+				const email = user.email || '';
+				const secret = process.env.PYLON_IDENTITY_SECRET || '';
+				let emailHash = '';
+
+				if (email && secret) {
+					emailHash = HmacSHA256(email, Hex.parse(secret)).toString(Hex);
+				}
+
 				window.pylon = {
 					chat_settings: {
 						app_id: process.env.PYLON_APP_ID,
 						email: user.email,
 						name: user.displayName || user.email,
+						email_hash: emailHash,
 					},
 				};
 			}
