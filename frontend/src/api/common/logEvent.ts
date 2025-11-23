@@ -1,6 +1,8 @@
 import { LogEventAxiosInstance as axios } from 'api';
+import getLocalStorageApi from 'api/browser/localstorage/get';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { EventSuccessPayloadProps } from 'types/api/events/types';
 
@@ -13,7 +15,12 @@ const logEvent = async (
 	try {
 		// add tenant_url to attributes
 		const { hostname } = window.location;
-		const updatedAttributes = { ...attributes, tenant_url: hostname };
+		const userEmail = getLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL);
+		const updatedAttributes = {
+			...attributes,
+			deployment_url: hostname,
+			user_email: userEmail,
+		};
 		const response = await axios.post('/event', {
 			eventName,
 			attributes: updatedAttributes,
