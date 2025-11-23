@@ -1,8 +1,7 @@
-import { render, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import BodyTitleRenderer from '../BodyTitleRenderer';
 
-// Mock hooks
 let mockSetCopy: jest.Mock;
 const mockNotification = jest.fn();
 
@@ -32,37 +31,15 @@ jest.mock('hooks/useNotifications', () => ({
 	}),
 }));
 
-const COPY_ICON_SELECTOR = '[role="img"][aria-label="copy"]';
-
 describe('BodyTitleRenderer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 	});
 
-	it('should display copy button with hover-reveal styling', async () => {
-		const { container } = render(
-			<BodyTitleRenderer
-				title="name"
-				nodeKey="user.name"
-				value="John"
-				parentIsArray={false}
-			/>,
-		);
-
-		// Find the copy icon - it should be in the DOM with hover-reveal class
-		const copyIcon = container.querySelector(COPY_ICON_SELECTOR) as HTMLElement;
-
-		expect(copyIcon).toBeInTheDocument();
-		// Copy icon should have the hover-reveal class (visibility controlled by CSS on parent hover)
-		expect(copyIcon).toHaveClass('hover-reveal');
-		// Verify it's an Ant Design copy icon
-		expect(copyIcon.getAttribute('aria-label')).toBe('copy');
-	});
-
-	it('should copy object key-value pair to clipboard when copy button clicked', async () => {
+	it('should copy primitive value when node is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		const { container } = render(
+		render(
 			<BodyTitleRenderer
 				title="name"
 				nodeKey="user.name"
@@ -71,22 +48,22 @@ describe('BodyTitleRenderer', () => {
 			/>,
 		);
 
-		const copyIcon = container.querySelector(COPY_ICON_SELECTOR) as HTMLElement;
-
-		expect(copyIcon).toBeInTheDocument();
-		expect(copyIcon).not.toBeNull();
-
-		await user.click(copyIcon);
+		await user.click(screen.getByText('name'));
 
 		await waitFor(() => {
 			expect(mockSetCopy).toHaveBeenCalledWith('"user.name": "John"');
+			expect(mockNotification).toHaveBeenCalledWith(
+				expect.objectContaining({
+					message: expect.stringContaining('user.name'),
+				}),
+			);
 		});
 	});
 
-	it('should copy only value for array elements', async () => {
+	it('should copy array element value when clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		const { container } = render(
+		render(
 			<BodyTitleRenderer
 				title="0"
 				nodeKey="items[*].0"
@@ -95,41 +72,36 @@ describe('BodyTitleRenderer', () => {
 			/>,
 		);
 
-		const copyIcon = container.querySelector(COPY_ICON_SELECTOR) as HTMLElement;
-
-		expect(copyIcon).toBeInTheDocument();
-		expect(copyIcon).not.toBeNull();
-
-		await user.click(copyIcon);
+		await user.click(screen.getByText('0'));
 
 		await waitFor(() => {
-			expect(mockSetCopy).toHaveBeenCalledWith('arrayElement');
+			expect(mockSetCopy).toHaveBeenCalledWith('"items[*].0": arrayElement');
 		});
 	});
 
-	it('should show notification with immediate key name after copy', async () => {
+	it('should copy entire object when object node is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const testObject = { id: 123, active: true };
 
-		const { container } = render(
+		render(
 			<BodyTitleRenderer
-				title="name"
-				nodeKey="service_meta.name"
-				value="metaValue"
+				title="metadata"
+				nodeKey="user.metadata"
+				value={testObject}
 				parentIsArray={false}
 			/>,
 		);
 
-		const copyIcon = container.querySelector(COPY_ICON_SELECTOR) as HTMLElement;
-
-		expect(copyIcon).toBeInTheDocument();
-		expect(copyIcon).not.toBeNull();
-
-		await user.click(copyIcon);
+		await user.click(screen.getByText('metadata'));
 
 		await waitFor(() => {
+			const callArg = mockSetCopy.mock.calls[0][0];
+			expect(callArg).toContain('"user.metadata":');
+			expect(callArg).toContain('"id": 123');
+			expect(callArg).toContain('"active": true');
 			expect(mockNotification).toHaveBeenCalledWith(
 				expect.objectContaining({
-					message: expect.stringContaining('service_meta.name'),
+					message: expect.stringContaining('object copied'),
 				}),
 			);
 		});
