@@ -70,7 +70,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 		return nil, err
 	}
 
-	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Expression, req.Start, req.End)
+	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid treemap mode")
 	}
 
-	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Expression, req.Start, req.End)
+	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
@@ -412,8 +412,11 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	return nil
 }
 
-func (m *module) buildFilterClause(ctx context.Context, expression string, startMillis, endMillis int64) (string, []any, error) {
-	expression = strings.TrimSpace(expression)
+func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (string, []any, error) {
+	expression := ""
+	if filter != nil {
+		expression = strings.TrimSpace(filter.Expression)
+	}
 	if expression == "" {
 		return defaultFilterConditionTrue, nil, nil
 	}

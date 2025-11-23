@@ -9,12 +9,12 @@ import (
 
 // StatsRequest represents the payload accepted by the metrics stats endpoint.
 type StatsRequest struct {
-	Expression string           `json:"expression"`
-	Start      int64            `json:"start"`
-	End        int64            `json:"end"`
-	Limit      int              `json:"limit"`
-	Offset     int              `json:"offset"`
-	OrderBy    *qbtypes.OrderBy `json:"orderBy,omitempty"`
+	Filter  *qbtypes.Filter  `json:"filter,omitempty"`
+	Start   int64            `json:"start"`
+	End     int64            `json:"end"`
+	Limit   int              `json:"limit"`
+	Offset  int              `json:"offset"`
+	OrderBy *qbtypes.OrderBy `json:"orderBy,omitempty"`
 }
 
 // Stat represents the summary information returned per metric.
@@ -64,11 +64,11 @@ type UpdateMetricsMetadataRequest struct {
 
 // TreemapRequest represents the payload for the metrics treemap endpoint.
 type TreemapRequest struct {
-	Expression string                  `json:"expression"`
-	Start      int64                   `json:"start"`
-	End        int64                   `json:"end"`
-	Limit      int                     `json:"limit"`
-	Treemap    metrictypes.TreemapMode `json:"treemap"`
+	Filter  *qbtypes.Filter         `json:"filter,omitempty"`
+	Start   int64                   `json:"start"`
+	End     int64                   `json:"end"`
+	Limit   int                     `json:"limit"`
+	Treemap metrictypes.TreemapMode `json:"treemap"`
 }
 
 // TreemapEntry represents each node in the treemap response.
