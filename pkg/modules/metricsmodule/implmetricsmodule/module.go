@@ -12,7 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
@@ -63,11 +62,6 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
 	}
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
-
 	orderCfg, err := resolveOrderBy(req.OrderBy)
 	if err != nil {
 		return nil, err
@@ -78,7 +72,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 		return nil, err
 	}
 
-	metricNames, metricStats, total, err := m.fetchTimeseriesCounts(ctx, req, filterSQL, filterArgs, normalized, orderCfg.sqlColumn, orderCfg.direction)
+	metricNames, metricStats, total, err := m.fetchTimeseriesCounts(ctx, req, filterSQL, filterArgs, false, orderCfg.sqlColumn, orderCfg.direction)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +86,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 		return resp, nil
 	}
 
-	sampleMap, err := m.fetchSampleCounts(ctx, metricNames, req, orderCfg.orderBySamples, orderCfg.direction, filterSQL, filterArgs, normalized)
+	sampleMap, err := m.fetchSampleCounts(ctx, metricNames, req, orderCfg.orderBySamples, orderCfg.direction, filterSQL, filterArgs, false)
 	if err != nil {
 		return nil, err
 	}
@@ -656,11 +650,6 @@ func (m *module) postProcessStatsResp(resp *metricsmoduletypes.StatsResponse, up
 func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterSQL string, filterArgs []any) ([]metricsmoduletypes.TreemapEntry, error) {
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
-
 	filterClause := ""
 	if filterSQL != defaultFilterConditionTrue {
 		filterClause = fmt.Sprintf(" AND (%s)", filterSQL)
@@ -696,8 +685,8 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 	)
 
 	args := make([]any, 0, 6+2*len(filterArgs))
-	args = append(args, start, end, normalized)
-	args = append(args, start, end, normalized)
+	args = append(args, start, end, false)
+	args = append(args, start, end, false)
 	if filterClause != "" {
 		args = append(args, filterArgs...)
 	}
@@ -732,11 +721,6 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
 	samplesTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
-
 	filterClause := ""
 	if filterSQL != defaultFilterConditionTrue {
 		filterClause = fmt.Sprintf(" AND (%s)", filterSQL)
@@ -758,7 +742,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 		metricDatabaseName, tsTable, filterClause, queryLimit)
 
 	args := make([]any, 0, 3+len(filterArgs))
-	args = append(args, normalized, start, end)
+	args = append(args, false, start, end)
 	if filterClause != "" {
 		args = append(args, filterArgs...)
 	}
@@ -837,7 +821,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 		for _, name := range metricNames {
 			sampleArgs = append(sampleArgs, name)
 		}
-		sampleArgs = append(sampleArgs, start, end, normalized)
+		sampleArgs = append(sampleArgs, start, end, false)
 		sampleArgs = append(sampleArgs, filterArgs...)
 	}
 
