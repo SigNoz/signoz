@@ -21,6 +21,8 @@ const (
 	sqlKeyWordWhere = "WHERE"
 )
 
+// TODO(nikhilmantri0902, srikanthccv): These constants need to be mapped to db constants like following.
+// Is this the right way?
 // convertMetricTypeToDBFormat converts metrictypes.Type (lowercase) to database format (capitalized)
 func convertMetricTypeToDBFormat(metricType metrictypes.Type) string {
 	switch metricType {
