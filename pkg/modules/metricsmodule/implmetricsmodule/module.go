@@ -176,12 +176,16 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 		var (
 			metricMetadata metricsmoduletypes.MetricMetadata
 			metricName     string
+			dbMetricType   string
+			dbTemporality  string
 		)
 
-		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality, &metricMetadata.IsMonotonic); err != nil {
+		if err := rows.Scan(&metricName, &metricMetadata.Description, &dbMetricType, &metricMetadata.MetricUnit, &dbTemporality, &metricMetadata.IsMonotonic); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
 		}
 
+		metricMetadata.MetricType = convertDBFormatToMetricType(dbMetricType)
+		metricMetadata.Temporality = convertDBFormatToTemporality(dbTemporality)
 		metadata[metricName] = &metricMetadata
 	}
 
@@ -465,12 +469,14 @@ func (m *module) fetchTimeseriesCounts(
 
 	for rows.Next() {
 		var (
-			metricStat metricsmoduletypes.Stat
-			rowTotal   uint64
+			metricStat   metricsmoduletypes.Stat
+			rowTotal     uint64
+			dbMetricType string
 		)
-		if err := rows.Scan(&metricStat.MetricName, &metricStat.Description, &metricStat.MetricType, &metricStat.MetricUnit, &metricStat.TimeSeries, &metricStat.LastReceived, &rowTotal); err != nil {
+		if err := rows.Scan(&metricStat.MetricName, &metricStat.Description, &dbMetricType, &metricStat.MetricUnit, &metricStat.TimeSeries, &metricStat.LastReceived, &rowTotal); err != nil {
 			return nil, nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metrics stats row")
 		}
+		metricStat.MetricType = convertDBFormatToMetricType(dbMetricType)
 		metricStats = append(metricStats, metricStat)
 		metricNames = append(metricNames, metricStat.MetricName)
 		total = rowTotal

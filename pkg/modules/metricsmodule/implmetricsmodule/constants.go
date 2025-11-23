@@ -45,3 +45,35 @@ func convertTemporalityToDBFormat(temporality metrictypes.Temporality) string {
 		return ""
 	}
 }
+
+// convertDBFormatToMetricType converts database format (capitalized) to metrictypes.Type (lowercase)
+func convertDBFormatToMetricType(dbType string) metrictypes.Type {
+	switch dbType {
+	case "Gauge":
+		return metrictypes.GaugeType
+	case "Sum":
+		return metrictypes.SumType
+	case "Histogram":
+		return metrictypes.HistogramType
+	case "Summary":
+		return metrictypes.SummaryType
+	case "ExponentialHistogram":
+		return metrictypes.ExpHistogramType
+	default:
+		return metrictypes.UnspecifiedType
+	}
+}
+
+// convertDBFormatToTemporality converts database format (capitalized) to metrictypes.Temporality (lowercase)
+func convertDBFormatToTemporality(dbTemporality string) metrictypes.Temporality {
+	switch dbTemporality {
+	case "Delta":
+		return metrictypes.Delta
+	case "Cumulative":
+		return metrictypes.Cumulative
+	case "Unspecified":
+		return metrictypes.Unspecified
+	default:
+		return metrictypes.Unknown
+	}
+}
