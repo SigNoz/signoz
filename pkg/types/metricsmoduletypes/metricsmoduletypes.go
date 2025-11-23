@@ -40,6 +40,16 @@ type MetricMetadata struct {
 	IsMonotonic bool                    `json:"isMonotonic"`
 }
 
+// UpdateMetricsMetadataRequest represents the payload for updating metrics metadata.
+type UpdateMetricsMetadataRequest struct {
+	MetricName  string                  `json:"metricName"`
+	MetricType  metrictypes.Type        `json:"metricType"`
+	Description string                  `json:"description"`
+	Unit        string                  `json:"unit"`
+	Temporality metrictypes.Temporality `json:"temporality"`
+	IsMonotonic bool                    `json:"isMonotonic"`
+}
+
 // TreemapRequest represents the payload for the metrics treemap endpoint.
 type TreemapRequest struct {
 	Expression string                  `json:"expression"`
@@ -60,14 +70,4 @@ type TreemapEntry struct {
 type TreemapResponse struct {
 	TimeSeries []TreemapEntry `json:"timeseries"`
 	Samples    []TreemapEntry `json:"samples"`
-}
-
-// UpdateMetricsMetadataRequest represents the payload for updating metrics metadata.
-type UpdateMetricsMetadataRequest struct {
-	MetricName  string                  `json:"metricName"`
-	MetricType  metrictypes.Type        `json:"metricType"`
-	Description string                  `json:"description"`
-	Unit        string                  `json:"unit"`
-	Temporality metrictypes.Temporality `json:"temporality"`
-	IsMonotonic bool                    `json:"isMonotonic"`
 }
