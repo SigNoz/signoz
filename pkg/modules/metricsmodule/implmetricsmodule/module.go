@@ -148,7 +148,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
 	}
 
-	if !slices.Contains([]metricsmoduletypes.TreemapMode{metricsmoduletypes.TreemapModeSamples, metricsmoduletypes.TreemapModeTimeSeries}, req.Treemap) {
+	if !slices.Contains([]metrictypes.TreemapMode{metrictypes.TreemapModeSamples, metrictypes.TreemapModeTimeSeries}, req.Treemap) {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid treemap mode")
 	}
 
@@ -159,7 +159,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 
 	resp := &metricsmoduletypes.TreemapResponse{}
 	switch req.Treemap {
-	case metricsmoduletypes.TreemapModeSamples:
+	case metrictypes.TreemapModeSamples:
 		entries, err := m.computeSamplesTreemap(ctx, req, filterSQL, filterArgs)
 		if err != nil {
 			return nil, err

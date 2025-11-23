@@ -3,7 +3,6 @@ package metricsmoduletypes
 import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // StatsRequest represents the payload accepted by the metrics stats endpoint.
@@ -40,25 +39,13 @@ type MetricMetadata struct {
 	Temporality metrictypes.Temporality `json:"temporality"`
 }
 
-// TreemapMode indicates which treemap variant the caller requests.
-type TreemapMode struct {
-	valuer.String
-}
-
-var (
-	// TreemapModeTimeSeries represents the treemap based on timeseries counts.
-	TreemapModeTimeSeries = TreemapMode{valuer.NewString("timeseries")}
-	// TreemapModeSamples represents the treemap based on sample counts.
-	TreemapModeSamples = TreemapMode{valuer.NewString("samples")}
-)
-
 // TreemapRequest represents the payload for the metrics treemap endpoint.
 type TreemapRequest struct {
-	Expression string      `json:"expression"`
-	Start      int64       `json:"start"`
-	End        int64       `json:"end"`
-	Limit      int         `json:"limit"`
-	Treemap    TreemapMode `json:"treemap"`
+	Expression string                  `json:"expression"`
+	Start      int64                   `json:"start"`
+	End        int64                   `json:"end"`
+	Limit      int                     `json:"limit"`
+	Treemap    metrictypes.TreemapMode `json:"treemap"`
 }
 
 // TreemapEntry represents each node in the treemap response.

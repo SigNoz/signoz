@@ -116,3 +116,15 @@ var (
 	OrderByTimeSeries = MetricOrderBy{valuer.NewString("timeseries")}
 	OrderBySamples    = MetricOrderBy{valuer.NewString("samples")}
 )
+
+// TreemapMode indicates which treemap variant the caller requests.
+type TreemapMode struct {
+	valuer.String
+}
+
+var (
+	// TreemapModeTimeSeries represents the treemap based on timeseries counts.
+	TreemapModeTimeSeries = TreemapMode{valuer.NewString("timeseries")}
+	// TreemapModeSamples represents the treemap based on sample counts.
+	TreemapModeSamples = TreemapMode{valuer.NewString("samples")}
+)
