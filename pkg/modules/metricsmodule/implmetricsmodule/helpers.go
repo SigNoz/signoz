@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -17,7 +18,7 @@ type orderConfig struct {
 func resolveOrderBy(order *qbtypes.OrderBy) (orderConfig, error) {
 	// default orderBy
 	cfg := orderConfig{
-		sqlColumn:      qbtypes.OrderByTimeSeries.StringValue(),
+		sqlColumn:      metrictypes.OrderByTimeSeries.StringValue(),
 		direction:      strings.ToUpper(qbtypes.OrderDirectionDesc.StringValue()),
 		orderBySamples: false,
 	}
@@ -30,11 +31,11 @@ func resolveOrderBy(order *qbtypes.OrderBy) (orderConfig, error) {
 	columnName := strings.ToLower(order.Key.Name)
 
 	switch columnName {
-	case qbtypes.OrderByTimeSeries.StringValue():
-		cfg.sqlColumn = qbtypes.OrderByTimeSeries.StringValue()
-	case qbtypes.OrderBySamples.StringValue():
+	case metrictypes.OrderByTimeSeries.StringValue():
+		cfg.sqlColumn = metrictypes.OrderByTimeSeries.StringValue()
+	case metrictypes.OrderBySamples.StringValue():
 		cfg.orderBySamples = true
-		cfg.sqlColumn = qbtypes.OrderByTimeSeries.StringValue() // defer true ordering until samples computed
+		cfg.sqlColumn = metrictypes.OrderByTimeSeries.StringValue() // defer true ordering until samples computed
 	default:
 		return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order column %q", columnName)
 	}

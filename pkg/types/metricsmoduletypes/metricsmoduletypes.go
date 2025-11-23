@@ -3,6 +3,7 @@ package metricsmoduletypes
 import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // StatsRequest represents the payload accepted by the metrics stats endpoint.
@@ -15,9 +16,9 @@ type StatsRequest struct {
 	OrderBy    *qbtypes.OrderBy `json:"orderBy,omitempty"`
 }
 
-// MetricStat represents the summary information returned per metric.
-type MetricStat struct {
-	MetricName   string           `json:"metric_name"`
+// Stat represents the summary information returned per metric.
+type Stat struct {
+	MetricName   string           `json:"metricName"`
 	Description  string           `json:"description"`
 	MetricType   metrictypes.Type `json:"type"`
 	MetricUnit   string           `json:"unit"`
@@ -28,8 +29,8 @@ type MetricStat struct {
 
 // StatsResponse represents the aggregated metrics statistics.
 type StatsResponse struct {
-	Metrics []MetricStat `json:"metrics"`
-	Total   uint64       `json:"total"`
+	Metrics []Stat `json:"metrics"`
+	Total   uint64 `json:"total"`
 }
 
 type MetricMetadata struct {
@@ -40,13 +41,15 @@ type MetricMetadata struct {
 }
 
 // TreemapMode indicates which treemap variant the caller requests.
-type TreemapMode string
+type TreemapMode struct {
+	valuer.String
+}
 
-const (
+var (
 	// TreemapModeTimeSeries represents the treemap based on timeseries counts.
-	TreemapModeTimeSeries TreemapMode = "timeseries"
+	TreemapModeTimeSeries = TreemapMode{valuer.NewString("timeseries")}
 	// TreemapModeSamples represents the treemap based on sample counts.
-	TreemapModeSamples TreemapMode = "samples"
+	TreemapModeSamples = TreemapMode{valuer.NewString("samples")}
 )
 
 // TreemapRequest represents the payload for the metrics treemap endpoint.
@@ -60,9 +63,9 @@ type TreemapRequest struct {
 
 // TreemapEntry represents each node in the treemap response.
 type TreemapEntry struct {
-	MetricName string  `json:"metric_name"`
+	MetricName string  `json:"metricName"`
 	Percentage float64 `json:"percentage"`
-	TotalValue uint64  `json:"total_value"`
+	TotalValue uint64  `json:"totalValue"`
 }
 
 // TreemapResponse is the output structure for the treemap endpoint.

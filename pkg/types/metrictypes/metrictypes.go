@@ -106,3 +106,13 @@ type MetricTableHints struct {
 type MetricValueFilter struct {
 	Value float64
 }
+
+// MetricOrderBy represents the order-by field for metrics queries
+type MetricOrderBy struct {
+	valuer.String
+}
+
+var (
+	OrderByTimeSeries = MetricOrderBy{valuer.NewString("timeseries")}
+	OrderBySamples    = MetricOrderBy{valuer.NewString("samples")}
+)

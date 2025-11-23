@@ -161,15 +161,6 @@ var (
 	}
 )
 
-type MetricOrderBy struct {
-	valuer.String
-}
-
-var (
-	OrderByTimeSeries = MetricOrderBy{valuer.NewString("timeseries")}
-	OrderBySamples    = MetricOrderBy{valuer.NewString("samples")}
-)
-
 type ReduceTo struct {
 	valuer.String
 }

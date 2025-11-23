@@ -459,7 +459,7 @@ func (m *module) fetchTimeseriesCounts(
 	normalized bool,
 	orderSQLColumn string,
 	orderDirection string,
-) ([]string, []metricsmoduletypes.MetricStat, uint64, error) {
+) ([]string, []metricsmoduletypes.Stat, uint64, error) {
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 	statsQuery := fmt.Sprintf(`
 		SELECT
@@ -495,13 +495,13 @@ func (m *module) fetchTimeseriesCounts(
 	}
 	defer rows.Close()
 
-	metricStats := make([]metricsmoduletypes.MetricStat, 0)
+	metricStats := make([]metricsmoduletypes.Stat, 0)
 	metricNames := make([]string, 0)
 	var total uint64
 
 	for rows.Next() {
 		var (
-			metricStat metricsmoduletypes.MetricStat
+			metricStat metricsmoduletypes.Stat
 			rowTotal   uint64
 		)
 		if err := rows.Scan(&metricStat.MetricName, &metricStat.Description, &metricStat.MetricType, &metricStat.MetricUnit, &metricStat.TimeSeries, &metricStat.LastReceived, &rowTotal); err != nil {
@@ -639,7 +639,7 @@ func (m *module) postProcessStatsResp(resp *metricsmoduletypes.StatsResponse, up
 	if resp == nil {
 		return
 	}
-	filtered := make([]metricsmoduletypes.MetricStat, 0, len(resp.Metrics))
+	filtered := make([]metricsmoduletypes.Stat, 0, len(resp.Metrics))
 	for i := range resp.Metrics {
 		stat := resp.Metrics[i]
 		if updated, ok := updatedMeta[stat.MetricName]; ok {

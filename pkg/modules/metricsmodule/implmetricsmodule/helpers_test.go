@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -20,7 +21,7 @@ func TestResolveOrderBy(t *testing.T) {
 			name:  "nil order uses defaults",
 			order: nil,
 			wantCfg: orderConfig{
-				sqlColumn:      qbtypes.OrderByTimeSeries.StringValue(),
+				sqlColumn:      metrictypes.OrderByTimeSeries.StringValue(),
 				direction:      strings.ToUpper(qbtypes.OrderDirectionDesc.StringValue()),
 				orderBySamples: false,
 			},
@@ -30,13 +31,13 @@ func TestResolveOrderBy(t *testing.T) {
 			order: &qbtypes.OrderBy{
 				Key: qbtypes.OrderByKey{
 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-						Name: qbtypes.OrderByTimeSeries.StringValue(),
+						Name: metrictypes.OrderByTimeSeries.StringValue(),
 					},
 				},
 				Direction: qbtypes.OrderDirectionAsc,
 			},
 			wantCfg: orderConfig{
-				sqlColumn:      qbtypes.OrderByTimeSeries.StringValue(),
+				sqlColumn:      metrictypes.OrderByTimeSeries.StringValue(),
 				direction:      strings.ToUpper(qbtypes.OrderDirectionAsc.StringValue()),
 				orderBySamples: false,
 			},
@@ -46,14 +47,14 @@ func TestResolveOrderBy(t *testing.T) {
 			order: &qbtypes.OrderBy{
 				Key: qbtypes.OrderByKey{
 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-						Name: qbtypes.OrderBySamples.StringValue(),
+						Name: metrictypes.OrderBySamples.StringValue(),
 					},
 				},
 				Direction: qbtypes.OrderDirectionDesc,
 			},
 			wantCfg: orderConfig{
 				// Note: sqlColumn remains timeSeries; real ordering done after sample counts exist
-				sqlColumn:      qbtypes.OrderByTimeSeries.StringValue(),
+				sqlColumn:      metrictypes.OrderByTimeSeries.StringValue(),
 				direction:      strings.ToUpper(qbtypes.OrderDirectionDesc.StringValue()),
 				orderBySamples: true,
 			},
@@ -75,7 +76,7 @@ func TestResolveOrderBy(t *testing.T) {
 			order: &qbtypes.OrderBy{
 				Key: qbtypes.OrderByKey{
 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-						Name: qbtypes.OrderByTimeSeries.StringValue(),
+						Name: metrictypes.OrderByTimeSeries.StringValue(),
 					},
 				},
 				Direction: qbtypes.OrderDirection{valuer.NewString("SIDEWAYS")},
