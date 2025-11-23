@@ -386,9 +386,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?);`, metricDatabaseName, distributedUpdatedMetadataTa
 	db := m.telemetryStore.ClickhouseDB()
 	err := db.Exec(ctx, insertQuery,
 		req.MetricName,
-		req.Temporality.StringValue(),
+		convertTemporalityToDBFormat(req.Temporality),
 		req.IsMonotonic,
-		req.MetricType.StringValue(),
+		convertMetricTypeToDBFormat(req.MetricType),
 		req.Description,
 		req.Unit,
 		createdAt,

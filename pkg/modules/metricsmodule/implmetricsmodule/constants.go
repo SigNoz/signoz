@@ -1,6 +1,9 @@
 package implmetricsmodule
 
-import "github.com/SigNoz/signoz/pkg/telemetrymetrics"
+import (
+	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+)
 
 // db and table name constants
 const (
@@ -17,3 +20,35 @@ const defaultFilterConditionTrue = "true"
 const (
 	sqlKeyWordWhere = "WHERE"
 )
+
+// convertMetricTypeToDBFormat converts metrictypes.Type (lowercase) to database format (capitalized)
+func convertMetricTypeToDBFormat(metricType metrictypes.Type) string {
+	switch metricType {
+	case metrictypes.GaugeType:
+		return "Gauge"
+	case metrictypes.SumType:
+		return "Sum"
+	case metrictypes.HistogramType:
+		return "Histogram"
+	case metrictypes.SummaryType:
+		return "Summary"
+	case metrictypes.ExpHistogramType:
+		return "ExponentialHistogram"
+	default:
+		return ""
+	}
+}
+
+// convertTemporalityToDBFormat converts metrictypes.Temporality (lowercase) to database format (capitalized)
+func convertTemporalityToDBFormat(temporality metrictypes.Temporality) string {
+	switch temporality {
+	case metrictypes.Delta:
+		return "Delta"
+	case metrictypes.Cumulative:
+		return "Cumulative"
+	case metrictypes.Unspecified:
+		return "Unspecified"
+	default:
+		return ""
+	}
+}
