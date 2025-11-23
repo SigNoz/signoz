@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
@@ -30,10 +31,11 @@ type module struct {
 	fieldMapper            qbtypes.FieldMapper
 	condBuilder            qbtypes.ConditionBuilder
 	logger                 *slog.Logger
+	cache                  cache.Cache
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, providerSettings factory.ProviderSettings) metricsmodule.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings) metricsmodule.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -42,6 +44,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		condBuilder:            condBuilder,
 		logger:                 providerSettings.Logger,
 		telemetryMetadataStore: telemetryMetadataStore,
+		cache:                  cache,
 	}
 }
 
@@ -150,8 +153,30 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 	}
 
 	metadata := make(map[string]*metricsmoduletypes.MetricMetadata)
+	cacheMisses := make([]string, 0)
 
-	placeholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
+	// Try to get from cache first
+	for _, metricName := range metricNames {
+		cacheKey := generateMetricMetadataCacheKey(metricName)
+		var cachedMetadata metricsmoduletypes.MetricMetadata
+		err := m.cache.Get(ctx, orgID, cacheKey, &cachedMetadata)
+		if err == nil {
+			// Cache hit
+			metadata[metricName] = &cachedMetadata
+		} else {
+			// Cache miss - log warning but continue
+			m.logger.WarnContext(ctx, "cache miss for metric metadata", "metricName", metricName, "error", err)
+			cacheMisses = append(cacheMisses, metricName)
+		}
+	}
+
+	// If all metrics were found in cache, return early
+	if len(cacheMisses) == 0 {
+		return metadata, nil
+	}
+
+	// Query database for cache misses
+	placeholders := strings.TrimRight(strings.Repeat("?,", len(cacheMisses)), ",")
 	query := fmt.Sprintf(`
 			SELECT metric_name, description, type, unit, temporality, is_monotonic
 				FROM %s.%s 
@@ -160,9 +185,9 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 		telemetrymetrics.UpdatedMetadataTableName,
 		placeholders)
 
-	args := make([]any, len(metricNames))
-	for i := range metricNames {
-		args[i] = metricNames[i]
+	args := make([]any, len(cacheMisses))
+	for i := range cacheMisses {
+		args[i] = cacheMisses[i]
 	}
 
 	db := m.telemetryStore.ClickhouseDB()
@@ -187,6 +212,12 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 		metricMetadata.MetricType = convertDBFormatToMetricType(dbMetricType)
 		metricMetadata.Temporality = convertDBFormatToTemporality(dbTemporality)
 		metadata[metricName] = &metricMetadata
+
+		// Set in cache after successful DB fetch
+		cacheKey := generateMetricMetadataCacheKey(metricName)
+		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
+			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metricName", metricName, "error", err)
+		}
 	}
 
 	if err := rows.Err(); err != nil {
@@ -221,7 +252,7 @@ func (m *module) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	}
 
 	// Insert new metadata
-	if err := m.insertMetricsMetadata(ctx, req); err != nil {
+	if err := m.insertMetricsMetadata(ctx, orgID, req); err != nil {
 		return err
 	}
 
@@ -342,7 +373,7 @@ func (m *module) deleteMetricsMetadata(ctx context.Context, metricName string) e
 	return nil
 }
 
-func (m *module) insertMetricsMetadata(ctx context.Context, req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
+func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
 	insertQuery := fmt.Sprintf(`
 				INSERT INTO %s.%s 
 				(metric_name, temporality, is_monotonic, type, description, unit, created_at)
@@ -364,6 +395,20 @@ func (m *module) insertMetricsMetadata(ctx context.Context, req *metricsmodulety
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to insert metrics metadata")
 	}
+
+	// Set in cache after successful DB insert
+	metricMetadata := &metricsmoduletypes.MetricMetadata{
+		Description: req.Description,
+		MetricType:  req.MetricType,
+		MetricUnit:  req.Unit,
+		Temporality: req.Temporality,
+		IsMonotonic: req.IsMonotonic,
+	}
+	cacheKey := generateMetricMetadataCacheKey(req.MetricName)
+	if err := m.cache.Set(ctx, orgID, cacheKey, metricMetadata, 0); err != nil {
+		m.logger.WarnContext(ctx, "failed to set metric metadata in cache after insert", "metricName", req.MetricName, "error", err)
+	}
+
 	return nil
 }
 

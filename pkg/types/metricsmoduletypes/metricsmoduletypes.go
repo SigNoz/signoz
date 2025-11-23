@@ -1,6 +1,8 @@
 package metricsmoduletypes
 
 import (
+	"encoding/json"
+
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
@@ -38,6 +40,16 @@ type MetricMetadata struct {
 	MetricUnit  string                  `json:"unit"`
 	Temporality metrictypes.Temporality `json:"temporality"`
 	IsMonotonic bool                    `json:"isMonotonic"`
+}
+
+// MarshalBinary implements cachetypes.Cacheable interface
+func (m *MetricMetadata) MarshalBinary() ([]byte, error) {
+	return json.Marshal(m)
+}
+
+// UnmarshalBinary implements cachetypes.Cacheable interface
+func (m *MetricMetadata) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, m)
 }
 
 // UpdateMetricsMetadataRequest represents the payload for updating metrics metadata.
