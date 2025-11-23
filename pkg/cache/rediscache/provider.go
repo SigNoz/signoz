@@ -52,7 +52,7 @@ func (c *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey string, 
 	return c.client.Set(ctx, strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), data, ttl).Err()
 }
 
-func (c *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable, allowExpired bool) error {
+func (c *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable) error {
 	err := c.client.Get(ctx, strings.Join([]string{orgID.StringValue(), cacheKey}, "::")).Scan(dest)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {

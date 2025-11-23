@@ -135,6 +135,62 @@
 	}
 }
 
+.alert-details-v2 {
+	.alert-details__breadcrumb {
+		padding-left: 32px;
+		.breadcrumb-item {
+			font-size: 13px;
+		}
+	}
+
+	.alert-info {
+		margin-right: 16px;
+
+		.alert-info__action-buttons {
+			.alert-action-buttons {
+				.ant-btn {
+					font-size: 13px;
+				}
+			}
+		}
+	}
+
+	.divider {
+		display: none;
+	}
+
+	.tabs-and-filters {
+		.ant-tabs {
+			.ant-tabs-nav {
+				margin: 0 8px;
+			}
+
+			.ant-tabs-tab {
+				.ant-tabs-tab-btn {
+					border-radius: 2px;
+					border: 1px solid var(--bg-slate-400);
+					background: var(--bg-ink-400);
+					font-size: 13px;
+
+					&[aria-selected='true'] {
+						background: var(--bg-ink-500);
+					}
+				}
+			}
+
+			.ant-tabs-content-holder {
+				.ant-tabs-content {
+					.ant-tabs-tabpane {
+						.alert-history {
+							margin: 0 16px;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 .lightMode {
 	.alert-details {
 		&-tabs {

@@ -79,7 +79,7 @@ func (bc *bucketCache) GetMissRanges(
 
 	// Try to get cached data
 	var data cachedData
-	err := bc.cache.Get(ctx, orgID, cacheKey, &data, false)
+	err := bc.cache.Get(ctx, orgID, cacheKey, &data)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
 			bc.logger.ErrorContext(ctx, "error getting cached data", "error", err)
@@ -148,7 +148,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 
 	// Get existing cached data
 	var existingData cachedData
-	if err := bc.cache.Get(ctx, orgID, cacheKey, &existingData, true); err != nil {
+	if err := bc.cache.Get(ctx, orgID, cacheKey, &existingData); err != nil {
 		existingData = cachedData{}
 	}
 

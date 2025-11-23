@@ -68,7 +68,7 @@ export default function TraceOperator({
 						!isListViewPanel && 'qb-trace-operator-arrow',
 					)}
 				>
-					<Typography.Text className="label">TRACE OPERATOR</Typography.Text>
+					<Typography.Text className="label">Trace Operator</Typography.Text>
 					<div className="qb-trace-operator-editor-container">
 						<TraceOperatorEditor
 							value={traceOperator?.expression || ''}

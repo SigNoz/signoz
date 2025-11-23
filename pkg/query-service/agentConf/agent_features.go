@@ -1,7 +1,6 @@
 package agentConf
 
 import (
-	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -25,6 +24,6 @@ type AgentFeature interface {
 		// TODO(Raj): maybe refactor agentConf further and clean this up
 		serializedSettingsUsed string,
 
-		apiErr *model.ApiError,
+		err error,
 	)
 }

@@ -236,6 +236,10 @@
 					background: var(--bg-ink-100) !important;
 					opacity: 0.5 !important;
 				}
+
+				.cm-activeLine > span {
+					font-size: 12px !important;
+				}
 			}
 		}
 
@@ -271,6 +275,9 @@
 
 		box-sizing: border-box;
 		position: relative;
+		.cm-placeholder {
+			font-size: 12px !important;
+		}
 	}
 }
 

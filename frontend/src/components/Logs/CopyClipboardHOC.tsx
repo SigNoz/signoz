@@ -6,6 +6,7 @@ import { useCopyToClipboard } from 'react-use';
 function CopyClipboardHOC({
 	entityKey,
 	textToCopy,
+	tooltipText = 'Copy to clipboard',
 	children,
 }: CopyClipboardHOCProps): JSX.Element {
 	const [value, setCopy] = useCopyToClipboard();
@@ -31,7 +32,7 @@ function CopyClipboardHOC({
 		<span onClick={onClick} role="presentation" tabIndex={-1}>
 			<Popover
 				placement="top"
-				content={<span style={{ fontSize: '0.9rem' }}>Copy to clipboard</span>}
+				content={<span style={{ fontSize: '0.9rem' }}>{tooltipText}</span>}
 			>
 				{children}
 			</Popover>
@@ -42,7 +43,11 @@ function CopyClipboardHOC({
 interface CopyClipboardHOCProps {
 	entityKey: string | undefined;
 	textToCopy: string;
+	tooltipText?: string;
 	children: ReactNode;
 }
 
 export default CopyClipboardHOC;
+CopyClipboardHOC.defaultProps = {
+	tooltipText: 'Copy to clipboard',
+};

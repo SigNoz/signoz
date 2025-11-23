@@ -67,7 +67,7 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	return nil
 }
 
-func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable, allowExpired bool) error {
+func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable) error {
 	_, span := provider.settings.Tracer().Start(ctx, "memory.get", trace.WithAttributes(
 		attribute.String(semconv.AttributeDBSystem, "memory"),
 		attribute.String(semconv.AttributeDBStatement, "get "+strings.Join([]string{orgID.StringValue(), cacheKey}, "::")),

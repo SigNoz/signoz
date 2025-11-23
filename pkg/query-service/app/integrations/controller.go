@@ -106,7 +106,7 @@ func (c *Controller) Uninstall(ctx context.Context, orgId string, req *Uninstall
 	return nil
 }
 
-func (c *Controller) GetPipelinesForInstalledIntegrations(ctx context.Context, orgId string) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
+func (c *Controller) GetPipelinesForInstalledIntegrations(ctx context.Context, orgId string) ([]pipelinetypes.GettablePipeline, error) {
 	return c.mgr.GetPipelinesForInstalledIntegrations(ctx, orgId)
 }
 

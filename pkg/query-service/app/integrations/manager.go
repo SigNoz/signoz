@@ -256,7 +256,7 @@ func (m *Manager) UninstallIntegration(
 func (m *Manager) GetPipelinesForInstalledIntegrations(
 	ctx context.Context,
 	orgId string,
-) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
+) ([]pipelinetypes.GettablePipeline, error) {
 	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx, orgId)
 	if apiErr != nil {
 		return nil, apiErr

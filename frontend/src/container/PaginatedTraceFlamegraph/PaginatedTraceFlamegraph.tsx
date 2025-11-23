@@ -5,7 +5,6 @@ import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { themeColors } from 'constants/theme';
 import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { useEffect, useMemo, useState } from 'react';
@@ -48,7 +47,6 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		traceId,
 		selectedSpanId: firstSpanAtFetchLevel,
 	});
-	const isDarkMode = useIsDarkMode();
 
 	// get the current state of trace flamegraph based on the API lifecycle
 	const traceFlamegraphState = useMemo(() => {
@@ -124,6 +122,8 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		traceId,
 	]);
 
+	const spread = useMemo(() => endTime - startTime, [endTime, startTime]);
+
 	return (
 		<div className="flamegraph">
 			<div
@@ -132,36 +132,40 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 			>
 				<div className="exec-time-service">% exec time</div>
 				<div className="stats">
-					{Object.keys(serviceExecTime).map((service) => {
-						const spread = endTime - startTime;
-						const value = (serviceExecTime[service] * 100) / spread;
-						const color = generateColor(
-							service,
-							isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-						);
-						return (
-							<div key={service} className="value-row">
-								<section className="service-name">
-									<div className="square-box" style={{ backgroundColor: color }} />
-									<Tooltip title={service}>
-										<Typography.Text className="service-text" ellipsis>
-											{service}
+					{Object.keys(serviceExecTime)
+						.sort((a, b) => {
+							if (spread <= 0) return 0;
+							const aValue = (serviceExecTime[a] * 100) / spread;
+							const bValue = (serviceExecTime[b] * 100) / spread;
+							return bValue - aValue;
+						})
+						.map((service) => {
+							const value =
+								spread <= 0 ? 0 : (serviceExecTime[service] * 100) / spread;
+							const color = generateColor(service, themeColors.traceDetailColors);
+							return (
+								<div key={service} className="value-row">
+									<section className="service-name">
+										<div className="square-box" style={{ backgroundColor: color }} />
+										<Tooltip title={service}>
+											<Typography.Text className="service-text" ellipsis>
+												{service}
+											</Typography.Text>
+										</Tooltip>
+									</section>
+									<section className="progress-service">
+										<Progress
+											percent={parseFloat(value.toFixed(2))}
+											className="service-progress-indicator"
+											showInfo={false}
+										/>
+										<Typography.Text className="percent-value">
+											{parseFloat(value.toFixed(2))}%
 										</Typography.Text>
-									</Tooltip>
-								</section>
-								<section className="progress-service">
-									<Progress
-										percent={parseFloat(value.toFixed(2))}
-										className="service-progress-indicator"
-										showInfo={false}
-									/>
-									<Typography.Text className="percent-value">
-										{parseFloat(value.toFixed(2))}%
-									</Typography.Text>
-								</section>
-							</div>
-						);
-					})}
+									</section>
+								</div>
+							);
+						})}
 				</div>
 			</div>
 			<div
