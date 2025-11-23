@@ -179,7 +179,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							isListViewPanel={isListViewPanel}
 							onSignalSourceChange={onSignalSourceChange || ((): void => {})}
 							signalSourceChangeEnabled={signalSourceChangeEnabled}
-							queriesCount={1}
+							canDelete={false}
 						/>
 					) : (
 						currentQuery.builder.queryData.map((query, index) => (
@@ -201,7 +201,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								signalSource={query.source as 'meter' | ''}
 								onSignalSourceChange={onSignalSourceChange || ((): void => {})}
 								signalSourceChangeEnabled={signalSourceChangeEnabled}
-								queriesCount={currentQuery.builder.queryData.length}
+								canDelete={currentQuery.builder.queryData.length > 1}
 							/>
 						))
 					)}
