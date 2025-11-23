@@ -6,6 +6,8 @@ import "github.com/SigNoz/signoz/pkg/telemetrymetrics"
 const (
 	metricDatabaseName                  = telemetrymetrics.DBName
 	distributedUpdatedMetadataTableName = telemetrymetrics.UpdatedMetadataTableName
+	updatedMetadataLocalTableName       = telemetrymetrics.UpdatedMetadataLocalTableName
+	timeseriesV41dayTableName           = telemetrymetrics.TimeseriesV41dayTableName
 )
 
 // default filter condition, this will be returned when no error and no where clause to process

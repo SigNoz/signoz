@@ -3,12 +3,14 @@ package implmetricsmodule
 import (
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/gorilla/mux"
 )
 
 type handler struct {
@@ -76,4 +78,43 @@ func (h *handler) GetTreemap(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	render.Success(rw, http.StatusOK, out)
+}
+
+func (h *handler) UpdateMetricsMetadata(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	// Extract metric_name from URL path
+	vars := mux.Vars(req)
+	metricName := vars["metric_name"]
+	if metricName == "" {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required in URL path"))
+		return
+	}
+
+	var in metricsmoduletypes.UpdateMetricsMetadataRequest
+	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	// Set metric name from URL path
+	in.MetricName = metricName
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = h.module.UpdateMetricsMetadata(req.Context(), orgID, &in)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, nil)
 }

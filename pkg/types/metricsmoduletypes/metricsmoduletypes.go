@@ -1,6 +1,9 @@
 package metricsmoduletypes
 
-import qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+import (
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+)
 
 // StatsRequest represents the payload accepted by the metrics stats endpoint.
 type StatsRequest struct {
@@ -14,13 +17,13 @@ type StatsRequest struct {
 
 // MetricStat represents the summary information returned per metric.
 type MetricStat struct {
-	MetricName   string `json:"metric_name"`
-	Description  string `json:"description"`
-	MetricType   string `json:"type"`
-	MetricUnit   string `json:"unit"`
-	TimeSeries   uint64 `json:"timeseries"`
-	Samples      uint64 `json:"samples"`
-	LastReceived int64  `json:"lastReceived"`
+	MetricName   string           `json:"metric_name"`
+	Description  string           `json:"description"`
+	MetricType   metrictypes.Type `json:"type"`
+	MetricUnit   string           `json:"unit"`
+	TimeSeries   uint64           `json:"timeseries"`
+	Samples      uint64           `json:"samples"`
+	LastReceived int64            `json:"lastReceived"`
 }
 
 // StatsResponse represents the aggregated metrics statistics.
@@ -30,10 +33,10 @@ type StatsResponse struct {
 }
 
 type MetricMetadata struct {
-	Description string `json:"description"`
-	MetricType  string `json:"type"`
-	MetricUnit  string `json:"unit"`
-	Temporality string `json:"temporality"`
+	Description string                  `json:"description"`
+	MetricType  metrictypes.Type        `json:"type"`
+	MetricUnit  string                  `json:"unit"`
+	Temporality metrictypes.Temporality `json:"temporality"`
 }
 
 // TreemapMode indicates which treemap variant the caller requests.
@@ -66,4 +69,14 @@ type TreemapEntry struct {
 type TreemapResponse struct {
 	TimeSeries []TreemapEntry `json:"timeseries"`
 	Samples    []TreemapEntry `json:"samples"`
+}
+
+// UpdateMetricsMetadataRequest represents the payload for updating metrics metadata.
+type UpdateMetricsMetadataRequest struct {
+	MetricName  string                  `json:"metricName"`
+	MetricType  metrictypes.Type        `json:"metricType"`
+	Description string                  `json:"description"`
+	Unit        string                  `json:"unit"`
+	Temporality metrictypes.Temporality `json:"temporality"`
+	IsMonotonic bool                    `json:"isMonotonic"`
 }

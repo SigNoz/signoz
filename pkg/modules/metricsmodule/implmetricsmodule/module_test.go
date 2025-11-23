@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -41,10 +42,10 @@ func TestPostProcessStatsResp_FiltersEnrichesAndOrders(t *testing.T) {
 			},
 			samplesCount: map[string]uint64{"m1": 5},
 			updatedMeta: map[string]*metricsmoduletypes.MetricMetadata{
-				"m1": {Description: "latency", MetricType: "histogram", MetricUnit: "ms"},
+				"m1": {Description: "latency", MetricType: metrictypes.HistogramType, MetricUnit: "ms"},
 			},
 			want: []metricsmoduletypes.MetricStat{
-				{MetricName: "m1", TimeSeries: 4, Samples: 5, Description: "latency", MetricType: "histogram", MetricUnit: "ms"},
+				{MetricName: "m1", TimeSeries: 4, Samples: 5, Description: "latency", MetricType: metrictypes.HistogramType, MetricUnit: "ms"},
 			},
 		},
 		{

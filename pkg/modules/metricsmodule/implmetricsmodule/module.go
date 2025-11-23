@@ -7,14 +7,12 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
-	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -24,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -36,11 +35,10 @@ type module struct {
 	fieldMapper            qbtypes.FieldMapper
 	condBuilder            qbtypes.ConditionBuilder
 	logger                 *slog.Logger
-	cache                  cache.Cache
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings, cache cache.Cache) metricsmodule.Module {
+func NewModule(ts telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings) metricsmodule.Module {
 	// TODO(nikhilmantri0902, srikanthccv): the three following dependencies are they rightly getting passed
 	// basically is this a good design. Alternatively, we can also take telemetrymetadatastore from newModules
 	// where all the modules are initialized, but there also this will be needed as today its not initialized there.
@@ -71,7 +69,6 @@ func NewModule(ts telemetrystore.TelemetryStore, providerSettings factory.Provid
 		condBuilder:            condBuilder,
 		logger:                 providerSettings.Logger,
 		telemetryMetadataStore: telemetryMetadataStore,
-		cache:                  cache,
 	}
 }
 
@@ -184,33 +181,9 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
 	}
 
-	cachedMetadata := make(map[string]*metricsmoduletypes.MetricMetadata)
-	var missingMetrics []string
+	metadata := make(map[string]*metricsmoduletypes.MetricMetadata)
 
-	// 1. Try cache
-	for _, metricName := range metricNames {
-		cachedMeta := new(model.UpdateMetricsMetadata)
-		cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metricName
-		err := m.cache.Get(ctx, orgID, cacheKey, cachedMeta)
-		if err == nil {
-			// Convert from model.UpdateMetricsMetadata to metricsmoduletypes.MetricMetadata
-			cachedMetadata[metricName] = &metricsmoduletypes.MetricMetadata{
-				Description: cachedMeta.Description,
-				MetricType:  string(cachedMeta.MetricType),
-				MetricUnit:  cachedMeta.Unit,
-				Temporality: string(cachedMeta.Temporality),
-			}
-		} else {
-			missingMetrics = append(missingMetrics, metricName)
-		}
-	}
-
-	// 2. Query database for missing metrics
-	if len(missingMetrics) == 0 {
-		return cachedMetadata, nil
-	}
-
-	placeholders := strings.TrimRight(strings.Repeat("?,", len(missingMetrics)), ",")
+	placeholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
 	query := fmt.Sprintf(`
 			SELECT metric_name, description, type, unit, temporality 
 				FROM %s.%s 
@@ -219,54 +192,211 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 		distributedUpdatedMetadataTableName,
 		placeholders)
 
-	args := make([]any, len(missingMetrics))
-	for i := range missingMetrics {
-		args[i] = missingMetrics[i]
+	args := make([]any, len(metricNames))
+	for i := range metricNames {
+		args[i] = metricNames[i]
 	}
 
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(ctx, query, args...)
 	if err != nil {
-		return cachedMetadata, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
+		return metadata, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var (
-			metricName     string
-			metricMetadata metricsmoduletypes.MetricMetadata
+			metricName  string
+			description string
+			metricType  metrictypes.Type
+			unit        string
+			temporality metrictypes.Temporality
 		)
 
-		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality); err != nil {
-			return cachedMetadata, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
+		if err := rows.Scan(&metricName, &description, &metricType, &unit, &temporality); err != nil {
+			return metadata, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
 		}
 
-		// Store in cache
-		cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metricName
-		cachedMeta := &model.UpdateMetricsMetadata{
-			MetricName:  metricName,
-			Description: metricMetadata.Description,
-			MetricType:  v3.MetricType(metricMetadata.MetricType),
-			Unit:        metricMetadata.MetricUnit,
-			Temporality: v3.Temporality(metricMetadata.Temporality),
-		}
-		if cacheErr := m.cache.Set(ctx, orgID, cacheKey, cachedMeta, 0); cacheErr != nil {
-			m.logger.Warn("Failed to store metrics metadata in cache", "metric_name", metricName, "error", cacheErr)
-		}
-
-		cachedMetadata[metricName] = &metricsmoduletypes.MetricMetadata{
-			Description: metricMetadata.Description,
-			MetricType:  metricMetadata.MetricType,
-			MetricUnit:  metricMetadata.MetricUnit,
-			Temporality: metricMetadata.Temporality,
+		metadata[metricName] = &metricsmoduletypes.MetricMetadata{
+			Description: description,
+			MetricType:  metricType,
+			MetricUnit:  unit,
+			Temporality: temporality,
 		}
 	}
 
 	if err := rows.Err(); err != nil {
-		return cachedMetadata, errors.WrapInternalf(err, errors.CodeInternal, "error iterating updated metrics metadata rows")
+		return metadata, errors.WrapInternalf(err, errors.CodeInternal, "error iterating updated metrics metadata rows")
 	}
 
-	return cachedMetadata, nil
+	return metadata, nil
+}
+
+func (m *module) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
+	if req == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric name is required")
+	}
+
+	// Validate and normalize metric type and temporality
+	if err := m.validateAndNormalizeMetricType(req); err != nil {
+		return err
+	}
+
+	// Validate labels for histogram and summary types
+	if err := m.validateMetricLabels(ctx, req); err != nil {
+		return err
+	}
+
+	// Delete existing metadata
+	if err := m.deleteMetricsMetadata(ctx, req.MetricName); err != nil {
+		return err
+	}
+
+	// Insert new metadata
+	if err := m.insertMetricsMetadata(ctx, req); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *module) validateAndNormalizeMetricType(req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
+	switch req.MetricType {
+	case metrictypes.SumType:
+		if req.Temporality.IsZero() {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "temporality is required when metric type is Sum")
+		}
+		if req.Temporality != metrictypes.Delta && req.Temporality != metrictypes.Cumulative {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid value for temporality")
+		}
+		// Special case: if Sum is not monotonic and cumulative, convert to Gauge
+		if !req.IsMonotonic && req.Temporality == metrictypes.Cumulative {
+			req.MetricType = metrictypes.GaugeType
+			req.Temporality = metrictypes.Unspecified
+		}
+
+	case metrictypes.HistogramType:
+		if req.Temporality.IsZero() {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "temporality is required when metric type is Histogram")
+		}
+		if req.Temporality != metrictypes.Delta && req.Temporality != metrictypes.Cumulative {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid value for temporality")
+		}
+
+	case metrictypes.ExpHistogramType:
+		if req.Temporality.IsZero() {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "temporality is required when metric type is exponential histogram")
+		}
+		if req.Temporality != metrictypes.Delta && req.Temporality != metrictypes.Cumulative {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid value for temporality")
+		}
+
+	case metrictypes.GaugeType:
+		// Gauge always has unspecified temporality
+		req.Temporality = metrictypes.Unspecified
+
+	case metrictypes.SummaryType:
+		// Summary always has cumulative temporality
+		req.Temporality = metrictypes.Cumulative
+
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid metric type")
+	}
+
+	return nil
+}
+
+func (m *module) validateMetricLabels(ctx context.Context, req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
+	if req.MetricType == metrictypes.HistogramType {
+		labels := []string{"le"}
+		hasLabels, err := m.checkForLabelsInMetric(ctx, req.MetricName, labels)
+		if err != nil {
+			return err
+		}
+		if !hasLabels {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as histogram type", req.MetricName)
+		}
+	}
+
+	if req.MetricType == metrictypes.SummaryType {
+		labels := []string{"quantile"}
+		hasLabels, err := m.checkForLabelsInMetric(ctx, req.MetricName, labels)
+		if err != nil {
+			return err
+		}
+		if !hasLabels {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as summary type", req.MetricName)
+		}
+	}
+
+	return nil
+}
+
+func (m *module) checkForLabelsInMetric(ctx context.Context, metricName string, labels []string) (bool, error) {
+	if len(labels) == 0 {
+		return true, nil
+	}
+
+	conditions := "metric_name = ?"
+	for range labels {
+		conditions += " AND JSONHas(labels, ?) = 1"
+	}
+
+	query := fmt.Sprintf(`
+        SELECT count(*) > 0 as has_labels
+        FROM %s.%s
+        WHERE %s
+        LIMIT 1`, metricDatabaseName, timeseriesV41dayTableName, conditions)
+
+	args := make([]interface{}, 0, len(labels)+1)
+	args = append(args, metricName)
+	for _, label := range labels {
+		args = append(args, label)
+	}
+
+	var hasLabels bool
+	db := m.telemetryStore.ClickhouseDB()
+	err := db.QueryRow(ctx, query, args...).Scan(&hasLabels)
+	if err != nil {
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "error checking metric labels")
+	}
+
+	return hasLabels, nil
+}
+
+func (m *module) deleteMetricsMetadata(ctx context.Context, metricName string) error {
+	delQuery := fmt.Sprintf(`ALTER TABLE %s.%s DELETE WHERE metric_name = ?;`, metricDatabaseName, updatedMetadataLocalTableName)
+	db := m.telemetryStore.ClickhouseDB()
+	err := db.Exec(ctx, delQuery, metricName)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to delete metrics metadata")
+	}
+	return nil
+}
+
+func (m *module) insertMetricsMetadata(ctx context.Context, req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
+	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, temporality, is_monotonic, type, description, unit, created_at)
+VALUES (?, ?, ?, ?, ?, ?, ?);`, metricDatabaseName, distributedUpdatedMetadataTableName)
+
+	createdAt := time.Now().UnixMilli()
+	db := m.telemetryStore.ClickhouseDB()
+	err := db.Exec(ctx, insertQuery,
+		req.MetricName,
+		req.Temporality.StringValue(),
+		req.IsMonotonic,
+		req.MetricType.StringValue(),
+		req.Description,
+		req.Unit,
+		createdAt,
+	)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to insert metrics metadata")
+	}
+	return nil
 }
 
 func (m *module) buildFilterClause(ctx context.Context, expression string, startMillis, endMillis int64) (string, []any, error) {
@@ -513,7 +643,7 @@ func (m *module) postProcessStatsResp(resp *metricsmoduletypes.StatsResponse, up
 	for i := range resp.Metrics {
 		stat := resp.Metrics[i]
 		if updated, ok := updatedMeta[stat.MetricName]; ok {
-			if updated.MetricType != "" {
+			if !updated.MetricType.IsZero() {
 				stat.MetricType = updated.MetricType
 			}
 			if updated.MetricUnit != "" {
