@@ -1,4 +1,5 @@
 import { orange } from '@ant-design/colors';
+import { SettingOutlined } from '@ant-design/icons';
 import { Dropdown, MenuProps } from 'antd';
 import {
 	negateOperator,
@@ -10,11 +11,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useCallback } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
-import {
-	StyledCopyOutlined,
-	StyledSettingOutlined,
-	TitleWrapper,
-} from './BodyTitleRenderer.styles';
+import { TitleWrapper } from './BodyTitleRenderer.styles';
 import { DROPDOWN_KEY } from './constant';
 import { BodyTitleRendererProps } from './LogDetailedView.types';
 import {
@@ -83,26 +80,34 @@ function BodyTitleRenderer({
 		onClick: onClickHandler,
 	};
 
-	const handleCopyClick = useCallback(
+	const handleNodeClick = useCallback(
 		(e: React.MouseEvent): void => {
 			// Prevent tree node expansion/collapse
 			e.stopPropagation();
-
-			// Format copy text as JSON key-value pair
-			// For objects/arrays without single value, copy just the key
 			const cleanedKey = removeObjectFromString(nodeKey);
 			let copyText: string;
-			if (parentIsArray) {
-				copyText = `${value}`; // For array elements, copy just the value
+
+			// Check if value is an object or array
+			const isObject = typeof value === 'object' && value !== null;
+
+			if (isObject) {
+				// For objects/arrays, stringify the entire structure
+				copyText = `"${cleanedKey}": ${JSON.stringify(value, null, 2)}`;
+			} else if (parentIsArray) {
+				// For array elements, copy just the value
+				copyText = `"${cleanedKey}": ${value}`;
 			} else {
+				// For primitive values, format as JSON key-value pair
 				const valueStr = typeof value === 'string' ? `"${value}"` : String(value);
-				copyText = `"${cleanedKey}": ${valueStr}`; // For objects, format as JSON
+				copyText = `"${cleanedKey}": ${valueStr}`;
 			}
 
 			setCopy(copyText);
 
 			if (copyText) {
-				const notificationMessage = `${cleanedKey} copied to clipboard`;
+				const notificationMessage = isObject
+					? `${cleanedKey} object copied to clipboard`
+					: `${cleanedKey} copied to clipboard`;
 
 				notifications.success({
 					message: notificationMessage,
@@ -113,22 +118,15 @@ function BodyTitleRenderer({
 		[nodeKey, parentIsArray, setCopy, value, notifications],
 	);
 
-	const handleTextSelection = (e: React.MouseEvent): void => {
-		// Prevent tree node click when user is trying to select text
-		e.stopPropagation();
-	};
-
 	return (
-		<TitleWrapper onMouseDown={handleTextSelection}>
-			<Dropdown menu={menu} trigger={['click']}>
-				<StyledSettingOutlined
-					style={{ marginRight: 8 }}
-					className="hover-reveal"
-				/>
-			</Dropdown>
-			<StyledCopyOutlined onClick={handleCopyClick} className="hover-reveal " />
+		<TitleWrapper onClick={handleNodeClick}>
+			{typeof value !== 'object' && (
+				<Dropdown menu={menu} trigger={['click']}>
+					<SettingOutlined style={{ marginRight: 8 }} className="hover-reveal" />
+				</Dropdown>
+			)}
 			{title.toString()}{' '}
-			{!parentIsArray && (
+			{!parentIsArray && typeof value !== 'object' && (
 				<span>
 					: <span style={{ color: orange[6] }}>{`${value}`}</span>
 				</span>
