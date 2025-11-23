@@ -1,16 +1,7 @@
 package implmetricsmodule
 
 import (
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
-)
-
-// db and table name constants
-const (
-	metricDatabaseName                  = telemetrymetrics.DBName
-	distributedUpdatedMetadataTableName = telemetrymetrics.UpdatedMetadataTableName
-	updatedMetadataLocalTableName       = telemetrymetrics.UpdatedMetadataLocalTableName
-	timeseriesV41dayTableName           = telemetrymetrics.TimeseriesV41dayTableName
 )
 
 // default filter condition, this will be returned when no error and no where clause to process

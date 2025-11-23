@@ -156,8 +156,8 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 			SELECT metric_name, description, type, unit, temporality 
 				FROM %s.%s 
 				WHERE metric_name IN (%s)`,
-		metricDatabaseName,
-		distributedUpdatedMetadataTableName,
+		telemetrymetrics.DBName,
+		telemetrymetrics.UpdatedMetadataTableName,
 		placeholders)
 
 	args := make([]any, len(metricNames))
@@ -318,7 +318,7 @@ func (m *module) checkForLabelsInMetric(ctx context.Context, metricName string, 
         SELECT count(*) > 0 as has_labels
         FROM %s.%s
         WHERE %s
-        LIMIT 1`, metricDatabaseName, timeseriesV41dayTableName, conditions)
+        LIMIT 1`, telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41dayTableName, conditions)
 
 	args := make([]interface{}, 0, len(labels)+1)
 	args = append(args, metricName)
@@ -337,7 +337,7 @@ func (m *module) checkForLabelsInMetric(ctx context.Context, metricName string, 
 }
 
 func (m *module) deleteMetricsMetadata(ctx context.Context, metricName string) error {
-	delQuery := fmt.Sprintf(`ALTER TABLE %s.%s DELETE WHERE metric_name = ?;`, metricDatabaseName, updatedMetadataLocalTableName)
+	delQuery := fmt.Sprintf(`ALTER TABLE %s.%s DELETE WHERE metric_name = ?;`, telemetrymetrics.DBName, telemetrymetrics.UpdatedMetadataLocalTableName)
 	db := m.telemetryStore.ClickhouseDB()
 	err := db.Exec(ctx, delQuery, metricName)
 	if err != nil {
@@ -351,8 +351,8 @@ func (m *module) insertMetricsMetadata(ctx context.Context, req *metricsmodulety
 				INSERT INTO %s.%s 
 				(metric_name, temporality, is_monotonic, type, description, unit, created_at)
 				VALUES (?, ?, ?, ?, ?, ?, ?);`,
-		metricDatabaseName,
-		distributedUpdatedMetadataTableName)
+		telemetrymetrics.DBName,
+		telemetrymetrics.UpdatedMetadataTableName)
 
 	createdAt := time.Now().UnixMilli()
 	db := m.telemetryStore.ClickhouseDB()
@@ -450,7 +450,7 @@ func (m *module) fetchTimeseriesCounts(
 		GROUP BY t.metric_name
 		ORDER BY %s %s, metric_name ASC
 		LIMIT ? OFFSET ?`,
-		metricDatabaseName, tsTable,
+		telemetrymetrics.DBName, tsTable,
 		filterSQL,
 		orderSQLColumn, orderDirection,
 	)
@@ -534,9 +534,9 @@ func (m *module) fetchSampleCounts(
 				GROUP BY dm.metric_name
 			) AS s`,
 			countExp,
-			metricDatabaseName, samplesTable,
+			telemetrymetrics.DBName, samplesTable,
 			metricPlaceholders,
-			metricDatabaseName, localTsTable,
+			telemetrymetrics.DBName, localTsTable,
 			metricPlaceholders,
 			filterSQL,
 		))
@@ -565,7 +565,7 @@ func (m *module) fetchSampleCounts(
 				GROUP BY metric_name
 			) AS s`,
 			countExp,
-			metricDatabaseName, samplesTable,
+			telemetrymetrics.DBName, samplesTable,
 			metricPlaceholders,
 		))
 		for _, name := range metricNames {
@@ -681,9 +681,9 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 		)
 		ORDER BY percentage DESC
 		LIMIT ?;`,
-		metricDatabaseName,
+		telemetrymetrics.DBName,
 		tsTable,
-		metricDatabaseName,
+		telemetrymetrics.DBName,
 		tsTable,
 		filterClause,
 	)
@@ -743,7 +743,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 		GROUP BY ts.metric_name
 		ORDER BY timeSeries DESC
 		LIMIT %d;`,
-		metricDatabaseName, tsTable, filterClause, queryLimit)
+		telemetrymetrics.DBName, tsTable, filterClause, queryLimit)
 
 	args := make([]any, 0, 3+len(filterArgs))
 	args = append(args, false, start, end)
@@ -796,8 +796,8 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 			FROM %s.%s AS dm
 			WHERE dm.unix_milli BETWEEN ? AND ?
 			AND dm.metric_name IN (%s) `,
-		countExp, metricDatabaseName, samplesTable,
-		countExp, metricDatabaseName, samplesTable, metricPlaceholders,
+		countExp, telemetrymetrics.DBName, samplesTable,
+		countExp, telemetrymetrics.DBName, samplesTable, metricPlaceholders,
 	))
 
 	sampleArgs = append(sampleArgs, req.Start, req.End)
@@ -819,7 +819,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 				AND (%s)
 				GROUP BY ts.fingerprint
 			)`,
-			metricDatabaseName, localTsTable, metricPlaceholdersSub, filterSQL,
+			telemetrymetrics.DBName, localTsTable, metricPlaceholdersSub, filterSQL,
 		))
 
 		for _, name := range metricNames {
