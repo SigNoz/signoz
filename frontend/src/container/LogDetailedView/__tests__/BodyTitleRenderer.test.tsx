@@ -73,13 +73,14 @@ describe('BodyTitleRenderer', () => {
 
 		const copyIcon = container.querySelector(COPY_ICON_SELECTOR) as HTMLElement;
 
-		if (copyIcon) {
-			await user.click(copyIcon);
+		expect(copyIcon).toBeInTheDocument();
+		expect(copyIcon).not.toBeNull();
 
-			await waitFor(() => {
-				expect(mockSetCopy).toHaveBeenCalledWith('"user.name": "John"');
-			});
-		}
+		await user.click(copyIcon);
+
+		await waitFor(() => {
+			expect(mockSetCopy).toHaveBeenCalledWith('"user.name": "John"');
+		});
 	});
 
 	it('should copy only value for array elements', async () => {
@@ -96,13 +97,14 @@ describe('BodyTitleRenderer', () => {
 
 		const copyIcon = container.querySelector(COPY_ICON_SELECTOR) as HTMLElement;
 
-		if (copyIcon) {
-			await user.click(copyIcon);
+		expect(copyIcon).toBeInTheDocument();
+		expect(copyIcon).not.toBeNull();
 
-			await waitFor(() => {
-				expect(mockSetCopy).toHaveBeenCalledWith('arrayElement');
-			});
-		}
+		await user.click(copyIcon);
+
+		await waitFor(() => {
+			expect(mockSetCopy).toHaveBeenCalledWith('arrayElement');
+		});
 	});
 
 	it('should show notification with immediate key name after copy', async () => {
@@ -119,16 +121,17 @@ describe('BodyTitleRenderer', () => {
 
 		const copyIcon = container.querySelector(COPY_ICON_SELECTOR) as HTMLElement;
 
-		if (copyIcon) {
-			await user.click(copyIcon);
+		expect(copyIcon).toBeInTheDocument();
+		expect(copyIcon).not.toBeNull();
 
-			await waitFor(() => {
-				expect(mockNotification).toHaveBeenCalledWith(
-					expect.objectContaining({
-						message: expect.stringContaining('service_meta.name'),
-					}),
-				);
-			});
-		}
+		await user.click(copyIcon);
+
+		await waitFor(() => {
+			expect(mockNotification).toHaveBeenCalledWith(
+				expect.objectContaining({
+					message: expect.stringContaining('service_meta.name'),
+				}),
+			);
+		});
 	});
 });
