@@ -13,7 +13,7 @@ const logEvent = async (
 	rateLimited?: boolean,
 ): Promise<SuccessResponse<EventSuccessPayloadProps> | ErrorResponse> => {
 	try {
-		// add tenant_url to attributes
+		// add deployment_url and user_email to attributes
 		const { hostname } = window.location;
 		const userEmail = getLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL);
 		const updatedAttributes = {
