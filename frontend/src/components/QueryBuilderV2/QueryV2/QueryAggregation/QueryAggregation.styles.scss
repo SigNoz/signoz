@@ -20,6 +20,8 @@
 				border-radius: 2px;
 				flex: 1;
 				min-width: 0;
+				font-size: 12px;
+				color: var(--bg-vanilla-400) !important;
 
 				&.error {
 					.cm-editor {
@@ -231,6 +233,9 @@
 				.query-aggregation-interval-input {
 					input {
 						max-width: 120px;
+						&::placeholder {
+							color: var(--bg-vanilla-400);
+						}
 					}
 				}
 			}

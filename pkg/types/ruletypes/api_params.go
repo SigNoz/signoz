@@ -180,7 +180,9 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (r *PostableRule) processRuleDefaults() error {
+// processRuleDefaults applies the default values
+// for the rule options that are blank or unset.
+func (r *PostableRule) processRuleDefaults() {
 
 	if r.SchemaVersion == "" {
 		r.SchemaVersion = DefaultSchemaVersion
@@ -195,11 +197,12 @@ func (r *PostableRule) processRuleDefaults() error {
 	}
 
 	if r.RuleCondition != nil {
-		if r.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		switch r.RuleCondition.CompositeQuery.QueryType {
+		case v3.QueryTypeBuilder:
 			if r.RuleType == "" {
 				r.RuleType = RuleTypeThreshold
 			}
-		} else if r.RuleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		case v3.QueryTypePromQL:
 			r.RuleType = RuleTypeProm
 		}
 
@@ -250,8 +253,6 @@ func (r *PostableRule) processRuleDefaults() error {
 			}
 		}
 	}
-
-	return r.Validate()
 }
 
 func (r *PostableRule) MarshalJSON() ([]byte, error) {
@@ -281,7 +282,8 @@ func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	if err := json.Unmarshal(bytes, aux); err != nil {
 		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "failed to parse json: %v", err)
 	}
-	return r.processRuleDefaults()
+	r.processRuleDefaults()
+	return r.validate()
 }
 
 func isValidLabelName(ln string) bool {
@@ -339,17 +341,16 @@ func isAllQueriesDisabled(compositeQuery *v3.CompositeQuery) bool {
 	return true
 }
 
-func (r *PostableRule) Validate() error {
+func (r *PostableRule) validate() error {
 
 	var errs []error
 
 	if r.RuleCondition == nil {
 		// will get panic if we try to access CompositeQuery, so return here
 		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "rule condition is required")
-	} else {
-		if r.RuleCondition.CompositeQuery == nil {
-			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite metric query is required"))
-		}
+	}
+	if r.RuleCondition.CompositeQuery == nil {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite query is required"))
 	}
 
 	if isAllQueriesDisabled(r.RuleCondition.CompositeQuery) {

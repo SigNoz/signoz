@@ -137,7 +137,7 @@
 		font-size: 13px;
 
 		&::placeholder {
-			color: #888;
+			color: var(--bg-vanilla-400);
 		}
 
 		&:focus,
