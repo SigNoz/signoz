@@ -1239,7 +1239,7 @@
 		"dataSource": "opentelemetry-cloudflare",
 		"label": "Cloudflare",
 		"imgUrl": "/Logos/cloudflare.svg",
-		"tags": ["apm/traces", "logs"],
+		"tags": ["apm/traces"],
 		"module": "apm",
 		"relatedSearchKeywords": [
 			"apm",
@@ -1259,6 +1259,30 @@
 		],
 		"id": "opentelemetry-cloudflare",
 		"link": "https://signoz.io/docs/instrumentation/opentelemetry-cloudflare/"
+	},
+	{
+		"dataSource": "opentelemetry-cloudflare-logs",
+		"label": "Cloudflare",
+		"imgUrl": "/Logos/cloudflare.svg",
+		"tags": ["logs"],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"logs",
+			"cloudflare",
+			"cloudflare workers",
+			"cloudflare monitoring",
+			"cloudflare logging",
+			"cloudflare observability",
+			"opentelemetry cloudflare",
+			"otel cloudflare",
+			"cloudflare instrumentation",
+			"monitor cloudflare workers",
+			"cloudflare logs",
+			"edge computing monitoring",
+			"cloudflare to signoz"
+		],
+		"id": "opentelemetry-cloudflare-logs",
+		"link": "https://signoz.io/docs/logs-management/send-logs/cloudflare-logs/"
 	},
 	{
 		"dataSource": "kubernetes-pod-logs",
