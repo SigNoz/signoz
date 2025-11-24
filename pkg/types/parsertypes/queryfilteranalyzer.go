@@ -1,4 +1,4 @@
-package types
+package parsertypes
 
 import (
 	"encoding/json"
