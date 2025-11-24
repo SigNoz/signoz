@@ -9,12 +9,12 @@ import { Card, CardContainer } from 'container/GridCardLayout/styles';
 import { WidgetRowHeader } from 'container/GridCardLayout/WidgetRow';
 import { TIME_RANGE_PRESETS_OPTIONS } from 'container/NewDashboard/DashboardSettings/PublicDashboard';
 import dayjs from 'dayjs';
-import { useGetPublicDashboardData } from 'hooks/dashboard/useGetPublicDashboardData';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { GripVertical } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import RGL, { Layout, WidthProvider } from 'react-grid-layout';
-import { useParams } from 'react-router-dom';
+import { SuccessResponseV2 } from 'types/api';
+import { PublicDashboardDataProps } from 'types/api/dashboard/public/get';
 
 import Panel from './Panel';
 
@@ -65,15 +65,14 @@ const getStartTimeAndEndTimeFromTimeRange = (
 	};
 };
 
-function PublicDashboardContainer(): JSX.Element {
-	// read the dashboard id from the url
-	const { dashboardId } = useParams<{ dashboardId: string }>();
+function PublicDashboardContainer({
+	publicDashboardId,
+	publicDashboardData,
+}: {
+	publicDashboardId: string;
+	publicDashboardData: SuccessResponseV2<PublicDashboardDataProps>;
+}): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-
-	const { data: publicDashboardData } = useGetPublicDashboardData(
-		dashboardId || '',
-	);
-
 	const { dashboard, publicDashboard } = publicDashboardData?.data || {};
 	const { widgets } = dashboard?.data || {};
 
@@ -220,7 +219,7 @@ function PublicDashboardContainer(): JSX.Element {
 									$panelType={widget?.panelTypes || PANEL_TYPES.TIME_SERIES}
 								>
 									<Panel
-										dashboardId={dashboardId}
+										dashboardId={publicDashboardId}
 										widget={widget}
 										index={index}
 										startTime={selectedTimeRange.startTime}

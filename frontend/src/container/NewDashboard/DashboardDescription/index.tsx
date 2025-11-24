@@ -321,7 +321,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				const errorDetails = errorPublicDashboardData?.getErrorDetails();
 
 				if (errorDetails?.error?.code === 'public_dashboard_not_found') {
-					console.log('NOT PUBLIC');
 					setIsPublicDashboard(false);
 				}
 			} else {
