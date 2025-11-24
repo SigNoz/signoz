@@ -140,6 +140,7 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *
 				updatedQueryMap["legend"] = queryData["legend"]
 				updatedQueryMap["queryName"] = queryData["queryName"]
 				updatedQueryMap["expression"] = queryData["expression"]
+				updatedQueryMap["groupBy"] = queryData["groupBy"]
 				updatedQueryData = append(updatedQueryData, updatedQueryMap)
 			}
 			widget.Query.Builder.QueryData = updatedQueryData
@@ -161,6 +162,7 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *
 				updatedQueryTraceOperatorMap["legend"] = queryTraceOperator["legend"]
 				updatedQueryTraceOperatorMap["queryName"] = queryTraceOperator["queryName"]
 				updatedQueryTraceOperatorMap["expression"] = queryTraceOperator["expression"]
+				updatedQueryTraceOperatorMap["groupBy"] = queryTraceOperator["groupBy"]
 				updatedQueryTraceOperator = append(updatedQueryTraceOperator, updatedQueryTraceOperatorMap)
 			}
 			widget.Query.Builder.QueryTraceOperator = updatedQueryTraceOperator
