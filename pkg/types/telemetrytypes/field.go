@@ -17,6 +17,10 @@ var (
 	FieldSelectorMatchTypeFuzzy = FieldSelectorMatchType{valuer.NewString("fuzzy")}
 )
 
+// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries
+// e.g., "body.status" where "body." is the prefix
+const BodyJSONStringSearchPrefix = `body.`
+
 type TelemetryFieldKey struct {
 	Name          string        `json:"name"`
 	Description   string        `json:"description,omitempty"`

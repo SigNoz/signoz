@@ -7,8 +7,8 @@ import (
 	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 )
 
@@ -93,7 +93,7 @@ func (i *PromotePathItem) Validate() error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "`%s`, `%s` don't add these prefixes to the path", constants.BodyJSONColumnPrefix, constants.BodyPromotedColumnPrefix)
 	}
 
-	if !strings.HasPrefix(i.Path, telemetrylogs.BodyJSONStringSearchPrefix) {
+	if !strings.HasPrefix(i.Path, telemetrytypes.BodyJSONStringSearchPrefix) {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must start with `body.`")
 	}
 

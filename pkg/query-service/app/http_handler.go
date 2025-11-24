@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
@@ -2026,7 +2027,7 @@ func (aH *APIHandler) promotePaths(w http.ResponseWriter, r *http.Request) {
 			response := []model.PromotePathItem{}
 			for _, path := range promotedPaths {
 				fullPath := telemetrylogs.BodyPromotedColumnPrefix + path
-				path = telemetrylogs.BodyJSONStringSearchPrefix + path
+				path = telemetrytypes.BodyJSONStringSearchPrefix + path
 				item := model.PromotePathItem{
 					Path:    path,
 					Promote: true,
@@ -2047,7 +2048,7 @@ func (aH *APIHandler) promotePaths(w http.ResponseWriter, r *http.Request) {
 					return err
 				}
 				path := strings.TrimPrefix(expr, telemetrylogs.BodyJSONColumnPrefix)
-				path = telemetrylogs.BodyJSONStringSearchPrefix + path
+				path = telemetrytypes.BodyJSONStringSearchPrefix + path
 				response = append(response, model.PromotePathItem{
 					Path:    path,
 					Indexes: indexes,

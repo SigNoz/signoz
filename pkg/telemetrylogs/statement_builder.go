@@ -24,7 +24,6 @@ type logQueryStatementBuilder struct {
 	aggExprRewriter           qbtypes.AggExprRewriter
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
-	jsonBodyPrefix string
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 }
 
@@ -38,7 +37,6 @@ func NewLogQueryStatementBuilder(
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
-	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
@@ -51,7 +49,6 @@ func NewLogQueryStatementBuilder(
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
 		fullTextColumn:            fullTextColumn,
-		jsonBodyPrefix:            jsonBodyPrefix,
 		jsonKeyToKey:              jsonKeyToKey,
 	}
 }
@@ -352,19 +349,20 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		var err error
 
 		// For body JSON fields with feature flag enabled, use array join logic
-		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && constants.BodyJSONQueryEnabled {
+		if gb.TelemetryFieldKey.FieldContext == telemetrytypes.FieldContextBody && constants.BodyJSONQueryEnabled {
 			// Build array join info for this field
-			groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
-			if err != nil {
-				return nil, err
-			}
+			// groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
+			// if err != nil {
+			// 	return nil, err
+			// }
 
-			// Collect array join clauses
-			arrayJoinClauses = append(arrayJoinClauses, groupbyInfo.ArrayJoinClauses...)
-			expr = groupbyInfo.TerminalExpr
+			// // Collect array join clauses
+			// arrayJoinClauses = append(arrayJoinClauses, groupbyInfo.ArrayJoinClauses...)
+			// expr = groupbyInfo.TerminalExpr
+			fmt.Println("body json group by is not supported yet")
 		} else {
 			// Use the standard collision handling for other fields
-			expr, args, err = querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
+			expr, args, err = querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
 			if err != nil {
 				return nil, err
 			}
@@ -524,19 +522,20 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		var err error
 
 		// For body JSON fields with feature flag enabled, use array join logic
-		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && constants.BodyJSONQueryEnabled {
+		if gb.TelemetryFieldKey.FieldContext == telemetrytypes.FieldContextBody && constants.BodyJSONQueryEnabled {
 			// Build array join info for this field
-			groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
-			if err != nil {
-				return nil, err
-			}
+			// groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
+			// if err != nil {
+			// 	return nil, err
+			// }
 
-			// Collect array join clauses
-			arrayJoinClauses = append(arrayJoinClauses, groupbyInfo.ArrayJoinClauses...)
-			expr = groupbyInfo.TerminalExpr
+			// // Collect array join clauses
+			// arrayJoinClauses = append(arrayJoinClauses, groupbyInfo.ArrayJoinClauses...)
+			// expr = groupbyInfo.TerminalExpr
+			fmt.Println("body json group by is not supported yet")
 		} else {
 			// Use the standard collision handling for other fields
-			expr, args, err = querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
+			expr, args, err = querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
 			if err != nil {
 				return nil, err
 			}
@@ -652,7 +651,6 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
 			FullTextColumn:     b.fullTextColumn,
-			JsonBodyPrefix:     b.jsonBodyPrefix,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
 		}, start, end)

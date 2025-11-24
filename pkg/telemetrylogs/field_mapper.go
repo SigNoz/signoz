@@ -89,11 +89,19 @@ func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.Telemet
 		case telemetrytypes.FieldDataTypeBool:
 			return logsV2Columns["attributes_bool"], nil
 		}
+	case telemetrytypes.FieldContextBody:
+		// Body context is for JSON body fields
+		// Use body_json if feature flag is enabled
+		if constants.BodyJSONQueryEnabled {
+			return logsV2Columns[LogsV2BodyJSONColumn], nil
+		}
+		// Fall back to legacy body column
+		return logsV2Columns["body"], nil
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
 		col, ok := logsV2Columns[key.Name]
 		if !ok {
 			// check if the key has body JSON search
-			if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
 				// Use body_json if feature flag is enabled and we have a body condition builder
 				if constants.BodyJSONQueryEnabled {
 					return logsV2Columns[LogsV2BodyJSONColumn], nil

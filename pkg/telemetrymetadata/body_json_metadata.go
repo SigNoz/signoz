@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	defaultPathLimit = 10000 // Default limit to prevent full table scans
+	defaultPathLimit = 1000 // Default limit to prevent full table scans
 
 	CodeUnknownJSONDataType     = errors.MustNewCode("unknown_json_data_type")
 	CodeFailLoadPromotedPaths   = errors.MustNewCode("fail_load_promoted_paths")
@@ -30,6 +30,7 @@ var (
 	CodeFailListJSONValues      = errors.MustNewCode("fail_list_json_values")
 	CodeFailScanJSONValue       = errors.MustNewCode("fail_scan_json_value")
 	CodeFailScanVariant         = errors.MustNewCode("fail_scan_variant")
+	CodeFailBuildJSONPathsQuery = errors.MustNewCode("fail_build_json_paths_query")
 )
 
 // GetBodyJSONPaths extracts body JSON paths from the path_types table
@@ -44,7 +45,11 @@ var (
 func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.TelemetryStore,
 	fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 
-	query, limit, args := buildGetBodyJSONPathsQuery(fieldKeySelectors)
+	query, args, limit, err := buildGetBodyJSONPathsQuery(fieldKeySelectors)
+	if err != nil {
+		return nil, false, err
+	}
+
 	rows, err := telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to extract body JSON keys")
@@ -76,7 +81,7 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 			paths = append(paths, &telemetrytypes.TelemetryFieldKey{
 				Name:          path,
 				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldContext:  telemetrytypes.FieldContextBody,
 				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[mapping],
 				JSONDataType:  &mapping,
 				Materialized:  promoted,
@@ -93,7 +98,10 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 	return paths, rowCount <= limit, nil
 }
 
-func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySelector) (string, int, []any) {
+func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySelector) (string, []any, int, error) {
+	if len(fieldKeySelectors) == 0 {
+		return "", nil, defaultPathLimit, errors.NewInternalf(CodeFailBuildJSONPathsQuery, "no field key selectors provided")
+	}
 	from := fmt.Sprintf("%s.%s", DBName, PathTypesTableName)
 
 	// Build a better query using GROUP BY to deduplicate at database level
@@ -127,10 +135,13 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 
 	// Order by max last_seen to get most recent paths first
 	sb.OrderBy("last_seen DESC")
+	if limit == 0 {
+		limit = defaultPathLimit
+	}
 	sb.Limit(limit)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return query, limit, args
+	return query, args, limit, nil
 }
 
 func listLogsIndexesClean(ctx context.Context, cluster string, conn clickhouse.Conn) ([]string, error) {
@@ -371,8 +382,9 @@ func IsPathPromoted(ctx context.Context, conn clickhouse.Conn, path string) (boo
 	return rows.Next(), nil
 }
 
+// TODO(Piyush): Remove this function
 func CleanPathPrefixes(path string) string {
-	path = strings.TrimPrefix(path, telemetrylogs.BodyJSONStringSearchPrefix)
+	path = strings.TrimPrefix(path, telemetrytypes.BodyJSONStringSearchPrefix)
 	path = strings.TrimPrefix(path, telemetrylogs.BodyJSONColumnPrefix)
 	path = strings.TrimPrefix(path, telemetrylogs.BodyPromotedColumnPrefix)
 	return path

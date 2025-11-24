@@ -6,68 +6,30 @@ import (
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 	testCases := []struct {
-		name            string
-		searchTexts     []string
-		uniquePathLimit int
-		operator        qbtypes.FilterOperator
-		expectedSQL     []string // SQL should contain these strings
-		notExpectedSQL  []string // SQL should NOT contain these strings
-		expectedArgs    []any    // Args include search texts (if any) + limit value
-		expectedLimit   int
+		name              string
+		fieldKeySelectors []*telemetrytypes.FieldKeySelector
+		operator          qbtypes.FilterOperator
+		expectedSQL       []string // SQL should contain these strings
+		notExpectedSQL    []string // SQL should NOT contain these strings
+		expectedArgs      []any    // Args include search texts (if any) + limit value
+		expectedLimit     int
 	}{
+
 		{
-			name:            "No search texts, no limit - should use default limit",
-			searchTexts:     nil,
-			uniquePathLimit: 0,
-			operator:        qbtypes.FilterOperatorLike,
-			expectedSQL: []string{
-				"SELECT",
-				"path",
-				"groupArray(DISTINCT type) AS types",
-				"max(last_seen) AS last_seen",
-				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
-				"GROUP BY path",
-				"ORDER BY last_seen DESC",
-				"LIMIT ?",
+			name: "Single search text with EQUAL operator",
+			fieldKeySelectors: []*telemetrytypes.FieldKeySelector{
+				{
+					Name: "user.name",
+				},
 			},
-			notExpectedSQL: []string{
-				"WHERE",
-			},
-			expectedArgs:  []any{defaultPathLimit},
-			expectedLimit: defaultPathLimit,
-		},
-		{
-			name:            "No search texts, with custom limit",
-			searchTexts:     nil,
-			uniquePathLimit: 5000,
-			operator:        qbtypes.FilterOperatorLike,
-			expectedSQL: []string{
-				"SELECT",
-				"path",
-				"groupArray(DISTINCT type) AS types",
-				"max(last_seen) AS last_seen",
-				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
-				"GROUP BY path",
-				"ORDER BY last_seen DESC",
-				"LIMIT ?",
-			},
-			notExpectedSQL: []string{
-				"WHERE",
-			},
-			expectedArgs:  []any{5000},
-			expectedLimit: 5000,
-		},
-		{
-			name:            "Single search text with EQUAL operator",
-			searchTexts:     []string{"user.name"},
-			uniquePathLimit: 0,
-			operator:        qbtypes.FilterOperatorEqual,
+			operator: qbtypes.FilterOperatorEqual,
 			expectedSQL: []string{
 				"SELECT",
 				"path",
@@ -88,10 +50,13 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 			expectedLimit: defaultPathLimit,
 		},
 		{
-			name:            "Single search text with LIKE operator",
-			searchTexts:     []string{"user"},
-			uniquePathLimit: 100,
-			operator:        qbtypes.FilterOperatorLike,
+			name: "Single search text with LIKE operator",
+			fieldKeySelectors: []*telemetrytypes.FieldKeySelector{
+				{
+					Name: "user",
+				},
+			},
+			operator: qbtypes.FilterOperatorLike,
 			expectedSQL: []string{
 				"SELECT",
 				"path",
@@ -99,7 +64,7 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 				"max(last_seen) AS last_seen",
 				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
 				"WHERE",
-				"LOWER(path) LIKE LOWER(?)",
+				"path LIKE ?",
 				"GROUP BY path",
 				"ORDER BY last_seen DESC",
 				"LIMIT ?",
@@ -111,10 +76,16 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 			expectedLimit: 100,
 		},
 		{
-			name:            "Multiple search texts with EQUAL operator",
-			searchTexts:     []string{"user.name", "user.age"},
-			uniquePathLimit: 0,
-			operator:        qbtypes.FilterOperatorEqual,
+			name: "Multiple search texts with EQUAL operator",
+			fieldKeySelectors: []*telemetrytypes.FieldKeySelector{
+				{
+					Name: "user.name",
+				},
+				{
+					Name: "user.age",
+				},
+			},
+			operator: qbtypes.FilterOperatorEqual,
 			expectedSQL: []string{
 				"SELECT",
 				"path",
@@ -136,10 +107,16 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 			expectedLimit: defaultPathLimit,
 		},
 		{
-			name:            "Multiple search texts with LIKE operator",
-			searchTexts:     []string{"user", "admin"},
-			uniquePathLimit: 2000,
-			operator:        qbtypes.FilterOperatorLike,
+			name: "Multiple search texts with LIKE operator",
+			fieldKeySelectors: []*telemetrytypes.FieldKeySelector{
+				{
+					Name: "user",
+				},
+				{
+					Name: "admin",
+				},
+			},
+			operator: qbtypes.FilterOperatorLike,
 			expectedSQL: []string{
 				"SELECT",
 				"path",
@@ -148,7 +125,7 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
 				"WHERE",
 				"OR",
-				"LOWER(path) LIKE LOWER(?)",
+				"path LIKE ?",
 				"GROUP BY path",
 				"ORDER BY last_seen DESC",
 				"LIMIT ?",
@@ -160,52 +137,16 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 			expectedLimit: 2000,
 		},
 		{
-			name:            "Empty search texts array",
-			searchTexts:     []string{},
-			uniquePathLimit: 0,
-			operator:        qbtypes.FilterOperatorLike,
-			expectedSQL: []string{
-				"SELECT",
-				"path",
-				"groupArray(DISTINCT type) AS types",
-				"max(last_seen) AS last_seen",
-				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
-				"GROUP BY path",
-				"ORDER BY last_seen DESC",
-				"LIMIT ?",
+			name: "Search with Contains operator (should default to LIKE)",
+			fieldKeySelectors: []*telemetrytypes.FieldKeySelector{
+				{
+					Name: "test",
+				},
 			},
-			notExpectedSQL: []string{
-				"WHERE",
-			},
-			expectedArgs:  []any{defaultPathLimit},
-			expectedLimit: defaultPathLimit,
-		},
-		{
-			name:            "Large limit value",
-			searchTexts:     nil,
-			uniquePathLimit: 50000,
-			operator:        qbtypes.FilterOperatorLike,
-			expectedSQL: []string{
-				"SELECT",
-				"path",
-				"groupArray(DISTINCT type) AS types",
-				"max(last_seen) AS last_seen",
-				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
-				"GROUP BY path",
-				"ORDER BY last_seen DESC",
-				"LIMIT ?",
-			},
-			expectedArgs:  []any{50000},
-			expectedLimit: 50000,
-		},
-		{
-			name:            "Search with Contains operator (should default to LIKE)",
-			searchTexts:     []string{"test"},
-			uniquePathLimit: 0,
-			operator:        qbtypes.FilterOperatorContains,
+			operator: qbtypes.FilterOperatorContains,
 			expectedSQL: []string{
 				"WHERE",
-				"LOWER(path) LIKE LOWER(?)",
+				"path LIKE ?",
 			},
 			notExpectedSQL: []string{
 				"path = ?",
@@ -217,7 +158,34 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			query, args := buildGetBodyJSONPathsQuery(tc.searchTexts, tc.uniquePathLimit, tc.operator)
+			// Set up fieldKeySelectors based on test case
+			for i, fieldKeySelector := range tc.fieldKeySelectors {
+				fieldKeySelector.Signal = telemetrytypes.SignalLogs
+				// Set SelectorMatchType based on operator
+				if tc.operator == qbtypes.FilterOperatorEqual {
+					fieldKeySelector.SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
+					// For exact matches, limit is not accumulated, so defaultPathLimit will be used
+				} else {
+					fieldKeySelector.SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeFuzzy
+					// For LIKE/Contains operators, set limit based on expectedLimit
+					if tc.expectedLimit == defaultPathLimit {
+						// Set to 0 to trigger defaultPathLimit
+						fieldKeySelector.Limit = 0
+					} else if len(tc.fieldKeySelectors) > 1 {
+						// Divide limit among multiple selectors
+						fieldKeySelector.Limit = tc.expectedLimit / len(tc.fieldKeySelectors)
+						// First selector gets any remainder
+						if i == 0 {
+							fieldKeySelector.Limit += tc.expectedLimit % len(tc.fieldKeySelectors)
+						}
+					} else {
+						// Single selector with custom limit
+						fieldKeySelector.Limit = tc.expectedLimit
+					}
+				}
+			}
+			query, args, limit, err := buildGetBodyJSONPathsQuery(tc.fieldKeySelectors)
+			require.NoError(t, err, "Error building query: %v", err)
 
 			// Verify query is not empty
 			require.NotEmpty(t, query, "Query should not be empty")
@@ -234,6 +202,9 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 				assert.NotContains(t, queryUpper, strings.ToUpper(notExpected),
 					"Query should NOT contain: %s\nActual query: %s", notExpected, query)
 			}
+
+			// Verify limit matches expected
+			assert.Equal(t, tc.expectedLimit, limit, "Limit should match expected value")
 
 			// Verify arguments match (including limit as last arg)
 			assert.Equal(t, tc.expectedArgs, args, "Arguments should match. Expected: %v, Got: %v", tc.expectedArgs, args)

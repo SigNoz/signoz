@@ -3,10 +3,10 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -19,22 +19,38 @@ var (
 	CodeGroupByPlanEmpty         = errors.MustNewCode("group_by_plan_empty")
 	CodeArrayMapExpressionsEmpty = errors.MustNewCode("array_map_expressions_empty")
 	CodePromotedPlanMissing      = errors.MustNewCode("promoted_plan_missing")
-	CodeLRUCacheCreateFailed     = errors.MustNewCode("lru_cache_create_failed")
 )
 
-// IsPromoted reports whether a JSON path is present in the promoted paths set.
-// func (b *JSONQueryBuilder) IsPromoted(path string) bool {
-// 	firstLeafNode := strings.Split(path, ArraySep)[0]
-// 	_, ok := b.promotedPaths.Load(firstLeafNode)
-// 	return ok
-// }
+func (c *conditionBuilder) getTypes(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
+	keys, _, err := c.metadataStore.GetKeys(ctx, &telemetrytypes.FieldKeySelector{
+		Name:              path,
+		SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
+		Signal:            telemetrytypes.SignalLogs,
+		Limit:             1,
+	})
+	if err != nil {
+		return nil, err
+	}
+	types := []telemetrytypes.JSONDataType{}
+	for _, key := range keys[path] {
+		if key.JSONDataType != nil {
+			types = append(types, *key.JSONDataType)
+		}
+	}
+	return types, nil
+}
 
 // BuildCondition builds the full WHERE condition for body_json JSON paths
 func (c *conditionBuilder) buildJSONCondition(ctx context.Context, key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 
+	plan, err := PlanJSON(ctx, key, operator, value, c.getTypes)
+	if err != nil {
+		return "", err
+	}
+
 	conditions := []string{}
-	for _, plan := range key.JSONPlan {
+	for _, plan := range plan {
 		condition, err := c.emitPlannedCondition(plan, operator, value, sb)
 		if err != nil {
 			return "", err
@@ -64,94 +80,75 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 	switch operator {
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 		return c.applyOperator(sb, fieldPath, operator, value)
-
-	case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorNotContains, qbtypes.FilterOperatorLike, qbtypes.FilterOperatorILike, qbtypes.FilterOperatorNotLike:
-		valueType := node.TerminalConfig.ValueType
-		hasScalar := slices.Contains(node.AvailableTypes, valueType)
-		hasArray := slices.Contains(node.AvailableTypes, telemetrytypes.ScalerTypeToArrayType[valueType]) || slices.Contains(node.AvailableTypes, telemetrytypes.ArrayDynamic)
-		conditions := []string{}
-		if hasScalar {
-			elemType := node.TerminalConfig.ElemType
-			fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, elemType.StringValue())
-
-			// TODO: Implement string indexing expression
-			// // if elemType is string and this field path is string indexed, use the string indexing expression
-			// if expr, found := c.stringIndexedColumns.Load().(map[string]string)[fieldPath]; found && elemType == telemetrytypes.String {
-			// 	fieldExpr = expr
-			// }
-
-			cond, err := c.applyOperator(sb, fieldExpr, operator, value)
-			if err != nil {
-				return "", err
+	default:
+		if node.TerminalConfig.ElemType.IsArray {
+			// switch operator for array membership checks
+			switch operator {
+			case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorIn:
+				operator = qbtypes.FilterOperatorEqual
+			case qbtypes.FilterOperatorNotContains, qbtypes.FilterOperatorNotIn:
+				operator = qbtypes.FilterOperatorNotEqual
 			}
-			conditions = append(conditions, cond)
-		}
-		// For CONTAINS/NotContains operators, check if both scalar and array are available
-		// If both are available, OR between array membership check and scalar string matching
-		if hasArray && isMembershipContains(operator) {
 			arrayCond, err := c.buildArrayMembershipCondition(node, operator, value, sb)
 			if err != nil {
 				return "", err
 			}
-			conditions = append(conditions, arrayCond)
+			return arrayCond, nil
 		}
-		return sb.Or(conditions...), nil
+		conditions := []string{}
 
-	default:
-		valueType := node.TerminalConfig.ValueType
-		fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, valueType.StringValue())
-		return c.applyOperator(sb, fieldExpr, operator, value)
+		elemType := node.TerminalConfig.ElemType
+		fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, elemType.StringValue())
+		fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, fieldExpr, operator)
+
+		// TODO: Implement string indexing expression
+		// // if elemType is string and this field path is string indexed, use the string indexing expression
+		// if expr, found := c.stringIndexedColumns.Load().(map[string]string)[fieldPath]; found && elemType == telemetrytypes.String {
+		// 	fieldExpr = expr
+		// }
+
+		cond, err := c.applyOperator(sb, fieldExpr, operator, value)
+		if err != nil {
+			return "", err
+		}
+		conditions = append(conditions, cond)
+		if len(conditions) > 1 {
+			return sb.Or(conditions...), nil
+		}
+		return cond, nil
 	}
 }
 
 // buildArrayMembershipCondition handles array membership checks
-func (c *conditionBuilder) buildArrayMembershipCondition(plan *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
-	arrayPath := plan.FieldPath()
-
-	// Check if we should use Array(Dynamic) filtering or typed array
-	cached := plan.AvailableTypes
-
-	// Check if we have a typed array available for this element type
-	typedArrayType := telemetrytypes.ScalerTypeToArrayType[plan.TerminalConfig.ValueType]
-	hasTypedArray := slices.Contains(cached, typedArrayType)
-	hasArrayDynamic := slices.Contains(cached, telemetrytypes.ArrayDynamic)
+func (c *conditionBuilder) buildArrayMembershipCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+	arrayPath := node.FieldPath()
 
 	// create typed array out of a dynamic array
 	filteredDynamicExpr := func() string {
 		baseArrayDynamicExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", arrayPath)
 		return fmt.Sprintf("arrayMap(x->dynamicElement(x, '%s'), arrayFilter(x->(dynamicType(x) = '%s'), %s))",
-			plan.TerminalConfig.ElemType.ScalerType,
-			plan.TerminalConfig.ElemType.ScalerType,
+			node.TerminalConfig.ValueType.StringValue(),
+			node.TerminalConfig.ValueType.StringValue(),
 			baseArrayDynamicExpr)
-	}()
+	}
 	typedArrayExpr := func() string {
-		return fmt.Sprintf("dynamicElement(%s, '%s')", arrayPath, typedArrayType.StringValue())
-	}()
-
-	// If both typed array and Array(Dynamic) are present, OR both membership checks
-	if hasTypedArray && hasArrayDynamic {
-		m1, err := c.buildArrayMembership(typedArrayExpr, operator, value, plan.TerminalConfig.ElemType, sb)
-		if err != nil {
-			return "", err
-		}
-		m2, err := c.buildArrayMembership(filteredDynamicExpr, operator, value, plan.TerminalConfig.ElemType, sb)
-		if err != nil {
-			return "", err
-		}
-		return sb.Or(m1, m2), nil
+		return fmt.Sprintf("dynamicElement(%s, '%s')", arrayPath, node.TerminalConfig.ElemType.StringValue())
 	}
 
 	var arrayExpr string
-	if hasTypedArray {
-		// Use the typed array directly when available
-		arrayExpr = typedArrayExpr
+	if node.TerminalConfig.ElemType == telemetrytypes.ArrayDynamic {
+		arrayExpr = filteredDynamicExpr()
 	} else {
-		// Fall back to Array(Dynamic) with filtering
-		arrayExpr = filteredDynamicExpr
+		arrayExpr = typedArrayExpr()
 	}
 
-	// For array membership, use original value (not LIKE-wrapped)
-	return c.buildArrayMembership(arrayExpr, operator, value, plan.TerminalConfig.ElemType, sb)
+	fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, "x", operator)
+	op, err := c.applyOperator(sb, fieldExpr, operator, value)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("arrayExists(%s -> %s, %s)", fieldExpr, op, arrayExpr), nil
 }
 
 // recurseArrayHops recursively builds array traversal conditions
@@ -200,39 +197,6 @@ func (c *conditionBuilder) recurseArrayHops(current *telemetrytypes.JSONAccessNo
 		return branches[0], nil
 	}
 	return fmt.Sprintf("(%s)", strings.Join(branches, " OR ")), nil
-}
-
-func (c *conditionBuilder) buildArrayMembership(arrayExpr string, operator qbtypes.FilterOperator, value any, elemType telemetrytypes.JSONDataType, sb *sqlbuilder.SelectBuilder) (string, error) {
-	var membership string
-	if elemType == telemetrytypes.String {
-		// For string arrays:
-		// - Contains/NotContains mean element membership equality
-		// - Like/ILike use substring match
-		if isMembershipContains(operator) {
-			membership = fmt.Sprintf("arrayExists(x -> x = %s, %s)", sb.Var(value), arrayExpr)
-		} else if isMembershipLike(operator) {
-			op, err := c.applyOperator(sb, "x", operator, value)
-			if err != nil {
-				return "", err
-			}
-			membership = fmt.Sprintf("arrayExists(x -> %s, %s)", op, arrayExpr)
-		} else {
-			membership = fmt.Sprintf("arrayExists(x -> x = %s, %s)", sb.Var(value), arrayExpr)
-		}
-	} else {
-		// For non-string types, use exact equality
-		membership = fmt.Sprintf("arrayExists(x -> x = %s, %s)", sb.Var(value), arrayExpr)
-	}
-
-	if c.isNotOperator(operator) {
-		return fmt.Sprintf("NOT %s", membership), nil
-	}
-
-	return membership, nil
-}
-
-func (c *conditionBuilder) isNotOperator(op qbtypes.FilterOperator) bool {
-	return op == qbtypes.FilterOperatorNotContains || op == qbtypes.FilterOperatorNotLike || op == qbtypes.FilterOperatorNotILike
 }
 
 func (c *conditionBuilder) applyOperator(sb *sqlbuilder.SelectBuilder, fieldExpr string, operator qbtypes.FilterOperator, value any) (string, error) {
@@ -300,19 +264,24 @@ type GroupByArrayJoinInfo struct {
 
 // BuildGroupBy builds GroupBy information for body JSON fields using arrayConcat pattern
 func (c *conditionBuilder) BuildGroupBy(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*GroupByArrayJoinInfo, error) {
-	path := strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
+	path := strings.TrimPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix)
 
-	if len(key.JSONPlan) == 0 {
+	plan, err := PlanJSON(ctx, key, qbtypes.FilterOperatorExists, nil, c.getTypes)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(plan) == 0 {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
 			"Could not find any valid paths for: %s", path)
 	}
 
-	if key.JSONPlan[0].IsTerminal {
-		node := key.JSONPlan[0]
+	if plan[0].IsTerminal {
+		node := plan[0]
 
 		expr := fmt.Sprintf("dynamicElement(%s, '%s')", node.FieldPath(), node.TerminalConfig.ElemType.StringValue())
 		if key.Materialized {
-			if len(key.JSONPlan) < 2 {
+			if len(plan) < 2 {
 				return nil, errors.Newf(errors.TypeUnexpected, CodePromotedPlanMissing,
 					"plan length is less than 2 for promoted path: %s", path)
 			}
@@ -320,7 +289,7 @@ func (c *conditionBuilder) BuildGroupBy(ctx context.Context, key *telemetrytypes
 			// promoted column first then body_json column
 			// TODO(Piyush): Change this in future for better performance
 			expr = fmt.Sprintf("coalesce(%s, %s)",
-				fmt.Sprintf("dynamicElement(%s, '%s')", key.JSONPlan[1].FieldPath(), key.JSONPlan[1].TerminalConfig.ElemType.StringValue()),
+				fmt.Sprintf("dynamicElement(%s, '%s')", plan[1].FieldPath(), plan[1].TerminalConfig.ElemType.StringValue()),
 				expr,
 			)
 		}
@@ -332,7 +301,7 @@ func (c *conditionBuilder) BuildGroupBy(ctx context.Context, key *telemetrytypes
 	}
 
 	// Build arrayConcat pattern directly from the tree structure
-	arrayConcatExpr, err := c.buildArrayConcat(key.JSONPlan)
+	arrayConcatExpr, err := c.buildArrayConcat(plan)
 	if err != nil {
 		return nil, err
 	}
@@ -455,13 +424,4 @@ func (c *conditionBuilder) buildArrayMap(currentNode *telemetrytypes.JSONAccessN
 
 func assumeNotNull(column string) string {
 	return fmt.Sprintf("assumeNotNull(dynamicElement(%s, 'String'))", column)
-}
-
-// Operator intent helpers
-func isMembershipContains(op qbtypes.FilterOperator) bool {
-	return op == qbtypes.FilterOperatorContains || op == qbtypes.FilterOperatorNotContains
-}
-
-func isMembershipLike(op qbtypes.FilterOperator) bool {
-	return op == qbtypes.FilterOperatorLike || op == qbtypes.FilterOperatorILike || op == qbtypes.FilterOperatorNotLike
 }

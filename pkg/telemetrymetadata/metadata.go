@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -572,11 +573,14 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 	}
 
-	bodyJSONPaths, complete, err := getBodyJSONPaths(ctx, t.telemetrystore, fieldKeySelectors) // LIKE for pattern matching
-	if err != nil {
-		t.logger.Error("failed to extract body JSON paths", "error", err)
+	if constants.BodyJSONQueryEnabled {
+		bodyJSONPaths, finished, err := getBodyJSONPaths(ctx, t.telemetrystore, fieldKeySelectors) // LIKE for pattern matching
+		if err != nil {
+			t.logger.Error("failed to extract body JSON paths", "error", err)
+		}
+		keys = append(keys, bodyJSONPaths...)
+		complete = complete && finished
 	}
-	keys = append(keys, bodyJSONPaths...)
 	return keys, complete, nil
 }
 
@@ -1169,7 +1173,7 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 		limit = 50
 	}
 
-	if strings.HasPrefix(fieldValueSelector.Name, telemetrylogs.BodyJSONStringSearchPrefix) {
+	if strings.HasPrefix(fieldValueSelector.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
 		return ListJSONValues(ctx, t.telemetrystore.ClickhouseDB(), fieldValueSelector.Name, limit)
 	}
 

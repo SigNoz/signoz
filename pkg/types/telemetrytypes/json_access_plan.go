@@ -17,6 +17,7 @@ const (
 )
 
 type TerminalConfig struct {
+	Key       *TelemetryFieldKey
 	ElemType  JSONDataType
 	ValueType JSONDataType
 }

@@ -17,105 +17,10 @@ var (
 	CodePlanIndexOutOfBounds = errors.MustNewCode("plan_index_out_of_bounds")
 )
 
-// Rule 1: valueType is determined based on the Value
-// Rule 1.1: if Value is nil (incase of EXISTS/NOT EXISTS + GroupBy) then on Operator and AvailableTypes
-// Rule 2: decision cannot be made if no type available; set ElemType = ValueType
-// Rule 3: elemType is determined based on the Operator, ValueType and the AvailableTypes all three in consideration
-// configureTerminal sets up terminal node configuration
-// func (pb *JSONAccessPlanBuilder) configureTerminalNode(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any) {
-// 	// ValueType: inference for normal operators; for EXISTS/group-by pick from availability (rule 5)
-// 	// valueType := pb.determineValueType(node, operator, value)
-// 	var elemType telemetrytypes.JSONDataType
-
-// 	hasScalar := slices.Contains(node.AvailableTypes, valueType)
-// 	hasArray := func() bool {
-// 		return slices.Contains(node.AvailableTypes, telemetrytypes.ScalerTypeToArrayType[valueType]) || slices.Contains(node.AvailableTypes, telemetrytypes.ArrayDynamic)
-// 	}()
-
-// 	// Rule: Universal logic for all operators
-// 	// Prefer scalar when available; if only array exists, choose array; else fallback to ValueType
-// 	if hasScalar {
-// 		elemType = valueType
-// 	} else if hasArray {
-// 		elemType = telemetrytypes.ScalerTypeToArrayType[valueType]
-// 	} else {
-// 		elemType = valueType
-// 	}
-// 	// Rule: if decision couldn't be made, ElemType equals ValueType handled inside chooser
-// 	node.TerminalConfig = &telemetrytypes.TerminalConfig{
-// 		ElemType:  elemType,
-// 		ValueType: valueType,
-// 	}
-// }
-
-// func (pb *JSONAccessPlanBuilder) determineValueType(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any) telemetrytypes.JSONDataType {
-// 	// For GroupBy operations (EXISTS operator with nil value), use the first available type
-// 	if operator == qbtypes.FilterOperatorExists && value == nil {
-// 		if len(node.AvailableTypes) > 0 {
-// 			// For GroupBy, prefer scalar types over array types
-// 			for _, t := range node.AvailableTypes {
-// 				if !t.IsArray {
-// 					return t
-// 				}
-// 			}
-// 			// If no scalar types, use the first available type
-// 			return node.AvailableTypes[0]
-// 		}
-
-// 		// Fallback to String if no types available
-// 		return telemetrytypes.String
-// 	}
-
-// 	// For other operations, derive from input value/operator
-// 	vt, _ := pb.inferDataType(node, value, operator)
-// 	return vt
-// }
-
-// func (pb *JSONAccessPlanBuilder) inferDataType(node *telemetrytypes.JSONAccessNode, value any, operator qbtypes.FilterOperator) (telemetrytypes.JSONDataType, any) {
-// 	// check if the value is a int, float, string, bool
-// 	valueType := telemetrytypes.Dynamic
-// 	switch v := value.(type) {
-// 	case []any:
-// 		// take the first element and infer the type
-// 		if len(v) > 0 {
-// 			valueType, _ = pb.inferDataType(node, v[0], operator)
-// 		}
-// 		return valueType, v
-// 	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
-// 		valueType = telemetrytypes.Int64
-// 	case float32:
-// 		f := float64(v)
-// 		if IsFloatActuallyInt(f) {
-// 			valueType = telemetrytypes.Int64
-// 			value = int64(f)
-// 		} else {
-// 			valueType = telemetrytypes.Float64
-// 		}
-// 	case float64:
-// 		if IsFloatActuallyInt(v) {
-// 			valueType = telemetrytypes.Int64
-// 			value = int64(v)
-// 		} else {
-// 			valueType = telemetrytypes.Float64
-// 		}
-// 	case string:
-// 		fieldDataType, parsedValue := ParseStrValue(v, operator)
-// 		valueType = telemetrytypes.MappingFieldDataTypeToJSONDataType[fieldDataType]
-// 		value = parsedValue
-// 	case bool:
-// 		valueType = telemetrytypes.Bool
-// 	}
-
-// 	return valueType, value
-// }
-
-// // IsFloatActuallyInt checks if a float64 has an exact int64 representation
-// func IsFloatActuallyInt(f float64) bool {
-// 	return float64(int64(f)) == f
-// }
-
 type JSONAccessPlanBuilder struct {
 	key        *telemetrytypes.TelemetryFieldKey
+	value      any
+	op         qbtypes.FilterOperator
 	parts      []string
 	getTypes   func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error)
 	isPromoted bool
@@ -171,8 +76,11 @@ func (pb *JSONAccessPlanBuilder) buildPlan(ctx context.Context, index int, paren
 
 	// Configure terminal if this is the last part
 	if isTerminal {
+		valueType, _ := inferDataType(pb.value, pb.op, pb.key)
 		node.TerminalConfig = &telemetrytypes.TerminalConfig{
-			ElemType: *pb.key.JSONDataType,
+			Key:       pb.key,
+			ElemType:  *pb.key.JSONDataType,
+			ValueType: telemetrytypes.MappingFieldDataTypeToJSONDataType[valueType],
 		}
 	} else {
 		if hasJSON {
@@ -194,9 +102,9 @@ func (pb *JSONAccessPlanBuilder) buildPlan(ctx context.Context, index int, paren
 
 // PlanJSON builds a tree structure representing the complete JSON path traversal
 // that precomputes all possible branches and their types
-func PlanJSON(ctx context.Context, key *telemetrytypes.TelemetryFieldKey,
-	operator qbtypes.FilterOperator, value any,
-	getTypes func(ctx context.Context, path string) ([]*telemetrytypes.JSONDataType, error),
+func PlanJSON(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator,
+	value any,
+	getTypes func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error),
 ) (telemetrytypes.JSONAccessPlan, error) {
 	// if path is empty, return nil
 	if key.Name == "" {
@@ -210,6 +118,8 @@ func PlanJSON(ctx context.Context, key *telemetrytypes.TelemetryFieldKey,
 
 	pb := &JSONAccessPlanBuilder{
 		key:        key,
+		op:         op,
+		value:      value,
 		parts:      parts,
 		getTypes:   getTypes,
 		isPromoted: key.Materialized,

@@ -26,6 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 
@@ -351,7 +352,7 @@ func (r *ClickHouseReader) PromoteAndIndexPaths(
 			return err
 		}
 		// remove the "body." prefix from the path
-		trimmedPath := strings.TrimPrefix(it.Path, telemetrylogs.BodyJSONStringSearchPrefix)
+		trimmedPath := strings.TrimPrefix(it.Path, telemetrytypes.BodyJSONStringSearchPrefix)
 		if it.Promote {
 			if _, promoted := existing[trimmedPath]; !promoted {
 				toInsert = append(toInsert, trimmedPath)

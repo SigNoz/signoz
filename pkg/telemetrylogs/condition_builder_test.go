@@ -271,13 +271,13 @@ func TestConditionFor(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	jqb := buildTestJSONQueryBuilder()
-	conditionBuilder := NewConditionBuilder(fm, jqb)
+	mockMetadataStore := buildTestTelemetryMetadataStore()
+	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-            cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
+			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {
@@ -325,15 +325,15 @@ func TestConditionForMultipleKeys(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	jqb := buildTestJSONQueryBuilder()
-	conditionBuilder := NewConditionBuilder(fm, jqb)
+	mockMetadataStore := buildTestTelemetryMetadataStore()
+	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-                cond, err := conditionBuilder.ConditionFor(ctx, &key, tc.operator, tc.value, sb, 0, 0)
+				cond, err := conditionBuilder.ConditionFor(ctx, &key, tc.operator, tc.value, sb, 0, 0)
 				sb.Where(cond)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)
@@ -525,13 +525,13 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	jqb := buildTestJSONQueryBuilder()
-	conditionBuilder := NewConditionBuilder(fm, jqb)
+	mockMetadataStore := buildTestTelemetryMetadataStore()
+	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-            cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
+			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {
