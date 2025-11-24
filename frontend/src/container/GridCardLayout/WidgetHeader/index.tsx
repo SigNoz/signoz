@@ -240,6 +240,7 @@ function WidgetHeader({
 							onClick={(e): void => {
 								e.stopPropagation();
 								e.preventDefault();
+								setSearchTerm('');
 								setShowGlobalSearch(false);
 							}}
 							className="search-header-icons"
