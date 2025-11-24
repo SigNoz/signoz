@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"slices"
 	"strings"
 	"time"
 
@@ -48,20 +47,8 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 }
 
 func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.StatsRequest) (*metricsmoduletypes.StatsResponse, error) {
-	if req == nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
-	}
-
-	if req.Start <= 0 || req.End <= 0 || req.Start >= req.End {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range")
-	}
-
-	if req.Limit < 1 || req.Limit > 5000 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
-	}
-
-	if req.Offset < 0 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
+	if err := req.Validate(); err != nil {
+		return nil, err
 	}
 
 	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
@@ -111,20 +98,8 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 
 // GetTreemap will return metrics treemap information once implemented.
 func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.TreemapRequest) (*metricsmoduletypes.TreemapResponse, error) {
-	if req == nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
-	}
-
-	if req.Start <= 0 || req.End <= 0 || req.Start >= req.End {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range")
-	}
-
-	if req.Limit < 1 || req.Limit > 5000 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
-	}
-
-	if !slices.Contains([]metrictypes.TreemapMode{metrictypes.TreemapModeSamples, metrictypes.TreemapModeTimeSeries}, req.Treemap) {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid treemap mode")
+	if err := req.Validate(); err != nil {
+		return nil, err
 	}
 
 	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
@@ -478,7 +453,7 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	}
 	cacheKey := generateMetricMetadataCacheKey(req.MetricName)
 	if err := m.cache.Set(ctx, orgID, cacheKey, metricMetadata, 0); err != nil {
-		m.logger.WarnContext(ctx, "failed to set metric metadata in cache after insert", "metricName", req.MetricName, "error", err)
+		m.logger.WarnContext(ctx, "failed to set metric metadata in cache after insert", "metric_name", req.MetricName, "error", err)
 	}
 
 	return nil

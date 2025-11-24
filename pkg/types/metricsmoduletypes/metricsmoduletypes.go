@@ -3,6 +3,7 @@ package metricsmoduletypes
 import (
 	"encoding/json"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
@@ -15,6 +16,38 @@ type StatsRequest struct {
 	Limit   int              `json:"limit"`
 	Offset  int              `json:"offset"`
 	OrderBy *qbtypes.OrderBy `json:"orderBy,omitempty"`
+}
+
+// Validate ensures StatsRequest contains acceptable values.
+func (req *StatsRequest) Validate() error {
+	if req == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.Start <= 0 || req.End <= 0 || req.Start >= req.End {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range")
+	}
+
+	if req.Limit < 1 || req.Limit > 5000 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
+	}
+
+	if req.Offset < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
+	}
+
+	return nil
+}
+
+// UnmarshalJSON validates input immediately after decoding.
+func (req *StatsRequest) UnmarshalJSON(data []byte) error {
+	type raw StatsRequest
+	var decoded raw
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	*req = StatsRequest(decoded)
+	return req.Validate()
 }
 
 // Stat represents the summary information returned per metric.
@@ -69,6 +102,40 @@ type TreemapRequest struct {
 	End     int64                   `json:"end"`
 	Limit   int                     `json:"limit"`
 	Treemap metrictypes.TreemapMode `json:"treemap"`
+}
+
+// Validate enforces basic constraints on TreemapRequest.
+func (req *TreemapRequest) Validate() error {
+	if req == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.Start <= 0 || req.End <= 0 || req.Start >= req.End {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range")
+	}
+
+	if req.Limit < 1 || req.Limit > 5000 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
+	}
+
+	if req.Treemap != metrictypes.TreemapModeSamples && req.Treemap != metrictypes.TreemapModeTimeSeries {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid treemap mode")
+	}
+
+	return nil
+}
+
+// UnmarshalJSON validates treemap requests immediately after decoding.
+func (req *TreemapRequest) UnmarshalJSON(data []byte) error {
+	type raw TreemapRequest
+	var decoded raw
+
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+
+	*req = TreemapRequest(decoded)
+	return req.Validate()
 }
 
 // TreemapEntry represents each node in the treemap response.
