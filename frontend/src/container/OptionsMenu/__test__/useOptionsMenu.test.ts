@@ -119,10 +119,117 @@ describe('useOptionsMenu', () => {
 
 		// isRoot and isEntryPoint should NOT be in the options
 		expect(optionNames).not.toContain('isRoot');
+		expect(optionNames).not.toContain('body');
 		expect(optionNames).not.toContain('isEntryPoint');
 
 		// Other attributes should be present
 		expect(optionNames).toContain('duration');
 		expect(optionNames).toContain('serviceName');
+	});
+
+	it('does not show body in column options when dataSource is METRICS', () => {
+		// Mock the query key suggestions to return data including body
+		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+			data: {
+				data: {
+					data: {
+						keys: {
+							attributeKeys: [
+								{
+									name: 'body',
+									signal: 'logs',
+									fieldDataType: 'string',
+									fieldContext: '',
+								},
+								{
+									name: 'status',
+									signal: 'metrics',
+									fieldDataType: 'int64',
+									fieldContext: '',
+								},
+								{
+									name: 'value',
+									signal: 'metrics',
+									fieldDataType: 'float64',
+									fieldContext: '',
+								},
+							],
+						},
+					},
+				},
+			},
+			isFetching: false,
+		});
+
+		const { result } = renderHook(() =>
+			useOptionsMenu({
+				dataSource: DataSource.METRICS,
+				aggregateOperator: 'count',
+			}),
+		);
+
+		// Get the column options from the config
+		const columnOptions = result.current.config.addColumn?.options ?? [];
+		const optionNames = columnOptions.map((option) => option.label);
+
+		// body should NOT be in the options
+		expect(optionNames).not.toContain('body');
+
+		// Other attributes should be present
+		expect(optionNames).toContain('status');
+		expect(optionNames).toContain('value');
+	});
+
+	it('does not show body in column options when dataSource is LOGS', () => {
+		// Mock the query key suggestions to return data including body
+		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+			data: {
+				data: {
+					data: {
+						keys: {
+							attributeKeys: [
+								{
+									name: 'body',
+									signal: 'logs',
+									fieldDataType: 'string',
+									fieldContext: '',
+								},
+								{
+									name: 'level',
+									signal: 'logs',
+									fieldDataType: 'string',
+									fieldContext: '',
+								},
+								{
+									name: 'timestamp',
+									signal: 'logs',
+									fieldDataType: 'int64',
+									fieldContext: '',
+								},
+							],
+						},
+					},
+				},
+			},
+			isFetching: false,
+		});
+
+		const { result } = renderHook(() =>
+			useOptionsMenu({
+				dataSource: DataSource.LOGS,
+				aggregateOperator: 'count',
+			}),
+		);
+
+		// Get the column options from the config
+		const columnOptions = result.current.config.addColumn?.options ?? [];
+		const optionNames = columnOptions.map((option) => option.label);
+
+		// body should be in the options
+		expect(optionNames).toContain('body');
+
+		// Other attributes should be present
+		expect(optionNames).toContain('level');
+		expect(optionNames).toContain('timestamp');
 	});
 });

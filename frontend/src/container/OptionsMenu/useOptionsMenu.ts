@@ -27,6 +27,7 @@ import {
 	defaultLogsSelectedColumns,
 	defaultOptionsQuery,
 	defaultTraceSelectedColumns,
+	EXCLUDED_COLUMNS,
 	URL_OPTIONS,
 } from './constants';
 import {
@@ -49,8 +50,6 @@ interface UseOptionsMenu {
 	config: OptionsMenuConfig;
 	handleOptionsChange: (newQueryData: OptionsQuery) => void;
 }
-
-const HIDDEN_OPTIONS = ['body', 'isRoot', 'isEntryPoint'];
 
 const useOptionsMenu = ({
 	dataSource,
@@ -203,7 +202,7 @@ const useOptionsMenu = ({
 				return [
 					...logsSelectedColumns,
 					...searchedAttributesDataList
-						.filter((attribute) => !HIDDEN_OPTIONS.includes(attribute.name))
+						.filter((attribute) => attribute.name !== 'body')
 						// eslint-disable-next-line sonarjs/no-identical-functions
 						.map((e) => ({
 							...e,
@@ -269,12 +268,9 @@ const useOptionsMenu = ({
 
 	const optionsFromAttributeKeys = useMemo(() => {
 		const filteredAttributeKeys = searchedAttributeKeys.filter((item) => {
-			if (dataSource === DataSource.TRACES) {
-				// Hide isRoot and isEntryPoint for traces
-				return !['isRoot', 'isEntryPoint'].includes(item.name);
-			}
-			if (dataSource !== DataSource.LOGS) {
-				return item.name !== 'body';
+			const exclusions = EXCLUDED_COLUMNS[dataSource];
+			if (exclusions) {
+				return !exclusions.includes(item.name);
 			}
 			return true;
 		});
