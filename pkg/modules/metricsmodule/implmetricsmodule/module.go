@@ -157,24 +157,24 @@ func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID,
 	// Query updated_metadata table for cache misses
 	foundInUpdatedMetadata := make(map[string]bool)
 	if len(cacheMisses) > 0 {
-		placeholders := strings.TrimRight(strings.Repeat("?,", len(cacheMisses)), ",")
-		query := fmt.Sprintf(`
-			SELECT metric_name, 
-				   description, 
-				   type, 
-				   unit, 
-				   temporality, 
-				   is_monotonic
-			FROM %s.%s 
-			WHERE metric_name IN (%s)`,
-			telemetrymetrics.DBName,
-			telemetrymetrics.UpdatedMetadataTableName,
-			placeholders)
-
 		args := make([]any, len(cacheMisses))
 		for i := range cacheMisses {
 			args[i] = cacheMisses[i]
 		}
+
+		sb := sqlbuilder.NewSelectBuilder()
+		sb.Select(
+			"metric_name",
+			"description",
+			"type",
+			"unit",
+			"temporality",
+			"is_monotonic",
+		)
+		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.UpdatedMetadataTableName))
+		sb.Where(sb.In("metric_name", args...))
+
+		query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 		db := m.telemetryStore.ClickhouseDB()
 		rows, err := db.Query(ctx, query, args...)
@@ -221,27 +221,25 @@ func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID,
 	}
 
 	if len(cacheAndUpdatedMetadataMisses) > 0 {
-		placeholders := strings.TrimRight(strings.Repeat("?,", len(cacheAndUpdatedMetadataMisses)), ",")
-		query := fmt.Sprintf(`
-			SELECT 
-				metric_name,
-				ANY_VALUE(description) AS description,
-				ANY_VALUE(type) AS metric_type,
-				ANY_VALUE(unit) AS metric_unit
-				ANY_VALUE(temporality) AS temporality
-				ANY_VALUE(is_monotonic) AS is_monotonic
-			FROM %s.%s
-			WHERE metric_name IN (%s)
-			GROUP BY metric_name`,
-			telemetrymetrics.DBName,
-			telemetrymetrics.TimeseriesV4TableName,
-			placeholders,
-		)
-
 		args := make([]any, len(cacheAndUpdatedMetadataMisses))
 		for i := range cacheAndUpdatedMetadataMisses {
 			args[i] = cacheAndUpdatedMetadataMisses[i]
 		}
+
+		sb := sqlbuilder.NewSelectBuilder()
+		sb.Select(
+			"metric_name",
+			"ANY_VALUE(description) AS description",
+			"ANY_VALUE(type) AS metric_type",
+			"ANY_VALUE(unit) AS metric_unit",
+			"ANY_VALUE(temporality) AS temporality",
+			"ANY_VALUE(is_monotonic) AS is_monotonic",
+		)
+		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4TableName))
+		sb.Where(sb.In("metric_name", args...))
+		sb.GroupBy("metric_name")
+
+		query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 		db := m.telemetryStore.ClickhouseDB()
 		rows, err := db.Query(ctx, query, args...)
@@ -390,22 +388,16 @@ func (m *module) checkForLabelsInMetric(ctx context.Context, metricName string, 
 		return true, nil
 	}
 
-	conditions := "metric_name = ?"
-	for range labels {
-		conditions += " AND JSONHas(labels, ?) = 1"
-	}
-
-	query := fmt.Sprintf(`
-        SELECT count(*) > 0 as has_labels
-        FROM %s.%s
-        WHERE %s
-        LIMIT 1`, telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41dayTableName, conditions)
-
-	args := make([]interface{}, 0, len(labels)+1)
-	args = append(args, metricName)
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("count(*) > 0 AS has_labels")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41dayTableName))
+	sb.Where(sb.E("metric_name", metricName))
 	for _, label := range labels {
-		args = append(args, label)
+		sb.Where(fmt.Sprintf("JSONHas(labels, %s) = 1", sb.Var(label)))
 	}
+	sb.Limit(1)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	var hasLabels bool
 	db := m.telemetryStore.ClickhouseDB()
@@ -418,26 +410,26 @@ func (m *module) checkForLabelsInMetric(ctx context.Context, metricName string, 
 }
 
 func (m *module) deleteMetricsMetadata(ctx context.Context, metricName string) error {
-	delQuery := fmt.Sprintf(`ALTER TABLE %s.%s DELETE WHERE metric_name = ?;`, telemetrymetrics.DBName, telemetrymetrics.UpdatedMetadataLocalTableName)
+	sb := sqlbuilder.NewDeleteBuilder()
+	sb.DeleteFrom(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.UpdatedMetadataLocalTableName))
+	sb.Where(sb.E("metric_name", metricName))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
 	db := m.telemetryStore.ClickhouseDB()
-	err := db.Exec(ctx, delQuery, metricName)
-	if err != nil {
+	if err := db.Exec(ctx, query, args...); err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to delete metrics metadata")
 	}
 	return nil
 }
 
 func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
-	insertQuery := fmt.Sprintf(`
-				INSERT INTO %s.%s 
-				(metric_name, temporality, is_monotonic, type, description, unit, created_at)
-				VALUES (?, ?, ?, ?, ?, ?, ?);`,
-		telemetrymetrics.DBName,
-		telemetrymetrics.UpdatedMetadataTableName)
-
 	createdAt := time.Now().UnixMilli()
-	db := m.telemetryStore.ClickhouseDB()
-	err := db.Exec(ctx, insertQuery,
+
+	ib := sqlbuilder.NewInsertBuilder()
+	ib.InsertInto(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.UpdatedMetadataTableName))
+	ib.Cols("metric_name", "temporality", "is_monotonic", "type", "description", "unit", "created_at")
+	ib.Values(
 		req.MetricName,
 		convertTemporalityToDBFormat(req.Temporality),
 		req.IsMonotonic,
@@ -446,7 +438,11 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 		req.Unit,
 		createdAt,
 	)
-	if err != nil {
+
+	query, args := ib.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	if err := db.Exec(ctx, query, args...); err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to insert metrics metadata")
 	}
 
