@@ -169,7 +169,7 @@ func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID,
 			metadata[metricName] = &cachedMetadata
 		} else {
 			// Cache miss - log warning but continue
-			m.logger.WarnContext(ctx, "cache miss for metric metadata", "metricName", metricName, "error", err)
+			m.logger.WarnContext(ctx, "cache miss for metric metadata", "metric_name", metricName, "error", err)
 			cacheMisses = append(cacheMisses, metricName)
 		}
 	}
@@ -223,7 +223,7 @@ func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID,
 			// Set in cache after successful DB fetch
 			cacheKey := generateMetricMetadataCacheKey(metricName)
 			if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
-				m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metricName", metricName, "error", err)
+				m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, "error", err)
 			}
 		}
 
@@ -287,7 +287,7 @@ func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID,
 			// Set in cache after successful DB fetch
 			cacheKey := generateMetricMetadataCacheKey(metricName)
 			if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
-				m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metricName", metricName, "error", err)
+				m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, "error", err)
 			}
 		}
 
