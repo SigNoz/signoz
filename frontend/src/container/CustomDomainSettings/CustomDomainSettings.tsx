@@ -143,6 +143,8 @@ export default function CustomDomainSettings(): JSX.Element {
 		});
 	};
 
+	console.log('updateDomainError', updateDomainError);
+
 	return (
 		<div className="custom-domain-settings-container">
 			<div className="custom-domain-settings-content">
@@ -266,7 +268,10 @@ export default function CustomDomainSettings(): JSX.Element {
 						<div className="custom-domain-settings-modal-error">
 							{updateDomainError.status === 409 ? (
 								<Alert
-									message="You’ve already updated the custom domain once today. To make further changes, please contact our support team for assistance."
+									message={
+										(updateDomainError?.response?.data as { error?: string })?.error ||
+										'Team’s URL: composed-tarpon subdomain name is taken, please try another one.'
+									}
 									type="warning"
 									className="update-limit-reached-error"
 								/>
