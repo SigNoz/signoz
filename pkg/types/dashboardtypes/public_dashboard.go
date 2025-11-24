@@ -200,7 +200,13 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *
 			}
 			widget.Query.PromQL = updatedPromQLQuery
 		default:
-			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "invalid query type: %s", widget.Query.QueryType)
+			widget.Query.Builder = struct {
+				QueryData          []map[string]any `json:"queryData"`
+				QueryFormulas      []map[string]any `json:"queryFormulas"`
+				QueryTraceOperator []map[string]any `json:"queryTraceOperator"`
+			}{}
+			widget.Query.ClickhouseSQL = []map[string]any{}
+			widget.Query.PromQL = []map[string]any{}
 		}
 
 		if widgets, ok := dashboard.Data["widgets"].([]any); ok {
