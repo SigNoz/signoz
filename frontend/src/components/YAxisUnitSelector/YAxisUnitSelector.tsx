@@ -27,14 +27,14 @@ function YAxisUnitSelector({
 	const universalUnit = mapMetricUnitToUniversalUnit(value);
 
 	const incompatibleUnitMessage = useMemo(() => {
-		if (!initialValue) return '';
+		if (!initialValue || !value || loading) return '';
 		if (initialValue !== value) {
 			const initialUniversalUnit = getUniversalNameFromMetricUnit(initialValue);
 			const currentUniversalUnit = getUniversalNameFromMetricUnit(value);
 			return `Unit mismatch. Saved unit is ${initialUniversalUnit}, but ${currentUniversalUnit} is selected.`;
 		}
 		return '';
-	}, [initialValue, value]);
+	}, [initialValue, value, loading]);
 
 	const handleSearch = (
 		searchTerm: string,

@@ -5,7 +5,8 @@ import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useMemo, useState } from 'react';
+import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { AlertDef } from 'types/api/alerts/def';
@@ -18,12 +19,7 @@ export interface ChartPreviewProps {
 
 function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 	const { currentQuery, panelType, stagedQuery } = useQueryBuilder();
-	const {
-		thresholdState,
-		alertState,
-		setAlertState,
-		initialAlertState,
-	} = useCreateAlertState();
+	const { thresholdState, alertState, setAlertState } = useCreateAlertState();
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -32,9 +28,9 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 
 	const yAxisUnit = alertState.yAxisUnit || '';
 
-	const initialYAxisUnit = useMemo(
-		() => initialAlertState?.basicAlertState.yAxisUnit || '',
-		[initialAlertState],
+	const selectedQueryName = thresholdState.selectedQuery;
+	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
+		selectedQueryName,
 	);
 
 	const headline = (
@@ -50,6 +46,7 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 					setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: value });
 				}}
 				source={YAxisSource.ALERTS}
+				loading={isLoading}
 			/>
 		</div>
 	);
