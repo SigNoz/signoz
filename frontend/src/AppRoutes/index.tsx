@@ -12,6 +12,8 @@ import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
+import Hex from 'crypto-js/enc-hex';
+import HmacSHA256 from 'crypto-js/hmac-sha256';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -84,9 +86,9 @@ function App(): JSX.Element {
 					email,
 					name: displayName,
 					company_name: orgName,
-					tenant_id: hostNameParts[0],
+					deployment_name: hostNameParts[0],
 					data_region: hostNameParts[1],
-					tenant_url: hostname,
+					deployment_url: hostname,
 					company_domain: domain,
 					source: 'signoz-ui',
 					role,
@@ -94,9 +96,9 @@ function App(): JSX.Element {
 
 				const groupTraits = {
 					name: orgName,
-					tenant_id: hostNameParts[0],
+					deployment_name: hostNameParts[0],
 					data_region: hostNameParts[1],
-					tenant_url: hostname,
+					deployment_url: hostname,
 					company_domain: domain,
 					source: 'signoz-ui',
 				};
@@ -111,12 +113,10 @@ function App(): JSX.Element {
 				if (window && window.Appcues) {
 					window.Appcues.identify(id, {
 						name: displayName,
-
-						tenant_id: hostNameParts[0],
+						deployment_name: hostNameParts[0],
 						data_region: hostNameParts[1],
-						tenant_url: hostname,
+						deployment_url: hostname,
 						company_domain: domain,
-
 						companyName: orgName,
 						email,
 						paidUser: !!trialInfo?.trialConvertedToSubscription,
@@ -139,9 +139,9 @@ function App(): JSX.Element {
 					email,
 					name: displayName,
 					orgName,
-					tenant_id: hostNameParts[0],
+					deployment_name: hostNameParts[0],
 					data_region: hostNameParts[1],
-					tenant_url: hostname,
+					deployment_url: hostname,
 					company_domain: domain,
 					source: 'signoz-ui',
 					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
@@ -149,9 +149,9 @@ function App(): JSX.Element {
 
 				posthog?.group('company', orgId, {
 					name: orgName,
-					tenant_id: hostNameParts[0],
+					deployment_name: hostNameParts[0],
 					data_region: hostNameParts[1],
-					tenant_url: hostname,
+					deployment_url: hostname,
 					company_domain: domain,
 					source: 'signoz-ui',
 					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
@@ -270,11 +270,20 @@ function App(): JSX.Element {
 				!showAddCreditCardModal &&
 				(isCloudUser || isEnterpriseSelfHostedUser)
 			) {
+				const email = user.email || '';
+				const secret = process.env.PYLON_IDENTITY_SECRET || '';
+				let emailHash = '';
+
+				if (email && secret) {
+					emailHash = HmacSHA256(email, Hex.parse(secret)).toString(Hex);
+				}
+
 				window.pylon = {
 					chat_settings: {
 						app_id: process.env.PYLON_APP_ID,
 						email: user.email,
 						name: user.displayName || user.email,
+						email_hash: emailHash,
 					},
 				};
 			}
