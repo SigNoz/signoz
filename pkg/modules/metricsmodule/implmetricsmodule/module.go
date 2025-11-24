@@ -51,7 +51,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 		return nil, err
 	}
 
-	_, _, filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+	filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 		return nil, err
 	}
 
-	_, _, filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+	filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
@@ -463,13 +463,13 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	return nil
 }
 
-func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (string, []any, *sqlbuilder.WhereClause, error) {
+func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := ""
 	if filter != nil {
 		expression = strings.TrimSpace(filter.Expression)
 	}
 	if expression == "" {
-		return defaultFilterConditionTrue, nil, nil, nil
+		return nil, nil
 	}
 
 	// TODO(nikhilmantri0902, srikanthccv): if this is the right way of dealing with  whereClauseSelectors
@@ -485,7 +485,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 
 	keys, _, err := m.telemetryMetadataStore.GetKeysMulti(ctx, whereClauseSelectors)
 	if err != nil {
-		return "", nil, nil, err
+		return nil, err
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
@@ -502,20 +502,14 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 
 	whereClause, err := querybuilder.PrepareWhereClause(expression, opts, startNs, endNs)
 	if err != nil {
-		return "", nil, nil, err
+		return nil, err
 	}
 
 	if whereClause == nil || whereClause.WhereClause == nil {
-		return defaultFilterConditionTrue, nil, nil, nil
+		return nil, nil
 	}
 
-	whereClauseString, args := whereClause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
-	// Remove "WHERE" (case sensitive) from the start of sql string, if present
-	whereClauseString = strings.TrimSpace(whereClauseString)
-	whereClauseString = strings.TrimPrefix(whereClauseString, sqlKeyWordWhere)
-	whereClauseString = strings.TrimSpace(whereClauseString)
-
-	return whereClauseString, args, whereClause.WhereClause, nil
+	return whereClause.WhereClause, nil
 }
 
 func (m *module) fetchMetricsStatsWithSamples(
