@@ -5,56 +5,40 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-// helper struct just for the implementation way we chose
-type orderConfig struct {
-	sqlColumn      string
-	direction      string
-	orderBySamples bool
+func generateMetricMetadataCacheKey(metricName string) string {
+	return fmt.Sprintf("metrics_metadata:%s", metricName)
 }
 
-func resolveOrderBy(order *qbtypes.OrderBy) (orderConfig, error) {
-	// default orderBy
-	cfg := orderConfig{
-		sqlColumn:      metrictypes.OrderByTimeSeries.StringValue(),
-		direction:      strings.ToUpper(qbtypes.OrderDirectionDesc.StringValue()),
-		orderBySamples: false,
-	}
+func resolveOrderBy(order *qbtypes.OrderBy) (string, string, error) {
 
 	if order == nil {
-		return cfg, nil
+		return sqlColumnTimeSeries, qbtypes.OrderDirectionDesc.StringValue(), nil
 	}
 
-	// Extract column name from OrderByKey (which wraps TelemetryFieldKey)
-	columnName := strings.ToLower(order.Key.Name)
-
-	switch columnName {
+	var columnName string
+	switch strings.ToLower(order.Key.Name) {
 	case metrictypes.OrderByTimeSeries.StringValue():
-		cfg.sqlColumn = metrictypes.OrderByTimeSeries.StringValue()
+		columnName = sqlColumnTimeSeries
 	case metrictypes.OrderBySamples.StringValue():
-		cfg.orderBySamples = true
-		cfg.sqlColumn = metrictypes.OrderByTimeSeries.StringValue() // defer true ordering until samples computed
+		columnName = sqlColumnSamples
 	default:
-		return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order column %q", columnName)
+		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order column %q", columnName)
 	}
 
 	// Extract direction from OrderDirection and convert to SQL format (uppercase)
-	direction := strings.ToUpper(order.Direction.StringValue())
+	var direction qbtypes.OrderDirection
+	var ok bool
 	// Validate direction using OrderDirectionMap
-	if _, ok := qbtypes.OrderDirectionMap[strings.ToLower(direction)]; !ok {
-		return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order direction %q, should be one of %s, %s", direction, qbtypes.OrderDirectionAsc, qbtypes.OrderDirectionDesc)
+	if direction, ok = qbtypes.OrderDirectionMap[strings.ToLower(order.Direction.StringValue())]; !ok {
+		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order direction %q, should be one of %s, %s", direction, qbtypes.OrderDirectionAsc, qbtypes.OrderDirectionDesc)
 	}
-	cfg.direction = direction
 
-	return cfg, nil
-}
-
-// generateMetricMetadataCacheKey generates a cache key for metric metadata
-func generateMetricMetadataCacheKey(metricName string) string {
-	return fmt.Sprintf("metrics_metadata:%s", metricName)
+	return columnName, direction.StringValue(), nil
 }
 
 // TODO(nikhilmantri0902, srikanthccv): These constants need to be mapped to db constants like following.
@@ -120,5 +104,16 @@ func convertDBFormatToTemporality(dbTemporality string) metrictypes.Temporality 
 		return metrictypes.Unspecified
 	default:
 		return metrictypes.Unknown
+	}
+}
+
+// enrichStatsWithMetadata enriches metric stats with metadata from the provided metadata map.
+func enrichStatsWithMetadata(metricStats []metricsmoduletypes.Stat, metadata map[string]*metricsmoduletypes.MetricMetadata) {
+	for i := range metricStats {
+		if meta, ok := metadata[metricStats[i].MetricName]; ok {
+			metricStats[i].Description = meta.Description
+			metricStats[i].MetricType = meta.MetricType
+			metricStats[i].MetricUnit = meta.MetricUnit
+		}
 	}
 }

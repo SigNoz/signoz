@@ -5,5 +5,7 @@ package implmetricsmodule
 const defaultFilterConditionTrue = "true"
 
 const (
-	sqlKeyWordWhere = "WHERE"
+	sqlKeyWordWhere     = "WHERE"
+	sqlColumnTimeSeries = "timeseries"
+	sqlColumnSamples    = "samples"
 )

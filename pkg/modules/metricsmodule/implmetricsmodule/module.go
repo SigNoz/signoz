@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
-	"sort"
 	"strings"
 	"time"
 
@@ -65,44 +64,49 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
 	}
 
-	orderCfg, err := resolveOrderBy(req.OrderBy)
-	if err != nil {
-		return nil, err
-	}
-
 	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
 
-	metricNames, metricStats, total, err := m.fetchTimeseriesCounts(ctx, req, filterSQL, filterArgs, false, orderCfg.sqlColumn, orderCfg.direction)
+	// Single query to get stats with samples, timeseries counts in required sorting order
+	metricStats, total, err := m.fetchMetricsStatsWithSamples(
+		ctx,
+		req,
+		filterSQL,
+		filterArgs,
+		false,
+		req.OrderBy,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := &metricsmoduletypes.StatsResponse{
+	if len(metricStats) == 0 {
+		return &metricsmoduletypes.StatsResponse{
+			Metrics: []metricsmoduletypes.Stat{},
+			Total:   0,
+		}, nil
+	}
+
+	// Get metadata for all metrics
+	metricNames := make([]string, len(metricStats))
+	for i := range metricStats {
+		metricNames[i] = metricStats[i].MetricName
+	}
+
+	metadata, err := m.GetMetricsMetadataMulti(ctx, orgID, metricNames)
+	if err != nil {
+		return nil, err
+	}
+
+	// Enrich stats with metadata
+	enrichStatsWithMetadata(metricStats, metadata)
+
+	return &metricsmoduletypes.StatsResponse{
 		Metrics: metricStats,
-	}
-
-	if len(metricNames) == 0 {
-		resp.Total = 0
-		return resp, nil
-	}
-
-	sampleMap, err := m.fetchSampleCounts(ctx, metricNames, req, orderCfg.orderBySamples, orderCfg.direction, filterSQL, filterArgs, false)
-	if err != nil {
-		return nil, err
-	}
-
-	updatedMeta, err := m.GetUpdatedMetricsMetadata(ctx, orgID, metricNames)
-	if err != nil {
-		return nil, err
-	}
-
-	m.postProcessStatsResp(resp, updatedMeta, sampleMap, orderCfg.orderBySamples, orderCfg.direction)
-
-	resp.Total = total
-	return resp, nil
+		Total:   total,
+	}, nil
 }
 
 // GetTreemap will return metrics treemap information once implemented.
@@ -147,7 +151,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 	return resp, nil
 }
 
-func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
+func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
 	if len(metricNames) == 0 {
 		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
 	}
@@ -175,53 +179,121 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 		return metadata, nil
 	}
 
-	// Query database for cache misses
-	placeholders := strings.TrimRight(strings.Repeat("?,", len(cacheMisses)), ",")
-	query := fmt.Sprintf(`
+	// Query updated_metadata table for cache misses
+	foundInUpdatedMetadata := make(map[string]bool)
+	if len(cacheMisses) > 0 {
+		placeholders := strings.TrimRight(strings.Repeat("?,", len(cacheMisses)), ",")
+		query := fmt.Sprintf(`
 			SELECT metric_name, description, type, unit, temporality, is_monotonic
-				FROM %s.%s 
-				WHERE metric_name IN (%s)`,
-		telemetrymetrics.DBName,
-		telemetrymetrics.UpdatedMetadataTableName,
-		placeholders)
+			FROM %s.%s 
+			WHERE metric_name IN (%s)`,
+			telemetrymetrics.DBName,
+			telemetrymetrics.UpdatedMetadataTableName,
+			placeholders)
 
-	args := make([]any, len(cacheMisses))
-	for i := range cacheMisses {
-		args[i] = cacheMisses[i]
+		args := make([]any, len(cacheMisses))
+		for i := range cacheMisses {
+			args[i] = cacheMisses[i]
+		}
+
+		db := m.telemetryStore.ClickhouseDB()
+		rows, err := db.Query(ctx, query, args...)
+		if err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var (
+				metricMetadata metricsmoduletypes.MetricMetadata
+				metricName     string
+				dbMetricType   string
+				dbTemporality  string
+			)
+
+			if err := rows.Scan(&metricName, &metricMetadata.Description, &dbMetricType, &metricMetadata.MetricUnit, &dbTemporality, &metricMetadata.IsMonotonic); err != nil {
+				return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
+			}
+
+			metricMetadata.MetricType = convertDBFormatToMetricType(dbMetricType)
+			metricMetadata.Temporality = convertDBFormatToTemporality(dbTemporality)
+			metadata[metricName] = &metricMetadata
+			foundInUpdatedMetadata[metricName] = true
+
+			// Set in cache after successful DB fetch
+			cacheKey := generateMetricMetadataCacheKey(metricName)
+			if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
+				m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metricName", metricName, "error", err)
+			}
+		}
+
+		if err := rows.Err(); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating updated metrics metadata rows")
+		}
 	}
 
-	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
+	// Query timeseries table for metrics not found in updated_metadata
+	timeseriesMisses := make([]string, 0)
+	for _, metricName := range cacheMisses {
+		if !foundInUpdatedMetadata[metricName] {
+			timeseriesMisses = append(timeseriesMisses, metricName)
+		}
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var (
-			metricMetadata metricsmoduletypes.MetricMetadata
-			metricName     string
-			dbMetricType   string
-			dbTemporality  string
+	if len(timeseriesMisses) > 0 {
+		placeholders := strings.TrimRight(strings.Repeat("?,", len(timeseriesMisses)), ",")
+		query := fmt.Sprintf(`
+			SELECT 
+				metric_name,
+				ANY_VALUE(description) AS description,
+				ANY_VALUE(type) AS metric_type,
+				ANY_VALUE(unit) AS metric_unit
+			FROM %s.%s
+			WHERE metric_name IN (%s)
+			GROUP BY metric_name`,
+			telemetrymetrics.DBName,
+			telemetrymetrics.TimeseriesV4TableName,
+			placeholders,
 		)
 
-		if err := rows.Scan(&metricName, &metricMetadata.Description, &dbMetricType, &metricMetadata.MetricUnit, &dbTemporality, &metricMetadata.IsMonotonic); err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
+		args := make([]any, len(timeseriesMisses))
+		for i := range timeseriesMisses {
+			args[i] = timeseriesMisses[i]
 		}
 
-		metricMetadata.MetricType = convertDBFormatToMetricType(dbMetricType)
-		metricMetadata.Temporality = convertDBFormatToTemporality(dbTemporality)
-		metadata[metricName] = &metricMetadata
-
-		// Set in cache after successful DB fetch
-		cacheKey := generateMetricMetadataCacheKey(metricName)
-		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
-			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metricName", metricName, "error", err)
+		db := m.telemetryStore.ClickhouseDB()
+		rows, err := db.Query(ctx, query, args...)
+		if err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch metrics metadata from timeseries table")
 		}
-	}
+		defer rows.Close()
 
-	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating updated metrics metadata rows")
+		for rows.Next() {
+			var (
+				metricMetadata metricsmoduletypes.MetricMetadata
+				metricName     string
+				dbMetricType   string
+			)
+
+			if err := rows.Scan(&metricName, &metricMetadata.Description, &dbMetricType, &metricMetadata.MetricUnit); err != nil {
+				return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan timeseries metadata")
+			}
+
+			metricMetadata.MetricType = convertDBFormatToMetricType(dbMetricType)
+			metricMetadata.Temporality = metrictypes.Unspecified // Default
+			metricMetadata.IsMonotonic = false                   // Default
+			metadata[metricName] = &metricMetadata
+
+			// Set in cache after successful DB fetch
+			cacheKey := generateMetricMetadataCacheKey(metricName)
+			if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
+				m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metricName", metricName, "error", err)
+			}
+		}
+
+		if err := rows.Err(); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating timeseries metadata rows")
+		}
 	}
 
 	return metadata, nil
@@ -467,234 +539,130 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 	return whereClauseString, args, nil
 }
 
-func (m *module) fetchTimeseriesCounts(
+func (m *module) fetchMetricsStatsWithSamples(
 	ctx context.Context,
 	req *metricsmoduletypes.StatsRequest,
 	filterSQL string,
 	filterArgs []any,
 	normalized bool,
-	orderSQLColumn string,
-	orderDirection string,
-) ([]string, []metricsmoduletypes.Stat, uint64, error) {
-	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
-	statsQuery := fmt.Sprintf(`
-		SELECT
-			t.metric_name AS metric_name,
-			ANY_VALUE(t.description) AS description,
-			ANY_VALUE(t.type) AS metric_type,
-			ANY_VALUE(t.unit) AS metric_unit,
-			uniq(t.fingerprint) AS timeseries,
-			max(t.unix_milli) AS lastReceived,
-			uniq(metric_name) OVER() AS total
-		FROM %s.%s AS t
-		WHERE unix_milli BETWEEN ? AND ?
-		AND NOT startsWith(metric_name, 'signoz')
-		AND __normalized = ?
-		AND (%s)
-		GROUP BY t.metric_name
-		ORDER BY %s %s, metric_name ASC
-		LIMIT ? OFFSET ?`,
-		telemetrymetrics.DBName, tsTable,
-		filterSQL,
-		orderSQLColumn, orderDirection,
-	)
+	orderBy *qbtypes.OrderBy,
+) ([]metricsmoduletypes.Stat, uint64, error) {
 
-	args := make([]any, 0, 4+len(filterArgs))
-	args = append(args, start, end, normalized)
-	args = append(args, filterArgs...)
-	args = append(args, req.Limit, req.Offset)
-
-	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, statsQuery, args...)
-	if err != nil {
-		return nil, nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute metrics stats query")
-	}
-	defer rows.Close()
-
-	metricStats := make([]metricsmoduletypes.Stat, 0)
-	metricNames := make([]string, 0)
-	var total uint64
-
-	for rows.Next() {
-		var (
-			metricStat   metricsmoduletypes.Stat
-			rowTotal     uint64
-			dbMetricType string
-		)
-		if err := rows.Scan(&metricStat.MetricName, &metricStat.Description, &dbMetricType, &metricStat.MetricUnit, &metricStat.TimeSeries, &metricStat.LastReceived, &rowTotal); err != nil {
-			return nil, nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metrics stats row")
-		}
-		metricStat.MetricType = convertDBFormatToMetricType(dbMetricType)
-		metricStats = append(metricStats, metricStat)
-		metricNames = append(metricNames, metricStat.MetricName)
-		total = rowTotal
-	}
-	if err := rows.Err(); err != nil {
-		return nil, nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metrics stats rows")
-	}
-
-	return metricNames, metricStats, total, nil
-}
-
-func (m *module) fetchSampleCounts(
-	ctx context.Context,
-	metricNames []string,
-	req *metricsmoduletypes.StatsRequest,
-	orderBySamples bool,
-	orderDirection string,
-	filterSQL string,
-	filterArgs []any,
-	normalized bool,
-) (map[string]uint64, error) {
-
-	start, end, _, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
+	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
 	samplesTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
 
-	metricPlaceholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
-	var (
-		queryBuilder strings.Builder
-		args         []any
+	var queryBuilder strings.Builder
+	var args []any
+
+	// Build samples subquery
+	samplesSubquery := fmt.Sprintf(`
+		SELECT 
+			dm.metric_name,
+			%s AS samples
+		FROM %s.%s AS dm
+		WHERE dm.unix_milli BETWEEN ? AND ?
+		AND NOT startsWith(dm.metric_name, 'signoz')`,
+		countExp,
+		telemetrymetrics.DBName, samplesTable,
 	)
 
+	// Add fingerprint filtering if filterSQL is not default
 	if filterSQL != defaultFilterConditionTrue {
-		queryBuilder.WriteString(fmt.Sprintf(
-			`SELECT 
-				s.samples,
-				s.metric_name
-			FROM (
-				SELECT 
-					dm.metric_name,
-					%s AS samples
-				FROM %s.%s AS dm
-				WHERE dm.metric_name IN (%s)
-				AND dm.fingerprint IN (
-					SELECT fingerprint
-					FROM %s.%s
-					WHERE metric_name IN (%s)
-					AND __normalized = ?
-					AND unix_milli BETWEEN ? AND ?
-					AND (%s)
-					GROUP BY fingerprint
-				)
-				AND dm.unix_milli BETWEEN ? AND ?
-				GROUP BY dm.metric_name
-			) AS s`,
-			countExp,
-			telemetrymetrics.DBName, samplesTable,
-			metricPlaceholders,
-			telemetrymetrics.DBName, localTsTable,
-			metricPlaceholders,
-			filterSQL,
-		))
-		for _, name := range metricNames {
-			args = append(args, name)
-		}
-		for _, name := range metricNames {
-			args = append(args, name)
-		}
-		args = append(args, normalized)
-		args = append(args, start, end)
+		samplesSubquery += fmt.Sprintf(`
+		AND dm.fingerprint IN (
+			SELECT fingerprint
+			FROM %s.%s
+			WHERE unix_milli BETWEEN ? AND ?
+			AND NOT startsWith(metric_name, 'signoz')
+			AND __normalized = ?
+			AND (%s)
+			GROUP BY fingerprint
+		)`,
+			telemetrymetrics.DBName, localTsTable, filterSQL,
+		)
+	}
+
+	samplesSubquery += `
+		GROUP BY dm.metric_name`
+
+	// Build main query with FULL OUTER JOIN
+	queryBuilder.WriteString(fmt.Sprintf(`
+		SELECT 
+			COALESCE(ts.metric_name, s.metric_name) AS metric_name,
+			COALESCE(ts.timeseries, 0) AS timeseries,
+			COALESCE(s.samples, 0) AS samples,
+			COUNT(*) OVER() AS total
+		FROM (
+			SELECT 
+				metric_name,
+				uniq(fingerprint) AS timeseries
+			FROM %s.%s
+			WHERE unix_milli BETWEEN ? AND ?
+			AND NOT startsWith(metric_name, 'signoz')
+			AND __normalized = ?
+			AND (%s)
+			GROUP BY metric_name
+		) AS ts
+		FULL OUTER JOIN (
+			%s
+		) AS s ON ts.metric_name = s.metric_name
+		WHERE (ts.timeseries > 0 OR s.samples > 0)`,
+		telemetrymetrics.DBName, tsTable, filterSQL, samplesSubquery,
+	))
+
+	// Build args in correct order: timeseries subquery first, then samples subquery
+	// Timeseries subquery args
+	args = append(args, start, end, normalized)
+	args = append(args, filterArgs...)
+
+	// Samples subquery args
+	args = append(args, req.Start, req.End)
+	if filterSQL != defaultFilterConditionTrue {
+		args = append(args, start, end, normalized)
 		args = append(args, filterArgs...)
-		args = append(args, req.Start, req.End)
-	} else {
-		queryBuilder.WriteString(fmt.Sprintf(
-			`SELECT 
-				s.samples,
-				s.metric_name
-			FROM (
-				SELECT 
-					metric_name,
-					%s AS samples
-				FROM %s.%s
-				WHERE metric_name IN (%s)
-				AND unix_milli BETWEEN ? AND ?
-				GROUP BY metric_name
-			) AS s`,
-			countExp,
-			telemetrymetrics.DBName, samplesTable,
-			metricPlaceholders,
-		))
-		for _, name := range metricNames {
-			args = append(args, name)
-		}
-		args = append(args, req.Start, req.End)
 	}
 
-	if orderBySamples {
-		queryBuilder.WriteString(fmt.Sprintf(" ORDER BY s.samples %s", orderDirection))
+	orderByColumn, orderDirection, err := resolveOrderBy(orderBy)
+	if err != nil {
+		return nil, 0, err
 	}
 
-	queryBuilder.WriteString(" LIMIT ?;")
-	args = append(args, req.Limit)
+	// Add ORDER BY clause
+	queryBuilder.WriteString(fmt.Sprintf(`
+		ORDER BY %s %s, metric_name ASC
+		LIMIT ? OFFSET ?`,
+		orderByColumn, orderDirection,
+	))
+
+	args = append(args, req.Limit, req.Offset)
 
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(ctx, queryBuilder.String(), args...)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute metrics samples query")
+		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute metrics stats with samples query")
 	}
 	defer rows.Close()
 
-	sampleMap := make(map[string]uint64, len(metricNames))
+	metricStats := make([]metricsmoduletypes.Stat, 0)
+	var total uint64
+
 	for rows.Next() {
 		var (
-			count      uint64
-			metricName string
+			metricStat metricsmoduletypes.Stat
+			rowTotal   uint64
 		)
-		if err := rows.Scan(&count, &metricName); err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metrics samples row")
+		if err := rows.Scan(&metricStat.MetricName, &metricStat.TimeSeries, &metricStat.Samples, &rowTotal); err != nil {
+			return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metrics stats row")
 		}
-		sampleMap[metricName] = count
+		metricStats = append(metricStats, metricStat)
+		total = rowTotal
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metrics samples rows")
+		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metrics stats rows")
 	}
 
-	return sampleMap, nil
-}
-
-func (m *module) postProcessStatsResp(resp *metricsmoduletypes.StatsResponse, updatedMeta map[string]*metricsmoduletypes.MetricMetadata, samplesCountMap map[string]uint64, orderBySamples bool, orderByDirection string) {
-	if resp == nil {
-		return
-	}
-	filtered := make([]metricsmoduletypes.Stat, 0, len(resp.Metrics))
-	for i := range resp.Metrics {
-		stat := resp.Metrics[i]
-		if updated, ok := updatedMeta[stat.MetricName]; ok {
-			if !updated.MetricType.IsZero() {
-				stat.MetricType = updated.MetricType
-			}
-			if updated.MetricUnit != "" {
-				stat.MetricUnit = updated.MetricUnit
-			}
-			if updated.Description != "" {
-				stat.Description = updated.Description
-			}
-		}
-		if samples, ok := samplesCountMap[stat.MetricName]; ok {
-			stat.Samples = samples
-			filtered = append(filtered, stat)
-		}
-	}
-	resp.Metrics = filtered
-
-	if orderBySamples {
-		sort.Slice(resp.Metrics, func(i, j int) bool {
-			// orderByDirection is in SQL format (uppercase: "ASC" or "DESC")
-			if orderByDirection == strings.ToUpper(qbtypes.OrderDirectionAsc.StringValue()) {
-				if resp.Metrics[i].Samples != resp.Metrics[j].Samples {
-					return resp.Metrics[i].Samples < resp.Metrics[j].Samples
-				}
-				// Tiebreaker: sort by metric_name lexicographically
-				return resp.Metrics[i].MetricName < resp.Metrics[j].MetricName
-			}
-			if resp.Metrics[i].Samples != resp.Metrics[j].Samples {
-				return resp.Metrics[i].Samples > resp.Metrics[j].Samples
-			}
-			// Tiebreaker: sort by metric_name lexicographically
-			return resp.Metrics[i].MetricName < resp.Metrics[j].MetricName
-		})
-	}
+	return metricStats, total, nil
 }
 
 func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterSQL string, filterArgs []any) ([]metricsmoduletypes.TreemapEntry, error) {
