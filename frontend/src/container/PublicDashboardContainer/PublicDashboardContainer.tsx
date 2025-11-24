@@ -1,86 +1,114 @@
 import './PublicDashboardContainer.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Typography } from 'antd';
+import { Select, Typography } from 'antd';
 import cx from 'classnames';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { Card, CardContainer } from 'container/GridCardLayout/styles';
 import { WidgetRowHeader } from 'container/GridCardLayout/WidgetRow';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import {
-	CustomTimeType,
-	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+import { TIME_RANGE_PRESETS_OPTIONS } from 'container/NewDashboard/DashboardSettings/PublicDashboard';
 import dayjs from 'dayjs';
 import { useGetPublicDashboardData } from 'hooks/dashboard/useGetPublicDashboardData';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import RGL, { Layout, WidthProvider } from 'react-grid-layout';
 import { useParams } from 'react-router-dom';
-import { Widgets } from 'types/api/dashboard/getAll';
 
 import Panel from './Panel';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);
+
+const CUSTOM_TIME_REGEX = /^(\d+)([mhdw])$/;
+
+const getStartTimeAndEndTimeFromTimeRange = (
+	timeRange: string,
+): { startTime: number; endTime: number } => {
+	const isValidFormat = CUSTOM_TIME_REGEX.test(timeRange);
+
+	if (isValidFormat) {
+		const match = timeRange.match(CUSTOM_TIME_REGEX) as RegExpMatchArray;
+
+		const timeValue = parseInt(match[1] as string, 10);
+		const timeUnit = match[2] as string;
+
+		switch (timeUnit) {
+			case 'm':
+				return {
+					startTime: dayjs().subtract(timeValue, 'minutes').unix(),
+					endTime: dayjs().unix(),
+				};
+			case 'h':
+				return {
+					startTime: dayjs().subtract(timeValue, 'hours').unix(),
+					endTime: dayjs().unix(),
+				};
+			case 'd':
+				return {
+					startTime: dayjs().subtract(timeValue, 'days').unix(),
+					endTime: dayjs().unix(),
+				};
+			case 'w':
+				return {
+					startTime: dayjs().subtract(timeValue, 'weeks').unix(),
+					endTime: dayjs().unix(),
+				};
+			default:
+				return { startTime: dayjs().unix(), endTime: dayjs().unix() };
+		}
+	}
+
+	return {
+		startTime: dayjs().subtract(30, 'minutes').unix(),
+		endTime: dayjs().unix(),
+	};
+};
 
 function PublicDashboardContainer(): JSX.Element {
 	// read the dashboard id from the url
 	const { dashboardId } = useParams<{ dashboardId: string }>();
 	const isDarkMode = useIsDarkMode();
 
-	console.log('dashboardId', dashboardId);
+	const { data: publicDashboardData } = useGetPublicDashboardData(
+		dashboardId || '',
+	);
 
-	const {
-		data: publicDashboardData,
-		isLoading: isLoadingPublicDashboardData,
-	} = useGetPublicDashboardData(dashboardId || '');
-
-	const { dashboard } = publicDashboardData?.data || {};
+	const { dashboard, publicDashboard } = publicDashboardData?.data || {};
 	const { widgets } = dashboard?.data || {};
-	const defaultTimeRange = 30 as number;
 
-	// Memoize startTime and endTime to prevent unnecessary re-renders
-	const { startTime, endTime } = useMemo(() => {
-		const start = dayjs().subtract(defaultTimeRange, 'minutes').unix();
-		const end = dayjs().unix();
-		return { startTime: start, endTime: end };
-	}, [defaultTimeRange]);
+	const [selectedTimeRangeLabel, setSelectedTimeRangeLabel] = useState<string>(
+		publicDashboard?.defaultTimeRange || '30m',
+	);
 
-	console.log('startTime', startTime);
-	console.log('endTime', endTime);
+	const [selectedTimeRange, setSelectedTimeRange] = useState<{
+		startTime: number;
+		endTime: number;
+	}>(
+		getStartTimeAndEndTimeFromTimeRange(
+			publicDashboard?.defaultTimeRange || '30m',
+		),
+	);
+
+	const isTimeRangeEnabled = publicDashboard?.timeRangeEnabled || false;
 
 	// Memoize dashboardLayout to prevent array recreation on every render
 	const dashboardLayout = useMemo(() => dashboard?.data?.layout || [], [
 		dashboard?.data?.layout,
 	]);
 
-	// Memoize widgets map for O(1) lookup and stable references
-	const widgetsMap = useMemo(() => {
-		if (!widgets) return new Map<string, Widgets>();
-		return new Map(widgets.map((widget) => [widget.id, widget]));
-	}, [widgets]);
-
 	const [currentPanelMap, setCurrentPanelMap] = useState<
 		Record<string, { widgets: Layout[]; collapsed: boolean }>
 	>({});
-
-	console.log('publicDashboardData', publicDashboardData);
-	console.log('isLoadingPublicDashboardData', isLoadingPublicDashboardData);
-
-	const handleRowCollapse = useCallback((id: string): void => {
-		console.log('handleRowCollapse id', id);
-	}, []);
 
 	useEffect(() => {
 		setCurrentPanelMap(dashboard?.data?.panelMap || {});
 	}, [dashboard?.data?.panelMap]);
 
 	const handleTimeRangeChange = useCallback(
-		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
-			console.log('handleTimeRangeChange interval', interval);
-			console.log('handleTimeRangeChange dateTimeRange', dateTimeRange);
+		(selectedTimeRange: string): void => {
+			setSelectedTimeRangeLabel(selectedTimeRange);
+			setSelectedTimeRange(getStartTimeAndEndTimeFromTimeRange(selectedTimeRange));
 		},
 		[],
 	);
@@ -98,19 +126,27 @@ function PublicDashboardContainer(): JSX.Element {
 
 						<Typography className="brand-logo-name">SigNoz</Typography>
 					</div>
-				</div>
 
-				<div className="public-dashboard-header-right">
-					<div className="datetime-section">
-						<DateTimeSelectionV2
-							showAutoRefresh
-							showRefreshText={false}
-							hideShareModal
-							defaultRelativeTime="30m"
-							onTimeChange={handleTimeRangeChange}
-						/>
+					<div className="public-dashboard-header-title">
+						<Typography.Text className="public-dashboard-header-title-text">
+							{dashboard?.data?.title}
+						</Typography.Text>
 					</div>
 				</div>
+
+				{isTimeRangeEnabled && (
+					<div className="public-dashboard-header-right">
+						<div className="datetime-section">
+							<Select
+								placeholder="Select default time range"
+								options={TIME_RANGE_PRESETS_OPTIONS}
+								value={selectedTimeRangeLabel}
+								onChange={handleTimeRangeChange}
+								className="time-range-select-dropdown"
+							/>
+						</div>
+					</div>
+				)}
 			</div>
 
 			<div className="public-dashboard-content fullscreen-grid-container">
@@ -127,13 +163,10 @@ function PublicDashboardContainer(): JSX.Element {
 					layout={dashboardLayout}
 					style={{ backgroundColor: isDarkMode ? '' : themeColors.snowWhite }}
 				>
-					{dashboardLayout.map((layout, index) => {
-						const { i: id } = layout;
-						const currentWidget = widgetsMap.get(id);
-
-						if (currentWidget?.panelTypes === PANEL_GROUP_TYPES.ROW) {
-							const rowWidgetProperties = currentPanelMap[id] || {};
-							let { title } = currentWidget;
+					{widgets?.map((widget, index) => {
+						if (widget?.panelTypes === PANEL_GROUP_TYPES.ROW) {
+							const rowWidgetProperties = currentPanelMap[widget?.id] || {};
+							let { title } = widget;
 							if (rowWidgetProperties.collapsed) {
 								const widgetCount = rowWidgetProperties.widgets?.length || 0;
 								const collapsedText = `(${widgetCount} widget${
@@ -146,8 +179,8 @@ function PublicDashboardContainer(): JSX.Element {
 								<CardContainer
 									isDarkMode={isDarkMode}
 									className="row-card"
-									key={id}
-									data-grid={JSON.stringify(currentWidget)}
+									key={widget?.id}
+									data-grid={JSON.stringify(widget)}
 								>
 									<div className={cx('row-panel')}>
 										<div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -160,22 +193,9 @@ function PublicDashboardContainer(): JSX.Element {
 												/>
 											)}
 											<Typography.Text className="section-title">{title}</Typography.Text>
-											{rowWidgetProperties.collapsed ? (
-												<ChevronDown
-													size={14}
-													onClick={(): void => handleRowCollapse(id)}
-													className="row-icon"
-												/>
-											) : (
-												<ChevronUp
-													size={14}
-													onClick={(): void => handleRowCollapse(id)}
-													className="row-icon"
-												/>
-											)}
 										</div>
 										<WidgetRowHeader
-											id={id}
+											id={widget?.id}
 											rowWidgetProperties={rowWidgetProperties}
 											editWidget={false}
 											deleteWidget={false}
@@ -191,21 +211,20 @@ function PublicDashboardContainer(): JSX.Element {
 						return (
 							<CardContainer
 								isDarkMode={isDarkMode}
-								key={id}
-								data-grid={JSON.stringify(currentWidget)}
+								key={widget?.id}
+								data-grid={JSON.stringify(widget)}
 							>
 								<Card
 									className="grid-item"
 									isDarkMode={isDarkMode}
-									$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
+									$panelType={widget?.panelTypes || PANEL_TYPES.TIME_SERIES}
 								>
 									<Panel
-										key={id}
 										dashboardId={dashboardId}
-										widget={(currentWidget as Widgets) || ({ id, query: {} } as Widgets)}
+										widget={widget}
 										index={index}
-										startTime={startTime}
-										endTime={endTime}
+										startTime={selectedTimeRange.startTime}
+										endTime={selectedTimeRange.endTime}
 									/>
 								</Card>
 							</CardContainer>

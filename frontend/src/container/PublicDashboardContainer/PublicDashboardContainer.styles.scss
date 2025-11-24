@@ -18,12 +18,50 @@
 			display: flex;
 			align-items: center;
 			gap: 16px;
+
+			width: 50%;
+
+			.brand-logo {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+
+				width: 100px;
+			}
+
+			.public-dashboard-header-title {
+				flex: 1;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				width: calc(100% - 100px);
+
+				.public-dashboard-header-title-text {
+					font-family: 'Work Sans', sans-serif;
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 500;
+					line-height: 18px;
+
+					// ellipsis text
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+					max-width: 100%;
+				}
+			}
 		}
 
 		.public-dashboard-header-right {
 			display: flex;
 			align-items: center;
 			gap: 16px;
+
+			.datetime-section {
+				.time-range-select-dropdown {
+					width: 200px;
+				}
+			}
 		}
 
 		.brand-logo {

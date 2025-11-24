@@ -24,6 +24,11 @@
 
 			.default-time-range-select-label {
 				margin-bottom: 4px;
+
+				.default-time-range-select-label-text {
+					font-size: 12px;
+					font-weight: 500;
+				}
 			}
 
 			.ant-select-selector {
@@ -49,8 +54,13 @@
 		}
 
 		.public-dashboard-url {
-			.url-label {
+			.url-label-container {
 				margin-bottom: 4px;
+
+				.url-label {
+					font-size: 12px;
+					font-weight: 500;
+				}
 			}
 
 			.url-container {
@@ -82,8 +92,9 @@
 	}
 
 	.public-dashboard-setting-actions {
+		margin-top: 32px;
 		display: flex;
 		gap: 8px;
-		margin-top: 16px;
+		justify-content: flex-end;
 	}
 }

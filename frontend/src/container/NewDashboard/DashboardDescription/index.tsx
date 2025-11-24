@@ -130,6 +130,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		false,
 	);
 
+	const [isPublicDashboard, setIsPublicDashboard] = useState<boolean>(false);
+
 	let isAuthor = false;
 
 	if (selectedDashboard && user && user.email) {
@@ -299,11 +301,43 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		safeNavigate(generatedUrl);
 	}
 
-	const { data: publicDashboardResponse } = useGetPublicDashboardMeta(
-		selectedDashboard?.id || '',
-	);
+	const {
+		data: publicDashboardResponse,
+		refetch: refetchPublicDashboardData,
+		isLoading: isLoadingPublicDashboardData,
+		isFetching: isFetchingPublicDashboardData,
+		error: errorPublicDashboardData,
+		isError: isErrorPublicDashboardData,
+	} = useGetPublicDashboardMeta(selectedDashboard?.id || '');
 
-	const isPublicDashboard = !!publicDashboardResponse?.data?.publicPath;
+	const handleCloseSettingsDrawer = (): void => {
+		// refresh the public dashboard data
+		refetchPublicDashboardData();
+	};
+
+	useEffect(() => {
+		if (!isLoadingPublicDashboardData && !isFetchingPublicDashboardData) {
+			if (isErrorPublicDashboardData) {
+				const errorDetails = errorPublicDashboardData?.getErrorDetails();
+
+				if (errorDetails?.error?.code === 'public_dashboard_not_found') {
+					console.log('NOT PUBLIC');
+					setIsPublicDashboard(false);
+				}
+			} else {
+				const publicDashboardData = publicDashboardResponse?.data;
+				if (publicDashboardData?.publicPath) {
+					setIsPublicDashboard(true);
+				}
+			}
+		}
+	}, [
+		isLoadingPublicDashboardData,
+		isFetchingPublicDashboardData,
+		isErrorPublicDashboardData,
+		errorPublicDashboardData,
+		publicDashboardResponse?.data,
+	]);
 
 	return (
 		<Card className="dashboard-description-container">
@@ -469,7 +503,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						/>
 					</Popover>
 					{!isDashboardLocked && editDashboard && (
-						<SettingsDrawer drawerTitle="Dashboard Configuration" />
+						<SettingsDrawer
+							drawerTitle="Dashboard Configuration"
+							onClose={handleCloseSettingsDrawer}
+						/>
 					)}
 					{!isDashboardLocked && addPanelPermission && (
 						<Button

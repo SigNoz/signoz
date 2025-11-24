@@ -3,7 +3,7 @@ import EmptyWidget from 'container/GridCardLayout/EmptyWidget';
 import WidgetGraphComponent from 'container/GridCardLayout/GridCard/WidgetGraphComponent';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { useGetPublicDashboardWidgetData } from 'hooks/dashboard/useGetPublicDashboardWidgetData';
-import { memo, useCallback, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
@@ -25,12 +25,18 @@ function Panel({
 	const {
 		data: publicDashboardWidgetData,
 		isLoading: isLoadingPublicDashboardWidgetData,
+		isFetching: isFetchingPublicDashboardWidgetData,
+		refetch: refetchPublicDashboardWidgetData,
 	} = useGetPublicDashboardWidgetData(
 		dashboardId,
 		index,
 		startTime * 1000, // convert to milliseconds
 		endTime * 1000, // convert to milliseconds
 	);
+
+	useEffect(() => {
+		refetchPublicDashboardWidgetData();
+	}, [startTime, endTime, refetchPublicDashboardWidgetData]);
 
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -39,8 +45,9 @@ function Panel({
 			transformPublicDashboardDataToQueryResponse(
 				publicDashboardWidgetData,
 				isLoadingPublicDashboardWidgetData,
+				widget.query,
 			),
-		[publicDashboardWidgetData, isLoadingPublicDashboardWidgetData],
+		[publicDashboardWidgetData, isLoadingPublicDashboardWidgetData, widget.query],
 	);
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
@@ -78,7 +85,9 @@ function Panel({
 					errorMessage={undefined}
 					headerMenuList={[]}
 					isWarning={false}
-					isFetchingResponse={isLoadingPublicDashboardWidgetData}
+					isFetchingResponse={
+						isLoadingPublicDashboardWidgetData || isFetchingPublicDashboardWidgetData
+					}
 					onDragSelect={onDragSelect}
 				/>
 			)}

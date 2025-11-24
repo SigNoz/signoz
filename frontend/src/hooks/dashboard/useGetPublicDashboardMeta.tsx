@@ -15,4 +15,5 @@ export const useGetPublicDashboardMeta = (
 		},
 		queryKey: [REACT_QUERY_KEY.GET_PUBLIC_DASHBOARD_META, id],
 		enabled: !!id,
+		keepPreviousData: false,
 	});

@@ -8,14 +8,14 @@ import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
 import updatePublicDashboardAPI from 'api/dashboard/public/updatePublicDashboard';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
-import { ExternalLink, Globe, Share, Trash } from 'lucide-react';
+import { Copy, ExternalLink, Globe, Loader2, Trash } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';
 
-const TIME_RANGE_PRESETS_OPTIONS = [
+export const TIME_RANGE_PRESETS_OPTIONS = [
 	{
 		label: 'Last 5 minutes',
 		value: '5m',
@@ -75,6 +75,7 @@ function PublicDashboardSetting(): JSX.Element {
 	const {
 		data: publicDashboardResponse,
 		isLoading: isLoadingPublicDashboard,
+		isFetching: isFetchingPublicDashboard,
 		refetch: refetchPublicDashboard,
 		error: errorPublicDashboard,
 	} = useGetPublicDashboardMeta(selectedDashboard?.id || '');
@@ -137,10 +138,10 @@ function PublicDashboardSetting(): JSX.Element {
 		data: revokePublicDashboardAccessResponse,
 	} = useMutation(revokePublicDashboardAccessAPI, {
 		onSuccess: () => {
-			toast.success('Public dashboard revoked successfully');
+			toast.success('Dashboard unpublished successfully');
 		},
 		onError: () => {
-			toast.error('Failed to revoke public dashboard');
+			toast.error('Failed to unpublish dashboard');
 		},
 	});
 
@@ -195,7 +196,7 @@ function PublicDashboardSetting(): JSX.Element {
 
 		try {
 			setCopyPublicDashboardURL(publicDashboardResponse?.data?.publicPath);
-			toast.success('Copied to clipboard successfully');
+			toast.success('Copied Public Dashboard URL successfully');
 		} catch (error) {
 			console.error('Error copying public dashboard URL', error);
 		}
@@ -228,28 +229,28 @@ function PublicDashboardSetting(): JSX.Element {
 					/>
 				</div>
 
-				{timeRangeEnabled && (
-					<div className="default-time-range-select">
-						<div className="default-time-range-select-label">
-							<Typography.Text className="default-time-range-select-label-text">
-								Default time range
-							</Typography.Text>
-						</div>
-						<Select
-							placeholder="Select default time range"
-							options={TIME_RANGE_PRESETS_OPTIONS}
-							value={defaultTimeRange}
-							onChange={handleDefaultTimeRange}
-							className="default-time-range-select-dropdown"
-						/>
+				<div className="default-time-range-select">
+					<div className="default-time-range-select-label">
+						<Typography.Text className="default-time-range-select-label-text">
+							Default time range
+						</Typography.Text>
 					</div>
-				)}
+					<Select
+						placeholder="Select default time range"
+						options={TIME_RANGE_PRESETS_OPTIONS}
+						value={defaultTimeRange}
+						onChange={handleDefaultTimeRange}
+						className="default-time-range-select-dropdown"
+					/>
+				</div>
 
 				{isPublicDashboardEnabled && (
 					<div className="public-dashboard-url">
-						<Typography.Text className="url-label">
-							Public Dashboard URL
-						</Typography.Text>
+						<div className="url-label-container">
+							<Typography.Text className="url-label">
+								Public Dashboard URL
+							</Typography.Text>
+						</div>
 
 						<div className="url-container">
 							<Typography.Text className="url-text">
@@ -259,7 +260,7 @@ function PublicDashboardSetting(): JSX.Element {
 							<Button
 								type="link"
 								className="url-copy-btn periscope-btn ghost"
-								icon={<Share size={12} />}
+								icon={<Copy size={12} />}
 								onClick={handleCopyPublicDashboardURL}
 							/>
 							<Button
@@ -283,13 +284,36 @@ function PublicDashboardSetting(): JSX.Element {
 							className="create-public-dashboard-btn periscope-btn primary"
 							disabled={isLoading}
 							onClick={handleCreatePublicDashboard}
-							loading={isLoadingCreatePublicDashboard}
-							icon={<Globe size={14} />}
+							loading={
+								isLoadingCreatePublicDashboard ||
+								isFetchingPublicDashboard ||
+								isLoadingPublicDashboard
+							}
+							icon={
+								isLoadingCreatePublicDashboard ||
+								isFetchingPublicDashboard ||
+								isLoadingPublicDashboard ? (
+									<Loader2 className="animate-spin" size={14} />
+								) : (
+									<Globe size={14} />
+								)
+							}
 						>
-							Enable Public Access
+							Publish dashboard
 						</Button>
 					) : (
 						<>
+							<Button
+								type="default"
+								className="periscope-btn secondary"
+								disabled={isLoading}
+								onClick={handleRevokePublicDashboardAccess}
+								loading={isLoadingRevokePublicDashboardAccess}
+								icon={<Trash size={14} />}
+							>
+								Unpublish dashboard
+							</Button>
+
 							<Button
 								type="primary"
 								className="create-public-dashboard-btn periscope-btn primary"
@@ -298,17 +322,7 @@ function PublicDashboardSetting(): JSX.Element {
 								loading={isLoadingUpdatePublicDashboard}
 								icon={<Globe size={14} />}
 							>
-								Update Public Access
-							</Button>
-							<Button
-								type="default"
-								className="periscope-btn danger"
-								disabled={isLoading}
-								onClick={handleRevokePublicDashboardAccess}
-								loading={isLoadingRevokePublicDashboardAccess}
-								icon={<Trash size={14} />}
-							>
-								Revoke Public Access
+								Update published dashboard
 							</Button>
 						</>
 					)}

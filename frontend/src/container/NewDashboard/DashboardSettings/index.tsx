@@ -38,7 +38,7 @@ function DashboardSettingsContent({
 					icon={<Globe size={14} />}
 					className="public-dashboard-btn"
 				>
-					Public Dashboard
+					Publish
 				</Button>
 			),
 			key: 'public-dashboard',
