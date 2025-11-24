@@ -90,8 +90,12 @@ function Explorer(): JSX.Element {
 			setYAxisUnit('');
 		} else if (units.length === 1 && units[0] !== '') {
 			setYAxisUnit(units[0]);
-		} else if (areAllMetricUnitsSame && units[0] !== '') {
-			setYAxisUnit(units[0]);
+		} else if (areAllMetricUnitsSame) {
+			if (units[0] !== '') {
+				setYAxisUnit(units[0]);
+			} else {
+				setYAxisUnit('');
+			}
 		} else if (units.length > 1 && !areAllMetricUnitsSame) {
 			setYAxisUnit('');
 		}
