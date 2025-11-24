@@ -2,9 +2,9 @@ package metrictypes
 
 import (
 	"database/sql/driver"
-	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -32,7 +32,7 @@ func (t Temporality) Value() (driver.Value, error) {
 	case Unknown:
 		return "", nil
 	default:
-		return nil, fmt.Errorf("temporality: unsupported value %q", t.StringValue())
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "temporality: unsupported value %q", t.StringValue())
 	}
 }
 
@@ -49,7 +49,7 @@ func (t *Temporality) Scan(src interface{}) error {
 	case []byte:
 		val = string(v)
 	default:
-		return fmt.Errorf("temporality: cannot scan %T", src)
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "temporality: cannot scan %T", src)
 	}
 
 	switch strings.ToLower(strings.TrimSpace(val)) {
@@ -87,7 +87,7 @@ func (t Type) Value() (driver.Value, error) {
 	case UnspecifiedType:
 		return "", nil
 	default:
-		return nil, fmt.Errorf("metric type: unsupported value %q", t.StringValue())
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "metric type: unsupported value %q", t.StringValue())
 	}
 }
 
@@ -104,7 +104,7 @@ func (t *Type) Scan(src interface{}) error {
 	case []byte:
 		val = string(v)
 	default:
-		return fmt.Errorf("metric type: cannot scan %T", src)
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "metric type: cannot scan %T", src)
 	}
 
 	switch strings.ToLower(strings.ReplaceAll(strings.TrimSpace(val), "_", "")) {

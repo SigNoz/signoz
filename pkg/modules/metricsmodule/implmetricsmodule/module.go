@@ -457,7 +457,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		expression = strings.TrimSpace(filter.Expression)
 	}
 	if expression == "" {
-		return nil, nil
+		return sqlbuilder.NewWhereClause(), nil
 	}
 
 	// TODO(nikhilmantri0902, srikanthccv): if this is the right way of dealing with  whereClauseSelectors
@@ -494,7 +494,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 	}
 
 	if whereClause == nil || whereClause.WhereClause == nil {
-		return nil, nil
+		return sqlbuilder.NewWhereClause(), nil
 	}
 
 	return whereClause.WhereClause, nil
