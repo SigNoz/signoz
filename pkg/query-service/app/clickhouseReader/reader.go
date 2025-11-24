@@ -859,7 +859,7 @@ func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string,
 
 func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadataCache(ctx context.Context, orgID valuer.UUID, traceID string) (*model.GetWaterfallSpansForTraceWithMetadataCache, error) {
 	cachedTraceData := new(model.GetWaterfallSpansForTraceWithMetadataCache)
-	err := r.cache.Get(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), cachedTraceData, false)
+	err := r.cache.Get(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), cachedTraceData)
 	if err != nil {
 		zap.L().Debug("error in retrieving getWaterfallSpansForTraceWithMetadata cache", zap.Error(err), zap.String("traceID", traceID))
 		return nil, err
@@ -1069,7 +1069,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 
 func (r *ClickHouseReader) GetFlamegraphSpansForTraceCache(ctx context.Context, orgID valuer.UUID, traceID string) (*model.GetFlamegraphSpansForTraceCache, error) {
 	cachedTraceData := new(model.GetFlamegraphSpansForTraceCache)
-	err := r.cache.Get(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), cachedTraceData, false)
+	err := r.cache.Get(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), cachedTraceData)
 	if err != nil {
 		zap.L().Debug("error in retrieving getFlamegraphSpansForTrace cache", zap.Error(err), zap.String("traceID", traceID))
 		return nil, err
@@ -6301,7 +6301,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 	for _, metricName := range metricNames {
 		metadata := new(model.UpdateMetricsMetadata)
 		cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metricName
-		err := r.cache.Get(ctx, orgID, cacheKey, metadata, true)
+		err := r.cache.Get(ctx, orgID, cacheKey, metadata)
 		if err == nil {
 			cachedMetadata[metricName] = metadata
 		} else {
@@ -6516,7 +6516,7 @@ func (r *ClickHouseReader) GetNormalizedStatus(
 	uncached := make([]string, 0, len(metricNames))
 	for _, m := range metricNames {
 		var status model.MetricsNormalizedMap
-		if err := r.cache.Get(ctx, orgID, buildKey(m), &status, true); err == nil {
+		if err := r.cache.Get(ctx, orgID, buildKey(m), &status); err == nil {
 			result[m] = status.IsUnNormalized
 		} else {
 			uncached = append(uncached, m)

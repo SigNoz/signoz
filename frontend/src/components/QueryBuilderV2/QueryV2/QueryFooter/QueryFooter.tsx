@@ -1,3 +1,5 @@
+import './QueryFooter.styles.scss';
+
 /* eslint-disable react/require-default-props */
 import { Button, Tooltip, Typography } from 'antd';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -56,7 +58,7 @@ function TraceOperatorSection({
 				}
 			>
 				<Button
-					className="add-trace-operator-button periscope-btn secondary"
+					className="add-trace-operator-button periscope-btn"
 					icon={<DraftingCompass size={16} />}
 					onClick={(): void => addTraceOperator?.()}
 				>
@@ -92,8 +94,7 @@ export default function QueryFooter({
 				<div className="qb-add-new-query">
 					<Tooltip title={<div style={{ textAlign: 'center' }}>Add New Query</div>}>
 						<Button
-							className="add-new-query-button periscope-btn secondary"
-							type="text"
+							className="add-new-query-button periscope-btn "
 							icon={<Plus size={16} />}
 							onClick={addNewBuilderQuery}
 						/>
@@ -119,7 +120,7 @@ export default function QueryFooter({
 							}
 						>
 							<Button
-								className="add-formula-button periscope-btn secondary"
+								className="add-formula-button periscope-btn "
 								icon={<Sigma size={16} />}
 								onClick={addNewFormula}
 							>
