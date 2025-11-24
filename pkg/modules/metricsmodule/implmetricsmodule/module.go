@@ -55,8 +55,6 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 	if err != nil {
 		return nil, err
 	}
-	// TODO: Use filterWhereClause once fetchMetricsStatsWithSamples migrates to sqlbuilder.
-	_ = filterWhereClause
 
 	// Single query to get stats with samples, timeseries counts in required sorting order
 	metricStats, total, err := m.fetchMetricsStatsWithSamples(
