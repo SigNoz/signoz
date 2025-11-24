@@ -114,8 +114,10 @@ export default function AlertRules({
 		</div>
 	);
 
-	const onEditHandler = (record: GettableAlert) => (
-		event?: React.MouseEvent,
+	const onEditHandler = (
+		record: GettableAlert,
+	): ((event?: React.MouseEvent | React.KeyboardEvent) => void) => (
+		event?: React.MouseEvent | React.KeyboardEvent,
 	): void => {
 		logEvent('Homepage: Alert clicked', {
 			ruleId: record.id,
@@ -152,7 +154,7 @@ export default function AlertRules({
 						onClick={(event: React.MouseEvent): void => onEditHandler(rule)(event)}
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter') {
-								onEditHandler(rule);
+								onEditHandler(rule)(e);
 							}
 						}}
 					>

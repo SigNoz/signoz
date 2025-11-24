@@ -97,10 +97,12 @@ function DataSourceInfo({
 										} else {
 											history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 										}
-									} else if (event && (event.ctrlKey || event.metaKey)) {
-										window.open(DOCS_LINKS.ADD_DATA_SOURCE, '_blank');
 									} else {
-										history.push(DOCS_LINKS.ADD_DATA_SOURCE);
+										window.open(
+											DOCS_LINKS.ADD_DATA_SOURCE,
+											'_blank',
+											'noopener noreferrer',
+										);
 									}
 								}}
 								onKeyDown={(e): void => {
