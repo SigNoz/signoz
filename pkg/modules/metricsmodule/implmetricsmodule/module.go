@@ -51,17 +51,18 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 		return nil, err
 	}
 
-	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+	_, _, filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
+	// TODO: Use filterWhereClause once fetchMetricsStatsWithSamples migrates to sqlbuilder.
+	_ = filterWhereClause
 
 	// Single query to get stats with samples, timeseries counts in required sorting order
 	metricStats, total, err := m.fetchMetricsStatsWithSamples(
 		ctx,
 		req,
-		filterSQL,
-		filterArgs,
+		filterWhereClause,
 		false,
 		req.OrderBy,
 	)
@@ -102,7 +103,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 		return nil, err
 	}
 
-	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+	_, _, filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
@@ -110,13 +111,13 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 	resp := &metricsmoduletypes.TreemapResponse{}
 	switch req.Treemap {
 	case metrictypes.TreemapModeSamples:
-		entries, err := m.computeSamplesTreemap(ctx, req, filterSQL, filterArgs)
+		entries, err := m.computeSamplesTreemap(ctx, req, filterWhereClause)
 		if err != nil {
 			return nil, err
 		}
 		resp.Samples = entries
 	default: // TreemapModeTimeSeries
-		entries, err := m.computeTimeseriesTreemap(ctx, req, filterSQL, filterArgs)
+		entries, err := m.computeTimeseriesTreemap(ctx, req, filterWhereClause)
 		if err != nil {
 			return nil, err
 		}
@@ -462,13 +463,13 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	return nil
 }
 
-func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (string, []any, error) {
+func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (string, []any, *sqlbuilder.WhereClause, error) {
 	expression := ""
 	if filter != nil {
 		expression = strings.TrimSpace(filter.Expression)
 	}
 	if expression == "" {
-		return defaultFilterConditionTrue, nil, nil
+		return defaultFilterConditionTrue, nil, nil, nil
 	}
 
 	// TODO(nikhilmantri0902, srikanthccv): if this is the right way of dealing with  whereClauseSelectors
@@ -484,7 +485,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 
 	keys, _, err := m.telemetryMetadataStore.GetKeysMulti(ctx, whereClauseSelectors)
 	if err != nil {
-		return "", nil, err
+		return "", nil, nil, err
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
@@ -501,11 +502,11 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 
 	whereClause, err := querybuilder.PrepareWhereClause(expression, opts, startNs, endNs)
 	if err != nil {
-		return "", nil, err
+		return "", nil, nil, err
 	}
 
 	if whereClause == nil || whereClause.WhereClause == nil {
-		return defaultFilterConditionTrue, nil, nil
+		return defaultFilterConditionTrue, nil, nil, nil
 	}
 
 	whereClauseString, args := whereClause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -514,14 +515,13 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 	whereClauseString = strings.TrimPrefix(whereClauseString, sqlKeyWordWhere)
 	whereClauseString = strings.TrimSpace(whereClauseString)
 
-	return whereClauseString, args, nil
+	return whereClauseString, args, whereClause.WhereClause, nil
 }
 
 func (m *module) fetchMetricsStatsWithSamples(
 	ctx context.Context,
 	req *metricsmoduletypes.StatsRequest,
-	filterSQL string,
-	filterArgs []any,
+	filterWhereClause *sqlbuilder.WhereClause,
 	normalized bool,
 	orderBy *qbtypes.OrderBy,
 ) ([]metricsmoduletypes.Stat, uint64, error) {
@@ -529,93 +529,76 @@ func (m *module) fetchMetricsStatsWithSamples(
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
 	samplesTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
 
-	var queryBuilder strings.Builder
-	var args []any
+	// Timeseries counts per metric
+	tsSB := sqlbuilder.NewSelectBuilder()
+	tsSB.Select(
+		"metric_name",
+		"uniq(fingerprint) AS timeseries",
+	)
+	tsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, tsTable))
+	tsSB.Where(tsSB.Between("unix_milli", start, end))
+	tsSB.Where("NOT startsWith(metric_name, 'signoz')")
+	tsSB.Where(tsSB.E("__normalized", normalized))
+	if filterWhereClause != nil {
+		tsSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+	}
+	tsSB.GroupBy("metric_name")
 
-	// Build samples subquery
-	samplesSubquery := fmt.Sprintf(`
-		SELECT 
-			dm.metric_name,
-			%s AS samples
-		FROM %s.%s AS dm
-		WHERE dm.unix_milli BETWEEN ? AND ?
-		AND NOT startsWith(dm.metric_name, 'signoz')`,
-		countExp,
-		telemetrymetrics.DBName, samplesTable,
+	// Samples counts per metric
+	samplesSB := sqlbuilder.NewSelectBuilder()
+	samplesSB.Select(
+		"dm.metric_name",
+		fmt.Sprintf("%s AS samples", countExp),
+	)
+	samplesSB.From(fmt.Sprintf("%s.%s AS dm", telemetrymetrics.DBName, samplesTable))
+	samplesSB.Where(samplesSB.Between("dm.unix_milli", req.Start, req.End))
+	samplesSB.Where("NOT startsWith(dm.metric_name, 'signoz')")
+
+	if filterWhereClause != nil {
+		fingerprintSB := sqlbuilder.NewSelectBuilder()
+		fingerprintSB.Select("ts.fingerprint")
+		fingerprintSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, localTsTable))
+		fingerprintSB.Where(fingerprintSB.Between("ts.unix_milli", start, end))
+		fingerprintSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
+		fingerprintSB.Where(fingerprintSB.E("__normalized", normalized))
+		fingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+		fingerprintSB.GroupBy("ts.fingerprint")
+
+		samplesSB.Where(fmt.Sprintf("dm.fingerprint IN (%s)", samplesSB.Var(fingerprintSB)))
+	}
+	samplesSB.GroupBy("dm.metric_name")
+
+	cteBuilder := sqlbuilder.With(
+		sqlbuilder.CTEQuery("TimeSeriesCounts").As(tsSB),
+		sqlbuilder.CTEQuery("SampleCounts").As(samplesSB),
 	)
 
-	// Add fingerprint filtering if filterSQL is not default
-	if filterSQL != defaultFilterConditionTrue {
-		samplesSubquery += fmt.Sprintf(`
-		AND dm.fingerprint IN (
-			SELECT fingerprint
-			FROM %s.%s
-			WHERE unix_milli BETWEEN ? AND ?
-			AND NOT startsWith(metric_name, 'signoz')
-			AND __normalized = ?
-			AND (%s)
-			GROUP BY fingerprint
-		)`,
-			telemetrymetrics.DBName, localTsTable, filterSQL,
-		)
-	}
-
-	samplesSubquery += `
-		GROUP BY dm.metric_name`
-
-	// Build main query with FULL OUTER JOIN
-	queryBuilder.WriteString(fmt.Sprintf(`
-		SELECT 
-			COALESCE(ts.metric_name, s.metric_name) AS metric_name,
-			COALESCE(ts.timeseries, 0) AS timeseries,
-			COALESCE(s.samples, 0) AS samples,
-			COUNT(*) OVER() AS total
-		FROM (
-			SELECT 
-				metric_name,
-				uniq(fingerprint) AS timeseries
-			FROM %s.%s
-			WHERE unix_milli BETWEEN ? AND ?
-			AND NOT startsWith(metric_name, 'signoz')
-			AND __normalized = ?
-			AND (%s)
-			GROUP BY metric_name
-		) AS ts
-		FULL OUTER JOIN (
-			%s
-		) AS s ON ts.metric_name = s.metric_name
-		WHERE (ts.timeseries > 0 OR s.samples > 0)`,
-		telemetrymetrics.DBName, tsTable, filterSQL, samplesSubquery,
-	))
-
-	// Build args in correct order: timeseries subquery first, then samples subquery
-	// Timeseries subquery args
-	args = append(args, start, end, normalized)
-	args = append(args, filterArgs...)
-
-	// Samples subquery args
-	args = append(args, req.Start, req.End)
-	if filterSQL != defaultFilterConditionTrue {
-		args = append(args, start, end, normalized)
-		args = append(args, filterArgs...)
-	}
+	finalSB := cteBuilder.Select(
+		"COALESCE(ts.metric_name, s.metric_name) AS metric_name",
+		"COALESCE(ts.timeseries, 0) AS timeseries",
+		"COALESCE(s.samples, 0) AS samples",
+		"COUNT(*) OVER() AS total",
+	)
+	finalSB.From("TimeSeriesCounts ts")
+	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "SampleCounts s", "ts.metric_name = s.metric_name")
+	finalSB.Where("(COALESCE(ts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) > 0)")
 
 	orderByColumn, orderDirection, err := getStatsOrderByColumn(orderBy)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Add ORDER BY clause
-	queryBuilder.WriteString(fmt.Sprintf(`
-		ORDER BY %s %s, metric_name ASC
-		LIMIT ? OFFSET ?`,
-		orderByColumn, orderDirection,
-	))
+	finalSB.OrderBy(
+		fmt.Sprintf("%s %s", orderByColumn, strings.ToUpper(orderDirection)),
+		"metric_name ASC",
+	)
+	finalSB.Limit(req.Limit)
+	finalSB.Offset(req.Offset)
 
-	args = append(args, req.Limit, req.Offset)
+	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, queryBuilder.String(), args...)
+	rows, err := db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute metrics stats with samples query")
 	}
@@ -643,50 +626,45 @@ func (m *module) fetchMetricsStatsWithSamples(
 	return metricStats, total, nil
 }
 
-func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterSQL string, filterArgs []any) ([]metricsmoduletypes.TreemapEntry, error) {
+func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsmoduletypes.TreemapEntry, error) {
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 
-	filterClause := ""
-	if filterSQL != defaultFilterConditionTrue {
-		filterClause = fmt.Sprintf(" AND (%s)", filterSQL)
-	}
+	totalTSBuilder := sqlbuilder.NewSelectBuilder()
+	totalTSBuilder.Select("uniq(fingerprint)")
+	totalTSBuilder.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, tsTable))
+	totalTSBuilder.Where(totalTSBuilder.Between("unix_milli", start, end))
+	totalTSBuilder.Where(totalTSBuilder.E("__normalized", false))
 
-	query := fmt.Sprintf(`
-		SELECT
-			metric_name,
-			total_value,
-			(total_value * 100.0 / total_time_series) AS percentage
-		FROM (
-			SELECT
-				metric_name,
-				uniq(fingerprint) AS total_value,
-				(SELECT uniq(fingerprint)
-					FROM %s.%s
-					WHERE unix_milli BETWEEN ? AND ?
-					AND __normalized = ?) AS total_time_series
-			FROM %s.%s
-			WHERE unix_milli BETWEEN ? AND ?
-			AND NOT startsWith(metric_name, 'signoz')
-			AND __normalized = ?
-			%s
-			GROUP BY metric_name
-		)
-		ORDER BY percentage DESC
-		LIMIT ?;`,
-		telemetrymetrics.DBName,
-		tsTable,
-		telemetrymetrics.DBName,
-		tsTable,
-		filterClause,
+	metricsSB := sqlbuilder.NewSelectBuilder()
+	metricsSB.Select(
+		"metric_name",
+		"uniq(fingerprint) AS total_value",
+	)
+	totalPlaceholder := metricsSB.Var(totalTSBuilder)
+	metricsSB.SelectMore(fmt.Sprintf("(%s) AS total_time_series", totalPlaceholder))
+	metricsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, tsTable))
+	metricsSB.Where(metricsSB.Between("unix_milli", start, end))
+	metricsSB.Where("NOT startsWith(metric_name, 'signoz')")
+	metricsSB.Where(metricsSB.E("__normalized", false))
+	if filterWhereClause != nil {
+		metricsSB.WhereClause.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+	}
+	metricsSB.GroupBy("metric_name")
+
+	cteBuilder := sqlbuilder.With(
+		sqlbuilder.CTEQuery("MetricTotals").As(metricsSB),
 	)
 
-	args := make([]any, 0, 6+2*len(filterArgs))
-	args = append(args, start, end, false)
-	args = append(args, start, end, false)
-	if filterClause != "" {
-		args = append(args, filterArgs...)
-	}
-	args = append(args, req.Limit)
+	finalSB := cteBuilder.Select(
+		"metric_name",
+		"total_value",
+		"CASE WHEN total_time_series = 0 THEN 0 ELSE (total_value * 100.0 / total_time_series) END AS percentage",
+	)
+	finalSB.From("MetricTotals")
+	finalSB.OrderBy("percentage").Desc()
+	finalSB.Limit(req.Limit)
+
+	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(ctx, query, args...)
@@ -697,9 +675,7 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 
 	entries := make([]metricsmoduletypes.TreemapEntry, 0)
 	for rows.Next() {
-		var (
-			treemapEntry metricsmoduletypes.TreemapEntry
-		)
+		var treemapEntry metricsmoduletypes.TreemapEntry
 		if err := rows.Scan(&treemapEntry.MetricName, &treemapEntry.TotalValue, &treemapEntry.Percentage); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan timeseries treemap row")
 		}
@@ -713,35 +689,28 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 	return entries, nil
 }
 
-func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterSQL string, filterArgs []any) ([]metricsmoduletypes.TreemapEntry, error) {
+func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsmoduletypes.TreemapEntry, error) {
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
 	samplesTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
 
-	filterClause := ""
-	if filterSQL != defaultFilterConditionTrue {
-		filterClause = fmt.Sprintf(" AND (%s)", filterSQL)
-	}
-
 	queryLimit := req.Limit + 50
-	metricsQuery := fmt.Sprintf(`
-		SELECT
-			ts.metric_name AS metric_name,
-			uniq(ts.fingerprint) AS timeSeries
-		FROM %s.%s AS ts
-		WHERE NOT startsWith(ts.metric_name, 'signoz')
-		AND __normalized = ?
-		AND unix_milli BETWEEN ? AND ?
-		%s
-		GROUP BY ts.metric_name
-		ORDER BY timeSeries DESC
-		LIMIT %d;`,
-		telemetrymetrics.DBName, tsTable, filterClause, queryLimit)
-
-	args := make([]any, 0, 3+len(filterArgs))
-	args = append(args, false, start, end)
-	if filterClause != "" {
-		args = append(args, filterArgs...)
+	metricsSB := sqlbuilder.NewSelectBuilder()
+	metricsSB.Select(
+		"ts.metric_name AS metric_name",
+		"uniq(ts.fingerprint) AS timeSeries",
+	)
+	metricsSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, tsTable))
+	metricsSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
+	metricsSB.Where(metricsSB.E("__normalized", false))
+	metricsSB.Where(metricsSB.Between("unix_milli", start, end))
+	if filterWhereClause != nil {
+		metricsSB.WhereClause.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
 	}
+	metricsSB.GroupBy("ts.metric_name")
+	metricsSB.OrderBy("timeSeries").Desc()
+	metricsSB.Limit(queryLimit)
+
+	metricsQuery, args := metricsSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(ctx, metricsQuery, args...)
@@ -769,74 +738,60 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 		return []metricsmoduletypes.TreemapEntry{}, nil
 	}
 
-	metricPlaceholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
-	var (
-		queryBuilder strings.Builder
-		sampleArgs   []any
+	metricArgs := make([]any, len(metricNames))
+	for i := range metricNames {
+		metricArgs[i] = metricNames[i]
+	}
+
+	totalSamplesSB := sqlbuilder.NewSelectBuilder()
+	totalSamplesSB.Select(fmt.Sprintf("%s AS total_samples", countExp))
+	totalSamplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	totalSamplesSB.Where(totalSamplesSB.Between("unix_milli", req.Start, req.End))
+
+	samplesSB := sqlbuilder.NewSelectBuilder()
+	samplesSB.Select(
+		"dm.metric_name",
+		fmt.Sprintf("%s AS samples", countExp),
+	)
+	samplesSB.From(fmt.Sprintf("%s.%s AS dm", telemetrymetrics.DBName, samplesTable))
+	samplesSB.Where(samplesSB.Between("dm.unix_milli", req.Start, req.End))
+	samplesSB.Where(samplesSB.In("dm.metric_name", metricArgs...))
+
+	if filterWhereClause != nil {
+		fingerprintSB := sqlbuilder.NewSelectBuilder()
+		fingerprintSB.Select("ts.fingerprint")
+		fingerprintSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, localTsTable))
+		fingerprintSB.Where(fingerprintSB.In("ts.metric_name", metricArgs...))
+		fingerprintSB.Where(fingerprintSB.Between("ts.unix_milli", start, end))
+		fingerprintSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
+		fingerprintSB.Where(fingerprintSB.E("__normalized", false))
+		fingerprintSB.WhereClause.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+		fingerprintSB.GroupBy("ts.fingerprint")
+
+		subQueryPlaceholder := samplesSB.Var(fingerprintSB)
+		samplesSB.Where(fmt.Sprintf("dm.fingerprint IN (%s)", subQueryPlaceholder))
+	}
+
+	samplesSB.GroupBy("dm.metric_name")
+
+	cteBuilder := sqlbuilder.With(
+		sqlbuilder.CTEQuery("TotalSamples").As(totalSamplesSB),
+		sqlbuilder.CTEQuery("Samples").As(samplesSB),
 	)
 
-	queryBuilder.WriteString(fmt.Sprintf(`
-		WITH TotalSamples AS (
-			SELECT %s AS total_samples
-			FROM %s.%s
-			WHERE unix_milli BETWEEN ? AND ?
-		),
-		Samples AS (
-			SELECT
-				dm.metric_name,
-				%s AS samples
-			FROM %s.%s AS dm
-			WHERE dm.unix_milli BETWEEN ? AND ?
-			AND dm.metric_name IN (%s) `,
-		countExp, telemetrymetrics.DBName, samplesTable,
-		countExp, telemetrymetrics.DBName, samplesTable, metricPlaceholders,
-	))
+	finalSB := cteBuilder.Select(
+		"s.metric_name",
+		"s.samples",
+		"CASE WHEN t.total_samples = 0 THEN 0 ELSE (s.samples * 100.0 / t.total_samples) END AS percentage",
+	)
+	finalSB.From("Samples s")
+	finalSB.Join("TotalSamples t", "1=1")
+	finalSB.OrderBy("percentage").Desc()
+	finalSB.Limit(req.Limit)
 
-	sampleArgs = append(sampleArgs, req.Start, req.End)
-	sampleArgs = append(sampleArgs, req.Start, req.End)
-	for _, name := range metricNames {
-		sampleArgs = append(sampleArgs, name)
-	}
+	query, sampleArgs := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	if filterSQL != defaultFilterConditionTrue {
-		metricPlaceholdersSub := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
-		queryBuilder.WriteString(fmt.Sprintf(`
-			AND dm.fingerprint IN (
-				SELECT ts.fingerprint
-				FROM %s.%s AS ts
-				WHERE ts.metric_name IN (%s)
-				AND unix_milli BETWEEN ? AND ?
-				AND NOT startsWith(ts.metric_name, 'signoz')
-				AND __normalized = ?
-				AND (%s)
-				GROUP BY ts.fingerprint
-			)`,
-			telemetrymetrics.DBName, localTsTable, metricPlaceholdersSub, filterSQL,
-		))
-
-		for _, name := range metricNames {
-			sampleArgs = append(sampleArgs, name)
-		}
-		sampleArgs = append(sampleArgs, start, end, false)
-		sampleArgs = append(sampleArgs, filterArgs...)
-	}
-
-	// TODO(nikhilmantri0902, srikanthccv): using cross join below instead of JOIN ON 1=1 like legacy. Is that fine?
-	queryBuilder.WriteString(`
-		GROUP BY dm.metric_name
-			)
-			SELECT
-				s.metric_name,
-				s.samples,
-				CASE WHEN t.total_samples = 0 THEN 0 ELSE (s.samples * 100.0 / t.total_samples) END AS percentage
-			FROM Samples s
-			CROSS JOIN TotalSamples t
-			ORDER BY percentage DESC
-			LIMIT ?;`)
-
-	sampleArgs = append(sampleArgs, req.Limit)
-
-	rows, err = db.Query(ctx, queryBuilder.String(), sampleArgs...)
+	rows, err = db.Query(ctx, query, sampleArgs...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute samples treemap query")
 	}
