@@ -186,16 +186,11 @@ func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID,
 			var (
 				metricMetadata metricsmoduletypes.MetricMetadata
 				metricName     string
-				dbMetricType   string
-				dbTemporality  string
 			)
 
-			if err := rows.Scan(&metricName, &metricMetadata.Description, &dbMetricType, &metricMetadata.MetricUnit, &dbTemporality, &metricMetadata.IsMonotonic); err != nil {
+			if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality, &metricMetadata.IsMonotonic); err != nil {
 				return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
 			}
-
-			metricMetadata.MetricType = convertDBFormatToMetricType(dbMetricType)
-			metricMetadata.Temporality = convertDBFormatToTemporality(dbTemporality)
 			metadata[metricName] = &metricMetadata
 			foundInUpdatedMetadata[metricName] = true
 
@@ -251,16 +246,11 @@ func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID,
 			var (
 				metricMetadata metricsmoduletypes.MetricMetadata
 				metricName     string
-				dbMetricType   string
-				dbTemporality  string
 			)
 
-			if err := rows.Scan(&metricName, &metricMetadata.Description, &dbMetricType, &metricMetadata.MetricUnit, &dbTemporality, &metricMetadata.IsMonotonic); err != nil {
+			if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality, &metricMetadata.IsMonotonic); err != nil {
 				return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan timeseries metadata")
 			}
-
-			metricMetadata.MetricType = convertDBFormatToMetricType(dbMetricType)
-			metricMetadata.Temporality = convertDBFormatToTemporality(dbTemporality)
 			metadata[metricName] = &metricMetadata
 
 			// Set in cache after successful DB fetch
@@ -430,9 +420,9 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	ib.Cols("metric_name", "temporality", "is_monotonic", "type", "description", "unit", "created_at")
 	ib.Values(
 		req.MetricName,
-		convertTemporalityToDBFormat(req.Temporality),
+		req.Temporality,
 		req.IsMonotonic,
-		convertMetricTypeToDBFormat(req.MetricType),
+		req.MetricType,
 		req.Description,
 		req.Unit,
 		createdAt,
