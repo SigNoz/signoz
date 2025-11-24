@@ -622,7 +622,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 		args = append(args, filterArgs...)
 	}
 
-	orderByColumn, orderDirection, err := resolveOrderBy(orderBy)
+	orderByColumn, orderDirection, err := getStatsOrderByColumn(orderBy)
 	if err != nil {
 		return nil, 0, err
 	}

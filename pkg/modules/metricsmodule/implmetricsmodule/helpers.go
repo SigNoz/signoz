@@ -14,8 +14,7 @@ func generateMetricMetadataCacheKey(metricName string) string {
 	return fmt.Sprintf("metrics_metadata:%s", metricName)
 }
 
-func resolveOrderBy(order *qbtypes.OrderBy) (string, string, error) {
-
+func getStatsOrderByColumn(order *qbtypes.OrderBy) (string, string, error) {
 	if order == nil {
 		return sqlColumnTimeSeries, qbtypes.OrderDirectionDesc.StringValue(), nil
 	}
