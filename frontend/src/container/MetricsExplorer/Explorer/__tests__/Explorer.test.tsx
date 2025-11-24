@@ -190,6 +190,12 @@ describe('Explorer', () => {
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'true' }),
 			mockSetSearchParams,
 		]);
+		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
+			units: ['seconds', 'seconds'],
+			isLoading: false,
+			isError: false,
+			metrics: [mockMetric, mockMetric],
+		});
 
 		renderExplorer();
 
@@ -202,6 +208,12 @@ describe('Explorer', () => {
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'false' }),
 			mockSetSearchParams,
 		]);
+		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
+			units: ['seconds', 'seconds'],
+			isLoading: false,
+			isError: false,
+			metrics: [mockMetric, mockMetric],
+		});
 
 		renderExplorer();
 
@@ -225,6 +237,10 @@ describe('Explorer', () => {
 	});
 
 	it('should render pre-populated y axis unit for mutliple metrics with same unit', () => {
+		(useSearchParams as jest.Mock).mockReturnValue([
+			new URLSearchParams({ isOneChartPerQueryEnabled: 'true' }),
+			mockSetSearchParams,
+		]);
 		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
 			units: ['seconds', 'seconds'],
 			isLoading: false,
@@ -240,7 +256,7 @@ describe('Explorer', () => {
 
 		// One chart per query switch should be enabled
 		const oneChartPerQueryToggle = screen.getByRole('switch');
-		expect(oneChartPerQueryToggle).toBeEnabled();
+		expect(oneChartPerQueryToggle).toBeChecked();
 	});
 
 	it('should hide y axis unit selector for multiple metrics with different units', () => {

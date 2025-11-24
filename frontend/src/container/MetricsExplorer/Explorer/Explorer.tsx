@@ -83,12 +83,17 @@ function Explorer(): JSX.Element {
 		// Set the y axis unit to the first metric unit if
 		// 1. There is one metric unit and it is not empty
 		// 2. All metric units are the same and not empty
+		// Else, set the y axis unit to empty if
+		// 1. There are more than one metric units and they are not the same
+		// 2. There are no metric units
 		if (units.length === 0) {
 			setYAxisUnit('');
 		} else if (units.length === 1 && units[0] !== '') {
 			setYAxisUnit(units[0]);
 		} else if (areAllMetricUnitsSame && units[0] !== '') {
 			setYAxisUnit(units[0]);
+		} else if (units.length > 1 && !areAllMetricUnitsSame) {
+			setYAxisUnit('');
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [JSON.stringify(units), areAllMetricUnitsSame]);
@@ -99,6 +104,9 @@ function Explorer(): JSX.Element {
 		// 2. The metric units are not the same
 		if (units.length > 1 && !areAllMetricUnitsSame) {
 			toggleShowOneChartPerQuery(true);
+			toggleDisableOneChartPerQuery(true);
+		} else if (units.length <= 1) {
+			toggleShowOneChartPerQuery(false);
 			toggleDisableOneChartPerQuery(true);
 		} else {
 			toggleDisableOneChartPerQuery(false);
@@ -191,6 +199,16 @@ function Explorer(): JSX.Element {
 
 	const [warning, setWarning] = useState<Warning | undefined>(undefined);
 
+	const oneChartPerQueryDisabledTooltip = useMemo(() => {
+		if (splitedQueries.length <= 1) {
+			return 'One chart per query cannot be toggled for a single query.';
+		}
+		if (disableOneChartPerQuery) {
+			return 'One chart per query cannot be disabled for multiple queries with different units.';
+		}
+		return undefined;
+	}, [disableOneChartPerQuery, splitedQueries.length]);
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-explore-container">
@@ -199,12 +217,12 @@ function Explorer(): JSX.Element {
 						<span>1 chart/query</span>
 						<Tooltip
 							open={disableOneChartPerQuery ? undefined : false}
-							title="One chart per query cannot be disabled for multiple queries with different units."
+							title={oneChartPerQueryDisabledTooltip}
 						>
 							<Switch
 								checked={showOneChartPerQuery}
 								onChange={handleToggleShowOneChartPerQuery}
-								disabled={disableOneChartPerQuery}
+								disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
 								size="small"
 							/>
 						</Tooltip>
