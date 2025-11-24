@@ -1,4 +1,4 @@
-package opaquetokenizer
+package sqltokenizerstore
 
 import (
 	"context"
