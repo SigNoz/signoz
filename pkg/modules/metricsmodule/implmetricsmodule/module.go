@@ -159,7 +159,12 @@ func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID,
 	if len(cacheMisses) > 0 {
 		placeholders := strings.TrimRight(strings.Repeat("?,", len(cacheMisses)), ",")
 		query := fmt.Sprintf(`
-			SELECT metric_name, description, type, unit, temporality, is_monotonic
+			SELECT metric_name, 
+				   description, 
+				   type, 
+				   unit, 
+				   temporality, 
+				   is_monotonic
 			FROM %s.%s 
 			WHERE metric_name IN (%s)`,
 			telemetrymetrics.DBName,
@@ -208,21 +213,23 @@ func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID,
 	}
 
 	// Query timeseries table for metrics not found in updated_metadata
-	timeseriesMisses := make([]string, 0)
+	cacheAndUpdatedMetadataMisses := make([]string, 0)
 	for _, metricName := range cacheMisses {
 		if !foundInUpdatedMetadata[metricName] {
-			timeseriesMisses = append(timeseriesMisses, metricName)
+			cacheAndUpdatedMetadataMisses = append(cacheAndUpdatedMetadataMisses, metricName)
 		}
 	}
 
-	if len(timeseriesMisses) > 0 {
-		placeholders := strings.TrimRight(strings.Repeat("?,", len(timeseriesMisses)), ",")
+	if len(cacheAndUpdatedMetadataMisses) > 0 {
+		placeholders := strings.TrimRight(strings.Repeat("?,", len(cacheAndUpdatedMetadataMisses)), ",")
 		query := fmt.Sprintf(`
 			SELECT 
 				metric_name,
 				ANY_VALUE(description) AS description,
 				ANY_VALUE(type) AS metric_type,
 				ANY_VALUE(unit) AS metric_unit
+				ANY_VALUE(temporality) AS temporality
+				ANY_VALUE(is_monotonic) AS is_monotonic
 			FROM %s.%s
 			WHERE metric_name IN (%s)
 			GROUP BY metric_name`,
@@ -231,9 +238,9 @@ func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID,
 			placeholders,
 		)
 
-		args := make([]any, len(timeseriesMisses))
-		for i := range timeseriesMisses {
-			args[i] = timeseriesMisses[i]
+		args := make([]any, len(cacheAndUpdatedMetadataMisses))
+		for i := range cacheAndUpdatedMetadataMisses {
+			args[i] = cacheAndUpdatedMetadataMisses[i]
 		}
 
 		db := m.telemetryStore.ClickhouseDB()
@@ -248,15 +255,15 @@ func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID,
 				metricMetadata metricsmoduletypes.MetricMetadata
 				metricName     string
 				dbMetricType   string
+				dbTemporality  string
 			)
 
-			if err := rows.Scan(&metricName, &metricMetadata.Description, &dbMetricType, &metricMetadata.MetricUnit); err != nil {
+			if err := rows.Scan(&metricName, &metricMetadata.Description, &dbMetricType, &metricMetadata.MetricUnit, &dbTemporality, &metricMetadata.IsMonotonic); err != nil {
 				return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan timeseries metadata")
 			}
 
 			metricMetadata.MetricType = convertDBFormatToMetricType(dbMetricType)
-			metricMetadata.Temporality = metrictypes.Unspecified // Default
-			metricMetadata.IsMonotonic = false                   // Default
+			metricMetadata.Temporality = convertDBFormatToTemporality(dbTemporality)
 			metadata[metricName] = &metricMetadata
 
 			// Set in cache after successful DB fetch
