@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"log/slog"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 
 	"go.uber.org/zap"
 
