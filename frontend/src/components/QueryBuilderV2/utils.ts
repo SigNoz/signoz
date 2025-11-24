@@ -224,7 +224,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 	const visitedPairs: Set<string> = new Set(); // Set to track visited query pairs
 
 	// Map extracted query pairs to key-specific pair information for faster access
-	let queryPairsMap = getQueryPairsMap(existingQuery.trim());
+	let queryPairsMap = getQueryPairsMap(existingQuery);
 
 	filters?.items?.forEach((filter) => {
 		const { key, op, value } = filter;
@@ -309,7 +309,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								notInPair.position.valueEnd + 1,
 							)}`;
-							queryPairsMap = getQueryPairsMap(modifiedQuery.trim());
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					} else if (
