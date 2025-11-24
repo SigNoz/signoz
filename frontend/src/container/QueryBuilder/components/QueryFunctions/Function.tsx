@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import { Button, Flex, Input, Select } from 'antd';
+import { Button, Flex, Input, InputRef, Select } from 'antd';
 import cx from 'classnames';
 import {
 	logsQueryFunctionOptions,
@@ -9,6 +9,7 @@ import {
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { debounce, isNil } from 'lodash-es';
 import { X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
@@ -46,6 +47,22 @@ export default function Function({
 		// eslint-disable-next-line prefer-destructuring
 		functionValue = funcData.args?.[0]?.value;
 	}
+
+	const [value, setValue] = useState<string>(
+		functionValue !== undefined ? String(functionValue) : '',
+	);
+	const inputRef = useRef<InputRef>(null);
+	const mirrorRef = useRef<HTMLSpanElement>(null);
+
+	useEffect(() => {
+		if (!mirrorRef.current || !inputRef.current?.input) return;
+
+		const mirrorWidth = mirrorRef.current.offsetWidth + 24; // padding
+		const newWidth = Math.min(150, Math.max(70, mirrorWidth));
+
+		// AntD input actual DOM element is inputRef.current.input
+		inputRef.current.input.style.width = `${newWidth}px`;
+	}, [value]);
 
 	const debouncedhandleUpdateFunctionArgs = debounce(
 		handleUpdateFunctionArgs,
@@ -89,14 +106,37 @@ export default function Function({
 			/>
 
 			{showInput && (
-				<Input
-					className="query-function-value"
-					autoFocus
-					defaultValue={functionValue}
-					onChange={(event): void => {
-						debouncedhandleUpdateFunctionArgs(funcData, index, event.target.value);
-					}}
-				/>
+				<>
+					<Input
+						ref={inputRef}
+						className="query-function-value"
+						autoFocus
+						value={value}
+						onChange={(event): void => {
+							const newVal = event.target.value;
+							setValue(newVal);
+							debouncedhandleUpdateFunctionArgs(funcData, index, event.target.value);
+						}}
+						style={{
+							width: 70,
+							minWidth: 70,
+							maxWidth: 150,
+						}}
+					/>
+					<span
+						ref={mirrorRef}
+						style={{
+							position: 'absolute',
+							visibility: 'hidden',
+							whiteSpace: 'pre',
+							fontSize: '14px',
+							fontFamily: 'inherit',
+							fontWeight: 'normal',
+						}}
+					>
+						{value || ' '}
+					</span>
+				</>
 			)}
 
 			<Button
