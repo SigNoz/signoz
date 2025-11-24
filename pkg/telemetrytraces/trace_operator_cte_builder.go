@@ -467,7 +467,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	for _, orderBy := range b.operator.Order {
 		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, &orderBy.Key.TelemetryFieldKey, keys)
 		if err != nil {
-			return nil, errors.WithAppendf(err, ", consider removing field %s from Order By menu", orderBy.Key.TelemetryFieldKey.Name)
+			return nil, errors.WithAdditionalf(err, "Consider removing field %s and choosing a different column in 'Order by' drop down menu", orderBy.Key.TelemetryFieldKey.Name)
 		}
 		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
 		orderApplied = true

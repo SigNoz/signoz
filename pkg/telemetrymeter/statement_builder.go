@@ -123,7 +123,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", []any{}, errors.WithAppendf(err, ", consider removing %s from AGGREGATE BY options", g.TelemetryFieldKey.Name)
+			return "", []any{}, errors.WithAdditionalf(err, "Consider removing field %s from 'AGGREGATE ACROSS TIME SERIES by' options", g.TelemetryFieldKey.Name)
 		}
 		sb.SelectMore(col)
 	}
@@ -149,7 +149,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-        }, start, end)
+		}, start, end)
 		if err != nil {
 			return "", []any{}, err
 		}
@@ -203,7 +203,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", nil, errors.WithAppendf(err, ", consider removing %s from AGGREGATE BY options", g.TelemetryFieldKey.Name)
+			return "", []any{}, errors.WithAdditionalf(err, "Consider removing field %s from 'AGGREGATE ACROSS TIME SERIES by' options", g.TelemetryFieldKey.Name)
 		}
 		sb.SelectMore(col)
 	}
@@ -273,7 +273,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", nil, errors.WithAppendf(err, ", consider removing %s from AGGREGATE BY options", g.TelemetryFieldKey.Name)
+			return "", []any{}, errors.WithAdditionalf(err, "Consider removing field %s from 'AGGREGATE ACROSS TIME SERIES by' options", g.TelemetryFieldKey.Name)
 		}
 		baseSb.SelectMore(col)
 	}

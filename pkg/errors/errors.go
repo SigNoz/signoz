@@ -124,32 +124,6 @@ func (b *base) WithAdditional(a ...string) *base {
 	}
 }
 
-// WithAppendf adds an additional message to the existing message and returns a new base error.
-func WithAppendf(cause error, format string, args ...any) *base {
-	t, c, m, e, u, a := Unwrapb(cause)
-	return &base{
-		t: t,
-		c: c,
-		m: m + fmt.Sprintf(format, args...),
-		e: e,
-		u: u,
-		a: a,
-	}
-}
-
-// WithAppend adds an additional message to the existing message and returns a new base error.
-func WithAppend(cause error, msg string) *base {
-	t, c, m, e, u, a := Unwrapb(cause)
-	return &base{
-		t: t,
-		c: c,
-		m: m + msg,
-		e: e,
-		u: u,
-		a: a,
-	}
-}
-
 // Unwrapb is a combination of built-in errors.As and type casting.
 // It finds the first error in cause that matches base,
 // and if one is found, returns the individual fields of base.
