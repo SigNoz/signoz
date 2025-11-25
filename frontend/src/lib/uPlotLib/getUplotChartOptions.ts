@@ -451,6 +451,12 @@ export const getUPlotChartOptions = ({
 				(self): void => {
 					const selection = self.select;
 					if (selection) {
+						// Cleanup any visible "View Traces" buttons when drag selection occurs
+						const activeButtons = document.querySelectorAll(
+							'.view-onclick-show-button',
+						);
+						activeButtons.forEach((btn) => btn.remove());
+
 						const startTime = self.posToVal(selection.left, 'x');
 						const endTime = self.posToVal(selection.left + selection.width, 'x');
 
