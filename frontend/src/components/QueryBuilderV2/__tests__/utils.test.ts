@@ -416,7 +416,7 @@ describe('convertFiltersToExpression', () => {
 		const result = convertFiltersToExpression(filters);
 		expect(result).toEqual({
 			expression:
-				'count = 0 AND score > 100 AND limit >= 50 AND threshold < 1000 AND max_value <= 999 AND values in [1, 2, 3, 4, 5]',
+				"count = 0 AND score > 100 AND limit >= 50 AND threshold < 1000 AND max_value <= 999 AND values in ['1', '2', '3', '4', '5']",
 		});
 	});
 
@@ -510,7 +510,7 @@ describe('convertFiltersToExpression', () => {
 		const result = convertFiltersToExpression(filters);
 		expect(result).toEqual({
 			expression:
-				"has(tags, 'production') AND hasAny(labels, ['env:prod', 'service:api']) AND hasAll(metadata, ['version:1.0', 'team:backend']) AND services in ['api-gateway', 'user-service', 'auth-service', 'payment-service'] AND excluded_services NOT IN ['legacy-service', 'deprecated-service'] AND status_codes in [200, 201, 400, 500]",
+				"has(tags, 'production') AND hasAny(labels, ['env:prod', 'service:api']) AND hasAll(metadata, ['version:1.0', 'team:backend']) AND services in ['api-gateway', 'user-service', 'auth-service', 'payment-service'] AND excluded_services NOT IN ['legacy-service', 'deprecated-service'] AND status_codes in ['200', '201', '400', '500']",
 		});
 	});
 
@@ -1213,18 +1213,20 @@ describe('formatValueForExpression', () => {
 	});
 
 	describe('Numeric string values', () => {
-		it('should return numeric strings without quotes', () => {
-			expect(formatValueForExpression('123')).toBe('123');
-			expect(formatValueForExpression('0')).toBe('0');
-			expect(formatValueForExpression('100000')).toBe('100000');
-			expect(formatValueForExpression('-42')).toBe('-42');
-			expect(formatValueForExpression('3.14')).toBe('3.14');
-			expect(formatValueForExpression(' 456 ')).toBe('456');
+		it('should return numeric strings with quotes', () => {
+			expect(formatValueForExpression('123')).toBe("'123'");
+			expect(formatValueForExpression('0')).toBe("'0'");
+			expect(formatValueForExpression('100000')).toBe("'100000'");
+			expect(formatValueForExpression('-42')).toBe("'-42'");
+			expect(formatValueForExpression('3.14')).toBe("'3.14'");
+			expect(formatValueForExpression(' 456 ')).toBe("' 456 '");
 		});
 
 		it('should handle numeric strings with IN operator', () => {
-			expect(formatValueForExpression('123', 'IN')).toBe('[123]');
-			expect(formatValueForExpression(['123', '456'], 'IN')).toBe('[123, 456]');
+			expect(formatValueForExpression('123', 'IN')).toBe("['123']");
+			expect(formatValueForExpression(['123', '456'], 'IN')).toBe(
+				"['123', '456']",
+			);
 		});
 	});
 
@@ -1313,7 +1315,7 @@ describe('formatValueForExpression', () => {
 
 		it('should format array of numeric strings', () => {
 			expect(formatValueForExpression(['123', '456', '789'])).toBe(
-				'[123, 456, 789]',
+				"['123', '456', '789']",
 			);
 		});
 
@@ -1345,12 +1347,14 @@ describe('formatValueForExpression', () => {
 		it('should format single value as array for IN operator', () => {
 			expect(formatValueForExpression('value', 'IN')).toBe("['value']");
 			expect(formatValueForExpression(123, 'IN')).toBe('[123]');
-			expect(formatValueForExpression('123', 'IN')).toBe('[123]');
+			expect(formatValueForExpression('123', 'IN')).toBe("['123']");
 		});
 
 		it('should format array for IN operator', () => {
 			expect(formatValueForExpression(['a', 'b'], 'IN')).toBe("['a', 'b']");
-			expect(formatValueForExpression(['123', '456'], 'IN')).toBe('[123, 456]');
+			expect(formatValueForExpression(['123', '456'], 'IN')).toBe(
+				"['123', '456']",
+			);
 		});
 
 		it('should format single value as array for NOT IN operator', () => {
@@ -1372,21 +1376,21 @@ describe('formatValueForExpression', () => {
 
 		it('should handle strings with leading/trailing whitespace', () => {
 			expect(formatValueForExpression('  hello  ')).toBe("'  hello  '");
-			expect(formatValueForExpression('  123  ')).toBe('123');
+			expect(formatValueForExpression('  123  ')).toBe("'  123  '");
 		});
 
 		it('should handle very large numbers', () => {
-			expect(formatValueForExpression('999999999')).toBe('999999999');
+			expect(formatValueForExpression('999999999')).toBe("'999999999'");
 			expect(formatValueForExpression(999999999)).toBe('999999999');
 		});
 
 		it('should handle decimal numbers', () => {
-			expect(formatValueForExpression('123.456')).toBe('123.456');
+			expect(formatValueForExpression('123.456')).toBe("'123.456'");
 			expect(formatValueForExpression(123.456)).toBe('123.456');
 		});
 
 		it('should handle negative numbers', () => {
-			expect(formatValueForExpression('-100')).toBe('-100');
+			expect(formatValueForExpression('-100')).toBe("'-100'");
 			expect(formatValueForExpression(-100)).toBe('-100');
 		});
 

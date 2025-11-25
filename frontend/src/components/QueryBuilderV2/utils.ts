@@ -47,20 +47,20 @@ const isVariable = (
 	return typeof value === 'string' && value.trim().startsWith('$');
 };
 
-const formatSingleValue = (
-	v: string | number | boolean,
-	shouldQuote = true,
-): string => {
+/**
+ * Formats a single value for use in expression strings.
+ * Strings are quoted and escaped, while numbers and booleans are converted to strings.
+ */
+const formatSingleValue = (v: string | number | boolean): string => {
 	if (typeof v === 'string') {
+		// Preserve already-quoted strings
 		if (isQuoted(v)) {
 			return v;
 		}
-		if (!Number.isNaN(Number(v)) && v.trim() !== '') {
-			return v.trim();
-		}
-
-		return shouldQuote ? `'${v.replace(/'/g, "\\'")}'` : unquote(v);
+		// Quote and escape single quotes in strings
+		return `'${v.replace(/'/g, "\\'")}'`;
 	}
+	// Convert numbers and booleans to strings without quotes
 	return String(v);
 };
 
@@ -80,11 +80,11 @@ export const formatValueForExpression = (
 
 	if (isArrayOperator(operator || '')) {
 		const arrayValue = Array.isArray(value) ? value : [value];
-		return `[${arrayValue.map((v) => formatSingleValue(v)).join(', ')}]`;
+		return `[${arrayValue.map(formatSingleValue).join(', ')}]`;
 	}
 
 	if (Array.isArray(value)) {
-		return `[${value.map((v) => formatSingleValue(v)).join(', ')}]`;
+		return `[${value.map(formatSingleValue).join(', ')}]`;
 	}
 
 	if (typeof value === 'string') {
@@ -144,16 +144,43 @@ export const convertFiltersToExpression = (
 	};
 };
 
-const formatValuesForFilter = (value: string | string[]): string | string[] => {
-	if (Array.isArray(value)) {
-		return value.map((v) =>
-			typeof v === 'string' ? formatSingleValue(v, false) : String(v),
-		);
-	}
+/**
+ * Converts a string value to its appropriate type (number, boolean, or string)
+ * for use in filter objects. This is the inverse of formatSingleValue.
+ */
+function formatSingleValueForFilter(
+	value: string | number | boolean,
+): string | number | boolean {
 	if (typeof value === 'string') {
-		return formatSingleValue(value, false);
+		const trimmed = value.trim();
+
+		// Try to convert numeric strings to numbers
+		if (trimmed !== '' && !Number.isNaN(Number(trimmed))) {
+			return Number(trimmed);
+		}
+
+		// Convert boolean strings to booleans
+		if (trimmed === 'true' || trimmed === 'false') {
+			return trimmed === 'true';
+		}
 	}
-	return String(value);
+
+	// Return non-string values as-is, or string values that couldn't be converted
+	return value;
+}
+
+/**
+ * Formats values for filter objects, converting string representations
+ * to their proper types (numbers, booleans) when appropriate.
+ */
+const formatValuesForFilter = (
+	value: (string | number | boolean)[] | number | boolean | string,
+): (string | number | boolean)[] | number | boolean | string => {
+	if (Array.isArray(value)) {
+		return value.map(formatSingleValueForFilter);
+	}
+
+	return formatSingleValueForFilter(value);
 };
 
 export const convertExpressionToFilters = (
