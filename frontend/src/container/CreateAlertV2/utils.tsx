@@ -38,7 +38,7 @@ export function Spinner(): JSX.Element | null {
 		return null;
 
 	return createPortal(
-		<div className="sticky-page-spinner">
+		<div className="sticky-page-spinner" data-testid="spinner">
 			<Spin size="large" spinning />
 		</div>,
 		document.body,
