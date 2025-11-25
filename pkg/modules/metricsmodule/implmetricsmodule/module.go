@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -533,8 +532,8 @@ func (m *module) fetchMetricsStatsWithSamples(
 	orderBy *qbtypes.OrderBy,
 ) ([]metricsmoduletypes.Stat, uint64, error) {
 
-	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
-	samplesTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
+	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
+	samplesTable, countExp := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
 
 	// Timeseries counts per metric
 	tsSB := sqlbuilder.NewSelectBuilder()
@@ -542,7 +541,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 		"metric_name",
 		"uniq(fingerprint) AS timeseries",
 	)
-	tsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, tsTable))
+	tsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
 	tsSB.Where(tsSB.Between("unix_milli", start, end))
 	tsSB.Where("NOT startsWith(metric_name, 'signoz')")
 	tsSB.Where(tsSB.E("__normalized", normalized))
@@ -634,11 +633,11 @@ func (m *module) fetchMetricsStatsWithSamples(
 }
 
 func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsmoduletypes.TreemapEntry, error) {
-	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
+	start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
 
 	totalTSBuilder := sqlbuilder.NewSelectBuilder()
 	totalTSBuilder.Select("uniq(fingerprint)")
-	totalTSBuilder.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, tsTable))
+	totalTSBuilder.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
 	totalTSBuilder.Where(totalTSBuilder.Between("unix_milli", start, end))
 	totalTSBuilder.Where(totalTSBuilder.E("__normalized", false))
 
@@ -649,7 +648,7 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 	)
 	totalPlaceholder := metricsSB.Var(totalTSBuilder)
 	metricsSB.SelectMore(fmt.Sprintf("(%s) AS total_time_series", totalPlaceholder))
-	metricsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, tsTable))
+	metricsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
 	metricsSB.Where(metricsSB.Between("unix_milli", start, end))
 	metricsSB.Where("NOT startsWith(metric_name, 'signoz')")
 	metricsSB.Where(metricsSB.E("__normalized", false))
@@ -697,14 +696,14 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 }
 
 func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsmoduletypes.TreemapEntry, error) {
-	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
-	samplesTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
+	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
+	samplesTable, countExp := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
 
 	candidateLimit := req.Limit + 50
 
 	metricCandidatesSB := sqlbuilder.NewSelectBuilder()
 	metricCandidatesSB.Select("ts.metric_name")
-	metricCandidatesSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, tsTable))
+	metricCandidatesSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, distributedTsTable))
 	metricCandidatesSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
 	metricCandidatesSB.Where(metricCandidatesSB.E("__normalized", false))
 	metricCandidatesSB.Where(metricCandidatesSB.Between("unix_milli", start, end))

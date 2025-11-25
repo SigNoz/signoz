@@ -43,29 +43,36 @@ var (
 	offsetBucket = uint64(60 * time.Minute.Milliseconds())
 )
 
+// WhichTSTableToUse returns adjusted start, adjusted end, distributed table name, local table name
+// in that order
 func WhichTSTableToUse(
 	start, end uint64,
 	tableHints *metrictypes.MetricTableHints,
-) (uint64, uint64, string) {
+) (uint64, uint64, string, string) {
 	// if we have a hint for the table, we need to use it
 	// the hint will be used to override the default table selection logic
 	if tableHints != nil {
 		if tableHints.TimeSeriesTableName != "" {
+			var distributedTableName string
 			switch tableHints.TimeSeriesTableName {
 			case TimeseriesV4LocalTableName:
 				// adjust the start time to nearest 1 hour
 				start = start - (start % (oneHourInMilliseconds))
+				distributedTableName = TimeseriesV4TableName
 			case TimeseriesV46hrsLocalTableName:
 				// adjust the start time to nearest 6 hours
 				start = start - (start % (sixHoursInMilliseconds))
+				distributedTableName = TimeseriesV46hrsTableName
 			case TimeseriesV41dayLocalTableName:
 				// adjust the start time to nearest 1 day
 				start = start - (start % (oneDayInMilliseconds))
+				distributedTableName = TimeseriesV41dayTableName
 			case TimeseriesV41weekLocalTableName:
 				// adjust the start time to nearest 1 week
 				start = start - (start % (oneWeekInMilliseconds))
+				distributedTableName = TimeseriesV41weekTableName
 			}
-			return start, end, tableHints.TimeSeriesTableName
+			return start, end, distributedTableName, tableHints.TimeSeriesTableName
 		}
 	}
 
@@ -73,26 +80,31 @@ func WhichTSTableToUse(
 	// else if time range is less than 1 day and greater than 6 hours, we need to use the `time_series_v4_6hrs` table
 	// else if time range is less than 1 week and greater than 1 day, we need to use the `time_series_v4_1day` table
 	// else we need to use the `time_series_v4_1week` table
-	var tableName string
+	var distributedTableName string
+	var localTableName string
 	if end-start < sixHoursInMilliseconds {
 		// adjust the start time to nearest 1 hour
 		start = start - (start % (oneHourInMilliseconds))
-		tableName = TimeseriesV4LocalTableName
+		distributedTableName = TimeseriesV4TableName
+		localTableName = TimeseriesV4LocalTableName
 	} else if end-start < oneDayInMilliseconds {
 		// adjust the start time to nearest 6 hours
 		start = start - (start % (sixHoursInMilliseconds))
-		tableName = TimeseriesV46hrsLocalTableName
+		distributedTableName = TimeseriesV46hrsTableName
+		localTableName = TimeseriesV46hrsLocalTableName
 	} else if end-start < oneWeekInMilliseconds {
 		// adjust the start time to nearest 1 day
 		start = start - (start % (oneDayInMilliseconds))
-		tableName = TimeseriesV41dayLocalTableName
+		distributedTableName = TimeseriesV41dayTableName
+		localTableName = TimeseriesV41dayLocalTableName
 	} else {
 		// adjust the start time to nearest 1 week
 		start = start - (start % (oneWeekInMilliseconds))
-		tableName = TimeseriesV41weekLocalTableName
+		distributedTableName = TimeseriesV41weekTableName
+		localTableName = TimeseriesV41weekLocalTableName
 	}
 
-	return start, end, tableName
+	return start, end, distributedTableName, localTableName
 }
 
 // start and end are in milliseconds
@@ -106,33 +118,40 @@ func WhichSamplesTableToUse(
 	metricType metrictypes.Type,
 	timeAggregation metrictypes.TimeAggregation,
 	tableHints *metrictypes.MetricTableHints,
-) string {
+) (string, string) {
 
 	// if we have a hint for the table, we need to use it
 	// the hint will be used to override the default table selection logic
 	if tableHints != nil {
 		if tableHints.SamplesTableName != "" {
-			return tableHints.SamplesTableName
+			// Determine count expression based on table name
+			var countExp string
+			if tableHints.SamplesTableName == SamplesV4TableName {
+				countExp = "count(*)"
+			} else {
+				countExp = "sum(count)"
+			}
+			return tableHints.SamplesTableName, countExp
 		}
 	}
 
 	// we don't have any aggregated table for sketches (yet)
 	if metricType == metrictypes.ExpHistogramType {
-		return ExpHistogramLocalTableName
+		return ExpHistogramLocalTableName, "count(*)"
 	}
 
 	// if the time aggregation is count_distinct, we need to use the distributed_samples_v4 table
 	// because the aggregated tables don't support count_distinct
 	if timeAggregation == metrictypes.TimeAggregationCountDistinct {
-		return SamplesV4TableName
+		return SamplesV4TableName, "count(*)"
 	}
 
 	if end-start < oneDayInMilliseconds+offsetBucket {
-		return SamplesV4TableName
+		return SamplesV4TableName, "count(*)"
 	} else if end-start < oneWeekInMilliseconds+offsetBucket {
-		return SamplesV4Agg5mTableName
+		return SamplesV4Agg5mTableName, "sum(count)"
 	} else {
-		return SamplesV4Agg30mTableName
+		return SamplesV4Agg30mTableName, "sum(count)"
 	}
 }
 
@@ -143,7 +162,7 @@ func AggregationColumnForSamplesTable(
 	timeAggregation metrictypes.TimeAggregation,
 	tableHints *metrictypes.MetricTableHints,
 ) string {
-	tableName := WhichSamplesTableToUse(start, end, metricType, timeAggregation, tableHints)
+	tableName, _ := WhichSamplesTableToUse(start, end, metricType, timeAggregation, tableHints)
 	var aggregationColumn string
 	switch temporality {
 	case metrictypes.Delta:
