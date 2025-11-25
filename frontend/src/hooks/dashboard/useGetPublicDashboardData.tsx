@@ -13,6 +13,6 @@ export const useGetPublicDashboardData = (
 		onError: (error) => {
 			console.error('Error getting public dashboard data', error);
 		},
-		queryKey: [REACT_QUERY_KEY.GET_PUBLIC_DASHBOARD_META, id],
+		queryKey: [REACT_QUERY_KEY.GET_PUBLIC_DASHBOARD, id],
 		enabled: !!id,
 	});
