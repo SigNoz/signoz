@@ -6,6 +6,8 @@
 	font-weight: 400;
 	line-height: 20px;
 	letter-spacing: -0.07px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .dot {
@@ -25,16 +27,21 @@
 		.left-section {
 			display: flex;
 			align-items: center;
-			width: 90%;
+			flex: 1;
+			min-width: 0;
 			gap: 8px;
 
 			.value {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
 			}
 		}
 		.right-section {
 			display: flex;
 			align-items: center;
 			gap: 4px;
+			flex-shrink: 0;
 
 			.data-type {
 				display: flex;
@@ -45,6 +52,7 @@
 				gap: 4px;
 				border-radius: 20px;
 				background: rgba(255, 255, 255, 0.08);
+				white-space: nowrap;
 			}
 
 			.type-tag {
@@ -56,6 +64,7 @@
 				gap: 4px;
 				border-radius: 50px;
 				text-transform: capitalize;
+				white-space: nowrap;
 
 				&.tag {
 					border-radius: 50px;
