@@ -12,6 +12,7 @@ import (
 type Handler interface {
 	GetStats(http.ResponseWriter, *http.Request)
 	GetTreemap(http.ResponseWriter, *http.Request)
+	GetMetricMetadata(http.ResponseWriter, *http.Request)
 	UpdateMetricsMetadata(http.ResponseWriter, *http.Request)
 }
 

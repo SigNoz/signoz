@@ -659,8 +659,10 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.Au
 	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
 		am.ViewAccess(ah.UpdateMetricsMetadata)).
 		Methods(http.MethodPost)
+	// v2 endpoints
 	router.HandleFunc("/api/v2/metrics/stats", am.ViewAccess(ah.Signoz.Handlers.Metrics.GetStats)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v2/metrics/treemap", am.ViewAccess(ah.Signoz.Handlers.Metrics.GetTreemap)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/metrics/metadata", am.ViewAccess(ah.Signoz.Handlers.Metrics.GetMetricMetadata)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/metrics/{metric_name}/metadata", am.ViewAccess(ah.Signoz.Handlers.Metrics.UpdateMetricsMetadata)).Methods(http.MethodPost)
 }
 

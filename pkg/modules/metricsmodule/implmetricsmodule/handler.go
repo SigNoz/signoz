@@ -2,6 +2,7 @@ package implmetricsmodule
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
@@ -117,4 +118,38 @@ func (h *handler) UpdateMetricsMetadata(rw http.ResponseWriter, req *http.Reques
 	}
 
 	render.Success(rw, http.StatusOK, nil)
+}
+
+func (h *handler) GetMetricMetadata(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	metricName := strings.TrimSpace(req.URL.Query().Get("metric_name"))
+	if metricName == "" {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name query parameter is required"))
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	metadataMap, err := h.module.GetMetricsMetadataMulti(req.Context(), orgID, []string{metricName})
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	metadata, ok := metadataMap[metricName]
+	if !ok || metadata == nil {
+		render.Error(rw, errors.NewNotFoundf(errors.CodeNotFound, "metadata not found for metric %q", metricName))
+		return
+	}
+
+	render.Success(rw, http.StatusOK, metadata)
 }
