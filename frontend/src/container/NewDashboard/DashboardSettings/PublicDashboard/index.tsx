@@ -33,23 +33,11 @@ export const TIME_RANGE_PRESETS_OPTIONS = [
 		value: '1h',
 	},
 	{
-		label: 'Last 2 hours',
-		value: '2h',
-	},
-	{
-		label: 'Last 4 hours',
-		value: '4h',
-	},
-	{
 		label: 'Last 6 hours',
 		value: '6h',
 	},
 	{
-		label: 'Last 12 hours',
-		value: '12h',
-	},
-	{
-		label: 'Last 24 hours',
+		label: 'Last 1 day',
 		value: '24h',
 	},
 ];

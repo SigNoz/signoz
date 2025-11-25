@@ -1,17 +1,22 @@
 import './PublicDashboardContainer.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Select, Typography } from 'antd';
+import { Typography } from 'antd';
 import cx from 'classnames';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { Card, CardContainer } from 'container/GridCardLayout/styles';
 import { WidgetRowHeader } from 'container/GridCardLayout/WidgetRow';
-import { TIME_RANGE_PRESETS_OPTIONS } from 'container/NewDashboard/DashboardSettings/PublicDashboard';
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import {
+	CustomTimeType,
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import GetMinMax from 'lib/getMinMax';
 import { GripVertical } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import RGL, { Layout, WidthProvider } from 'react-grid-layout';
 import { SuccessResponseV2 } from 'types/api';
 import { PublicDashboardDataProps } from 'types/api/dashboard/public/get';
@@ -104,13 +109,26 @@ function PublicDashboardContainer({
 		setCurrentPanelMap(dashboard?.data?.panelMap || {});
 	}, [dashboard?.data?.panelMap]);
 
-	const handleTimeRangeChange = useCallback(
-		(selectedTimeRange: string): void => {
-			setSelectedTimeRangeLabel(selectedTimeRange);
-			setSelectedTimeRange(getStartTimeAndEndTimeFromTimeRange(selectedTimeRange));
-		},
-		[],
-	);
+	const handleTimeChange = (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	): void => {
+		if (dateTimeRange) {
+			setSelectedTimeRange({
+				startTime: Math.floor(dateTimeRange[0] / 1000),
+				endTime: Math.floor(dateTimeRange[1] / 1000),
+			});
+		} else if (interval !== 'custom') {
+			const { maxTime, minTime } = GetMinMax(interval);
+
+			setSelectedTimeRange({
+				startTime: Math.floor(minTime / 1000000000),
+				endTime: Math.floor(maxTime / 1000000000),
+			});
+		}
+
+		setSelectedTimeRangeLabel(interval as string);
+	};
 
 	return (
 		<div className="public-dashboard-container">
@@ -136,12 +154,16 @@ function PublicDashboardContainer({
 				{isTimeRangeEnabled && (
 					<div className="public-dashboard-header-right">
 						<div className="datetime-section">
-							<Select
-								placeholder="Select default time range"
-								options={TIME_RANGE_PRESETS_OPTIONS}
-								value={selectedTimeRangeLabel}
-								onChange={handleTimeRangeChange}
-								className="time-range-select-dropdown"
+							<DateTimeSelectionV2
+								showAutoRefresh={false}
+								showRefreshText={false}
+								hideShareModal
+								onTimeChange={handleTimeChange}
+								defaultRelativeTime={publicDashboard?.defaultTimeRange as Time}
+								isModalTimeSelection
+								modalSelectedInterval={selectedTimeRangeLabel as Time}
+								disableUrlSync
+								showRecentlyUsed={false}
 							/>
 						</div>
 					</div>
