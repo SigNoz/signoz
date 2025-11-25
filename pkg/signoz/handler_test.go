@@ -4,14 +4,11 @@ import (
 	"context"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
-	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
@@ -38,15 +35,8 @@ func TestNewHandlers(t *testing.T) {
 	require.NoError(t, err)
 	tokenizer := tokenizertest.New()
 	emailing := emailingtest.New()
-	testCache, err := cachetest.New(cache.Config{
-		Provider: "memory",
-		Memory: cache.Memory{
-			TTL:             time.Hour,
-			CleanupInterval: 10 * time.Minute,
-		},
-	})
 	require.NoError(t, err)
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, testCache)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil)
 
 	handlers := NewHandlers(modules, providerSettings, nil, nil)
 
