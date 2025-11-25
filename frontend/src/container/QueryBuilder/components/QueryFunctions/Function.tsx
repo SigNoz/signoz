@@ -10,7 +10,7 @@ import {
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { debounce, isNil } from 'lodash-es';
 import { X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
@@ -65,9 +65,9 @@ export default function Function({
 		inputRef.current.input.style.width = `${newWidth}px`;
 	}, [value]);
 
-	const debouncedhandleUpdateFunctionArgs = debounce(
-		handleUpdateFunctionArgs,
-		500,
+	const debouncedhandleUpdateFunctionArgs = useMemo(
+		() => debounce(handleUpdateFunctionArgs, 500),
+		[handleUpdateFunctionArgs],
 	);
 
 	// update the logic when we start supporting functions for traces
