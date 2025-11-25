@@ -774,7 +774,15 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		readerCache, err := cachetest.New(cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
+		readerCache, err := cachetest.New(
+			cache.Config{
+				Provider: "memory",
+				Memory: cache.Memory{
+					NumCounters: 10 * 1000,
+					MaxCost:     1 << 26,
+				},
+			},
+		)
 		require.NoError(t, err)
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), readerCache)
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
@@ -880,7 +888,15 @@ func TestThresholdRuleNoData(t *testing.T) {
 			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
-		readerCache, err := cachetest.New(cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
+		readerCache, err := cachetest.New(
+			cache.Config{
+				Provider: "memory",
+				Memory: cache.Memory{
+					NumCounters: 10 * 1000,
+					MaxCost:     1 << 26,
+				},
+			},
+		)
 		assert.NoError(t, err)
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), readerCache)
@@ -1397,7 +1413,15 @@ func TestMultipleThresholdRule(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		readerCache, err := cachetest.New(cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
+		readerCache, err := cachetest.New(
+			cache.Config{
+				Provider: "memory",
+				Memory: cache.Memory{
+					NumCounters: 10 * 1000,
+					MaxCost:     1 << 26,
+				},
+			},
+		)
 		require.NoError(t, err)
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), readerCache)
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
