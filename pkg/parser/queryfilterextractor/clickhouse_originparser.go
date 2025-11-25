@@ -101,18 +101,11 @@ func extractCHOriginFieldFromQuery(query string) (string, error) {
 	p := parser.NewParser(query)
 	stmts, err := p.ParseStmts()
 	if err != nil {
-		return "", err
-	}
-
-	if len(stmts) == 0 {
-		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no statements found in query")
+		return "", errors.NewInternalf(errors.CodeInternal, "failed to parse origin field from query: %s", err.Error())
 	}
 
 	// Get the first statement which should be a SELECT
-	selectStmt, ok := stmts[0].(*parser.SelectQuery)
-	if !ok {
-		return "", errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "statement is not a SELECT query")
-	}
+	selectStmt := stmts[0].(*parser.SelectQuery)
 
 	// If query has multiple select items, return blank string as we don't expect multiple select items
 	if len(selectStmt.SelectItems) > 1 {
@@ -120,7 +113,7 @@ func extractCHOriginFieldFromQuery(query string) (string, error) {
 	}
 
 	if len(selectStmt.SelectItems) == 0 {
-		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "SELECT query has no select items")
+		return "", errors.NewInternalf(errors.CodeInternal, "SELECT query has no select items")
 	}
 
 	// Extract origin field from the first (and only) select item's expression
@@ -130,10 +123,6 @@ func extractCHOriginFieldFromQuery(query string) (string, error) {
 // extractOriginFieldFromExpr extracts the origin field (column name) from an expression.
 // This is the internal helper function that contains the original logic.
 func extractOriginFieldFromExpr(expr parser.Expr) (string, error) {
-	if expr == nil {
-		return "", errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "expression is nil")
-	}
-
 	// Check if expression contains excluded functions or IF/CASE
 	hasExcludedExpressions := false
 	hasReservedKeyword := false
@@ -176,7 +165,7 @@ func extractOriginFieldFromExpr(expr parser.Expr) (string, error) {
 
 	// If the expression contains reserved keywords, return error
 	if hasReservedKeyword {
-		return "", errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "reserved keyword found in query")
+		return "", errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "reserved keyword found in select clause")
 	}
 
 	// If the expression contains excluded expressions, return empty string

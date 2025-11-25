@@ -1,6 +1,7 @@
 package queryfilterextractor
 
 import (
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 )
@@ -17,7 +18,7 @@ func NewPromQLFilterExtractor() *PromQLFilterExtractor {
 func (e *PromQLFilterExtractor) Extract(query string) (*FilterResult, error) {
 	expr, err := parser.ParseExpr(query)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse promql query: %s", err.Error())
 	}
 
 	result := &FilterResult{
@@ -33,7 +34,7 @@ func (e *PromQLFilterExtractor) Extract(query string) (*FilterResult, error) {
 
 	// Walk the AST
 	if err := parser.Walk(visitor, expr, nil); err != nil {
-		return result, err
+		return result, errors.NewInternalf(errors.CodeInternal, "failed to walk promql query: %s", err.Error())
 	}
 
 	// Convert sets to slices
@@ -61,21 +62,6 @@ func (v *promQLVisitor) Visit(node parser.Node, path []parser.Node) (parser.Visi
 		v.visitVectorSelector(n)
 	case *parser.AggregateExpr:
 		v.visitAggregateExpr(n, path)
-	case *parser.Call:
-		// Function calls may contain VectorSelectors, continue traversal
-		return v, nil
-	case *parser.BinaryExpr:
-		// Binary expressions may contain VectorSelectors on both sides
-		return v, nil
-	case *parser.SubqueryExpr:
-		// Subqueries may contain VectorSelectors
-		return v, nil
-	case *parser.ParenExpr:
-		// Parentheses don't change semantics, continue traversal
-		return v, nil
-	case *parser.MatrixSelector:
-		// Matrix selectors wrap VectorSelectors
-		return v, nil
 	}
 
 	return v, nil

@@ -142,6 +142,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAuthzFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddPublicDashboardsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRoleFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateAuthzFactory(sqlstore, sqlschema),
 	)
 }
 
