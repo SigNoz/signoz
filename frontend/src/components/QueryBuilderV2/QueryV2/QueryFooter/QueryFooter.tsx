@@ -17,17 +17,13 @@ function TraceOperatorSection({
 	const { currentQuery, panelType } = useQueryBuilder();
 
 	const showTraceOperatorWarning = useMemo(() => {
-		try {
-			const isListViewPanel =
-				panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE;
-			const hasMultipleQueries = currentQuery.builder.queryData.length > 1;
-			const hasTraceOperator =
-				currentQuery.builder.queryTraceOperator &&
-				currentQuery.builder.queryTraceOperator.length > 0;
-			return isListViewPanel && hasMultipleQueries && !hasTraceOperator;
-		} catch (error) {
-			return false;
-		}
+		const isListViewPanel =
+			panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE;
+		const hasMultipleQueries = currentQuery.builder.queryData.length > 1;
+		const hasTraceOperator =
+			currentQuery.builder.queryTraceOperator &&
+			currentQuery.builder.queryTraceOperator.length > 0;
+		return isListViewPanel && hasMultipleQueries && !hasTraceOperator;
 	}, [
 		currentQuery?.builder?.queryData,
 		currentQuery?.builder?.queryTraceOperator,
