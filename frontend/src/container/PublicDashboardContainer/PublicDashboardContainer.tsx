@@ -1,12 +1,10 @@
 import './PublicDashboardContainer.styles.scss';
 
-import { Color } from '@signozhq/design-tokens';
 import { Typography } from 'antd';
 import cx from 'classnames';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { Card, CardContainer } from 'container/GridCardLayout/styles';
-import { WidgetRowHeader } from 'container/GridCardLayout/WidgetRow';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
@@ -15,7 +13,6 @@ import {
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import GetMinMax from 'lib/getMinMax';
-import { GripVertical } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import RGL, { Layout, WidthProvider } from 'react-grid-layout';
 import { SuccessResponseV2 } from 'types/api';
@@ -205,25 +202,8 @@ function PublicDashboardContainer({
 								>
 									<div className={cx('row-panel')}>
 										<div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-											{rowWidgetProperties.collapsed && (
-												<GripVertical
-													size={14}
-													className="drag-handle"
-													color={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_300}
-													cursor="move"
-												/>
-											)}
 											<Typography.Text className="section-title">{title}</Typography.Text>
 										</div>
-										<WidgetRowHeader
-											id={widget?.id}
-											rowWidgetProperties={rowWidgetProperties}
-											editWidget={false}
-											deleteWidget={false}
-											setCurrentSelectRowId={(): void => {}}
-											setIsDeleteModalOpen={(): void => {}}
-											setIsSettingsModalOpen={(): void => {}}
-										/>
 									</div>
 								</CardContainer>
 							);

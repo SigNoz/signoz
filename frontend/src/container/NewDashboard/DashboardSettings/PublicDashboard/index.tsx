@@ -8,7 +8,7 @@ import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
 import updatePublicDashboardAPI from 'api/dashboard/public/updatePublicDashboard';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
-import { Copy, ExternalLink, Globe, Loader2, Trash } from 'lucide-react';
+import { Copy, ExternalLink, Globe, Info, Loader2, Trash } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
@@ -183,7 +183,9 @@ function PublicDashboardSetting(): JSX.Element {
 		if (!publicDashboardResponse?.data?.publicPath) return;
 
 		try {
-			setCopyPublicDashboardURL(publicDashboardResponse?.data?.publicPath);
+			setCopyPublicDashboardURL(
+				`${window.location.origin}${publicDashboardResponse?.data?.publicPath}`,
+			);
 			toast.success('Copied Public Dashboard URL successfully');
 		} catch (error) {
 			console.error('Error copying public dashboard URL', error);
@@ -264,6 +266,13 @@ function PublicDashboardSetting(): JSX.Element {
 						</div>
 					</div>
 				)}
+
+				<div className="public-dashboard-setting-callout">
+					<Typography.Text className="public-dashboard-setting-callout-text">
+						<Info size={12} className="public-dashboard-setting-callout-icon" />{' '}
+						Dashboard variables won&apos;t work in public dashboards
+					</Typography.Text>
+				</div>
 
 				<div className="public-dashboard-setting-actions">
 					{!isPublicDashboardEnabled ? (

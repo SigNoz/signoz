@@ -81,13 +81,25 @@
 			}
 		}
 
-		.accept-terms-checkbox {
-			margin-top: 16px;
-			margin-bottom: 16px;
-		}
-
 		.default-time-range-select-dropdown {
 			width: 200px;
+		}
+
+		.public-dashboard-setting-callout {
+			margin-top: 12px;
+			background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
+			padding: 12px 8px;
+			border-radius: 3px;
+
+			.public-dashboard-setting-callout-text {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+
+				font-size: 11px;
+				font-weight: 400;
+				color: var(--text-robin-300);
+			}
 		}
 	}
 
