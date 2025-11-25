@@ -9,6 +9,12 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
+// used for mapping the sqlColumns via orderBy
+const (
+	sqlColumnTimeSeries = "timeseries"
+	sqlColumnSamples    = "samples"
+)
+
 func generateMetricMetadataCacheKey(metricName string) string {
 	return fmt.Sprintf("metrics_metadata:%s", metricName)
 }
@@ -25,7 +31,13 @@ func getStatsOrderByColumn(order *qbtypes.OrderBy) (string, string, error) {
 	case metricsmoduletypes.OrderBySamples.StringValue():
 		columnName = sqlColumnSamples
 	default:
-		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order column %q", columnName)
+		return "", "", errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"unsupported order column %q: supported columns are %q or %q",
+			order.Key.Name,
+			metricsmoduletypes.OrderByTimeSeries,
+			metricsmoduletypes.OrderBySamples,
+		)
 	}
 
 	// Extract direction from OrderDirection and convert to SQL format (uppercase)

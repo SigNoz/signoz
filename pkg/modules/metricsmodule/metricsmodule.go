@@ -13,13 +13,13 @@ type Handler interface {
 	GetStats(http.ResponseWriter, *http.Request)
 	GetTreemap(http.ResponseWriter, *http.Request)
 	GetMetricMetadata(http.ResponseWriter, *http.Request)
-	UpdateMetricsMetadata(http.ResponseWriter, *http.Request)
+	UpdateMetricMetadata(http.ResponseWriter, *http.Request)
 }
 
 // Module represents the metrics module interface.
 type Module interface {
 	GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.StatsRequest) (*metricsmoduletypes.StatsResponse, error)
 	GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.TreemapRequest) (*metricsmoduletypes.TreemapResponse, error)
-	GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error)
-	UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricsMetadataRequest) error
+	GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error)
+	UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricMetadataRequest) error
 }

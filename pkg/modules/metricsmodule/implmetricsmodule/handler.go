@@ -81,7 +81,7 @@ func (h *handler) GetTreemap(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, out)
 }
 
-func (h *handler) UpdateMetricsMetadata(rw http.ResponseWriter, req *http.Request) {
+func (h *handler) UpdateMetricMetadata(rw http.ResponseWriter, req *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(req.Context())
 	if err != nil {
 		render.Error(rw, err)
@@ -96,7 +96,7 @@ func (h *handler) UpdateMetricsMetadata(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	var in metricsmoduletypes.UpdateMetricsMetadataRequest
+	var in metricsmoduletypes.UpdateMetricMetadataRequest
 	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
 		render.Error(rw, err)
 		return
@@ -111,7 +111,7 @@ func (h *handler) UpdateMetricsMetadata(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	err = h.module.UpdateMetricsMetadata(req.Context(), orgID, &in)
+	err = h.module.UpdateMetricMetadata(req.Context(), orgID, &in)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -139,7 +139,7 @@ func (h *handler) GetMetricMetadata(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	metadataMap, err := h.module.GetMetricsMetadataMulti(req.Context(), orgID, []string{metricName})
+	metadataMap, err := h.module.GetMetricMetadataMulti(req.Context(), orgID, []string{metricName})
 	if err != nil {
 		render.Error(rw, err)
 		return

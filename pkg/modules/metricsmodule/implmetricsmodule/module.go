@@ -81,7 +81,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 		metricNames[i] = metricStats[i].MetricName
 	}
 
-	metadata, err := m.GetMetricsMetadataMulti(ctx, orgID, metricNames)
+	metadata, err := m.GetMetricMetadataMulti(ctx, orgID, metricNames)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 	return resp, nil
 }
 
-func (m *module) GetMetricsMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
+func (m *module) GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
 	if len(metricNames) == 0 {
 		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
 	}
@@ -293,7 +293,7 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 	return result, nil
 }
 
-func (m *module) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
+func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
@@ -325,7 +325,7 @@ func (m *module) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	return nil
 }
 
-func (m *module) validateAndNormalizeMetricType(req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
+func (m *module) validateAndNormalizeMetricType(req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
 	switch req.Type {
 	case metrictypes.SumType:
 		if req.Temporality.IsZero() {
@@ -371,7 +371,7 @@ func (m *module) validateAndNormalizeMetricType(req *metricsmoduletypes.UpdateMe
 	return nil
 }
 
-func (m *module) validateMetricLabels(ctx context.Context, req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
+func (m *module) validateMetricLabels(ctx context.Context, req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
 	if req.Type == metrictypes.HistogramType {
 		labels := []string{"le"}
 		hasLabels, err := m.checkForLabelsInMetric(ctx, req.MetricName, labels)
@@ -437,7 +437,7 @@ func (m *module) deleteMetricsMetadata(ctx context.Context, metricName string) e
 	return nil
 }
 
-func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
+func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
 	createdAt := time.Now().UnixMilli()
 
 	ib := sqlbuilder.NewInsertBuilder()
@@ -576,8 +576,8 @@ func (m *module) fetchMetricsStatsWithSamples(
 	samplesSB.GroupBy("dm.metric_name")
 
 	cteBuilder := sqlbuilder.With(
-		sqlbuilder.CTEQuery("TimeSeriesCounts").As(tsSB),
-		sqlbuilder.CTEQuery("SampleCounts").As(samplesSB),
+		sqlbuilder.CTEQuery("__time_series_counts").As(tsSB),
+		sqlbuilder.CTEQuery("__sample_counts").As(samplesSB),
 	)
 
 	finalSB := cteBuilder.Select(
@@ -586,8 +586,8 @@ func (m *module) fetchMetricsStatsWithSamples(
 		"COALESCE(s.samples, 0) AS samples",
 		"COUNT(*) OVER() AS total",
 	)
-	finalSB.From("TimeSeriesCounts ts")
-	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "SampleCounts s", "ts.metric_name = s.metric_name")
+	finalSB.From("__time_series_counts ts")
+	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "ts.metric_name = s.metric_name")
 	finalSB.Where("(COALESCE(ts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) > 0)")
 
 	orderByColumn, orderDirection, err := getStatsOrderByColumn(orderBy)
@@ -659,7 +659,7 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 	metricsSB.GroupBy("metric_name")
 
 	cteBuilder := sqlbuilder.With(
-		sqlbuilder.CTEQuery("MetricTotals").As(metricsSB),
+		sqlbuilder.CTEQuery("__metric_totals").As(metricsSB),
 	)
 
 	finalSB := cteBuilder.Select(
@@ -667,7 +667,7 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 		"total_value",
 		"CASE WHEN total_time_series = 0 THEN 0 ELSE (total_value * 100.0 / total_time_series) END AS percentage",
 	)
-	finalSB.From("MetricTotals")
+	finalSB.From("__metric_totals")
 	finalSB.OrderBy("percentage").Desc()
 	finalSB.Limit(req.Limit)
 
@@ -727,7 +727,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 	)
 	sampleCountsSB.From(fmt.Sprintf("%s.%s AS dm", telemetrymetrics.DBName, samplesTable))
 	sampleCountsSB.Where(sampleCountsSB.Between("dm.unix_milli", req.Start, req.End))
-	sampleCountsSB.Where("dm.metric_name IN (SELECT metric_name FROM MetricCandidates)")
+	sampleCountsSB.Where("dm.metric_name IN (SELECT metric_name FROM __metric_candidates)")
 
 	if filterWhereClause != nil {
 		fingerprintSB := sqlbuilder.NewSelectBuilder()
@@ -737,7 +737,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 		fingerprintSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
 		fingerprintSB.Where(fingerprintSB.E("__normalized", false))
 		fingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
-		fingerprintSB.Where("ts.metric_name IN (SELECT metric_name FROM MetricCandidates)")
+		fingerprintSB.Where("ts.metric_name IN (SELECT metric_name FROM __metric_candidates)")
 		fingerprintSB.GroupBy("ts.fingerprint")
 
 		subQuery := sampleCountsSB.Var(fingerprintSB)
@@ -747,9 +747,9 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 	sampleCountsSB.GroupBy("dm.metric_name")
 
 	cteBuilder := sqlbuilder.With(
-		sqlbuilder.CTEQuery("MetricCandidates").As(metricCandidatesSB),
-		sqlbuilder.CTEQuery("SampleCounts").As(sampleCountsSB),
-		sqlbuilder.CTEQuery("TotalSamples").As(totalSamplesSB),
+		sqlbuilder.CTEQuery("__metric_candidates").As(metricCandidatesSB),
+		sqlbuilder.CTEQuery("__sample_counts").As(sampleCountsSB),
+		sqlbuilder.CTEQuery("__total_samples").As(totalSamplesSB),
 	)
 
 	finalSB := cteBuilder.Select(
@@ -757,9 +757,9 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 		"COALESCE(sc.samples, 0) AS samples",
 		"CASE WHEN ts.total_samples = 0 THEN 0 ELSE (COALESCE(sc.samples, 0) * 100.0 / ts.total_samples) END AS percentage",
 	)
-	finalSB.From("MetricCandidates mc")
-	finalSB.JoinWithOption(sqlbuilder.LeftJoin, "SampleCounts sc", "mc.metric_name = sc.metric_name")
-	finalSB.Join("TotalSamples ts", "1=1")
+	finalSB.From("__metric_candidates mc")
+	finalSB.JoinWithOption(sqlbuilder.LeftJoin, "__sample_counts sc", "mc.metric_name = sc.metric_name")
+	finalSB.Join("__total_samples ts", "1=1")
 	finalSB.OrderBy("percentage DESC")
 	finalSB.Limit(req.Limit)
 

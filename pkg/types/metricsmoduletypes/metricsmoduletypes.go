@@ -47,8 +47,29 @@ func (req *StatsRequest) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
 
-	if req.Start <= 0 || req.End <= 0 || req.Start >= req.End {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range")
+	if req.Start <= 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid start time %d: start must be greater than 0",
+			req.Start,
+		)
+	}
+
+	if req.End <= 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid end time %d: end must be greater than 0",
+			req.End,
+		)
+	}
+
+	if req.Start >= req.End {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid time range: start (%d) must be less than end (%d)",
+			req.Start,
+			req.End,
+		)
 	}
 
 	if req.Limit < 1 || req.Limit > 5000 {
@@ -107,8 +128,8 @@ func (m *MetricMetadata) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, m)
 }
 
-// UpdateMetricsMetadataRequest represents the payload for updating metrics metadata.
-type UpdateMetricsMetadataRequest struct {
+// UpdateMetricMetadataRequest represents the payload for updating metric metadata.
+type UpdateMetricMetadataRequest struct {
 	MetricName  string                  `json:"metricName"`
 	Type        metrictypes.Type        `json:"type"`
 	Description string                  `json:"description"`
@@ -132,8 +153,29 @@ func (req *TreemapRequest) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
 
-	if req.Start <= 0 || req.End <= 0 || req.Start >= req.End {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range")
+	if req.Start <= 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid start time %d: start must be greater than 0",
+			req.Start,
+		)
+	}
+
+	if req.End <= 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid end time %d: end must be greater than 0",
+			req.End,
+		)
+	}
+
+	if req.Start >= req.End {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid time range: start (%d) must be less than end (%d)",
+			req.Start,
+			req.End,
+		)
 	}
 
 	if req.Limit < 1 || req.Limit > 5000 {
@@ -141,7 +183,13 @@ func (req *TreemapRequest) Validate() error {
 	}
 
 	if req.Treemap != TreemapModeSamples && req.Treemap != TreemapModeTimeSeries {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid treemap mode")
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid treemap mode %q: supported values are %q or %q",
+			req.Treemap,
+			TreemapModeSamples,
+			TreemapModeTimeSeries,
+		)
 	}
 
 	return nil
