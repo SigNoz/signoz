@@ -2,6 +2,7 @@ package implmetricsmodule
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
+	"golang.org/x/sync/errgroup"
 )
 
 type module struct {
@@ -163,135 +165,6 @@ func (m *module) GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, 
 	return metadata, nil
 }
 
-func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, []string) {
-	hits := make(map[string]*metricsmoduletypes.MetricMetadata)
-	misses := make([]string, 0)
-	for _, metricName := range metricNames {
-		cacheKey := generateMetricMetadataCacheKey(metricName)
-		var cachedMetadata metricsmoduletypes.MetricMetadata
-		if err := m.cache.Get(ctx, orgID, cacheKey, &cachedMetadata); err == nil {
-			hits[metricName] = &cachedMetadata
-		} else {
-			m.logger.WarnContext(ctx, "cache miss for metric metadata", "metric_name", metricName, "error", err)
-			misses = append(misses, metricName)
-		}
-	}
-	return hits, misses
-}
-
-func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
-	if len(metricNames) == 0 {
-		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
-	}
-
-	args := make([]any, len(metricNames))
-	for i := range metricNames {
-		args[i] = metricNames[i]
-	}
-
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		"metric_name",
-		"description",
-		"type",
-		"unit",
-		"temporality",
-		"is_monotonic",
-	)
-	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.UpdatedMetadataTableName))
-	sb.Where(sb.In("metric_name", args...))
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
-	}
-	defer rows.Close()
-
-	result := make(map[string]*metricsmoduletypes.MetricMetadata)
-	for rows.Next() {
-		var (
-			metricMetadata metricsmoduletypes.MetricMetadata
-			metricName     string
-		)
-
-		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality, &metricMetadata.IsMonotonic); err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
-		}
-		result[metricName] = &metricMetadata
-
-		cacheKey := generateMetricMetadataCacheKey(metricName)
-		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
-			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, "error", err)
-		}
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating updated metrics metadata rows")
-	}
-
-	return result, nil
-}
-
-func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
-	if len(metricNames) == 0 {
-		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
-	}
-
-	args := make([]any, len(metricNames))
-	for i := range metricNames {
-		args[i] = metricNames[i]
-	}
-
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		"metric_name",
-		"ANY_VALUE(description) AS description",
-		"ANY_VALUE(type) AS metric_type",
-		"ANY_VALUE(unit) AS metric_unit",
-		"ANY_VALUE(temporality) AS temporality",
-		"ANY_VALUE(is_monotonic) AS is_monotonic",
-	)
-	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4TableName))
-	sb.Where(sb.In("metric_name", args...))
-	sb.GroupBy("metric_name")
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch metrics metadata from timeseries table")
-	}
-	defer rows.Close()
-
-	result := make(map[string]*metricsmoduletypes.MetricMetadata)
-	for rows.Next() {
-		var (
-			metricMetadata metricsmoduletypes.MetricMetadata
-			metricName     string
-		)
-
-		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality, &metricMetadata.IsMonotonic); err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan timeseries metadata")
-		}
-		result[metricName] = &metricMetadata
-
-		cacheKey := generateMetricMetadataCacheKey(metricName)
-		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
-			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, "error", err)
-		}
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating timeseries metadata rows")
-	}
-
-	return result, nil
-}
-
 func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
@@ -322,6 +195,63 @@ func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, re
 	}
 
 	return nil
+}
+
+// GetMetricHighlights returns highlights for a metric including data points, last received, total time series, and active time series.
+func (m *module) GetMetricHighlights(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsmoduletypes.MetricHighlightsResponse, error) {
+	if metricName == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric name is required")
+	}
+
+	var response metricsmoduletypes.MetricHighlightsResponse
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// Fetch data points
+	g.Go(func() error {
+		dataPoints, err := m.getMetricsDataPoints(gCtx, metricName)
+		if err != nil {
+			return err
+		}
+		response.DataPoints = dataPoints
+		return nil
+	})
+
+	// Fetch last received
+	g.Go(func() error {
+		lastReceived, err := m.getMetricsLastReceived(gCtx, metricName)
+		if err != nil {
+			return err
+		}
+		response.LastReceived = lastReceived
+		return nil
+	})
+
+	// Fetch total time series
+	g.Go(func() error {
+		totalTimeSeries, err := m.getTotalTimeSeriesForMetricName(gCtx, metricName)
+		if err != nil {
+			return err
+		}
+		response.TotalTimeSeries = totalTimeSeries
+		return nil
+	})
+
+	// Fetch active time series (using 120 minutes as default duration)
+	g.Go(func() error {
+		activeTimeSeries, err := m.getActiveTimeSeriesForMetricName(gCtx, metricName, 120*time.Minute)
+		if err != nil {
+			return err
+		}
+		response.ActiveTimeSeries = activeTimeSeries
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
 
 func (m *module) validateAndNormalizeMetricType(req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
@@ -785,4 +715,228 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 	}
 
 	return entries, nil
+}
+
+// getMetricsDataPoints returns the total number of data points (samples) for a metric.
+func (m *module) getMetricsDataPoints(ctx context.Context, metricName string) (uint64, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("sum(count) AS data_points")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4Agg30mTableName))
+	sb.Where(sb.E("metric_name", metricName))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	var dataPoints uint64
+	err := db.QueryRow(ctx, query, args...).Scan(&dataPoints)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get metrics data points")
+	}
+
+	return dataPoints, nil
+}
+
+// getMetricsLastReceived returns the last received timestamp for a metric.
+func (m *module) getMetricsLastReceived(ctx context.Context, metricName string) (int64, error) {
+	// Build CTE for aggregated table MAX
+	aggCTE := sqlbuilder.NewSelectBuilder()
+	aggCTE.Select("MAX(unix_milli) AS max_time")
+	aggCTE.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4Agg30mLocalTableName))
+	aggCTE.Where(aggCTE.E("metric_name", metricName))
+
+	// Build query with CTE
+	cteBuilder := sqlbuilder.With(
+		sqlbuilder.CTEQuery("__agg_max_time").As(aggCTE),
+	)
+
+	// Build main query: get MAX from raw samples table where unix_milli > aggregated MAX
+	finalSB := cteBuilder.Select("MAX(unix_milli) AS last_received_time")
+	finalSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4TableName))
+	finalSB.Where(finalSB.E("metric_name", metricName))
+	finalSB.Where("unix_milli > (SELECT max_time FROM __agg_max_time)")
+
+	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	var lastReceived sql.NullInt64
+	err := db.QueryRow(ctx, query, args...).Scan(&lastReceived)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get last received timestamp")
+	}
+
+	if !lastReceived.Valid {
+		return 0, nil
+	}
+
+	return lastReceived.Int64, nil
+}
+
+// getTotalTimeSeriesForMetricName returns the total number of unique time series for a metric.
+func (m *module) getTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("uniq(fingerprint) AS time_series_count")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41weekTableName))
+	sb.Where(sb.E("metric_name", metricName))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	var timeSeriesCount uint64
+	err := db.QueryRow(ctx, query, args...).Scan(&timeSeriesCount)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get total time series count")
+	}
+
+	return timeSeriesCount, nil
+}
+
+// getActiveTimeSeriesForMetricName returns the number of active time series for a metric within the given duration.
+func (m *module) getActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, error) {
+	milli := time.Now().Add(-duration).UnixMilli()
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("uniq(fingerprint) AS active_time_series")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4TableName))
+	sb.Where(sb.E("metric_name", metricName))
+	sb.Where(sb.GTE("unix_milli", milli))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	var activeTimeSeries uint64
+	err := db.QueryRow(ctx, query, args...).Scan(&activeTimeSeries)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get active time series count")
+	}
+
+	return activeTimeSeries, nil
+}
+
+func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, []string) {
+	hits := make(map[string]*metricsmoduletypes.MetricMetadata)
+	misses := make([]string, 0)
+	for _, metricName := range metricNames {
+		cacheKey := generateMetricMetadataCacheKey(metricName)
+		var cachedMetadata metricsmoduletypes.MetricMetadata
+		if err := m.cache.Get(ctx, orgID, cacheKey, &cachedMetadata); err == nil {
+			hits[metricName] = &cachedMetadata
+		} else {
+			m.logger.WarnContext(ctx, "cache miss for metric metadata", "metric_name", metricName, "error", err)
+			misses = append(misses, metricName)
+		}
+	}
+	return hits, misses
+}
+
+func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
+	if len(metricNames) == 0 {
+		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
+	}
+
+	args := make([]any, len(metricNames))
+	for i := range metricNames {
+		args[i] = metricNames[i]
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"metric_name",
+		"description",
+		"type",
+		"unit",
+		"temporality",
+		"is_monotonic",
+	)
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.UpdatedMetadataTableName))
+	sb.Where(sb.In("metric_name", args...))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
+	}
+	defer rows.Close()
+
+	result := make(map[string]*metricsmoduletypes.MetricMetadata)
+	for rows.Next() {
+		var (
+			metricMetadata metricsmoduletypes.MetricMetadata
+			metricName     string
+		)
+
+		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality, &metricMetadata.IsMonotonic); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
+		}
+		result[metricName] = &metricMetadata
+
+		cacheKey := generateMetricMetadataCacheKey(metricName)
+		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
+			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, "error", err)
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating updated metrics metadata rows")
+	}
+
+	return result, nil
+}
+
+func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
+	if len(metricNames) == 0 {
+		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
+	}
+
+	args := make([]any, len(metricNames))
+	for i := range metricNames {
+		args[i] = metricNames[i]
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"metric_name",
+		"ANY_VALUE(description) AS description",
+		"ANY_VALUE(type) AS metric_type",
+		"ANY_VALUE(unit) AS metric_unit",
+		"ANY_VALUE(temporality) AS temporality",
+		"ANY_VALUE(is_monotonic) AS is_monotonic",
+	)
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4TableName))
+	sb.Where(sb.In("metric_name", args...))
+	sb.GroupBy("metric_name")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch metrics metadata from timeseries table")
+	}
+	defer rows.Close()
+
+	result := make(map[string]*metricsmoduletypes.MetricMetadata)
+	for rows.Next() {
+		var (
+			metricMetadata metricsmoduletypes.MetricMetadata
+			metricName     string
+		)
+
+		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality, &metricMetadata.IsMonotonic); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan timeseries metadata")
+		}
+		result[metricName] = &metricMetadata
+
+		cacheKey := generateMetricMetadataCacheKey(metricName)
+		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
+			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, "error", err)
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating timeseries metadata rows")
+	}
+
+	return result, nil
 }
