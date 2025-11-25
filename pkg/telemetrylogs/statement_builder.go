@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -363,7 +362,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		// Use the standard collision handling for other fields
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
 		if err != nil {
 			return nil, err
@@ -518,28 +516,9 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	var arrayJoinClauses []string
 
 	for _, gb := range query.GroupBy {
-		var expr string
-		var args []any
-		var err error
-
-		// For body JSON fields with feature flag enabled, use array join logic
-		if gb.TelemetryFieldKey.FieldContext == telemetrytypes.FieldContextBody && constants.BodyJSONQueryEnabled {
-			// Build array join info for this field
-			// groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
-			// if err != nil {
-			// 	return nil, err
-			// }
-
-			// // Collect array join clauses
-			// arrayJoinClauses = append(arrayJoinClauses, groupbyInfo.ArrayJoinClauses...)
-			// expr = groupbyInfo.TerminalExpr
-			fmt.Println("body json group by is not supported yet")
-		} else {
-			// Use the standard collision handling for other fields
-			expr, args, err = querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
-			if err != nil {
-				return nil, err
-			}
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		if err != nil {
+			return nil, err
 		}
 
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)

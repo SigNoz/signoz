@@ -103,6 +103,29 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 	})
 	if elemType.IndexSupported && indexed {
 		indexedExpr := assumeNotNull(fieldPath, elemType)
+		emptyValue := func() any {
+			switch elemType {
+			case telemetrytypes.String:
+				return ""
+			case telemetrytypes.Int64, telemetrytypes.Float64, telemetrytypes.Bool:
+				return 0
+			default:
+				return nil
+			}
+		}()
+
+		// switch the operator and value for exists and not exists
+		switch operator {
+		case qbtypes.FilterOperatorExists:
+			operator = qbtypes.FilterOperatorNotEqual
+			value = emptyValue
+		case qbtypes.FilterOperatorNotExists:
+			operator = qbtypes.FilterOperatorEqual
+			value = emptyValue
+		default:
+			// do nothing
+		}
+
 		cond, err := c.applyOperator(sb, indexedExpr, operator, value)
 		if err != nil {
 			return "", err
