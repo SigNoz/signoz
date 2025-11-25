@@ -222,6 +222,7 @@ func (m *defaultFieldMapper) ColumnFor(
 // otherwise it returns qbtypes.ErrColumnNotFound
 func (m *defaultFieldMapper) FieldFor(
 	ctx context.Context,
+	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 	// Special handling for span scope fields
@@ -300,11 +301,12 @@ func (m *defaultFieldMapper) FieldFor(
 // if it exists otherwise it returns qbtypes.ErrColumnNotFound
 func (m *defaultFieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	colName, err := m.FieldFor(ctx, field)
+	colName, err := m.FieldFor(ctx, startNs, endNs, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -314,7 +316,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 			if _, ok := indexV3Columns[field.Name]; ok {
 				// if it is, attach the column name directly
 				field.FieldContext = telemetrytypes.FieldContextSpan
-				colName, _ = m.FieldFor(ctx, field)
+				colName, _ = m.FieldFor(ctx, startNs, endNs, field)
 			} else {
 				// - the context is not provided
 				// - there are not keys for the field
@@ -332,12 +334,12 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it
-			colName, _ = m.FieldFor(ctx, keysForField[0])
+			colName, _ = m.FieldFor(ctx, startNs, endNs, keysForField[0])
 		} else {
 			// select any non-empty value from the keys
 			args := []string{}
 			for _, key := range keysForField {
-				colName, _ = m.FieldFor(ctx, key)
+				colName, _ = m.FieldFor(ctx, startNs, endNs, key)
 				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", colName, colName))
 			}
 			colName = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))

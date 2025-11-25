@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"testing"
+	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -185,6 +186,8 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	testCases := []struct {
 		name           string
+		tsStart        uint64
+		tsEnd          uint64
 		key            telemetrytypes.TelemetryFieldKey
 		expectedResult string
 		expectedError  error
@@ -249,6 +252,30 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
+			name:    "Map column type - resource attribute",
+			tsStart: uint64(time.Now().Add(10 * time.Second).UnixNano()),
+			tsEnd:   uint64(time.Now().Add(20 * time.Second).UnixNano()),
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "service.name",
+				FieldContext: telemetrytypes.FieldContextResource,
+			},
+			expectedResult: "resource.`service.name`::String",
+			expectedError:  nil,
+		},
+		{
+			name:    "Map column type - resource attribute - Materialized",
+			tsStart: uint64(time.Now().Add(10 * time.Second).UnixNano()),
+			tsEnd:   uint64(time.Now().Add(20 * time.Second).UnixNano()),
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+			expectedResult: "resource.`service.name`::String",
+			expectedError:  nil,
+		},
+		{
 			name: "Non-existent column",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "nonexistent_field",
@@ -262,7 +289,7 @@ func TestGetFieldKeyName(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fm := NewFieldMapper()
-			result, err := fm.FieldFor(ctx, &tc.key)
+			result, err := fm.FieldFor(ctx, tc.tsStart, tc.tsEnd, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)

@@ -348,7 +348,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-        }, start, end)
+		}, start, end)
 		if err != nil {
 			return "", nil, err
 		}
@@ -359,7 +359,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 
 	sb.Select("fingerprint")
 	for _, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
+		col, err := b.fm.ColumnExpressionFor(ctx, start, end, &g.TelemetryFieldKey, keys)
 		if err != nil {
 			return "", nil, err
 		}

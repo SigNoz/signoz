@@ -25,8 +25,7 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-    _ uint64,
-    _ uint64,
+	tsStart, tsEnd uint64,
 ) (string, error) {
 
 	switch operator {
@@ -45,7 +44,7 @@ func (c *conditionBuilder) ConditionFor(
 		return "", nil
 	}
 
-	tblFieldName, err := c.fm.FieldFor(ctx, key)
+	tblFieldName, err := c.fm.FieldFor(ctx, tsStart, tsEnd, key)
 	if err != nil {
 		// if we don't have a table field name, we can't build a condition for related values
 		return "", nil
