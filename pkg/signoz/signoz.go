@@ -34,6 +34,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 
@@ -42,24 +43,25 @@ import (
 
 type SigNoz struct {
 	*factory.Registry
-	Instrumentation instrumentation.Instrumentation
-	Analytics       analytics.Analytics
-	Cache           cache.Cache
-	Web             web.Web
-	SQLStore        sqlstore.SQLStore
-	TelemetryStore  telemetrystore.TelemetryStore
-	Prometheus      prometheus.Prometheus
-	Alertmanager    alertmanager.Alertmanager
-	Querier         querier.Querier
-	Zeus            zeus.Zeus
-	Licensing       licensing.Licensing
-	Emailing        emailing.Emailing
-	Sharder         sharder.Sharder
-	StatsReporter   statsreporter.StatsReporter
-	Tokenizer       pkgtokenizer.Tokenizer
-	Authz           authz.AuthZ
-	Modules         Modules
-	Handlers        Handlers
+	Instrumentation        instrumentation.Instrumentation
+	Analytics              analytics.Analytics
+	Cache                  cache.Cache
+	Web                    web.Web
+	SQLStore               sqlstore.SQLStore
+	TelemetryStore         telemetrystore.TelemetryStore
+	TelemetryMetadataStore telemetrytypes.MetadataStore
+	Prometheus             prometheus.Prometheus
+	Alertmanager           alertmanager.Alertmanager
+	Querier                querier.Querier
+	Zeus                   zeus.Zeus
+	Licensing              licensing.Licensing
+	Emailing               emailing.Emailing
+	Sharder                sharder.Sharder
+	StatsReporter          statsreporter.StatsReporter
+	Tokenizer              pkgtokenizer.Tokenizer
+	Authz                  authz.AuthZ
+	Modules                Modules
+	Handlers               Handlers
 }
 
 func New(
@@ -315,6 +317,7 @@ func New(
 	}
 
 	// Initialize telemetry metadata store
+	// TODO: consolidate other telemetrymetadata.NewTelemetryMetaStore initializations to reuse this instance instead.
 	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
 		providerSettings,
 		telemetrystore,
@@ -380,23 +383,24 @@ func New(
 	}
 
 	return &SigNoz{
-		Registry:        registry,
-		Analytics:       analytics,
-		Instrumentation: instrumentation,
-		Cache:           cache,
-		Web:             web,
-		SQLStore:        sqlstore,
-		TelemetryStore:  telemetrystore,
-		Prometheus:      prometheus,
-		Alertmanager:    alertmanager,
-		Querier:         querier,
-		Zeus:            zeus,
-		Licensing:       licensing,
-		Emailing:        emailing,
-		Sharder:         sharder,
-		Tokenizer:       tokenizer,
-		Authz:           authz,
-		Modules:         modules,
-		Handlers:        handlers,
+		Registry:               registry,
+		Analytics:              analytics,
+		Instrumentation:        instrumentation,
+		Cache:                  cache,
+		Web:                    web,
+		SQLStore:               sqlstore,
+		TelemetryStore:         telemetrystore,
+		TelemetryMetadataStore: telemetryMetadataStore,
+		Prometheus:             prometheus,
+		Alertmanager:           alertmanager,
+		Querier:                querier,
+		Zeus:                   zeus,
+		Licensing:              licensing,
+		Emailing:               emailing,
+		Sharder:                sharder,
+		Tokenizer:              tokenizer,
+		Authz:                  authz,
+		Modules:                modules,
+		Handlers:               handlers,
 	}, nil
 }
