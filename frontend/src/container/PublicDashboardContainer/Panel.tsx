@@ -3,7 +3,7 @@ import EmptyWidget from 'container/GridCardLayout/EmptyWidget';
 import WidgetGraphComponent from 'container/GridCardLayout/GridCard/WidgetGraphComponent';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { useGetPublicDashboardWidgetData } from 'hooks/dashboard/useGetPublicDashboardWidgetData';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
@@ -26,17 +26,12 @@ function Panel({
 		data: publicDashboardWidgetData,
 		isLoading: isLoadingPublicDashboardWidgetData,
 		isFetching: isFetchingPublicDashboardWidgetData,
-		refetch: refetchPublicDashboardWidgetData,
 	} = useGetPublicDashboardWidgetData(
 		dashboardId,
 		index,
 		startTime * 1000, // convert to milliseconds
 		endTime * 1000, // convert to milliseconds
 	);
-
-	useEffect(() => {
-		refetchPublicDashboardWidgetData();
-	}, [startTime, endTime, refetchPublicDashboardWidgetData]);
 
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -46,8 +41,16 @@ function Panel({
 				publicDashboardWidgetData,
 				isLoadingPublicDashboardWidgetData,
 				widget.query,
+				startTime * 1000, // convert to milliseconds
+				endTime * 1000, // convert to milliseconds
 			),
-		[publicDashboardWidgetData, isLoadingPublicDashboardWidgetData, widget.query],
+		[
+			publicDashboardWidgetData,
+			isLoadingPublicDashboardWidgetData,
+			widget.query,
+			startTime,
+			endTime,
+		],
 	);
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
@@ -65,9 +68,9 @@ function Panel({
 		queryResponse.data = transformedData;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const onDragSelect = useCallback((_start: number, _end: number): void => {
-		// Handle drag select if needed
-		console.log('onDragSelect', _start, _end);
+		// Handle drag select if needed - no-op for public dashboards
 	}, []);
 
 	return (

@@ -105,6 +105,8 @@ export function transformPublicDashboardDataToQueryResponse(
 		| undefined,
 	isLoading: boolean,
 	widgetQuery?: Query,
+	startTime?: number,
+	endTime?: number,
 ): UseQueryResult<SuccessResponse<MetricRangePayloadProps, unknown>, Error> {
 	if (!publicDashboardWidgetData?.data) {
 		const loadingResult = {
@@ -326,6 +328,7 @@ export function transformPublicDashboardDataToQueryResponse(
 	});
 
 	// Create the response structure
+	// Include params with start/end for time range so getTimeRange can extract it
 	const successResponse: SuccessResponse<MetricRangePayloadProps, unknown> = {
 		statusCode: publicDashboardWidgetData.httpStatusCode as any,
 		message: 'Success',
@@ -342,6 +345,11 @@ export function transformPublicDashboardDataToQueryResponse(
 			},
 		},
 		error: null,
+		// Include params with start/end times so UplotPanelWrapper can extract the time range
+		params: {
+			start: startTime,
+			end: endTime,
+		},
 	};
 
 	const successResult = {

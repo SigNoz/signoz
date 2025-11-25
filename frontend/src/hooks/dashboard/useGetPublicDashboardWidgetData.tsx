@@ -20,6 +20,12 @@ export const useGetPublicDashboardWidgetData = (
 		onError: (error) => {
 			console.error('Error getting public dashboard data', error);
 		},
-		queryKey: [REACT_QUERY_KEY.GET_PUBLIC_DASHBOARD_WIDGET_DATA, id, index],
+		queryKey: [
+			REACT_QUERY_KEY.GET_PUBLIC_DASHBOARD_WIDGET_DATA,
+			id,
+			index,
+			startTime,
+			endTime,
+		],
 		enabled: !!id,
 	});
