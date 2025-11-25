@@ -675,105 +675,76 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
 	samplesTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
 
-	queryLimit := req.Limit + 50
-	metricsSB := sqlbuilder.NewSelectBuilder()
-	metricsSB.Select(
-		"ts.metric_name AS metric_name",
-		"uniq(ts.fingerprint) AS timeSeries",
+	candidateLimit := req.Limit + 50
+
+	metricCandidatesSB := sqlbuilder.NewSelectBuilder()
+	metricCandidatesSB.Select(
+		"ts.metric_name",
+		"uniq(ts.fingerprint) AS timeseries",
 	)
-	metricsSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, tsTable))
-	metricsSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
-	metricsSB.Where(metricsSB.E("__normalized", false))
-	metricsSB.Where(metricsSB.Between("unix_milli", start, end))
+	metricCandidatesSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, tsTable))
+	metricCandidatesSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
+	metricCandidatesSB.Where(metricCandidatesSB.E("__normalized", false))
+	metricCandidatesSB.Where(metricCandidatesSB.Between("unix_milli", start, end))
 	if filterWhereClause != nil {
-		metricsSB.WhereClause.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+		metricCandidatesSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
 	}
-	metricsSB.GroupBy("ts.metric_name")
-	metricsSB.OrderBy("timeSeries").Desc()
-	metricsSB.Limit(queryLimit)
-
-	metricsQuery, args := metricsSB.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, metricsQuery, args...)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute samples treemap pre-query")
-	}
-	defer rows.Close()
-
-	metricNames := make([]string, 0)
-	for rows.Next() {
-		var (
-			metricName string
-			timeSeries uint64
-		)
-		if err := rows.Scan(&metricName, &timeSeries); err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan samples treemap pre-query row")
-		}
-		metricNames = append(metricNames, metricName)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating samples treemap pre-query rows")
-	}
-
-	if len(metricNames) == 0 {
-		return []metricsmoduletypes.TreemapEntry{}, nil
-	}
-
-	metricArgs := make([]any, len(metricNames))
-	for i := range metricNames {
-		metricArgs[i] = metricNames[i]
-	}
+	metricCandidatesSB.GroupBy("ts.metric_name")
+	metricCandidatesSB.OrderBy("timeseries DESC")
+	metricCandidatesSB.Limit(candidateLimit)
 
 	totalSamplesSB := sqlbuilder.NewSelectBuilder()
 	totalSamplesSB.Select(fmt.Sprintf("%s AS total_samples", countExp))
 	totalSamplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
 	totalSamplesSB.Where(totalSamplesSB.Between("unix_milli", req.Start, req.End))
 
-	samplesSB := sqlbuilder.NewSelectBuilder()
-	samplesSB.Select(
-		"dm.metric_name",
+	sampleCountsSB := sqlbuilder.NewSelectBuilder()
+	sampleCountsSB.Select(
+		"mc.metric_name",
 		fmt.Sprintf("%s AS samples", countExp),
 	)
-	samplesSB.From(fmt.Sprintf("%s.%s AS dm", telemetrymetrics.DBName, samplesTable))
-	samplesSB.Where(samplesSB.Between("dm.unix_milli", req.Start, req.End))
-	samplesSB.Where(samplesSB.In("dm.metric_name", metricArgs...))
+	sampleCountsSB.From(fmt.Sprintf("%s.%s AS dm", telemetrymetrics.DBName, samplesTable))
+	sampleCountsSB.Join("MetricCandidates mc", "dm.metric_name = mc.metric_name")
+	sampleCountsSB.Where(sampleCountsSB.Between("dm.unix_milli", req.Start, req.End))
 
 	if filterWhereClause != nil {
 		fingerprintSB := sqlbuilder.NewSelectBuilder()
 		fingerprintSB.Select("ts.fingerprint")
 		fingerprintSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, localTsTable))
-		fingerprintSB.Where(fingerprintSB.In("ts.metric_name", metricArgs...))
+		fingerprintSB.Join("MetricCandidates mc", "ts.metric_name = mc.metric_name")
 		fingerprintSB.Where(fingerprintSB.Between("ts.unix_milli", start, end))
 		fingerprintSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
 		fingerprintSB.Where(fingerprintSB.E("__normalized", false))
-		fingerprintSB.WhereClause.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+		fingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
 		fingerprintSB.GroupBy("ts.fingerprint")
 
-		subQueryPlaceholder := samplesSB.Var(fingerprintSB)
-		samplesSB.Where(fmt.Sprintf("dm.fingerprint IN (%s)", subQueryPlaceholder))
+		subQuery := sampleCountsSB.Var(fingerprintSB)
+		sampleCountsSB.Where(fmt.Sprintf("dm.fingerprint IN (%s)", subQuery))
 	}
 
-	samplesSB.GroupBy("dm.metric_name")
+	sampleCountsSB.GroupBy("mc.metric_name")
 
 	cteBuilder := sqlbuilder.With(
+		sqlbuilder.CTEQuery("MetricCandidates").As(metricCandidatesSB),
+		sqlbuilder.CTEQuery("SampleCounts").As(sampleCountsSB),
 		sqlbuilder.CTEQuery("TotalSamples").As(totalSamplesSB),
-		sqlbuilder.CTEQuery("Samples").As(samplesSB),
 	)
 
 	finalSB := cteBuilder.Select(
-		"s.metric_name",
-		"s.samples",
-		"CASE WHEN t.total_samples = 0 THEN 0 ELSE (s.samples * 100.0 / t.total_samples) END AS percentage",
+		"mc.metric_name",
+		"COALESCE(sc.samples, 0) AS samples",
+		"CASE WHEN ts.total_samples = 0 THEN 0 ELSE (COALESCE(sc.samples, 0) * 100.0 / ts.total_samples) END AS percentage",
 	)
-	finalSB.From("Samples s")
-	finalSB.Join("TotalSamples t", "1=1")
-	finalSB.OrderBy("percentage").Desc()
+	finalSB.From("MetricCandidates mc")
+	finalSB.JoinWithOption(sqlbuilder.LeftJoin, "SampleCounts sc", "mc.metric_name = sc.metric_name")
+	finalSB.Join("TotalSamples ts", "1=1")
+	finalSB.OrderBy("percentage DESC")
 	finalSB.Limit(req.Limit)
 
-	query, sampleArgs := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	rows, err = db.Query(ctx, query, sampleArgs...)
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute samples treemap query")
 	}
@@ -781,9 +752,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 
 	entries := make([]metricsmoduletypes.TreemapEntry, 0)
 	for rows.Next() {
-		var (
-			treemapEntry metricsmoduletypes.TreemapEntry
-		)
+		var treemapEntry metricsmoduletypes.TreemapEntry
 		if err := rows.Scan(&treemapEntry.MetricName, &treemapEntry.TotalValue, &treemapEntry.Percentage); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan samples treemap row")
 		}
