@@ -1134,9 +1134,9 @@ export const AdditionalLabelsMappingForGrafanaUnits: Partial<
 	[UniversalYAxisUnit.YOTTABITS_SECOND]: 'Yb/s',
 
 	// Binary (IEC) Bit Rate
-	[UniversalYAxisUnit.EXBIBITS_SECOND]: 'Eibit/s',
-	[UniversalYAxisUnit.ZEBIBITS_SECOND]: 'Zibit/s',
-	[UniversalYAxisUnit.YOBIBITS_SECOND]: 'Yibit/s',
+	[UniversalYAxisUnit.EXBIBITS_SECOND]: 'Eib/s',
+	[UniversalYAxisUnit.ZEBIBITS_SECOND]: 'Zib/s',
+	[UniversalYAxisUnit.YOBIBITS_SECOND]: 'Yib/s',
 };
 
 /**

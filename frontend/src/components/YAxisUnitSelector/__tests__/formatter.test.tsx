@@ -362,6 +362,30 @@ describe('formatUniversalUnit', () => {
 				'900 YiB',
 			);
 		});
+
+		it('scales between bytes', () => {
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.KIBIBYTES)).toBe(
+				'1 MiB',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.MEBIBYTES)).toBe(
+				'1 GiB',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.GIBIBYTES)).toBe(
+				'1 TiB',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.TEBIBYTES)).toBe(
+				'1 PiB',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.PEBIBYTES)).toBe(
+				'1 EiB',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.EXBIBYTES)).toBe(
+				'1 ZiB',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.ZEBIBYTES)).toBe(
+				'1 YiB',
+			);
+		});
 	});
 
 	describe('Data Rate (IEC/Binary)', () => {
@@ -412,13 +436,40 @@ describe('formatUniversalUnit', () => {
 				'900 YiB/s',
 			);
 			expect(formatUniversalUnit(900, UniversalYAxisUnit.EXBIBITS_SECOND)).toBe(
-				'900 Eibit/s',
+				'900 Eib/s',
 			);
 			expect(formatUniversalUnit(900, UniversalYAxisUnit.ZEBIBITS_SECOND)).toBe(
-				'900 Zibit/s',
+				'900 Zib/s',
 			);
 			expect(formatUniversalUnit(900, UniversalYAxisUnit.YOBIBITS_SECOND)).toBe(
-				'900 Yibit/s',
+				'900 Yib/s',
+			);
+		});
+
+		it('scales between bit rates', () => {
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.KIBIBITS_SECOND)).toBe(
+				'1 Mib/s',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.MEBIBITS_SECOND)).toBe(
+				'1 Gib/s',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.GIBIBITS_SECOND)).toBe(
+				'1 Tib/s',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.TEBIBITS_SECOND)).toBe(
+				'1 Pib/s',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.PEBIBITS_SECOND)).toBe(
+				'1 Eib/s',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.EXBIBITS_SECOND)).toBe(
+				'1 Zib/s',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.ZEBIBITS_SECOND)).toBe(
+				'1 Yib/s',
+			);
+			expect(formatUniversalUnit(1024, UniversalYAxisUnit.YOBIBITS_SECOND)).toBe(
+				'1024 Yib/s',
 			);
 		});
 
@@ -473,6 +524,48 @@ describe('formatUniversalUnit', () => {
 			expect(
 				formatUniversalUnit(321, UniversalYAxisUnit.HASH_RATE_EXAHASHES_PER_SECOND),
 			).toBe('321 EH/s');
+		});
+
+		it('scales between hash rates', () => {
+			expect(
+				formatUniversalUnit(1080, UniversalYAxisUnit.HASH_RATE_HASHES_PER_SECOND),
+			).toBe('1.08 kH/s');
+			expect(
+				formatUniversalUnit(
+					1080,
+					UniversalYAxisUnit.HASH_RATE_KILOHASHES_PER_SECOND,
+				),
+			).toBe('1.08 MH/s');
+			expect(
+				formatUniversalUnit(
+					1080,
+					UniversalYAxisUnit.HASH_RATE_MEGAHASHES_PER_SECOND,
+				),
+			).toBe('1.08 GH/s');
+			expect(
+				formatUniversalUnit(
+					1080,
+					UniversalYAxisUnit.HASH_RATE_GIGAHASHES_PER_SECOND,
+				),
+			).toBe('1.08 TH/s');
+			expect(
+				formatUniversalUnit(
+					1080,
+					UniversalYAxisUnit.HASH_RATE_TERAHASHES_PER_SECOND,
+				),
+			).toBe('1.08 PH/s');
+			expect(
+				formatUniversalUnit(
+					1080,
+					UniversalYAxisUnit.HASH_RATE_PETAHASHES_PER_SECOND,
+				),
+			).toBe('1.08 EH/s');
+			expect(
+				formatUniversalUnit(
+					1080,
+					UniversalYAxisUnit.HASH_RATE_EXAHASHES_PER_SECOND,
+				),
+			).toBe('1.08 ZH/s');
 		});
 	});
 
@@ -583,6 +676,33 @@ describe('formatUniversalUnit', () => {
 			);
 			expect(formatUniversalUnit(840, UniversalYAxisUnit.FLOPS_YFLOPS)).toBe(
 				'840 YFLOPS',
+			);
+		});
+
+		it('scales between FLOPs units', () => {
+			expect(formatUniversalUnit(1080, UniversalYAxisUnit.FLOPS_FLOPS)).toBe(
+				'1.08 kFLOPS',
+			);
+			expect(formatUniversalUnit(1080, UniversalYAxisUnit.FLOPS_MFLOPS)).toBe(
+				'1.08 GFLOPS',
+			);
+			expect(formatUniversalUnit(1080, UniversalYAxisUnit.FLOPS_GFLOPS)).toBe(
+				'1.08 TFLOPS',
+			);
+			expect(formatUniversalUnit(1080, UniversalYAxisUnit.FLOPS_TFLOPS)).toBe(
+				'1.08 PFLOPS',
+			);
+			expect(formatUniversalUnit(1080, UniversalYAxisUnit.FLOPS_PFLOPS)).toBe(
+				'1.08 EFLOPS',
+			);
+			expect(formatUniversalUnit(1080, UniversalYAxisUnit.FLOPS_EFLOPS)).toBe(
+				'1.08 ZFLOPS',
+			);
+			expect(formatUniversalUnit(1080, UniversalYAxisUnit.FLOPS_ZFLOPS)).toBe(
+				'1.08 YFLOPS',
+			);
+			expect(formatUniversalUnit(1080, UniversalYAxisUnit.FLOPS_YFLOPS)).toBe(
+				'1080 YFLOPS',
 			);
 		});
 	});
@@ -890,7 +1010,13 @@ describe('formatUniversalUnit', () => {
 			expect(formatUniversalUnit(120, UniversalYAxisUnit.MASS_MILLIGRAM)).toBe(
 				'120 mg',
 			);
+			expect(formatUniversalUnit(120000, UniversalYAxisUnit.MASS_MILLIGRAM)).toBe(
+				'120 g',
+			);
 			expect(formatUniversalUnit(987, UniversalYAxisUnit.MASS_GRAM)).toBe('987 g');
+			expect(formatUniversalUnit(1020, UniversalYAxisUnit.MASS_GRAM)).toBe(
+				'1.02 kg',
+			);
 			expect(formatUniversalUnit(456, UniversalYAxisUnit.MASS_POUND)).toBe(
 				'456 lb',
 			);
@@ -916,6 +1042,9 @@ describe('formatUniversalUnit', () => {
 			);
 			expect(formatUniversalUnit(355, UniversalYAxisUnit.LENGTH_METER)).toBe(
 				'355 m',
+			);
+			expect(formatUniversalUnit(355000, UniversalYAxisUnit.LENGTH_METER)).toBe(
+				'355 km',
 			);
 			expect(formatUniversalUnit(444, UniversalYAxisUnit.LENGTH_KILOMETER)).toBe(
 				'444 km',
@@ -981,6 +1110,9 @@ describe('formatUniversalUnit', () => {
 			expect(
 				formatUniversalUnit(875, UniversalYAxisUnit.RADIATION_MICROSIEVERT),
 			).toBe('875 µSv');
+			expect(
+				formatUniversalUnit(875000, UniversalYAxisUnit.RADIATION_MICROSIEVERT),
+			).toBe('875 mSv');
 			expect(formatUniversalUnit(92, UniversalYAxisUnit.RADIATION_REM)).toBe(
 				'92 rem',
 			);
@@ -1019,6 +1151,9 @@ describe('formatUniversalUnit', () => {
 			expect(
 				formatUniversalUnit(789, UniversalYAxisUnit.ROTATION_SPEED_HERTZ),
 			).toBe('789 Hz');
+			expect(
+				formatUniversalUnit(789000, UniversalYAxisUnit.ROTATION_SPEED_HERTZ),
+			).toBe('789 kHz');
 			expect(
 				formatUniversalUnit(
 					213,
@@ -1067,11 +1202,11 @@ describe('formatUniversalUnit', () => {
 
 	describe('Volume', () => {
 		it('formats volume units', () => {
-			expect(formatUniversalUnit(900, UniversalYAxisUnit.VOLUME_MILLILITER)).toBe(
-				'900 mL',
+			expect(formatUniversalUnit(1200, UniversalYAxisUnit.VOLUME_MILLILITER)).toBe(
+				'1.2 L',
 			);
-			expect(formatUniversalUnit(900, UniversalYAxisUnit.VOLUME_LITER)).toBe(
-				'900 L',
+			expect(formatUniversalUnit(9000, UniversalYAxisUnit.VOLUME_LITER)).toBe(
+				'9 kL',
 			);
 			expect(formatUniversalUnit(900, UniversalYAxisUnit.VOLUME_CUBIC_METER)).toBe(
 				'900 m³',
@@ -1104,6 +1239,12 @@ describe('formatUniversalUnit', () => {
 			expect(formatUniversalUnit(1000, UniversalYAxisUnit.ZETTABITS_SECOND)).toBe(
 				'1 Yb/s',
 			);
+			expect(formatUniversalUnit(1015, UniversalYAxisUnit.EXABITS_SECOND)).toBe(
+				'1.01 Zb/s',
+			);
+			expect(formatUniversalUnit(2012, UniversalYAxisUnit.ZETTABITS_SECOND)).toBe(
+				'2.01 Yb/s',
+			);
 		});
 	});
 
@@ -1112,6 +1253,12 @@ describe('formatUniversalUnit', () => {
 			expect(formatUniversalUnit(1000, UniversalYAxisUnit.EXABYTES)).toBe('1 ZB');
 			expect(formatUniversalUnit(1000, UniversalYAxisUnit.ZETTABYTES)).toBe(
 				'1 YB',
+			);
+			expect(formatUniversalUnit(1012, UniversalYAxisUnit.EXABYTES)).toBe(
+				'1.01 ZB',
+			);
+			expect(formatUniversalUnit(2012, UniversalYAxisUnit.ZETTABYTES)).toBe(
+				'2.01 YB',
 			);
 		});
 	});
