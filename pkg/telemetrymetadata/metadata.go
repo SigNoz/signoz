@@ -7,9 +7,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -573,43 +573,14 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 	}
 
-	bodyJSONSearchTexts := []string{}
-	bodyJSONLimit := 100
-	for _, selector := range fieldKeySelectors {
-		// Extract search text for body JSON keys
-		if strings.HasPrefix(selector.Name, "body.") {
-			bodyJSONSearchTexts = append(bodyJSONSearchTexts, strings.TrimPrefix(selector.Name, "body."))
-			bodyJSONLimit += selector.Limit
+	if constants.BodyJSONQueryEnabled {
+		bodyJSONPaths, finished, err := getBodyJSONPaths(ctx, t.telemetrystore, fieldKeySelectors) // LIKE for pattern matching
+		if err != nil {
+			t.logger.Error("failed to extract body JSON paths", "error", err)
 		}
+		keys = append(keys, bodyJSONPaths...)
+		complete = complete && finished
 	}
-
-	bodyJSONPaths, err := telemetrylogs.ExtractBodyPaths(ctx, t.telemetrystore, bodyJSONSearchTexts, bodyJSONLimit, qbtypes.FilterOperatorLike) // LIKE for pattern matching
-	if err != nil {
-		t.logger.Error("failed to extract body JSON paths", "error", err)
-	} else {
-		// Add body JSON keys to results
-		// Note: bodyJSONComplete is no longer returned, pagination completeness is handled by the limit
-		for path, types := range bodyJSONPaths {
-			types.Iter(func(dataType telemetrytypes.JSONDataType) bool {
-				keys = append(keys, &telemetrytypes.TelemetryFieldKey{
-					// clean backticks from the path
-					Name:          telemetrylogs.BodyJSONStringSearchPrefix + keycheck.CleanBackticks(path),
-					Signal:        telemetrytypes.SignalLogs,
-					FieldContext:  telemetrytypes.FieldContextLog,
-					FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[dataType],
-				})
-				return true
-			})
-		}
-
-		// Note: Completeness is now determined by whether we got fewer results than the limit
-		// If we got exactly bodyJSONLimit results, there might be more (incomplete)
-		// If we got fewer, we've exhausted all results (complete)
-		if len(bodyJSONPaths) >= bodyJSONLimit {
-			complete = false // Might have more results
-		}
-	}
-
 	return keys, complete, nil
 }
 
@@ -1200,6 +1171,10 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 	limit := fieldValueSelector.Limit
 	if limit == 0 {
 		limit = 50
+	}
+
+	if strings.HasPrefix(fieldValueSelector.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
+		return ListJSONValues(ctx, t.telemetrystore.ClickhouseDB(), fieldValueSelector.Name, limit)
 	}
 
 	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(t.logsDBName + "." + t.logsFieldsTblName)

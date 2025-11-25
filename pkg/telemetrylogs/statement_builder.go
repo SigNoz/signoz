@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -20,12 +19,10 @@ type logQueryStatementBuilder struct {
 	metadataStore             telemetrytypes.MetadataStore
 	fm                        qbtypes.FieldMapper
 	cb                        qbtypes.ConditionBuilder
-	jsonQueryBuilder          *JSONQueryBuilder
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
-	jsonBodyPrefix string
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 }
 
@@ -36,11 +33,9 @@ func NewLogQueryStatementBuilder(
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	jsonQueryBuilder *JSONQueryBuilder,
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
-	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
@@ -50,11 +45,9 @@ func NewLogQueryStatementBuilder(
 		metadataStore:             metadataStore,
 		fm:                        fieldMapper,
 		cb:                        conditionBuilder,
-		jsonQueryBuilder:          jsonQueryBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
 		fullTextColumn:            fullTextColumn,
-		jsonBodyPrefix:            jsonBodyPrefix,
 		jsonKeyToKey:              jsonKeyToKey,
 	}
 }
@@ -173,6 +166,25 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 
 		if _, ok := IntrinsicFields[k.Name]; ok {
 			overallMatch = overallMatch || findMatch(IntrinsicFields)
+		}
+
+		if strings.Contains(k.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
+			k.Name = strings.TrimPrefix(k.Name, telemetrytypes.BodyJSONStringSearchPrefix)
+			fieldKeys, found := keys[k.Name]
+			if found && len(fieldKeys) > 0 {
+				k.FieldContext = fieldKeys[0].FieldContext
+				k.FieldDataType = fieldKeys[0].FieldDataType
+				k.Materialized = fieldKeys[0].Materialized
+				k.JSONDataType = fieldKeys[0].JSONDataType
+				k.Indexes = fieldKeys[0].Indexes
+
+				overallMatch = true // because we found a match
+			} else {
+				b.logger.InfoContext(ctx, "overriding the field context and data type", "key", k.Name)
+				k.FieldContext = telemetrytypes.FieldContextBody
+				k.FieldDataType = telemetrytypes.FieldDataTypeString
+				k.JSONDataType = &telemetrytypes.String
+			}
 		}
 
 		if !overallMatch {
@@ -350,27 +362,9 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		var expr string
-		var args []any
-		var err error
-
-		// For body JSON fields with feature flag enabled, use array join logic
-		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && constants.BodyJSONQueryEnabled {
-			// Build array join info for this field
-			groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
-			if err != nil {
-				return nil, err
-			}
-
-			// Collect array join clauses
-			arrayJoinClauses = append(arrayJoinClauses, groupbyInfo.ArrayJoinClauses...)
-			expr = groupbyInfo.TerminalExpr
-		} else {
-			// Use the standard collision handling for other fields
-			expr, args, err = querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
-			if err != nil {
-				return nil, err
-			}
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		if err != nil {
+			return nil, err
 		}
 
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
@@ -522,27 +516,9 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	var arrayJoinClauses []string
 
 	for _, gb := range query.GroupBy {
-		var expr string
-		var args []any
-		var err error
-
-		// For body JSON fields with feature flag enabled, use array join logic
-		if strings.HasPrefix(gb.TelemetryFieldKey.Name, BodyJSONStringSearchPrefix) && constants.BodyJSONQueryEnabled {
-			// Build array join info for this field
-			groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
-			if err != nil {
-				return nil, err
-			}
-
-			// Collect array join clauses
-			arrayJoinClauses = append(arrayJoinClauses, groupbyInfo.ArrayJoinClauses...)
-			expr = groupbyInfo.TerminalExpr
-		} else {
-			// Use the standard collision handling for other fields
-			expr, args, err = querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
-			if err != nil {
-				return nil, err
-			}
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		if err != nil {
+			return nil, err
 		}
 
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
@@ -655,7 +631,6 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
 			FullTextColumn:     b.fullTextColumn,
-			JsonBodyPrefix:     b.jsonBodyPrefix,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
 		}, start, end)

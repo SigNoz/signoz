@@ -2,25 +2,28 @@ package telemetrylogs
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz-otel-collector/utils"
-	"github.com/SigNoz/signoz/ee/query-service/constants"
+	eeconstants "github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
-	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestStmtBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
-	constants.BodyJSONQueryEnabled = true
+	enableBodyJSONQuery(t)
 	defer func() {
-		constants.BodyJSONQueryEnabled = false
+		disableBodyJSONQuery(t)
 	}()
+	statementBuilder := buildJSONTestStatementBuilder(t)
 
 	cases := []struct {
 		name                string
@@ -50,7 +53,7 @@ func TestStmtBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(dynamicElement(body_v2.user.age, 'Int64')) AS `body.user.age`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `body.user.age` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(dynamicElement(body_v2.user.age, 'Int64')) AS `body.user.age`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`body.user.age`) GLOBAL IN (SELECT `body.user.age` FROM __limit_cte) GROUP BY ts, `body.user.age`",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf((dynamicElement(body_json.user.age, 'Int64') IS NOT NULL), toString(dynamicElement(body_json.user.age, 'Int64')), (dynamicElement(body_json.user.age, 'String') IS NOT NULL), dynamicElement(body_json.user.age, 'String'), NULL)) AS `user.age`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `user.age` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf((dynamicElement(body_json.user.age, 'Int64') IS NOT NULL), toString(dynamicElement(body_json.user.age, 'Int64')), (dynamicElement(body_json.user.age, 'String') IS NOT NULL), dynamicElement(body_json.user.age, 'String'), NULL)) AS `user.age`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`user.age`) GLOBAL IN (SELECT `user.age` FROM __limit_cte) GROUP BY ts, `user.age`",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
@@ -74,37 +77,9 @@ func TestStmtBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(`body.education[].awards[].type`) AS `body.education[].awards[].type`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 ARRAY JOIN arrayFlatten(arrayConcat(arrayMap(`body_v2.education`->arrayConcat(arrayMap(`body_v2.education[].awards`->dynamicElement(`body_v2.education[].awards`.type, 'String'), dynamicElement(`body_v2.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), arrayMap(`body_v2.education[].awards`->dynamicElement(`body_v2.education[].awards`.type, 'String'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AS `body.education[].awards[].type` WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `body.education[].awards[].type` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(`body.education[].awards[].type`) AS `body.education[].awards[].type`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 ARRAY JOIN arrayFlatten(arrayConcat(arrayMap(`body_v2.education`->arrayConcat(arrayMap(`body_v2.education[].awards`->dynamicElement(`body_v2.education[].awards`.type, 'String'), dynamicElement(`body_v2.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), arrayMap(`body_v2.education[].awards`->dynamicElement(`body_v2.education[].awards`.type, 'String'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AS `body.education[].awards[].type` WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`body.education[].awards[].type`) GLOBAL IN (SELECT `body.education[].awards[].type` FROM __limit_cte) GROUP BY ts, `body.education[].awards[].type`",
-				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
-			},
+			expectedErrContains: "Group by/Aggregation isn't available for the Array Paths",
 		},
 	}
-
-	// Create JSONQueryBuilder with mock metadata
-	jqb := buildTestJSONQueryBuilder()
-
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, jqb)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
-
-	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
-
-	statementBuilder := NewLogQueryStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		jqb,
-		resourceFilterStmtBuilder,
-		aggExprRewriter,
-		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
-		GetBodyJSONKey,
-	)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -125,10 +100,11 @@ func TestStmtBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
 }
 
 func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
-	constants.BodyJSONQueryEnabled = true
+	enableBodyJSONQuery(t)
 	defer func() {
-		constants.BodyJSONQueryEnabled = false
+		disableBodyJSONQuery(t)
 	}()
+	statementBuilder := buildJSONTestStatementBuilder(t, "user.age", "user.name")
 
 	cases := []struct {
 		name                string
@@ -163,39 +139,11 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(coalesce(dynamicElement(promoted.user.age, 'Int64'), dynamicElement(body_v2.user.age, 'Int64'))) AS `body.user.age`, toString(coalesce(dynamicElement(promoted.user.name, 'String'), dynamicElement(body_v2.user.name, 'String'))) AS `body.user.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `body.user.age`, `body.user.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(coalesce(dynamicElement(promoted.user.age, 'Int64'), dynamicElement(body_v2.user.age, 'Int64'))) AS `body.user.age`, toString(coalesce(dynamicElement(promoted.user.name, 'String'), dynamicElement(body_v2.user.name, 'String'))) AS `body.user.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`body.user.age`, `body.user.name`) GLOBAL IN (SELECT `body.user.age`, `body.user.name` FROM __limit_cte) GROUP BY ts, `body.user.age`, `body.user.name`",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf((dynamicElement(body_json.user.age, 'Int64') IS NOT NULL OR dynamicElement(body_json_promoted.user.age, 'Int64') IS NOT NULL), toString(coalesce(dynamicElement(body_json.user.age, 'Int64'), dynamicElement(body_json_promoted.user.age, 'Int64'))), (dynamicElement(body_json.user.age, 'String') IS NOT NULL OR dynamicElement(body_json_promoted.user.age, 'String') IS NOT NULL), coalesce(dynamicElement(body_json.user.age, 'String'), dynamicElement(body_json_promoted.user.age, 'String')), NULL)) AS `user.age`, toString(multiIf((dynamicElement(body_json.user.name, 'String') IS NOT NULL OR dynamicElement(body_json_promoted.user.name, 'String') IS NOT NULL), coalesce(dynamicElement(body_json.user.name, 'String'), dynamicElement(body_json_promoted.user.name, 'String')), NULL)) AS `user.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `user.age`, `user.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf((dynamicElement(body_json.user.age, 'Int64') IS NOT NULL OR dynamicElement(body_json_promoted.user.age, 'Int64') IS NOT NULL), toString(coalesce(dynamicElement(body_json.user.age, 'Int64'), dynamicElement(body_json_promoted.user.age, 'Int64'))), (dynamicElement(body_json.user.age, 'String') IS NOT NULL OR dynamicElement(body_json_promoted.user.age, 'String') IS NOT NULL), coalesce(dynamicElement(body_json.user.age, 'String'), dynamicElement(body_json_promoted.user.age, 'String')), NULL)) AS `user.age`, toString(multiIf((dynamicElement(body_json.user.name, 'String') IS NOT NULL OR dynamicElement(body_json_promoted.user.name, 'String') IS NOT NULL), coalesce(dynamicElement(body_json.user.name, 'String'), dynamicElement(body_json_promoted.user.name, 'String')), NULL)) AS `user.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`user.age`, `user.name`) GLOBAL IN (SELECT `user.age`, `user.name` FROM __limit_cte) GROUP BY ts, `user.age`, `user.name`",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
 	}
-
-	// Create JSONQueryBuilder with mock metadata
-	jqb := buildTestJSONQueryBuilder()
-	// promote paths for testing
-	jqb.promotedPaths.Store("user.age", struct{}{})
-	jqb.promotedPaths.Store("user.name", struct{}{})
-
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, jqb)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
-
-	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
-
-	statementBuilder := NewLogQueryStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		jqb,
-		resourceFilterStmtBuilder,
-		aggExprRewriter,
-		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
-		GetBodyJSONKey,
-	)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -214,34 +162,12 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBody(t *testing.T) {
-	constants.BodyJSONQueryEnabled = true
+	enableBodyJSONQuery(t)
 	defer func() {
-		constants.BodyJSONQueryEnabled = false
+		disableBodyJSONQuery(t)
 	}()
 
-	jqb := buildTestJSONQueryBuilder()
-	fm := NewFieldMapper()
-	// Enable JSONQueryBuilder for WHERE-only JSON body
-	cb := NewConditionBuilder(fm, jqb)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
-	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
-
-	statementBuilder := NewLogQueryStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		jqb,
-		resourceFilterStmtBuilder,
-		aggExprRewriter,
-		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
-		GetBodyJSONKey,
-	)
-
+	statementBuilder := buildJSONTestStatementBuilder(t)
 	cases := []struct {
 		name        string
 		requestType qbtypes.RequestType
@@ -258,7 +184,7 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_v2.user.name, 'String') = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_json.user.name, 'String') = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "x", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -272,7 +198,7 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> `body_v2.education`.name IS NOT NULL, dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_json.education`-> dynamicElement(`body_json.education`.name, 'String') IS NOT NULL, dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -286,7 +212,7 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> `body_v2.education[].awards`.name IS NOT NULL, dynamicElement(`body_v2.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> `body_v2.education[].awards`.name IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_json.education`-> (arrayExists(`body_json.education[].awards`-> dynamicElement(`body_json.education[].awards`.name, 'String') IS NOT NULL, dynamicElement(`body_json.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_json.education[].awards`-> dynamicElement(`body_json.education[].awards`.name, 'String') IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -300,13 +226,13 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.name, 'String') = ?, dynamicElement(`body_v2.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.name, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_json.education`-> (arrayExists(`body_json.education[].awards`-> dynamicElement(`body_json.education[].awards`.name, 'String') = ?, dynamicElement(`body_json.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_json.education[].awards`-> dynamicElement(`body_json.education[].awards`.name, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
 		{
-			name:        "Key inside Array(JSON) contains value",
+			name:        "Key inside Array(JSON) contains Float value",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
@@ -314,8 +240,9 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> (arrayExists(x -> x = ?, dynamicElement(`body_v2.education`.parameters, 'Array(Nullable(Float64))')) OR arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'Float64'), arrayFilter(x->(dynamicType(x) = 'Float64'), dynamicElement(`body_v2.education`.parameters, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), 1.65, 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query:    "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((arrayExists(`body_json.education`-> arrayExists(x -> x = ?, dynamicElement(`body_json.education`.parameters, 'Array(Nullable(Float64))')), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) OR (arrayExists(`body_json.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'Float64'), arrayFilter(x->(dynamicType(x) = 'Float64'), dynamicElement(`body_json.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{uint64(1747945619), uint64(1747983448), 1.65, 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 			expectedErr: nil,
 		},
@@ -328,7 +255,7 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> LOWER(dynamicElement(`body_v2.education`.name, 'String')) LIKE LOWER(?), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_json.education`-> LOWER(dynamicElement(`body_json.education`.name, 'String')) LIKE LOWER(?), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -342,8 +269,9 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'Bool'), arrayFilter(x->(dynamicType(x) = 'Bool'), dynamicElement(`body_v2.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query:    "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((arrayExists(`body_json.education`-> arrayExists(x -> x = ?, dynamicElement(`body_json.education`.parameters, 'Array(Nullable(Float64))')), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) OR (arrayExists(`body_json.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'Bool'), arrayFilter(x->(dynamicType(x) = 'Bool'), dynamicElement(`body_json.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{uint64(1747945619), uint64(1747983448), true, true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 			expectedErr: nil,
 		},
@@ -356,8 +284,9 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'String'), arrayFilter(x->(dynamicType(x) = 'String'), dynamicElement(`body_v2.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query:    "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((arrayExists(`body_json.education`-> arrayExists(toString(x) -> toString(x) = ?, dynamicElement(`body_json.education`.parameters, 'Array(Nullable(Float64))')), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) OR (arrayExists(`body_json.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'String'), arrayFilter(x->(dynamicType(x) = 'String'), dynamicElement(`body_json.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{uint64(1747945619), uint64(1747983448), "passed", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 			expectedErr: nil,
 		},
@@ -370,7 +299,7 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.type, 'String') = ?, dynamicElement(`body_v2.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.type, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_json.education`-> (arrayExists(`body_json.education[].awards`-> dynamicElement(`body_json.education[].awards`.type, 'String') = ?, dynamicElement(`body_json.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_json.education[].awards`-> dynamicElement(`body_json.education[].awards`.type, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "sports", "sports", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -384,8 +313,9 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.interests`-> arrayExists(`body_v2.interests[].entities`-> arrayExists(`body_v2.interests[].entities[].reviews`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries[].metadata`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`-> arrayExists(x -> x = ?, dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`.ratings, 'Array(Nullable(Int64))')), dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata`.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities[].reviews[].entries`.metadata, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities[].reviews`.entries, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities`.reviews, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests`.entities, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.interests, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), float64(4), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query:    "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((arrayExists(`body_json.interests`-> arrayExists(`body_json.interests[].entities`-> arrayExists(`body_json.interests[].entities[].reviews`-> arrayExists(`body_json.interests[].entities[].reviews[].entries`-> arrayExists(`body_json.interests[].entities[].reviews[].entries[].metadata`-> arrayExists(`body_json.interests[].entities[].reviews[].entries[].metadata[].positions`-> arrayExists(toFloat64(x) -> toFloat64(x) = ?, dynamicElement(`body_json.interests[].entities[].reviews[].entries[].metadata[].positions`.ratings, 'Array(Nullable(Int64))')), dynamicElement(`body_json.interests[].entities[].reviews[].entries[].metadata`.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))')), dynamicElement(`body_json.interests[].entities[].reviews[].entries`.metadata, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))')), dynamicElement(`body_json.interests[].entities[].reviews`.entries, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_json.interests[].entities`.reviews, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), dynamicElement(`body_json.interests`.entities, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_json.interests, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) OR (arrayExists(`body_json.interests`-> arrayExists(`body_json.interests[].entities`-> arrayExists(`body_json.interests[].entities[].reviews`-> arrayExists(`body_json.interests[].entities[].reviews[].entries`-> arrayExists(`body_json.interests[].entities[].reviews[].entries[].metadata`-> arrayExists(`body_json.interests[].entities[].reviews[].entries[].metadata[].positions`-> arrayExists(toFloat64OrNull(x) -> toFloat64OrNull(x) = ?, dynamicElement(`body_json.interests[].entities[].reviews[].entries[].metadata[].positions`.ratings, 'Array(Nullable(String))')), dynamicElement(`body_json.interests[].entities[].reviews[].entries[].metadata`.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))')), dynamicElement(`body_json.interests[].entities[].reviews[].entries`.metadata, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))')), dynamicElement(`body_json.interests[].entities[].reviews`.entries, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_json.interests[].entities`.reviews, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), dynamicElement(`body_json.interests`.entities, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_json.interests, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{uint64(1747945619), uint64(1747983448), float64(4), float64(4), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings: []string{"Key `interests[].entities[].reviews[].entries[].metadata[].positions[].ratings` is ambiguous, found 2 different combinations of field context / data type: [name=interests[].entities[].reviews[].entries[].metadata[].positions[].ratings,context=body,datatype=[]int64 name=interests[].entities[].reviews[].entries[].metadata[].positions[].ratings,context=body,datatype=[]string]."},
 			},
 			expectedErr: nil,
 		},
@@ -398,8 +328,9 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.interests`-> arrayExists(`body_v2.interests[].entities`-> arrayExists(`body_v2.interests[].entities[].reviews`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries[].metadata`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`-> arrayExists(x -> x = ?, dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`.ratings, 'Array(Nullable(String))')), dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata`.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities[].reviews[].entries`.metadata, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities[].reviews`.entries, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities`.reviews, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests`.entities, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.interests, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), "Good", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query:    "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((arrayExists(`body_json.interests`-> arrayExists(`body_json.interests[].entities`-> arrayExists(`body_json.interests[].entities[].reviews`-> arrayExists(`body_json.interests[].entities[].reviews[].entries`-> arrayExists(`body_json.interests[].entities[].reviews[].entries[].metadata`-> arrayExists(`body_json.interests[].entities[].reviews[].entries[].metadata[].positions`-> arrayExists(toString(x) -> toString(x) = ?, dynamicElement(`body_json.interests[].entities[].reviews[].entries[].metadata[].positions`.ratings, 'Array(Nullable(Int64))')), dynamicElement(`body_json.interests[].entities[].reviews[].entries[].metadata`.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))')), dynamicElement(`body_json.interests[].entities[].reviews[].entries`.metadata, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))')), dynamicElement(`body_json.interests[].entities[].reviews`.entries, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_json.interests[].entities`.reviews, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), dynamicElement(`body_json.interests`.entities, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_json.interests, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) OR (arrayExists(`body_json.interests`-> arrayExists(`body_json.interests[].entities`-> arrayExists(`body_json.interests[].entities[].reviews`-> arrayExists(`body_json.interests[].entities[].reviews[].entries`-> arrayExists(`body_json.interests[].entities[].reviews[].entries[].metadata`-> arrayExists(`body_json.interests[].entities[].reviews[].entries[].metadata[].positions`-> arrayExists(x -> x = ?, dynamicElement(`body_json.interests[].entities[].reviews[].entries[].metadata[].positions`.ratings, 'Array(Nullable(String))')), dynamicElement(`body_json.interests[].entities[].reviews[].entries[].metadata`.positions, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))')), dynamicElement(`body_json.interests[].entities[].reviews[].entries`.metadata, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))')), dynamicElement(`body_json.interests[].entities[].reviews`.entries, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_json.interests[].entities`.reviews, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), dynamicElement(`body_json.interests`.entities, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_json.interests, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{uint64(1747945619), uint64(1747983448), "Good", "Good", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings: []string{"Key `interests[].entities[].reviews[].entries[].metadata[].positions[].ratings` is ambiguous, found 2 different combinations of field context / data type: [name=interests[].entities[].reviews[].entries[].metadata[].positions[].ratings,context=body,datatype=[]int64 name=interests[].entities[].reviews[].entries[].metadata[].positions[].ratings,context=body,datatype=[]string]."},
 			},
 			expectedErr: nil,
 		},
@@ -412,7 +343,7 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> (arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_v2.education[].awards`.participated, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.participated, 'Array(Dynamic)'))))), dynamicElement(`body_v2.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> (arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')), dynamicElement(`body_v2.education[].awards`.participated, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')) OR arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.participated, 'Array(Dynamic)'))))), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_json.education`-> (arrayExists(`body_json.education[].awards`-> (arrayExists(`body_json.education[].awards[].participated`-> arrayExists(`body_json.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_json.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_json.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_json.education[].awards`.participated, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')) OR arrayExists(`body_json.education[].awards[].participated`-> arrayExists(`body_json.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_json.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_json.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education[].awards`.participated, 'Array(Dynamic)'))))), dynamicElement(`body_json.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_json.education[].awards`-> (arrayExists(`body_json.education[].awards[].participated`-> arrayExists(`body_json.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_json.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_json.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')), dynamicElement(`body_json.education[].awards`.participated, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')) OR arrayExists(`body_json.education[].awards[].participated`-> arrayExists(`body_json.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_json.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_json.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education[].awards`.participated, 'Array(Dynamic)'))))), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "%Civil%", "%Civil%", "%Civil%", "%Civil%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -423,7 +354,6 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 
 			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
-
 			if c.expectedErr != nil {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErr.Error())
@@ -438,37 +368,12 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
-	constants.BodyJSONQueryEnabled = true
+	enableBodyJSONQuery(t)
 	defer func() {
-		constants.BodyJSONQueryEnabled = false
+		disableBodyJSONQuery(t)
 	}()
 
-	jqb := buildTestJSONQueryBuilder()
-	// promote paths for testing
-	jqb.promotedPaths.Store("education", struct{}{})
-
-	fm := NewFieldMapper()
-	// Enable JSONQueryBuilder for WHERE-only JSON body
-	cb := NewConditionBuilder(fm, jqb)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
-	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
-
-	statementBuilder := NewLogQueryStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		jqb,
-		resourceFilterStmtBuilder,
-		aggExprRewriter,
-		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
-		GetBodyJSONKey,
-	)
-
+	statementBuilder := buildJSONTestStatementBuilder(t, "education")
 	cases := []struct {
 		name        string
 		requestType qbtypes.RequestType
@@ -485,7 +390,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> `body_v2.education`.name IS NOT NULL, dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`promoted.education`-> `promoted.education`.name IS NOT NULL, dynamicElement(promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_json.education`-> dynamicElement(`body_json.education`.name, 'String') IS NOT NULL, dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`body_json_promoted.education`-> dynamicElement(`body_json_promoted.education`.name, 'String') IS NOT NULL, dynamicElement(body_json_promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -499,7 +404,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> `body_v2.education[].awards`.name IS NOT NULL, dynamicElement(`body_v2.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> `body_v2.education[].awards`.name IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`promoted.education`-> (arrayExists(`promoted.education[].awards`-> `promoted.education[].awards`.name IS NOT NULL, dynamicElement(`promoted.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')) OR arrayExists(`promoted.education[].awards`-> `promoted.education[].awards`.name IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`promoted.education`.awards, 'Array(Dynamic)'))))), dynamicElement(promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_json.education`-> (arrayExists(`body_json.education[].awards`-> dynamicElement(`body_json.education[].awards`.name, 'String') IS NOT NULL, dynamicElement(`body_json.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_json.education[].awards`-> dynamicElement(`body_json.education[].awards`.name, 'String') IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`body_json_promoted.education`-> (arrayExists(`body_json_promoted.education[].awards`-> dynamicElement(`body_json_promoted.education[].awards`.name, 'String') IS NOT NULL, dynamicElement(`body_json_promoted.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')) OR arrayExists(`body_json_promoted.education[].awards`-> dynamicElement(`body_json_promoted.education[].awards`.name, 'String') IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json_promoted.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json_promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -513,7 +418,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.name, 'String') = ?, dynamicElement(`body_v2.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.name, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`promoted.education`-> (arrayExists(`promoted.education[].awards`-> dynamicElement(`promoted.education[].awards`.name, 'String') = ?, dynamicElement(`promoted.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')) OR arrayExists(`promoted.education[].awards`-> dynamicElement(`promoted.education[].awards`.name, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`promoted.education`.awards, 'Array(Dynamic)'))))), dynamicElement(promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_json.education`-> (arrayExists(`body_json.education[].awards`-> dynamicElement(`body_json.education[].awards`.name, 'String') = ?, dynamicElement(`body_json.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_json.education[].awards`-> dynamicElement(`body_json.education[].awards`.name, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`body_json_promoted.education`-> (arrayExists(`body_json_promoted.education[].awards`-> dynamicElement(`body_json_promoted.education[].awards`.name, 'String') = ?, dynamicElement(`body_json_promoted.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')) OR arrayExists(`body_json_promoted.education[].awards`-> dynamicElement(`body_json_promoted.education[].awards`.name, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json_promoted.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json_promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "Iron Award", "Iron Award", "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -527,8 +432,9 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> (arrayExists(x -> x = ?, dynamicElement(`body_v2.education`.parameters, 'Array(Nullable(Float64))')) OR arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'Float64'), arrayFilter(x->(dynamicType(x) = 'Float64'), dynamicElement(`body_v2.education`.parameters, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`promoted.education`-> (arrayExists(x -> x = ?, dynamicElement(`promoted.education`.parameters, 'Array(Nullable(Float64))')) OR arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'Float64'), arrayFilter(x->(dynamicType(x) = 'Float64'), dynamicElement(`promoted.education`.parameters, 'Array(Dynamic)'))))), dynamicElement(promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), 1.65, 1.65, 1.65, 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query:    "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((arrayExists(`body_json.education`-> arrayExists(x -> x = ?, dynamicElement(`body_json.education`.parameters, 'Array(Nullable(Float64))')), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`body_json_promoted.education`-> arrayExists(x -> x = ?, dynamicElement(`body_json_promoted.education`.parameters, 'Array(Nullable(Float64))')), dynamicElement(body_json_promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_json.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'Float64'), arrayFilter(x->(dynamicType(x) = 'Float64'), dynamicElement(`body_json.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`body_json_promoted.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'Float64'), arrayFilter(x->(dynamicType(x) = 'Float64'), dynamicElement(`body_json_promoted.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_json_promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{uint64(1747945619), uint64(1747983448), 1.65, 1.65, 1.65, 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 			expectedErr: nil,
 		},
@@ -541,7 +447,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> LOWER(dynamicElement(`body_v2.education`.name, 'String')) LIKE LOWER(?), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`promoted.education`-> LOWER(dynamicElement(`promoted.education`.name, 'String')) LIKE LOWER(?), dynamicElement(promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_json.education`-> LOWER(dynamicElement(`body_json.education`.name, 'String')) LIKE LOWER(?), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`body_json_promoted.education`-> LOWER(dynamicElement(`body_json_promoted.education`.name, 'String')) LIKE LOWER(?), dynamicElement(body_json_promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "%IIT%", "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -555,8 +461,9 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'Bool'), arrayFilter(x->(dynamicType(x) = 'Bool'), dynamicElement(`body_v2.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`promoted.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'Bool'), arrayFilter(x->(dynamicType(x) = 'Bool'), dynamicElement(`promoted.education`.parameters, 'Array(Dynamic)')))), dynamicElement(promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), true, true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query:    "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((arrayExists(`body_json.education`-> arrayExists(x -> x = ?, dynamicElement(`body_json.education`.parameters, 'Array(Nullable(Float64))')), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`body_json_promoted.education`-> arrayExists(x -> x = ?, dynamicElement(`body_json_promoted.education`.parameters, 'Array(Nullable(Float64))')), dynamicElement(body_json_promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_json.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'Bool'), arrayFilter(x->(dynamicType(x) = 'Bool'), dynamicElement(`body_json.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`body_json_promoted.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'Bool'), arrayFilter(x->(dynamicType(x) = 'Bool'), dynamicElement(`body_json_promoted.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_json_promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{uint64(1747945619), uint64(1747983448), true, true, true, true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 			expectedErr: nil,
 		},
@@ -569,8 +476,9 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'String'), arrayFilter(x->(dynamicType(x) = 'String'), dynamicElement(`body_v2.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`promoted.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'String'), arrayFilter(x->(dynamicType(x) = 'String'), dynamicElement(`promoted.education`.parameters, 'Array(Dynamic)')))), dynamicElement(promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), "passed", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query:    "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((arrayExists(`body_json.education`-> arrayExists(toString(x) -> toString(x) = ?, dynamicElement(`body_json.education`.parameters, 'Array(Nullable(Float64))')), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`body_json_promoted.education`-> arrayExists(toString(x) -> toString(x) = ?, dynamicElement(`body_json_promoted.education`.parameters, 'Array(Nullable(Float64))')), dynamicElement(body_json_promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_json.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'String'), arrayFilter(x->(dynamicType(x) = 'String'), dynamicElement(`body_json.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`body_json_promoted.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'String'), arrayFilter(x->(dynamicType(x) = 'String'), dynamicElement(`body_json_promoted.education`.parameters, 'Array(Dynamic)')))), dynamicElement(body_json_promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{uint64(1747945619), uint64(1747983448), "passed", "passed", "passed", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 			expectedErr: nil,
 		},
@@ -583,7 +491,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.type, 'String') = ?, dynamicElement(`body_v2.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.type, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`promoted.education`-> (arrayExists(`promoted.education[].awards`-> dynamicElement(`promoted.education[].awards`.type, 'String') = ?, dynamicElement(`promoted.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')) OR arrayExists(`promoted.education[].awards`-> dynamicElement(`promoted.education[].awards`.type, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`promoted.education`.awards, 'Array(Dynamic)'))))), dynamicElement(promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_json.education`-> (arrayExists(`body_json.education[].awards`-> dynamicElement(`body_json.education[].awards`.type, 'String') = ?, dynamicElement(`body_json.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_json.education[].awards`-> dynamicElement(`body_json.education[].awards`.type, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`body_json_promoted.education`-> (arrayExists(`body_json_promoted.education[].awards`-> dynamicElement(`body_json_promoted.education[].awards`.type, 'String') = ?, dynamicElement(`body_json_promoted.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')) OR arrayExists(`body_json_promoted.education[].awards`-> dynamicElement(`body_json_promoted.education[].awards`.type, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json_promoted.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json_promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "sports", "sports", "sports", "sports", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -597,7 +505,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> (arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_v2.education[].awards`.participated, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.participated, 'Array(Dynamic)'))))), dynamicElement(`body_v2.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> (arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')), dynamicElement(`body_v2.education[].awards`.participated, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')) OR arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.participated, 'Array(Dynamic)'))))), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_v2.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`promoted.education`-> (arrayExists(`promoted.education[].awards`-> (arrayExists(`promoted.education[].awards[].participated`-> arrayExists(`promoted.education[].awards[].participated[].team`-> LOWER(dynamicElement(`promoted.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`promoted.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=4))')), dynamicElement(`promoted.education[].awards`.participated, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=16))')) OR arrayExists(`promoted.education[].awards[].participated`-> arrayExists(`promoted.education[].awards[].participated[].team`-> LOWER(dynamicElement(`promoted.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`promoted.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`promoted.education[].awards`.participated, 'Array(Dynamic)'))))), dynamicElement(`promoted.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')) OR arrayExists(`promoted.education[].awards`-> (arrayExists(`promoted.education[].awards[].participated`-> arrayExists(`promoted.education[].awards[].participated[].team`-> LOWER(dynamicElement(`promoted.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`promoted.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')), dynamicElement(`promoted.education[].awards`.participated, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')) OR arrayExists(`promoted.education[].awards[].participated`-> arrayExists(`promoted.education[].awards[].participated[].team`-> LOWER(dynamicElement(`promoted.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`promoted.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`promoted.education[].awards`.participated, 'Array(Dynamic)'))))), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`promoted.education`.awards, 'Array(Dynamic)'))))), dynamicElement(promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (arrayExists(`body_json.education`-> (arrayExists(`body_json.education[].awards`-> (arrayExists(`body_json.education[].awards[].participated`-> arrayExists(`body_json.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_json.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_json.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_json.education[].awards`.participated, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')) OR arrayExists(`body_json.education[].awards[].participated`-> arrayExists(`body_json.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_json.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_json.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education[].awards`.participated, 'Array(Dynamic)'))))), dynamicElement(`body_json.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_json.education[].awards`-> (arrayExists(`body_json.education[].awards[].participated`-> arrayExists(`body_json.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_json.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_json.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')), dynamicElement(`body_json.education[].awards`.participated, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')) OR arrayExists(`body_json.education[].awards[].participated`-> arrayExists(`body_json.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_json.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_json.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education[].awards`.participated, 'Array(Dynamic)'))))), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')) OR arrayExists(`body_json_promoted.education`-> (arrayExists(`body_json_promoted.education[].awards`-> (arrayExists(`body_json_promoted.education[].awards[].participated`-> arrayExists(`body_json_promoted.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_json_promoted.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_json_promoted.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=4))')), dynamicElement(`body_json_promoted.education[].awards`.participated, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=16))')) OR arrayExists(`body_json_promoted.education[].awards[].participated`-> arrayExists(`body_json_promoted.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_json_promoted.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_json_promoted.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json_promoted.education[].awards`.participated, 'Array(Dynamic)'))))), dynamicElement(`body_json_promoted.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')) OR arrayExists(`body_json_promoted.education[].awards`-> (arrayExists(`body_json_promoted.education[].awards[].participated`-> arrayExists(`body_json_promoted.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_json_promoted.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_json_promoted.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')), dynamicElement(`body_json_promoted.education[].awards`.participated, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')) OR arrayExists(`body_json_promoted.education[].awards[].participated`-> arrayExists(`body_json_promoted.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_json_promoted.education[].awards[].participated[].team`.branch, 'String')) LIKE LOWER(?), dynamicElement(`body_json_promoted.education[].awards[].participated`.team, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json_promoted.education[].awards`.participated, 'Array(Dynamic)'))))), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json_promoted.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json_promoted.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -623,38 +531,25 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
-	constants.BodyJSONQueryEnabled = true
+	enableBodyJSONQuery(t)
 	defer func() {
-		constants.BodyJSONQueryEnabled = false
+		disableBodyJSONQuery(t)
 	}()
 
-	jqb := buildTestJSONQueryBuilder()
-	jqb.promotedPaths.Store("message", struct{}{})
-	jqb.stringIndexedColumns.Store(map[string]string{
-		"promoted.message": assumeNotNull("promoted.message"),
-	})
-
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, jqb)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
-	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
-
-	statementBuilder := NewLogQueryStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		jqb,
-		resourceFilterStmtBuilder,
-		aggExprRewriter,
-		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
-		GetBodyJSONKey,
-	)
-
+	statementBuilder := buildJSONTestStatementBuilder(t)
+	indexed := []*telemetrytypes.TelemetryFieldKey{
+		{
+			Name: "message",
+			Indexes: []telemetrytypes.JSONDataTypeIndex{
+				{
+					Type:             telemetrytypes.String,
+					ColumnExpression: "body_json_promoted.message",
+					IndexExpression:  "(lower(assumeNotNull(dynamicElement(body_json_promoted.message, 'String'))))",
+				},
+			},
+		},
+	}
+	testAddIndexedPaths(t, statementBuilder, indexed...)
 	cases := []struct {
 		name        string
 		requestType qbtypes.RequestType
@@ -671,8 +566,8 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (body_v2.message IS NOT NULL OR promoted.message IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_json.message, 'String') IS NOT NULL OR (assumeNotNull(dynamicElement(body_json_promoted.message, 'String')) <> ? AND dynamicElement(body_json_promoted.message, 'String') IS NOT NULL)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -685,7 +580,7 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_v2.message, 'String') = ? OR dynamicElement(promoted.message, 'String') = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_json.message, 'String') = ? OR (assumeNotNull(dynamicElement(body_json_promoted.message, 'String')) = ? AND dynamicElement(body_json_promoted.message, 'String') IS NOT NULL)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "", "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -699,7 +594,7 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_v2.message, 'String') = ? OR dynamicElement(promoted.message, 'String') = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_json.message, 'String') = ? OR (assumeNotNull(dynamicElement(body_json_promoted.message, 'String')) = ? AND dynamicElement(body_json_promoted.message, 'String') IS NOT NULL)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -713,7 +608,7 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_v2, promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (LOWER(dynamicElement(body_v2.message, 'String')) LIKE LOWER(?) OR LOWER(assumeNotNull(dynamicElement(promoted.message, 'String'))) LIKE LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (LOWER(dynamicElement(body_json.message, 'String')) LIKE LOWER(?) OR (LOWER(assumeNotNull(dynamicElement(body_json_promoted.message, 'String'))) LIKE LOWER(?) AND dynamicElement(body_json_promoted.message, 'String') IS NOT NULL)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "%Iron Award%", "%Iron Award%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -738,25 +633,85 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 	}
 }
 
-func buildTestJSONQueryBuilder() *JSONQueryBuilder {
-	lruCache, err := lru.New[string, *utils.ConcurrentSet[telemetrytypes.JSONDataType]](10000)
-	if err != nil {
-		panic(err)
-	}
-	b := &JSONQueryBuilder{
-		cache:    lruCache,
-		lastSeen: 1747945619,
-	}
+func buildTestTelemetryMetadataStore(promotedPaths ...string) *telemetrytypestest.MockMetadataStore {
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 
 	types, _ := testTypeSet()
-	for path, types := range types {
-		typesSet := utils.NewConcurrentSet[telemetrytypes.JSONDataType]()
-		for _, t := range types {
-			typesSet.Insert(t)
+	for path, jsonTypes := range types {
+		promoted := false
+
+		split := strings.Split(path, ArraySep)
+		if path == "message" {
+			promoted = true
+		} else if slices.Contains(promotedPaths, split[0]) {
+			promoted = true
 		}
-		b.cache.Add(path, typesSet)
+		// Create a TelemetryFieldKey for each JSONDataType for this path
+		// Since a path can have multiple types, we create one key per type
+		for _, jsonType := range jsonTypes {
+			key := &telemetrytypes.TelemetryFieldKey{
+				Name:          path,
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextBody,
+				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[jsonType],
+				JSONDataType:  &jsonType,
+				Materialized:  promoted,
+			}
+			mockMetadataStore.SetKey(key)
+		}
 	}
 
-	b.stringIndexedColumns.Store(map[string]string{})
-	return b
+	return mockMetadataStore
+}
+
+func buildJSONTestStatementBuilder(_ *testing.T, promotedPaths ...string) *logQueryStatementBuilder {
+	fm := NewFieldMapper()
+	mockMetadataStore := buildTestTelemetryMetadataStore(promotedPaths...)
+	cb := NewConditionBuilder(fm, mockMetadataStore)
+
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+	resourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		fm,
+		cb,
+		mockMetadataStore,
+		DefaultFullTextColumn,
+		GetBodyJSONKey,
+	)
+
+	statementBuilder := NewLogQueryStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		mockMetadataStore,
+		fm,
+		cb,
+		resourceFilterStmtBuilder,
+		aggExprRewriter,
+		DefaultFullTextColumn,
+		GetBodyJSONKey,
+	)
+
+	return statementBuilder
+}
+
+func testAddIndexedPaths(t *testing.T, statementBuilder *logQueryStatementBuilder, telemetryFieldKeys ...*telemetrytypes.TelemetryFieldKey) {
+	mockMetadataStore := statementBuilder.metadataStore.(*telemetrytypestest.MockMetadataStore)
+	for _, key := range telemetryFieldKeys {
+		if strings.Contains(key.Name, ArraySep) || strings.Contains(key.Name, ArrayAnyIndex) {
+			t.Fatalf("array paths are not supported: %s", key.Name)
+		}
+
+		for _, storedKey := range mockMetadataStore.KeysMap[key.Name] {
+			storedKey.Indexes = append(storedKey.Indexes, key.Indexes...)
+		}
+	}
+}
+
+func enableBodyJSONQuery(_ *testing.T) {
+	eeconstants.BodyJSONQueryEnabled = true
+	constants.BodyJSONQueryEnabled = true
+}
+
+func disableBodyJSONQuery(_ *testing.T) {
+	eeconstants.BodyJSONQueryEnabled = false
+	constants.BodyJSONQueryEnabled = false
 }

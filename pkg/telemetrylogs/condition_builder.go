@@ -18,12 +18,12 @@ import (
 )
 
 type conditionBuilder struct {
-	fm  qbtypes.FieldMapper
-	jqb *JSONQueryBuilder
+	fm            qbtypes.FieldMapper
+	metadataStore telemetrytypes.MetadataStore
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper, jqb *JSONQueryBuilder) *conditionBuilder {
-	return &conditionBuilder{fm: fm, jqb: jqb}
+func NewConditionBuilder(fm qbtypes.FieldMapper, metadataStore telemetrytypes.MetadataStore) *conditionBuilder {
+	return &conditionBuilder{fm: fm, metadataStore: metadataStore}
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -33,7 +33,6 @@ func (c *conditionBuilder) conditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-
 	column, err := c.fm.ColumnFor(ctx, key)
 	if err != nil {
 		return "", err
@@ -41,7 +40,7 @@ func (c *conditionBuilder) conditionFor(
 
 	// For JSON columns, preserve the original value type (numeric, bool, etc.)
 	// Only format to string for non-JSON columns that need string formatting
-	isJSONColumn := column.IsJSONColumn() && constants.BodyJSONQueryEnabled && strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix)
+	isJSONColumn := column.IsJSONColumn() && constants.BodyJSONQueryEnabled && key.FieldContext == telemetrytypes.FieldContextBody
 	if !isJSONColumn {
 		switch operator {
 		case qbtypes.FilterOperatorContains,
@@ -55,7 +54,7 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	if isJSONColumn {
-		cond, err := c.jqb.BuildCondition(ctx, key, operator, value, sb)
+		cond, err := c.buildJSONCondition(ctx, key, operator, value, sb)
 		if err != nil {
 			return "", err
 		}
@@ -67,7 +66,7 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+	if key.FieldContext == telemetrytypes.FieldContextBody {
 		tblFieldName, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
@@ -170,7 +169,7 @@ func (c *conditionBuilder) conditionFor(
 	// in the UI based query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) && !constants.BodyJSONQueryEnabled {
+		if key.FieldContext == telemetrytypes.FieldContextBody && !constants.BodyJSONQueryEnabled {
 			if operator == qbtypes.FilterOperatorExists {
 				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			} else {
@@ -242,11 +241,11 @@ func (c *conditionBuilder) ConditionFor(
 		return "", err
 	}
 
-	if !(strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) && constants.BodyJSONQueryEnabled) && operator.AddDefaultExistsFilter() {
+	if !(key.FieldContext == telemetrytypes.FieldContextBody && constants.BodyJSONQueryEnabled) && operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
 		field, _ := c.fm.FieldFor(ctx, key)
-		if slices.Contains(maps.Keys(IntrinsicFields), field) && !strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+		if slices.Contains(maps.Keys(IntrinsicFields), field) && !strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
 			return condition, nil
 		}
 

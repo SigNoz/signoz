@@ -24,7 +24,6 @@ func CollisionHandledFinalExpr(
 	cb qbtypes.ConditionBuilder,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	requiredDataType telemetrytypes.FieldDataType,
-	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) (string, []any, error) {
 
@@ -45,7 +44,7 @@ func CollisionHandledFinalExpr(
 
 	addCondition := func(key *telemetrytypes.TelemetryFieldKey) error {
 		sb := sqlbuilder.NewSelectBuilder()
-        condition, err := cb.ConditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, 0, 0)
+		condition, err := cb.ConditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, 0, 0)
 		if err != nil {
 			return err
 		}
@@ -58,8 +57,8 @@ func CollisionHandledFinalExpr(
 		return nil
 	}
 
-	colName, err := fm.FieldFor(ctx, field)
-	if errors.Is(err, qbtypes.ErrColumnNotFound) {
+	colName, fieldForErr := fm.FieldFor(ctx, field)
+	if errors.Is(fieldForErr, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
 		keysForField := keys[field.Name]
@@ -82,10 +81,10 @@ func CollisionHandledFinalExpr(
 			correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
 			if found {
 				// we found a close match, in the error message send the suggestion
-				return "", nil, errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
+				return "", nil, errors.WithAdditionalf(fieldForErr, "%s", correction)
 			} else {
 				// not even a close match, return an error
-				return "", nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
+				return "", nil, errors.WithAdditionalf(fieldForErr, "field `%s` not found", field.Name)
 			}
 		} else {
 			for _, key := range keysForField {
@@ -104,9 +103,8 @@ func CollisionHandledFinalExpr(
 			return "", nil, err
 		}
 
-		if strings.HasPrefix(field.Name, jsonBodyPrefix) && jsonBodyPrefix != "" && jsonKeyToKey != nil {
-			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
-			// colName, _ = jsonKeyToKey(context.Background(), field, qbtypes.FilterOperatorUnknown, dummyValue)
+		if field.FieldContext == telemetrytypes.FieldContextBody && jsonKeyToKey != nil {
+			return "", nil, fieldForErr
 		} else {
 			colName, _ = DataTypeCollisionHandledFieldName(field, dummyValue, colName, qbtypes.FilterOperatorUnknown)
 		}
@@ -203,7 +201,7 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 	// While we expect user not to send the mixed data types, it inevitably happens
 	// So we handle the data type collisions here
 	switch key.FieldDataType {
-	case telemetrytypes.FieldDataTypeString:
+	case telemetrytypes.FieldDataTypeString, telemetrytypes.FieldDataTypeArrayString:
 		switch v := value.(type) {
 		case float64:
 			// try to convert the string value to to number
@@ -218,8 +216,40 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
 			value = fmt.Sprintf("%t", v)
 		}
+	case telemetrytypes.FieldDataTypeFloat64,
+		telemetrytypes.FieldDataTypeArrayFloat64:
+		switch v := value.(type) {
+		case string:
+			// check if it's a number inside a string
+			isNumber := false
+			if _, err := strconv.ParseFloat(v, 64); err == nil {
+				isNumber = true
+			}
 
-	case telemetrytypes.FieldDataTypeFloat64, telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeNumber:
+			if !operator.IsComparisonOperator() || !isNumber {
+				// try to convert the number attribute to string
+				tblFieldName = castString(tblFieldName) // numeric col vs string literal
+			} else {
+				tblFieldName = castFloatHack(tblFieldName)
+			}
+		case []any:
+			if allFloats(v) {
+				tblFieldName = castFloatHack(tblFieldName)
+			} else if hasString(v) {
+				tblFieldName, value = castString(tblFieldName), toStrings(v)
+			}
+		}
+
+	case telemetrytypes.FieldDataTypeInt64,
+		telemetrytypes.FieldDataTypeArrayInt64,
+		telemetrytypes.FieldDataTypeNumber,
+		telemetrytypes.FieldDataTypeArrayNumber:
+		// case telemetrytypes.FieldDataTypeFloat64,
+		// 	telemetrytypes.FieldDataTypeArrayFloat64,
+		// 	telemetrytypes.FieldDataTypeInt64,
+		// 	telemetrytypes.FieldDataTypeArrayInt64,
+		// 	telemetrytypes.FieldDataTypeNumber,
+		// 	telemetrytypes.FieldDataTypeArrayNumber:
 		switch v := value.(type) {
 		// why? ; CH returns an error for a simple check
 		// attributes_number['http.status_code'] = 200 but not for attributes_number['http.status_code'] >= 200
@@ -257,7 +287,8 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 			}
 		}
 
-	case telemetrytypes.FieldDataTypeBool:
+	case telemetrytypes.FieldDataTypeBool,
+		telemetrytypes.FieldDataTypeArrayBool:
 		switch v := value.(type) {
 		case string:
 			tblFieldName = castString(tblFieldName)

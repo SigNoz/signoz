@@ -23,8 +23,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 
@@ -238,11 +240,11 @@ func NewReaderFromClickhouseConnection(
 }
 
 func (r *ClickHouseReader) ListBodySkipIndexes(ctx context.Context) ([]schemamigrator.Index, error) {
-	return telemetrylogs.ListIndexes(ctx, r.cluster, r.db)
+	return telemetrymetadata.ListLogsJSONIndexes(ctx, r.cluster, r.db)
 }
 
 func (r *ClickHouseReader) ListPromotedPaths(ctx context.Context) ([]string, error) {
-	paths, err := telemetrylogs.ListPromotedPaths(ctx, r.db)
+	paths, err := telemetrymetadata.ListPromotedPaths(ctx, r.db)
 	if err != nil {
 		return nil, err
 	}
@@ -350,7 +352,7 @@ func (r *ClickHouseReader) PromoteAndIndexPaths(
 			return err
 		}
 		// remove the "body." prefix from the path
-		trimmedPath := strings.TrimPrefix(it.Path, telemetrylogs.BodyJSONStringSearchPrefix)
+		trimmedPath := strings.TrimPrefix(it.Path, telemetrytypes.BodyJSONStringSearchPrefix)
 		if it.Promote {
 			if _, promoted := existing[trimmedPath]; !promoted {
 				toInsert = append(toInsert, trimmedPath)
