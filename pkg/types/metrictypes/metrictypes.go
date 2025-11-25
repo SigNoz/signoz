@@ -107,7 +107,7 @@ func (t *Type) Scan(src interface{}) error {
 		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "metric type: cannot scan %T", src)
 	}
 
-	switch strings.ToLower(strings.ReplaceAll(strings.TrimSpace(val), "_", "")) {
+	switch strings.ToLower(strings.TrimSpace(val)) {
 	case "gauge":
 		*t = GaugeType
 	case "sum":
@@ -208,25 +208,3 @@ type MetricTableHints struct {
 type MetricValueFilter struct {
 	Value float64
 }
-
-// MetricOrderBy represents the order-by field for metrics queries
-type MetricOrderBy struct {
-	valuer.String
-}
-
-var (
-	OrderByTimeSeries = MetricOrderBy{valuer.NewString("timeseries")}
-	OrderBySamples    = MetricOrderBy{valuer.NewString("samples")}
-)
-
-// TreemapMode indicates which treemap variant the caller requests.
-type TreemapMode struct {
-	valuer.String
-}
-
-var (
-	// TreemapModeTimeSeries represents the treemap based on timeseries counts.
-	TreemapModeTimeSeries = TreemapMode{valuer.NewString("timeseries")}
-	// TreemapModeSamples represents the treemap based on sample counts.
-	TreemapModeSamples = TreemapMode{valuer.NewString("samples")}
-)

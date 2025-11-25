@@ -127,9 +127,9 @@ func (h *handler) GetMetricMetadata(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	metricName := strings.TrimSpace(req.URL.Query().Get("metric_name"))
+	metricName := strings.TrimSpace(req.URL.Query().Get("metricName"))
 	if metricName == "" {
-		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name query parameter is required"))
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName query parameter is required"))
 		return
 	}
 

@@ -6,6 +6,29 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+// MetricOrderBy represents the order-by field for metrics queries.
+type MetricOrderBy struct {
+	valuer.String
+}
+
+var (
+	OrderByTimeSeries = MetricOrderBy{valuer.NewString("timeseries")}
+	OrderBySamples    = MetricOrderBy{valuer.NewString("samples")}
+)
+
+// TreemapMode indicates which treemap variant the caller requests.
+type TreemapMode struct {
+	valuer.String
+}
+
+var (
+	// TreemapModeTimeSeries represents the treemap based on timeseries counts.
+	TreemapModeTimeSeries = TreemapMode{valuer.NewString("timeseries")}
+	// TreemapModeSamples represents the treemap based on sample counts.
+	TreemapModeSamples = TreemapMode{valuer.NewString("samples")}
 )
 
 // StatsRequest represents the payload accepted by the metrics stats endpoint.
@@ -52,13 +75,12 @@ func (req *StatsRequest) UnmarshalJSON(data []byte) error {
 
 // Stat represents the summary information returned per metric.
 type Stat struct {
-	MetricName   string           `json:"metricName"`
-	Description  string           `json:"description"`
-	MetricType   metrictypes.Type `json:"type"`
-	MetricUnit   string           `json:"unit"`
-	TimeSeries   uint64           `json:"timeseries"`
-	Samples      uint64           `json:"samples"`
-	LastReceived int64            `json:"lastReceived"`
+	MetricName  string           `json:"metricName"`
+	Description string           `json:"description"`
+	MetricType  metrictypes.Type `json:"type"`
+	MetricUnit  string           `json:"unit"`
+	TimeSeries  uint64           `json:"timeseries"`
+	Samples     uint64           `json:"samples"`
 }
 
 // StatsResponse represents the aggregated metrics statistics.
@@ -88,7 +110,7 @@ func (m *MetricMetadata) UnmarshalBinary(data []byte) error {
 // UpdateMetricsMetadataRequest represents the payload for updating metrics metadata.
 type UpdateMetricsMetadataRequest struct {
 	MetricName  string                  `json:"metricName"`
-	MetricType  metrictypes.Type        `json:"metricType"`
+	Type        metrictypes.Type        `json:"type"`
 	Description string                  `json:"description"`
 	Unit        string                  `json:"unit"`
 	Temporality metrictypes.Temporality `json:"temporality"`
@@ -97,11 +119,11 @@ type UpdateMetricsMetadataRequest struct {
 
 // TreemapRequest represents the payload for the metrics treemap endpoint.
 type TreemapRequest struct {
-	Filter  *qbtypes.Filter         `json:"filter,omitempty"`
-	Start   int64                   `json:"start"`
-	End     int64                   `json:"end"`
-	Limit   int                     `json:"limit"`
-	Treemap metrictypes.TreemapMode `json:"treemap"`
+	Filter  *qbtypes.Filter `json:"filter,omitempty"`
+	Start   int64           `json:"start"`
+	End     int64           `json:"end"`
+	Limit   int             `json:"limit"`
+	Treemap TreemapMode     `json:"treemap"`
 }
 
 // Validate enforces basic constraints on TreemapRequest.
@@ -118,7 +140,7 @@ func (req *TreemapRequest) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
 	}
 
-	if req.Treemap != metrictypes.TreemapModeSamples && req.Treemap != metrictypes.TreemapModeTimeSeries {
+	if req.Treemap != TreemapModeSamples && req.Treemap != TreemapModeTimeSeries {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid treemap mode")
 	}
 

@@ -108,7 +108,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 
 	resp := &metricsmoduletypes.TreemapResponse{}
 	switch req.Treemap {
-	case metrictypes.TreemapModeSamples:
+	case metricsmoduletypes.TreemapModeSamples:
 		entries, err := m.computeSamplesTreemap(ctx, req, filterWhereClause)
 		if err != nil {
 			return nil, err
@@ -326,7 +326,7 @@ func (m *module) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 }
 
 func (m *module) validateAndNormalizeMetricType(req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
-	switch req.MetricType {
+	switch req.Type {
 	case metrictypes.SumType:
 		if req.Temporality.IsZero() {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "temporality is required when metric type is Sum")
@@ -336,7 +336,7 @@ func (m *module) validateAndNormalizeMetricType(req *metricsmoduletypes.UpdateMe
 		}
 		// Special case: if Sum is not monotonic and cumulative, convert to Gauge
 		if !req.IsMonotonic && req.Temporality == metrictypes.Cumulative {
-			req.MetricType = metrictypes.GaugeType
+			req.Type = metrictypes.GaugeType
 			req.Temporality = metrictypes.Unspecified
 		}
 
@@ -372,7 +372,7 @@ func (m *module) validateAndNormalizeMetricType(req *metricsmoduletypes.UpdateMe
 }
 
 func (m *module) validateMetricLabels(ctx context.Context, req *metricsmoduletypes.UpdateMetricsMetadataRequest) error {
-	if req.MetricType == metrictypes.HistogramType {
+	if req.Type == metrictypes.HistogramType {
 		labels := []string{"le"}
 		hasLabels, err := m.checkForLabelsInMetric(ctx, req.MetricName, labels)
 		if err != nil {
@@ -383,7 +383,7 @@ func (m *module) validateMetricLabels(ctx context.Context, req *metricsmoduletyp
 		}
 	}
 
-	if req.MetricType == metrictypes.SummaryType {
+	if req.Type == metrictypes.SummaryType {
 		labels := []string{"quantile"}
 		hasLabels, err := m.checkForLabelsInMetric(ctx, req.MetricName, labels)
 		if err != nil {
@@ -447,7 +447,7 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 		req.MetricName,
 		req.Temporality,
 		req.IsMonotonic,
-		req.MetricType,
+		req.Type,
 		req.Description,
 		req.Unit,
 		createdAt,
@@ -463,7 +463,7 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	// Set in cache after successful DB insert
 	metricMetadata := &metricsmoduletypes.MetricMetadata{
 		Description: req.Description,
-		MetricType:  req.MetricType,
+		MetricType:  req.Type,
 		MetricUnit:  req.Unit,
 		Temporality: req.Temporality,
 		IsMonotonic: req.IsMonotonic,

@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -21,9 +20,9 @@ func getStatsOrderByColumn(order *qbtypes.OrderBy) (string, string, error) {
 
 	var columnName string
 	switch strings.ToLower(order.Key.Name) {
-	case metrictypes.OrderByTimeSeries.StringValue():
+	case metricsmoduletypes.OrderByTimeSeries.StringValue():
 		columnName = sqlColumnTimeSeries
-	case metrictypes.OrderBySamples.StringValue():
+	case metricsmoduletypes.OrderBySamples.StringValue():
 		columnName = sqlColumnSamples
 	default:
 		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order column %q", columnName)
