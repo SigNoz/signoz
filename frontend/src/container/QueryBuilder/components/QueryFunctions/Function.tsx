@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import { Button, Flex, Input, InputRef, Select } from 'antd';
+import { Button, Flex, InputRef, Select } from 'antd';
 import cx from 'classnames';
+import OverflowInputToolTip from 'components/OverflowInputToolTip';
 import {
 	logsQueryFunctionOptions,
 	metricQueryFunctionOptions,
@@ -107,7 +108,7 @@ export default function Function({
 
 			{showInput && (
 				<>
-					<Input
+					<OverflowInputToolTip
 						ref={inputRef}
 						className="query-function-value"
 						autoFocus
@@ -117,6 +118,7 @@ export default function Function({
 							setValue(newVal);
 							debouncedhandleUpdateFunctionArgs(funcData, index, event.target.value);
 						}}
+						tooltipPlacement="top"
 						style={{
 							width: 70,
 							minWidth: 70,
