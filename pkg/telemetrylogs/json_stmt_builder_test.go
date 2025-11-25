@@ -19,10 +19,11 @@ import (
 )
 
 func TestStmtBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
-	enableBodyJSONQuery()
+	enableBodyJSONQuery(t)
 	defer func() {
-		disableBodyJSONQuery()
+		disableBodyJSONQuery(t)
 	}()
+	statementBuilder := buildJSONTestStatementBuilder(t)
 
 	cases := []struct {
 		name                string
@@ -83,7 +84,6 @@ func TestStmtBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
 		},
 	}
 
-	statementBuilder := buildJSONTestStatementBuilder()
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
@@ -103,10 +103,11 @@ func TestStmtBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
 }
 
 func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
-	enableBodyJSONQuery()
+	enableBodyJSONQuery(t)
 	defer func() {
-		disableBodyJSONQuery()
+		disableBodyJSONQuery(t)
 	}()
+	statementBuilder := buildJSONTestStatementBuilder(t)
 
 	cases := []struct {
 		name                string
@@ -147,8 +148,6 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 		},
 	}
 
-	statementBuilder := buildJSONTestStatementBuilder()
-
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
@@ -166,12 +165,12 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBody(t *testing.T) {
-	enableBodyJSONQuery()
+	enableBodyJSONQuery(t)
 	defer func() {
-		disableBodyJSONQuery()
+		disableBodyJSONQuery(t)
 	}()
 
-	statementBuilder := buildJSONTestStatementBuilder()
+	statementBuilder := buildJSONTestStatementBuilder(t)
 	cases := []struct {
 		name        string
 		requestType qbtypes.RequestType
@@ -372,12 +371,12 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
-	enableBodyJSONQuery()
+	enableBodyJSONQuery(t)
 	defer func() {
-		disableBodyJSONQuery()
+		disableBodyJSONQuery(t)
 	}()
 
-	statementBuilder := buildJSONTestStatementBuilder("education")
+	statementBuilder := buildJSONTestStatementBuilder(t, "education")
 	cases := []struct {
 		name        string
 		requestType qbtypes.RequestType
@@ -535,13 +534,25 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
-	enableBodyJSONQuery()
+	enableBodyJSONQuery(t)
 	defer func() {
-		disableBodyJSONQuery()
+		disableBodyJSONQuery(t)
 	}()
 
-	statementBuilder := buildJSONTestStatementBuilder()
-
+	statementBuilder := buildJSONTestStatementBuilder(t)
+	indexed := []*telemetrytypes.TelemetryFieldKey{
+		{
+			Name: "message",
+			Indexes: []telemetrytypes.JSONDataTypeIndex{
+				{
+					Type:             telemetrytypes.String,
+					ColumnExpression: "body_json_promoted.message",
+					IndexExpression:  "(lower(assumeNotNull(dynamicElement(body_json_promoted.message, 'String'))))",
+				},
+			},
+		},
+	}
+	testAddIndexedPaths(t, statementBuilder, indexed...)
 	cases := []struct {
 		name        string
 		requestType qbtypes.RequestType
@@ -558,7 +569,7 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (body_json.message IS NOT NULL OR promoted.message IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (body_json.message IS NOT NULL OR body_json_promoted.message IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -572,7 +583,7 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_json.message, 'String') = ? OR dynamicElement(promoted.message, 'String') = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_json.message, 'String') = ? OR (assumeNotNull(dynamicElement(body_json_promoted.message, 'String')) = ? AND dynamicElement(body_json_promoted.message, 'String') IS NOT NULL)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "", "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -586,7 +597,7 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_json.message, 'String') = ? OR dynamicElement(promoted.message, 'String') = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_json.message, 'String') = ? OR (assumeNotNull(dynamicElement(body_json_promoted.message, 'String')) = ? AND dynamicElement(body_json_promoted.message, 'String') IS NOT NULL)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -600,7 +611,7 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (LOWER(dynamicElement(body_json.message, 'String')) LIKE LOWER(?) OR LOWER(assumeNotNull(dynamicElement(promoted.message, 'String'))) LIKE LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (LOWER(dynamicElement(body_json.message, 'String')) LIKE LOWER(?) OR (LOWER(assumeNotNull(dynamicElement(body_json_promoted.message, 'String'))) LIKE LOWER(?) AND dynamicElement(body_json_promoted.message, 'String') IS NOT NULL)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "%Iron Award%", "%Iron Award%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -656,7 +667,7 @@ func buildTestTelemetryMetadataStore(promotedPaths ...string) *telemetrytypestes
 	return mockMetadataStore
 }
 
-func buildJSONTestStatementBuilder(promotedPaths ...string) *logQueryStatementBuilder {
+func buildJSONTestStatementBuilder(_ *testing.T, promotedPaths ...string) *logQueryStatementBuilder {
 	fm := NewFieldMapper()
 	mockMetadataStore := buildTestTelemetryMetadataStore(promotedPaths...)
 	cb := NewConditionBuilder(fm, mockMetadataStore)
@@ -685,12 +696,25 @@ func buildJSONTestStatementBuilder(promotedPaths ...string) *logQueryStatementBu
 	return statementBuilder
 }
 
-func enableBodyJSONQuery() {
+func testAddIndexedPaths(t *testing.T, statementBuilder *logQueryStatementBuilder, telemetryFieldKeys ...*telemetrytypes.TelemetryFieldKey) {
+	mockMetadataStore := statementBuilder.metadataStore.(*telemetrytypestest.MockMetadataStore)
+	for _, key := range telemetryFieldKeys {
+		if strings.Contains(key.Name, ArraySep) || strings.Contains(key.Name, ArrayAnyIndex) {
+			t.Fatalf("array paths are not supported: %s", key.Name)
+		}
+
+		for _, storedKey := range mockMetadataStore.KeysMap[key.Name] {
+			storedKey.Indexes = append(storedKey.Indexes, key.Indexes...)
+		}
+	}
+}
+
+func enableBodyJSONQuery(_ *testing.T) {
 	eeconstants.BodyJSONQueryEnabled = true
 	constants.BodyJSONQueryEnabled = true
 }
 
-func disableBodyJSONQuery() {
+func disableBodyJSONQuery(_ *testing.T) {
 	eeconstants.BodyJSONQueryEnabled = false
 	constants.BodyJSONQueryEnabled = false
 }

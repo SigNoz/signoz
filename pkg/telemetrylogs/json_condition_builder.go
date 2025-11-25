@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -101,11 +102,19 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 		fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, elemType.StringValue())
 		fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, fieldExpr, operator)
 
-		// TODO: Implement string indexing expression
-		// // if elemType is string and this field path is string indexed, use the string indexing expression
-		// if expr, found := c.stringIndexedColumns.Load().(map[string]string)[fieldPath]; found && elemType == telemetrytypes.String {
-		// 	fieldExpr = expr
-		// }
+		indexed := slices.ContainsFunc(node.TerminalConfig.Key.Indexes, func(index telemetrytypes.JSONDataTypeIndex) bool {
+			return index.Type == elemType && index.ColumnExpression == fieldPath
+		})
+		if elemType.IndexSupported && indexed {
+			indexedExpr := assumeNotNull(fieldPath, elemType)
+			cond, err := c.applyOperator(sb, indexedExpr, operator, value)
+			if err != nil {
+				return "", err
+			}
+			conditions = append(conditions, cond)
+			// Switch operator to EXISTS
+			operator = qbtypes.FilterOperatorExists
+		}
 
 		cond, err := c.applyOperator(sb, fieldExpr, operator, value)
 		if err != nil {
@@ -113,7 +122,7 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 		}
 		conditions = append(conditions, cond)
 		if len(conditions) > 1 {
-			return sb.Or(conditions...), nil
+			return sb.And(conditions...), nil
 		}
 		return cond, nil
 	}
@@ -422,6 +431,6 @@ func (c *conditionBuilder) buildArrayMap(currentNode *telemetrytypes.JSONAccessN
 	return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), nestedExpr, arrayExpr), nil
 }
 
-func assumeNotNull(column string) string {
-	return fmt.Sprintf("assumeNotNull(dynamicElement(%s, 'String'))", column)
+func assumeNotNull(column string, elemType telemetrytypes.JSONDataType) string {
+	return fmt.Sprintf("assumeNotNull(dynamicElement(%s, '%s'))", column, elemType.StringValue())
 }

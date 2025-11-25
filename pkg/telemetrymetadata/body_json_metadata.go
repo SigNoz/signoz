@@ -73,6 +73,11 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 			return nil, false, err
 		}
 
+		indexes, err := listLogsIndexesClean(ctx, telemetryStore.ClickhouseDB(), telemetryStore.Cluster(), path)
+		if err != nil {
+			return nil, false, err
+		}
+
 		for _, typ := range typesArray {
 			mapping, found := telemetrytypes.MappingStringToJSONDataType[typ]
 			if !found {
@@ -84,6 +89,7 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 				FieldContext:  telemetrytypes.FieldContextBody,
 				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[mapping],
 				JSONDataType:  &mapping,
+				Indexes:       indexes,
 				Materialized:  promoted,
 			})
 		}
@@ -144,39 +150,78 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 	return query, args, limit, nil
 }
 
-func listLogsIndexesClean(ctx context.Context, cluster string, conn clickhouse.Conn) ([]string, error) {
-	indexes, err := ListLogsJSONIndexes(ctx, cluster, conn)
+func listLogsIndexesClean(ctx context.Context, conn clickhouse.Conn, cluster, path string) ([]telemetrytypes.JSONDataTypeIndex, error) {
+	// return empty slice if path is an array
+	if strings.Contains(path, telemetrylogs.ArraySep) || strings.Contains(path, telemetrylogs.ArrayAnyIndex) {
+		return nil, nil
+	}
+
+	// list indexes for the path
+	indexes, err := ListLogsJSONIndexes(ctx, cluster, conn, path)
 	if err != nil {
 		return nil, err
 	}
 
-	cleanIndexes := []string{}
+	// build a set of indexes
+	cleanIndexes := []telemetrytypes.JSONDataTypeIndex{}
 	for _, index := range indexes {
-		if !strings.HasPrefix(index.Expression, telemetrylogs.BodyJSONColumnPrefix) && !strings.HasPrefix(index.Expression, telemetrylogs.BodyPromotedColumnPrefix) {
-			continue
-		}
-
-		expr, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
+		columnExpr, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
 		if err != nil {
 			return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to unfold JSON sub column index expression: %s", index.Expression)
 		}
 
-		expr = strings.TrimPrefix(expr, telemetrylogs.BodyJSONColumnPrefix)
-		expr = strings.TrimPrefix(expr, telemetrylogs.BodyPromotedColumnPrefix)
-
-		cleanIndexes = append(cleanIndexes, expr)
+		if strings.HasPrefix(index.Type, "ngram") || strings.HasPrefix(index.Type, "token") {
+			cleanIndexes = append(cleanIndexes, telemetrytypes.JSONDataTypeIndex{
+				Type:             telemetrytypes.String,
+				ColumnExpression: columnExpr,
+				IndexExpression:  index.Expression,
+			})
+		} else if strings.HasPrefix(index.Type, "minmax") {
+			if strings.Contains(columnExpr, telemetrytypes.Int64.StringValue()) {
+				cleanIndexes = append(cleanIndexes, telemetrytypes.JSONDataTypeIndex{
+					Type:             telemetrytypes.Int64,
+					ColumnExpression: columnExpr,
+					IndexExpression:  index.Expression,
+				})
+			} else if strings.Contains(columnExpr, telemetrytypes.Float64.StringValue()) {
+				cleanIndexes = append(cleanIndexes, telemetrytypes.JSONDataTypeIndex{
+					Type:             telemetrytypes.Float64,
+					ColumnExpression: columnExpr,
+					IndexExpression:  index.Expression,
+				})
+			}
+		}
 	}
 
 	return cleanIndexes, nil
 }
 
-func ListLogsJSONIndexes(ctx context.Context, cluster string, conn clickhouse.Conn) ([]schemamigrator.Index, error) {
-	query := fmt.Sprintf(`SELECT name, type_full, expr, granularity FROM 
-	clusterAllReplicas('%s', %s) 
-	WHERE database = '%s' AND table = '%s'
-	AND (expr LIKE '%%%s%%' OR expr LIKE '%%%s%%')`,
-		cluster, SkipIndexTableName, telemetrylogs.DBName, telemetrylogs.LogsV2LocalTableName, constants.BodyJSONColumnPrefix, constants.BodyPromotedColumnPrefix)
-	rows, err := conn.Query(ctx, query)
+func buildListLogsJSONIndexesQuery(cluster string, filters ...string) (string, []any) {
+	// Build a better query using GROUP BY to deduplicate at database level
+	// This aggregates all types per path and gets the max last_seen, then applies LIMIT
+	sb := sqlbuilder.Select(
+		"name", "type_full", "expr", "granularity",
+	).From(fmt.Sprintf("clusterAllReplicas('%s', %s)", cluster, SkipIndexTableName))
+
+	sb.Where(sb.Equal("database", telemetrylogs.DBName))
+	sb.Where(sb.Equal("table", telemetrylogs.LogsV2LocalTableName))
+	sb.Where(sb.Or(
+		sb.Like("expr", querybuilder.FormatValueForContains(constants.BodyJSONColumnPrefix)),
+		sb.Like("expr", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix))),
+	)
+
+	filterExprs := []string{}
+	for _, filter := range filters {
+		filterExprs = append(filterExprs, sb.Like("expr", querybuilder.FormatValueForContains(filter)))
+	}
+	sb.Where(sb.Or(filterExprs...))
+
+	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+}
+
+func ListLogsJSONIndexes(ctx context.Context, cluster string, conn clickhouse.Conn, filters ...string) ([]schemamigrator.Index, error) {
+	query, args := buildListLogsJSONIndexesQuery(cluster, filters...)
+	rows, err := conn.Query(ctx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to load string indexed columns")
 	}
@@ -372,8 +417,9 @@ func derefValue(v any) any {
 
 // IsPathPromoted checks if a specific path is promoted
 func IsPathPromoted(ctx context.Context, conn clickhouse.Conn, path string) (bool, error) {
+	split := strings.Split(path, telemetrylogs.ArraySep)
 	query := fmt.Sprintf("SELECT 1 FROM %s.%s WHERE path = ? LIMIT 1", DBName, PromotedPathsTableName)
-	rows, err := conn.Query(ctx, query, path)
+	rows, err := conn.Query(ctx, query, split[0])
 	if err != nil {
 		return false, errors.WrapInternalf(err, CodeFailCheckPathPromoted, "failed to check if path %s is promoted", path)
 	}
