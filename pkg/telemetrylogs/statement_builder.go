@@ -169,6 +169,25 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 			overallMatch = overallMatch || findMatch(IntrinsicFields)
 		}
 
+		if strings.Contains(k.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
+			k.Name = strings.TrimPrefix(k.Name, telemetrytypes.BodyJSONStringSearchPrefix)
+			fieldKeys, found := keys[k.Name]
+			if found && len(fieldKeys) > 0 {
+				k.FieldContext = fieldKeys[0].FieldContext
+				k.FieldDataType = fieldKeys[0].FieldDataType
+				k.Materialized = fieldKeys[0].Materialized
+				k.JSONDataType = fieldKeys[0].JSONDataType
+				k.Indexes = fieldKeys[0].Indexes
+
+				overallMatch = true // because we found a match
+			} else {
+				b.logger.InfoContext(ctx, "overriding the field context and data type", "key", k.Name)
+				k.FieldContext = telemetrytypes.FieldContextBody
+				k.FieldDataType = telemetrytypes.FieldDataTypeString
+				k.JSONDataType = &telemetrytypes.String
+			}
+		}
+
 		if !overallMatch {
 			// check if all the key for the given field have been materialized, if so
 			// set the key to materialized
@@ -344,28 +363,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		var expr string
-		var args []any
-		var err error
-
-		// For body JSON fields with feature flag enabled, use array join logic
-		if gb.TelemetryFieldKey.FieldContext == telemetrytypes.FieldContextBody && constants.BodyJSONQueryEnabled {
-			// Build array join info for this field
-			// groupbyInfo, err := b.jsonQueryBuilder.BuildGroupBy(ctx, &gb.TelemetryFieldKey)
-			// if err != nil {
-			// 	return nil, err
-			// }
-
-			// // Collect array join clauses
-			// arrayJoinClauses = append(arrayJoinClauses, groupbyInfo.ArrayJoinClauses...)
-			// expr = groupbyInfo.TerminalExpr
-			fmt.Println("body json group by is not supported yet")
-		} else {
-			// Use the standard collision handling for other fields
-			expr, args, err = querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
-			if err != nil {
-				return nil, err
-			}
+		// Use the standard collision handling for other fields
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		if err != nil {
+			return nil, err
 		}
 
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)

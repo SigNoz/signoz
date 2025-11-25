@@ -1198,7 +1198,7 @@ func TestPlanJSON(t *testing.T) {
 func testTypeSet() (map[string][]telemetrytypes.JSONDataType, func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error)) {
 	types := map[string][]telemetrytypes.JSONDataType{
 		"user.name":                                           {telemetrytypes.String},
-		"user.age":                                            {telemetrytypes.Int64},
+		"user.age":                                            {telemetrytypes.Int64, telemetrytypes.String},
 		"user.height":                                         {telemetrytypes.Float64},
 		"education":                                           {telemetrytypes.ArrayJSON},
 		"education[].name":                                    {telemetrytypes.String},

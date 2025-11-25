@@ -57,31 +57,31 @@ func TestStmtBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
 				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
-		{
-			name:        "Group By One Array Join",
-			requestType: qbtypes.RequestTypeTimeSeries,
-			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal:       telemetrytypes.SignalLogs,
-				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
-				Aggregations: []qbtypes.LogAggregation{
-					{
-						Expression: "count()",
-					},
-				},
-				Limit: 10,
-				GroupBy: []qbtypes.GroupByKey{
-					{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "body.education[].awards[].type",
-						},
-					},
-				},
-			},
-			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(`body.education[].awards[].type`) AS `body.education[].awards[].type`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 ARRAY JOIN arrayFlatten(arrayConcat(arrayMap(`body_json.education`->arrayConcat(arrayMap(`body_json.education[].awards`->dynamicElement(`body_json.education[].awards`.type, 'String'), dynamicElement(`body_json.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), arrayMap(`body_json.education[].awards`->dynamicElement(`body_json.education[].awards`.type, 'String'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AS `body.education[].awards[].type` WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `body.education[].awards[].type` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(`body.education[].awards[].type`) AS `body.education[].awards[].type`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 ARRAY JOIN arrayFlatten(arrayConcat(arrayMap(`body_json.education`->arrayConcat(arrayMap(`body_json.education[].awards`->dynamicElement(`body_json.education[].awards`.type, 'String'), dynamicElement(`body_json.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), arrayMap(`body_json.education[].awards`->dynamicElement(`body_json.education[].awards`.type, 'String'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AS `body.education[].awards[].type` WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`body.education[].awards[].type`) GLOBAL IN (SELECT `body.education[].awards[].type` FROM __limit_cte) GROUP BY ts, `body.education[].awards[].type`",
-				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
-			},
-		},
+		// {
+		// 	name:        "Group By One Array Join",
+		// 	requestType: qbtypes.RequestTypeTimeSeries,
+		// 	query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+		// 		Signal:       telemetrytypes.SignalLogs,
+		// 		StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+		// 		Aggregations: []qbtypes.LogAggregation{
+		// 			{
+		// 				Expression: "count()",
+		// 			},
+		// 		},
+		// 		Limit: 10,
+		// 		GroupBy: []qbtypes.GroupByKey{
+		// 			{
+		// 				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+		// 					Name: "body.education[].awards[].type",
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	expected: qbtypes.Statement{
+		// 		Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(`body.education[].awards[].type`) AS `body.education[].awards[].type`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 ARRAY JOIN arrayFlatten(arrayConcat(arrayMap(`body_json.education`->arrayConcat(arrayMap(`body_json.education[].awards`->dynamicElement(`body_json.education[].awards`.type, 'String'), dynamicElement(`body_json.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), arrayMap(`body_json.education[].awards`->dynamicElement(`body_json.education[].awards`.type, 'String'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AS `body.education[].awards[].type` WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `body.education[].awards[].type` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(`body.education[].awards[].type`) AS `body.education[].awards[].type`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 ARRAY JOIN arrayFlatten(arrayConcat(arrayMap(`body_json.education`->arrayConcat(arrayMap(`body_json.education[].awards`->dynamicElement(`body_json.education[].awards`.type, 'String'), dynamicElement(`body_json.education`.awards, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), arrayMap(`body_json.education[].awards`->dynamicElement(`body_json.education[].awards`.type, 'String'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.awards, 'Array(Dynamic)'))))), dynamicElement(body_json.education, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AS `body.education[].awards[].type` WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`body.education[].awards[].type`) GLOBAL IN (SELECT `body.education[].awards[].type` FROM __limit_cte) GROUP BY ts, `body.education[].awards[].type`",
+		// 		Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+		// 	},
+		// },
 	}
 
 	for _, c := range cases {

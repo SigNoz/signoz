@@ -69,7 +69,7 @@ func (c *conditionBuilder) emitPlannedCondition(plan *telemetrytypes.JSONAccessN
 		return "", err
 	}
 
-	sb.AddWhereClause(sqlbuilder.NewWhereClause().AddWhereExpr(sb.Args, compiled))
+	// sb.AddWhereClause(sqlbuilder.NewWhereClause().AddWhereExpr(sb.Args, compiled))
 	return compiled, nil
 }
 
@@ -78,54 +78,49 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 	// Use the parent's alias + current field name for the full path
 	fieldPath := node.FieldPath()
 
-	switch operator {
-	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		return c.applyOperator(sb, fieldPath, operator, value)
-	default:
-		if node.TerminalConfig.ElemType.IsArray {
-			// switch operator for array membership checks
-			switch operator {
-			case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorIn:
-				operator = qbtypes.FilterOperatorEqual
-			case qbtypes.FilterOperatorNotContains, qbtypes.FilterOperatorNotIn:
-				operator = qbtypes.FilterOperatorNotEqual
-			}
-			arrayCond, err := c.buildArrayMembershipCondition(node, operator, value, sb)
-			if err != nil {
-				return "", err
-			}
-			return arrayCond, nil
+	if node.TerminalConfig.ElemType.IsArray {
+		// switch operator for array membership checks
+		switch operator {
+		case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorIn:
+			operator = qbtypes.FilterOperatorEqual
+		case qbtypes.FilterOperatorNotContains, qbtypes.FilterOperatorNotIn:
+			operator = qbtypes.FilterOperatorNotEqual
 		}
-		conditions := []string{}
-
-		elemType := node.TerminalConfig.ElemType
-		fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, elemType.StringValue())
-		fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, fieldExpr, operator)
-
-		indexed := slices.ContainsFunc(node.TerminalConfig.Key.Indexes, func(index telemetrytypes.JSONDataTypeIndex) bool {
-			return index.Type == elemType && index.ColumnExpression == fieldPath
-		})
-		if elemType.IndexSupported && indexed {
-			indexedExpr := assumeNotNull(fieldPath, elemType)
-			cond, err := c.applyOperator(sb, indexedExpr, operator, value)
-			if err != nil {
-				return "", err
-			}
-			conditions = append(conditions, cond)
-			// Switch operator to EXISTS
-			operator = qbtypes.FilterOperatorExists
+		arrayCond, err := c.buildArrayMembershipCondition(node, operator, value, sb)
+		if err != nil {
+			return "", err
 		}
+		return arrayCond, nil
+	}
+	conditions := []string{}
 
-		cond, err := c.applyOperator(sb, fieldExpr, operator, value)
+	elemType := node.TerminalConfig.ElemType
+	fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, elemType.StringValue())
+	fieldExpr, value = querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, fieldExpr, operator)
+
+	indexed := slices.ContainsFunc(node.TerminalConfig.Key.Indexes, func(index telemetrytypes.JSONDataTypeIndex) bool {
+		return index.Type == elemType && index.ColumnExpression == fieldPath
+	})
+	if elemType.IndexSupported && indexed {
+		indexedExpr := assumeNotNull(fieldPath, elemType)
+		cond, err := c.applyOperator(sb, indexedExpr, operator, value)
 		if err != nil {
 			return "", err
 		}
 		conditions = append(conditions, cond)
-		if len(conditions) > 1 {
-			return sb.And(conditions...), nil
-		}
-		return cond, nil
+		// Switch operator to EXISTS
+		operator = qbtypes.FilterOperatorExists
 	}
+
+	cond, err := c.applyOperator(sb, fieldExpr, operator, value)
+	if err != nil {
+		return "", err
+	}
+	conditions = append(conditions, cond)
+	if len(conditions) > 1 {
+		return sb.And(conditions...), nil
+	}
+	return cond, nil
 }
 
 // buildArrayMembershipCondition handles array membership checks
