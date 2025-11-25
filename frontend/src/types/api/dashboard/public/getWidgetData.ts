@@ -1,8 +1,9 @@
-import { MetricRangePayloadProps } from "types/api/metrics/getQueryRange";
+import { QueryRangeResponseV5 } from 'types/api/v5/queryRange';
 
-export interface PublicDashboardWidgetDataProps {
-	data: MetricRangePayloadProps['data'];
-}
+/**
+ * The public dashboard widget API returns V5 format response directly
+ */
+export type PublicDashboardWidgetDataProps = QueryRangeResponseV5;
 
 export type GetPublicDashboardWidgetDataProps = {
 	id: string;

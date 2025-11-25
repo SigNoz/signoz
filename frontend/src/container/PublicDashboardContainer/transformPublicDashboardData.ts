@@ -1,18 +1,55 @@
-/* eslint-disable sonarjs/no-identical-functions */
-import { getLegend } from 'lib/dashboard/getQueryResults';
-import getLabelName from 'lib/getLabelName';
+/**
+ * Transforms public dashboard widget data to the format expected by WidgetGraphComponent.
+ *
+ * This module acts as an adapter between the public dashboard API response and
+ * the regular dashboard rendering components. It reuses the same transformation
+ * functions used in GetMetricQueryRange (lib/dashboard/getQueryResults.ts) to ensure
+ * consistent data handling.
+ */
+
+import { convertV5ResponseToLegacy } from 'api/v5/queryRange/convertV5Response';
+import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
+import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
+import { isEmpty } from 'lodash-es';
 import { QueryObserverResult, UseQueryResult } from 'react-query';
 import { SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { PublicDashboardWidgetDataProps } from 'types/api/dashboard/public/getWidgetData';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import {
+	MetricRangePayloadProps,
+	MetricRangePayloadV3,
+} from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryData, QueryDataV3, SeriesItem } from 'types/api/widgets/getQuery';
+import { QueryEnvelope, QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
 
+interface LegendSource {
+	queryName?: string;
+	name?: string;
+	legend?: string;
+}
+
 /**
- * Builds a legend map from widget query configuration
+ * Helper to extract legend from query items.
+ * This matches the legendMap building in prepareQueryRangePayloadV5.
  */
-// eslint-disable-next-line sonarjs/cognitive-complexity
+function extractLegends(
+	items: LegendSource[] | undefined,
+): Record<string, string> {
+	const legends: Record<string, string> = {};
+	items?.forEach((item) => {
+		const key = item.queryName || item.name;
+		if (key) {
+			legends[key] = item.legend || '';
+		}
+	});
+	return legends;
+}
+
+/**
+ * Builds a legend map from widget query configuration.
+ * This matches the logic in prepareQueryRangePayloadV5.
+ */
 function buildLegendMapFromQuery(
 	query: Query | undefined,
 ): Record<string, string> {
@@ -20,340 +57,138 @@ function buildLegendMapFromQuery(
 		return {};
 	}
 
-	const legendMap: Record<string, string> = {};
-
-	switch (query.queryType) {
-		case EQueryType.QUERY_BUILDER: {
-			// Extract legends from queryData
-			if (query.builder?.queryData) {
-				query.builder.queryData.forEach((q) => {
-					if (q.queryName) {
-						legendMap[q.queryName] = q.legend || '';
-					}
-				});
-			}
-			// Extract legends from queryFormulas
-			if (query.builder?.queryFormulas) {
-				query.builder.queryFormulas.forEach((q: any) => {
-					if (q.queryName) {
-						legendMap[q.queryName] = q.legend || '';
-					}
-				});
-			}
-			break;
-		}
-		case EQueryType.CLICKHOUSE: {
-			if (query.clickhouse_sql) {
-				query.clickhouse_sql.forEach((q) => {
-					if (q.name) {
-						legendMap[q.name] = q.legend || '';
-					}
-				});
-			}
-			break;
-		}
-		case EQueryType.PROM: {
-			if (query.promql) {
-				query.promql.forEach((q) => {
-					if (q.name) {
-						legendMap[q.name] = q.legend || '';
-					}
-				});
-			}
-			break;
-		}
-		default:
-			break;
+	if (query.queryType === EQueryType.QUERY_BUILDER) {
+		return {
+			...extractLegends(query.builder?.queryData),
+			...extractLegends(query.builder?.queryFormulas),
+		};
 	}
 
-	return legendMap;
-}
-
-/**
- * Extracts labels from seriesItem in V5 format
- */
-function extractLabelsFromSeriesItem(seriesItem: any): Record<string, string> {
-	if (!seriesItem?.labels) {
-		return {};
+	if (query.queryType === EQueryType.CLICKHOUSE) {
+		return extractLegends(query.clickhouse_sql);
 	}
 
-	// Handle V5 format: labels is an array of {key: {name: string}, value: string}
-	if (Array.isArray(seriesItem.labels)) {
-		return Object.fromEntries(
-			seriesItem.labels.map((label: any) => [
-				label.key?.name || label.key,
-				label.value || '',
-			]),
-		);
-	}
-
-	// Handle legacy format: labels is already an object
-	if (typeof seriesItem.labels === 'object') {
-		return seriesItem.labels;
+	if (query.queryType === EQueryType.PROM) {
+		return extractLegends(query.promql);
 	}
 
 	return {};
 }
 
 /**
- * Transforms public dashboard widget data to the queryResponse format expected by WidgetGraphComponent
+ * Builds query envelope params from widget query configuration.
+ * This provides aggregation info needed by convertV5ResponseToLegacy.
  */
-// eslint-disable-next-line sonarjs/cognitive-complexity
-export function transformPublicDashboardDataToQueryResponse(
-	publicDashboardWidgetData:
-		| SuccessResponseV2<PublicDashboardWidgetDataProps>
-		| undefined,
-	isLoading: boolean,
-	widgetQuery?: Query,
-	startTime?: number,
-	endTime?: number,
-): UseQueryResult<SuccessResponse<MetricRangePayloadProps, unknown>, Error> {
-	if (!publicDashboardWidgetData?.data) {
-		const loadingResult = {
-			data: undefined,
-			error: null,
-			isError: false as const,
-			isLoading,
-			isSuccess: false as const,
-			isIdle: false as const,
-			status: (isLoading ? 'loading' : 'idle') as 'loading' | 'idle',
-			dataUpdatedAt: 0,
-			errorUpdatedAt: 0,
-			failureCount: 0,
-			errorUpdateCount: 0,
-			isFetched: false as const,
-			isFetchedAfterMount: false as const,
-			isFetching: isLoading,
-			isRefetching: false as const,
-			isLoadingError: false as const,
-			isPlaceholderData: false as const,
-			isPreviousData: false as const,
-			isRefetchError: false as const,
-			isStale: false as const,
-			refetch: async (): Promise<
-				QueryObserverResult<
-					SuccessResponse<MetricRangePayloadProps, unknown>,
-					Error
-				>
-			> =>
-				loadingResult as QueryObserverResult<
-					SuccessResponse<MetricRangePayloadProps, unknown>,
-					Error
-				>,
-			remove: (): void => {},
-		};
-		return loadingResult as UseQueryResult<
-			SuccessResponse<MetricRangePayloadProps, unknown>,
-			Error
-		>;
+function buildQueryEnvelopesFromWidgetQuery(
+	widgetQuery: Query | undefined,
+): QueryEnvelope[] {
+	if (!widgetQuery || widgetQuery.queryType !== EQueryType.QUERY_BUILDER) {
+		return [];
 	}
 
-	// The actual API response structure has: { type, meta, data: { results: [...] } }
-	// Access it as: publicDashboardWidgetData.data.data.results
-	const widgetData = publicDashboardWidgetData.data as any; // Type doesn't match actual API response
-	const resultType = widgetData.type || 'time_series';
-	const results = widgetData.data?.results || [];
+	const queryEnvelopes: QueryEnvelope[] = [];
 
-	// Build legend map from widget query
-	const legendMap = buildLegendMapFromQuery(widgetQuery);
+	widgetQuery.builder?.queryData?.forEach((queryData) => {
+		if (queryData.queryName) {
+			const aggregations = createAggregation(queryData);
 
-	// Transform to QueryDataV3 format (newResult)
-	const newResultData: QueryDataV3[] = results.map((result: any) => {
-		const { queryName } = result;
-		const aggregations = result.aggregations || [];
+			queryEnvelopes.push({
+				type: 'builder_query',
+				spec: {
+					name: queryData.queryName,
+					signal: queryData.dataSource as 'traces' | 'logs' | 'metrics',
+					aggregations,
+				},
+			} as QueryEnvelope);
+		}
+	});
 
-		// Process series data from aggregations
-		const series: SeriesItem[] = aggregations.flatMap((aggregation: any) => {
-			const { index, alias, series: aggregationSeries = [] } = aggregation;
+	return queryEnvelopes;
+}
 
-			return aggregationSeries.map((seriesItem: any) => {
-				// Convert values from {timestamp, value, partial?} to {timestamp, value}[]
-				const values = seriesItem.values.map((val: any) => ({
-					timestamp: val.timestamp,
-					value: String(val.value),
-				}));
+/**
+ * Applies legend mapping to query results.
+ * This EXACTLY matches the logic in GetMetricQueryRange (lines 322-340).
+ */
+function applyLegendMapping(
+	result: QueryData[],
+	legendMap: Record<string, string>,
+): QueryData[] {
+	return result.map((queryData) => {
+		const newQueryData = { ...queryData };
+		// Adds the legend if it is already defined by the user.
+		newQueryData.legend = legendMap[queryData.queryName];
 
-				// Extract labels from seriesItem (V5 format)
-				const labels = extractLabelsFromSeriesItem(seriesItem);
-
-				// Build labelsArray from labels object
-				const labelsArray = Object.entries(labels).map(([key, value]) => ({
-					[key]: value,
-				}));
-
-				return {
-					labels,
-					labelsArray,
-					values,
-					metaData: {
-						alias: alias || `__result_${index}`,
-						index,
-						queryName,
-					},
-				};
-			});
-		});
-
-		// For QueryDataV3, compute legend using the first series (if available)
-		// The actual rendering will use series-level legends from legacyResult
-		let computedLegend = legendMap[queryName] || queryName;
-		if (series.length > 0 && widgetQuery) {
-			const firstSeries = series[0];
-			const labelName = getLabelName(
-				firstSeries.labels || {},
-				queryName,
-				legendMap[queryName] || '',
-			);
-			const mockQueryData: QueryData = {
-				metric: firstSeries.labels || {},
-				values: [],
-				queryName,
-				legend: legendMap[queryName] || '',
-				metaData: firstSeries.metaData,
-			};
-			computedLegend = getLegend(mockQueryData, widgetQuery, labelName);
-
-			// If the computed legend is just an aggregation expression (like "count()", "sum()", etc.)
-			// and we have metric labels, prefer the labelName instead
-			const isAggregationExpression =
-				computedLegend &&
-				(computedLegend.endsWith('()') ||
-					/^(count|sum|avg|min|max|p\d+|quantile|rate|increase|delta)\(/.test(
-						computedLegend,
-					));
-
-			// Check if we have metric labels (non-empty metric object)
-			const hasMetricLabels =
-				firstSeries.labels && Object.keys(firstSeries.labels).length > 0;
-
-			// If we got an aggregation expression and have metric labels, always prefer labelName
-			// This ensures we show meaningful labels like {key="value"} instead of "count()"
-			// Even if labelName equals queryName, if we have metric labels, getLabelName should format them
-			if (
-				isAggregationExpression &&
-				hasMetricLabels &&
-				labelName &&
-				labelName.trim()
-			) {
-				computedLegend = labelName;
+		// If metric names is an empty object
+		if (isEmpty(queryData.metric)) {
+			// If metrics list is empty && the user haven't defined a legend
+			// then add the legend equal to the name of the query.
+			if (!newQueryData.legend) {
+				newQueryData.legend = queryData.queryName;
+			}
+			// If name of the query and the legend if inserted is same
+			// then add the same to the metrics object.
+			if (queryData.queryName === newQueryData.legend) {
+				newQueryData.metric = { ...newQueryData.metric };
+				newQueryData.metric[queryData.queryName] = queryData.queryName;
 			}
 		}
 
-		return {
-			queryName,
-			legend: computedLegend,
-			series: series.length > 0 ? series : null,
-			predictedSeries: null,
-			upperBoundSeries: null,
-			lowerBoundSeries: null,
-			anomalyScores: null,
-			list: null,
-		};
+		return newQueryData;
 	});
+}
 
-	// Transform to QueryData format (legacy result)
-	const legacyResult: QueryData[] = results.flatMap((result: any) => {
-		const { queryName } = result;
-		const aggregations = result.aggregations || [];
-
-		return aggregations.flatMap((aggregation: any) => {
-			const { index, alias, series: aggregationSeries = [] } = aggregation;
-
-			return aggregationSeries.map((seriesItem: any) => {
-				// Convert values to [timestamp_in_seconds, value_string][] format
-				const values: [number, string][] = seriesItem.values
-					.map((val: any) => [
-						Math.floor(val.timestamp / 1000), // Convert milliseconds to seconds
-						String(val.value),
-					])
-					.sort((a: any, b: any) => a[0] - b[0]); // Sort by timestamp
-
-				// Extract labels from seriesItem (V5 format) and use as metric
-				const metric = extractLabelsFromSeriesItem(seriesItem);
-
-				// Compute labelName from metric labels (same as regular dashboard)
-				const legendFromMap = legendMap[queryName] || '';
-				const labelName = getLabelName(metric, queryName, legendFromMap);
-
-				// Create QueryData object for getLegend function
-				const queryData: QueryData = {
-					metric,
-					values,
-					queryName,
-					legend: legendFromMap,
-					metaData: {
-						alias: alias || `__result_${index}`,
-						index, // This index corresponds to the aggregation index
-						queryName,
-					},
-				};
-
-				// Use getLegend to compute the final legend (same as regular dashboard)
-				// getLegend uses createAggregation to extract aggregation alias/expression from widgetQuery
-				// and combines it with labelName to compute the final legend
-				let computedLegend = widgetQuery
-					? getLegend(queryData, widgetQuery, labelName)
-					: labelName || queryName;
-
-				// If the computed legend is just an aggregation expression (like "count()", "sum()", etc.)
-				// and we have metric labels, prefer the labelName instead
-				const isAggregationExpression =
-					computedLegend &&
-					(computedLegend.endsWith('()') ||
-						/^(count|sum|avg|min|max|p\d+|quantile|rate|increase|delta)\(/.test(
-							computedLegend,
-						));
-
-				// Check if we have metric labels (non-empty metric object)
-				const hasMetricLabels = metric && Object.keys(metric).length > 0;
-
-				// If we got an aggregation expression and have metric labels, always prefer labelName
-				// This ensures we show meaningful labels like {key="value"} instead of "count()"
-				// Even if labelName equals queryName, if we have metric labels, getLabelName should format them
-				if (
-					isAggregationExpression &&
-					hasMetricLabels &&
-					labelName &&
-					labelName.trim()
-				) {
-					computedLegend = labelName;
-				}
-
-				return {
-					...queryData,
-					legend: computedLegend,
-				};
-			});
-		});
-	});
-
-	// Create the response structure
-	// Include params with start/end for time range so getTimeRange can extract it
-	const successResponse: SuccessResponse<MetricRangePayloadProps, unknown> = {
-		statusCode: publicDashboardWidgetData.httpStatusCode as any,
-		message: 'Success',
-		payload: {
-			data: {
-				result: legacyResult,
-				resultType,
-				newResult: {
-					data: {
-						result: newResultData,
-						resultType,
-					},
-				},
-			},
-		},
+/**
+ * Creates a loading/idle query result when no data is available.
+ */
+function createLoadingResult(
+	isLoading: boolean,
+): UseQueryResult<SuccessResponse<MetricRangePayloadProps, unknown>, Error> {
+	const loadingResult = {
+		data: undefined,
 		error: null,
-		// Include params with start/end times so UplotPanelWrapper can extract the time range
-		params: {
-			start: startTime,
-			end: endTime,
-		},
+		isError: false as const,
+		isLoading,
+		isSuccess: false as const,
+		isIdle: false as const,
+		status: (isLoading ? 'loading' : 'idle') as 'loading' | 'idle',
+		dataUpdatedAt: 0,
+		errorUpdatedAt: 0,
+		failureCount: 0,
+		errorUpdateCount: 0,
+		isFetched: false as const,
+		isFetchedAfterMount: false as const,
+		isFetching: isLoading,
+		isRefetching: false as const,
+		isLoadingError: false as const,
+		isPlaceholderData: false as const,
+		isPreviousData: false as const,
+		isRefetchError: false as const,
+		isStale: false as const,
+		refetch: async (): Promise<
+			QueryObserverResult<SuccessResponse<MetricRangePayloadProps, unknown>, Error>
+		> =>
+			loadingResult as QueryObserverResult<
+				SuccessResponse<MetricRangePayloadProps, unknown>,
+				Error
+			>,
+		remove: (): void => {},
 	};
 
+	return loadingResult as UseQueryResult<
+		SuccessResponse<MetricRangePayloadProps, unknown>,
+		Error
+	>;
+}
+
+/**
+ * Creates a success query result wrapper.
+ */
+function createSuccessResult(
+	data: SuccessResponse<MetricRangePayloadProps, unknown>,
+): UseQueryResult<SuccessResponse<MetricRangePayloadProps, unknown>, Error> {
 	const successResult = {
-		data: successResponse,
+		data,
 		error: null,
 		isError: false as const,
 		isLoading: false as const,
@@ -382,8 +217,153 @@ export function transformPublicDashboardDataToQueryResponse(
 			>,
 		remove: (): void => {},
 	};
+
 	return successResult as UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
+}
+
+/**
+ * Converts QueryDataV3[] to QueryData[] for scalar/table results.
+ */
+function convertScalarResultToLegacy(v3Result: QueryDataV3[]): QueryData[] {
+	return v3Result.map((item) => {
+		// Convert Column[] to { [key: string]: string }[] format
+		const legacyColumns = item.table?.columns?.map((col) => ({
+			name: col.name,
+			queryName: col.queryName,
+			isValueColumn: String(col.isValueColumn),
+			id: col.id || '',
+		}));
+
+		return {
+			metric: {},
+			values: [],
+			queryName: item.queryName,
+			legend: item.legend,
+			table: item.table
+				? {
+						rows: item.table.rows,
+						columns: legacyColumns || [],
+				  }
+				: undefined,
+		};
+	});
+}
+
+/**
+ * Transforms public dashboard widget data to the queryResponse format expected by WidgetGraphComponent.
+ *
+ * This function mirrors the transformation logic in GetMetricQueryRange:
+ * 1. Builds legendMap from widget query (same as prepareQueryRangePayloadV5)
+ * 2. Calls convertV5ResponseToLegacy (same function used in GetMetricQueryRange)
+ * 3. For non-table data: calls convertNewDataToOld (same function)
+ * 4. Applies legend mapping (same logic as GetMetricQueryRange lines 322-340)
+ */
+export function transformPublicDashboardDataToQueryResponse(
+	publicDashboardWidgetData:
+		| SuccessResponseV2<PublicDashboardWidgetDataProps>
+		| undefined,
+	isLoading: boolean,
+	widgetQuery?: Query,
+	startTime?: number,
+	endTime?: number,
+): UseQueryResult<SuccessResponse<MetricRangePayloadProps, unknown>, Error> {
+	if (!publicDashboardWidgetData?.data) {
+		return createLoadingResult(isLoading);
+	}
+
+	// Step 1: Build legendMap from widget query (matches prepareQueryRangePayloadV5)
+	const legendMap = buildLegendMapFromQuery(widgetQuery);
+
+	// Build query envelopes to provide aggregation info for convertV5ResponseToLegacy
+	const queryEnvelopes = buildQueryEnvelopesFromWidgetQuery(widgetQuery);
+
+	// Determine if this is a table/scalar format (formatForWeb case)
+	const isScalarFormat = publicDashboardWidgetData.data.type === 'scalar';
+
+	// Step 2: Prepare V5 response structure for convertV5ResponseToLegacy
+	// This matches the structure passed in GetMetricQueryRange:
+	// convertV5ResponseToLegacy({ payload: v5Response.data, params: v5Result.queryPayload }, legendMap, finalFormatForWeb)
+	const v5Response = {
+		statusCode: publicDashboardWidgetData.httpStatusCode as 200,
+		message: 'Success',
+		error: null,
+		payload: {
+			data: publicDashboardWidgetData.data,
+		},
+		params: ({
+			compositeQuery: {
+				queries: queryEnvelopes,
+			},
+			start: startTime,
+			end: endTime,
+		} as unknown) as QueryRangeRequestV5,
+	};
+
+	// Step 3: Call convertV5ResponseToLegacy (same as GetMetricQueryRange line 283-290)
+	const v3Response = convertV5ResponseToLegacy(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		v5Response as any,
+		legendMap,
+		isScalarFormat, // formatForWeb for table/scalar panels
+	);
+
+	let finalPayload: MetricRangePayloadProps;
+
+	// Step 4: Handle based on format (same as GetMetricQueryRange lines 313-341)
+	if (isScalarFormat) {
+		// For tables (formatForWeb=true), return directly without convertNewDataToOld
+		// This matches GetMetricQueryRange line 314: "return response;"
+		const v3Result = (v3Response.payload?.data?.result || []) as QueryDataV3[];
+		const legacyResult = convertScalarResultToLegacy(v3Result);
+		const resultType = v3Response.payload?.data?.resultType || 'scalar';
+
+		finalPayload = {
+			data: {
+				result: legacyResult,
+				resultType,
+				newResult: {
+					data: {
+						result: v3Result,
+						resultType,
+					},
+				},
+			},
+		};
+	} else {
+		// For time series: call convertNewDataToOld then apply legends
+		// This matches GetMetricQueryRange lines 317-340
+		const v3Payload = v3Response.payload as MetricRangePayloadV3;
+
+		// Step 4a: convertNewDataToOld (matches line 318)
+		finalPayload = convertNewDataToOld(v3Payload);
+
+		// Step 4b: Apply legend mapping (matches lines 322-340)
+		if (finalPayload?.data?.result) {
+			finalPayload = {
+				...finalPayload,
+				data: {
+					...finalPayload.data,
+					result: applyLegendMapping(finalPayload.data.result, legendMap),
+				},
+			};
+		}
+	}
+
+	// Wrap in SuccessResponse format
+	const finalResponse: SuccessResponse<MetricRangePayloadProps, unknown> = {
+		statusCode: 200,
+		message: 'Success',
+		error: null,
+		payload: finalPayload,
+		// Include params with start/end times for UplotPanelWrapper time range
+		params: {
+			start: startTime,
+			end: endTime,
+		},
+	};
+
+	return createSuccessResult(finalResponse);
 }
