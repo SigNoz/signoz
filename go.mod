@@ -351,6 +351,5 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-replace github.com/SigNoz/signoz-otel-collector v0.129.4 => ../signoz-otel-collector
 
 replace github.com/expr-lang/expr => github.com/SigNoz/expr v1.17.7-beta
