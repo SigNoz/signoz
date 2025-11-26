@@ -125,53 +125,6 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, dashboard)
 }
 
-func (handler *handler) GetDashboardsForMetric(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	metricName := mux.Vars(r)["metric_name"]
-	if metricName == "" {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "metric_name is missing in path"))
-		return
-	}
-
-	data, err := handler.module.GetByMetricNames(ctx, orgID, []string{metricName})
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	dashboards, ok := data[metricName]
-	if !ok {
-		render.Success(rw, http.StatusOK, []dashboardtypes.MetricDashboard{})
-		return
-	}
-
-	resp := make([]dashboardtypes.MetricDashboard, 0, len(dashboards))
-	for _, item := range dashboards {
-		resp = append(resp, dashboardtypes.MetricDashboard{
-			DashboardName: item["dashboard_name"],
-			DashboardID:   item["dashboard_id"],
-			WidgetID:      item["widget_id"],
-			WidgetName:    item["widget_name"],
-		})
-	}
-
-	render.Success(rw, http.StatusOK, resp)
-}
-
 func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

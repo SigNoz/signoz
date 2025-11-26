@@ -153,3 +153,31 @@ func (h *handler) GetMetricMetadata(rw http.ResponseWriter, req *http.Request) {
 
 	render.Success(rw, http.StatusOK, metadata)
 }
+
+func (h *handler) GetMetricDashboards(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	metricName := strings.TrimSpace(req.URL.Query().Get("metricName"))
+	if metricName == "" {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName query parameter is required"))
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	out, err := h.module.GetMetricDashboards(req.Context(), orgID, metricName)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, out)
+}

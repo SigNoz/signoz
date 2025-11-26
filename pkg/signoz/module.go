@@ -84,6 +84,7 @@ func NewModules(
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
 	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics)
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
+	dashboard := impldashboard.NewModule(sqlstore, providerSettings, analytics, orgGetter, implrole.NewModule(implrole.NewStore(sqlstore), authz, nil))
 
 	return Modules{
 		OrgGetter:      orgGetter,
@@ -91,7 +92,7 @@ func NewModules(
 		Preference:     implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
 		SavedView:      implsavedview.NewModule(sqlstore),
 		Apdex:          implapdex.NewModule(sqlstore),
-		Dashboard:      impldashboard.NewModule(sqlstore, providerSettings, analytics, orgGetter, implrole.NewModule(implrole.NewStore(sqlstore), authz, nil)),
+		Dashboard:      dashboard,
 		User:           user,
 		UserGetter:     userGetter,
 		QuickFilter:    quickfilter,
@@ -101,6 +102,6 @@ func NewModules(
 		Session:        implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
 		SpanPercentile: implspanpercentile.NewModule(querier, providerSettings),
 		Services:       implservices.NewModule(querier, telemetryStore),
-		Metrics:        implmetricsmodule.NewModule(telemetryStore, telemetryMetadataStore, cache, providerSettings),
+		Metrics:        implmetricsmodule.NewModule(telemetryStore, telemetryMetadataStore, cache, dashboard, providerSettings),
 	}
 }
