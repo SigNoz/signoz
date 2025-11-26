@@ -1,4 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
+import './Function.styles.scss';
+
 import { Button, Flex, InputRef, Select } from 'antd';
 import cx from 'classnames';
 import OverflowInputToolTip from 'components/OverflowInputToolTip';
@@ -125,17 +127,7 @@ export default function Function({
 							maxWidth: 150,
 						}}
 					/>
-					<span
-						ref={mirrorRef}
-						style={{
-							position: 'absolute',
-							visibility: 'hidden',
-							whiteSpace: 'pre',
-							fontSize: '14px',
-							fontFamily: 'inherit',
-							fontWeight: 'normal',
-						}}
-					>
+					<span ref={mirrorRef} className="query-function-mirror">
 						{value || ' '}
 					</span>
 				</>
