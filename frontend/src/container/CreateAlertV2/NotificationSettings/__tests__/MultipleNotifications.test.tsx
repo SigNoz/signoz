@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ALL_SELECTED_VALUE } from 'container/CreateAlertV2/constants';
 import * as createAlertContext from 'container/CreateAlertV2/context';
 import {
 	INITIAL_ALERT_THRESHOLD_STATE,
@@ -28,6 +29,9 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 }));
 
 const TEST_QUERY = 'test-query';
+const TEST_QUERY_2 = 'test-query-2';
+const ANT_SELECT_ITEM_OPTION_CONTENT_SELECTOR =
+	'.ant-select-item-option-content';
 const TEST_GROUP_BY_FIELDS = [{ key: 'service' }, { key: 'environment' }];
 const TRUE = 'true';
 const FALSE = 'false';
@@ -151,7 +155,7 @@ describe('MultipleNotifications', () => {
 							groupBy: [{ key: 'http.status_code' }],
 						},
 						{
-							queryName: 'test-query-2',
+							queryName: TEST_QUERY_2,
 							groupBy: [{ key: 'service' }],
 						},
 					],
@@ -165,8 +169,121 @@ describe('MultipleNotifications', () => {
 		await userEvent.click(select);
 
 		expect(
-			screen.getByRole('option', { name: 'http.status_code' }),
+			screen.getByText('http.status_code', {
+				selector: ANT_SELECT_ITEM_OPTION_CONTENT_SELECTOR,
+			}),
 		).toBeInTheDocument();
-		expect(screen.getByRole('option', { name: 'service' })).toBeInTheDocument();
+		expect(
+			screen.getByText('service', {
+				selector: ANT_SELECT_ITEM_OPTION_CONTENT_SELECTOR,
+			}),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText('All', {
+				selector: ANT_SELECT_ITEM_OPTION_CONTENT_SELECTOR,
+			}),
+		).toBeInTheDocument();
+	});
+
+	it('selecting the "all" option shows correct group by description', () => {
+		useQueryBuilder.mockReturnValue({
+			currentQuery: {
+				builder: {
+					queryData: [
+						{
+							queryName: TEST_QUERY_2,
+							groupBy: [{ key: 'service' }],
+						},
+					],
+				},
+			},
+		});
+		jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+			createMockAlertContextState({
+				notificationSettings: {
+					...INITIAL_NOTIFICATION_SETTINGS_STATE,
+					multipleNotifications: [ALL_SELECTED_VALUE],
+				},
+			}),
+		);
+
+		render(<MultipleNotifications />);
+
+		expect(
+			screen.getByText('Grouping of alerts is disabled'),
+		).toBeInTheDocument();
+	});
+
+	it('selecting "all" option should disable selection of other options', async () => {
+		useQueryBuilder.mockReturnValue({
+			currentQuery: {
+				builder: {
+					queryData: [
+						{
+							queryName: TEST_QUERY_2,
+							groupBy: [{ key: 'service' }],
+						},
+					],
+				},
+			},
+		});
+		jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+			createMockAlertContextState({
+				notificationSettings: {
+					...INITIAL_NOTIFICATION_SETTINGS_STATE,
+					multipleNotifications: [ALL_SELECTED_VALUE],
+				},
+			}),
+		);
+
+		render(<MultipleNotifications />);
+
+		const select = screen.getByRole(COMBOBOX_ROLE);
+		await userEvent.click(select);
+
+		const serviceOption = screen.getAllByTestId(
+			'multiple-notifications-select-option',
+		);
+		expect(serviceOption).toHaveLength(2);
+		expect(serviceOption[0]).not.toHaveClass('ant-select-item-option-disabled');
+		expect(serviceOption[1]).toHaveClass('ant-select-item-option-disabled');
+	});
+
+	it('selecting all option should remove all other selected options', async () => {
+		useQueryBuilder.mockReturnValue({
+			currentQuery: {
+				builder: {
+					queryData: [
+						{
+							queryName: TEST_QUERY_2,
+							groupBy: [{ key: 'service' }],
+						},
+					],
+				},
+			},
+		});
+		jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+			createMockAlertContextState({
+				notificationSettings: {
+					...INITIAL_NOTIFICATION_SETTINGS_STATE,
+					multipleNotifications: ['service', 'environment'],
+				},
+				setNotificationSettings: mockSetNotificationSettings,
+			}),
+		);
+
+		render(<MultipleNotifications />);
+		const select = screen.getByRole(COMBOBOX_ROLE);
+		await userEvent.click(select);
+
+		const serviceOption = screen.getAllByTestId(
+			'multiple-notifications-select-option',
+		);
+		expect(serviceOption).toHaveLength(2);
+		await userEvent.click(serviceOption[0]);
+		expect(mockSetNotificationSettings).toHaveBeenCalledWith({
+			type: 'SET_MULTIPLE_NOTIFICATIONS',
+			payload: [ALL_SELECTED_VALUE],
+		});
 	});
 });
