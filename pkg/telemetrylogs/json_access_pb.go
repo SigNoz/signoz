@@ -5,15 +5,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 var (
-	ArraySep                 = jsontypeexporter.ArraySeparator
-	ArrayAnyIndex            = "[*]."
 	CodePlanIndexOutOfBounds = errors.MustNewCode("plan_index_out_of_bounds")
 )
 
