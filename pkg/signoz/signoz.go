@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
@@ -39,6 +40,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/zeus"
 
 	"github.com/SigNoz/signoz/pkg/web"
+
+	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+	"go.uber.org/zap"
 )
 
 type SigNoz struct {
@@ -60,6 +67,7 @@ type SigNoz struct {
 	StatsReporter          statsreporter.StatsReporter
 	Tokenizer              pkgtokenizer.Tokenizer
 	Authz                  authz.AuthZ
+	RulesManager           *rules.Manager
 	Modules                Modules
 	Handlers               Handlers
 }
@@ -316,6 +324,40 @@ func New(
 		return nil, err
 	}
 
+	// Initialize reader for rules manager
+	reader := clickhouseReader.NewReader(
+		sqlstore,
+		telemetrystore,
+		prometheus,
+		telemetrystore.Cluster(),
+		config.Querier.FluxInterval,
+		cache,
+	)
+
+	// Initialize rules manager
+	ruleStore := sqlrulestore.NewRuleStore(sqlstore)
+	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
+	managerOpts := &rules.ManagerOptions{
+		TelemetryStore:   telemetrystore,
+		Prometheus:       prometheus,
+		Context:          ctx,
+		Logger:           zap.L(),
+		Reader:           reader,
+		Querier:          querier,
+		SLogger:          providerSettings.Logger,
+		Cache:            cache,
+		EvalDelay:        constants.GetEvalDelay(),
+		OrgGetter:        orgGetter,
+		Alertmanager:     alertmanager,
+		RuleStore:        ruleStore,
+		MaintenanceStore: maintenanceStore,
+		SqlStore:         sqlstore,
+	}
+	rulesManager, err := rules.NewManager(managerOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rules manager: %w", err)
+	}
+
 	// Initialize telemetry metadata store
 	// TODO: consolidate other telemetrymetadata.NewTelemetryMetaStore initializations to reuse this instance instead.
 	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
@@ -339,7 +381,7 @@ func New(
 	)
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, rulesManager)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings, querier, licensing)
@@ -400,6 +442,7 @@ func New(
 		Sharder:                sharder,
 		Tokenizer:              tokenizer,
 		Authz:                  authz,
+		RulesManager:           rulesManager,
 		Modules:                modules,
 		Handlers:               handlers,
 	}, nil

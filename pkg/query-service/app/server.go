@@ -3,13 +3,10 @@ package app
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
 	"slices"
-
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 
 	"github.com/gorilla/handlers"
 
@@ -17,9 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
-	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/querier"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
@@ -29,16 +23,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 
-	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
-	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
@@ -83,21 +73,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.Cache,
 	)
 
-	rm, err := makeRulesManager(
-		reader,
-		signoz.Cache,
-		signoz.Alertmanager,
-		signoz.SQLStore,
-		signoz.TelemetryStore,
-		signoz.Prometheus,
-		signoz.Modules.OrgGetter,
-		signoz.Querier,
-		signoz.Instrumentation.Logger(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
 		signoz.SQLStore,
 		integrationsController.GetPipelinesForInstalledIntegrations,
@@ -108,7 +83,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
-		RuleManager:                   rm,
+		RuleManager:                   signoz.RulesManager,
 		IntegrationsController:        integrationsController,
 		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
@@ -126,7 +101,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	s := &Server{
 		config:             config,
 		signoz:             signoz,
-		ruleManager:        rm,
+		ruleManager:        signoz.RulesManager,
 		httpHostPort:       constants.HTTPHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
@@ -307,46 +282,4 @@ func (s *Server) Stop(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func makeRulesManager(
-	ch interfaces.Reader,
-	cache cache.Cache,
-	alertmanager alertmanager.Alertmanager,
-	sqlstore sqlstore.SQLStore,
-	telemetryStore telemetrystore.TelemetryStore,
-	prometheus prometheus.Prometheus,
-	orgGetter organization.Getter,
-	querier querier.Querier,
-	logger *slog.Logger,
-) (*rules.Manager, error) {
-	ruleStore := sqlrulestore.NewRuleStore(sqlstore)
-	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
-	// create manager opts
-	managerOpts := &rules.ManagerOptions{
-		TelemetryStore:   telemetryStore,
-		Prometheus:       prometheus,
-		Context:          context.Background(),
-		Logger:           zap.L(),
-		Reader:           ch,
-		Querier:          querier,
-		SLogger:          logger,
-		Cache:            cache,
-		EvalDelay:        constants.GetEvalDelay(),
-		OrgGetter:        orgGetter,
-		Alertmanager:     alertmanager,
-		RuleStore:        ruleStore,
-		MaintenanceStore: maintenanceStore,
-		SqlStore:         sqlstore,
-	}
-
-	// create Manager
-	manager, err := rules.NewManager(managerOpts)
-	if err != nil {
-		return nil, fmt.Errorf("rule manager error: %v", err)
-	}
-
-	zap.L().Info("rules manager is ready")
-
-	return manager, nil
 }

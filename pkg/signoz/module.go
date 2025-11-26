@@ -44,6 +44,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+
+	"github.com/SigNoz/signoz/pkg/query-service/rules"
 )
 
 type Modules struct {
@@ -79,6 +81,7 @@ func NewModules(
 	authNs map[authtypes.AuthNProvider]authn.AuthN,
 	authz authz.AuthZ,
 	cache cache.Cache,
+	rulesManager *rules.Manager,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -101,6 +104,6 @@ func NewModules(
 		Session:        implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
 		SpanPercentile: implspanpercentile.NewModule(querier, providerSettings),
 		Services:       implservices.NewModule(querier, telemetryStore),
-		Metrics:        implmetricsmodule.NewModule(telemetryStore, telemetryMetadataStore, cache, providerSettings),
+		Metrics:        implmetricsmodule.NewModule(telemetryStore, telemetryMetadataStore, cache, rulesManager, providerSettings),
 	}
 }

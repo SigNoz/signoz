@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
+	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -29,10 +30,11 @@ type module struct {
 	condBuilder            qbtypes.ConditionBuilder
 	logger                 *slog.Logger
 	cache                  cache.Cache
+	rulesManager           *rules.Manager
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings) metricsmodule.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, rulesManager *rules.Manager, providerSettings factory.ProviderSettings) metricsmodule.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -42,6 +44,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		logger:                 providerSettings.Logger,
 		telemetryMetadataStore: telemetryMetadataStore,
 		cache:                  cache,
+		rulesManager:           rulesManager,
 	}
 }
 
@@ -785,4 +788,30 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 	}
 
 	return entries, nil
+}
+
+func (m *module) GetMetricAlerts(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsmoduletypes.MetricAlertsResponse, error) {
+	if metricName == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+
+	data, apiErr := m.rulesManager.GetAlertDetailsForMetricNames(ctx, []string{metricName})
+	if apiErr != nil {
+		return nil, errors.WrapInternalf(apiErr.Err, errors.CodeInternal, "failed to get alert details")
+	}
+
+	alerts := make([]metricsmoduletypes.MetricAlert, 0)
+	if rulesList, ok := data[metricName]; ok {
+		alerts = make([]metricsmoduletypes.MetricAlert, 0, len(rulesList))
+		for _, rule := range rulesList {
+			alerts = append(alerts, metricsmoduletypes.MetricAlert{
+				AlertName: rule.AlertName,
+				AlertID:   rule.Id,
+			})
+		}
+	}
+
+	return &metricsmoduletypes.MetricAlertsResponse{
+		Alerts: alerts,
+	}, nil
 }
