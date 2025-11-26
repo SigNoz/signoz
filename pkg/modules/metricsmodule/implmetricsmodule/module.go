@@ -163,6 +163,32 @@ func (m *module) GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, 
 	return metadata, nil
 }
 
+func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.MetricAttributesRequest) (*metricsmoduletypes.MetricAttributesResponse, error) {
+	if req == nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.MetricName == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required")
+	}
+
+	if req.Start != nil && req.End != nil {
+		if *req.Start >= *req.End {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start (%d) must be less than end (%d)", *req.Start, *req.End)
+		}
+	}
+
+	attributes, err := m.fetchMetricAttributes(ctx, req.MetricName, req.Start, req.End)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metricsmoduletypes.MetricAttributesResponse{
+		Attributes: attributes,
+		TotalKeys:  int64(len(attributes)),
+	}, nil
+}
+
 func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, []string) {
 	hits := make(map[string]*metricsmoduletypes.MetricMetadata)
 	misses := make([]string, 0)
@@ -787,58 +813,35 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 	return entries, nil
 }
 
-func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.MetricAttributesRequest) (*metricsmoduletypes.MetricAttributesResponse, error) {
-	if req == nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
-	}
-
-	if req.MetricName == "" {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required")
-	}
-
-	if req.Start != nil && req.End != nil {
-		if *req.Start >= *req.End {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start (%d) must be less than end (%d)", *req.Start, *req.End)
-		}
-	}
-
-	var args []any
-	args = append(args, req.MetricName)
+func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, start, end *int64) ([]metricsmoduletypes.MetricAttribute, error) {
+	// Build query using sqlbuilder
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"attr_name AS key",
+		"groupUniqArray(1000)(attr_string_value) AS values",
+		"count(DISTINCT attr_string_value) AS valueCount",
+	)
+	// TODO(nikhilmantri0902, srikanthccv): should FINAL be used here? Final gives a more accurate response
+	// by letting asynchronous merging happen in case of aggregating merge tree. But do we need such an
+	// accurate answer here vs the extra cost used with final?
+	sb.From(fmt.Sprintf("%s.%s FINAL", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(sb.E("metric_name", metricName))
+	sb.Where("NOT startsWith(attr_name, '__')")
 
 	// Add time range filtering if provided
-	var timeFilterParts []string
-	if req.Start != nil {
+	if start != nil {
 		// Filter by start time: attributes that were active at or after start time
-		timeFilterParts = append(timeFilterParts, "last_reported_unix_milli >= ?")
-		args = append(args, *req.Start)
+		sb.Where(sb.GE("last_reported_unix_milli", *start))
 	}
-	if req.End != nil {
+	if end != nil {
 		// Filter by end time: attributes that were active at or before end time
-		timeFilterParts = append(timeFilterParts, "first_reported_unix_milli <= ?")
-		args = append(args, *req.End)
+		sb.Where(sb.LE("first_reported_unix_milli", *end))
 	}
 
-	timeFilter := ""
-	if len(timeFilterParts) > 0 {
-		timeFilter = " AND (" + strings.Join(timeFilterParts, " AND ") + ")"
-	}
+	sb.GroupBy("attr_name")
+	sb.OrderBy("valueCount DESC")
 
-	// Query the metadata table
-	// We use FINAL to ensure we get the aggregated results from AggregatingMergeTree
-	query := fmt.Sprintf(`
-		SELECT 
-			attr_name AS key,
-			groupUniqArray(1000)(attr_string_value) AS values,
-			count(DISTINCT attr_string_value) AS valueCount
-		FROM %s.%s FINAL
-		WHERE metric_name = ? 
-		AND NOT startsWith(attr_name, '__')
-		%s
-		GROUP BY attr_name
-		ORDER BY valueCount DESC;`,
-		telemetrymetrics.DBName,
-		telemetrymetrics.AttributesMetadataTableName,
-		timeFilter)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(ctx, query, args...)
@@ -860,7 +863,5 @@ func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metric attribute rows")
 	}
 
-	return &metricsmoduletypes.MetricAttributesResponse{
-		Attributes: attributes,
-	}, nil
+	return attributes, nil
 }

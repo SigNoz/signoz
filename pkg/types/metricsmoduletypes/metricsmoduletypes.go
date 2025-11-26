@@ -238,4 +238,5 @@ type MetricAttribute struct {
 // MetricAttributesResponse is the output structure for the metric attributes endpoint.
 type MetricAttributesResponse struct {
 	Attributes []MetricAttribute `json:"attributes"`
+	TotalKeys  int64             `json:"totalKeys"`
 }
