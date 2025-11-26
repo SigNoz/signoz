@@ -154,6 +154,7 @@ type ClickHouseReader struct {
 
 	fluxIntervalForTraceDetail time.Duration
 	cache                      cache.Cache
+	cacheForTraceDetail        cache.Cache
 	metadataDB                 string
 	metadataTable              string
 }
@@ -165,21 +166,14 @@ func NewReader(
 	prometheus prometheus.Prometheus,
 	cluster string,
 	fluxIntervalForTraceDetail time.Duration,
+	cacheForTraceDetail cache.Cache,
 	cache cache.Cache,
-) *ClickHouseReader {
-	options := NewOptions(primaryNamespace, archiveNamespace)
-	return NewReaderFromClickhouseConnection(options, sqlDB, telemetryStore, prometheus, cluster, fluxIntervalForTraceDetail, cache)
-}
-
-func NewReaderFromClickhouseConnection(
 	options *Options,
-	sqlDB sqlstore.SQLStore,
-	telemetryStore telemetrystore.TelemetryStore,
-	prometheus prometheus.Prometheus,
-	cluster string,
-	fluxIntervalForTraceDetail time.Duration,
-	cache cache.Cache,
 ) *ClickHouseReader {
+	if options == nil {
+		options = NewOptions(primaryNamespace, archiveNamespace)
+	}
+
 	logsTableName := options.primary.LogsTableV2
 	logsLocalTableName := options.primary.LogsLocalTableV2
 	traceTableName := options.primary.TraceIndexTableV3
@@ -221,6 +215,7 @@ func NewReaderFromClickhouseConnection(
 		traceSummaryTable:          options.primary.TraceSummaryTable,
 		fluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
 		cache:                      cache,
+		cacheForTraceDetail:        cacheForTraceDetail,
 		metadataDB:                 options.primary.MetadataDB,
 		metadataTable:              options.primary.MetadataTable,
 	}
@@ -859,7 +854,7 @@ func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string,
 
 func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadataCache(ctx context.Context, orgID valuer.UUID, traceID string) (*model.GetWaterfallSpansForTraceWithMetadataCache, error) {
 	cachedTraceData := new(model.GetWaterfallSpansForTraceWithMetadataCache)
-	err := r.cache.Get(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), cachedTraceData)
+	err := r.cacheForTraceDetail.Get(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), cachedTraceData)
 	if err != nil {
 		zap.L().Debug("error in retrieving getWaterfallSpansForTraceWithMetadata cache", zap.Error(err), zap.String("traceID", traceID))
 		return nil, err
@@ -1044,7 +1039,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		}
 
 		zap.L().Info("getWaterfallSpansForTraceWithMetadata: processing pre cache", zap.Duration("duration", time.Since(processingBeforeCache)), zap.String("traceID", traceID))
-		cacheErr := r.cache.Set(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), &traceCache, time.Minute*5)
+		cacheErr := r.cacheForTraceDetail.Set(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), &traceCache, time.Minute*5)
 		if cacheErr != nil {
 			zap.L().Debug("failed to store cache for getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID), zap.Error(err))
 		}
@@ -1069,7 +1064,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 
 func (r *ClickHouseReader) GetFlamegraphSpansForTraceCache(ctx context.Context, orgID valuer.UUID, traceID string) (*model.GetFlamegraphSpansForTraceCache, error) {
 	cachedTraceData := new(model.GetFlamegraphSpansForTraceCache)
-	err := r.cache.Get(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), cachedTraceData)
+	err := r.cacheForTraceDetail.Get(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), cachedTraceData)
 	if err != nil {
 		zap.L().Debug("error in retrieving getFlamegraphSpansForTrace cache", zap.Error(err), zap.String("traceID", traceID))
 		return nil, err
@@ -1205,7 +1200,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 		}
 
 		zap.L().Info("getFlamegraphSpansForTrace: processing pre cache", zap.Duration("duration", time.Since(processingBeforeCache)), zap.String("traceID", traceID))
-		cacheErr := r.cache.Set(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), &traceCache, time.Minute*5)
+		cacheErr := r.cacheForTraceDetail.Set(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), &traceCache, time.Minute*5)
 		if cacheErr != nil {
 			zap.L().Debug("failed to store cache for getFlamegraphSpansForTrace", zap.String("traceID", traceID), zap.Error(err))
 		}
