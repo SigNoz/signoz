@@ -162,27 +162,46 @@ func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	// Extract metric_name from URL path
-	vars := mux.Vars(req)
-	metricName, ok := vars["metric_name"]
-	if !ok || metricName == "" {
-		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required"))
+	// Extract metricName from query parameters
+	metricName := strings.TrimSpace(req.URL.Query().Get("metricName"))
+	if metricName == "" {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName query parameter is required"))
 		return
 	}
 
 	var in metricsmoduletypes.MetricAttributesRequest
 	in.MetricName = metricName
 
-	// Parse optional start and end from query parameters
+	// Parse optional start from query parameters
 	if startStr := req.URL.Query().Get("start"); startStr != "" {
-		if startVal, err := strconv.ParseInt(startStr, 10, 64); err == nil {
-			in.Start = startVal
+		startVal, err := strconv.ParseInt(startStr, 10, 64)
+		if err != nil {
+			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time %q: %v", startStr, err))
+			return
 		}
+		in.Start = &startVal
 	}
 
+	// Parse optional end from query parameters
 	if endStr := req.URL.Query().Get("end"); endStr != "" {
-		if endVal, err := strconv.ParseInt(endStr, 10, 64); err == nil {
-			in.End = endVal
+		endVal, err := strconv.ParseInt(endStr, 10, 64)
+		if err != nil {
+			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time %q: %v", endStr, err))
+			return
+		}
+		in.End = &endVal
+	}
+
+	// Validate that start < end if both are present
+	if in.Start != nil && in.End != nil {
+		if *in.Start >= *in.End {
+			render.Error(rw, errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"invalid time range: start (%d) must be less than end (%d)",
+				*in.Start,
+				*in.End,
+			))
+			return
 		}
 	}
 

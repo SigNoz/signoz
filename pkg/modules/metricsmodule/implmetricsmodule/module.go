@@ -796,16 +796,31 @@ func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required")
 	}
 
+	if req.Start != nil && req.End != nil {
+		if *req.Start >= *req.End {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start (%d) must be less than end (%d)", *req.Start, *req.End)
+		}
+	}
+
 	var args []any
 	args = append(args, req.MetricName)
 
 	// Add time range filtering if provided
+	var timeFilterParts []string
+	if req.Start != nil {
+		// Filter by start time: attributes that were active at or after start time
+		timeFilterParts = append(timeFilterParts, "last_reported_unix_milli >= ?")
+		args = append(args, *req.Start)
+	}
+	if req.End != nil {
+		// Filter by end time: attributes that were active at or before end time
+		timeFilterParts = append(timeFilterParts, "first_reported_unix_milli <= ?")
+		args = append(args, *req.End)
+	}
+
 	timeFilter := ""
-	if req.Start > 0 && req.End > 0 {
-		// Filter by time range using first_reported_unix_milli and last_reported_unix_milli
-		// We want attributes that were active during this time range
-		timeFilter = " AND (last_reported_unix_milli >= ? AND first_reported_unix_milli <= ?)"
-		args = append(args, req.Start, req.End)
+	if len(timeFilterParts) > 0 {
+		timeFilter = " AND (" + strings.Join(timeFilterParts, " AND ") + ")"
 	}
 
 	// Query the metadata table
