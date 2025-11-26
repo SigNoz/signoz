@@ -10,7 +10,7 @@ import {
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { debounce, isNil } from 'lodash-es';
 import { X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
@@ -70,22 +70,6 @@ export default function Function({
 		[handleUpdateFunctionArgs],
 	);
 
-	const handleValueChange = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>) => {
-			const newVal = e.target.value;
-			setValue(newVal);
-			debouncedhandleUpdateFunctionArgs(funcData, index, newVal);
-
-			if (mirrorRef.current && inputRef.current?.input) {
-				mirrorRef.current.textContent = newVal || ' ';
-				const mirrorWidth = mirrorRef.current.offsetWidth + 24; // padding
-				const newWidth = Math.min(150, Math.max(70, mirrorWidth));
-				inputRef.current.input.style.width = `${newWidth}px`;
-			}
-		},
-		[debouncedhandleUpdateFunctionArgs, funcData, index],
-	);
-
 	// update the logic when we start supporting functions for traces
 	const functionOptions =
 		query.dataSource === DataSource.LOGS
@@ -129,7 +113,11 @@ export default function Function({
 						className="query-function-value"
 						autoFocus
 						value={value}
-						onChange={handleValueChange}
+						onChange={(event): void => {
+							const newVal = event.target.value;
+							setValue(newVal);
+							debouncedhandleUpdateFunctionArgs(funcData, index, event.target.value);
+						}}
 						tooltipPlacement="top"
 						style={{
 							width: 70,
