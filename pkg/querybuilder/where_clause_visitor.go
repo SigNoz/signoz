@@ -94,6 +94,7 @@ type PreparedWhereClause struct {
 
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
 func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64, endNs uint64) (*PreparedWhereClause, error) {
+
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
 	lexer := grammar.NewFilterQueryLexer(input)
@@ -437,6 +438,10 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 					}
 					switch varValues := varItem.Value.(type) {
 					case []any:
+						if len(varValues) == 0 {
+							v.errors = append(v.errors, fmt.Sprintf("malformed request payload: variable `%s` used in expression has an empty list value", strings.TrimPrefix(var_, "$")))
+							return ""
+						}
 						values = varValues
 					case any:
 						values = []any{varValues}
@@ -516,6 +521,10 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			if ok {
 				switch varValues := varItem.Value.(type) {
 				case []any:
+					if len(varValues) == 0 {
+						v.errors = append(v.errors, fmt.Sprintf("malformed request payload: variable `%s` used in expression has an empty list value", strings.TrimPrefix(var_, "$")))
+						return ""
+					}
 					value = varValues[0]
 				case any:
 					value = varValues
