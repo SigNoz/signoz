@@ -67,7 +67,6 @@ type SigNoz struct {
 	StatsReporter          statsreporter.StatsReporter
 	Tokenizer              pkgtokenizer.Tokenizer
 	Authz                  authz.AuthZ
-	RulesManager           *rules.Manager
 	Modules                Modules
 	Handlers               Handlers
 }
@@ -353,6 +352,7 @@ func New(
 		MaintenanceStore: maintenanceStore,
 		SqlStore:         sqlstore,
 	}
+
 	rulesManager, err := rules.NewManager(managerOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rules manager: %w", err)
@@ -442,7 +442,6 @@ func New(
 		Sharder:                sharder,
 		Tokenizer:              tokenizer,
 		Authz:                  authz,
-		RulesManager:           rulesManager,
 		Modules:                modules,
 		Handlers:               handlers,
 	}, nil
