@@ -4,23 +4,18 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"slices"
-	"sort"
 	"strings"
+	"time"
 
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
-	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
-	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -33,32 +28,11 @@ type module struct {
 	fieldMapper            qbtypes.FieldMapper
 	condBuilder            qbtypes.ConditionBuilder
 	logger                 *slog.Logger
+	cache                  cache.Cache
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings) metricsmodule.Module {
-	// TODO(nikhilmantri0902, srikanthccv): the three following dependencies are they rightly getting passed
-	// basically is this a good design. Alternatively, we can also take telemetrymetadatastore from newModules
-	// where all the modules are initialized, but there also this will be needed as today its not initialized there.
-	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
-		providerSettings,
-		ts,
-		telemetrytraces.DBName,
-		telemetrytraces.TagAttributesV2TableName,
-		telemetrytraces.SpanAttributesKeysTblName,
-		telemetrytraces.SpanIndexV3TableName,
-		telemetrymetrics.DBName,
-		telemetrymetrics.AttributesMetadataTableName,
-		telemetrymeter.DBName,
-		telemetrymeter.SamplesAgg1dTableName,
-		telemetrylogs.DBName,
-		telemetrylogs.LogsV2TableName,
-		telemetrylogs.TagAttributesV2TableName,
-		telemetrylogs.LogAttributeKeysTblName,
-		telemetrylogs.LogResourceKeysTblName,
-		telemetrymetadata.DBName,
-		telemetrymetadata.AttributesMetadataLocalTableName,
-	)
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings) metricsmodule.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -67,90 +41,66 @@ func NewModule(ts telemetrystore.TelemetryStore, providerSettings factory.Provid
 		condBuilder:            condBuilder,
 		logger:                 providerSettings.Logger,
 		telemetryMetadataStore: telemetryMetadataStore,
+		cache:                  cache,
 	}
 }
 
 func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.StatsRequest) (*metricsmoduletypes.StatsResponse, error) {
-	if req == nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	if err := req.Validate(); err != nil {
+		return nil, err
 	}
 
-	if req.Start <= 0 || req.End <= 0 || req.Start >= req.End {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range")
-	}
-
-	if req.Limit < 1 || req.Limit > 5000 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
-	}
-
-	if req.Offset < 0 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
-	}
-
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
-
-	orderCfg, err := resolveOrderBy(req.OrderBy)
+	filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
 
-	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Expression, req.Start, req.End)
+	// Single query to get stats with samples, timeseries counts in required sorting order
+	metricStats, total, err := m.fetchMetricsStatsWithSamples(
+		ctx,
+		req,
+		filterWhereClause,
+		false,
+		req.OrderBy,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	metricNames, metricStats, total, err := m.fetchTimeseriesCounts(ctx, req, filterSQL, filterArgs, normalized, orderCfg.sqlColumn, orderCfg.direction)
+	if len(metricStats) == 0 {
+		return &metricsmoduletypes.StatsResponse{
+			Metrics: []metricsmoduletypes.Stat{},
+			Total:   0,
+		}, nil
+	}
+
+	// Get metadata for all metrics
+	metricNames := make([]string, len(metricStats))
+	for i := range metricStats {
+		metricNames[i] = metricStats[i].MetricName
+	}
+
+	metadata, err := m.GetMetricMetadataMulti(ctx, orgID, metricNames)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := &metricsmoduletypes.StatsResponse{
+	// Enrich stats with metadata
+	enrichStatsWithMetadata(metricStats, metadata)
+
+	return &metricsmoduletypes.StatsResponse{
 		Metrics: metricStats,
-	}
-
-	if len(metricNames) == 0 {
-		resp.Total = 0
-		return resp, nil
-	}
-
-	sampleMap, err := m.fetchSampleCounts(ctx, metricNames, req, orderCfg.orderBySamples, orderCfg.direction, filterSQL, filterArgs, normalized)
-	if err != nil {
-		return nil, err
-	}
-
-	updatedMeta, err := m.GetUpdatedMetricsMetadata(ctx, orgID, metricNames)
-	if err != nil {
-		return nil, err
-	}
-
-	m.postProcessStatsResp(resp, updatedMeta, sampleMap, orderCfg.orderBySamples, orderCfg.direction)
-
-	resp.Total = total
-	return resp, nil
+		Total:   total,
+	}, nil
 }
 
 // GetTreemap will return metrics treemap information once implemented.
 func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.TreemapRequest) (*metricsmoduletypes.TreemapResponse, error) {
-	if req == nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	if err := req.Validate(); err != nil {
+		return nil, err
 	}
 
-	if req.Start <= 0 || req.End <= 0 || req.Start >= req.End {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid time range")
-	}
-
-	if req.Limit < 1 || req.Limit > 5000 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
-	}
-
-	if !slices.Contains([]metricsmoduletypes.TreemapMode{metricsmoduletypes.TreemapModeSamples, metricsmoduletypes.TreemapModeTimeSeries}, req.Treemap) {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid treemap mode")
-	}
-
-	filterSQL, filterArgs, err := m.buildFilterClause(ctx, req.Expression, req.Start, req.End)
+	filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
@@ -158,13 +108,13 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 	resp := &metricsmoduletypes.TreemapResponse{}
 	switch req.Treemap {
 	case metricsmoduletypes.TreemapModeSamples:
-		entries, err := m.computeSamplesTreemap(ctx, req, filterSQL, filterArgs)
+		entries, err := m.computeSamplesTreemap(ctx, req, filterWhereClause)
 		if err != nil {
 			return nil, err
 		}
 		resp.Samples = entries
 	default: // TreemapModeTimeSeries
-		entries, err := m.computeTimeseriesTreemap(ctx, req, filterSQL, filterArgs)
+		entries, err := m.computeTimeseriesTreemap(ctx, req, filterWhereClause)
 		if err != nil {
 			return nil, err
 		}
@@ -174,24 +124,84 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 	return resp, nil
 }
 
-func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
+func (m *module) GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
 	if len(metricNames) == 0 {
 		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
 	}
 
-	placeholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
-	query := fmt.Sprintf(`
-			SELECT metric_name, description, type, unit, temporality 
-				FROM %s.%s 
-				WHERE metric_name IN (%s)`,
-		metricDatabaseName,
-		distributedUpdatedMetadataTableName,
-		placeholders)
+	metadata := make(map[string]*metricsmoduletypes.MetricMetadata)
+	cacheHits, cacheMisses := m.fetchMetadataFromCache(ctx, orgID, metricNames)
+	for name, meta := range cacheHits {
+		metadata[name] = meta
+	}
+
+	if len(cacheMisses) == 0 {
+		return metadata, nil
+	}
+
+	updatedMetadata, err := m.fetchUpdatedMetadata(ctx, orgID, cacheMisses)
+	if err != nil {
+		return nil, err
+	}
+	for name, meta := range updatedMetadata {
+		metadata[name] = meta
+	}
+
+	remainingMisses := extractMissingMetricNamesInMap(cacheMisses, updatedMetadata)
+	if len(remainingMisses) == 0 {
+		return metadata, nil
+	}
+
+	timeseriesMetadata, err := m.fetchTimeseriesMetadata(ctx, orgID, remainingMisses)
+	if err != nil {
+		return nil, err
+	}
+	for name, meta := range timeseriesMetadata {
+		metadata[name] = meta
+	}
+
+	return metadata, nil
+}
+
+func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, []string) {
+	hits := make(map[string]*metricsmoduletypes.MetricMetadata)
+	misses := make([]string, 0)
+	for _, metricName := range metricNames {
+		cacheKey := generateMetricMetadataCacheKey(metricName)
+		var cachedMetadata metricsmoduletypes.MetricMetadata
+		if err := m.cache.Get(ctx, orgID, cacheKey, &cachedMetadata); err == nil {
+			hits[metricName] = &cachedMetadata
+		} else {
+			m.logger.WarnContext(ctx, "cache miss for metric metadata", "metric_name", metricName, "error", err)
+			misses = append(misses, metricName)
+		}
+	}
+	return hits, misses
+}
+
+func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
+	if len(metricNames) == 0 {
+		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
+	}
 
 	args := make([]any, len(metricNames))
 	for i := range metricNames {
 		args[i] = metricNames[i]
 	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"metric_name",
+		"description",
+		"type",
+		"unit",
+		"temporality",
+		"is_monotonic",
+	)
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.UpdatedMetadataTableName))
+	sb.Where(sb.In("metric_name", args...))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(ctx, query, args...)
@@ -200,22 +210,21 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 	}
 	defer rows.Close()
 
-	updatedMeta := make(map[string]*metricsmoduletypes.MetricMetadata, len(metricNames))
+	result := make(map[string]*metricsmoduletypes.MetricMetadata)
 	for rows.Next() {
 		var (
-			metricName     string
 			metricMetadata metricsmoduletypes.MetricMetadata
+			metricName     string
 		)
 
-		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality); err != nil {
+		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality, &metricMetadata.IsMonotonic); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan updated metrics metadata")
 		}
+		result[metricName] = &metricMetadata
 
-		updatedMeta[metricName] = &metricsmoduletypes.MetricMetadata{
-			Description: metricMetadata.Description,
-			MetricType:  metricMetadata.MetricType,
-			MetricUnit:  metricMetadata.MetricUnit,
-			Temporality: metricMetadata.Temporality,
+		cacheKey := generateMetricMetadataCacheKey(metricName)
+		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
+			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, "error", err)
 		}
 	}
 
@@ -223,13 +232,256 @@ func (m *module) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUI
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating updated metrics metadata rows")
 	}
 
-	return updatedMeta, nil
+	return result, nil
 }
 
-func (m *module) buildFilterClause(ctx context.Context, expression string, startMillis, endMillis int64) (string, []any, error) {
-	expression = strings.TrimSpace(expression)
+func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
+	if len(metricNames) == 0 {
+		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
+	}
+
+	args := make([]any, len(metricNames))
+	for i := range metricNames {
+		args[i] = metricNames[i]
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"metric_name",
+		"ANY_VALUE(description) AS description",
+		"ANY_VALUE(type) AS metric_type",
+		"ANY_VALUE(unit) AS metric_unit",
+		"ANY_VALUE(temporality) AS temporality",
+		"ANY_VALUE(is_monotonic) AS is_monotonic",
+	)
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4TableName))
+	sb.Where(sb.In("metric_name", args...))
+	sb.GroupBy("metric_name")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch metrics metadata from timeseries table")
+	}
+	defer rows.Close()
+
+	result := make(map[string]*metricsmoduletypes.MetricMetadata)
+	for rows.Next() {
+		var (
+			metricMetadata metricsmoduletypes.MetricMetadata
+			metricName     string
+		)
+
+		if err := rows.Scan(&metricName, &metricMetadata.Description, &metricMetadata.MetricType, &metricMetadata.MetricUnit, &metricMetadata.Temporality, &metricMetadata.IsMonotonic); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan timeseries metadata")
+		}
+		result[metricName] = &metricMetadata
+
+		cacheKey := generateMetricMetadataCacheKey(metricName)
+		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
+			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, "error", err)
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating timeseries metadata rows")
+	}
+
+	return result, nil
+}
+
+func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
+	if req == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric name is required")
+	}
+
+	// Validate and normalize metric type and temporality
+	if err := m.validateAndNormalizeMetricType(req); err != nil {
+		return err
+	}
+
+	// Validate labels for histogram and summary types
+	if err := m.validateMetricLabels(ctx, req); err != nil {
+		return err
+	}
+
+	// Delete existing metadata
+	if err := m.deleteMetricsMetadata(ctx, req.MetricName); err != nil {
+		return err
+	}
+
+	// Insert new metadata
+	if err := m.insertMetricsMetadata(ctx, orgID, req); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *module) validateAndNormalizeMetricType(req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
+	switch req.Type {
+	case metrictypes.SumType:
+		if req.Temporality.IsZero() {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "temporality is required when metric type is Sum")
+		}
+		if req.Temporality != metrictypes.Delta && req.Temporality != metrictypes.Cumulative {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid value for temporality")
+		}
+		// Special case: if Sum is not monotonic and cumulative, convert to Gauge
+		if !req.IsMonotonic && req.Temporality == metrictypes.Cumulative {
+			req.Type = metrictypes.GaugeType
+			req.Temporality = metrictypes.Unspecified
+		}
+
+	case metrictypes.HistogramType:
+		if req.Temporality.IsZero() {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "temporality is required when metric type is Histogram")
+		}
+		if req.Temporality != metrictypes.Delta && req.Temporality != metrictypes.Cumulative {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid value for temporality")
+		}
+
+	case metrictypes.ExpHistogramType:
+		if req.Temporality.IsZero() {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "temporality is required when metric type is exponential histogram")
+		}
+		if req.Temporality != metrictypes.Delta && req.Temporality != metrictypes.Cumulative {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid value for temporality")
+		}
+
+	case metrictypes.GaugeType:
+		// Gauge always has unspecified temporality
+		req.Temporality = metrictypes.Unspecified
+
+	case metrictypes.SummaryType:
+		// Summary always has cumulative temporality
+		req.Temporality = metrictypes.Cumulative
+
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid metric type")
+	}
+
+	return nil
+}
+
+func (m *module) validateMetricLabels(ctx context.Context, req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
+	if req.Type == metrictypes.HistogramType {
+		labels := []string{"le"}
+		hasLabels, err := m.checkForLabelsInMetric(ctx, req.MetricName, labels)
+		if err != nil {
+			return err
+		}
+		if !hasLabels {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as histogram type", req.MetricName)
+		}
+	}
+
+	if req.Type == metrictypes.SummaryType {
+		labels := []string{"quantile"}
+		hasLabels, err := m.checkForLabelsInMetric(ctx, req.MetricName, labels)
+		if err != nil {
+			return err
+		}
+		if !hasLabels {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as summary type", req.MetricName)
+		}
+	}
+
+	return nil
+}
+
+func (m *module) checkForLabelsInMetric(ctx context.Context, metricName string, labels []string) (bool, error) {
+	if len(labels) == 0 {
+		return true, nil
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("count(*) > 0 AS has_labels")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41dayTableName))
+	sb.Where(sb.E("metric_name", metricName))
+	for _, label := range labels {
+		sb.Where(fmt.Sprintf("JSONHas(labels, %s) = 1", sb.Var(label)))
+	}
+	sb.Limit(1)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var hasLabels bool
+	db := m.telemetryStore.ClickhouseDB()
+	err := db.QueryRow(ctx, query, args...).Scan(&hasLabels)
+	if err != nil {
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "error checking metric labels")
+	}
+
+	return hasLabels, nil
+}
+
+func (m *module) deleteMetricsMetadata(ctx context.Context, metricName string) error {
+	sb := sqlbuilder.NewDeleteBuilder()
+	sb.DeleteFrom(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.UpdatedMetadataLocalTableName))
+	sb.Where(sb.E("metric_name", metricName))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	if err := db.Exec(ctx, query, args...); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to delete metrics metadata")
+	}
+	return nil
+}
+
+func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
+	createdAt := time.Now().UnixMilli()
+
+	ib := sqlbuilder.NewInsertBuilder()
+	ib.InsertInto(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.UpdatedMetadataTableName))
+	ib.Cols("metric_name", "temporality", "is_monotonic", "type", "description", "unit", "created_at")
+	ib.Values(
+		req.MetricName,
+		req.Temporality,
+		req.IsMonotonic,
+		req.Type,
+		req.Description,
+		req.Unit,
+		createdAt,
+	)
+
+	query, args := ib.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	if err := db.Exec(ctx, query, args...); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to insert metrics metadata")
+	}
+
+	// Set in cache after successful DB insert
+	metricMetadata := &metricsmoduletypes.MetricMetadata{
+		Description: req.Description,
+		MetricType:  req.Type,
+		MetricUnit:  req.Unit,
+		Temporality: req.Temporality,
+		IsMonotonic: req.IsMonotonic,
+	}
+	cacheKey := generateMetricMetadataCacheKey(req.MetricName)
+	if err := m.cache.Set(ctx, orgID, cacheKey, metricMetadata, 0); err != nil {
+		m.logger.WarnContext(ctx, "failed to set metric metadata in cache after insert", "metric_name", req.MetricName, "error", err)
+	}
+
+	return nil
+}
+
+func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
+	expression := ""
+	if filter != nil {
+		expression = strings.TrimSpace(filter.Expression)
+	}
 	if expression == "" {
-		return defaultFilterConditionTrue, nil, nil
+		return sqlbuilder.NewWhereClause(), nil
 	}
 
 	// TODO(nikhilmantri0902, srikanthccv): if this is the right way of dealing with  whereClauseSelectors
@@ -245,7 +497,7 @@ func (m *module) buildFilterClause(ctx context.Context, expression string, start
 
 	keys, _, err := m.telemetryMetadataStore.GetKeysMulti(ctx, whereClauseSelectors)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
@@ -262,298 +514,163 @@ func (m *module) buildFilterClause(ctx context.Context, expression string, start
 
 	whereClause, err := querybuilder.PrepareWhereClause(expression, opts, startNs, endNs)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	if whereClause == nil || whereClause.WhereClause == nil {
-		return defaultFilterConditionTrue, nil, nil
+		return sqlbuilder.NewWhereClause(), nil
 	}
 
-	whereClauseString, args := whereClause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
-	// Remove "WHERE" (case sensitive) from the start of sql string, if present
-	whereClauseString = strings.TrimSpace(whereClauseString)
-	whereClauseString = strings.TrimPrefix(whereClauseString, sqlKeyWordWhere)
-	whereClauseString = strings.TrimSpace(whereClauseString)
-
-	return whereClauseString, args, nil
+	return whereClause.WhereClause, nil
 }
 
-func (m *module) fetchTimeseriesCounts(
+func (m *module) fetchMetricsStatsWithSamples(
 	ctx context.Context,
 	req *metricsmoduletypes.StatsRequest,
-	filterSQL string,
-	filterArgs []any,
+	filterWhereClause *sqlbuilder.WhereClause,
 	normalized bool,
-	orderSQLColumn string,
-	orderDirection string,
-) ([]string, []metricsmoduletypes.MetricStat, uint64, error) {
-	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
-	statsQuery := fmt.Sprintf(`
-		SELECT
-			t.metric_name AS metric_name,
-			ANY_VALUE(t.description) AS description,
-			ANY_VALUE(t.type) AS metric_type,
-			ANY_VALUE(t.unit) AS metric_unit,
-			uniq(t.fingerprint) AS timeseries,
-			max(t.unix_milli) AS lastReceived,
-			uniq(metric_name) OVER() AS total
-		FROM %s.%s AS t
-		WHERE unix_milli BETWEEN ? AND ?
-		AND NOT startsWith(metric_name, 'signoz')
-		AND __normalized = ?
-		AND (%s)
-		GROUP BY t.metric_name
-		ORDER BY %s %s, metric_name ASC
-		LIMIT ? OFFSET ?`,
-		metricDatabaseName, tsTable,
-		filterSQL,
-		orderSQLColumn, orderDirection,
+	orderBy *qbtypes.OrderBy,
+) ([]metricsmoduletypes.Stat, uint64, error) {
+
+	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
+	samplesTable, countExp := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
+
+	// Timeseries counts per metric
+	tsSB := sqlbuilder.NewSelectBuilder()
+	tsSB.Select(
+		"metric_name",
+		"uniq(fingerprint) AS timeseries",
+	)
+	tsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
+	tsSB.Where(tsSB.Between("unix_milli", start, end))
+	tsSB.Where("NOT startsWith(metric_name, 'signoz')")
+	tsSB.Where(tsSB.E("__normalized", normalized))
+	if filterWhereClause != nil {
+		tsSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+	}
+	tsSB.GroupBy("metric_name")
+
+	// Samples counts per metric
+	samplesSB := sqlbuilder.NewSelectBuilder()
+	samplesSB.Select(
+		"dm.metric_name",
+		fmt.Sprintf("%s AS samples", countExp),
+	)
+	samplesSB.From(fmt.Sprintf("%s.%s AS dm", telemetrymetrics.DBName, samplesTable))
+	samplesSB.Where(samplesSB.Between("dm.unix_milli", req.Start, req.End))
+	samplesSB.Where("NOT startsWith(dm.metric_name, 'signoz')")
+
+	if filterWhereClause != nil {
+		fingerprintSB := sqlbuilder.NewSelectBuilder()
+		fingerprintSB.Select("ts.fingerprint")
+		fingerprintSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, localTsTable))
+		fingerprintSB.Where(fingerprintSB.Between("ts.unix_milli", start, end))
+		fingerprintSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
+		fingerprintSB.Where(fingerprintSB.E("__normalized", normalized))
+		fingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+		fingerprintSB.GroupBy("ts.fingerprint")
+
+		samplesSB.Where(fmt.Sprintf("dm.fingerprint IN (%s)", samplesSB.Var(fingerprintSB)))
+	}
+	samplesSB.GroupBy("dm.metric_name")
+
+	cteBuilder := sqlbuilder.With(
+		sqlbuilder.CTEQuery("__time_series_counts").As(tsSB),
+		sqlbuilder.CTEQuery("__sample_counts").As(samplesSB),
 	)
 
-	args := make([]any, 0, 4+len(filterArgs))
-	args = append(args, start, end, normalized)
-	args = append(args, filterArgs...)
-	args = append(args, req.Limit, req.Offset)
+	finalSB := cteBuilder.Select(
+		"COALESCE(ts.metric_name, s.metric_name) AS metric_name",
+		"COALESCE(ts.timeseries, 0) AS timeseries",
+		"COALESCE(s.samples, 0) AS samples",
+		"COUNT(*) OVER() AS total",
+	)
+	finalSB.From("__time_series_counts ts")
+	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "ts.metric_name = s.metric_name")
+	finalSB.Where("(COALESCE(ts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) > 0)")
+
+	orderByColumn, orderDirection, err := getStatsOrderByColumn(orderBy)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	finalSB.OrderBy(
+		fmt.Sprintf("%s %s", orderByColumn, strings.ToUpper(orderDirection)),
+		"metric_name ASC",
+	)
+	finalSB.Limit(req.Limit)
+	finalSB.Offset(req.Offset)
+
+	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, statsQuery, args...)
+	rows, err := db.Query(ctx, query, args...)
 	if err != nil {
-		return nil, nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute metrics stats query")
+		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute metrics stats with samples query")
 	}
 	defer rows.Close()
 
-	metricStats := make([]metricsmoduletypes.MetricStat, 0)
-	metricNames := make([]string, 0)
+	metricStats := make([]metricsmoduletypes.Stat, 0)
 	var total uint64
 
 	for rows.Next() {
 		var (
-			metricStat metricsmoduletypes.MetricStat
+			metricStat metricsmoduletypes.Stat
 			rowTotal   uint64
 		)
-		if err := rows.Scan(&metricStat.MetricName, &metricStat.Description, &metricStat.MetricType, &metricStat.MetricUnit, &metricStat.TimeSeries, &metricStat.LastReceived, &rowTotal); err != nil {
-			return nil, nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metrics stats row")
+		if err := rows.Scan(&metricStat.MetricName, &metricStat.TimeSeries, &metricStat.Samples, &rowTotal); err != nil {
+			return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metrics stats row")
 		}
 		metricStats = append(metricStats, metricStat)
-		metricNames = append(metricNames, metricStat.MetricName)
 		total = rowTotal
 	}
-	if err := rows.Err(); err != nil {
-		return nil, nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metrics stats rows")
-	}
-
-	return metricNames, metricStats, total, nil
-}
-
-func (m *module) fetchSampleCounts(
-	ctx context.Context,
-	metricNames []string,
-	req *metricsmoduletypes.StatsRequest,
-	orderBySamples bool,
-	orderDirection string,
-	filterSQL string,
-	filterArgs []any,
-	normalized bool,
-) (map[string]uint64, error) {
-
-	start, end, _, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
-	samplesTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
-
-	metricPlaceholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
-	var (
-		queryBuilder strings.Builder
-		args         []any
-	)
-
-	if filterSQL != defaultFilterConditionTrue {
-		queryBuilder.WriteString(fmt.Sprintf(
-			`SELECT 
-				s.samples,
-				s.metric_name
-			FROM (
-				SELECT 
-					dm.metric_name,
-					%s AS samples
-				FROM %s.%s AS dm
-				WHERE dm.metric_name IN (%s)
-				AND dm.fingerprint IN (
-					SELECT fingerprint
-					FROM %s.%s
-					WHERE metric_name IN (%s)
-					AND __normalized = ?
-					AND unix_milli BETWEEN ? AND ?
-					AND (%s)
-					GROUP BY fingerprint
-				)
-				AND dm.unix_milli BETWEEN ? AND ?
-				GROUP BY dm.metric_name
-			) AS s`,
-			countExp,
-			metricDatabaseName, samplesTable,
-			metricPlaceholders,
-			metricDatabaseName, localTsTable,
-			metricPlaceholders,
-			filterSQL,
-		))
-		for _, name := range metricNames {
-			args = append(args, name)
-		}
-		for _, name := range metricNames {
-			args = append(args, name)
-		}
-		args = append(args, normalized)
-		args = append(args, start, end)
-		args = append(args, filterArgs...)
-		args = append(args, req.Start, req.End)
-	} else {
-		queryBuilder.WriteString(fmt.Sprintf(
-			`SELECT 
-				s.samples,
-				s.metric_name
-			FROM (
-				SELECT 
-					metric_name,
-					%s AS samples
-				FROM %s.%s
-				WHERE metric_name IN (%s)
-				AND unix_milli BETWEEN ? AND ?
-				GROUP BY metric_name
-			) AS s`,
-			countExp,
-			metricDatabaseName, samplesTable,
-			metricPlaceholders,
-		))
-		for _, name := range metricNames {
-			args = append(args, name)
-		}
-		args = append(args, req.Start, req.End)
-	}
-
-	if orderBySamples {
-		queryBuilder.WriteString(fmt.Sprintf(" ORDER BY s.samples %s", orderDirection))
-	}
-
-	queryBuilder.WriteString(" LIMIT ?;")
-	args = append(args, req.Limit)
-
-	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, queryBuilder.String(), args...)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute metrics samples query")
-	}
-	defer rows.Close()
-
-	sampleMap := make(map[string]uint64, len(metricNames))
-	for rows.Next() {
-		var (
-			count      uint64
-			metricName string
-		)
-		if err := rows.Scan(&count, &metricName); err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metrics samples row")
-		}
-		sampleMap[metricName] = count
-	}
 
 	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metrics samples rows")
+		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metrics stats rows")
 	}
 
-	return sampleMap, nil
+	return metricStats, total, nil
 }
 
-func (m *module) postProcessStatsResp(resp *metricsmoduletypes.StatsResponse, updatedMeta map[string]*metricsmoduletypes.MetricMetadata, samplesCountMap map[string]uint64, orderBySamples bool, orderByDirection string) {
-	if resp == nil {
-		return
-	}
-	filtered := make([]metricsmoduletypes.MetricStat, 0, len(resp.Metrics))
-	for i := range resp.Metrics {
-		stat := resp.Metrics[i]
-		if updated, ok := updatedMeta[stat.MetricName]; ok {
-			if updated.MetricType != "" {
-				stat.MetricType = updated.MetricType
-			}
-			if updated.MetricUnit != "" {
-				stat.MetricUnit = updated.MetricUnit
-			}
-			if updated.Description != "" {
-				stat.Description = updated.Description
-			}
-		}
-		if samples, ok := samplesCountMap[stat.MetricName]; ok {
-			stat.Samples = samples
-			filtered = append(filtered, stat)
-		}
-	}
-	resp.Metrics = filtered
+func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsmoduletypes.TreemapEntry, error) {
+	start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
 
-	if orderBySamples {
-		sort.Slice(resp.Metrics, func(i, j int) bool {
-			if orderByDirection == orderByDirectionAsc {
-				if resp.Metrics[i].Samples != resp.Metrics[j].Samples {
-					return resp.Metrics[i].Samples < resp.Metrics[j].Samples
-				}
-				// Tiebreaker: sort by metric_name lexicographically
-				return resp.Metrics[i].MetricName < resp.Metrics[j].MetricName
-			}
-			if resp.Metrics[i].Samples != resp.Metrics[j].Samples {
-				return resp.Metrics[i].Samples > resp.Metrics[j].Samples
-			}
-			// Tiebreaker: sort by metric_name lexicographically
-			return resp.Metrics[i].MetricName < resp.Metrics[j].MetricName
-		})
+	totalTSBuilder := sqlbuilder.NewSelectBuilder()
+	totalTSBuilder.Select("uniq(fingerprint)")
+	totalTSBuilder.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
+	totalTSBuilder.Where(totalTSBuilder.Between("unix_milli", start, end))
+	totalTSBuilder.Where(totalTSBuilder.E("__normalized", false))
+
+	metricsSB := sqlbuilder.NewSelectBuilder()
+	metricsSB.Select(
+		"metric_name",
+		"uniq(fingerprint) AS total_value",
+	)
+	totalPlaceholder := metricsSB.Var(totalTSBuilder)
+	metricsSB.SelectMore(fmt.Sprintf("(%s) AS total_time_series", totalPlaceholder))
+	metricsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
+	metricsSB.Where(metricsSB.Between("unix_milli", start, end))
+	metricsSB.Where("NOT startsWith(metric_name, 'signoz')")
+	metricsSB.Where(metricsSB.E("__normalized", false))
+	if filterWhereClause != nil {
+		metricsSB.WhereClause.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
 	}
-}
+	metricsSB.GroupBy("metric_name")
 
-func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterSQL string, filterArgs []any) ([]metricsmoduletypes.TreemapEntry, error) {
-	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
-
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
-
-	filterClause := ""
-	if filterSQL != defaultFilterConditionTrue {
-		filterClause = fmt.Sprintf(" AND (%s)", filterSQL)
-	}
-
-	query := fmt.Sprintf(`
-		SELECT
-			metric_name,
-			total_value,
-			(total_value * 100.0 / total_time_series) AS percentage
-		FROM (
-			SELECT
-				metric_name,
-				uniq(fingerprint) AS total_value,
-				(SELECT uniq(fingerprint)
-					FROM %s.%s
-					WHERE unix_milli BETWEEN ? AND ?
-					AND __normalized = ?) AS total_time_series
-			FROM %s.%s
-			WHERE unix_milli BETWEEN ? AND ?
-			AND NOT startsWith(metric_name, 'signoz')
-			AND __normalized = ?
-			%s
-			GROUP BY metric_name
-		)
-		ORDER BY percentage DESC
-		LIMIT ?;`,
-		metricDatabaseName,
-		tsTable,
-		metricDatabaseName,
-		tsTable,
-		filterClause,
+	cteBuilder := sqlbuilder.With(
+		sqlbuilder.CTEQuery("__metric_totals").As(metricsSB),
 	)
 
-	args := make([]any, 0, 6+2*len(filterArgs))
-	args = append(args, start, end, normalized)
-	args = append(args, start, end, normalized)
-	if filterClause != "" {
-		args = append(args, filterArgs...)
-	}
-	args = append(args, req.Limit)
+	finalSB := cteBuilder.Select(
+		"metric_name",
+		"total_value",
+		"CASE WHEN total_time_series = 0 THEN 0 ELSE (total_value * 100.0 / total_time_series) END AS percentage",
+	)
+	finalSB.From("__metric_totals")
+	finalSB.OrderBy("percentage").Desc()
+	finalSB.Limit(req.Limit)
+
+	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(ctx, query, args...)
@@ -564,9 +681,7 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 
 	entries := make([]metricsmoduletypes.TreemapEntry, 0)
 	for rows.Next() {
-		var (
-			treemapEntry metricsmoduletypes.TreemapEntry
-		)
+		var treemapEntry metricsmoduletypes.TreemapEntry
 		if err := rows.Scan(&treemapEntry.MetricName, &treemapEntry.TotalValue, &treemapEntry.Percentage); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan timeseries treemap row")
 		}
@@ -580,135 +695,77 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 	return entries, nil
 }
 
-func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterSQL string, filterArgs []any) ([]metricsmoduletypes.TreemapEntry, error) {
-	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
-	samplesTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
+func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsmoduletypes.TreemapEntry, error) {
+	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
+	samplesTable, countExp := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
+	candidateLimit := req.Limit + 50
+
+	metricCandidatesSB := sqlbuilder.NewSelectBuilder()
+	metricCandidatesSB.Select("ts.metric_name")
+	metricCandidatesSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, distributedTsTable))
+	metricCandidatesSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
+	metricCandidatesSB.Where(metricCandidatesSB.E("__normalized", false))
+	metricCandidatesSB.Where(metricCandidatesSB.Between("unix_milli", start, end))
+	if filterWhereClause != nil {
+		metricCandidatesSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+	}
+	metricCandidatesSB.GroupBy("ts.metric_name")
+	metricCandidatesSB.OrderBy("uniq(ts.fingerprint) DESC")
+	metricCandidatesSB.Limit(candidateLimit)
+
+	totalSamplesSB := sqlbuilder.NewSelectBuilder()
+	totalSamplesSB.Select(fmt.Sprintf("%s AS total_samples", countExp))
+	totalSamplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	totalSamplesSB.Where(totalSamplesSB.Between("unix_milli", req.Start, req.End))
+
+	sampleCountsSB := sqlbuilder.NewSelectBuilder()
+	sampleCountsSB.Select(
+		"dm.metric_name AS metric_name",
+		fmt.Sprintf("%s AS samples", countExp),
+	)
+	sampleCountsSB.From(fmt.Sprintf("%s.%s AS dm", telemetrymetrics.DBName, samplesTable))
+	sampleCountsSB.Where(sampleCountsSB.Between("dm.unix_milli", req.Start, req.End))
+	sampleCountsSB.Where("dm.metric_name IN (SELECT metric_name FROM __metric_candidates)")
+
+	if filterWhereClause != nil {
+		fingerprintSB := sqlbuilder.NewSelectBuilder()
+		fingerprintSB.Select("ts.fingerprint")
+		fingerprintSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, localTsTable))
+		fingerprintSB.Where(fingerprintSB.Between("ts.unix_milli", start, end))
+		fingerprintSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
+		fingerprintSB.Where(fingerprintSB.E("__normalized", false))
+		fingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
+		fingerprintSB.Where("ts.metric_name IN (SELECT metric_name FROM __metric_candidates)")
+		fingerprintSB.GroupBy("ts.fingerprint")
+
+		subQuery := sampleCountsSB.Var(fingerprintSB)
+		sampleCountsSB.Where(fmt.Sprintf("dm.fingerprint IN (%s)", subQuery))
 	}
 
-	filterClause := ""
-	if filterSQL != defaultFilterConditionTrue {
-		filterClause = fmt.Sprintf(" AND (%s)", filterSQL)
-	}
+	sampleCountsSB.GroupBy("dm.metric_name")
 
-	queryLimit := req.Limit + 50
-	metricsQuery := fmt.Sprintf(`
-		SELECT
-			ts.metric_name AS metric_name,
-			uniq(ts.fingerprint) AS timeSeries
-		FROM %s.%s AS ts
-		WHERE NOT startsWith(ts.metric_name, 'signoz')
-		AND __normalized = ?
-		AND unix_milli BETWEEN ? AND ?
-		%s
-		GROUP BY ts.metric_name
-		ORDER BY timeSeries DESC
-		LIMIT %d;`,
-		metricDatabaseName, tsTable, filterClause, queryLimit)
-
-	args := make([]any, 0, 3+len(filterArgs))
-	args = append(args, normalized, start, end)
-	if filterClause != "" {
-		args = append(args, filterArgs...)
-	}
-
-	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, metricsQuery, args...)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute samples treemap pre-query")
-	}
-	defer rows.Close()
-
-	metricNames := make([]string, 0)
-	for rows.Next() {
-		var (
-			metricName string
-			timeSeries uint64
-		)
-		if err := rows.Scan(&metricName, &timeSeries); err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan samples treemap pre-query row")
-		}
-		metricNames = append(metricNames, metricName)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating samples treemap pre-query rows")
-	}
-
-	if len(metricNames) == 0 {
-		return []metricsmoduletypes.TreemapEntry{}, nil
-	}
-
-	metricPlaceholders := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
-	var (
-		queryBuilder strings.Builder
-		sampleArgs   []any
+	cteBuilder := sqlbuilder.With(
+		sqlbuilder.CTEQuery("__metric_candidates").As(metricCandidatesSB),
+		sqlbuilder.CTEQuery("__sample_counts").As(sampleCountsSB),
+		sqlbuilder.CTEQuery("__total_samples").As(totalSamplesSB),
 	)
 
-	queryBuilder.WriteString(fmt.Sprintf(`
-		WITH TotalSamples AS (
-			SELECT %s AS total_samples
-			FROM %s.%s
-			WHERE unix_milli BETWEEN ? AND ?
-		),
-		Samples AS (
-			SELECT
-				dm.metric_name,
-				%s AS samples
-			FROM %s.%s AS dm
-			WHERE dm.unix_milli BETWEEN ? AND ?
-			AND dm.metric_name IN (%s) `,
-		countExp, metricDatabaseName, samplesTable,
-		countExp, metricDatabaseName, samplesTable, metricPlaceholders,
-	))
+	finalSB := cteBuilder.Select(
+		"mc.metric_name",
+		"COALESCE(sc.samples, 0) AS samples",
+		"CASE WHEN ts.total_samples = 0 THEN 0 ELSE (COALESCE(sc.samples, 0) * 100.0 / ts.total_samples) END AS percentage",
+	)
+	finalSB.From("__metric_candidates mc")
+	finalSB.JoinWithOption(sqlbuilder.LeftJoin, "__sample_counts sc", "mc.metric_name = sc.metric_name")
+	finalSB.Join("__total_samples ts", "1=1")
+	finalSB.OrderBy("percentage DESC")
+	finalSB.Limit(req.Limit)
 
-	sampleArgs = append(sampleArgs, req.Start, req.End)
-	sampleArgs = append(sampleArgs, req.Start, req.End)
-	for _, name := range metricNames {
-		sampleArgs = append(sampleArgs, name)
-	}
+	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	if filterSQL != defaultFilterConditionTrue {
-		metricPlaceholdersSub := strings.TrimRight(strings.Repeat("?,", len(metricNames)), ",")
-		queryBuilder.WriteString(fmt.Sprintf(`
-			AND dm.fingerprint IN (
-				SELECT ts.fingerprint
-				FROM %s.%s AS ts
-				WHERE ts.metric_name IN (%s)
-				AND unix_milli BETWEEN ? AND ?
-				AND NOT startsWith(ts.metric_name, 'signoz')
-				AND __normalized = ?
-				AND (%s)
-				GROUP BY ts.fingerprint
-			)`,
-			metricDatabaseName, localTsTable, metricPlaceholdersSub, filterSQL,
-		))
-
-		for _, name := range metricNames {
-			sampleArgs = append(sampleArgs, name)
-		}
-		sampleArgs = append(sampleArgs, start, end, normalized)
-		sampleArgs = append(sampleArgs, filterArgs...)
-	}
-
-	// TODO(nikhilmantri0902, srikanthccv): using cross join below instead of JOIN ON 1=1 like legacy. Is that fine?
-	queryBuilder.WriteString(`
-		GROUP BY dm.metric_name
-			)
-			SELECT
-				s.metric_name,
-				s.samples,
-				CASE WHEN t.total_samples = 0 THEN 0 ELSE (s.samples * 100.0 / t.total_samples) END AS percentage
-			FROM Samples s
-			CROSS JOIN TotalSamples t
-			ORDER BY percentage DESC
-			LIMIT ?;`)
-
-	sampleArgs = append(sampleArgs, req.Limit)
-
-	rows, err = db.Query(ctx, queryBuilder.String(), sampleArgs...)
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute samples treemap query")
 	}
@@ -716,9 +773,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 
 	entries := make([]metricsmoduletypes.TreemapEntry, 0)
 	for rows.Next() {
-		var (
-			treemapEntry metricsmoduletypes.TreemapEntry
-		)
+		var treemapEntry metricsmoduletypes.TreemapEntry
 		if err := rows.Scan(&treemapEntry.MetricName, &treemapEntry.TotalValue, &treemapEntry.Percentage); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan samples treemap row")
 		}
@@ -766,7 +821,7 @@ func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req
 		%s
 		GROUP BY attr_name
 		ORDER BY valueCount DESC;`,
-		metricDatabaseName,
+		telemetrymetrics.DBName,
 		telemetrymetrics.AttributesMetadataTableName,
 		timeFilter)
 

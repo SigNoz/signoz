@@ -3,6 +3,7 @@ package implmetricsmodule
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
@@ -79,6 +80,79 @@ func (h *handler) GetTreemap(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	render.Success(rw, http.StatusOK, out)
+}
+
+func (h *handler) UpdateMetricMetadata(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	// Extract metric_name from URL path
+	vars := mux.Vars(req)
+	metricName := vars["metric_name"]
+	if metricName == "" {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required in URL path"))
+		return
+	}
+
+	var in metricsmoduletypes.UpdateMetricMetadataRequest
+	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	// Set metric name from URL path
+	in.MetricName = metricName
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = h.module.UpdateMetricMetadata(req.Context(), orgID, &in)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, nil)
+}
+
+func (h *handler) GetMetricMetadata(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	metricName := strings.TrimSpace(req.URL.Query().Get("metricName"))
+	if metricName == "" {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName query parameter is required"))
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	metadataMap, err := h.module.GetMetricMetadataMulti(req.Context(), orgID, []string{metricName})
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	metadata, ok := metadataMap[metricName]
+	if !ok || metadata == nil {
+		render.Error(rw, errors.NewNotFoundf(errors.CodeNotFound, "metadata not found for metric %q", metricName))
+		return
+	}
+
+	render.Success(rw, http.StatusOK, metadata)
 }
 
 func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request) {

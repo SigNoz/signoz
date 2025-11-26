@@ -1,51 +1,73 @@
 package implmetricsmodule
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-// helper struct just for the implementation way we chose
-type orderConfig struct {
-	sqlColumn      string
-	direction      string
-	orderBySamples bool
+// used for mapping the sqlColumns via orderBy
+const (
+	sqlColumnTimeSeries = "timeseries"
+	sqlColumnSamples    = "samples"
+)
+
+func generateMetricMetadataCacheKey(metricName string) string {
+	return fmt.Sprintf("metrics_metadata:%s", metricName)
 }
 
-func resolveOrderBy(order *metricsmoduletypes.OrderBy) (orderConfig, error) {
-	// default orderBy
-	cfg := orderConfig{
-		sqlColumn:      orderByColNameTimeSeries,
-		direction:      orderByDirectionDesc,
-		orderBySamples: false,
-	}
-
+func getStatsOrderByColumn(order *qbtypes.OrderBy) (string, string, error) {
 	if order == nil {
-		return cfg, nil
+		return sqlColumnTimeSeries, qbtypes.OrderDirectionDesc.StringValue(), nil
 	}
 
-	switch strings.ToLower(order.ColumnName) {
-	case orderByColNameTimeSeries:
-		cfg.sqlColumn = orderByColNameTimeSeries
-	case orderByColNameSamples:
-		cfg.orderBySamples = true
-		cfg.sqlColumn = orderByColNameTimeSeries // defer true ordering until samples computed
+	var columnName string
+	switch strings.ToLower(order.Key.Name) {
+	case metricsmoduletypes.OrderByTimeSeries.StringValue():
+		columnName = sqlColumnTimeSeries
+	case metricsmoduletypes.OrderBySamples.StringValue():
+		columnName = sqlColumnSamples
 	default:
-		return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order column %q", order.ColumnName)
+		return "", "", errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"unsupported order column %q: supported columns are %q or %q",
+			order.Key.Name,
+			metricsmoduletypes.OrderByTimeSeries,
+			metricsmoduletypes.OrderBySamples,
+		)
 	}
 
-	if order.Order != "" {
-		switch strings.ToUpper(order.Order) {
-		case orderByDirectionAsc:
-			cfg.direction = orderByDirectionAsc
-		case orderByDirectionDesc:
-			cfg.direction = orderByDirectionDesc
-		default:
-			return cfg, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order direction %q", order.Order)
+	// Extract direction from OrderDirection and convert to SQL format (uppercase)
+	var direction qbtypes.OrderDirection
+	var ok bool
+	// Validate direction using OrderDirectionMap
+	if direction, ok = qbtypes.OrderDirectionMap[strings.ToLower(order.Direction.StringValue())]; !ok {
+		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order direction %q, should be one of %s, %s", direction, qbtypes.OrderDirectionAsc, qbtypes.OrderDirectionDesc)
+		}
+
+	return columnName, direction.StringValue(), nil
+}
+
+func extractMissingMetricNamesInMap(metricNames []string, metricMetadataMap map[string]*metricsmoduletypes.MetricMetadata) []string {
+	misses := make([]string, 0)
+	for _, name := range metricNames {
+		if _, ok := metricMetadataMap[name]; !ok {
+			misses = append(misses, name)
 		}
 	}
+	return misses
+}
 
-	return cfg, nil
+// enrichStatsWithMetadata enriches metric stats with metadata from the provided metadata map.
+func enrichStatsWithMetadata(metricStats []metricsmoduletypes.Stat, metadata map[string]*metricsmoduletypes.MetricMetadata) {
+	for i := range metricStats {
+		if meta, ok := metadata[metricStats[i].MetricName]; ok {
+			metricStats[i].Description = meta.Description
+			metricStats[i].MetricType = meta.MetricType
+			metricStats[i].MetricUnit = meta.MetricUnit
+		}
+	}
 }
