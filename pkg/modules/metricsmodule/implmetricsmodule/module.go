@@ -209,7 +209,7 @@ func (m *module) GetMetricHighlights(ctx context.Context, orgID valuer.UUID, met
 
 	// Fetch data points
 	g.Go(func() error {
-		dataPoints, err := m.getMetricsDataPoints(gCtx, metricName)
+		dataPoints, err := m.getMetricDataPoints(gCtx, metricName)
 		if err != nil {
 			return err
 		}
@@ -219,7 +219,7 @@ func (m *module) GetMetricHighlights(ctx context.Context, orgID valuer.UUID, met
 
 	// Fetch last received
 	g.Go(func() error {
-		lastReceived, err := m.getMetricsLastReceived(gCtx, metricName)
+		lastReceived, err := m.getMetricLastReceived(gCtx, metricName)
 		if err != nil {
 			return err
 		}
@@ -717,8 +717,8 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 	return entries, nil
 }
 
-// getMetricsDataPoints returns the total number of data points (samples) for a metric.
-func (m *module) getMetricsDataPoints(ctx context.Context, metricName string) (uint64, error) {
+// getMetricDataPoints returns the total number of data points (samples) for a metric.
+func (m *module) getMetricDataPoints(ctx context.Context, metricName string) (uint64, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("sum(count) AS data_points")
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4Agg30mTableName))
@@ -736,8 +736,8 @@ func (m *module) getMetricsDataPoints(ctx context.Context, metricName string) (u
 	return dataPoints, nil
 }
 
-// getMetricsLastReceived returns the last received timestamp for a metric.
-func (m *module) getMetricsLastReceived(ctx context.Context, metricName string) (int64, error) {
+// getMetricLastReceived returns the last received timestamp for a metric.
+func (m *module) getMetricLastReceived(ctx context.Context, metricName string) (uint64, error) {
 	// Build CTE for aggregated table MAX
 	aggCTE := sqlbuilder.NewSelectBuilder()
 	aggCTE.Select("MAX(unix_milli) AS max_time")
@@ -764,11 +764,7 @@ func (m *module) getMetricsLastReceived(ctx context.Context, metricName string) 
 		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get last received timestamp")
 	}
 
-	if !lastReceived.Valid {
-		return 0, nil
-	}
-
-	return lastReceived.Int64, nil
+	return uint64(lastReceived.Int64), nil
 }
 
 // getTotalTimeSeriesForMetricName returns the total number of unique time series for a metric.

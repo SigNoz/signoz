@@ -224,7 +224,7 @@ type TreemapResponse struct {
 // MetricHighlightsResponse is the output structure for the metric highlights endpoint.
 type MetricHighlightsResponse struct {
 	DataPoints       uint64 `json:"dataPoints"`
-	LastReceived     int64  `json:"lastReceived"`
+	LastReceived     uint64 `json:"lastReceived"`
 	TotalTimeSeries  uint64 `json:"totalTimeSeries"`
 	ActiveTimeSeries uint64 `json:"activeTimeSeries"`
 }
