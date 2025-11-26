@@ -1,0 +1,12 @@
+{
+    // This tells VS Code to use the TypeScript version installed in your package.json
+    // instead of the one built-in to VS Code. This ensures everyone is on the same version.
+    "typescript.tsdk": "node_modules/typescript/lib",
+    
+    // This suppresses the "Allow using workspace TypeScript version?" popup
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    
+    // This forces VS Code to look at package.json dependencies for imports
+    // even if they haven't been opened yet.
+    "typescript.preferences.includePackageJsonAutoImports": "on",
+}
