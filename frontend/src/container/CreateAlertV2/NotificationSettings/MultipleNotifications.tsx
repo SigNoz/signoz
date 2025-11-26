@@ -72,7 +72,7 @@ function MultipleNotifications(): JSX.Element {
 
 	const groupByDescription = useMemo(() => {
 		if (isAllOptionSelected) {
-			return 'Grouping of alerts is disabled';
+			return 'All = grouping of alerts is disabled';
 		}
 		if (notificationSettings.multipleNotifications?.length) {
 			return `Alerts with same ${notificationSettings.multipleNotifications?.join(
