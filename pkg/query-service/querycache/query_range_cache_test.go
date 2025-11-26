@@ -3,7 +3,6 @@ package querycache_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
@@ -17,8 +16,8 @@ import (
 func TestFindMissingTimeRanges(t *testing.T) {
 	// Initialize the mock cache
 	opts := cache.Memory{
-		TTL:             5 * time.Minute,
-		CleanupInterval: 10 * time.Minute,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}
 	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
@@ -243,8 +242,8 @@ func TestFindMissingTimeRanges(t *testing.T) {
 func TestFindMissingTimeRangesV2(t *testing.T) {
 	// Initialize the mock cache
 	opts := cache.Memory{
-		TTL:             5 * time.Minute,
-		CleanupInterval: 10 * time.Minute,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}
 	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
@@ -590,8 +589,8 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 func TestMergeWithCachedSeriesData(t *testing.T) {
 	// Initialize the mock cache
 	opts := cache.Memory{
-		TTL:             5 * time.Minute,
-		CleanupInterval: 10 * time.Minute,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}
 	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)

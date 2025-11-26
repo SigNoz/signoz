@@ -1,14 +1,12 @@
 package cache
 
 import (
-	"time"
-
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
 type Memory struct {
-	TTL             time.Duration `mapstructure:"ttl"`
-	CleanupInterval time.Duration `mapstructure:"cleanup_interval"`
+	NumCounters int64 `mapstructure:"num_counters"`
+	MaxCost     int64 `mapstructure:"max_cost"`
 }
 
 type Redis struct {
@@ -32,8 +30,8 @@ func newConfig() factory.Config {
 	return &Config{
 		Provider: "memory",
 		Memory: Memory{
-			TTL:             time.Hour * 168,
-			CleanupInterval: 10 * time.Minute,
+			NumCounters: 10 * 10000, // 10k cache entries * 10x as per ristretto
+			MaxCost:     1 << 27,    // 128 MB
 		},
 		Redis: Redis{
 			Host:     "localhost",

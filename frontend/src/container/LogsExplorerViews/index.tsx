@@ -8,11 +8,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
-import {
-	initialFilters,
-	initialQueriesMap,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
+import { initialFilters, PANEL_TYPES } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
@@ -101,12 +97,7 @@ function LogsExplorerViewsContainer({
 	const currentMinTimeRef = useRef<number>(minTime);
 
 	// Context
-	const {
-		currentQuery,
-		stagedQuery,
-		panelType,
-		updateAllQueriesOperators,
-	} = useQueryBuilder();
+	const { stagedQuery, panelType } = useQueryBuilder();
 
 	const selectedPanelType = panelType || PANEL_TYPES.LIST;
 
@@ -136,13 +127,8 @@ function LogsExplorerViewsContainer({
 	}, [stagedQuery, activeLogId]);
 
 	const exportDefaultQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				currentQuery || initialQueriesMap.logs,
-				selectedPanelType,
-				DataSource.LOGS,
-			),
-		[currentQuery, selectedPanelType, updateAllQueriesOperators],
+		() => getExportQueryData(requestData, selectedPanelType),
+		[selectedPanelType, requestData],
 	);
 
 	const {
@@ -279,9 +265,7 @@ function LogsExplorerViewsContainer({
 
 			const widgetId = v4();
 
-			const query = getExportQueryData(requestData, selectedPanelType);
-
-			if (!query) return;
+			if (!exportDefaultQuery) return;
 
 			logEvent('Logs Explorer: Add to dashboard successful', {
 				panelType: selectedPanelType,
@@ -290,7 +274,7 @@ function LogsExplorerViewsContainer({
 			});
 
 			const dashboardEditView = generateExportToDashboardLink({
-				query,
+				query: exportDefaultQuery,
 				panelType: panelTypeParam,
 				dashboardId: dashboard.id,
 				widgetId,
@@ -298,7 +282,7 @@ function LogsExplorerViewsContainer({
 
 			safeNavigate(dashboardEditView);
 		},
-		[safeNavigate, requestData, selectedPanelType],
+		[safeNavigate, exportDefaultQuery, selectedPanelType],
 	);
 
 	useEffect(() => {
