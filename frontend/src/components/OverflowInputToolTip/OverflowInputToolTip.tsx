@@ -1,6 +1,8 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/jsx-props-no-spreading */
 
+import './OverflowInputToolTip.scss';
+
 import { Input, InputProps, InputRef, Tooltip } from 'antd';
 import {
 	forwardRef,
@@ -53,12 +55,8 @@ const OverflowInputToolTip = forwardRef<InputRef, OverflowTooltipInputProps>(
 					onChange={onChange}
 					disabled={disabled}
 					ref={inputRef}
-					style={{
-						...style,
-						overflow: 'hidden',
-						whiteSpace: 'nowrap',
-						textOverflow: 'ellipsis',
-					}}
+					className="overflow-input"
+					style={style}
 				/>
 			</Tooltip>
 		);
