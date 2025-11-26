@@ -1,6 +1,7 @@
 package telemetrytypes
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -86,7 +87,7 @@ func TestGetFieldKeyFromKeyText(t *testing.T) {
 
 	for _, testCase := range testCases {
 		result := GetFieldKeyFromKeyText(testCase.keyText)
-		if result != testCase.expected {
+		if !reflect.DeepEqual(result, testCase.expected) {
 			t.Errorf("expected %v, got %v", testCase.expected, result)
 		}
 	}

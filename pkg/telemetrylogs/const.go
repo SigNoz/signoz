@@ -2,6 +2,7 @@ package telemetrylogs
 
 import (
 	"github.com/SigNoz/signoz-otel-collector/constants"
+	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -36,6 +37,8 @@ const (
 
 	BodyJSONColumnPrefix     = constants.BodyJSONColumnPrefix
 	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
+	ArraySep                 = jsontypeexporter.ArraySeparator
+	ArrayAnyIndex            = "[*]."
 )
 
 var (
