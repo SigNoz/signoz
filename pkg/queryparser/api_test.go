@@ -1,4 +1,4 @@
-package queryfilterextractor
+package queryparser
 
 import (
 	"bytes"
@@ -17,7 +17,8 @@ import (
 )
 
 func TestAPI_AnalyzeQueryFilter(t *testing.T) {
-	aH := NewAPI(instrumentationtest.New().ToProviderSettings())
+	queryParser := New(instrumentationtest.New().ToProviderSettings())
+	aH := NewAPI(instrumentationtest.New().ToProviderSettings(), queryParser)
 
 	tests := []struct {
 		name              string

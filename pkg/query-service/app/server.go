@@ -9,6 +9,7 @@ import (
 	_ "net/http/pprof" // http profiler
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 
 	"github.com/gorilla/handlers"
@@ -36,7 +37,6 @@ import (
 	"github.com/soheilhy/cmux"
 
 	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/parser/queryfilterextractor"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -119,7 +119,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
-		QueryParserAPI:                queryfilterextractor.NewAPI(signoz.Instrumentation.ToProviderSettings()),
+		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
 	})
 	if err != nil {
 		return nil, err

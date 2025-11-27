@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"io"
 	"math"
@@ -78,7 +79,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/version"
 
-	"github.com/SigNoz/signoz/pkg/parser/queryfilterextractor"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 )
 
@@ -147,7 +147,7 @@ type APIHandler struct {
 
 	QuerierAPI *querierAPI.API
 
-	QueryParserAPI *queryfilterextractor.API
+	QueryParserAPI *queryparser.API
 
 	Signoz *signoz.SigNoz
 }
@@ -179,7 +179,7 @@ type APIHandlerOpts struct {
 
 	QuerierAPI *querierAPI.API
 
-	QueryParserAPI *queryfilterextractor.API
+	QueryParserAPI *queryparser.API
 
 	Signoz *signoz.SigNoz
 }
