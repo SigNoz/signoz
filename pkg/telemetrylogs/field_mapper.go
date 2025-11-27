@@ -82,10 +82,13 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		case telemetrytypes.FieldDataTypeBool:
 			return logsV2Columns["attributes_bool"], nil
 		}
+	case telemetrytypes.FieldContextBody:
+		// body context fields are stored in the body column
+		return logsV2Columns["body"], nil
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
 		col, ok := logsV2Columns[key.Name]
 		if !ok {
-			// check if the key has body JSON search
+			// check if the key has body JSON search (backward compatibility)
 			if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
 				return logsV2Columns["body"], nil
 			}
