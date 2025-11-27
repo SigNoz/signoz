@@ -163,6 +163,38 @@ func (m *module) GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, 
 	return metadata, nil
 }
 
+func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.UpdateMetricMetadataRequest) error {
+	if req == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric name is required")
+	}
+
+	// Validate and normalize metric type and temporality
+	if err := m.validateAndNormalizeMetricType(req); err != nil {
+		return err
+	}
+
+	// Validate labels for histogram and summary types
+	if err := m.validateMetricLabels(ctx, req); err != nil {
+		return err
+	}
+
+	// Delete existing metadata
+	if err := m.deleteMetricsMetadata(ctx, req.MetricName); err != nil {
+		return err
+	}
+
+	// Insert new metadata
+	if err := m.insertMetricsMetadata(ctx, orgID, req); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, []string) {
 	hits := make(map[string]*metricsexplorertypes.MetricMetadata)
 	misses := make([]string, 0)
@@ -290,38 +322,6 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 	}
 
 	return result, nil
-}
-
-func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.UpdateMetricMetadataRequest) error {
-	if req == nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
-	}
-
-	if req.MetricName == "" {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric name is required")
-	}
-
-	// Validate and normalize metric type and temporality
-	if err := m.validateAndNormalizeMetricType(req); err != nil {
-		return err
-	}
-
-	// Validate labels for histogram and summary types
-	if err := m.validateMetricLabels(ctx, req); err != nil {
-		return err
-	}
-
-	// Delete existing metadata
-	if err := m.deleteMetricsMetadata(ctx, req.MetricName); err != nil {
-		return err
-	}
-
-	// Insert new metadata
-	if err := m.insertMetricsMetadata(ctx, orgID, req); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (m *module) validateAndNormalizeMetricType(req *metricsexplorertypes.UpdateMetricMetadataRequest) error {
