@@ -16,6 +16,7 @@ import GetMinMax from 'lib/getMinMax';
 import { useEffect, useMemo, useState } from 'react';
 import RGL, { Layout, WidthProvider } from 'react-grid-layout';
 import { SuccessResponseV2 } from 'types/api';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { PublicDashboardDataProps } from 'types/api/dashboard/public/get';
 
 import Panel from './Panel';
@@ -181,10 +182,14 @@ function PublicDashboardContainer({
 					layout={dashboardLayout}
 					style={{ backgroundColor: isDarkMode ? '' : themeColors.snowWhite }}
 				>
-					{widgets?.map((widget, index) => {
-						if (widget?.panelTypes === PANEL_GROUP_TYPES.ROW) {
-							const rowWidgetProperties = currentPanelMap[widget?.id] || {};
-							let { title } = widget;
+					{dashboardLayout?.map((layout) => {
+						const { i: id } = layout;
+						const currentWidget = (widgets || [])?.find((e) => e.id === id);
+						const currentWidgetIndex = (widgets || [])?.findIndex((e) => e.id === id);
+
+						if (currentWidget?.panelTypes === PANEL_GROUP_TYPES.ROW) {
+							const rowWidgetProperties = currentPanelMap[id] || {};
+							let { title } = currentWidget;
 							if (rowWidgetProperties.collapsed) {
 								const widgetCount = rowWidgetProperties.widgets?.length || 0;
 								const collapsedText = `(${widgetCount} widget${
@@ -197,8 +202,8 @@ function PublicDashboardContainer({
 								<CardContainer
 									isDarkMode={isDarkMode}
 									className="row-card"
-									key={widget?.id}
-									data-grid={JSON.stringify(widget)}
+									key={id}
+									data-grid={JSON.stringify(currentWidget)}
 								>
 									<div className={cx('row-panel')}>
 										<div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -212,18 +217,18 @@ function PublicDashboardContainer({
 						return (
 							<CardContainer
 								isDarkMode={isDarkMode}
-								key={widget?.id}
-								data-grid={JSON.stringify(widget)}
+								key={id}
+								data-grid={JSON.stringify(currentWidget)}
 							>
 								<Card
 									className="grid-item"
 									isDarkMode={isDarkMode}
-									$panelType={widget?.panelTypes || PANEL_TYPES.TIME_SERIES}
+									$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
 								>
 									<Panel
 										dashboardId={publicDashboardId}
-										widget={widget}
-										index={index}
+										widget={(currentWidget as Widgets) || ({ id, query: {} } as Widgets)}
+										index={currentWidgetIndex}
 										startTime={selectedTimeRange.startTime}
 										endTime={selectedTimeRange.endTime}
 									/>

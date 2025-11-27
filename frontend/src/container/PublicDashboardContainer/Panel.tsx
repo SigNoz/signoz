@@ -1,13 +1,18 @@
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import EmptyWidget from 'container/GridCardLayout/EmptyWidget';
 import WidgetGraphComponent from 'container/GridCardLayout/GridCard/WidgetGraphComponent';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
-import { useGetPublicDashboardWidgetData } from 'hooks/dashboard/useGetPublicDashboardWidgetData';
+// import { useGetPublicDashboardWidgetData } from 'hooks/dashboard/useGetPublicDashboardWidgetData';
+import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { memo, useCallback, useMemo, useRef } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { DataSource } from 'types/common/queryBuilder';
+import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
-import { transformPublicDashboardDataToQueryResponse } from './transformPublicDashboardData';
+// import { transformPublicDashboardDataToQueryResponse } from './transformPublicDashboardData';
 
 function Panel({
 	widget,
@@ -22,35 +27,80 @@ function Panel({
 	startTime: number;
 	endTime: number;
 }): JSX.Element {
-	const {
-		data: publicDashboardWidgetData,
-		isLoading: isLoadingPublicDashboardWidgetData,
-		isFetching: isFetchingPublicDashboardWidgetData,
-	} = useGetPublicDashboardWidgetData(
-		dashboardId,
-		index,
-		startTime * 1000, // convert to milliseconds
-		endTime * 1000, // convert to milliseconds
-	);
-
 	const graphRef = useRef<HTMLDivElement>(null);
+	const updatedQuery = widget?.query;
 
-	const queryResponse = useMemo(
-		() =>
-			transformPublicDashboardDataToQueryResponse(
-				publicDashboardWidgetData,
-				isLoadingPublicDashboardWidgetData,
-				widget.query,
-				startTime * 1000, // convert to milliseconds
-				endTime * 1000, // convert to milliseconds
-			),
-		[
-			publicDashboardWidgetData,
-			isLoadingPublicDashboardWidgetData,
-			widget.query,
-			startTime,
-			endTime,
-		],
+	const requestData: GetQueryResultsProps = useMemo(() => {
+		if (widget.panelTypes !== PANEL_TYPES.LIST) {
+			return {
+				selectedTime: widget?.timePreferance,
+				graphType: getGraphType(widget.panelTypes),
+				query: updatedQuery,
+				variables: {}, // we are not supporting variables in public dashboards
+				fillGaps: widget.fillSpans,
+				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
+				start: startTime,
+				end: endTime,
+				originalGraphType: widget.panelTypes,
+			};
+		}
+
+		updatedQuery.builder.queryData[0].pageSize = 10;
+		const initialDataSource = updatedQuery.builder.queryData[0].dataSource;
+
+		return {
+			query: updatedQuery,
+			graphType: PANEL_TYPES.LIST,
+			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
+			tableParams: {
+				pagination: {
+					offset: 0,
+					limit: updatedQuery.builder.queryData[0].limit || 0,
+				},
+				// we do not need select columns in case of logs
+				selectColumns:
+					initialDataSource === DataSource.TRACES && widget.selectedTracesFields,
+			},
+			fillGaps: widget.fillSpans,
+			start: startTime,
+			end: endTime,
+		};
+	}, [widget, updatedQuery, startTime, endTime]);
+
+	const queryResponse = useGetQueryRange(
+		{
+			...requestData,
+			originalGraphType: widget?.panelTypes,
+		},
+		ENTITY_VERSION_V5,
+		{
+			queryKey: [
+				widget?.query,
+				widget?.panelTypes,
+				requestData,
+				startTime,
+				endTime,
+			],
+			retry(failureCount, error): boolean {
+				if (
+					String(error).includes('status: error') &&
+					String(error).includes('i/o timeout')
+				) {
+					return false;
+				}
+
+				return failureCount < 2;
+			},
+			keepPreviousData: true,
+			enabled: !!widget?.query,
+			refetchOnMount: false,
+		},
+		{},
+		{
+			isPublic: true,
+			widgetIndex: index,
+			publicDashboardId: dashboardId,
+		},
 	);
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
@@ -88,9 +138,7 @@ function Panel({
 					errorMessage={undefined}
 					headerMenuList={[]}
 					isWarning={false}
-					isFetchingResponse={
-						isLoadingPublicDashboardWidgetData || isFetchingPublicDashboardWidgetData
-					}
+					isFetchingResponse={queryResponse.isFetching || queryResponse.isLoading}
 					onDragSelect={onDragSelect}
 				/>
 			)}
