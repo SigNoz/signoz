@@ -87,6 +87,49 @@ func (m *module) createIndexes(ctx context.Context, indexes []schemamigrator.Ind
 	return nil
 }
 
+func (m *module) DropIndex(ctx context.Context, path promotetypes.PromotePath) error {
+	promoted, err := telemetrymetadata.IsPathPromoted(ctx, m.store.ClickhouseDB(), path.Path)
+	if err != nil {
+		return err
+	}
+	parentColumn := telemetrylogs.LogsV2BodyJSONColumn
+	if promoted {
+		parentColumn = telemetrylogs.LogsV2BodyPromotedColumn
+	}
+	trimmedPath := strings.TrimPrefix(path.Path, telemetrytypes.BodyJSONStringSearchPrefix)
+
+	for _, index := range path.Indexes {
+		typeIndex := schemamigrator.IndexTypeTokenBF
+		switch {
+		case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeNGramBF)):
+			typeIndex = schemamigrator.IndexTypeNGramBF
+		case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeTokenBF)):
+			typeIndex = schemamigrator.IndexTypeTokenBF
+		case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeMinMax)):
+			typeIndex = schemamigrator.IndexTypeMinMax
+		default:
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid index type: %s", index.Type)
+		}
+
+		alterStmt := schemamigrator.AlterTableDropIndex{
+			Database: telemetrylogs.DBName,
+			Table:    telemetrylogs.LogsV2LocalTableName,
+			Index: schemamigrator.Index{
+				Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, trimmedPath, index.JSONDataType.StringValue(), typeIndex),
+				Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, trimmedPath, index.JSONDataType.StringValue()),
+				Type:        index.Type,
+				Granularity: index.Granularity,
+			},
+		}
+		op := alterStmt.OnCluster(m.store.Cluster())
+		if err := m.store.ClickhouseDB().Exec(ctx, op.ToSQL()); err != nil {
+			return errors.NewInternalf(errors.CodeInternal, "failed to drop index: %s", err)
+		}
+	}
+
+	return nil
+}
+
 // PromoteAndIndexPaths handles promoting paths and creating indexes in one call.
 func (m *module) PromoteAndIndexPaths(
 	ctx context.Context,

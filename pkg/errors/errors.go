@@ -208,3 +208,8 @@ func WrapUnexpectedf(cause error, code Code, format string, args ...any) *base {
 func NewUnexpectedf(code Code, format string, args ...any) *base {
 	return Newf(TypeInvalidInput, code, format, args...)
 }
+
+// NewMethodNotAllowedf is a wrapper around Newf with TypeMethodNotAllowed.
+func NewMethodNotAllowedf(code Code, format string, args ...any) *base {
+	return Newf(TypeMethodNotAllowed, code, format, args...)
+}

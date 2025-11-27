@@ -165,31 +165,28 @@ func listLogsIndexesClean(ctx context.Context, conn clickhouse.Conn, cluster, pa
 	// build a set of indexes
 	cleanIndexes := []telemetrytypes.JSONDataTypeIndex{}
 	for _, index := range indexes {
-		columnExpr, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
+		columnExpr, columnType, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
 		if err != nil {
 			return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to unfold JSON sub column index expression: %s", index.Expression)
 		}
 
-		if strings.HasPrefix(index.Type, "ngram") || strings.HasPrefix(index.Type, "token") {
+		jsonDataType, found := telemetrytypes.MappingStringToJSONDataType[columnType]
+		if !found {
+			return nil, errors.NewInternalf(CodeUnknownJSONDataType, "failed to map column type to JSON data type: %s", columnType)
+		}
+
+		if jsonDataType == telemetrytypes.String {
 			cleanIndexes = append(cleanIndexes, telemetrytypes.JSONDataTypeIndex{
 				Type:             telemetrytypes.String,
 				ColumnExpression: columnExpr,
 				IndexExpression:  index.Expression,
 			})
 		} else if strings.HasPrefix(index.Type, "minmax") {
-			if strings.Contains(columnExpr, telemetrytypes.Int64.StringValue()) {
-				cleanIndexes = append(cleanIndexes, telemetrytypes.JSONDataTypeIndex{
-					Type:             telemetrytypes.Int64,
-					ColumnExpression: columnExpr,
-					IndexExpression:  index.Expression,
-				})
-			} else if strings.Contains(columnExpr, telemetrytypes.Float64.StringValue()) {
-				cleanIndexes = append(cleanIndexes, telemetrytypes.JSONDataTypeIndex{
-					Type:             telemetrytypes.Float64,
-					ColumnExpression: columnExpr,
-					IndexExpression:  index.Expression,
-				})
-			}
+			cleanIndexes = append(cleanIndexes, telemetrytypes.JSONDataTypeIndex{
+				Type:             jsonDataType,
+				ColumnExpression: columnExpr,
+				IndexExpression:  index.Expression,
+			})
 		}
 	}
 

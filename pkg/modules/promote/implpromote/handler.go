@@ -34,9 +34,32 @@ func (h *handler) HandlePromote(w http.ResponseWriter, r *http.Request) {
 		h.GetPromotedAndIndexedPaths(w, r)
 		return
 	case http.MethodPost:
-
+		h.PromotePaths(w, r)
+		return
+	case http.MethodDelete:
+		h.DropIndex(w, r)
+		return
+	default:
+		render.Error(w, errors.NewMethodNotAllowedf(errors.CodeMethodNotAllowed, "method not allowed"))
+		return
 	}
 
+}
+
+func (h *handler) DropIndex(w http.ResponseWriter, r *http.Request) {
+	var req promotetypes.PromotePath
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "Invalid data"))
+		return
+	}
+
+	err := h.module.DropIndex(r.Context(), req)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, nil)
 }
 
 func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
