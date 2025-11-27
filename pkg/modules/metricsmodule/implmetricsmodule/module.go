@@ -629,7 +629,7 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 	start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
 
 	totalTSBuilder := sqlbuilder.NewSelectBuilder()
-	totalTSBuilder.Select("uniq(fingerprint)")
+	totalTSBuilder.Select("uniq(fingerprint) AS total_time_series")
 	totalTSBuilder.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
 	totalTSBuilder.Where(totalTSBuilder.Between("unix_milli", start, end))
 	totalTSBuilder.Where(totalTSBuilder.E("__normalized", false))
@@ -639,8 +639,6 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 		"metric_name",
 		"uniq(fingerprint) AS total_value",
 	)
-	totalPlaceholder := metricsSB.Var(totalTSBuilder)
-	metricsSB.SelectMore(fmt.Sprintf("(%s) AS total_time_series", totalPlaceholder))
 	metricsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
 	metricsSB.Where(metricsSB.Between("unix_milli", start, end))
 	metricsSB.Where("NOT startsWith(metric_name, 'signoz')")
@@ -651,15 +649,17 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 	metricsSB.GroupBy("metric_name")
 
 	cteBuilder := sqlbuilder.With(
+		sqlbuilder.CTEQuery("__total_time_series").As(totalTSBuilder),
 		sqlbuilder.CTEQuery("__metric_totals").As(metricsSB),
 	)
 
 	finalSB := cteBuilder.Select(
-		"metric_name",
-		"total_value",
-		"CASE WHEN total_time_series = 0 THEN 0 ELSE (total_value * 100.0 / total_time_series) END AS percentage",
+		"mt.metric_name",
+		"mt.total_value",
+		"CASE WHEN tts.total_time_series = 0 THEN 0 ELSE (mt.total_value * 100.0 / tts.total_time_series) END AS percentage",
 	)
-	finalSB.From("__metric_totals")
+	finalSB.From("__metric_totals mt")
+	finalSB.Join("__total_time_series tts", "1=1")
 	finalSB.OrderBy("percentage").Desc()
 	finalSB.Limit(req.Limit)
 
@@ -708,6 +708,10 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 	metricCandidatesSB.OrderBy("uniq(ts.fingerprint) DESC")
 	metricCandidatesSB.Limit(candidateLimit)
 
+	cteQueries := []*sqlbuilder.CTEQueryBuilder{
+		sqlbuilder.CTEQuery("__metric_candidates").As(metricCandidatesSB),
+	}
+
 	totalSamplesSB := sqlbuilder.NewSelectBuilder()
 	totalSamplesSB.Select(fmt.Sprintf("%s AS total_samples", countExp))
 	totalSamplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
@@ -724,26 +728,28 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 
 	if filterWhereClause != nil {
 		fingerprintSB := sqlbuilder.NewSelectBuilder()
-		fingerprintSB.Select("ts.fingerprint")
-		fingerprintSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, localTsTable))
-		fingerprintSB.Where(fingerprintSB.Between("ts.unix_milli", start, end))
-		fingerprintSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
+		fingerprintSB.Select("fingerprint")
+		fingerprintSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTsTable))
+		fingerprintSB.Where(fingerprintSB.Between("unix_milli", start, end))
+		fingerprintSB.Where("NOT startsWith(metric_name, 'signoz')")
 		fingerprintSB.Where(fingerprintSB.E("__normalized", false))
 		fingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
-		fingerprintSB.Where("ts.metric_name IN (SELECT metric_name FROM __metric_candidates)")
-		fingerprintSB.GroupBy("ts.fingerprint")
+		fingerprintSB.Where("metric_name IN (SELECT metric_name FROM __metric_candidates)")
+		fingerprintSB.GroupBy("fingerprint")
 
-		subQuery := sampleCountsSB.Var(fingerprintSB)
-		sampleCountsSB.Where(fmt.Sprintf("dm.fingerprint IN (%s)", subQuery))
+		sampleCountsSB.Where("dm.fingerprint IN (SELECT fingerprint FROM __filtered_fingerprints)")
+
+		cteQueries = append(cteQueries, sqlbuilder.CTEQuery("__filtered_fingerprints").As(fingerprintSB))
 	}
 
 	sampleCountsSB.GroupBy("dm.metric_name")
 
-	cteBuilder := sqlbuilder.With(
-		sqlbuilder.CTEQuery("__metric_candidates").As(metricCandidatesSB),
+	cteQueries = append(cteQueries,
 		sqlbuilder.CTEQuery("__sample_counts").As(sampleCountsSB),
 		sqlbuilder.CTEQuery("__total_samples").As(totalSamplesSB),
 	)
+
+	cteBuilder := sqlbuilder.With(cteQueries...)
 
 	finalSB := cteBuilder.Select(
 		"mc.metric_name",
