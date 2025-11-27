@@ -210,7 +210,7 @@ describe('MultipleNotifications', () => {
 		render(<MultipleNotifications />);
 
 		expect(
-			screen.getByText('Grouping of alerts is disabled'),
+			screen.getByText('All = grouping of alerts is disabled'),
 		).toBeInTheDocument();
 	});
 
