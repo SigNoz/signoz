@@ -251,6 +251,10 @@
 					.ant-input-group-addon {
 						border-top-left-radius: 0px !important;
 						border-top-right-radius: 0px !important;
+						background: var(--bg-ink-300);
+						color: var(--bg-vanilla-400);
+						font-size: 12px;
+						font-weight: 300;
 					}
 
 					.ant-input {
@@ -296,6 +300,10 @@
 				}
 			}
 			.qb-trace-operator-button-container {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+
 				&-text {
 					display: flex;
 					align-items: center;

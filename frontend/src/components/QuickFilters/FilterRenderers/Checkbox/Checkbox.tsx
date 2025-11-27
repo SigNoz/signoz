@@ -178,7 +178,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			if (SELECTED_OPERATORS.includes(filterSync.op)) {
 				if (isArray(filterSync.value)) {
 					filterSync.value.forEach((val) => {
-						filterState[val] = true;
+						filterState[String(val)] = true;
 					});
 				} else if (typeof filterSync.value === 'string') {
 					filterState[filterSync.value] = true;
@@ -191,7 +191,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				filterState = setDefaultValues(attributeValues, true);
 				if (isArray(filterSync.value)) {
 					filterSync.value.forEach((val) => {
-						filterState[val] = false;
+						filterState[String(val)] = false;
 					});
 				} else if (typeof filterSync.value === 'string') {
 					filterState[filterSync.value] = false;
