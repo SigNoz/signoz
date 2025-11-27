@@ -92,6 +92,9 @@ func (h *handler) GetPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Requ
 				return nil, err
 			}
 
+			// clean backticks from the path
+			path = strings.ReplaceAll(path, "`", "")
+
 			aggr[path] = append(aggr[path], promotetypes.WrappedIndex{
 				ColumnType:  columnType,
 				Type:        index.Type,

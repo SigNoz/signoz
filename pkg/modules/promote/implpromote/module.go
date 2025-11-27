@@ -95,10 +95,16 @@ func (m *module) createIndexes(ctx context.Context, indexes []schemamigrator.Ind
 			return errors.WrapInternalf(err, CodeFailedToCreateIndex, "failed to create index")
 		}
 	}
+
 	return nil
 }
 
 func (m *module) DropIndex(ctx context.Context, path promotetypes.PromotePath) error {
+	// validate the paths
+	if err := path.Validate(); err != nil {
+		return err
+	}
+
 	promoted, err := telemetrymetadata.IsPathPromoted(ctx, m.store.ClickhouseDB(), path.Path)
 	if err != nil {
 		return err
@@ -149,6 +155,13 @@ func (m *module) PromoteAndIndexPaths(
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty")
 	}
 
+	// validate the paths
+	for _, path := range paths {
+		if err := path.Validate(); err != nil {
+			return err
+		}
+	}
+
 	sb := sqlbuilder.NewSelectBuilder().From(fmt.Sprintf("%s.%s", telemetrymetadata.DBName, telemetrymetadata.PromotedPathsTableName)).Select("path")
 	cond := []string{}
 	for _, path := range paths {
@@ -174,9 +187,6 @@ func (m *module) PromoteAndIndexPaths(
 	var toInsert []string
 	indexes := []schemamigrator.Index{}
 	for _, it := range paths {
-		if err := it.Validate(); err != nil {
-			return err
-		}
 		if it.Promote {
 			if _, promoted := existingPromotedPaths[it.Path]; !promoted {
 				toInsert = append(toInsert, it.Path)
