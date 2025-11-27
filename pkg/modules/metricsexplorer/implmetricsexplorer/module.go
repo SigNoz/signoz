@@ -546,12 +546,12 @@ func (m *module) fetchMetricsStatsWithSamples(
 	// Samples counts per metric
 	samplesSB := sqlbuilder.NewSelectBuilder()
 	samplesSB.Select(
-		"dm.metric_name",
+		"metric_name",
 		fmt.Sprintf("%s AS samples", countExp),
 	)
-	samplesSB.From(fmt.Sprintf("%s.%s AS dm", telemetrymetrics.DBName, samplesTable))
-	samplesSB.Where(samplesSB.Between("dm.unix_milli", req.Start, req.End))
-	samplesSB.Where("NOT startsWith(dm.metric_name, 'signoz')")
+	samplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	samplesSB.Where(samplesSB.Between("unix_milli", req.Start, req.End))
+	samplesSB.Where("NOT startsWith(metric_name, 'signoz')")
 
 	ctes := []*sqlbuilder.CTEQueryBuilder{
 		sqlbuilder.CTEQuery("__time_series_counts").As(tsSB),
@@ -568,9 +568,9 @@ func (m *module) fetchMetricsStatsWithSamples(
 		fingerprintSB.GroupBy("fingerprint")
 
 		ctes = append(ctes, sqlbuilder.CTEQuery("__filtered_fingerprints").As(fingerprintSB))
-		samplesSB.Where("dm.fingerprint IN (SELECT fingerprint FROM __filtered_fingerprints)")
+		samplesSB.Where("fingerprint IN (SELECT fingerprint FROM __filtered_fingerprints)")
 	}
-	samplesSB.GroupBy("dm.metric_name")
+	samplesSB.GroupBy("metric_name")
 
 	ctes = append(ctes, sqlbuilder.CTEQuery("__sample_counts").As(samplesSB))
 	cteBuilder := sqlbuilder.With(ctes...)
