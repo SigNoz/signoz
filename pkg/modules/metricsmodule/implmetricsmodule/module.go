@@ -372,23 +372,21 @@ func (m *module) validateAndNormalizeMetricType(req *metricsmoduletypes.UpdateMe
 
 func (m *module) validateMetricLabels(ctx context.Context, req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
 	if req.Type == metrictypes.HistogramType {
-		labels := []string{"le"}
-		hasLabels, err := m.checkForLabelsInMetric(ctx, req.MetricName, labels)
+		hasLabel, err := m.checkForLabelInMetric(ctx, req.MetricName, "le")
 		if err != nil {
 			return err
 		}
-		if !hasLabels {
+		if !hasLabel {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as histogram type", req.MetricName)
 		}
 	}
 
 	if req.Type == metrictypes.SummaryType {
-		labels := []string{"quantile"}
-		hasLabels, err := m.checkForLabelsInMetric(ctx, req.MetricName, labels)
+		hasLabel, err := m.checkForLabelInMetric(ctx, req.MetricName, "quantile")
 		if err != nil {
 			return err
 		}
-		if !hasLabels {
+		if !hasLabel {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as summary type", req.MetricName)
 		}
 	}
@@ -396,30 +394,24 @@ func (m *module) validateMetricLabels(ctx context.Context, req *metricsmoduletyp
 	return nil
 }
 
-func (m *module) checkForLabelsInMetric(ctx context.Context, metricName string, labels []string) (bool, error) {
-	if len(labels) == 0 {
-		return true, nil
-	}
-
+func (m *module) checkForLabelInMetric(ctx context.Context, metricName string, label string) (bool, error) {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("count(*) > 0 AS has_labels")
-	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41dayTableName))
+	sb.Select("count(*) > 0 AS has_label")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
 	sb.Where(sb.E("metric_name", metricName))
-	for _, label := range labels {
-		sb.Where(fmt.Sprintf("JSONHas(labels, %s) = 1", sb.Var(label)))
-	}
+	sb.Where(sb.E("attr_name", label))
 	sb.Limit(1)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	var hasLabels bool
+	var hasLabel bool
 	db := m.telemetryStore.ClickhouseDB()
-	err := db.QueryRow(ctx, query, args...).Scan(&hasLabels)
+	err := db.QueryRow(ctx, query, args...).Scan(&hasLabel)
 	if err != nil {
-		return false, errors.WrapInternalf(err, errors.CodeInternal, "error checking metric labels")
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "error checking metric label %q", label)
 	}
 
-	return hasLabels, nil
+	return hasLabel, nil
 }
 
 func (m *module) deleteMetricsMetadata(ctx context.Context, metricName string) error {
