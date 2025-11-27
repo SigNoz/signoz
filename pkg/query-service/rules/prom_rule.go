@@ -160,7 +160,8 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		}
 
 		results, err := r.Threshold.Eval(toCommonSeries(series), r.Unit(), ruletypes.EvalData{
-			ActiveAlerts: r.ActiveAlertsLabelFP(),
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+			SendUnmatched: r.ShouldSendUnmatched(),
 		})
 		if err != nil {
 			return nil, err
