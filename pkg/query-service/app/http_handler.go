@@ -78,6 +78,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/version"
 
+	"github.com/SigNoz/signoz/pkg/parser/queryfilterextractor"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 )
 
@@ -146,6 +147,8 @@ type APIHandler struct {
 
 	QuerierAPI *querierAPI.API
 
+	QueryParserAPI *queryfilterextractor.API
+
 	Signoz *signoz.SigNoz
 }
 
@@ -175,6 +178,8 @@ type APIHandlerOpts struct {
 	FieldsAPI *fields.API
 
 	QuerierAPI *querierAPI.API
+
+	QueryParserAPI *queryfilterextractor.API
 
 	Signoz *signoz.SigNoz
 }
@@ -238,6 +243,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Signoz:                        opts.Signoz,
 		FieldsAPI:                     opts.FieldsAPI,
 		QuerierAPI:                    opts.QuerierAPI,
+		QueryParserAPI:                opts.QueryParserAPI,
 	}
 
 	logsQueryBuilder := logsv4.PrepareLogsQuery
@@ -632,6 +638,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/span_percentile", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetSpanPercentileDetails)).Methods(http.MethodPost)
 
+	// Query Filter Analyzer api used to extract metric names and grouping columns from a query
+	router.HandleFunc("/api/v1/query_filter/analyze", am.ViewAccess(aH.QueryParserAPI.AnalyzeQueryFilter)).Methods(http.MethodPost)
 }
 
 func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.AuthZ) {
