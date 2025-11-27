@@ -3,7 +3,6 @@ package googlecallbackauthn
 import (
 	"context"
 	"net/url"
-	"sync"
 
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -20,10 +19,6 @@ const (
 
 var (
 	scopes []string = []string{"email"}
-
-	oidcProviderOnce sync.Once
-	oidcProvider     *oidc.Provider
-	oidcProviderErr  error
 )
 
 var _ authn.CallbackAuthN = (*AuthN)(nil)
@@ -39,7 +34,7 @@ func New(ctx context.Context, store authtypes.AuthNStore) (*AuthN, error) {
 }
 
 func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
-	provider, err := getProvider(ctx)
+	provider, err := oidc.NewProvider(ctx, issuerURL)
 	if err != nil {
 		return "", err
 	}
@@ -57,7 +52,7 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 }
 
 func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtypes.CallbackIdentity, error) {
-	provider, err := getProvider(ctx)
+	provider, err := oidc.NewProvider(ctx, issuerURL)
 	if err != nil {
 		return nil, err
 	}
@@ -134,11 +129,4 @@ func (a *AuthN) oauth2Config(siteURL *url.URL, authDomain *authtypes.AuthDomain,
 			Path:   redirectPath,
 		}).String(),
 	}
-}
-
-func getProvider(ctx context.Context) (*oidc.Provider, error) {
-	oidcProviderOnce.Do(func() {
-		oidcProvider, oidcProviderErr = oidc.NewProvider(ctx, issuerURL)
-	})
-	return oidcProvider, oidcProviderErr
 }
