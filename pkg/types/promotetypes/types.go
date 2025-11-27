@@ -20,7 +20,6 @@ type WrappedIndex struct {
 type PromotePath struct {
 	Path    string `json:"path"`
 	Promote bool   `json:"promote,omitempty"`
-	Index   bool   `json:"index,omitempty"`
 
 	Indexes []WrappedIndex `json:"indexes,omitempty"`
 }
@@ -46,6 +45,9 @@ func (i *PromotePath) Validate() error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must start with `body.`")
 	}
 
+	// remove the "body." prefix from the path
+	i.Path = strings.TrimPrefix(i.Path, telemetrylogs.BodyJSONStringSearchPrefix)
+
 	isCardinal := keycheck.IsCardinal(i.Path)
 	if isCardinal {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cardinal paths can not be promoted or indexed")
@@ -68,10 +70,6 @@ func (i *PromotePath) Validate() error {
 		}
 
 		i.Indexes[idx].JSONDataType = jsonDataType
-	}
-
-	if i.Index && len(i.Indexes) == 0 {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "indexes are required when indexing is enabled")
 	}
 
 	return nil

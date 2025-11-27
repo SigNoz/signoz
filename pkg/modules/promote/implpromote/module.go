@@ -2,6 +2,7 @@ package implpromote
 
 import (
 	"context"
+	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -14,7 +15,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/huandu/go-sqlbuilder"
+)
+
+var (
+	CodeFailedToPrepareBatch       = errors.MustNewCode("failed_to_prepare_batch_promoted_paths")
+	CodeFailedToSendBatch          = errors.MustNewCode("failed_to_send_batch_promoted_paths")
+	CodeFailedToAppendPath         = errors.MustNewCode("failed_to_append_path_promoted_paths")
+	CodeFailedToCreateIndex        = errors.MustNewCode("failed_to_create_index_promoted_paths")
+	CodeFailedToDropIndex          = errors.MustNewCode("failed_to_drop_index_promoted_paths")
+	CodeFailedToQueryPromotedPaths = errors.MustNewCode("failed_to_query_promoted_paths")
 )
 
 type module struct {
@@ -43,10 +53,11 @@ func (m *module) PromotePaths(ctx context.Context, paths []string) error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty")
 	}
 
-	// Table: signoz_logs.distributed_promoted_paths with columns: path, created_at (UInt64 epoch ms)
-	batch, err := m.store.ClickhouseDB().PrepareBatch(ctx, "INSERT INTO signoz_logs.distributed_promoted_paths (path, created_at) VALUES")
+	batch, err := m.store.ClickhouseDB().PrepareBatch(ctx,
+		fmt.Sprintf("INSERT INTO %s.%s (path, created_at) VALUES", telemetrymetadata.DBName,
+			telemetrymetadata.PromotedPathsTableName))
 	if err != nil {
-		return errors.NewInternalf(errors.CodeInternal, "failed to prepare batch: %w", err)
+		return errors.WrapInternalf(err, CodeFailedToPrepareBatch, "failed to prepare batch")
 	}
 
 	nowMs := uint64(time.Now().UnixMilli())
@@ -57,12 +68,12 @@ func (m *module) PromotePaths(ctx context.Context, paths []string) error {
 		}
 		if err := batch.Append(trimmed, nowMs); err != nil {
 			_ = batch.Abort()
-			return errors.NewInternalf(errors.CodeInternal, "failed to append path: %w", err)
+			return errors.WrapInternalf(err, CodeFailedToAppendPath, "failed to append path")
 		}
 	}
 
 	if err := batch.Send(); err != nil {
-		return errors.NewInternalf(errors.CodeInternal, "failed to send batch: %w", err)
+		return errors.WrapInternalf(err, CodeFailedToSendBatch, "failed to send batch")
 	}
 	return nil
 }
@@ -81,7 +92,7 @@ func (m *module) createIndexes(ctx context.Context, indexes []schemamigrator.Ind
 		}
 		op := alterStmt.OnCluster(m.store.Cluster())
 		if err := m.store.ClickhouseDB().Exec(ctx, op.ToSQL()); err != nil {
-			return errors.NewInternalf(errors.CodeInternal, "failed to create index: %s", err)
+			return errors.WrapInternalf(err, CodeFailedToCreateIndex, "failed to create index")
 		}
 	}
 	return nil
@@ -96,7 +107,6 @@ func (m *module) DropIndex(ctx context.Context, path promotetypes.PromotePath) e
 	if promoted {
 		parentColumn = telemetrylogs.LogsV2BodyPromotedColumn
 	}
-	trimmedPath := strings.TrimPrefix(path.Path, telemetrytypes.BodyJSONStringSearchPrefix)
 
 	for _, index := range path.Indexes {
 		typeIndex := schemamigrator.IndexTypeTokenBF
@@ -115,15 +125,15 @@ func (m *module) DropIndex(ctx context.Context, path promotetypes.PromotePath) e
 			Database: telemetrylogs.DBName,
 			Table:    telemetrylogs.LogsV2LocalTableName,
 			Index: schemamigrator.Index{
-				Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, trimmedPath, index.JSONDataType.StringValue(), typeIndex),
-				Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, trimmedPath, index.JSONDataType.StringValue()),
+				Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, path.Path, index.JSONDataType.StringValue(), typeIndex),
+				Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, path.Path, index.JSONDataType.StringValue()),
 				Type:        index.Type,
 				Granularity: index.Granularity,
 			},
 		}
 		op := alterStmt.OnCluster(m.store.Cluster())
 		if err := m.store.ClickhouseDB().Exec(ctx, op.ToSQL()); err != nil {
-			return errors.NewInternalf(errors.CodeInternal, "failed to drop index: %s", err)
+			return errors.WrapInternalf(err, CodeFailedToDropIndex, "failed to drop index")
 		}
 	}
 
@@ -139,16 +149,25 @@ func (m *module) PromoteAndIndexPaths(
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty")
 	}
 
+	sb := sqlbuilder.NewSelectBuilder().From(fmt.Sprintf("%s.%s", telemetrymetadata.DBName, telemetrymetadata.PromotedPathsTableName)).Select("path")
+	cond := []string{}
+	for _, path := range paths {
+		cond = append(cond, sb.Equal("path", path.Path))
+	}
+	sb.Where(sb.Or(cond...))
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	rows, err := m.store.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return errors.WrapInternalf(err, CodeFailedToQueryPromotedPaths, "failed to query promoted paths")
+	}
+	defer rows.Close()
+
 	// Load existing promoted paths once
 	existingPromotedPaths := make(map[string]struct{})
-	rows, qerr := m.store.ClickhouseDB().Query(ctx, "SELECT path FROM signoz_logs.distributed_promoted_paths")
-	if qerr == nil {
-		defer rows.Close()
-		for rows.Next() {
-			var p string
-			if err := rows.Scan(&p); err == nil {
-				existingPromotedPaths[p] = struct{}{}
-			}
+	for rows.Next() {
+		var p string
+		if err := rows.Scan(&p); err == nil {
+			existingPromotedPaths[p] = struct{}{}
 		}
 	}
 
@@ -158,17 +177,15 @@ func (m *module) PromoteAndIndexPaths(
 		if err := it.Validate(); err != nil {
 			return err
 		}
-		// remove the "body." prefix from the path
-		trimmedPath := strings.TrimPrefix(it.Path, telemetrytypes.BodyJSONStringSearchPrefix)
 		if it.Promote {
-			if _, promoted := existingPromotedPaths[trimmedPath]; !promoted {
-				toInsert = append(toInsert, trimmedPath)
+			if _, promoted := existingPromotedPaths[it.Path]; !promoted {
+				toInsert = append(toInsert, it.Path)
 			}
 		}
-		if it.Index {
+		if len(it.Indexes) > 0 {
 			parentColumn := telemetrylogs.LogsV2BodyJSONColumn
 			// if the path is already promoted or is being promoted, add it to the promoted column
-			if _, promoted := existingPromotedPaths[trimmedPath]; promoted || it.Promote {
+			if _, promoted := existingPromotedPaths[it.Path]; promoted || it.Promote {
 				parentColumn = telemetrylogs.LogsV2BodyPromotedColumn
 			}
 
@@ -185,8 +202,8 @@ func (m *module) PromoteAndIndexPaths(
 					return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid index type: %s", index.Type)
 				}
 				indexes = append(indexes, schemamigrator.Index{
-					Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, trimmedPath, index.JSONDataType.StringValue(), typeIndex),
-					Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, trimmedPath, index.JSONDataType.StringValue()),
+					Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, it.Path, index.JSONDataType.StringValue(), typeIndex),
+					Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, it.Path, index.JSONDataType.StringValue()),
 					Type:        index.Type,
 					Granularity: index.Granularity,
 				})
