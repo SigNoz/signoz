@@ -699,16 +699,16 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 	candidateLimit := req.Limit + 50
 
 	metricCandidatesSB := sqlbuilder.NewSelectBuilder()
-	metricCandidatesSB.Select("ts.metric_name")
-	metricCandidatesSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, distributedTsTable))
-	metricCandidatesSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
+	metricCandidatesSB.Select("metric_name")
+	metricCandidatesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
+	metricCandidatesSB.Where("NOT startsWith(metric_name, 'signoz')")
 	metricCandidatesSB.Where(metricCandidatesSB.E("__normalized", false))
 	metricCandidatesSB.Where(metricCandidatesSB.Between("unix_milli", start, end))
 	if filterWhereClause != nil {
 		metricCandidatesSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
 	}
-	metricCandidatesSB.GroupBy("ts.metric_name")
-	metricCandidatesSB.OrderBy("uniq(ts.fingerprint) DESC")
+	metricCandidatesSB.GroupBy("metric_name")
+	metricCandidatesSB.OrderBy("uniq(fingerprint) DESC")
 	metricCandidatesSB.Limit(candidateLimit)
 
 	cteQueries := []*sqlbuilder.CTEQueryBuilder{
@@ -722,12 +722,12 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 
 	sampleCountsSB := sqlbuilder.NewSelectBuilder()
 	sampleCountsSB.Select(
-		"dm.metric_name AS metric_name",
+		"metric_name",
 		fmt.Sprintf("%s AS samples", countExp),
 	)
-	sampleCountsSB.From(fmt.Sprintf("%s.%s AS dm", telemetrymetrics.DBName, samplesTable))
-	sampleCountsSB.Where(sampleCountsSB.Between("dm.unix_milli", req.Start, req.End))
-	sampleCountsSB.Where("dm.metric_name IN (SELECT metric_name FROM __metric_candidates)")
+	sampleCountsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	sampleCountsSB.Where(sampleCountsSB.Between("unix_milli", req.Start, req.End))
+	sampleCountsSB.Where("metric_name IN (SELECT metric_name FROM __metric_candidates)")
 
 	if filterWhereClause != nil {
 		fingerprintSB := sqlbuilder.NewSelectBuilder()
@@ -740,12 +740,12 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 		fingerprintSB.Where("metric_name IN (SELECT metric_name FROM __metric_candidates)")
 		fingerprintSB.GroupBy("fingerprint")
 
-		sampleCountsSB.Where("dm.fingerprint IN (SELECT fingerprint FROM __filtered_fingerprints)")
+		sampleCountsSB.Where("fingerprint IN (SELECT fingerprint FROM __filtered_fingerprints)")
 
 		cteQueries = append(cteQueries, sqlbuilder.CTEQuery("__filtered_fingerprints").As(fingerprintSB))
 	}
 
-	sampleCountsSB.GroupBy("dm.metric_name")
+	sampleCountsSB.GroupBy("metric_name")
 
 	cteQueries = append(cteQueries,
 		sqlbuilder.CTEQuery("__sample_counts").As(sampleCountsSB),
