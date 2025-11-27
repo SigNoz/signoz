@@ -602,13 +602,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 	// Filter out new series if newGroupEvalDelay is configured
 	if r.ShouldSkipNewGroups() {
-		collection := ruletypes.NewVectorCollection(res)
+		collection := ruletypes.NewVectorLabelledCollection(res)
 		filteredCollection, _, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, collection)
 		if filterErr != nil {
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
 			return nil, filterErr
 		}
-		res = filteredCollection.(*ruletypes.VectorCollection).Vector()
+		res = filteredCollection.(*ruletypes.VectorLabelledCollection).Vector()
 	}
 
 	r.mtx.Lock()

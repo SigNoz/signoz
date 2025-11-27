@@ -623,9 +623,9 @@ func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) ([]string, []st
 	return metricNames, groupedFields, nil
 }
 
-// FilterNewSeries filters out series that are too new based on metadata first_seen timestamps.
+// FilterNewSeries filters out items that are too new based on metadata first_seen timestamps.
 // Returns the filtered series and the number of series that were skipped.
-func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series ruletypes.SeriesCollection) (ruletypes.SeriesCollection, int, error) {
+func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series ruletypes.LabelledCollection) (ruletypes.LabelledCollection, int, error) {
 	// Extract metric names and groupBy keys
 	metricNames, groupedFields, err := r.extractMetricAndGroupBys(ctx)
 	if err != nil {
