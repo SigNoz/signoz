@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	defaultPathLimit = 1000 // Default limit to prevent full table scans
+	defaultPathLimit = 100 // Default limit to prevent full table scans
 
 	CodeUnknownJSONDataType     = errors.MustNewCode("unknown_json_data_type")
 	CodeFailLoadPromotedPaths   = errors.MustNewCode("fail_load_promoted_paths")
