@@ -1369,7 +1369,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr), zap.String("table", tableName))
-				continue
+				return
 			}
 
 			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
@@ -1388,9 +1388,10 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 						Exec(ctx)
 					if dbErr != nil {
 						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr), zap.String("table", tableName))
+						return
 					}
 				}
-				continue
+				return
 			}
 			zap.L().Info("Executing TTL request: ", zap.String("request", query), zap.String("table", tableName))
 			statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
@@ -1407,8 +1408,9 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 					Exec(ctx)
 				if dbErr != nil {
 					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr), zap.String("table", tableName))
+					return
 				}
-				continue
+				return
 			}
 			_, dbErr = r.
 				sqlDB.
@@ -1421,7 +1423,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr), zap.String("table", tableName))
-				continue
+				return
 			}
 		}
 
