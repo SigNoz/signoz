@@ -730,11 +730,12 @@ const maxJSONFlatteningDepth = "MAX_JSON_FLATTENING_DEPTH"
 
 func LogsSQLSelectV2() string {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("timestamp", "id", "trace_id", "span_id", "trace_flags", "severity_text", "severity_number", "scope_name", "scope_version", "body")
+	columns := []string{"timestamp", "id", "trace_id", "span_id", "trace_flags", "severity_text", "severity_number", "scope_name", "scope_version", "body"}
 	if BodyJSONQueryEnabled {
-		sb.Select("body_json", "body_json_promoted")
+		columns = append(columns, "body_json", "body_json_promoted")
 	}
-	sb.Select("attributes_string", "attributes_number", "attributes_bool", "resources_string", "scope_string")
+	columns = append(columns, "attributes_string", "attributes_number", "attributes_bool", "resources_string", "scope_string")
+	sb.Select(columns...)
 	query, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return query
+	return query + " " // add space to avoid concatenation issues
 }
