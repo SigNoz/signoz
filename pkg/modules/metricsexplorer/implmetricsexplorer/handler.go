@@ -1,4 +1,4 @@
-package implmetricsmodule
+package implmetricsexplorer
 
 import (
 	"net/http"
@@ -7,19 +7,19 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
+	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
+	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
 type handler struct {
-	module metricsmodule.Module
+	module metricsexplorer.Module
 }
 
-// NewHandler returns a metricsmodule.Handler implementation.
-func NewHandler(m metricsmodule.Module) metricsmodule.Handler {
+// NewHandler returns a metricsexplorer.Handler implementation.
+func NewHandler(m metricsexplorer.Module) metricsexplorer.Handler {
 	return &handler{
 		module: m,
 	}
@@ -32,7 +32,7 @@ func (h *handler) GetStats(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var in metricsmoduletypes.StatsRequest
+	var in metricsexplorertypes.StatsRequest
 	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
 		render.Error(rw, err)
 		return
@@ -56,7 +56,7 @@ func (h *handler) GetTreemap(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var in metricsmoduletypes.TreemapRequest
+	var in metricsexplorertypes.TreemapRequest
 	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
 		render.Error(rw, err)
 		return
@@ -88,7 +88,7 @@ func (h *handler) UpdateMetricMetadata(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	var in metricsmoduletypes.UpdateMetricMetadataRequest
+	var in metricsexplorertypes.UpdateMetricMetadataRequest
 	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
 		render.Error(rw, err)
 		return

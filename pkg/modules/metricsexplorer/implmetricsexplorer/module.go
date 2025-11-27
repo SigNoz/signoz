@@ -1,4 +1,4 @@
-package implmetricsmodule
+package implmetricsexplorer
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
+	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
+	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -32,7 +32,7 @@ type module struct {
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings) metricsmodule.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings) metricsexplorer.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -45,7 +45,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 	}
 }
 
-func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.StatsRequest) (*metricsmoduletypes.StatsResponse, error) {
+func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.StatsRequest) (*metricsexplorertypes.StatsResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -68,8 +68,8 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 	}
 
 	if len(metricStats) == 0 {
-		return &metricsmoduletypes.StatsResponse{
-			Metrics: []metricsmoduletypes.Stat{},
+		return &metricsexplorertypes.StatsResponse{
+			Metrics: []metricsexplorertypes.Stat{},
 			Total:   0,
 		}, nil
 	}
@@ -88,14 +88,14 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsmo
 	// Enrich stats with metadata
 	enrichStatsWithMetadata(metricStats, metadata)
 
-	return &metricsmoduletypes.StatsResponse{
+	return &metricsexplorertypes.StatsResponse{
 		Metrics: metricStats,
 		Total:   total,
 	}, nil
 }
 
 // GetTreemap will return metrics treemap information once implemented.
-func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.TreemapRequest) (*metricsmoduletypes.TreemapResponse, error) {
+func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.TreemapRequest) (*metricsexplorertypes.TreemapResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -105,9 +105,9 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 		return nil, err
 	}
 
-	resp := &metricsmoduletypes.TreemapResponse{}
+	resp := &metricsexplorertypes.TreemapResponse{}
 	switch req.Treemap {
-	case metricsmoduletypes.TreemapModeSamples:
+	case metricsexplorertypes.TreemapModeSamples:
 		entries, err := m.computeSamplesTreemap(ctx, req, filterWhereClause)
 		if err != nil {
 			return nil, err
@@ -124,12 +124,12 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 	return resp, nil
 }
 
-func (m *module) GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
+func (m *module) GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, error) {
 	if len(metricNames) == 0 {
-		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
+		return map[string]*metricsexplorertypes.MetricMetadata{}, nil
 	}
 
-	metadata := make(map[string]*metricsmoduletypes.MetricMetadata)
+	metadata := make(map[string]*metricsexplorertypes.MetricMetadata)
 	cacheHits, cacheMisses := m.fetchMetadataFromCache(ctx, orgID, metricNames)
 	for name, meta := range cacheHits {
 		metadata[name] = meta
@@ -163,12 +163,12 @@ func (m *module) GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, 
 	return metadata, nil
 }
 
-func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, []string) {
-	hits := make(map[string]*metricsmoduletypes.MetricMetadata)
+func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, []string) {
+	hits := make(map[string]*metricsexplorertypes.MetricMetadata)
 	misses := make([]string, 0)
 	for _, metricName := range metricNames {
 		cacheKey := generateMetricMetadataCacheKey(metricName)
-		var cachedMetadata metricsmoduletypes.MetricMetadata
+		var cachedMetadata metricsexplorertypes.MetricMetadata
 		if err := m.cache.Get(ctx, orgID, cacheKey, &cachedMetadata); err == nil {
 			hits[metricName] = &cachedMetadata
 		} else {
@@ -179,9 +179,9 @@ func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, 
 	return hits, misses
 }
 
-func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
+func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, error) {
 	if len(metricNames) == 0 {
-		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
+		return map[string]*metricsexplorertypes.MetricMetadata{}, nil
 	}
 
 	args := make([]any, len(metricNames))
@@ -210,10 +210,10 @@ func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, me
 	}
 	defer rows.Close()
 
-	result := make(map[string]*metricsmoduletypes.MetricMetadata)
+	result := make(map[string]*metricsexplorertypes.MetricMetadata)
 	for rows.Next() {
 		var (
-			metricMetadata metricsmoduletypes.MetricMetadata
+			metricMetadata metricsexplorertypes.MetricMetadata
 			metricName     string
 		)
 
@@ -235,9 +235,9 @@ func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, me
 	return result, nil
 }
 
-func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsmoduletypes.MetricMetadata, error) {
+func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, error) {
 	if len(metricNames) == 0 {
-		return map[string]*metricsmoduletypes.MetricMetadata{}, nil
+		return map[string]*metricsexplorertypes.MetricMetadata{}, nil
 	}
 
 	args := make([]any, len(metricNames))
@@ -267,10 +267,10 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 	}
 	defer rows.Close()
 
-	result := make(map[string]*metricsmoduletypes.MetricMetadata)
+	result := make(map[string]*metricsexplorertypes.MetricMetadata)
 	for rows.Next() {
 		var (
-			metricMetadata metricsmoduletypes.MetricMetadata
+			metricMetadata metricsexplorertypes.MetricMetadata
 			metricName     string
 		)
 
@@ -292,7 +292,7 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 	return result, nil
 }
 
-func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
+func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.UpdateMetricMetadataRequest) error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
@@ -324,7 +324,7 @@ func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, re
 	return nil
 }
 
-func (m *module) validateAndNormalizeMetricType(req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
+func (m *module) validateAndNormalizeMetricType(req *metricsexplorertypes.UpdateMetricMetadataRequest) error {
 	switch req.Type {
 	case metrictypes.SumType:
 		if req.Temporality.IsZero() {
@@ -370,7 +370,7 @@ func (m *module) validateAndNormalizeMetricType(req *metricsmoduletypes.UpdateMe
 	return nil
 }
 
-func (m *module) validateMetricLabels(ctx context.Context, req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
+func (m *module) validateMetricLabels(ctx context.Context, req *metricsexplorertypes.UpdateMetricMetadataRequest) error {
 	if req.Type == metrictypes.HistogramType {
 		hasLabel, err := m.checkForLabelInMetric(ctx, req.MetricName, "le")
 		if err != nil {
@@ -428,7 +428,7 @@ func (m *module) deleteMetricsMetadata(ctx context.Context, metricName string) e
 	return nil
 }
 
-func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *metricsmoduletypes.UpdateMetricMetadataRequest) error {
+func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.UpdateMetricMetadataRequest) error {
 	createdAt := time.Now().UnixMilli()
 
 	ib := sqlbuilder.NewInsertBuilder()
@@ -452,7 +452,7 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	}
 
 	// Set in cache after successful DB insert
-	metricMetadata := &metricsmoduletypes.MetricMetadata{
+	metricMetadata := &metricsexplorertypes.MetricMetadata{
 		Description: req.Description,
 		MetricType:  req.Type,
 		MetricUnit:  req.Unit,
@@ -518,11 +518,11 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 
 func (m *module) fetchMetricsStatsWithSamples(
 	ctx context.Context,
-	req *metricsmoduletypes.StatsRequest,
+	req *metricsexplorertypes.StatsRequest,
 	filterWhereClause *sqlbuilder.WhereClause,
 	normalized bool,
 	orderBy *qbtypes.OrderBy,
-) ([]metricsmoduletypes.Stat, uint64, error) {
+) ([]metricsexplorertypes.Stat, uint64, error) {
 
 	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
 	samplesTable := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
@@ -603,12 +603,12 @@ func (m *module) fetchMetricsStatsWithSamples(
 	}
 	defer rows.Close()
 
-	metricStats := make([]metricsmoduletypes.Stat, 0)
+	metricStats := make([]metricsexplorertypes.Stat, 0)
 	var total uint64
 
 	for rows.Next() {
 		var (
-			metricStat metricsmoduletypes.Stat
+			metricStat metricsexplorertypes.Stat
 			rowTotal   uint64
 		)
 		if err := rows.Scan(&metricStat.MetricName, &metricStat.TimeSeries, &metricStat.Samples, &rowTotal); err != nil {
@@ -625,7 +625,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 	return metricStats, total, nil
 }
 
-func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsmoduletypes.TreemapEntry, error) {
+func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsexplorertypes.TreemapEntry, error) {
 	start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
 
 	totalTSBuilder := sqlbuilder.NewSelectBuilder()
@@ -672,9 +672,9 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 	}
 	defer rows.Close()
 
-	entries := make([]metricsmoduletypes.TreemapEntry, 0)
+	entries := make([]metricsexplorertypes.TreemapEntry, 0)
 	for rows.Next() {
-		var treemapEntry metricsmoduletypes.TreemapEntry
+		var treemapEntry metricsexplorertypes.TreemapEntry
 		if err := rows.Scan(&treemapEntry.MetricName, &treemapEntry.TotalValue, &treemapEntry.Percentage); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan timeseries treemap row")
 		}
@@ -688,7 +688,7 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsmodul
 	return entries, nil
 }
 
-func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmoduletypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsmoduletypes.TreemapEntry, error) {
+func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsexplorertypes.TreemapEntry, error) {
 	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
 	samplesTable := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
 	countExp := telemetrymetrics.CountExpressionForSamplesTable(samplesTable)
@@ -771,9 +771,9 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsmodulety
 	}
 	defer rows.Close()
 
-	entries := make([]metricsmoduletypes.TreemapEntry, 0)
+	entries := make([]metricsexplorertypes.TreemapEntry, 0)
 	for rows.Next() {
-		var treemapEntry metricsmoduletypes.TreemapEntry
+		var treemapEntry metricsexplorertypes.TreemapEntry
 		if err := rows.Scan(&treemapEntry.MetricName, &treemapEntry.TotalValue, &treemapEntry.Percentage); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan samples treemap row")
 		}

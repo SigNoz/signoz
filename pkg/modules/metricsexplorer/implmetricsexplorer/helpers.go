@@ -1,11 +1,11 @@
-package implmetricsmodule
+package implmetricsexplorer
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/metricsmoduletypes"
+	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -26,17 +26,17 @@ func getStatsOrderByColumn(order *qbtypes.OrderBy) (string, string, error) {
 
 	var columnName string
 	switch strings.ToLower(order.Key.Name) {
-	case metricsmoduletypes.OrderByTimeSeries.StringValue():
+	case metricsexplorertypes.OrderByTimeSeries.StringValue():
 		columnName = sqlColumnTimeSeries
-	case metricsmoduletypes.OrderBySamples.StringValue():
+	case metricsexplorertypes.OrderBySamples.StringValue():
 		columnName = sqlColumnSamples
 	default:
 		return "", "", errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"unsupported order column %q: supported columns are %q or %q",
 			order.Key.Name,
-			metricsmoduletypes.OrderByTimeSeries,
-			metricsmoduletypes.OrderBySamples,
+			metricsexplorertypes.OrderByTimeSeries,
+			metricsexplorertypes.OrderBySamples,
 		)
 	}
 
@@ -51,7 +51,7 @@ func getStatsOrderByColumn(order *qbtypes.OrderBy) (string, string, error) {
 	return columnName, direction.StringValue(), nil
 }
 
-func extractMissingMetricNamesInMap(metricNames []string, metricMetadataMap map[string]*metricsmoduletypes.MetricMetadata) []string {
+func extractMissingMetricNamesInMap(metricNames []string, metricMetadataMap map[string]*metricsexplorertypes.MetricMetadata) []string {
 	misses := make([]string, 0)
 	for _, name := range metricNames {
 		if _, ok := metricMetadataMap[name]; !ok {
@@ -62,7 +62,7 @@ func extractMissingMetricNamesInMap(metricNames []string, metricMetadataMap map[
 }
 
 // enrichStatsWithMetadata enriches metric stats with metadata from the provided metadata map.
-func enrichStatsWithMetadata(metricStats []metricsmoduletypes.Stat, metadata map[string]*metricsmoduletypes.MetricMetadata) {
+func enrichStatsWithMetadata(metricStats []metricsexplorertypes.Stat, metadata map[string]*metricsexplorertypes.MetricMetadata) {
 	for i := range metricStats {
 		if meta, ok := metadata[metricStats[i].MetricName]; ok {
 			metricStats[i].Description = meta.Description
