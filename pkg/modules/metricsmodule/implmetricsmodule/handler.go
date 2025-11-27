@@ -38,11 +38,7 @@ func (h *handler) GetStats(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	out, err := h.module.GetStats(req.Context(), orgID, &in)
 	if err != nil {
@@ -66,11 +62,7 @@ func (h *handler) GetTreemap(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	out, err := h.module.GetTreemap(req.Context(), orgID, &in)
 	if err != nil {
@@ -105,11 +97,7 @@ func (h *handler) UpdateMetricMetadata(rw http.ResponseWriter, req *http.Request
 	// Set metric name from URL path
 	in.MetricName = metricName
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	err = h.module.UpdateMetricMetadata(req.Context(), orgID, &in)
 	if err != nil {
@@ -133,11 +121,7 @@ func (h *handler) GetMetricMetadata(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	metadataMap, err := h.module.GetMetricMetadataMulti(req.Context(), orgID, []string{metricName})
 	if err != nil {
