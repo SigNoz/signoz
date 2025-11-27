@@ -553,24 +553,27 @@ func (m *module) fetchMetricsStatsWithSamples(
 	samplesSB.Where(samplesSB.Between("dm.unix_milli", req.Start, req.End))
 	samplesSB.Where("NOT startsWith(dm.metric_name, 'signoz')")
 
+	ctes := []*sqlbuilder.CTEQueryBuilder{
+		sqlbuilder.CTEQuery("__time_series_counts").As(tsSB),
+	}
+
 	if filterWhereClause != nil {
 		fingerprintSB := sqlbuilder.NewSelectBuilder()
-		fingerprintSB.Select("ts.fingerprint")
-		fingerprintSB.From(fmt.Sprintf("%s.%s AS ts", telemetrymetrics.DBName, localTsTable))
-		fingerprintSB.Where(fingerprintSB.Between("ts.unix_milli", start, end))
-		fingerprintSB.Where("NOT startsWith(ts.metric_name, 'signoz')")
+		fingerprintSB.Select("fingerprint")
+		fingerprintSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTsTable))
+		fingerprintSB.Where(fingerprintSB.Between("unix_milli", start, end))
+		fingerprintSB.Where("NOT startsWith(metric_name, 'signoz')")
 		fingerprintSB.Where(fingerprintSB.E("__normalized", normalized))
 		fingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
-		fingerprintSB.GroupBy("ts.fingerprint")
+		fingerprintSB.GroupBy("fingerprint")
 
-		samplesSB.Where(fmt.Sprintf("dm.fingerprint IN (%s)", samplesSB.Var(fingerprintSB)))
+		ctes = append(ctes, sqlbuilder.CTEQuery("__filtered_fingerprints").As(fingerprintSB))
+		samplesSB.Where("dm.fingerprint IN (SELECT fingerprint FROM __filtered_fingerprints)")
 	}
 	samplesSB.GroupBy("dm.metric_name")
 
-	cteBuilder := sqlbuilder.With(
-		sqlbuilder.CTEQuery("__time_series_counts").As(tsSB),
-		sqlbuilder.CTEQuery("__sample_counts").As(samplesSB),
-	)
+	ctes = append(ctes, sqlbuilder.CTEQuery("__sample_counts").As(samplesSB))
+	cteBuilder := sqlbuilder.With(ctes...)
 
 	finalSB := cteBuilder.Select(
 		"COALESCE(ts.metric_name, s.metric_name) AS metric_name",
