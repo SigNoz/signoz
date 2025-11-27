@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/huandu/go-sqlbuilder"
 )
 
 const (
@@ -216,13 +217,6 @@ const (
 		"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool," +
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string," +
 		"CAST((scope_string_key, scope_string_value), 'Map(String, String)') as scope "
-	LogsSQLSelectV2 = "SELECT " +
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, " +
-		"attributes_string, " +
-		"attributes_number, " +
-		"attributes_bool, " +
-		"resources_string, " +
-		"scope_string "
 	TracesExplorerViewSQLSelectWithSubQuery = "(SELECT traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s ORDER BY durationNano DESC LIMIT 1 BY traceID"
 	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName as `subQuery.serviceName`, subQuery.name as `subQuery.name`, count() AS " +
@@ -733,3 +727,14 @@ const InspectMetricsMaxTimeDiff = 1800000
 
 const DotMetricsEnabled = "DOT_METRICS_ENABLED"
 const maxJSONFlatteningDepth = "MAX_JSON_FLATTENING_DEPTH"
+
+func LogsSQLSelectV2() string {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("timestamp", "id", "trace_id", "span_id", "trace_flags", "severity_text", "severity_number", "scope_name", "scope_version", "body")
+	if BodyJSONQueryEnabled {
+		sb.Select("body_json", "body_json_promoted")
+	}
+	sb.Select("attributes_string", "attributes_number", "attributes_bool", "resources_string", "scope_string")
+	query, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	return query
+}
