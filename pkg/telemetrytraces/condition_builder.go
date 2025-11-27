@@ -108,9 +108,13 @@ func (c *conditionBuilder) conditionFor(
 		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
-		return fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value)), nil
+		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
+		return strings.ReplaceAll(fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), "$$", "$$$$"), nil
 	case qbtypes.FilterOperatorNotRegexp:
-		return fmt.Sprintf(`NOT match(%s, %s)`, tblFieldName, sb.Var(value)), nil
+		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
+		return strings.ReplaceAll(fmt.Sprintf(`NOT match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), "$$", "$$$$"), nil
 
 	// between and not between
 	case qbtypes.FilterOperatorBetween:
@@ -223,8 +227,8 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-    startNs uint64,
-    _ uint64,
+	startNs uint64,
+	_ uint64,
 ) (string, error) {
 	if c.isSpanScopeField(key.Name) {
 		return c.buildSpanScopeCondition(key, operator, value, startNs)
