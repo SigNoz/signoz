@@ -23,3 +23,9 @@ type CallbackAuthN interface {
 	// Handle the callback from the provider.
 	HandleCallback(context.Context, url.Values) (*authtypes.CallbackIdentity, error)
 }
+
+type CallbackAuthNWithIDPInitiatedLogin interface {
+	CallbackAuthN
+
+	GetIDPInfo(context.Context, *authtypes.AuthDomain) (*authtypes.IDPInfo, error)
+}

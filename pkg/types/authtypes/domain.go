@@ -31,8 +31,12 @@ var (
 type GettableAuthDomain struct {
 	*StorableAuthDomain
 	*AuthDomainConfig
+	*IDPInfo
 }
 
+type IDPInfo struct {
+	RelayStateURL string `json:"relay_state_url"`
+}
 type PostableAuthDomain struct {
 	Config AuthDomainConfig `json:"config"`
 	Name   string           `json:"name"`
@@ -103,10 +107,11 @@ func NewAuthDomainFromStorableAuthDomain(storableAuthDomain *StorableAuthDomain)
 	}, nil
 }
 
-func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain) *GettableAuthDomain {
+func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain, idpInfo *IDPInfo) *GettableAuthDomain {
 	return &GettableAuthDomain{
 		StorableAuthDomain: authDomain.StorableAuthDomain(),
 		AuthDomainConfig:   authDomain.AuthDomainConfig(),
+		IDPInfo:            idpInfo,
 	}
 }
 

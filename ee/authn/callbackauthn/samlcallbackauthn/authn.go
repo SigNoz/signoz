@@ -21,7 +21,7 @@ const (
 	redirectPath string = "/api/v1/complete/saml"
 )
 
-var _ authn.CallbackAuthN = (*AuthN)(nil)
+var _ authn.CallbackAuthNWithIDPInitiatedLogin = (*AuthN)(nil)
 
 type AuthN struct {
 	store     authtypes.AuthNStore
@@ -32,6 +32,13 @@ func New(ctx context.Context, store authtypes.AuthNStore, licensing licensing.Li
 	return &AuthN{
 		store:     store,
 		licensing: licensing,
+	}, nil
+}
+
+func (a *AuthN) GetIDPInfo(ctx context.Context, authDomain *authtypes.AuthDomain) (*authtypes.IDPInfo, error) {
+	relayStateUrl := "<your-instance-url>/login?domain_id=" + authtypes.FormatDomainIDForIDPInitiatedLoginRelayStateURL(authDomain.StorableAuthDomain().ID)
+	return &authtypes.IDPInfo{
+		RelayStateURL: relayStateUrl,
 	}, nil
 }
 
