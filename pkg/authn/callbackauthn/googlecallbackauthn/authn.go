@@ -34,7 +34,7 @@ func New(ctx context.Context, store authtypes.AuthNStore) (*AuthN, error) {
 }
 
 func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
-	provider, err := oidc.NewProvider(ctx, issuerURL)
+	oidcProvider, err := oidc.NewProvider(ctx, issuerURL)
 	if err != nil {
 		return "", err
 	}
@@ -43,7 +43,7 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "domain type is not google")
 	}
 
-	oauth2Config := a.oauth2Config(siteURL, authDomain, provider)
+	oauth2Config := a.oauth2Config(siteURL, authDomain, oidcProvider)
 
 	return oauth2Config.AuthCodeURL(
 		authtypes.NewState(siteURL, authDomain.StorableAuthDomain().ID).URL.String(),
@@ -52,7 +52,7 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 }
 
 func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtypes.CallbackIdentity, error) {
-	provider, err := oidc.NewProvider(ctx, issuerURL)
+	oidcProvider, err := oidc.NewProvider(ctx, issuerURL)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, err
 	}
 
-	oauth2Config := a.oauth2Config(state.URL, authDomain, provider)
+	oauth2Config := a.oauth2Config(state.URL, authDomain, oidcProvider)
 	token, err := oauth2Config.Exchange(ctx, query.Get("code"))
 	if err != nil {
 		var retrieveError *oauth2.RetrieveError
@@ -87,7 +87,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google: no id_token in token response")
 	}
 
-	verifier := provider.Verifier(&oidc.Config{ClientID: authDomain.AuthDomainConfig().Google.ClientID})
+	verifier := oidcProvider.Verifier(&oidc.Config{ClientID: authDomain.AuthDomainConfig().Google.ClientID})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to verify token").WithAdditional(err.Error())
