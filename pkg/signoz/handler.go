@@ -12,6 +12,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
+	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/promote/implpromote"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
@@ -44,6 +46,7 @@ type Handlers struct {
 	Session        session.Handler
 	SpanPercentile spanpercentile.Handler
 	Services       services.Handler
+	Promote        promote.Handler
 }
 
 func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Handlers {
@@ -61,5 +64,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Han
 		Session:        implsession.NewHandler(modules.Session),
 		Services:       implservices.NewHandler(modules.Services),
 		SpanPercentile: implspanpercentile.NewHandler(modules.SpanPercentile),
+		Promote:        implpromote.NewHandler(modules.Promote),
 	}
 }

@@ -22,8 +22,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
-
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
@@ -42,7 +40,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "modernc.org/sqlite"
 
-	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
@@ -1990,92 +1987,6 @@ func (aH *APIHandler) getCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 	}
 
 	aH.WriteJSON(w, r, result)
-}
-
-// promotePaths inserts provided JSON paths into the promoted paths table in ClickHouse.
-func (aH *APIHandler) promotePaths(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	claims, errv2 := authtypes.ClaimsFromContext(ctx)
-	if errv2 != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get org id from context"))
-		return
-	}
-
-	var resp any
-	var err error
-	switch r.Method {
-	case http.MethodGet:
-		err := func() error {
-			indexes, err := aH.reader.ListBodySkipIndexes(ctx)
-			if err != nil {
-				return err
-			}
-			aggr := map[string][]schemamigrator.Index{}
-			for _, index := range indexes {
-				path, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
-				if err != nil {
-					return err
-				}
-				aggr[path] = append(aggr[path], index)
-			}
-			promotedPaths, err := aH.reader.ListPromotedPaths(ctx)
-			if err != nil {
-				return err
-			}
-
-			response := []model.PromotePathItem{}
-			for _, path := range promotedPaths {
-				fullPath := telemetrylogs.BodyPromotedColumnPrefix + path
-				path = telemetrylogs.BodyJSONStringSearchPrefix + path
-				item := model.PromotePathItem{
-					Path:    path,
-					Promote: true,
-				}
-				indexes, ok := aggr[fullPath]
-				if ok {
-					item.Indexes = indexes
-					delete(aggr, fullPath)
-				}
-				response = append(response, item)
-			}
-
-			// add the paths that are not promoted but have indexes
-			for _, indexes := range aggr {
-				expr := indexes[0].Expression
-				expr, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(expr)
-				if err != nil {
-					return err
-				}
-				path := strings.TrimPrefix(expr, telemetrylogs.BodyJSONColumnPrefix)
-				path = telemetrylogs.BodyJSONStringSearchPrefix + path
-				response = append(response, model.PromotePathItem{
-					Path:    path,
-					Indexes: indexes,
-				})
-			}
-			resp = response
-			return nil
-		}()
-		if err != nil {
-			render.Error(w, err)
-			return
-		}
-	case http.MethodPost:
-		var req []model.PromotePathItem
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "Invalid data"))
-			return
-		}
-
-		// Delegate all processing to the reader
-		err = aH.reader.PromoteAndIndexPaths(ctx, claims.OrgID, req...)
-		if err != nil {
-			render.Error(w, err)
-			return
-		}
-	}
-
-	render.Success(w, http.StatusOK, resp)
 }
 
 func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
@@ -4114,7 +4025,7 @@ func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *middleware.Auth
 	subRouter.HandleFunc("/pipelines", am.EditAccess(aH.CreateLogsPipeline)).Methods(http.MethodPost)
 
 	// Promote and index JSON paths used in logs
-	subRouter.HandleFunc("/promote_paths", am.AdminAccess(aH.promotePaths)).Methods(http.MethodGet, http.MethodPost)
+	subRouter.HandleFunc("/promote_paths", am.AdminAccess(aH.Signoz.Handlers.Promote.HandlePromote)).Methods(http.MethodGet, http.MethodPost)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
