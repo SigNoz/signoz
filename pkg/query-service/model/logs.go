@@ -90,8 +90,7 @@ func (i *PromotePathItem) Validate() error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path cannot contain spaces")
 	}
 
-	// TODO(Piyush): Replace with ArraySeparator once we have it
-	if strings.Contains(i.Path, "[]") {
+	if strings.Contains(i.Path, telemetrylogs.ArraySep) || strings.Contains(i.Path, telemetrylogs.ArrayAnyIndex) {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "array paths can not be promoted or indexed")
 	}
 
@@ -106,38 +105,6 @@ func (i *PromotePathItem) Validate() error {
 	isCardinal := keycheck.IsCardinal(i.Path)
 	if isCardinal {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cardinal paths can not be promoted or indexed")
-	}
-
-	// set default indexes if not provided
-	if i.Index {
-		if len(i.Indexes) > 2 {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "too many indexes for path %s", i.Path)
-		}
-		for _, index := range i.Indexes {
-			if index.Type == "" {
-				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index type is required for path %s", i.Path)
-			}
-			if !strings.Contains(index.Type, "ngrambf_v1") && !strings.Contains(index.Type, "tokenbf_v1") {
-				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index type must be ngrambf_v1 or tokenbf_v1 for path %s", i.Path)
-			}
-			if index.Granularity < 1 {
-				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index granularity is required for path %s", i.Path)
-			}
-		}
-		if len(i.Indexes) == 0 {
-			// set default indexes if not provided
-			i.Indexes = []schemamigrator.Index{
-				{
-					Type:        NgramIndexType,
-					Granularity: 1,
-				},
-				{
-					Type:        TokenIndexType,
-					Granularity: 1,
-				},
-			}
-		}
-
 	}
 
 	return nil
