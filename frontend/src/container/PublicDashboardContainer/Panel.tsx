@@ -3,7 +3,6 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import EmptyWidget from 'container/GridCardLayout/EmptyWidget';
 import WidgetGraphComponent from 'container/GridCardLayout/GridCard/WidgetGraphComponent';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
-// import { useGetPublicDashboardWidgetData } from 'hooks/dashboard/useGetPublicDashboardWidgetData';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { memo, useCallback, useMemo, useRef } from 'react';
@@ -11,8 +10,6 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
-
-// import { transformPublicDashboardDataToQueryResponse } from './transformPublicDashboardData';
 
 function Panel({
 	widget,
