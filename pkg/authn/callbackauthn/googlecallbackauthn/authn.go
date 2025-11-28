@@ -117,6 +117,12 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 
 }
 
+func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDomain) *authtypes.AuthNProviderInfo {
+	return &authtypes.AuthNProviderInfo{
+		RelayStatePath: nil,
+	}
+}
+
 func (a *AuthN) oauth2Config(siteURL *url.URL, authDomain *authtypes.AuthDomain, provider *oidc.Provider) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     authDomain.AuthDomainConfig().Google.ClientID,
