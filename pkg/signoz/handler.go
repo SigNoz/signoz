@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
@@ -12,6 +13,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
+	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/promote/implpromote"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
@@ -28,6 +31,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/querier"
 )
 
 type Handlers struct {
@@ -44,16 +48,17 @@ type Handlers struct {
 	Session        session.Handler
 	SpanPercentile spanpercentile.Handler
 	Services       services.Handler
+	Promote        promote.Handler
 }
 
-func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Handlers {
+func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing) Handlers {
 	return Handlers{
 		Organization:   implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
 		Preference:     implpreference.NewHandler(modules.Preference),
 		User:           impluser.NewHandler(modules.User, modules.UserGetter),
 		SavedView:      implsavedview.NewHandler(modules.SavedView),
 		Apdex:          implapdex.NewHandler(modules.Apdex),
-		Dashboard:      impldashboard.NewHandler(modules.Dashboard, providerSettings),
+		Dashboard:      impldashboard.NewHandler(modules.Dashboard, providerSettings, querier, licensing),
 		QuickFilter:    implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:    impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport:  implrawdataexport.NewHandler(modules.RawDataExport),
@@ -61,5 +66,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings) Han
 		Session:        implsession.NewHandler(modules.Session),
 		Services:       implservices.NewHandler(modules.Services),
 		SpanPercentile: implspanpercentile.NewHandler(modules.SpanPercentile),
+		Promote:        implpromote.NewHandler(modules.Promote),
 	}
 }

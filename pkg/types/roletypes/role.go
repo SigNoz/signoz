@@ -2,6 +2,7 @@ package roletypes
 
 import (
 	"encoding/json"
+	"regexp"
 	"slices"
 	"time"
 
@@ -22,6 +23,20 @@ var (
 )
 
 var (
+	RoleNameRegex = regexp.MustCompile("^[a-z-]{1,50}$")
+)
+
+var (
+	RoleTypeCustom  = valuer.NewString("custom")
+	RoleTypeManaged = valuer.NewString("managed")
+)
+
+var (
+	AnonymousUserRoleName        = "signoz-anonymous"
+	AnonymousUserRoleDescription = "Role assigned to anonymous users for access to public resources."
+)
+
+var (
 	TypeableResourcesRoles = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("roles"))
 )
 
@@ -30,26 +45,28 @@ type StorableRole struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	DisplayName string `bun:"display_name,type:string"`
+	Name        string `bun:"name,type:string"`
 	Description string `bun:"description,type:string"`
+	Type        string `bun:"type,type:string"`
 	OrgID       string `bun:"org_id,type:string"`
 }
 
 type Role struct {
 	types.Identifiable
 	types.TimeAuditable
-	DisplayName string      `json:"displayName"`
+	Name        string      `json:"name"`
 	Description string      `json:"description"`
+	Type        string      `json:"type"`
 	OrgID       valuer.UUID `json:"org_id"`
 }
 
 type PostableRole struct {
-	DisplayName string `json:"displayName"`
+	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
 type PatchableRole struct {
-	DisplayName *string `json:"displayName"`
+	Name        *string `json:"name"`
 	Description *string `json:"description"`
 }
 
@@ -58,32 +75,29 @@ type PatchableObjects struct {
 	Deletions []*authtypes.Object `json:"deletions"`
 }
 
-func NewStorableRoleFromRole(role *Role) (*StorableRole, error) {
+func NewStorableRoleFromRole(role *Role) *StorableRole {
 	return &StorableRole{
 		Identifiable:  role.Identifiable,
 		TimeAuditable: role.TimeAuditable,
-		DisplayName:   role.DisplayName,
+		Name:          role.Name,
 		Description:   role.Description,
+		Type:          role.Type,
 		OrgID:         role.OrgID.StringValue(),
-	}, nil
+	}
 }
 
-func NewRoleFromStorableRole(storableRole *StorableRole) (*Role, error) {
-	orgID, err := valuer.NewUUID(storableRole.OrgID)
-	if err != nil {
-		return nil, err
-	}
-
+func NewRoleFromStorableRole(storableRole *StorableRole) *Role {
 	return &Role{
 		Identifiable:  storableRole.Identifiable,
 		TimeAuditable: storableRole.TimeAuditable,
-		DisplayName:   storableRole.DisplayName,
+		Name:          storableRole.Name,
 		Description:   storableRole.Description,
-		OrgID:         orgID,
-	}, nil
+		Type:          storableRole.Type,
+		OrgID:         valuer.MustNewUUID(storableRole.OrgID),
+	}
 }
 
-func NewRole(displayName, description string, orgID valuer.UUID) *Role {
+func NewRole(name, description string, roleType string, orgID valuer.UUID) *Role {
 	return &Role{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -92,8 +106,9 @@ func NewRole(displayName, description string, orgID valuer.UUID) *Role {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		DisplayName: displayName,
+		Name:        name,
 		Description: description,
+		Type:        roleType,
 		OrgID:       orgID,
 	}
 }
@@ -118,9 +133,9 @@ func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.O
 	return &PatchableObjects{Additions: additions, Deletions: deletions}, nil
 }
 
-func (role *Role) PatchMetadata(displayName, description *string) {
-	if displayName != nil {
-		role.DisplayName = *displayName
+func (role *Role) PatchMetadata(name, description *string) {
+	if name != nil {
+		role.Name = *name
 	}
 	if description != nil {
 		role.Description = *description
@@ -130,7 +145,7 @@ func (role *Role) PatchMetadata(displayName, description *string) {
 
 func (role *PostableRole) UnmarshalJSON(data []byte) error {
 	type shadowPostableRole struct {
-		DisplayName string `json:"displayName"`
+		Name        string `json:"name"`
 		Description string `json:"description"`
 	}
 
@@ -139,11 +154,15 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if shadowRole.DisplayName == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "displayName is missing from the request")
+	if shadowRole.Name == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name is missing from the request")
 	}
 
-	role.DisplayName = shadowRole.DisplayName
+	if match := RoleNameRegex.MatchString(shadowRole.Name); !match {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must conform to the regex: %s", RoleNameRegex.String())
+	}
+
+	role.Name = shadowRole.Name
 	role.Description = shadowRole.Description
 
 	return nil
@@ -151,7 +170,7 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 
 func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	type shadowPatchableRole struct {
-		DisplayName *string `json:"displayName"`
+		Name        *string `json:"name"`
 		Description *string `json:"description"`
 	}
 
@@ -160,11 +179,17 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if shadowRole.DisplayName == nil && shadowRole.Description == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request received, at least one of displayName or description must be present")
+	if shadowRole.Name == nil && shadowRole.Description == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request received, at least one of name or description must be present")
 	}
 
-	role.DisplayName = shadowRole.DisplayName
+	if shadowRole.Name != nil {
+		if match := RoleNameRegex.MatchString(*shadowRole.Name); !match {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must conform to the regex: %s", RoleNameRegex.String())
+		}
+	}
+
+	role.Name = shadowRole.Name
 	role.Description = shadowRole.Description
 
 	return nil
@@ -177,9 +202,10 @@ func GetAdditionTuples(id valuer.UUID, orgID valuer.UUID, relation authtypes.Rel
 		typeable := authtypes.MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
 		transactionTuples, err := typeable.Tuples(
 			authtypes.MustNewSubject(
-				authtypes.TypeRole,
+				authtypes.TypeableRole,
 				id.String(),
-				authtypes.RelationAssignee,
+				orgID,
+				&authtypes.RelationAssignee,
 			),
 			relation,
 			[]authtypes.Selector{object.Selector},
@@ -202,9 +228,10 @@ func GetDeletionTuples(id valuer.UUID, orgID valuer.UUID, relation authtypes.Rel
 		typeable := authtypes.MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
 		transactionTuples, err := typeable.Tuples(
 			authtypes.MustNewSubject(
-				authtypes.TypeRole,
+				authtypes.TypeableRole,
 				id.String(),
-				authtypes.RelationAssignee,
+				orgID,
+				&authtypes.RelationAssignee,
 			),
 			relation,
 			[]authtypes.Selector{object.Selector},

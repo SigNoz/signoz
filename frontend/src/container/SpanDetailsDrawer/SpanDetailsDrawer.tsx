@@ -11,13 +11,11 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { RadioChangeEvent } from 'antd/lib';
 import getSpanPercentiles from 'api/trace/getSpanPercentiles';
 import getUserPreference from 'api/v1/user/preferences/name/get';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
-import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { themeColors } from 'constants/theme';
@@ -178,11 +176,13 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		themeColors.traceDetailColors,
 	);
 
-	const handleRelatedSignalsChange = useCallback((e: RadioChangeEvent): void => {
-		const selectedView = e.target.value as RelatedSignalsViews;
-		setActiveDrawerView(selectedView);
-		setIsRelatedSignalsOpen(true);
-	}, []);
+	const handleRelatedSignalsClick = useCallback(
+		(view: RelatedSignalsViews): void => {
+			setActiveDrawerView(view);
+			setIsRelatedSignalsOpen(true);
+		},
+		[],
+	);
 
 	const handleRelatedSignalsClose = useCallback((): void => {
 		setIsRelatedSignalsOpen(false);
@@ -883,12 +883,16 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								related signals
 							</Typography.Text>
 							<div className="related-signals-section">
-								<SignozRadioGroup
-									value=""
-									options={relatedSignalsOptions}
-									onChange={handleRelatedSignalsChange}
-									className="related-signals-radio"
-								/>
+								<Button.Group className="related-signals-button-group">
+									{relatedSignalsOptions.map((option) => (
+										<Button
+											key={option.value}
+											onClick={(): void => handleRelatedSignalsClick(option.value)}
+										>
+											{option.label}
+										</Button>
+									))}
+								</Button.Group>
 							</div>
 						</div>
 					</section>

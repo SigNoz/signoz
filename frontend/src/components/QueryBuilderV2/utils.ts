@@ -24,7 +24,7 @@ import {
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
-import { unquote } from 'utils/stringUtils';
+import { isQuoted, unquote } from 'utils/stringUtils';
 import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -38,11 +38,30 @@ const isArrayOperator = (operator: string): boolean => {
 	return arrayOperators.includes(operator);
 };
 
-const isVariable = (value: string | string[] | number | boolean): boolean => {
+const isVariable = (
+	value: (string | number | boolean)[] | string | number | boolean,
+): boolean => {
 	if (Array.isArray(value)) {
 		return value.some((v) => typeof v === 'string' && v.trim().startsWith('$'));
 	}
 	return typeof value === 'string' && value.trim().startsWith('$');
+};
+
+/**
+ * Formats a single value for use in expression strings.
+ * Strings are quoted and escaped, while numbers and booleans are converted to strings.
+ */
+const formatSingleValue = (v: string | number | boolean): string => {
+	if (typeof v === 'string') {
+		// Preserve already-quoted strings
+		if (isQuoted(v)) {
+			return v;
+		}
+		// Quote and escape single quotes in strings
+		return `'${v.replace(/'/g, "\\'")}'`;
+	}
+	// Convert numbers and booleans to strings without quotes
+	return String(v);
 };
 
 /**
@@ -51,36 +70,25 @@ const isVariable = (value: string | string[] | number | boolean): boolean => {
  * @param operator - The operator being used (to determine if array is needed)
  * @returns Formatted value string
  */
-const formatValueForExpression = (
-	value: string[] | string | number | boolean,
+export const formatValueForExpression = (
+	value: (string | number | boolean)[] | string | number | boolean,
 	operator?: string,
 ): string => {
 	if (isVariable(value)) {
 		return String(value);
 	}
 
-	// For IN operators, ensure value is always an array
 	if (isArrayOperator(operator || '')) {
 		const arrayValue = Array.isArray(value) ? value : [value];
-		return `[${arrayValue
-			.map((v) =>
-				typeof v === 'string' ? `'${v.replace(/'/g, "\\'")}'` : String(v),
-			)
-			.join(', ')}]`;
+		return `[${arrayValue.map(formatSingleValue).join(', ')}]`;
 	}
 
 	if (Array.isArray(value)) {
-		// Handle array values (e.g., for IN operations)
-		return `[${value
-			.map((v) =>
-				typeof v === 'string' ? `'${v.replace(/'/g, "\\'")}'` : String(v),
-			)
-			.join(', ')}]`;
+		return `[${value.map(formatSingleValue).join(', ')}]`;
 	}
 
 	if (typeof value === 'string') {
-		// Add single quotes around all string values and escape internal single quotes
-		return `'${value.replace(/'/g, "\\'")}'`;
+		return formatSingleValue(value);
 	}
 
 	return String(value);
@@ -136,14 +144,43 @@ export const convertFiltersToExpression = (
 	};
 };
 
-const formatValuesForFilter = (value: string | string[]): string | string[] => {
-	if (Array.isArray(value)) {
-		return value.map((v) => (typeof v === 'string' ? unquote(v) : String(v)));
-	}
+/**
+ * Converts a string value to its appropriate type (number, boolean, or string)
+ * for use in filter objects. This is the inverse of formatSingleValue.
+ */
+function formatSingleValueForFilter(
+	value: string | number | boolean,
+): string | number | boolean {
 	if (typeof value === 'string') {
-		return unquote(value);
+		const trimmed = value.trim();
+
+		// Try to convert numeric strings to numbers
+		if (trimmed !== '' && !Number.isNaN(Number(trimmed))) {
+			return Number(trimmed);
+		}
+
+		// Convert boolean strings to booleans
+		if (trimmed === 'true' || trimmed === 'false') {
+			return trimmed === 'true';
+		}
 	}
-	return String(value);
+
+	// Return non-string values as-is, or string values that couldn't be converted
+	return value;
+}
+
+/**
+ * Formats values for filter objects, converting string representations
+ * to their proper types (numbers, booleans) when appropriate.
+ */
+const formatValuesForFilter = (
+	value: (string | number | boolean)[] | number | boolean | string,
+): (string | number | boolean)[] | number | boolean | string => {
+	if (Array.isArray(value)) {
+		return value.map(formatSingleValueForFilter);
+	}
+
+	return formatSingleValueForFilter(value);
 };
 
 export const convertExpressionToFilters = (
@@ -224,7 +261,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 	const visitedPairs: Set<string> = new Set(); // Set to track visited query pairs
 
 	// Map extracted query pairs to key-specific pair information for faster access
-	let queryPairsMap = getQueryPairsMap(existingQuery.trim());
+	let queryPairsMap = getQueryPairsMap(existingQuery);
 
 	filters?.items?.forEach((filter) => {
 		const { key, op, value } = filter;
@@ -309,7 +346,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								notInPair.position.valueEnd + 1,
 							)}`;
-							queryPairsMap = getQueryPairsMap(modifiedQuery.trim());
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					} else if (
