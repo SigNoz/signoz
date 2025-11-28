@@ -36,7 +36,7 @@ func NewModule(store telemetrystore.TelemetryStore) promote.Module {
 }
 
 func (m *module) ListBodySkipIndexes(ctx context.Context) ([]schemamigrator.Index, error) {
-	return telemetrymetadata.ListLogsJSONIndexes(ctx, m.store.Cluster(), m.store.ClickhouseDB())
+	return telemetrymetadata.ListLogsJSONIndexes(ctx, m.store)
 }
 
 func (m *module) ListPromotedPaths(ctx context.Context) ([]string, error) {
