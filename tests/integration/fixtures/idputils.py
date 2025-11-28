@@ -29,7 +29,7 @@ def create_saml_client(
         client.create_client(
             skip_exists=True,
             payload={
-                "clientId": f"{client_id}",
+                "clientId": f"{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}",
                 "name": f"{client_id}",
                 "description": f"client for {client_id}",
                 "rootUrl": "",
@@ -134,6 +134,7 @@ def update_saml_client_attributes(
         )
 
         kc_client_id = client.get_client_id(client_id=client_id)
+        print("kc_client_id: " + kc_client_id)
 
         payload = client.get_client(client_id=kc_client_id)
 
