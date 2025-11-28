@@ -175,7 +175,18 @@ function LiveLogsContainer(): JSX.Element {
 		if (isConnectionError && reconnectDueToError) {
 			// Small delay to prevent immediate reconnection attempts
 			const reconnectTimer = setTimeout(() => {
-				handleStartNewConnection();
+				const fallbackFilterExpression =
+					prevFilterExpressionRef.current ||
+					currentQuery?.builder.queryData[0]?.filter?.expression?.trim() ||
+					null;
+
+				const validationResult = validateQuery(fallbackFilterExpression || '');
+
+				if (validationResult.isValid) {
+					handleStartNewConnection(fallbackFilterExpression);
+				} else {
+					handleStartNewConnection(null);
+				}
 			}, 1000);
 
 			return (): void => clearTimeout(reconnectTimer);
@@ -186,6 +197,7 @@ function LiveLogsContainer(): JSX.Element {
 		reconnectDueToError,
 		compositeQuery,
 		handleStartNewConnection,
+		currentQuery,
 	]);
 
 	// clean up the connection when the component unmounts
