@@ -81,7 +81,7 @@ def test_create_auth_domain(
             None,
         )
 
-    relay_state_path = found_domain["authn_provider_info"]["relay_state_path"]
+    relay_state_path = found_domain["authNProviderInfo"]["relayStatePath"]
 
     assert relay_state_path is not None
 
