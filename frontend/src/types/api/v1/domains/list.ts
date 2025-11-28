@@ -11,6 +11,7 @@ export interface GettableAuthDomain {
 	orgId: string;
 	ssoEnabled: boolean;
 	ssoType: string;
+	relay_state_url: string;
 	samlConfig?: SAMLConfig;
 	googleAuthConfig?: GoogleAuthConfig;
 	oidcConfig?: OIDCConfig;

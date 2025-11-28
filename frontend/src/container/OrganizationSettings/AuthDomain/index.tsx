@@ -33,6 +33,15 @@ const columns: ColumnsType<GettableAuthDomain> = [
 		),
 	},
 	{
+		title: 'IDP URL',
+		dataIndex: 'relayState',
+		key: 'relayState',
+		width: 80,
+		render: (value: boolean): JSX.Element => (
+			<Typography.Text>{value}</Typography.Text>
+		),
+	},
+	{
 		title: 'Action',
 		dataIndex: 'action',
 		key: 'action',
