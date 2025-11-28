@@ -1,10 +1,10 @@
-import { Select, SelectProps, Space } from 'antd';
+import { Select, SelectProps, Space, Typography } from 'antd';
 import { getCategorySelectOptionByName } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { categoryToSupport } from './config';
-import { DefaultLabel, selectStyles } from './styles';
+import { selectStyles } from './styles';
 import { IBuilderUnitsFilterProps } from './types';
 import { filterOption } from './utils';
 
@@ -31,9 +31,9 @@ function BuilderUnitsFilter({
 
 	return (
 		<Space className="builder-units-filter">
-			<DefaultLabel className="builder-units-filter-label">
+			<Typography.Text className="builder-units-filter-label">
 				Y-axis unit
-			</DefaultLabel>
+			</Typography.Text>
 			<Select
 				getPopupContainer={popupContainer}
 				style={selectStyles}
