@@ -31,11 +31,11 @@ func (module *module) Get(ctx context.Context, id valuer.UUID) (*authtypes.AuthD
 	return authdomain, nil
 }
 
-func (module *module) GetIDPInfoByAuthDomain(ctx context.Context, domain *authtypes.AuthDomain) (*authtypes.IDPInfo, error) {
-	if x, ok := module.authNs[domain.AuthDomainConfig().AuthNProvider].(authn.CallbackAuthNWithIDPInitiatedLogin); ok {
-		return x.GetIDPInfo(ctx, domain)
+func (module *module) GetAuthNProviderInfo(ctx context.Context, domain *authtypes.AuthDomain) (*authtypes.AuthNProviderInfo) {
+	if callbackAuthN, ok := module.authNs[domain.AuthDomainConfig().AuthNProvider].(authn.CallbackAuthN); ok {
+		return callbackAuthN.ProviderInfo(ctx, domain)
 	}
-	return &authtypes.IDPInfo{}, nil
+	return &authtypes.AuthNProviderInfo{}
 }
 
 func (module *module) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.AuthDomain, error) {

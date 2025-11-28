@@ -102,10 +102,6 @@ func newDomainIDFromState(state string) (valuer.UUID, error) {
 	return valuer.NewUUID(strings.Replace(state, ":", "-", -1))
 }
 
-func FormatDomainIDForIDPInitiatedLoginRelayStateURL(domainID valuer.UUID) string {
-	return newDomainIDForState(domainID)
-}
-
 func (typ Identity) MarshalBinary() ([]byte, error) {
 	return json.Marshal(typ)
 }

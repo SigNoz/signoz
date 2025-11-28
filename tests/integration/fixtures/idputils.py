@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Dict, Any
 from urllib.parse import urljoin
 from xml.etree import ElementTree
 
@@ -121,11 +121,11 @@ def create_saml_client(
     return _create_saml_client
 
 
-@pytest.fixture(name="enable_idp_initiated_login_for_saml_client", scope="function")
-def enable_idp_initiated_login_for_saml_client(
+@pytest.fixture(name="update_saml_client_attributes", scope="function")
+def update_saml_client_attributes(
     idp: types.TestContainerIDP
-) -> Callable[[str, str, str, str], None]:
-    def _enable_idp_initiated_login_for_saml_client(client_id: str, sso_url_name: str, relay_state_url: str, saml_acs_url: str) -> None:
+) -> Callable[[str, Dict[str, Any]], None]:
+    def _update_saml_client_attributes(client_id: str, attributes: Dict[str, Any]) -> None:
         client = KeycloakAdmin(
             server_url=idp.container.host_configs["6060"].base(),
             username=IDP_ROOT_USERNAME,
@@ -133,21 +133,16 @@ def enable_idp_initiated_login_for_saml_client(
             realm_name="master",
         )
 
-        print("updating saml client with values: " + client_id + " " + sso_url_name + " " + relay_state_url + " " + saml_acs_url)
-
         kc_client_id = client.get_client_id(client_id=client_id)
 
         payload = client.get_client(client_id=kc_client_id)
 
-        payload["attributes"]["saml_idp_initiated_sso_url_name"] = sso_url_name
-        payload["attributes"]["saml_idp_initiated_sso_relay_state"] = relay_state_url
-        payload["attributes"]["saml_assertion_consumer_url_post"] = saml_acs_url
-
-        print(payload)
+        for attr_key, attr_value in attributes.items():
+            payload["attributes"][attr_key] = attr_value
 
         client.update_client(client_id=kc_client_id, payload=payload)
 
-    return _enable_idp_initiated_login_for_saml_client
+    return _update_saml_client_attributes
 
 
 @pytest.fixture(name="create_oidc_client", scope="function")

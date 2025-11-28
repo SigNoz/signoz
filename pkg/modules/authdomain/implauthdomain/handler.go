@@ -95,12 +95,7 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 
 	authDomains := make([]*authtypes.GettableAuthDomain, len(domains))
 	for i, domain := range domains {
-		idpInfo, err := handler.module.GetIDPInfoByAuthDomain(ctx, domain)
-		if err != nil {
-			render.Error(rw, err)
-		}
-		
-		authDomains[i] = authtypes.NewGettableAuthDomainFromAuthDomain(domain, idpInfo)
+		authDomains[i] = authtypes.NewGettableAuthDomainFromAuthDomain(domain, handler.module.GetAuthNProviderInfo(ctx, domain))
 	}
 
 	render.Success(rw, http.StatusOK, authDomains)

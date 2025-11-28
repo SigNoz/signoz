@@ -24,7 +24,7 @@ def test_create_auth_domain(
     signoz: SigNoz,
     idp: TestContainerIDP,  # pylint: disable=unused-argument
     create_saml_client: Callable[[str, str], None],
-    enable_idp_initiated_login_for_saml_client: Callable[[str, str, str, str], None],
+    update_saml_client_attributes: Callable[[str, str, str, str], None],
     get_saml_settings: Callable[[], dict],
     create_user_admin: Callable[[], None],  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -66,13 +66,14 @@ def test_create_auth_domain(
     relay_state_url = signoz.self.host_configs["8080"].base() + "/login?domain_id=" + created_domain_id
 
     # Update the saml client with new attributes
-    enable_idp_initiated_login_for_saml_client(
+    update_saml_client_attributes(
         "idp-initiated-saml.integration.test",
-        "idp-initiated-saml-test",
-        relay_state_url,
-        signoz.self.host_configs["8080"].get("/api/v1/complete/saml")
+        {
+            "saml_idp_initiated_sso_url_name": "idp-initiated-saml-test",
+            "saml_idp_initiated_sso_relay_state": relay_state_url,
+            "saml_assertion_consumer_url_post": signoz.self.host_configs["8080"].get("/api/v1/complete/saml")
+        }
     )
-
 
 
 def test_idp_initiated_saml_authn(
