@@ -13,6 +13,11 @@
 		width: 100%;
 		padding: 8px 16px;
 		border-bottom: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+
+		position: sticky;
+		top: 0;
+		z-index: 999;
 
 		.public-dashboard-header-left {
 			display: flex;
@@ -87,13 +92,18 @@
 	.public-dashboard-content {
 		width: 100%;
 		height: 100%;
-
-		.react-grid-item {
-			background-color: var(--bg-ink-400);
-		}
 	}
 
 	.fullscreen-grid-container {
 		margin: 0px 8px;
+	}
+}
+
+.lightMode {
+	.public-dashboard-container {
+		.public-dashboard-header {
+			background: var(--bg-vanilla-100);
+			border-bottom: 1px solid var(--bg-vanilla-300);
+		}
 	}
 }

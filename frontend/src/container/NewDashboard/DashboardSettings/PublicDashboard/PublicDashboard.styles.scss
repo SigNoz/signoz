@@ -107,3 +107,26 @@
 		justify-content: flex-end;
 	}
 }
+
+.lightMode {
+	.public-dashboard-setting-container {
+		border: 1px solid var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
+
+		.public-dashboard-setting-content {
+			.default-time-range-select {
+				.ant-select-selector {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-100);
+				}
+			}
+
+			.public-dashboard-url {
+				.url-container {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-100);
+				}
+			}
+		}
+	}
+}
