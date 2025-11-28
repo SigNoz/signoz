@@ -16,7 +16,7 @@ const (
 )
 
 func generateMetricMetadataCacheKey(metricName string) string {
-	return fmt.Sprintf("metrics_metadata:%s", metricName)
+	return fmt.Sprintf("metrics::metadata::%s", metricName)
 }
 
 func getStatsOrderByColumn(order *qbtypes.OrderBy) (string, string, error) {
@@ -46,7 +46,7 @@ func getStatsOrderByColumn(order *qbtypes.OrderBy) (string, string, error) {
 	// Validate direction using OrderDirectionMap
 	if direction, ok = qbtypes.OrderDirectionMap[strings.ToLower(order.Direction.StringValue())]; !ok {
 		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported order direction %q, should be one of %s, %s", direction, qbtypes.OrderDirectionAsc, qbtypes.OrderDirectionDesc)
-		}
+	}
 
 	return columnName, direction.StringValue(), nil
 }
