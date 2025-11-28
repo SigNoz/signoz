@@ -95,7 +95,6 @@ def test_idp_initiated_saml_authn(
     assert len(session_context["orgs"][0]["authNSupport"]["callback"]) == 1
 
     idp_initiated_login_url = idp.container.host_configs["6060"].base() + "/realms/master/protocol/saml/clients/idp-initiated-saml-test"
-    print("opening: " + idp_initiated_login_url)
 
     driver.get(idp_initiated_login_url)
     idp_login("viewer@idp-initiated-saml.integration.test", "password")
