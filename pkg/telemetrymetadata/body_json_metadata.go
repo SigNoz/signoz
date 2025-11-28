@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
@@ -73,7 +74,7 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 			return nil, false, err
 		}
 
-		indexes, err := listLogsIndexesClean(ctx, telemetryStore.ClickhouseDB(), telemetryStore.Cluster(), path)
+		indexes, err := getJSONPathIndexes(ctx, telemetryStore.ClickhouseDB(), telemetryStore.Cluster(), path)
 		if err != nil {
 			return nil, false, err
 		}
@@ -150,7 +151,7 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 	return query, args, limit, nil
 }
 
-func listLogsIndexesClean(ctx context.Context, conn clickhouse.Conn, cluster, path string) ([]telemetrytypes.JSONDataTypeIndex, error) {
+func getJSONPathIndexes(ctx context.Context, conn clickhouse.Conn, cluster, path string) ([]telemetrytypes.JSONDataTypeIndex, error) {
 	// return empty slice if path is an array
 	if strings.Contains(path, telemetrylogs.ArraySep) || strings.Contains(path, telemetrylogs.ArrayAnyIndex) {
 		return nil, nil
@@ -304,9 +305,14 @@ func ListJSONValues(ctx context.Context, conn clickhouse.Conn, path string, limi
 	sb.Where(fmt.Sprintf("%s IS NOT NULL", path))
 	sb.Limit(limit)
 
+	contextWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	rows, err := conn.Query(ctx, query, args...)
+	rows, err := conn.Query(contextWithTimeout, query, args...)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, false, errors.WrapTimeoutf(err, errors.CodeTimeout, "query timed out").WithAdditional("failed to list JSON values")
+		}
 		return nil, false, errors.WrapInternalf(err, CodeFailListJSONValues, "failed to list JSON values")
 	}
 	defer rows.Close()
