@@ -6,12 +6,14 @@ linters:
     - depguard
     - errcheck
     - forbidigo
+    - godot
     - govet
     - iface
     - ineffassign
     - misspell
     - nilnil
     - sloglint
+    - staticcheck
     - unparam
     - unused
   settings:
