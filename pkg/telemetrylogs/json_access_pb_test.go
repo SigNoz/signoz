@@ -1,6 +1,7 @@
 package telemetrylogs
 
 import (
+	"context"
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -8,72 +9,90 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Helper function to create a TelemetryFieldKey for testing
+func makeKey(name string, dataType telemetrytypes.JSONDataType, materialized bool) *telemetrytypes.TelemetryFieldKey {
+	return &telemetrytypes.TelemetryFieldKey{
+		Name:         name,
+		JSONDataType: &dataType,
+		Materialized: materialized,
+	}
+}
+
+// Helper function to infer JSONDataType from a value
+func inferDataTypeFromValue(value any) telemetrytypes.JSONDataType {
+	switch v := value.(type) {
+	case string:
+		return telemetrytypes.String
+	case int64:
+		return telemetrytypes.Int64
+	case int:
+		return telemetrytypes.Int64
+	case float64:
+		return telemetrytypes.Float64
+	case float32:
+		return telemetrytypes.Float64
+	case bool:
+		return telemetrytypes.Bool
+	case []any:
+		if len(v) == 0 {
+			return telemetrytypes.Dynamic
+		}
+		// For arrays, infer from first element
+		return inferDataTypeFromValue(v[0])
+	case nil:
+		return telemetrytypes.String // fallback
+	default:
+		return telemetrytypes.String // fallback
+	}
+}
+
 func TestNode_Alias(t *testing.T) {
 	cases := []struct {
 		name     string
-		node     *Node
+		node     *telemetrytypes.JSONAccessNode
 		expected string
 	}{
 		{
-			name: "Root node returns name as-is",
-			node: &Node{
-				Name:   LogsV2BodyJSONColumn,
-				isRoot: true,
-			},
+			name:     "Root node returns name as-is",
+			node:     telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
 			expected: LogsV2BodyJSONColumn,
 		},
 		{
 			name: "Node without parent returns backticked name",
-			node: &Node{
+			node: &telemetrytypes.JSONAccessNode{
 				Name:   "user",
-				isRoot: false,
 				Parent: nil,
 			},
 			expected: "`user`",
 		},
 		{
 			name: "Node with root parent uses dot separator",
-			node: &Node{
+			node: &telemetrytypes.JSONAccessNode{
 				Name:   "age",
-				isRoot: false,
-				Parent: &Node{
-					Name:   LogsV2BodyJSONColumn,
-					isRoot: true,
-				},
+				Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
 			},
 			expected: "`" + LogsV2BodyJSONColumn + ".age`",
 		},
 		{
 			name: "Node with non-root parent uses array separator",
-			node: &Node{
-				Name:   "name",
-				isRoot: false,
-				Parent: &Node{
+			node: &telemetrytypes.JSONAccessNode{
+				Name: "name",
+				Parent: &telemetrytypes.JSONAccessNode{
 					Name:   "education",
-					isRoot: false,
-					Parent: &Node{
-						Name:   LogsV2BodyJSONColumn,
-						isRoot: true,
-					},
+					Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
 				},
 			},
 			expected: "`" + LogsV2BodyJSONColumn + ".education[].name`",
 		},
 		{
 			name: "Nested array path with multiple levels",
-			node: &Node{
-				Name:   "type",
-				isRoot: false,
-				Parent: &Node{
-					Name:   "awards",
-					isRoot: false,
-					Parent: &Node{
+			node: &telemetrytypes.JSONAccessNode{
+				Name: "type",
+				Parent: &telemetrytypes.JSONAccessNode{
+					Name: "awards",
+					Parent: &telemetrytypes.JSONAccessNode{
 						Name:   "education",
-						isRoot: false,
-						Parent: &Node{
-							Name:   LogsV2BodyJSONColumn,
-							isRoot: true,
-						},
+						Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
 					},
 				},
 			},
@@ -92,61 +111,43 @@ func TestNode_Alias(t *testing.T) {
 func TestNode_FieldPath(t *testing.T) {
 	cases := []struct {
 		name     string
-		node     *Node
+		node     *telemetrytypes.JSONAccessNode
 		expected string
 	}{
 		{
 			name: "Simple field path from root",
-			node: &Node{
+			node: &telemetrytypes.JSONAccessNode{
 				Name:   "user",
-				isRoot: false,
-				Parent: &Node{
-					Name:   LogsV2BodyJSONColumn,
-					isRoot: true,
-				},
+				Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
 			},
 			expected: LogsV2BodyJSONColumn + ".user",
 		},
 		{
 			name: "Field path with backtick-required key",
-			node: &Node{
+			node: &telemetrytypes.JSONAccessNode{
 				Name:   "user-name", // requires backtick
-				isRoot: false,
-				Parent: &Node{
-					Name:   LogsV2BodyJSONColumn,
-					isRoot: true,
-				},
+				Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
 			},
 			expected: LogsV2BodyJSONColumn + ".`user-name`",
 		},
 		{
 			name: "Nested field path",
-			node: &Node{
-				Name:   "age",
-				isRoot: false,
-				Parent: &Node{
+			node: &telemetrytypes.JSONAccessNode{
+				Name: "age",
+				Parent: &telemetrytypes.JSONAccessNode{
 					Name:   "user",
-					isRoot: false,
-					Parent: &Node{
-						Name:   LogsV2BodyJSONColumn,
-						isRoot: true,
-					},
+					Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
 				},
 			},
 			expected: "`" + LogsV2BodyJSONColumn + ".user`.age",
 		},
 		{
 			name: "Array element field path",
-			node: &Node{
-				Name:   "name",
-				isRoot: false,
-				Parent: &Node{
+			node: &telemetrytypes.JSONAccessNode{
+				Name: "name",
+				Parent: &telemetrytypes.JSONAccessNode{
 					Name:   "education",
-					isRoot: false,
-					Parent: &Node{
-						Name:   LogsV2BodyJSONColumn,
-						isRoot: true,
-					},
+					Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
 				},
 			},
 			expected: "`" + LogsV2BodyJSONColumn + ".education`.name",
@@ -161,619 +162,139 @@ func TestNode_FieldPath(t *testing.T) {
 	}
 }
 
-func TestNode_decideElemType(t *testing.T) {
-	cases := []struct {
-		name         string
-		node         *Node
-		operator     qbtypes.FilterOperator
-		valueType    telemetrytypes.JSONDataType
-		expectedPref bool
-		expectedElem telemetrytypes.JSONDataType
-	}{
-		{
-			name: "No available types - fallback to valueType",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{},
-			},
-			operator:     qbtypes.FilterOperatorEqual,
-			valueType:    telemetrytypes.String,
-			expectedPref: false,
-			expectedElem: telemetrytypes.String,
-		},
-		{
-			name: "Has scalar type - prefer scalar",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.String},
-			},
-			operator:     qbtypes.FilterOperatorEqual,
-			valueType:    telemetrytypes.String,
-			expectedPref: false,
-			expectedElem: telemetrytypes.String,
-		},
-		{
-			name: "Only array type available - prefer array",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.ArrayString},
-			},
-			operator:     qbtypes.FilterOperatorEqual,
-			valueType:    telemetrytypes.String,
-			expectedPref: true,
-			expectedElem: telemetrytypes.ArrayString,
-		},
-		{
-			name: "Both scalar and array - prefer scalar",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.String, telemetrytypes.ArrayString},
-			},
-			operator:     qbtypes.FilterOperatorEqual,
-			valueType:    telemetrytypes.String,
-			expectedPref: false,
-			expectedElem: telemetrytypes.String,
-		},
-		{
-			name: "Contains operator with typed array - prefer array",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.ArrayString},
-			},
-			operator:     qbtypes.FilterOperatorContains,
-			valueType:    telemetrytypes.String,
-			expectedPref: true,
-			expectedElem: telemetrytypes.ArrayString,
-		},
-		{
-			name: "Contains operator with ArrayDynamic - prefer array",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.ArrayDynamic},
-			},
-			operator:     qbtypes.FilterOperatorContains,
-			valueType:    telemetrytypes.String,
-			expectedPref: true,
-			expectedElem: telemetrytypes.ArrayString,
-		},
-		{
-			name: "Contains operator with scalar only - prefer scalar",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.String},
-			},
-			operator:     qbtypes.FilterOperatorContains,
-			valueType:    telemetrytypes.String,
-			expectedPref: false,
-			expectedElem: telemetrytypes.String,
-		},
-		{
-			name: "Contains operator with no matching array - prefer scalar",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.String},
-			},
-			operator:     qbtypes.FilterOperatorContains,
-			valueType:    telemetrytypes.String,
-			expectedPref: false,
-			expectedElem: telemetrytypes.String,
-		},
-		{
-			name: "NotContains operator with array - prefer array",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.ArrayInt64},
-			},
-			operator:     qbtypes.FilterOperatorNotContains,
-			valueType:    telemetrytypes.Int64,
-			expectedPref: true,
-			expectedElem: telemetrytypes.ArrayInt64,
-		},
-		{
-			name: "Int64 with ArrayInt64 available",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.ArrayInt64},
-			},
-			operator:     qbtypes.FilterOperatorEqual,
-			valueType:    telemetrytypes.Int64,
-			expectedPref: true,
-			expectedElem: telemetrytypes.ArrayInt64,
-		},
-		{
-			name: "Float64 with ArrayFloat64 available",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.ArrayFloat64},
-			},
-			operator:     qbtypes.FilterOperatorEqual,
-			valueType:    telemetrytypes.Float64,
-			expectedPref: true,
-			expectedElem: telemetrytypes.ArrayFloat64,
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			pref, elem := c.node.decideElemType(c.operator, c.valueType)
-			require.Equal(t, c.expectedPref, pref, "PreferArrayAtEnd mismatch")
-			require.Equal(t, c.expectedElem, elem, "ElemType mismatch")
-		})
-	}
-}
-
-func TestNode_configureTerminal(t *testing.T) {
-	cases := []struct {
-		name     string
-		node     *Node
-		operator qbtypes.FilterOperator
-		value    any
-		expected *TerminalConfig
-	}{
-		{
-			name: "String value with Equal operator",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.String},
-			},
-			operator: qbtypes.FilterOperatorEqual,
-			value:    "test",
-			expected: &TerminalConfig{
-				PreferArrayAtEnd: false,
-				ElemType:         telemetrytypes.String,
-				ValueType:        telemetrytypes.String,
-				Operator:         qbtypes.FilterOperatorEqual,
-				Value:            "test",
-			},
-		},
-		{
-			name: "Int64 value with Equal operator",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.Int64},
-			},
-			operator: qbtypes.FilterOperatorEqual,
-			value:    int64(42),
-			expected: &TerminalConfig{
-				PreferArrayAtEnd: false,
-				ElemType:         telemetrytypes.Int64,
-				ValueType:        telemetrytypes.Int64,
-				Operator:         qbtypes.FilterOperatorEqual,
-				Value:            int64(42),
-			},
-		},
-		{
-			name: "Contains operator with array available",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.ArrayString},
-			},
-			operator: qbtypes.FilterOperatorContains,
-			value:    "test",
-			expected: &TerminalConfig{
-				PreferArrayAtEnd: true,
-				ElemType:         telemetrytypes.ArrayString,
-				ValueType:        telemetrytypes.String,
-				Operator:         qbtypes.FilterOperatorContains,
-				Value:            "test",
-			},
-		},
-		{
-			name: "Exists operator with nil value (GroupBy)",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.String, telemetrytypes.Int64},
-			},
-			operator: qbtypes.FilterOperatorExists,
-			value:    nil,
-			expected: &TerminalConfig{
-				PreferArrayAtEnd: false,
-				ElemType:         telemetrytypes.String,
-				ValueType:        telemetrytypes.String,
-				Operator:         qbtypes.FilterOperatorExists,
-				Value:            nil,
-			},
-		},
-		{
-			name: "Exists operator with only array types",
-			node: &Node{
-				AvailableTypes: []telemetrytypes.JSONDataType{telemetrytypes.ArrayString},
-			},
-			operator: qbtypes.FilterOperatorExists,
-			value:    nil,
-			expected: &TerminalConfig{
-				PreferArrayAtEnd: false,
-				ElemType:         telemetrytypes.ArrayString,
-				ValueType:        telemetrytypes.ArrayString,
-				Operator:         qbtypes.FilterOperatorExists,
-				Value:            nil,
-			},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			c.node.configureTerminal(c.operator, c.value)
-			require.NotNil(t, c.node.TerminalConfig)
-			require.Equal(t, c.expected.PreferArrayAtEnd, c.node.TerminalConfig.PreferArrayAtEnd)
-			require.Equal(t, c.expected.ElemType, c.node.TerminalConfig.ElemType)
-			require.Equal(t, c.expected.ValueType, c.node.TerminalConfig.ValueType)
-			require.Equal(t, c.expected.Operator, c.node.TerminalConfig.Operator)
-			require.Equal(t, c.expected.Value, c.node.TerminalConfig.Value)
-		})
-	}
-}
-
-func TestNode_determineValueType(t *testing.T) {
-	cases := []struct {
-		name           string
-		node           *Node
-		availableTypes []telemetrytypes.JSONDataType
-		operator       qbtypes.FilterOperator
-		value          any
-		expected       telemetrytypes.JSONDataType
-	}{
-		{
-			name:           "String value",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{},
-			operator:       qbtypes.FilterOperatorEqual,
-			value:          "test",
-			expected:       telemetrytypes.String,
-		},
-		{
-			name:           "Int64 value",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{},
-			operator:       qbtypes.FilterOperatorEqual,
-			value:          int64(42),
-			expected:       telemetrytypes.Int64,
-		},
-		{
-			name:           "Float64 value",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{},
-			operator:       qbtypes.FilterOperatorEqual,
-			value:          float64(3.14),
-			expected:       telemetrytypes.Float64,
-		},
-		{
-			name:           "Bool value",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{},
-			operator:       qbtypes.FilterOperatorEqual,
-			value:          true,
-			expected:       telemetrytypes.Bool,
-		},
-		{
-			name:           "Exists with nil value - uses first scalar type",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{telemetrytypes.String, telemetrytypes.Int64},
-			operator:       qbtypes.FilterOperatorExists,
-			value:          nil,
-			expected:       telemetrytypes.String,
-		},
-		{
-			name:           "Exists with nil value - only arrays available",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{telemetrytypes.ArrayString},
-			operator:       qbtypes.FilterOperatorExists,
-			value:          nil,
-			expected:       telemetrytypes.ArrayString,
-		},
-		{
-			name:           "Exists with nil value - no types available",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{},
-			operator:       qbtypes.FilterOperatorExists,
-			value:          nil,
-			expected:       telemetrytypes.String, // fallback
-		},
-		{
-			name:           "Float that is actually int",
-			node:           &Node{},
-			availableTypes: []telemetrytypes.JSONDataType{},
-			operator:       qbtypes.FilterOperatorEqual,
-			value:          float64(42.0),
-			expected:       telemetrytypes.Int64,
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			result := c.node.determineValueType(c.availableTypes, c.operator, c.value)
-			require.Equal(t, c.expected, result)
-		})
-	}
-}
-
-func TestNode_inferDataType(t *testing.T) {
-	cases := []struct {
-		name          string
-		node          *Node
-		value         any
-		operator      qbtypes.FilterOperator
-		expectedType  telemetrytypes.JSONDataType
-		expectedValue any
-	}{
-		{
-			name:          "String value",
-			node:          &Node{},
-			value:         "test",
-			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.String,
-			expectedValue: "test",
-		},
-		{
-			name:          "Int64 value",
-			node:          &Node{},
-			value:         int64(42),
-			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Int64,
-			expectedValue: int64(42),
-		},
-		{
-			name:          "Int value",
-			node:          &Node{},
-			value:         int(42),
-			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Int64,
-			expectedValue: int(42),
-		},
-		{
-			name:          "Float64 value",
-			node:          &Node{},
-			value:         float64(3.14),
-			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Float64,
-			expectedValue: float64(3.14),
-		},
-		{
-			name:          "Float64 that is actually int",
-			node:          &Node{},
-			value:         float64(42.0),
-			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Int64,
-			expectedValue: int64(42),
-		},
-		{
-			name:          "Float32 value",
-			node:          &Node{},
-			value:         float32(3.14),
-			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Float64,
-			expectedValue: float32(3.14), // Function infers Float64 type but doesn't convert the value
-		},
-		{
-			name:          "Bool value",
-			node:          &Node{},
-			value:         true,
-			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Bool,
-			expectedValue: true,
-		},
-		{
-			name:          "Array value",
-			node:          &Node{},
-			value:         []any{"test"},
-			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.String,
-			expectedValue: []any{"test"},
-		},
-		{
-			name:          "Empty array",
-			node:          &Node{},
-			value:         []any{},
-			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Dynamic,
-			expectedValue: []any{},
-		},
-		{
-			name:          "String with Contains operator",
-			node:          &Node{},
-			value:         "test",
-			operator:      qbtypes.FilterOperatorContains,
-			expectedType:  telemetrytypes.String,
-			expectedValue: "test",
-		},
-		{
-			name:          "Numeric string parsed as int",
-			node:          &Node{},
-			value:         "42",
-			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Int64,
-			expectedValue: int64(42),
-		},
-		{
-			name:          "Numeric string parsed as float",
-			node:          &Node{},
-			value:         "3.14",
-			operator:      qbtypes.FilterOperatorEqual,
-			expectedType:  telemetrytypes.Float64,
-			expectedValue: float64(3.14),
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			resultType, resultValue := c.node.inferDataType(c.value, c.operator)
-			require.Equal(t, c.expectedType, resultType)
-			require.Equal(t, c.expectedValue, resultValue)
-		})
-	}
-}
-
-func TestIsFloatActuallyInt(t *testing.T) {
-	cases := []struct {
-		name     string
-		value    float64
-		expected bool
-	}{
-		{
-			name:     "Integer float",
-			value:    42.0,
-			expected: true,
-		},
-		{
-			name:     "Non-integer float",
-			value:    3.14,
-			expected: false,
-		},
-		{
-			name:     "Zero",
-			value:    0.0,
-			expected: true,
-		},
-		{
-			name:     "Negative integer float",
-			value:    -42.0,
-			expected: true,
-		},
-		{
-			name:     "Large integer float",
-			value:    1000000.0,
-			expected: true,
-		},
-		{
-			name:     "Small decimal",
-			value:    0.1,
-			expected: false,
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			result := IsFloatActuallyInt(c.value)
-			require.Equal(t, c.expected, result)
-		})
-	}
-}
+// Tests for decideElemType, configureTerminal, determineValueType, inferDataType, and IsFloatActuallyInt
+// have been removed as these methods are no longer part of the JSONAccessNode type.
+// The logic has been moved into the JSONAccessPlanBuilder during plan construction.
 
 func TestPlanBuilder_buildPlan(t *testing.T) {
 	cases := []struct {
 		name          string
 		parts         []string
-		operator      qbtypes.FilterOperator
-		value         any
-		getTypes      func(path string) []telemetrytypes.JSONDataType
+		key           *telemetrytypes.TelemetryFieldKey
+		getTypes      func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error)
 		isDynArrChild bool
-		parent        *Node
-		validate      func(t *testing.T, node *Node)
+		parent        *telemetrytypes.JSONAccessNode
+		validate      func(t *testing.T, node *telemetrytypes.JSONAccessNode)
 	}{
 		{
-			name:          "Simple path with single part",
-			parts:         []string{"user"},
-			operator:      qbtypes.FilterOperatorEqual,
-			value:         "test",
+			name:  "Simple path with single part",
+			parts: []string{"user"},
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "user",
+				JSONDataType: func() *telemetrytypes.JSONDataType { dt := telemetrytypes.String; return &dt }(),
+			},
 			isDynArrChild: false,
-			parent: &Node{
-				Name:            LogsV2BodyJSONColumn,
-				isRoot:          true,
-				MaxDynamicTypes: 32,
-				MaxDynamicPaths: 0,
-			},
-			getTypes: func(path string) []telemetrytypes.JSONDataType {
+			parent:        telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
+			getTypes: func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
 				if path == "user" {
-					return []telemetrytypes.JSONDataType{telemetrytypes.String}
+					return []telemetrytypes.JSONDataType{telemetrytypes.String}, nil
 				}
-				return nil
+				return nil, nil
 			},
-			validate: func(t *testing.T, node *Node) {
+			validate: func(t *testing.T, node *telemetrytypes.JSONAccessNode) {
 				require.NotNil(t, node)
 				require.Equal(t, "user", node.Name)
 				require.True(t, node.IsTerminal)
 				require.NotNil(t, node.TerminalConfig)
-				require.Equal(t, telemetrytypes.String, node.TerminalConfig.ValueType)
+				require.Equal(t, telemetrytypes.String, node.TerminalConfig.ElemType)
 			},
 		},
 		{
-			name:          "Path with array - JSON branch",
-			parts:         []string{"education", "name"},
-			operator:      qbtypes.FilterOperatorEqual,
-			value:         "IIT",
-			isDynArrChild: false,
-			parent: &Node{
-				Name:            LogsV2BodyJSONColumn,
-				isRoot:          true,
-				MaxDynamicTypes: 32,
-				MaxDynamicPaths: 0,
+			name:  "Path with array - JSON branch",
+			parts: []string{"education", "name"},
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "education[].name",
+				JSONDataType: func() *telemetrytypes.JSONDataType { dt := telemetrytypes.String; return &dt }(),
 			},
-			getTypes: func(path string) []telemetrytypes.JSONDataType {
+			isDynArrChild: false,
+			parent:        telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
+			getTypes: func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
 				switch path {
 				case "education":
-					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON}
+					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON}, nil
 				case "education[].name":
-					return []telemetrytypes.JSONDataType{telemetrytypes.String}
+					return []telemetrytypes.JSONDataType{telemetrytypes.String}, nil
 				}
-				return nil
+				return nil, nil
 			},
-			validate: func(t *testing.T, node *Node) {
+			validate: func(t *testing.T, node *telemetrytypes.JSONAccessNode) {
 				require.NotNil(t, node)
 				require.Equal(t, "education", node.Name)
 				require.False(t, node.IsTerminal)
-				require.NotNil(t, node.Branches[BranchJSON])
+				require.NotNil(t, node.Branches[telemetrytypes.BranchJSON])
 				// Parent has MaxDynamicTypes=32, so this node gets 32/2=16
 				require.Equal(t, 16, node.MaxDynamicTypes) // 32/2
 				require.Equal(t, 0, node.MaxDynamicPaths)  // 0/4
 				// The child (terminal "name" node) gets 16/2=8
-				child := node.Branches[BranchJSON]
+				child := node.Branches[telemetrytypes.BranchJSON]
 				require.Equal(t, 8, child.MaxDynamicTypes) // 16/2
 				require.True(t, child.IsTerminal)
 				require.NotNil(t, child.TerminalConfig)
 			},
 		},
 		{
-			name:          "Path with array - Dynamic branch",
-			parts:         []string{"education", "name"},
-			operator:      qbtypes.FilterOperatorEqual,
-			value:         "IIT",
-			isDynArrChild: false,
-			parent: &Node{
-				Name:            LogsV2BodyJSONColumn,
-				isRoot:          true,
-				MaxDynamicTypes: 32,
-				MaxDynamicPaths: 0,
+			name:  "Path with array - Dynamic branch",
+			parts: []string{"education", "name"},
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "education[].name",
+				JSONDataType: func() *telemetrytypes.JSONDataType { dt := telemetrytypes.String; return &dt }(),
 			},
-			getTypes: func(path string) []telemetrytypes.JSONDataType {
+			isDynArrChild: false,
+			parent:        telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
+			getTypes: func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
 				switch path {
 				case "education":
-					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayDynamic}
+					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayDynamic}, nil
 				case "education[].name":
-					return []telemetrytypes.JSONDataType{telemetrytypes.String}
+					return []telemetrytypes.JSONDataType{telemetrytypes.String}, nil
 				}
-				return nil
+				return nil, nil
 			},
-			validate: func(t *testing.T, node *Node) {
+			validate: func(t *testing.T, node *telemetrytypes.JSONAccessNode) {
 				require.NotNil(t, node)
 				require.Equal(t, "education", node.Name)
 				require.False(t, node.IsTerminal)
-				require.NotNil(t, node.Branches[BranchDynamic])
-				require.Equal(t, 16, node.Branches[BranchDynamic].MaxDynamicTypes)  // reset to base
-				require.Equal(t, 256, node.Branches[BranchDynamic].MaxDynamicPaths) // reset to base
+				require.NotNil(t, node.Branches[telemetrytypes.BranchDynamic])
+				require.Equal(t, 16, node.Branches[telemetrytypes.BranchDynamic].MaxDynamicTypes)  // reset to base
+				require.Equal(t, 256, node.Branches[telemetrytypes.BranchDynamic].MaxDynamicPaths) // reset to base
 			},
 		},
 		{
-			name:          "Path with both JSON and Dynamic branches",
-			parts:         []string{"education", "name"},
-			operator:      qbtypes.FilterOperatorEqual,
-			value:         "IIT",
-			isDynArrChild: false,
-			parent: &Node{
-				Name:            LogsV2BodyJSONColumn,
-				isRoot:          true,
-				MaxDynamicTypes: 32,
-				MaxDynamicPaths: 0,
+			name:  "Path with both JSON and Dynamic branches",
+			parts: []string{"education", "name"},
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "education[].name",
+				JSONDataType: func() *telemetrytypes.JSONDataType { dt := telemetrytypes.String; return &dt }(),
 			},
-			getTypes: func(path string) []telemetrytypes.JSONDataType {
+			isDynArrChild: false,
+			parent:        telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
+			getTypes: func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
 				switch path {
 				case "education":
-					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON, telemetrytypes.ArrayDynamic}
+					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON, telemetrytypes.ArrayDynamic}, nil
 				case "education[].name":
-					return []telemetrytypes.JSONDataType{telemetrytypes.String}
+					return []telemetrytypes.JSONDataType{telemetrytypes.String}, nil
 				}
-				return nil
+				return nil, nil
 			},
-			validate: func(t *testing.T, node *Node) {
+			validate: func(t *testing.T, node *telemetrytypes.JSONAccessNode) {
 				require.NotNil(t, node)
 				require.Equal(t, "education", node.Name)
-				require.NotNil(t, node.Branches[BranchJSON])
-				require.NotNil(t, node.Branches[BranchDynamic])
+				require.NotNil(t, node.Branches[telemetrytypes.BranchJSON])
+				require.NotNil(t, node.Branches[telemetrytypes.BranchDynamic])
 			},
 		},
 		{
-			name:          "Index out of bounds returns nil",
-			parts:         []string{"user"},
-			operator:      qbtypes.FilterOperatorEqual,
-			value:         "test",
+			name:  "Index out of bounds returns nil",
+			parts: []string{"user"},
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "user",
+				JSONDataType: func() *telemetrytypes.JSONDataType { dt := telemetrytypes.String; return &dt }(),
+			},
 			isDynArrChild: false,
 			parent:        nil,
-			getTypes:      func(path string) []telemetrytypes.JSONDataType { return nil },
-			validate: func(t *testing.T, node *Node) {
+			getTypes:      func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) { return nil, nil },
+			validate: func(t *testing.T, node *telemetrytypes.JSONAccessNode) {
 				// buildPlan with index >= len(parts) returns nil
 				// Here we call with index=0 and parts=["user"], so index < len(parts), so it won't be nil
 				// To test index out of bounds, we'd need to call buildPlan with index >= len(parts)
@@ -784,40 +305,37 @@ func TestPlanBuilder_buildPlan(t *testing.T) {
 			},
 		},
 		{
-			name:          "Nested array path progression",
-			parts:         []string{"education", "awards", "type"},
-			operator:      qbtypes.FilterOperatorEqual,
-			value:         "sports",
-			isDynArrChild: false,
-			parent: &Node{
-				Name:            LogsV2BodyJSONColumn,
-				isRoot:          true,
-				MaxDynamicTypes: 32,
-				MaxDynamicPaths: 0,
+			name:  "Nested array path progression",
+			parts: []string{"education", "awards", "type"},
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "education[].awards[].type",
+				JSONDataType: func() *telemetrytypes.JSONDataType { dt := telemetrytypes.String; return &dt }(),
 			},
-			getTypes: func(path string) []telemetrytypes.JSONDataType {
+			isDynArrChild: false,
+			parent:        telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
+			getTypes: func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
 				switch path {
 				case "education":
-					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON}
+					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON}, nil
 				case "education[].awards":
-					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON}
+					return []telemetrytypes.JSONDataType{telemetrytypes.ArrayJSON}, nil
 				case "education[].awards[].type":
-					return []telemetrytypes.JSONDataType{telemetrytypes.String}
+					return []telemetrytypes.JSONDataType{telemetrytypes.String}, nil
 				}
-				return nil
+				return nil, nil
 			},
-			validate: func(t *testing.T, node *Node) {
+			validate: func(t *testing.T, node *telemetrytypes.JSONAccessNode) {
 				require.NotNil(t, node)
 				require.Equal(t, "education", node.Name)
 				// This node (education) gets 32/2=16 from parent
 				require.Equal(t, 16, node.MaxDynamicTypes)
-				require.NotNil(t, node.Branches[BranchJSON])
+				require.NotNil(t, node.Branches[telemetrytypes.BranchJSON])
 				// Child (awards) gets 16/2=8
-				child := node.Branches[BranchJSON]
+				child := node.Branches[telemetrytypes.BranchJSON]
 				require.Equal(t, 8, child.MaxDynamicTypes)
 				// Grandchild (type) gets 8/2=4
-				require.NotNil(t, child.Branches[BranchJSON])
-				grandchild := child.Branches[BranchJSON]
+				require.NotNil(t, child.Branches[telemetrytypes.BranchJSON])
+				grandchild := child.Branches[telemetrytypes.BranchJSON]
 				require.Equal(t, 4, grandchild.MaxDynamicTypes)
 				require.True(t, grandchild.IsTerminal)
 			},
@@ -826,31 +344,31 @@ func TestPlanBuilder_buildPlan(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			pb := &PlanBuilder{
+			pb := &JSONAccessPlanBuilder{
+				key:      c.key,
 				parts:    c.parts,
-				operator: c.operator,
-				value:    c.value,
 				getTypes: c.getTypes,
 			}
-			result := pb.buildPlan(0, c.parent, c.isDynArrChild)
+			result, err := pb.buildPlan(context.Background(), 0, c.parent, c.isDynArrChild)
+			require.NoError(t, err)
 			c.validate(t, result)
 		})
 	}
 }
 
 // Helper function to find terminal node in a plan tree
-func findTerminalNode(node *Node) *Node {
+func findTerminalNode(node *telemetrytypes.JSONAccessNode) *telemetrytypes.JSONAccessNode {
 	if node == nil {
 		return nil
 	}
 	if node.IsTerminal {
 		return node
 	}
-	if node.Branches[BranchJSON] != nil {
-		return findTerminalNode(node.Branches[BranchJSON])
+	if node.Branches[telemetrytypes.BranchJSON] != nil {
+		return findTerminalNode(node.Branches[telemetrytypes.BranchJSON])
 	}
-	if node.Branches[BranchDynamic] != nil {
-		return findTerminalNode(node.Branches[BranchDynamic])
+	if node.Branches[telemetrytypes.BranchDynamic] != nil {
+		return findTerminalNode(node.Branches[telemetrytypes.BranchDynamic])
 	}
 	return nil
 }
@@ -862,31 +380,31 @@ func TestPlanJSON(t *testing.T) {
 	findTerminal := findTerminalNode
 
 	// Helper to validate root structure
-	validateRoot := func(t *testing.T, plan *Node, expectedColumn string, expectedMaxPaths int) {
+	validateRoot := func(t *testing.T, plan *telemetrytypes.JSONAccessNode, expectedColumn string, expectedMaxPaths int) {
 		require.NotNil(t, plan)
 		require.NotNil(t, plan.Parent)
 		require.Equal(t, expectedColumn, plan.Parent.Name)
-		require.True(t, plan.Parent.isRoot)
+		// isRoot is unexported, but we can verify it's a root node by checking it was created with NewRootJSONAccessNode
+		// For now, just verify the parent exists and has the expected name
 		require.Equal(t, 32, plan.Parent.MaxDynamicTypes)
 		require.Equal(t, expectedMaxPaths, plan.Parent.MaxDynamicPaths)
 	}
 
 	t.Run("Basic Structure Tests", func(t *testing.T) {
 		cases := []struct {
-			name       string
-			path       string
-			operator   qbtypes.FilterOperator
-			value      any
-			isPromoted bool
-			validate   func(t *testing.T, plans []*Node)
+			name      string
+			key       *telemetrytypes.TelemetryFieldKey
+			expectErr bool
+			validate  func(t *testing.T, plans []*telemetrytypes.JSONAccessNode)
 		}{
 			{
-				name:       "Simple path not promoted - validates root structure",
-				path:       "user.name",
-				operator:   qbtypes.FilterOperatorEqual,
-				value:      "John",
-				isPromoted: false,
-				validate: func(t *testing.T, plans []*Node) {
+				name: "Simple path not promoted - validates root structure",
+				key: &telemetrytypes.TelemetryFieldKey{
+					Name:         "user.name",
+					JSONDataType: func() *telemetrytypes.JSONDataType { dt := telemetrytypes.String; return &dt }(),
+					Materialized: false,
+				},
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					require.Len(t, plans, 1)
 					validateRoot(t, plans[0], LogsV2BodyJSONColumn, 0)
 					// Path "user.name" is split by "." not arraySep, so first part is "user.name"
@@ -896,12 +414,13 @@ func TestPlanJSON(t *testing.T) {
 				},
 			},
 			{
-				name:       "Simple path promoted - validates both plans",
-				path:       "user.name",
-				operator:   qbtypes.FilterOperatorEqual,
-				value:      "John",
-				isPromoted: true,
-				validate: func(t *testing.T, plans []*Node) {
+				name: "Simple path promoted - validates both plans",
+				key: &telemetrytypes.TelemetryFieldKey{
+					Name:         "user.name",
+					JSONDataType: func() *telemetrytypes.JSONDataType { dt := telemetrytypes.String; return &dt }(),
+					Materialized: true,
+				},
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					require.Len(t, plans, 2)
 					validateRoot(t, plans[0], LogsV2BodyJSONColumn, 0)
 					validateRoot(t, plans[1], LogsV2BodyPromotedColumn, 1024)
@@ -910,12 +429,14 @@ func TestPlanJSON(t *testing.T) {
 				},
 			},
 			{
-				name:       "Empty path returns nil",
-				path:       "",
-				operator:   qbtypes.FilterOperatorEqual,
-				value:      "test",
-				isPromoted: false,
-				validate: func(t *testing.T, plans []*Node) {
+				name: "Empty path returns nil",
+				key: &telemetrytypes.TelemetryFieldKey{
+					Name:         "",
+					JSONDataType: func() *telemetrytypes.JSONDataType { dt := telemetrytypes.String; return &dt }(),
+					Materialized: false,
+				},
+				expectErr: true,
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					require.Nil(t, plans)
 				},
 			},
@@ -923,7 +444,13 @@ func TestPlanJSON(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				plans := PlanJSON(c.path, c.operator, c.value, c.isPromoted, getTypes)
+				plans, err := PlanJSON(context.Background(), c.key, qbtypes.FilterOperatorEqual, "John", getTypes)
+				if c.expectErr {
+					require.Error(t, err)
+					c.validate(t, plans)
+					return
+				}
+				require.NoError(t, err)
 				c.validate(t, plans)
 			})
 		}
@@ -935,22 +462,20 @@ func TestPlanJSON(t *testing.T) {
 			path     string
 			operator qbtypes.FilterOperator
 			value    any
-			validate func(t *testing.T, plans []*Node)
+			validate func(t *testing.T, plans []*telemetrytypes.JSONAccessNode)
 		}{
 			{
 				name:     "Equal operator with string",
 				path:     "user.name",
 				operator: qbtypes.FilterOperatorEqual,
 				value:    "John",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorEqual, terminal.TerminalConfig.Operator)
-					require.Equal(t, "John", terminal.TerminalConfig.Value)
-					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ValueType)
 					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ElemType)
-					require.False(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ElemType)
+					require.False(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayString)
 				},
 			},
 			{
@@ -958,13 +483,11 @@ func TestPlanJSON(t *testing.T) {
 				path:     "user.age",
 				operator: qbtypes.FilterOperatorNotEqual,
 				value:    int64(30),
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorNotEqual, terminal.TerminalConfig.Operator)
-					require.Equal(t, int64(30), terminal.TerminalConfig.Value)
-					require.Equal(t, telemetrytypes.Int64, terminal.TerminalConfig.ValueType)
+					require.Equal(t, telemetrytypes.Int64, terminal.TerminalConfig.ElemType)
 				},
 			},
 			{
@@ -972,15 +495,13 @@ func TestPlanJSON(t *testing.T) {
 				path:     "education[].name",
 				operator: qbtypes.FilterOperatorContains,
 				value:    "IIT",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorContains, terminal.TerminalConfig.Operator)
-					require.Equal(t, "IIT", terminal.TerminalConfig.Value)
-					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ValueType)
+					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ElemType)
 					// Since education[].name is String (not array), PreferArrayAtEnd should be false
-					require.False(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.False(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayString)
 				},
 			},
 			{
@@ -988,15 +509,14 @@ func TestPlanJSON(t *testing.T) {
 				path:     "education[].parameters",
 				operator: qbtypes.FilterOperatorContains,
 				value:    1.65,
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorContains, terminal.TerminalConfig.Operator)
 					// Should prefer array since ArrayFloat64 is available
-					require.True(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.True(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayFloat64)
 					require.Equal(t, telemetrytypes.ArrayFloat64, terminal.TerminalConfig.ElemType)
-					require.Equal(t, telemetrytypes.Float64, terminal.TerminalConfig.ValueType)
+					// ValueType is no longer in TerminalConfig, only ElemType
 				},
 			},
 			{
@@ -1004,11 +524,10 @@ func TestPlanJSON(t *testing.T) {
 				path:     "education[].parameters",
 				operator: qbtypes.FilterOperatorNotContains,
 				value:    "test",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorNotContains, terminal.TerminalConfig.Operator)
 				},
 			},
 			{
@@ -1016,11 +535,10 @@ func TestPlanJSON(t *testing.T) {
 				path:     "user.name",
 				operator: qbtypes.FilterOperatorLike,
 				value:    "John%",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorLike, terminal.TerminalConfig.Operator)
 				},
 			},
 			{
@@ -1028,11 +546,10 @@ func TestPlanJSON(t *testing.T) {
 				path:     "user.name",
 				operator: qbtypes.FilterOperatorILike,
 				value:    "john%",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorILike, terminal.TerminalConfig.Operator)
 				},
 			},
 			{
@@ -1040,12 +557,10 @@ func TestPlanJSON(t *testing.T) {
 				path:     "user.age",
 				operator: qbtypes.FilterOperatorGreaterThan,
 				value:    int64(18),
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorGreaterThan, terminal.TerminalConfig.Operator)
-					require.Equal(t, int64(18), terminal.TerminalConfig.Value)
 				},
 			},
 			{
@@ -1053,11 +568,10 @@ func TestPlanJSON(t *testing.T) {
 				path:     "user.age",
 				operator: qbtypes.FilterOperatorGreaterThanOrEq,
 				value:    int64(18),
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorGreaterThanOrEq, terminal.TerminalConfig.Operator)
 				},
 			},
 			{
@@ -1065,12 +579,11 @@ func TestPlanJSON(t *testing.T) {
 				path:     "user.name",
 				operator: qbtypes.FilterOperatorIn,
 				value:    []any{"John", "Jane", "Bob"},
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorIn, terminal.TerminalConfig.Operator)
-					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ValueType)
+					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ElemType)
 				},
 			},
 			{
@@ -1078,11 +591,10 @@ func TestPlanJSON(t *testing.T) {
 				path:     "user.age",
 				operator: qbtypes.FilterOperatorNotIn,
 				value:    []any{int64(18), int64(21), int64(65)},
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorNotIn, terminal.TerminalConfig.Operator)
 				},
 			},
 			{
@@ -1090,14 +602,12 @@ func TestPlanJSON(t *testing.T) {
 				path:     "user.age",
 				operator: qbtypes.FilterOperatorExists,
 				value:    nil,
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorExists, terminal.TerminalConfig.Operator)
-					require.Nil(t, terminal.TerminalConfig.Value)
 					// Should pick first scalar type from available types
-					require.Equal(t, telemetrytypes.Int64, terminal.TerminalConfig.ValueType)
+					require.Equal(t, telemetrytypes.Int64, terminal.TerminalConfig.ElemType)
 					require.Equal(t, telemetrytypes.Int64, terminal.TerminalConfig.ElemType)
 				},
 			},
@@ -1106,11 +616,10 @@ func TestPlanJSON(t *testing.T) {
 				path:     "user.name",
 				operator: qbtypes.FilterOperatorRegexp,
 				value:    "^John.*",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorRegexp, terminal.TerminalConfig.Operator)
 				},
 			},
 			{
@@ -1118,18 +627,19 @@ func TestPlanJSON(t *testing.T) {
 				path:     "user.name",
 				operator: qbtypes.FilterOperatorNotRegexp,
 				value:    "^John.*",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.Equal(t, qbtypes.FilterOperatorNotRegexp, terminal.TerminalConfig.Operator)
 				},
 			},
 		}
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				plans := PlanJSON(c.path, c.operator, c.value, false, getTypes)
+				key := makeKey(c.path, inferDataTypeFromValue(c.value), false)
+				plans, err := PlanJSON(context.Background(), key, c.operator, c.value, getTypes)
+				require.NoError(t, err)
 				require.NotNil(t, plans)
 				require.Len(t, plans, 1)
 				c.validate(t, plans)
@@ -1142,20 +652,20 @@ func TestPlanJSON(t *testing.T) {
 			name     string
 			path     string
 			operator qbtypes.FilterOperator
-			validate func(t *testing.T, plans []*Node)
+			validate func(t *testing.T, plans []*telemetrytypes.JSONAccessNode)
 		}{
 			{
 				name:     "Single array level - JSON branch only",
 				path:     "education[].name",
 				operator: qbtypes.FilterOperatorEqual,
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					node := plans[0]
 					require.Equal(t, "education", node.Name)
 					require.False(t, node.IsTerminal)
-					require.NotNil(t, node.Branches[BranchJSON])
-					require.Nil(t, node.Branches[BranchDynamic])
+					require.NotNil(t, node.Branches[telemetrytypes.BranchJSON])
+					require.Nil(t, node.Branches[telemetrytypes.BranchDynamic])
 					// Check progression: root(32) -> education(32/2=16) -> name terminal(16/2=8)
-					child := node.Branches[BranchJSON]
+					child := node.Branches[telemetrytypes.BranchJSON]
 					// Terminal node (name) gets MaxDynamicTypes from parent divided by 2
 					require.True(t, child.IsTerminal)
 					require.Equal(t, "name", child.Name)
@@ -1167,19 +677,19 @@ func TestPlanJSON(t *testing.T) {
 				name:     "Single array level - both JSON and Dynamic branches",
 				path:     "education[].awards[].type",
 				operator: qbtypes.FilterOperatorEqual,
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					node := plans[0]
 					require.Equal(t, "education", node.Name)
-					require.NotNil(t, node.Branches[BranchJSON])
-					child := node.Branches[BranchJSON]
+					require.NotNil(t, node.Branches[telemetrytypes.BranchJSON])
+					child := node.Branches[telemetrytypes.BranchJSON]
 					require.Equal(t, "awards", child.Name)
-					require.NotNil(t, child.Branches[BranchJSON])
-					require.NotNil(t, child.Branches[BranchDynamic])
+					require.NotNil(t, child.Branches[telemetrytypes.BranchJSON])
+					require.NotNil(t, child.Branches[telemetrytypes.BranchDynamic])
 					// Check progression: root(32) -> education(32/2=16) -> awards(16/2=8) -> type terminal(8/2=4)
 					require.Equal(t, 8, child.MaxDynamicTypes) // awards node has 8 (16/2)
 					// Terminal is in grandchild (type), so check it
-					terminalJSON := findTerminal(child.Branches[BranchJSON])
-					terminalDyn := findTerminal(child.Branches[BranchDynamic])
+					terminalJSON := findTerminal(child.Branches[telemetrytypes.BranchJSON])
+					terminalDyn := findTerminal(child.Branches[telemetrytypes.BranchDynamic])
 					// awards has 8, so terminal gets 8/2=4
 					require.Equal(t, 4, terminalJSON.MaxDynamicTypes)
 					require.Equal(t, "type", terminalJSON.Name)
@@ -1193,18 +703,18 @@ func TestPlanJSON(t *testing.T) {
 				name:     "Deeply nested array path - validates progression",
 				path:     "interests[].entities[].reviews[].entries[].metadata[].positions[].name",
 				operator: qbtypes.FilterOperatorEqual,
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					node := plans[0]
 					// Traverse and check progression at each level
 					current := node
 					expectedTypes := []int{16, 8, 4, 2, 1, 0} // 32/2 at each level
 					level := 0
-					for !current.IsTerminal && current.Branches[BranchJSON] != nil {
+					for !current.IsTerminal && current.Branches[telemetrytypes.BranchJSON] != nil {
 						if level < len(expectedTypes) {
 							require.Equal(t, expectedTypes[level], current.MaxDynamicTypes,
 								"MaxDynamicTypes mismatch at level %d", level)
 						}
-						current = current.Branches[BranchJSON]
+						current = current.Branches[telemetrytypes.BranchJSON]
 						level++
 					}
 					require.True(t, current.IsTerminal)
@@ -1214,12 +724,12 @@ func TestPlanJSON(t *testing.T) {
 				name:     "ArrayAnyIndex replacement [*] to []",
 				path:     "education[*].name",
 				operator: qbtypes.FilterOperatorEqual,
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					// Should work the same as education[].name
 					node := plans[0]
 					require.Equal(t, "education", node.Name)
-					require.NotNil(t, node.Branches[BranchJSON])
-					terminal := findTerminal(node.Branches[BranchJSON])
+					require.NotNil(t, node.Branches[telemetrytypes.BranchJSON])
+					terminal := findTerminal(node.Branches[telemetrytypes.BranchJSON])
 					require.NotNil(t, terminal)
 					require.Equal(t, "name", terminal.Name)
 				},
@@ -1228,19 +738,21 @@ func TestPlanJSON(t *testing.T) {
 				name:     "Multiple arrayAnyIndex replacements",
 				path:     "education[*].awards[*].type",
 				operator: qbtypes.FilterOperatorEqual,
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					node := plans[0]
-					require.NotNil(t, node.Branches[BranchJSON])
-					child := node.Branches[BranchJSON]
-					require.NotNil(t, child.Branches[BranchJSON])
-					require.NotNil(t, child.Branches[BranchDynamic])
+					require.NotNil(t, node.Branches[telemetrytypes.BranchJSON])
+					child := node.Branches[telemetrytypes.BranchJSON]
+					require.NotNil(t, child.Branches[telemetrytypes.BranchJSON])
+					require.NotNil(t, child.Branches[telemetrytypes.BranchDynamic])
 				},
 			},
 		}
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				plans := PlanJSON(c.path, c.operator, "test_value", false, getTypes)
+				key := makeKey(c.path, telemetrytypes.String, false)
+				plans, err := PlanJSON(context.Background(), key, c.operator, "John", getTypes)
+				require.NoError(t, err)
 				require.NotNil(t, plans)
 				require.Len(t, plans, 1)
 				c.validate(t, plans)
@@ -1254,20 +766,20 @@ func TestPlanJSON(t *testing.T) {
 			path     string
 			operator qbtypes.FilterOperator
 			value    any
-			validate func(t *testing.T, plans []*Node)
+			validate func(t *testing.T, plans []*telemetrytypes.JSONAccessNode)
 		}{
 			{
 				name:     "Contains with ArrayFloat64 - should prefer array",
 				path:     "education[].parameters",
 				operator: qbtypes.FilterOperatorContains,
 				value:    1.65,
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.True(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.True(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayFloat64)
 					require.Equal(t, telemetrytypes.ArrayFloat64, terminal.TerminalConfig.ElemType)
-					require.Equal(t, telemetrytypes.Float64, terminal.TerminalConfig.ValueType)
+					// ValueType is no longer in TerminalConfig, only ElemType
 				},
 			},
 			{
@@ -1275,12 +787,12 @@ func TestPlanJSON(t *testing.T) {
 				path:     "education[].parameters",
 				operator: qbtypes.FilterOperatorContains,
 				value:    "passed",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
 					// ArrayDynamic is available, so should prefer array
-					require.True(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.True(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayString)
 					require.Equal(t, telemetrytypes.ArrayString, terminal.TerminalConfig.ElemType)
 				},
 			},
@@ -1289,11 +801,11 @@ func TestPlanJSON(t *testing.T) {
 				path:     "interests[].entities[].reviews[].entries[].metadata[].positions[].ratings",
 				operator: qbtypes.FilterOperatorContains,
 				value:    int64(4),
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.True(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.True(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayInt64)
 					require.Equal(t, telemetrytypes.ArrayInt64, terminal.TerminalConfig.ElemType)
 				},
 			},
@@ -1302,11 +814,11 @@ func TestPlanJSON(t *testing.T) {
 				path:     "interests[].entities[].reviews[].entries[].metadata[].positions[].ratings",
 				operator: qbtypes.FilterOperatorContains,
 				value:    "Good",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
-					require.True(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.True(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayString)
 					require.Equal(t, telemetrytypes.ArrayString, terminal.TerminalConfig.ElemType)
 				},
 			},
@@ -1315,12 +827,12 @@ func TestPlanJSON(t *testing.T) {
 				path:     "education[].name",
 				operator: qbtypes.FilterOperatorContains,
 				value:    "IIT",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
 					// Only String scalar available, no array
-					require.False(t, terminal.TerminalConfig.PreferArrayAtEnd)
+					require.False(t, terminal.TerminalConfig.ElemType == telemetrytypes.ArrayString)
 					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ElemType)
 				},
 			},
@@ -1328,7 +840,9 @@ func TestPlanJSON(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				plans := PlanJSON(c.path, c.operator, c.value, false, getTypes)
+				key := makeKey(c.path, inferDataTypeFromValue(c.value), false)
+				plans, err := PlanJSON(context.Background(), key, c.operator, c.value, getTypes)
+				require.NoError(t, err)
 				require.NotNil(t, plans)
 				require.Len(t, plans, 1)
 				c.validate(t, plans)
@@ -1338,17 +852,20 @@ func TestPlanJSON(t *testing.T) {
 
 	t.Run("Promoted vs Non-Promoted Differences", func(t *testing.T) {
 		path := "education[].awards[].type"
-		operator := qbtypes.FilterOperatorEqual
 		value := "sports"
 
 		t.Run("Non-promoted plan", func(t *testing.T) {
-			plans := PlanJSON(path, operator, value, false, getTypes)
+			key := makeKey(path, inferDataTypeFromValue(value), false)
+			plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, value, getTypes)
+			require.NoError(t, err)
 			require.Len(t, plans, 1)
 			validateRoot(t, plans[0], LogsV2BodyJSONColumn, 0)
 		})
 
 		t.Run("Promoted plan", func(t *testing.T) {
-			plans := PlanJSON(path, operator, value, true, getTypes)
+			key := makeKey(path, inferDataTypeFromValue(value), true)
+			plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, value, getTypes)
+			require.NoError(t, err)
 			require.Len(t, plans, 2)
 			validateRoot(t, plans[0], LogsV2BodyJSONColumn, 0)
 			validateRoot(t, plans[1], LogsV2BodyPromotedColumn, 1024)
@@ -1359,8 +876,6 @@ func TestPlanJSON(t *testing.T) {
 			require.NotNil(t, terminal1)
 			require.NotNil(t, terminal2)
 			require.Equal(t, terminal1.Name, terminal2.Name)
-			require.Equal(t, terminal1.TerminalConfig.Operator, terminal2.TerminalConfig.Operator)
-			require.Equal(t, terminal1.TerminalConfig.Value, terminal2.TerminalConfig.Value)
 
 			// But promoted plan should have different MaxDynamicPaths progression
 			// Check that promoted plan has different MaxDynamicPaths at each level
@@ -1370,9 +885,9 @@ func TestPlanJSON(t *testing.T) {
 			// For non-promoted: first child gets 0/4=0
 			require.Equal(t, 256, node2.MaxDynamicPaths, "Promoted education node should have 256 (reset value)")
 			require.Equal(t, 0, node1.MaxDynamicPaths, "Non-promoted education node should have 0")
-			if node1.Branches[BranchJSON] != nil && node2.Branches[BranchJSON] != nil {
-				child1 := node1.Branches[BranchJSON] // "awards" node (non-promoted)
-				child2 := node2.Branches[BranchJSON] // "awards" node (promoted)
+			if node1.Branches[telemetrytypes.BranchJSON] != nil && node2.Branches[telemetrytypes.BranchJSON] != nil {
+				child1 := node1.Branches[telemetrytypes.BranchJSON] // "awards" node (non-promoted)
+				child2 := node2.Branches[telemetrytypes.BranchJSON] // "awards" node (promoted)
 				// Promoted awards: parent(256) -> child gets 256/4 = 64
 				require.Equal(t, 64, child2.MaxDynamicPaths, "Promoted awards node should have 64")
 				// Non-promoted awards: parent(0) -> child gets 0/4 = 0
@@ -1387,14 +902,14 @@ func TestPlanJSON(t *testing.T) {
 			path     string
 			operator qbtypes.FilterOperator
 			value    any
-			validate func(t *testing.T, plans []*Node)
+			validate func(t *testing.T, plans []*telemetrytypes.JSONAccessNode)
 		}{
 			{
 				name:     "Path with no available types - should still create plan",
 				path:     "unknown.path",
 				operator: qbtypes.FilterOperatorEqual,
 				value:    "test",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					require.NotNil(t, plans)
 					require.Len(t, plans, 1)
 					require.NotNil(t, plans[0])
@@ -1403,7 +918,7 @@ func TestPlanJSON(t *testing.T) {
 					if terminal != nil {
 						require.NotNil(t, terminal.TerminalConfig)
 						// Should fallback to String if no types available
-						require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ValueType)
+						require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ElemType)
 						require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ElemType)
 					}
 				},
@@ -1413,16 +928,16 @@ func TestPlanJSON(t *testing.T) {
 				path:     "interests[].entities[].reviews[].entries[].metadata[].positions[].name",
 				operator: qbtypes.FilterOperatorEqual,
 				value:    "Engineer",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					node := plans[0]
 					current := node
 					// Traverse all levels and ensure MaxDynamicTypes never goes negative
-					for !current.IsTerminal && current.Branches[BranchJSON] != nil {
+					for !current.IsTerminal && current.Branches[telemetrytypes.BranchJSON] != nil {
 						require.GreaterOrEqual(t, current.MaxDynamicTypes, 0,
 							"MaxDynamicTypes should not be negative at node %s", current.Name)
 						require.GreaterOrEqual(t, current.MaxDynamicPaths, 0,
 							"MaxDynamicPaths should not be negative at node %s", current.Name)
-						current = current.Branches[BranchJSON]
+						current = current.Branches[telemetrytypes.BranchJSON]
 					}
 				},
 			},
@@ -1431,14 +946,14 @@ func TestPlanJSON(t *testing.T) {
 				path:     "education[].type",
 				operator: qbtypes.FilterOperatorEqual,
 				value:    "high_school",
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					// education[].type has both String and Int64 types
 					require.Contains(t, terminal.AvailableTypes, telemetrytypes.String)
 					require.Contains(t, terminal.AvailableTypes, telemetrytypes.Int64)
 					// Should prefer String since value is string
-					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ValueType)
+					require.Equal(t, telemetrytypes.String, terminal.TerminalConfig.ElemType)
 				},
 			},
 			{
@@ -1446,19 +961,21 @@ func TestPlanJSON(t *testing.T) {
 				path:     "education",
 				operator: qbtypes.FilterOperatorExists,
 				value:    nil,
-				validate: func(t *testing.T, plans []*Node) {
+				validate: func(t *testing.T, plans []*telemetrytypes.JSONAccessNode) {
 					terminal := findTerminal(plans[0])
 					require.NotNil(t, terminal)
 					require.NotNil(t, terminal.TerminalConfig)
 					// education is ArrayJSON, so should use that
-					require.Equal(t, telemetrytypes.ArrayJSON, terminal.TerminalConfig.ValueType)
+					require.Equal(t, telemetrytypes.ArrayJSON, terminal.TerminalConfig.ElemType)
 				},
 			},
 		}
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				plans := PlanJSON(c.path, c.operator, c.value, false, getTypes)
+				key := makeKey(c.path, inferDataTypeFromValue(c.value), false)
+				plans, err := PlanJSON(context.Background(), key, c.operator, c.value, getTypes)
+				require.NoError(t, err)
 				c.validate(t, plans)
 			})
 		}
@@ -1466,29 +983,31 @@ func TestPlanJSON(t *testing.T) {
 
 	t.Run("Tree Structure Validation", func(t *testing.T) {
 		path := "education[].awards[].participated[].team[].branch"
-		plans := PlanJSON(path, qbtypes.FilterOperatorEqual, "Civil", false, getTypes)
+		key := makeKey(path, telemetrytypes.String, false)
+		plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, "John", getTypes)
+		require.NoError(t, err)
 		require.Len(t, plans, 1)
 
 		node := plans[0]
 		// Validate all nodes have correct parent references
-		var validateNode func(*Node)
-		validateNode = func(n *Node) {
+		var validateNode func(*telemetrytypes.JSONAccessNode)
+		validateNode = func(n *telemetrytypes.JSONAccessNode) {
 			if n == nil {
 				return
 			}
 			if n.Parent != nil {
 				require.NotNil(t, n.Parent, "Node %s should have parent", n.Name)
 				// Parent should not be terminal if it has children (unless it's root)
-				if !n.IsTerminal && !n.Parent.isRoot {
+				if !n.IsTerminal && n.Parent != nil {
 					require.False(t, n.Parent.IsTerminal,
 						"Non-terminal node %s should have non-terminal parent", n.Name)
 				}
 			}
-			if n.Branches[BranchJSON] != nil {
-				validateNode(n.Branches[BranchJSON])
+			if n.Branches[telemetrytypes.BranchJSON] != nil {
+				validateNode(n.Branches[telemetrytypes.BranchJSON])
 			}
-			if n.Branches[BranchDynamic] != nil {
-				validateNode(n.Branches[BranchDynamic])
+			if n.Branches[telemetrytypes.BranchDynamic] != nil {
+				validateNode(n.Branches[telemetrytypes.BranchDynamic])
 			}
 		}
 		validateNode(node)
@@ -1676,10 +1195,10 @@ func TestPlanJSON(t *testing.T) {
 	  ]
 	}
 */
-func testTypeSet() (map[string][]telemetrytypes.JSONDataType, func(path string) []telemetrytypes.JSONDataType) {
+func testTypeSet() (map[string][]telemetrytypes.JSONDataType, func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error)) {
 	types := map[string][]telemetrytypes.JSONDataType{
 		"user.name":                                           {telemetrytypes.String},
-		"user.age":                                            {telemetrytypes.Int64},
+		"user.age":                                            {telemetrytypes.Int64, telemetrytypes.String},
 		"user.height":                                         {telemetrytypes.Float64},
 		"education":                                           {telemetrytypes.ArrayJSON},
 		"education[].name":                                    {telemetrytypes.String},
@@ -1735,7 +1254,7 @@ func testTypeSet() (map[string][]telemetrytypes.JSONDataType, func(path string) 
 		"message": {telemetrytypes.String},
 	}
 
-	return types, func(path string) []telemetrytypes.JSONDataType {
-		return types[path]
+	return types, func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
+		return types[path], nil
 	}
 }
