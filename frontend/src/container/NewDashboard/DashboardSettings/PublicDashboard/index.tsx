@@ -206,9 +206,14 @@ function PublicDashboardSetting(): JSX.Element {
 	return (
 		<div className="public-dashboard-setting-container">
 			<div className="public-dashboard-setting-content">
-				<Typography.Text className="public-dashboard-setting-content-text">
-					Access Settings: This dashboard is accessible to anyone who has the link.
-				</Typography.Text>
+				<Typography.Title
+					level={5}
+					className="public-dashboard-setting-content-title"
+				>
+					{isPublicDashboardEnabled
+						? 'This dashboard is publicly accessible. Anyone with the link can view it.'
+						: 'This dashboard is private. Publish it to make it accessible to anyone with the link.'}
+				</Typography.Title>
 
 				<div className="timerange-enabled-checkbox">
 					<Checkbox
