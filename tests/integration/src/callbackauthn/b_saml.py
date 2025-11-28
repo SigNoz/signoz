@@ -31,10 +31,12 @@ def test_create_auth_domain(
     get_token: Callable[[str, str], str],
 ) -> None:
     # Create a saml client in the idp.
-    create_saml_client("saml.integration.test", "/api/v1/complete/saml")
+    create_saml_client(f"{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}", "/api/v1/complete/saml")
 
     # Get the saml settings from keycloak.
     settings = get_saml_settings()
+
+    print("settings: " + str(settings))
 
     # Create a auth domain in signoz.
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -79,6 +81,8 @@ def test_saml_authn(
     assert len(session_context["orgs"][0]["authNSupport"]["callback"]) == 1
 
     url = session_context["orgs"][0]["authNSupport"]["callback"][0]["url"]
+
+    print("url: " + url)
 
     driver.get(url)
     idp_login("viewer@saml.integration.test", "password")
