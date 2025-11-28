@@ -204,13 +204,13 @@ func buildListLogsJSONIndexesQuery(cluster string, filters ...string) (string, [
 	sb.Where(sb.Equal("database", telemetrylogs.DBName))
 	sb.Where(sb.Equal("table", telemetrylogs.LogsV2LocalTableName))
 	sb.Where(sb.Or(
-		sb.Like("expr", querybuilder.FormatValueForContains(constants.BodyJSONColumnPrefix)),
-		sb.Like("expr", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix))),
-	)
+		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyJSONColumnPrefix))),
+		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix))),
+	))
 
 	filterExprs := []string{}
 	for _, filter := range filters {
-		filterExprs = append(filterExprs, sb.Like("expr", querybuilder.FormatValueForContains(filter)))
+		filterExprs = append(filterExprs, sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(filter))))
 	}
 	sb.Where(sb.Or(filterExprs...))
 
