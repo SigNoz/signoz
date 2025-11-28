@@ -37,7 +37,7 @@ def test_set_ttl_traces_success(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -64,6 +64,7 @@ def test_set_ttl_traces_success(
         "usage_explorer",
         "dependency_graph_minutes_v2",
         "trace_summary",
+        "span_attributes_keys",
     ]
 
     # Query to get table engine info which includes TTL
@@ -92,7 +93,7 @@ def test_set_ttl_traces_with_cold_storage(signoz: types.SigNoz, get_token: Calla
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -120,7 +121,7 @@ def test_set_ttl_metrics_success(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -179,7 +180,7 @@ def test_set_ttl_metrics_with_cold_storage(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -207,7 +208,7 @@ def test_set_ttl_invalid_type(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -233,7 +234,7 @@ def test_set_custom_retention_ttl_basic(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -291,6 +292,26 @@ def test_set_custom_retention_ttl_basic(
             retention_col[3] == "100"
         ), f"Expected default value of _retention_days to be 100 in table {table}, but got {retention_col[3]}"
 
+    tables_to_check = [
+        "logs_attribute_keys",
+        "logs_resource_keys"
+    ]
+
+    # Query to get table engine info which includes TTL
+    table_list = "', '".join(tables_to_check)
+    query = f"SELECT engine_full FROM system.tables WHERE table in ['{table_list}']"
+    result = signoz.telemetrystore.conn.query(query).result_rows
+
+    # Verify TTL exists in all table definitions
+    assert all("TTL" in r[0] for r in result)
+
+    assert all(" SETTINGS" in r[0] for r in result)
+
+    ttl_parts = [r[0].split("TTL ")[1].split(" SETTINGS")[0] for r in result]
+
+    # Also verify the TTL parts contain retention_days
+    assert all("toIntervalDay(100)" in ttl_part for ttl_part in ttl_parts)
+
 
 def test_set_custom_retention_ttl_basic_fallback(
     signoz: types.SigNoz,
@@ -309,7 +330,7 @@ def test_set_custom_retention_ttl_basic_fallback(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -332,6 +353,8 @@ def test_set_custom_retention_ttl_basic_fallback(
     tables_to_check = [
         "logs_v2",
         "logs_v2_resource",
+        "logs_attribute_keys",
+        "logs_resource_keys"
     ]
 
     # Query to get table engine info which includes TTL
@@ -364,7 +387,7 @@ def test_set_custom_retention_ttl_basic_101_times(signoz: types.SigNoz, get_toke
         }
 
         headers = {
-            "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+            "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
         }
 
         response = requests.post(
@@ -440,7 +463,7 @@ def test_set_custom_retention_ttl_with_conditions(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -494,7 +517,7 @@ def test_set_custom_retention_ttl_with_cold_storage(
     insert_logs(logs)
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -538,7 +561,7 @@ def test_set_custom_retention_ttl_duplicate_conditions(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -575,7 +598,7 @@ def test_set_custom_retention_ttl_invalid_condition(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -614,7 +637,7 @@ def test_get_custom_retention_ttl(
     insert_logs(logs)
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
     set_response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
@@ -629,7 +652,7 @@ def test_get_custom_retention_ttl(
 
     # Now get the TTL configuration
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     get_response = requests.get(
@@ -666,7 +689,7 @@ def test_set_ttl_logs_success(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(
@@ -683,7 +706,7 @@ def test_set_ttl_logs_success(
 
     # Verify TTL settings in Clickhouse
     # Allow some time for the TTL to be applied
-    time.sleep(2)
+    time.sleep(5)
 
     # Check TTL settings on relevant logs tables
     tables_to_check = [
@@ -719,7 +742,7 @@ def test_get_ttl_traces_success(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     set_response = requests.post(
@@ -786,7 +809,7 @@ def test_large_ttl_conditions_list(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
     }
 
     response = requests.post(

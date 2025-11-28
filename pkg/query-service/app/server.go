@@ -9,6 +9,7 @@ import (
 	_ "net/http/pprof" // http profiler
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 
 	"github.com/gorilla/handlers"
@@ -74,13 +75,26 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		return nil, err
 	}
 
+	cacheForTraceDetail, err := memorycache.New(context.TODO(), signoz.Instrumentation.ToProviderSettings(), cache.Config{
+		Provider: "memory",
+		Memory: cache.Memory{
+			NumCounters: 10 * 10000,
+			MaxCost:     1 << 27, // 128 MB
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	reader := clickhouseReader.NewReader(
 		signoz.SQLStore,
 		signoz.TelemetryStore,
 		signoz.Prometheus,
 		signoz.TelemetryStore.Cluster(),
 		config.Querier.FluxInterval,
+		cacheForTraceDetail,
 		signoz.Cache,
+		nil,
 	)
 
 	rm, err := makeRulesManager(
@@ -190,7 +204,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
 	r.Use(middleware.NewComment().Wrap)
 
-	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger())
+	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz)
 
 	api.RegisterRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)

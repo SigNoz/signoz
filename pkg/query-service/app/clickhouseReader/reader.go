@@ -155,6 +155,7 @@ type ClickHouseReader struct {
 
 	fluxIntervalForTraceDetail time.Duration
 	cache                      cache.Cache
+	cacheForTraceDetail        cache.Cache
 	metadataDB                 string
 	metadataTable              string
 }
@@ -166,21 +167,14 @@ func NewReader(
 	prometheus prometheus.Prometheus,
 	cluster string,
 	fluxIntervalForTraceDetail time.Duration,
+	cacheForTraceDetail cache.Cache,
 	cache cache.Cache,
-) *ClickHouseReader {
-	options := NewOptions(primaryNamespace, archiveNamespace)
-	return NewReaderFromClickhouseConnection(options, sqlDB, telemetryStore, prometheus, cluster, fluxIntervalForTraceDetail, cache)
-}
-
-func NewReaderFromClickhouseConnection(
 	options *Options,
-	sqlDB sqlstore.SQLStore,
-	telemetryStore telemetrystore.TelemetryStore,
-	prometheus prometheus.Prometheus,
-	cluster string,
-	fluxIntervalForTraceDetail time.Duration,
-	cache cache.Cache,
 ) *ClickHouseReader {
+	if options == nil {
+		options = NewOptions(primaryNamespace, archiveNamespace)
+	}
+
 	logsTableName := options.primary.LogsTableV2
 	logsLocalTableName := options.primary.LogsLocalTableV2
 	traceTableName := options.primary.TraceIndexTableV3
@@ -222,6 +216,7 @@ func NewReaderFromClickhouseConnection(
 		traceSummaryTable:          options.primary.TraceSummaryTable,
 		fluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
 		cache:                      cache,
+		cacheForTraceDetail:        cacheForTraceDetail,
 		metadataDB:                 options.primary.MetadataDB,
 		metadataTable:              options.primary.MetadataTable,
 	}
@@ -860,7 +855,7 @@ func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string,
 
 func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadataCache(ctx context.Context, orgID valuer.UUID, traceID string) (*model.GetWaterfallSpansForTraceWithMetadataCache, error) {
 	cachedTraceData := new(model.GetWaterfallSpansForTraceWithMetadataCache)
-	err := r.cache.Get(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), cachedTraceData, false)
+	err := r.cacheForTraceDetail.Get(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), cachedTraceData)
 	if err != nil {
 		zap.L().Debug("error in retrieving getWaterfallSpansForTraceWithMetadata cache", zap.Error(err), zap.String("traceID", traceID))
 		return nil, err
@@ -1045,7 +1040,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		}
 
 		zap.L().Info("getWaterfallSpansForTraceWithMetadata: processing pre cache", zap.Duration("duration", time.Since(processingBeforeCache)), zap.String("traceID", traceID))
-		cacheErr := r.cache.Set(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), &traceCache, time.Minute*5)
+		cacheErr := r.cacheForTraceDetail.Set(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), &traceCache, time.Minute*5)
 		if cacheErr != nil {
 			zap.L().Debug("failed to store cache for getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID), zap.Error(err))
 		}
@@ -1070,7 +1065,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 
 func (r *ClickHouseReader) GetFlamegraphSpansForTraceCache(ctx context.Context, orgID valuer.UUID, traceID string) (*model.GetFlamegraphSpansForTraceCache, error) {
 	cachedTraceData := new(model.GetFlamegraphSpansForTraceCache)
-	err := r.cache.Get(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), cachedTraceData, false)
+	err := r.cacheForTraceDetail.Get(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), cachedTraceData)
 	if err != nil {
 		zap.L().Debug("error in retrieving getFlamegraphSpansForTrace cache", zap.Error(err), zap.String("traceID", traceID))
 		return nil, err
@@ -1206,7 +1201,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 		}
 
 		zap.L().Info("getFlamegraphSpansForTrace: processing pre cache", zap.Duration("duration", time.Since(processingBeforeCache)), zap.String("traceID", traceID))
-		cacheErr := r.cache.Set(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), &traceCache, time.Minute*5)
+		cacheErr := r.cacheForTraceDetail.Set(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), &traceCache, time.Minute*5)
 		if cacheErr != nil {
 			zap.L().Debug("failed to store cache for getFlamegraphSpansForTrace", zap.String("traceID", traceID), zap.Error(err))
 		}
@@ -1294,7 +1289,12 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 		coldStorageDuration = int(params.ToColdStorageDuration)
 	}
 
-	tableNameArray := []string{r.logsDB + "." + r.logsLocalTableV2, r.logsDB + "." + r.logsResourceLocalTableV2}
+	tableNameArray := []string{
+		r.logsDB + "." + r.logsLocalTableV2,
+		r.logsDB + "." + r.logsResourceLocalTableV2,
+		getLocalTableName(r.logsDB + "." + r.logsAttributeKeys),
+		getLocalTableName(r.logsDB + "." + r.logsResourceKeys),
+	}
 
 	// check if there is existing things to be done
 	for _, tableName := range tableNameArray {
@@ -1328,9 +1328,19 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 			params.ToColdStorageDuration, params.ColdStorageVolume)
 	}
 
+	ttlLogsV2AttributeKeys := fmt.Sprintf(
+		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp + "+
+			"INTERVAL %v SECOND DELETE", tableNameArray[2], r.cluster, params.DelDuration)
+
+	ttlLogsV2ResourceKeys := fmt.Sprintf(
+		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp + "+
+			"INTERVAL %v SECOND DELETE", tableNameArray[3], r.cluster, params.DelDuration)
+
 	ttlPayload := map[string]string{
 		tableNameArray[0]: ttlLogsV2,
 		tableNameArray[1]: ttlLogsV2Resource,
+		tableNameArray[2]: ttlLogsV2AttributeKeys,
+		tableNameArray[3]: ttlLogsV2ResourceKeys,
 	}
 
 	// set the ttl if nothing is pending/ no errors
@@ -1436,6 +1446,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 		r.TraceDB + "." + signozUsageExplorerTable,
 		r.TraceDB + "." + defaultDependencyGraphTable,
 		r.TraceDB + "." + r.traceSummaryTable,
+		r.TraceDB + "." + r.spanAttributesKeysTable,
 	}
 
 	coldStorageDuration := -1
@@ -1503,7 +1514,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				req = fmt.Sprintf(ttlV2Resource, tableName, r.cluster, params.DelDuration)
 			}
 
-			if len(params.ColdStorageVolume) > 0 {
+			if len(params.ColdStorageVolume) > 0 && !strings.HasSuffix(distributedTableName, r.spanAttributesKeysTable) {
 				if strings.HasSuffix(distributedTableName, r.traceResourceTableV3) {
 					req += fmt.Sprintf(ttlTracesV2ResourceColdStorage, params.ToColdStorageDuration, params.ColdStorageVolume)
 				} else {
@@ -1650,6 +1661,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	tableNames := []string{
 		r.logsDB + "." + r.logsLocalTableV2,
 		r.logsDB + "." + r.logsResourceLocalTableV2,
+		getLocalTableName(r.logsDB + "." + r.logsAttributeKeys),
+		getLocalTableName(r.logsDB + "." + r.logsResourceKeys),
 	}
 
 	for _, tableName := range tableNames {
@@ -1696,6 +1709,23 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	}
 
 	ttlPayload[tableNames[1]] = resourceQueries
+
+	// NOTE: Since logs support custom rule based retention, that makes it difficult to identify which attributes, resource keys
+	// we need to keep, hence choosing MAX for safe side and not to create any complex solution for this.
+	maxRetentionTTL := params.DefaultTTLDays
+	for _, rule := range params.TTLConditions {
+		maxRetentionTTL = max(maxRetentionTTL, rule.TTLDays)
+	}
+
+	ttlPayload[tableNames[2]] = []string{
+		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL timestamp + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
+			tableNames[2], r.cluster, maxRetentionTTL),
+	}
+
+	ttlPayload[tableNames[3]] = []string{
+		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL timestamp + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
+			tableNames[3], r.cluster, maxRetentionTTL),
+	}
 
 	ttlConditionsJSON, err := json.Marshal(params.TTLConditions)
 	if err != nil {
@@ -6302,7 +6332,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 	for _, metricName := range metricNames {
 		metadata := new(model.UpdateMetricsMetadata)
 		cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metricName
-		err := r.cache.Get(ctx, orgID, cacheKey, metadata, true)
+		err := r.cache.Get(ctx, orgID, cacheKey, metadata)
 		if err == nil {
 			cachedMetadata[metricName] = metadata
 		} else {
@@ -6517,7 +6547,7 @@ func (r *ClickHouseReader) GetNormalizedStatus(
 	uncached := make([]string, 0, len(metricNames))
 	for _, m := range metricNames {
 		var status model.MetricsNormalizedMap
-		if err := r.cache.Get(ctx, orgID, buildKey(m), &status, true); err == nil {
+		if err := r.cache.Get(ctx, orgID, buildKey(m), &status); err == nil {
 			result[m] = status.IsUnNormalized
 		} else {
 			uncached = append(uncached, m)

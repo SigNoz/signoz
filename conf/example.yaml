@@ -47,10 +47,10 @@ cache:
   provider: memory
   # memory: Uses in-memory caching.
   memory:
-    # Time-to-live for cache entries in memory. Specify the duration in ns
-    ttl: 60000000000
-    # The interval at which the cache will be cleaned up
-    cleanup_interval: 1m
+    # Max items for the in-memory cache (10x the entries)
+    num_counters: 100000
+    # Total cost in bytes allocated bounded cache
+    max_cost: 67108864
   # redis: Uses Redis as the caching backend.
   redis:
     # The hostname or IP address of the Redis server.
