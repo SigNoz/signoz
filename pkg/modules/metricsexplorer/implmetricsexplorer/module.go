@@ -182,12 +182,7 @@ func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, re
 		return err
 	}
 
-	// Delete existing metadata
-	if err := m.deleteMetricsMetadata(ctx, req.MetricName); err != nil {
-		return err
-	}
-
-	// Insert new metadata
+	// Insert new metadata (keeping history of all updates)
 	if err := m.insertMetricsMetadata(ctx, orgID, req); err != nil {
 		return err
 	}
@@ -224,14 +219,15 @@ func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, me
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"metric_name",
-		"description",
-		"type",
-		"unit",
-		"temporality",
-		"is_monotonic",
+		"argMax(description, created_at) AS description",
+		"argMax(type, created_at) AS type",
+		"argMax(unit, created_at) AS unit",
+		"argMax(temporality, created_at) AS temporality",
+		"argMax(is_monotonic, created_at) AS is_monotonic",
 	)
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.UpdatedMetadataTableName))
 	sb.Where(sb.In("metric_name", args...))
+	sb.GroupBy("metric_name")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
@@ -412,20 +408,6 @@ func (m *module) checkForLabelInMetric(ctx context.Context, metricName string, l
 	}
 
 	return hasLabel, nil
-}
-
-func (m *module) deleteMetricsMetadata(ctx context.Context, metricName string) error {
-	sb := sqlbuilder.NewDeleteBuilder()
-	sb.DeleteFrom(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.UpdatedMetadataLocalTableName))
-	sb.Where(sb.E("metric_name", metricName))
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	db := m.telemetryStore.ClickhouseDB()
-	if err := db.Exec(ctx, query, args...); err != nil {
-		return errors.WrapInternalf(err, errors.CodeInternal, "failed to delete metrics metadata")
-	}
-	return nil
 }
 
 func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.UpdateMetricMetadataRequest) error {
