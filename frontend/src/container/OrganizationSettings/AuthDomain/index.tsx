@@ -37,9 +37,24 @@ const columns: ColumnsType<GettableAuthDomain> = [
 		dataIndex: 'relayState',
 		key: 'relayState',
 		width: 80,
-		render: (value: boolean): JSX.Element => (
-			<Typography.Text>{value}</Typography.Text>
-		),
+		render: (_, record: GettableAuthDomain): JSX.Element => {
+			const relayPath = record.authNProviderInfo?.relayStatePath ?? '';
+
+			if (!relayPath) return <Typography.Text>N/A</Typography.Text>;
+
+			const baseUrl =
+				typeof window !== 'undefined'
+					? `${window.location.protocol}//${window.location.origin}`
+					: '';
+
+			const normalizedRelayPath = relayPath.startsWith('/')
+				? relayPath
+				: `/${relayPath}`;
+
+			return (
+				<Typography.Text>{`${baseUrl}${normalizedRelayPath}`}</Typography.Text>
+			);
+		},
 	},
 	{
 		title: 'Action',

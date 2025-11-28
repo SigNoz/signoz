@@ -11,10 +11,10 @@ export interface GettableAuthDomain {
 	orgId: string;
 	ssoEnabled: boolean;
 	ssoType: string;
-	relay_state_url: string;
 	samlConfig?: SAMLConfig;
 	googleAuthConfig?: GoogleAuthConfig;
 	oidcConfig?: OIDCConfig;
+	authNProviderInfo?: AuthNProviderInfo;
 }
 
 export interface SAMLConfig {
@@ -42,4 +42,8 @@ export interface OIDCConfig {
 
 export interface ClaimMapping {
 	email: string;
+}
+
+export interface AuthNProviderInfo {
+	relayStatePath: string;
 }
