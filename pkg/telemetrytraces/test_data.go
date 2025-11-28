@@ -85,9 +85,9 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				Materialized:  true,
 			},
 		},
-		"isroot": {
+		"isentrypoint": {
 			{
-				Name:          "isroot",
+				Name:          "isentrypoint",
 				FieldContext:  telemetrytypes.FieldContextSpan,
 				FieldDataType: telemetrytypes.FieldDataTypeBool,
 			},
