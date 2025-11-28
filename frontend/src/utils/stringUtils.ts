@@ -11,3 +11,8 @@ export function unquote(str: string): string {
 
 	return trimmed;
 }
+
+export function isQuoted(str: string): boolean {
+	const trimmed = str.trim();
+	return trimmed.length >= 2 && /^(["'`])(.*)\1$/.test(trimmed);
+}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/ee/query-service/constants"
@@ -66,6 +65,7 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
+	// Check if this is a body JSON search - either by FieldContext
 	if key.FieldContext == telemetrytypes.FieldContextBody {
 		tblFieldName, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
@@ -245,7 +245,7 @@ func (c *conditionBuilder) ConditionFor(
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
 		field, _ := c.fm.FieldFor(ctx, key)
-		if slices.Contains(maps.Keys(IntrinsicFields), field) && !strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
+		if slices.Contains(maps.Keys(IntrinsicFields), field) && key.FieldContext != telemetrytypes.FieldContextBody {
 			return condition, nil
 		}
 

@@ -4,12 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/SigNoz/signoz-otel-collector/constants"
-	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 )
 
 type QueryProgress struct {
@@ -66,41 +61,4 @@ func GetLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3
 		}
 	}
 	return data
-}
-
-type PromotePathItem struct {
-	Path    string `json:"path"`
-	Promote bool   `json:"promote,omitempty"`
-	Index   bool   `json:"index,omitempty"`
-
-	Indexes []schemamigrator.Index `json:"indexes,omitempty"`
-}
-
-func (i *PromotePathItem) Validate() error {
-	if i.Path == "" {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path is required")
-	}
-
-	if strings.Contains(i.Path, " ") {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path cannot contain spaces")
-	}
-
-	if strings.Contains(i.Path, ":") {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "array paths can not be promoted or indexed")
-	}
-
-	if strings.HasPrefix(i.Path, constants.BodyJSONColumnPrefix) || strings.HasPrefix(i.Path, constants.BodyPromotedColumnPrefix) {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "`%s`, `%s` don't add these prefixes to the path", constants.BodyJSONColumnPrefix, constants.BodyPromotedColumnPrefix)
-	}
-
-	if !strings.HasPrefix(i.Path, telemetrytypes.BodyJSONStringSearchPrefix) {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must start with `body.`")
-	}
-
-	isCardinal := keycheck.IsCardinal(i.Path)
-	if isCardinal {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cardinal paths can not be promoted or indexed")
-	}
-
-	return nil
 }
