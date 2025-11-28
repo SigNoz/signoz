@@ -23,15 +23,10 @@ func (module *module) Create(ctx context.Context, domain *authtypes.AuthDomain) 
 }
 
 func (module *module) Get(ctx context.Context, id valuer.UUID) (*authtypes.AuthDomain, error) {
-	authdomain, err := module.store.Get(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	return authdomain, nil
+	return module.store.Get(ctx, id)
 }
 
-func (module *module) GetAuthNProviderInfo(ctx context.Context, domain *authtypes.AuthDomain) (*authtypes.AuthNProviderInfo) {
+func (module *module) GetAuthNProviderInfo(ctx context.Context, domain *authtypes.AuthDomain) *authtypes.AuthNProviderInfo {
 	if callbackAuthN, ok := module.authNs[domain.AuthDomainConfig().AuthNProvider].(authn.CallbackAuthN); ok {
 		return callbackAuthN.ProviderInfo(ctx, domain)
 	}
