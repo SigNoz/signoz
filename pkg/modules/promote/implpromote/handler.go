@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type handler struct {
@@ -108,7 +109,7 @@ func (h *handler) GetPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Requ
 		response := []promotetypes.PromotePath{}
 		for _, path := range promotedPaths {
 			fullPath := telemetrylogs.BodyPromotedColumnPrefix + path
-			path = telemetrylogs.BodyJSONStringSearchPrefix + path
+			path = telemetrytypes.BodyJSONStringSearchPrefix + path
 			item := promotetypes.PromotePath{
 				Path:    path,
 				Promote: true,
@@ -124,7 +125,7 @@ func (h *handler) GetPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Requ
 		// add the paths that are not promoted but have indexes
 		for path, indexes := range aggr {
 			path := strings.TrimPrefix(path, telemetrylogs.BodyJSONColumnPrefix)
-			path = telemetrylogs.BodyJSONStringSearchPrefix + path
+			path = telemetrytypes.BodyJSONStringSearchPrefix + path
 			response = append(response, promotetypes.PromotePath{
 				Path:    path,
 				Indexes: indexes,

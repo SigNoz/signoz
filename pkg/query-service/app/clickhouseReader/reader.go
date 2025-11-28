@@ -20,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 
@@ -44,7 +43,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -1373,13 +1371,13 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				Model(&ttl).
 				Exec(ctx)
 			if dbErr != nil {
-				zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr), zap.String("table", tableName))
-				continue
+				zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr))
+				return
 			}
 
 			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 			if err != nil {
-				zap.L().Error("error in setting cold storage", zap.Error(err), zap.String("table", tableName))
+				zap.L().Error("error in setting cold storage", zap.Error(err))
 				statusItem, err := r.checkTTLStatusItem(ctx, orgID, tableName)
 				if err == nil {
 					_, dbErr := r.
@@ -1392,15 +1390,16 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
-						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr), zap.String("table", tableName))
+						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
+						return
 					}
 				}
-				continue
+				return
 			}
-			zap.L().Info("Executing TTL request: ", zap.String("request", query), zap.String("table", tableName))
+			zap.L().Info("Executing TTL request: ", zap.String("request", query))
 			statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
 			if err := r.db.Exec(ctx, query); err != nil {
-				zap.L().Error("error while setting ttl", zap.Error(err), zap.String("table", tableName))
+				zap.L().Error("error while setting ttl", zap.Error(err))
 				_, dbErr := r.
 					sqlDB.
 					BunDB().
@@ -1411,9 +1410,10 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
-					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr), zap.String("table", tableName))
+					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
+					return
 				}
-				continue
+				return
 			}
 			_, dbErr = r.
 				sqlDB.
@@ -1425,8 +1425,8 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
-				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr), zap.String("table", tableName))
-				continue
+				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
+				return
 			}
 		}
 
@@ -1663,6 +1663,10 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		getLocalTableName(r.logsDB + "." + r.logsAttributeKeys),
 		getLocalTableName(r.logsDB + "." + r.logsResourceKeys),
 	}
+	distributedTableNames := []string{
+		r.logsDB + "." + r.logsTableV2,
+		r.logsDB + "." + r.logsResourceTableV2,
+	}
 
 	for _, tableName := range tableNames {
 		statusItem, err := r.checkCustomRetentionTTLStatusItem(ctx, orgID, tableName)
@@ -1682,11 +1686,17 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	queries := []string{
 		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
 			tableNames[0], r.cluster, multiIfExpr),
+		// for distributed table
+		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
+			distributedTableNames[0], r.cluster, multiIfExpr),
 	}
 
 	if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
 		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
 			tableNames[0], r.cluster, coldStorageDuration))
+		// for distributed table
+		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
+			distributedTableNames[0], r.cluster, coldStorageDuration))
 
 		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
 			tableNames[0], r.cluster, params.ColdStorageVolume))
@@ -1697,12 +1707,17 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	resourceQueries := []string{
 		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
 			tableNames[1], r.cluster, resourceMultiIfExpr),
+		// for distributed table
+		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
+			distributedTableNames[1], r.cluster, resourceMultiIfExpr),
 	}
 
 	if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
 		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
 			tableNames[1], r.cluster, coldStorageDuration))
-
+		// for distributed table
+		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
+			distributedTableNames[1], r.cluster, coldStorageDuration))
 		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
 			tableNames[1], r.cluster, params.ColdStorageVolume))
 	}

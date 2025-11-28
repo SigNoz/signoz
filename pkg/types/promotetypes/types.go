@@ -41,12 +41,12 @@ func (i *PromotePath) Validate() error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "`%s`, `%s` don't add these prefixes to the path", constants.BodyJSONColumnPrefix, constants.BodyPromotedColumnPrefix)
 	}
 
-	if !strings.HasPrefix(i.Path, telemetrylogs.BodyJSONStringSearchPrefix) {
+	if !strings.HasPrefix(i.Path, telemetrytypes.BodyJSONStringSearchPrefix) {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must start with `body.`")
 	}
 
 	// remove the "body." prefix from the path
-	i.Path = strings.TrimPrefix(i.Path, telemetrylogs.BodyJSONStringSearchPrefix)
+	i.Path = strings.TrimPrefix(i.Path, telemetrytypes.BodyJSONStringSearchPrefix)
 
 	isCardinal := keycheck.IsCardinal(i.Path)
 	if isCardinal {
