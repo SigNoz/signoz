@@ -110,12 +110,11 @@ func (c *conditionBuilder) conditionFor(
 	case qbtypes.FilterOperatorRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-		return strings.ReplaceAll(fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), "$$", "$$$$"), nil
+		return sqlbuilder.Escape(fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value))), nil
 	case qbtypes.FilterOperatorNotRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-		return strings.ReplaceAll(fmt.Sprintf(`NOT match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), "$$", "$$$$"), nil
-
+		return sqlbuilder.Escape(fmt.Sprintf(`NOT match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value))), nil
 	// between and not between
 	case qbtypes.FilterOperatorBetween:
 		values, ok := value.([]any)
@@ -292,6 +291,8 @@ func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.Telemetry
 			return fmt.Sprintf("((name, resource_string_service$$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s WHERE time >= toDateTime(%d))) AND parent_span_id != ''",
 				DBName, TopLevelOperationsTableName, startS), nil
 		}
+		// NOTE: we have to use 3 dollar signs ($$$) to escape the $ signs
+		// This differs from other places where we use 4 dollar signs ($$$$) because here we are not using huandu/go-sqlbuilder library
 		return fmt.Sprintf("((name, resource_string_service$$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
 			DBName, TopLevelOperationsTableName), nil
 	default:

@@ -77,12 +77,11 @@ func (c *conditionBuilder) conditionFor(
 	case qbtypes.FilterOperatorRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-		return strings.ReplaceAll(fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), "$$", "$$$$"), nil
+		return sqlbuilder.Escape(fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value))), nil
 	case qbtypes.FilterOperatorNotRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-		return strings.ReplaceAll(fmt.Sprintf(`NOT match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), "$$", "$$$$"), nil
-
+		return sqlbuilder.Escape(fmt.Sprintf(`NOT match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value))), nil
 	// between and not between
 	case qbtypes.FilterOperatorBetween:
 		values, ok := value.([]any)
