@@ -11,7 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func parseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetrytypes.FieldDataType, any) {
+func ParseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetrytypes.FieldDataType, any) {
 
 	valueType := telemetrytypes.FieldDataTypeString
 
@@ -55,7 +55,7 @@ func inferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 	case float32, float64:
 		valueType = telemetrytypes.FieldDataTypeFloat64
 	case string:
-		valueType, value = parseStrValue(v, operator)
+		valueType, value = ParseStrValue(v, operator)
 	case bool:
 		valueType = telemetrytypes.FieldDataTypeBool
 	}
@@ -84,7 +84,6 @@ func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
 }
 
 func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, any) {
-
 	dataType, value := inferDataType(value, operator, key)
 
 	// for array types, we need to extract the value from the JSON_QUERY

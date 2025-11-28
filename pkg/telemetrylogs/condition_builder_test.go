@@ -271,7 +271,8 @@ func TestConditionFor(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	mockMetadataStore := buildTestTelemetryMetadataStore()
+	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -324,7 +325,8 @@ func TestConditionForMultipleKeys(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	mockMetadataStore := buildTestTelemetryMetadataStore()
+	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -539,7 +541,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	mockMetadataStore := buildTestTelemetryMetadataStore()
+	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
