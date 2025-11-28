@@ -33,7 +33,7 @@ const columns: ColumnsType<GettableAuthDomain> = [
 		),
 	},
 	{
-		title: 'IDP URL',
+		title: 'IDP Initiated SSO URL',
 		dataIndex: 'relayState',
 		key: 'relayState',
 		width: 80,
