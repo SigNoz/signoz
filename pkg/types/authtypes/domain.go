@@ -31,11 +31,11 @@ var (
 type GettableAuthDomain struct {
 	*StorableAuthDomain
 	*AuthDomainConfig
-	AuthNProviderInfo *AuthNProviderInfo `json:"authn_provider_info"`
+	AuthNProviderInfo *AuthNProviderInfo `json:"authNProviderInfo"`
 }
 
 type AuthNProviderInfo struct {
-	RelayStatePath *string `json:"relay_state_path"`
+	RelayStatePath *string `json:"relayStatePath"`
 }
 
 type PostableAuthDomain struct {
