@@ -29,7 +29,7 @@ def create_saml_client(
         client.create_client(
             skip_exists=True,
             payload={
-                "clientId": f"{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}",
+                "clientId": f"{client_id}",
                 "name": f"{client_id}",
                 "description": f"client for {client_id}",
                 "rootUrl": "",
@@ -119,6 +119,35 @@ def create_saml_client(
         )
 
     return _create_saml_client
+
+
+@pytest.fixture(name="enable_idp_initiated_login_for_saml_client", scope="function")
+def enable_idp_initiated_login_for_saml_client(
+    idp: types.TestContainerIDP
+) -> Callable[[str, str, str, str], None]:
+    def _enable_idp_initiated_login_for_saml_client(client_id: str, sso_url_name: str, relay_state_url: str, saml_acs_url: str) -> None:
+        client = KeycloakAdmin(
+            server_url=idp.container.host_configs["6060"].base(),
+            username=IDP_ROOT_USERNAME,
+            password=IDP_ROOT_PASSWORD,
+            realm_name="master",
+        )
+
+        print("updating saml client with values: " + client_id + " " + sso_url_name + " " + relay_state_url + " " + saml_acs_url)
+
+        kc_client_id = client.get_client_id(client_id=client_id)
+
+        payload = client.get_client(client_id=kc_client_id)
+
+        payload["attributes"]["saml_idp_initiated_sso_url_name"] = sso_url_name
+        payload["attributes"]["saml_idp_initiated_sso_relay_state"] = relay_state_url
+        payload["attributes"]["saml_assertion_consumer_url_post"] = saml_acs_url
+
+        print(payload)
+
+        client.update_client(client_id=kc_client_id, payload=payload)
+
+    return _enable_idp_initiated_login_for_saml_client
 
 
 @pytest.fixture(name="create_oidc_client", scope="function")
