@@ -18,8 +18,9 @@ export const checkVersionState = (
 	currentVersion: string,
 	latestVersion: string,
 ): boolean => {
-	const versionCore = currentVersion?.split('-')[0];
-	return versionCore === latestVersion;
+	const normalizeVersion = (v: string): string =>
+		v?.replace(/^v/, '').split('-')[0];
+	return normalizeVersion(currentVersion) === normalizeVersion(latestVersion);
 };
 
 // list of forbidden tags to remove in dompurify
