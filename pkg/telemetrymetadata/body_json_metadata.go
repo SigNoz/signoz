@@ -210,7 +210,6 @@ func buildListLogsJSONIndexesQuery(cluster string, filters ...string) (string, [
 	filterExprs := []string{}
 	for _, filter := range filters {
 		filterExprs = append(filterExprs, sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(filter))))
-		// filterExprs = append(filterExprs, sb.ILike("expr", querybuilder.FormatValueForContains(filter)))
 	}
 	sb.Where(sb.Or(filterExprs...))
 

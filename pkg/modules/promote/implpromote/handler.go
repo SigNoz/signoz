@@ -43,7 +43,6 @@ func (h *handler) HandlePromote(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errors.NewMethodNotAllowedf(errors.CodeMethodNotAllowed, "method not allowed"))
 		return
 	}
-
 }
 
 func (h *handler) DropIndex(w http.ResponseWriter, r *http.Request) {
