@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/SigNoz/signoz-otel-collector/constants"
 )
 
 type Encoding string
@@ -44,9 +43,6 @@ const (
 	defaultLogsTableV2              string = "distributed_logs_v2"
 	defaultLogsResourceLocalTableV2 string = "logs_v2_resource"
 	defaultLogsResourceTableV2      string = "distributed_logs_v2_resource"
-
-	defaultPathTypesLocalTable string = constants.LocalPathTypesTable
-	defaultPathTypesTable      string = constants.DistributedPathTypesTable
 
 	defaultTraceIndexTableV3    string = "distributed_signoz_index_v3"
 	defaultTraceLocalTableName  string = "signoz_index_v3"
@@ -97,9 +93,6 @@ type namespaceConfig struct {
 	TraceSummaryTable     string
 	MetadataDB            string
 	MetadataTable         string
-
-	PathTypesLocalTable string
-	PathTypesTable      string
 }
 
 // Connecto defines how to connect to the database
@@ -155,9 +148,6 @@ func NewOptions(
 			TraceSummaryTable:     defaultTraceSummaryTable,
 			MetadataDB:            defaultMetadataDB,
 			MetadataTable:         defaultMetadataTable,
-
-			PathTypesLocalTable: defaultPathTypesLocalTable,
-			PathTypesTable:      defaultPathTypesTable,
 		},
 		others: make(map[string]*namespaceConfig, len(otherNamespaces)),
 	}

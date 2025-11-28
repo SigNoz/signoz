@@ -7,11 +7,6 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
-const (
-	NgramIndexType = "ngrambf_v1(4, 60000, 5, 0)"
-	TokenIndexType = "tokenbf_v1(10000, 2, 0)"
-)
-
 type QueryProgress struct {
 	ReadRows uint64 `json:"read_rows"`
 

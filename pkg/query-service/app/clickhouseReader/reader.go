@@ -157,9 +157,6 @@ type ClickHouseReader struct {
 	cache                      cache.Cache
 	metadataDB                 string
 	metadataTable              string
-
-	pathTypesLocalTable string
-	pathTypesTable      string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -227,8 +224,6 @@ func NewReaderFromClickhouseConnection(
 		cache:                      cache,
 		metadataDB:                 options.primary.MetadataDB,
 		metadataTable:              options.primary.MetadataTable,
-		pathTypesLocalTable:        options.primary.PathTypesLocalTable,
-		pathTypesTable:             options.primary.PathTypesTable,
 	}
 }
 
@@ -1300,7 +1295,6 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 	}
 
 	tableNameArray := []string{r.logsDB + "." + r.logsLocalTableV2, r.logsDB + "." + r.logsResourceLocalTableV2}
-	tableNameArray = append(tableNameArray, fmt.Sprintf("%s.%s", r.logsDB, r.pathTypesLocalTable))
 
 	// check if there is existing things to be done
 	for _, tableName := range tableNameArray {
@@ -1368,13 +1362,13 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				Model(&ttl).
 				Exec(ctx)
 			if dbErr != nil {
-				zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr), zap.String("table", tableName))
+				zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr))
 				return
 			}
 
 			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 			if err != nil {
-				zap.L().Error("error in setting cold storage", zap.Error(err), zap.String("table", tableName))
+				zap.L().Error("error in setting cold storage", zap.Error(err))
 				statusItem, err := r.checkTTLStatusItem(ctx, orgID, tableName)
 				if err == nil {
 					_, dbErr := r.
@@ -1387,16 +1381,16 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
-						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr), zap.String("table", tableName))
+						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 						return
 					}
 				}
 				return
 			}
-			zap.L().Info("Executing TTL request: ", zap.String("request", query), zap.String("table", tableName))
+			zap.L().Info("Executing TTL request: ", zap.String("request", query))
 			statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
 			if err := r.db.Exec(ctx, query); err != nil {
-				zap.L().Error("error while setting ttl", zap.Error(err), zap.String("table", tableName))
+				zap.L().Error("error while setting ttl", zap.Error(err))
 				_, dbErr := r.
 					sqlDB.
 					BunDB().
@@ -1407,7 +1401,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
-					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr), zap.String("table", tableName))
+					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 					return
 				}
 				return
@@ -1422,7 +1416,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
-				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr), zap.String("table", tableName))
+				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 				return
 			}
 		}
