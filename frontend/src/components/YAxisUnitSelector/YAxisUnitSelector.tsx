@@ -1,20 +1,37 @@
 import './styles.scss';
 
-import { Select } from 'antd';
+import { WarningFilled } from '@ant-design/icons';
+import { Color } from '@signozhq/design-tokens';
+import { Select, Tooltip } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
+import classNames from 'classnames';
+import { useMemo } from 'react';
 
 import { UniversalYAxisUnitMappings, Y_AXIS_CATEGORIES } from './constants';
 import { UniversalYAxisUnit, YAxisUnitSelectorProps } from './types';
-import { mapMetricUnitToUniversalUnit } from './utils';
+import {
+	getUniversalNameFromMetricUnit,
+	mapMetricUnitToUniversalUnit,
+} from './utils';
 
 function YAxisUnitSelector({
 	value,
 	onChange,
 	placeholder = 'Please select a unit',
 	loading = false,
-	'data-testid': dataTestId,
+	initialValue,
 }: YAxisUnitSelectorProps): JSX.Element {
 	const universalUnit = mapMetricUnitToUniversalUnit(value);
+
+	const incompatibleUnitMessage = useMemo(() => {
+		if (!initialValue || !value || loading) return '';
+		if (initialValue !== value) {
+			const initialUniversalUnit = getUniversalNameFromMetricUnit(initialValue);
+			const currentUniversalUnit = getUniversalNameFromMetricUnit(value);
+			return `Unit mismatch. Saved unit is ${initialUniversalUnit}, but ${currentUniversalUnit} is selected.`;
+		}
+		return '';
+	}, [initialValue, value, loading]);
 
 	const handleSearch = (
 		searchTerm: string,
@@ -46,7 +63,16 @@ function YAxisUnitSelector({
 				placeholder={placeholder}
 				filterOption={(input, option): boolean => handleSearch(input, option)}
 				loading={loading}
-				data-testid={dataTestId}
+				suffixIcon={
+					incompatibleUnitMessage ? (
+						<Tooltip title={incompatibleUnitMessage}>
+							<WarningFilled color={Color.BG_AMBER_500} />
+						</Tooltip>
+					) : null
+				}
+				className={classNames({
+					'warning-state': incompatibleUnitMessage,
+				})}
 			>
 				{Y_AXIS_CATEGORIES.map((category) => (
 					<Select.OptGroup key={category.name} label={category.name}>

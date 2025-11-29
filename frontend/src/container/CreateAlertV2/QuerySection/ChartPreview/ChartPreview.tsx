@@ -4,6 +4,7 @@ import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -26,6 +27,11 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 
 	const yAxisUnit = alertState.yAxisUnit || '';
 
+	const selectedQueryName = thresholdState.selectedQuery;
+	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
+		selectedQueryName,
+	);
+
 	const headline = (
 		<div className="chart-preview-headline">
 			<PlotTag
@@ -33,10 +39,12 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 				panelType={panelType || PANEL_TYPES.TIME_SERIES}
 			/>
 			<YAxisUnitSelector
-				value={alertState.yAxisUnit}
+				value={yAxisUnit}
+				initialValue={initialYAxisUnit}
 				onChange={(value): void => {
 					setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: value });
 				}}
+				loading={isLoading}
 			/>
 		</div>
 	);
