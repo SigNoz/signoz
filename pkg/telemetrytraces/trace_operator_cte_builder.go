@@ -237,7 +237,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 				ConditionBuilder:   b.stmtBuilder.cb,
 				FieldKeys:          keys,
 				SkipResourceFilter: true,
-            }, b.start, b.end,
+			}, b.start, b.end,
 		)
 		if err != nil {
 			b.stmtBuilder.logger.ErrorContext(ctx, "Failed to prepare where clause", "error", err, "filter", query.Filter.Expression)
@@ -450,7 +450,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		if selectedFields[field.Name] {
 			continue
 		}
-		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, &field, keys)
+		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.start, b.end, &field, keys)
 		if err != nil {
 			b.stmtBuilder.logger.WarnContext(ctx, "failed to map select field",
 				"field", field.Name, "error", err)
@@ -465,7 +465,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	// Add order by support using ColumnExpressionFor
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
-		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, &orderBy.Key.TelemetryFieldKey, keys)
+		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.start, b.end, &orderBy.Key.TelemetryFieldKey, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -547,6 +547,8 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	for _, gb := range b.operator.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(
 			ctx,
+			b.start,
+			b.end,
 			&gb.TelemetryFieldKey,
 			b.stmtBuilder.fm,
 			b.stmtBuilder.cb,
@@ -572,6 +574,8 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	for i, agg := range b.operator.Aggregations {
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
+			b.start,
+			b.end,
 			agg.Expression,
 			uint64(b.operator.StepInterval.Seconds()),
 			keys,
@@ -657,6 +661,8 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 	for _, gb := range b.operator.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(
 			ctx,
+			b.start,
+			b.end,
 			&gb.TelemetryFieldKey,
 			b.stmtBuilder.fm,
 			b.stmtBuilder.cb,
@@ -684,6 +690,8 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 	for i, agg := range b.operator.Aggregations {
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
+			b.start,
+			b.end,
 			agg.Expression,
 			rateInterval,
 			keys,
@@ -797,6 +805,8 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	for _, gb := range b.operator.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(
 			ctx,
+			b.start,
+			b.end,
 			&gb.TelemetryFieldKey,
 			b.stmtBuilder.fm,
 			b.stmtBuilder.cb,
@@ -822,6 +832,8 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	for i, agg := range b.operator.Aggregations {
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
+			b.start,
+			b.end,
 			agg.Expression,
 			uint64((b.end-b.start)/querybuilder.NsToSeconds),
 			keys,

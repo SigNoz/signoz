@@ -65,7 +65,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *fieldMapper) FieldFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	column, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -92,11 +92,12 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, key *telemetrytypes.Telemet
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	colName, err := m.FieldFor(ctx, field)
+	colName, err := m.FieldFor(ctx, startNs, endNs, field)
 	if err != nil {
 		return "", err
 	}
