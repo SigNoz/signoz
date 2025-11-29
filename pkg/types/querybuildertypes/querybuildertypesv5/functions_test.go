@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// Helper function to create test time series data
+// Helper function to create test time series data.
 func createTestTimeSeriesData(values []float64) *TimeSeries {
 	timeSeriesValues := make([]*TimeSeriesValue, len(values))
 	for i, val := range values {
@@ -22,7 +22,7 @@ func createTestTimeSeriesData(values []float64) *TimeSeries {
 	return series
 }
 
-// Helper function to extract values from result for comparison
+// Helper function to extract values from result for comparison.
 func extractValues(result *TimeSeries) []float64 {
 	values := make([]float64, len(result.Values))
 	for i, point := range result.Values {

@@ -47,7 +47,7 @@ var friendly = map[string]string{
 //  1. hard-coded friendly table
 //  2. literal name from grammar  e.g.  "'('"
 //  3. symbolic name              e.g.  AND
-//  4. numeric fallback           e.g.  <34>
+//  4. numeric fallback           e.g.  <34>.
 func prettyToken(p antlr.Parser, tType int) (string, bool) {
 	if slices.Contains(skipTokens, tokenName(p, tType)) {
 		return "", false

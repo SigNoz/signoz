@@ -330,7 +330,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 			}
 			// use min value from the series
 			if shouldAlert {
-				var minValue float64 = math.Inf(1)
+				minValue := math.Inf(1)
 				for _, smpl := range series.Points {
 					if smpl.Value < minValue {
 						minValue = smpl.Value
@@ -346,7 +346,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 				}
 			}
 			if shouldAlert {
-				var maxValue float64 = math.Inf(-1)
+				maxValue := math.Inf(-1)
 				for _, smpl := range series.Points {
 					if smpl.Value > maxValue {
 						maxValue = smpl.Value
@@ -398,23 +398,24 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 		}
 		avg := sum / count
 		alertSmpl = Sample{Point: Point{V: avg}, Metric: lbls}
-		if b.CompareOp == ValueIsAbove {
+		switch b.CompareOp {
+		case ValueIsAbove:
 			if avg > target {
 				shouldAlert = true
 			}
-		} else if b.CompareOp == ValueIsBelow {
+		case ValueIsBelow:
 			if avg < target {
 				shouldAlert = true
 			}
-		} else if b.CompareOp == ValueIsEq {
+		case ValueIsEq:
 			if avg == target {
 				shouldAlert = true
 			}
-		} else if b.CompareOp == ValueIsNotEq {
+		case ValueIsNotEq:
 			if avg != target {
 				shouldAlert = true
 			}
-		} else if b.CompareOp == ValueOutsideBounds {
+		case ValueOutsideBounds:
 			if math.Abs(avg) >= target {
 				shouldAlert = true
 			}
@@ -430,23 +431,24 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 			sum += smpl.Value
 		}
 		alertSmpl = Sample{Point: Point{V: sum}, Metric: lbls}
-		if b.CompareOp == ValueIsAbove {
+		switch b.CompareOp {
+		case ValueIsAbove:
 			if sum > target {
 				shouldAlert = true
 			}
-		} else if b.CompareOp == ValueIsBelow {
+		case ValueIsBelow:
 			if sum < target {
 				shouldAlert = true
 			}
-		} else if b.CompareOp == ValueIsEq {
+		case ValueIsEq:
 			if sum == target {
 				shouldAlert = true
 			}
-		} else if b.CompareOp == ValueIsNotEq {
+		case ValueIsNotEq:
 			if sum != target {
 				shouldAlert = true
 			}
-		} else if b.CompareOp == ValueOutsideBounds {
+		case ValueOutsideBounds:
 			if math.Abs(sum) >= target {
 				shouldAlert = true
 			}
@@ -455,19 +457,20 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 		// If the last sample matches the condition, the rule is firing.
 		shouldAlert = false
 		alertSmpl = Sample{Point: Point{V: series.Points[len(series.Points)-1].Value}, Metric: lbls}
-		if b.CompareOp == ValueIsAbove {
+		switch b.CompareOp {
+		case ValueIsAbove:
 			if series.Points[len(series.Points)-1].Value > target {
 				shouldAlert = true
 			}
-		} else if b.CompareOp == ValueIsBelow {
+		case ValueIsBelow:
 			if series.Points[len(series.Points)-1].Value < target {
 				shouldAlert = true
 			}
-		} else if b.CompareOp == ValueIsEq {
+		case ValueIsEq:
 			if series.Points[len(series.Points)-1].Value == target {
 				shouldAlert = true
 			}
-		} else if b.CompareOp == ValueIsNotEq {
+		case ValueIsNotEq:
 			if series.Points[len(series.Points)-1].Value != target {
 				shouldAlert = true
 			}

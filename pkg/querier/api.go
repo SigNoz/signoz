@@ -218,8 +218,8 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// TODO(srikanthccv): everything done here can be done on frontend as well
-// For the time being I am adding a helper function
+// TODO(srikanthccv): everything done here can be done on frontend as well.
+// For the time being I am adding a helper function.
 func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 
 	var queryRangeRequest qbtypes.QueryRangeRequest
@@ -278,7 +278,7 @@ func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEv
 		return
 	}
 
-	if !(event.LogsUsed || event.MetricsUsed || event.TracesUsed) {
+	if !event.LogsUsed && !event.MetricsUsed && !event.TracesUsed {
 		return
 	}
 

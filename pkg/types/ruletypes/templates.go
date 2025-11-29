@@ -21,8 +21,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 )
 
-// this file contains all the methods and structs
-// related to go templating in rule labels and annotations
+// This file contains all the methods and structs
+// related to go templating in rule labels and annotations.
 
 type tmplQueryRecord struct {
 	Labels    map[string]string
@@ -229,7 +229,7 @@ func AlertTemplateData(labels map[string]string, value string, threshold string)
 }
 
 // preprocessTemplate preprocesses the template to replace our custom $variable syntax with the correct Go template syntax.
-// example, $service.name in the template is replaced with {{index $labels "service.name"}}
+// Example, $service.name in the template is replaced with {{index $labels "service.name"}}
 // While we could use go template functions to do this, we need to keep the syntax
 // consistent across the platform.
 // If there is a go template block, it won't be replaced.

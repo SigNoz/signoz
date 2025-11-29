@@ -20,7 +20,7 @@ type QueryRef struct {
 	Name string `json:"name"`
 }
 
-// Copy creates a deep copy of QueryRef
+// Copy creates a deep copy of QueryRef.
 func (q QueryRef) Copy() QueryRef {
 	return q
 }
@@ -29,21 +29,21 @@ type QueryBuilderJoin struct {
 	Name     string `json:"name"`
 	Disabled bool   `json:"disabled,omitempty"`
 
-	// references into flat registry of queries
+	// References into flat registry of queries.
 	Left  QueryRef `json:"left"`
 	Right QueryRef `json:"right"`
 
-	// join type + condition ON
+	// Join type + condition ON.
 	Type JoinType `json:"type"`
 	On   string   `json:"on"`
 
-	// primary aggregations: if empty ⇒ raw columns
-	// currently supported: []Aggregation, []MetricAggregation
+	// Primary aggregations: if empty ⇒ raw columns
+	// currently supported: []Aggregation, []MetricAggregation.
 	Aggregations []any `json:"aggregations,omitempty"`
-	// select columns to select
+	// Select columns to select.
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
 
-	// post-join clauses (also used for aggregated joins)
+	// Post-join clauses (also used for aggregated joins).
 	Filter                *Filter                `json:"filter,omitempty"`
 	GroupBy               []GroupByKey           `json:"groupBy,omitempty"`
 	Having                *Having                `json:"having,omitempty"`
@@ -53,7 +53,7 @@ type QueryBuilderJoin struct {
 	Functions             []Function             `json:"functions,omitempty"`
 }
 
-// Copy creates a deep copy of QueryBuilderJoin
+// Copy creates a deep copy of QueryBuilderJoin.
 func (q QueryBuilderJoin) Copy() QueryBuilderJoin {
 	c := q
 

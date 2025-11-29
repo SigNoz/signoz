@@ -92,12 +92,12 @@ type PipelineOperator struct {
 	OnError string `json:"on_error,omitempty" yaml:"on_error,omitempty"`
 	If      string `json:"if,omitempty" yaml:"if,omitempty"`
 
-	// don't need the following in the final config
+	// Don't need the following in the final config.
 	OrderId int    `json:"orderId" yaml:"-"`
 	Enabled bool   `json:"enabled" yaml:"-"`
 	Name    string `json:"name,omitempty" yaml:"-"`
 
-	// optional keys depending on the type
+	// Optional keys depending on the type.
 	ParseTo      string `json:"parse_to,omitempty" yaml:"parse_to,omitempty"`
 	Pattern      string `json:"pattern,omitempty" yaml:"pattern,omitempty"`
 	Regex        string `json:"regex,omitempty" yaml:"regex,omitempty"`
@@ -116,7 +116,7 @@ type PipelineOperator struct {
 	Layout     string `json:"layout,omitempty" yaml:"layout,omitempty"`
 	LayoutType string `json:"layout_type,omitempty" yaml:"layout_type,omitempty"`
 
-	// json_parser fields
+	// json_parser fields.
 	EnableFlattening   bool   `json:"enable_flattening,omitempty" yaml:"enable_flattening,omitempty"`
 	MaxFlatteningDepth int    `json:"-" yaml:"max_flattening_depth,omitempty"` // MaxFlatteningDepth is not configurable from User's side
 	EnablePaths        bool   `json:"enable_paths,omitempty" yaml:"enable_paths,omitempty"`
@@ -152,14 +152,14 @@ func (op PipelineOperator) MarshalYAML() (interface{}, error) {
 	alias := Alias(op)
 
 	if alias.TraceParser != nil {
-		if alias.TraceParser.TraceId != nil && len(alias.TraceParser.TraceId.ParseFrom) < 1 {
-			alias.TraceParser.TraceId = nil
+		if alias.TraceId != nil && len(alias.TraceId.ParseFrom) < 1 {
+			alias.TraceId = nil
 		}
-		if alias.TraceParser.SpanId != nil && len(alias.TraceParser.SpanId.ParseFrom) < 1 {
-			alias.TraceParser.SpanId = nil
+		if alias.SpanId != nil && len(alias.SpanId.ParseFrom) < 1 {
+			alias.SpanId = nil
 		}
-		if alias.TraceParser.TraceFlags != nil && len(alias.TraceParser.TraceFlags.ParseFrom) < 1 {
-			alias.TraceParser.TraceFlags = nil
+		if alias.TraceFlags != nil && len(alias.TraceFlags.ParseFrom) < 1 {
+			alias.TraceFlags = nil
 		}
 	}
 
@@ -204,7 +204,7 @@ type PostablePipeline struct {
 	Config      []PipelineOperator `json:"config"`
 }
 
-// IsValid checks if postable pipeline has all the required params
+// IsValid checks if postable pipeline has all the required params.
 func (p *PostablePipeline) IsValid() error {
 	if p.OrderID == 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "orderId with value > 1 is required")
@@ -324,22 +324,22 @@ func isValidOperator(op PipelineOperator) error {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "field of %s remove operator cannot be empty", op.ID)
 		}
 
-		hasTraceIdParseFrom := (op.TraceParser.TraceId != nil && op.TraceParser.TraceId.ParseFrom != "")
-		hasSpanIdParseFrom := (op.TraceParser.SpanId != nil && op.TraceParser.SpanId.ParseFrom != "")
-		hasTraceFlagsParseFrom := (op.TraceParser.TraceFlags != nil && op.TraceParser.TraceFlags.ParseFrom != "")
+		hasTraceIdParseFrom := (op.TraceId != nil && op.TraceId.ParseFrom != "")
+		hasSpanIdParseFrom := (op.SpanId != nil && op.SpanId.ParseFrom != "")
+		hasTraceFlagsParseFrom := (op.TraceFlags != nil && op.TraceFlags.ParseFrom != "")
 
-		if !(hasTraceIdParseFrom || hasSpanIdParseFrom || hasTraceFlagsParseFrom) {
+		if !hasTraceIdParseFrom && !hasSpanIdParseFrom && !hasTraceFlagsParseFrom {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "one of trace_id, span_id, trace_flags of %s trace_parser operator must be present", op.ID)
 		}
 
-		if hasTraceIdParseFrom && !isValidOtelValue(op.TraceParser.TraceId.ParseFrom) {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "trace id can't be parsed from %s", op.TraceParser.TraceId.ParseFrom)
+		if hasTraceIdParseFrom && !isValidOtelValue(op.TraceId.ParseFrom) {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "trace id can't be parsed from %s", op.TraceId.ParseFrom)
 		}
-		if hasSpanIdParseFrom && !isValidOtelValue(op.TraceParser.SpanId.ParseFrom) {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "span id can't be parsed from %s", op.TraceParser.SpanId.ParseFrom)
+		if hasSpanIdParseFrom && !isValidOtelValue(op.SpanId.ParseFrom) {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "span id can't be parsed from %s", op.SpanId.ParseFrom)
 		}
-		if hasTraceFlagsParseFrom && !isValidOtelValue(op.TraceParser.TraceFlags.ParseFrom) {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "trace flags can't be parsed from %s", op.TraceParser.TraceFlags.ParseFrom)
+		if hasTraceFlagsParseFrom && !isValidOtelValue(op.TraceFlags.ParseFrom) {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "trace flags can't be parsed from %s", op.TraceFlags.ParseFrom)
 		}
 
 	case "retain":

@@ -2,13 +2,14 @@ package tracefunnel
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"net/http"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 )
 
-// Module defines the interface for trace funnel operations
+// Module defines the interface for trace funnel operations.
 type Module interface {
 	Create(ctx context.Context, timestamp int64, name string, userID valuer.UUID, orgID valuer.UUID) (*traceFunnels.StorableFunnel, error)
 

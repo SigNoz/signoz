@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestFilterExprLogs tests a comprehensive set of query patterns for logs search
+// TestFilterExprLogs tests a comprehensive set of query patterns for logs search.
 func TestFilterExprLogs(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
@@ -2421,7 +2421,7 @@ func TestFilterExprLogs(t *testing.T) {
 	}
 }
 
-// TestFilterExprLogs tests a comprehensive set of query patterns for logs search
+// TestFilterExprLogs tests a comprehensive set of query patterns for logs search.
 func TestFilterExprLogsConflictNegation(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)

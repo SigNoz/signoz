@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestFilterExprLogsBodyJSON tests a comprehensive set of query patterns for body JSON search
+// TestFilterExprLogsBodyJSON tests a comprehensive set of query patterns for body JSON search.
 func TestFilterExprLogsBodyJSON(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)

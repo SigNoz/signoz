@@ -42,7 +42,7 @@ type PostableAcceptInvite struct {
 	InviteToken string `json:"token"`
 	Password    string `json:"password"`
 
-	// reference URL to track where the register request is coming from
+	// Reference URL to track where the register request is coming from.
 	SourceURL string `json:"sourceUrl"`
 }
 

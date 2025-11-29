@@ -23,7 +23,7 @@ type StorableLicense struct {
 	OrgID           valuer.UUID    `bun:"org_id,type:text,notnull" json:"orgId"`
 }
 
-// this data excludes ID and Key
+// This data excludes ID and Key.
 type License struct {
 	ID              valuer.UUID
 	Key             string

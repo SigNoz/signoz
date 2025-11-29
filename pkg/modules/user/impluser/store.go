@@ -434,7 +434,7 @@ func (store *store) UpdatePassword(ctx context.Context, factorPassword *types.Fa
 	return nil
 }
 
-// --- API KEY ---
+// --- API KEY ---.
 func (store *store) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
 	_, err := store.sqlstore.BunDB().NewInsert().
 		Model(apiKey).
