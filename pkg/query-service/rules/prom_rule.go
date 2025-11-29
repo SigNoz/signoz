@@ -140,6 +140,17 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		return nil, err
 	}
 
+	// Filter out new series if newGroupEvalDelay is configured
+	if r.ShouldSkipNewGroups() {
+		collection := ruletypes.NewPromMatrixLabelledCollection(res)
+		filteredCollection, _, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, collection)
+		if filterErr != nil {
+			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
+			return nil, filterErr
+		}
+		res = filteredCollection.(*ruletypes.PromMatrixLabelledCollection).Matrix()
+	}
+
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
