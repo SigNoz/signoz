@@ -44,7 +44,7 @@ const columns: ColumnsType<GettableAuthDomain> = [
 
 			const baseUrl =
 				typeof window !== 'undefined'
-					? `${window.location.protocol}//${window.location.origin}`
+					? `${window.location.protocol}//${window.location.host}`
 					: '';
 
 			const normalizedRelayPath = relayPath.startsWith('/')
