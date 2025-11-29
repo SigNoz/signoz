@@ -90,8 +90,8 @@ func NewModules(
 		QuickFilter:    quickfilter,
 		TraceFunnel:    impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport:  implrawdataexport.NewModule(querier),
-		AuthDomain:     implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)),
-		Session:        implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
+		AuthDomain:     implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs),
+		Session:        implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
 		SpanPercentile: implspanpercentile.NewModule(querier, providerSettings),
 		Services:       implservices.NewModule(querier, telemetryStore),
 	}
