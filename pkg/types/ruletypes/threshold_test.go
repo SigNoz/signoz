@@ -9,7 +9,7 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
-func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
+func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 	target := 100.0
 
 	tests := []struct {
@@ -270,7 +270,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			thresholds := BasicRuleThresholds{tt.threshold}
-			vector, err := thresholds.ShouldAlert(tt.series, tt.ruleUnit)
+			vector, err := thresholds.Eval(tt.series, tt.ruleUnit, EvalData{})
 			assert.NoError(t, err)
 
 			alert := len(vector) > 0
@@ -300,4 +300,32 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPrepareSampleLabelsForRule(t *testing.T) {
+	alertAllHashes := make(map[uint64]struct{})
+	thresholdName := "test"
+	for range 50_000 {
+		sampleLabels := map[string]string{
+			"service":   "test",
+			"env":       "prod",
+			"tier":      "backend",
+			"namespace": "default",
+			"pod":       "test-pod",
+			"container": "test-container",
+			"node":      "test-node",
+			"cluster":   "test-cluster",
+			"region":    "test-region",
+			"az":        "test-az",
+			"hostname":  "test-hostname",
+			"ip":        "192.168.1.1",
+			"port":      "8080",
+		}
+		lbls := PrepareSampleLabelsForRule(sampleLabels, thresholdName)
+		assert.True(t, lbls.Has(LabelThresholdName), "LabelThresholdName not found in labels")
+		alertAllHashes[lbls.Hash()] = struct{}{}
+	}
+	t.Logf("Total hashes: %d", len(alertAllHashes))
+	// there should be only one hash for all the samples
+	assert.Equal(t, 1, len(alertAllHashes), "Expected only one hash for all the samples")
 }
