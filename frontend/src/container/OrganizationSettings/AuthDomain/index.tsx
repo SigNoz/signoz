@@ -51,9 +51,9 @@ const columns: ColumnsType<GettableAuthDomain> = [
 				? relayPath
 				: `/${relayPath}`;
 
-			return (
-				<Typography.Text>{`${baseUrl}${normalizedRelayPath}`}</Typography.Text>
-			);
+			const href = `${baseUrl}${normalizedRelayPath}`;
+
+			return <Typography.Text copyable={{ text: href }}>{href}</Typography.Text>;
 		},
 	},
 	{
