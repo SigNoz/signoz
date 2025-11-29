@@ -43,7 +43,7 @@ export const TIME_RANGE_PRESETS_OPTIONS = [
 ];
 
 function PublicDashboardSetting(): JSX.Element {
-	const [publidDashboardData, setPublidDashboardData] = useState<
+	const [publicDashboardData, setPublicDashboardData] = useState<
 		PublicDashboardMetaProps | undefined
 	>(undefined);
 	const [timeRangeEnabled, setTimeRangeEnabled] = useState(true);
@@ -68,16 +68,16 @@ function PublicDashboardSetting(): JSX.Element {
 		error: errorPublicDashboard,
 	} = useGetPublicDashboardMeta(selectedDashboard?.id || '');
 
-	const isPublicDashboardEnabled = !!publidDashboardData?.publicPath;
+	const isPublicDashboardEnabled = !!publicDashboardData?.publicPath;
 
 	useEffect(() => {
 		if (publicDashboardResponse?.data) {
-			setPublidDashboardData(publicDashboardResponse?.data);
+			setPublicDashboardData(publicDashboardResponse?.data);
 		}
 
 		if (errorPublicDashboard) {
 			console.error('Error getting public dashboard', errorPublicDashboard);
-			setPublidDashboardData(undefined);
+			setPublicDashboardData(undefined);
 			setTimeRangeEnabled(true);
 			setDefaultTimeRange('30m');
 		}
@@ -217,7 +217,7 @@ function PublicDashboardSetting(): JSX.Element {
 
 				<div className="timerange-enabled-checkbox">
 					<Checkbox
-						id="time-range-enabled"
+						id="enable-time-range"
 						checked={timeRangeEnabled}
 						onCheckedChange={handleTimeRangeEnabled}
 						labelName="Enable time range"
@@ -235,6 +235,7 @@ function PublicDashboardSetting(): JSX.Element {
 						options={TIME_RANGE_PRESETS_OPTIONS}
 						value={defaultTimeRange}
 						onChange={handleDefaultTimeRange}
+						data-testid="default-time-range-select-dropdown"
 						className="default-time-range-select-dropdown"
 					/>
 				</div>
