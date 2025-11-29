@@ -1716,23 +1716,6 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 
 	ttlPayload[tableNames[1]] = resourceQueries
 
-	// NOTE: Since logs support custom rule based retention, that makes it difficult to identify which attributes, resource keys
-	// we need to keep, hence choosing MAX for safe side and not to create any complex solution for this.
-	maxRetentionTTL := params.DefaultTTLDays
-	for _, rule := range params.TTLConditions {
-		maxRetentionTTL = max(maxRetentionTTL, rule.TTLDays)
-	}
-
-	ttlPayload[tableNames[2]] = []string{
-		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL timestamp + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
-			tableNames[2], r.cluster, maxRetentionTTL),
-	}
-
-	ttlPayload[tableNames[3]] = []string{
-		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL timestamp + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
-			tableNames[3], r.cluster, maxRetentionTTL),
-	}
-
 	// -------------------------------------------------------------------
 	// Distributed tables: ensure defaults are aligned with local tables.
 	// Note: TTL clauses are NOT applied on distributed tables as they
@@ -1759,6 +1742,23 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			distTableNames[1], r.cluster, coldStorageDuration))
 	}
 	ttlPayload[distTableNames[1]] = resourceDistQueries
+
+	// NOTE: Since logs support custom rule based retention, that makes it difficult to identify which attributes, resource keys
+	// we need to keep, hence choosing MAX for safe side and not to create any complex solution for this.
+	maxRetentionTTL := params.DefaultTTLDays
+	for _, rule := range params.TTLConditions {
+		maxRetentionTTL = max(maxRetentionTTL, rule.TTLDays)
+	}
+
+	ttlPayload[tableNames[2]] = []string{
+		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL timestamp + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
+			tableNames[2], r.cluster, maxRetentionTTL),
+	}
+
+	ttlPayload[tableNames[3]] = []string{
+		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL timestamp + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
+			tableNames[3], r.cluster, maxRetentionTTL),
+	}
 
 	ttlConditionsJSON, err := json.Marshal(params.TTLConditions)
 	if err != nil {
@@ -1792,7 +1792,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 
 		if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
 			// Only local tables require cold storage configuration. Skip distributed tables.
-			if tableName == tableNames[0] || tableName == tableNames[1] {
+			if tableName != distTableNames[0] && tableName != distTableNames[1] {
 				err := r.setColdStorage(ctx, tableName, params.ColdStorageVolume)
 				if err != nil {
 					zap.L().Error("error in setting cold storage", zap.Error(err))
