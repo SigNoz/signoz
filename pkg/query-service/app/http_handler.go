@@ -2001,8 +2001,7 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, apiErr := aH.reader.GetTTL(r.Context(), claims.OrgID, ttlParams)
-	if apiErr != nil {
-		render.Error(w, apiErr)
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 	aH.WriteJSON(w, r, result)
