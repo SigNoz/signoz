@@ -29,8 +29,8 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useInterval from 'hooks/useInterval';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useState } from 'react';
@@ -50,6 +50,7 @@ const { Search } = Input;
 
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const { t } = useTranslation('common');
+	const { safeNavigate } = useSafeNavigate();
 	const { user } = useAppContext();
 	const [addNewAlert, action] = useComponentPermission(
 		['add_new_alert', 'action'],
@@ -112,7 +113,8 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			number: allAlertRules?.length,
 			layout: 'new',
 		});
-		history.push(`${ROUTES.ALERTS_NEW}?showNewCreateAlertsPage=true`);
+		params.set(QueryParams.showNewCreateAlertsPage, 'true');
+		safeNavigate(`${ROUTES.ALERT_TYPE_SELECTION}?${params.toString()}`);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
@@ -121,7 +123,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			number: allAlertRules?.length,
 			layout: 'classic',
 		});
-		history.push(ROUTES.ALERTS_NEW);
+		safeNavigate(ROUTES.ALERT_TYPE_SELECTION);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
@@ -161,7 +163,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		if (openInNewTab) {
 			window.open(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`, '_blank');
 		} else {
-			history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+			safeNavigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 		}
 	};
 
@@ -190,7 +192,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					setTimeout(() => {
 						const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
 						params.set(QueryParams.ruleId, String(clonedAlert.id));
-						history.push(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
+						safeNavigate(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
 					}, 2000);
 				}
 				if (status === 'error') {
