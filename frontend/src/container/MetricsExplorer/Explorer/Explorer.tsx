@@ -190,6 +190,20 @@ function Explorer(): JSX.Element {
 		[stagedQuery],
 	);
 
+	const [selectedMetricName, setSelectedMetricName] = useState<string | null>(
+		null,
+	);
+
+	const handleOpenMetricDetails = (metricName: string): void => {
+		setIsMetricDetailsOpen(true);
+		setSelectedMetricName(metricName);
+	};
+
+	const handleCloseMetricDetails = (): void => {
+		setIsMetricDetailsOpen(false);
+		setSelectedMetricName(null);
+	};
+
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.TabChanged, {
 			[MetricsExplorerEventKeys.Tab]: 'explorer',
@@ -276,7 +290,7 @@ function Explorer(): JSX.Element {
 							metricUnits={units}
 							metricNames={metricNames}
 							metrics={metrics}
-							setIsMetricDetailsOpen={setIsMetricDetailsOpen}
+							handleOpenMetricDetails={handleOpenMetricDetails}
 							yAxisUnit={yAxisUnit}
 							setYAxisUnit={setYAxisUnit}
 						/>
@@ -297,9 +311,9 @@ function Explorer(): JSX.Element {
 			/>
 			{isMetricDetailsOpen && (
 				<MetricDetails
-					metricName={metricNames[0]}
+					metricName={selectedMetricName}
 					isOpen={isMetricDetailsOpen}
-					onClose={(): void => setIsMetricDetailsOpen(false)}
+					onClose={handleCloseMetricDetails}
 					isModalTimeSelection={false}
 				/>
 			)}

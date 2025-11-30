@@ -3,10 +3,11 @@ import { Button, Tooltip, Typography } from 'antd';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { isAxiosError } from 'axios';
 import classNames from 'classnames';
+import YAxisUnitSelector from 'components/YAxisUnitSelector';
+import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/useUpdateMetricMetadata';
@@ -35,7 +36,7 @@ function TimeSeries({
 	metricUnits,
 	metricNames,
 	metrics,
-	setIsMetricDetailsOpen,
+	handleOpenMetricDetails,
 	yAxisUnit,
 	setYAxisUnit,
 }: TimeSeriesProps): JSX.Element {
@@ -140,10 +141,6 @@ function TimeSeries({
 		setYAxisUnit(value);
 	};
 
-	const goToMetricDetails = (): void => {
-		setIsMetricDetailsOpen(true);
-	};
-
 	const showYAxisUnitSelector = useMemo(() => {
 		if (metricUnits.length <= 1) {
 			return true;
@@ -207,9 +204,11 @@ function TimeSeries({
 			<div className="y-axis-unit-selector-container">
 				{showYAxisUnitSelector && (
 					<>
-						<BuilderUnitsFilter
+						<YAxisUnitSelector
 							onChange={onUnitChangeHandler}
-							yAxisUnit={yAxisUnit}
+							value={yAxisUnit}
+							source={YAxisSource.EXPLORER}
+							data-testid="y-axis-unit-selector"
 						/>
 						{showSaveUnitButton && (
 							<div className="save-unit-container">
@@ -258,7 +257,9 @@ function TimeSeries({
 									title={
 										<Typography.Text>
 											This metric does not have a unit. Please set one for it in the{' '}
-											<Typography.Link onClick={goToMetricDetails}>
+											<Typography.Link
+												onClick={(): void => handleOpenMetricDetails(metricNames[index])}
+											>
 												metric details
 											</Typography.Link>{' '}
 											page.

@@ -19,7 +19,7 @@ export interface TimeSeriesProps {
 	metricUnits: string[];
 	metricNames: string[];
 	metrics: (MetricDetails | undefined)[];
-	setIsMetricDetailsOpen: (isOpen: boolean) => void;
+	handleOpenMetricDetails: (metricName: string) => void;
 	yAxisUnit: string;
 	setYAxisUnit: (unit: string) => void;
 }

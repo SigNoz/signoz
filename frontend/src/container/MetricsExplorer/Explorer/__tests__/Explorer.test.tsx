@@ -128,8 +128,8 @@ jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 	...mockUseQueryBuilderData,
 } as any);
 
-const BUILDER_UNITS_FILTER_TEST_ID = 'builder-units-filter';
-const SECONDS_UNIT_LABEL = 'seconds';
+const Y_AXIS_UNIT_SELECTOR_TEST_ID = 'y-axis-unit-selector';
+const SECONDS_UNIT_LABEL = 'Seconds (s)';
 
 const mockMetric: MetricDetails = {
 	name: 'metric1',
@@ -231,7 +231,7 @@ describe('Explorer', () => {
 
 		renderExplorer();
 
-		const yAxisUnitSelector = screen.getByTestId(BUILDER_UNITS_FILTER_TEST_ID);
+		const yAxisUnitSelector = screen.getByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
 		expect(yAxisUnitSelector).toBeInTheDocument();
 		expect(yAxisUnitSelector).toHaveTextContent(SECONDS_UNIT_LABEL);
 	});
@@ -250,7 +250,7 @@ describe('Explorer', () => {
 
 		renderExplorer();
 
-		const yAxisUnitSelector = screen.getByTestId(BUILDER_UNITS_FILTER_TEST_ID);
+		const yAxisUnitSelector = screen.getByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
 		expect(yAxisUnitSelector).toBeInTheDocument();
 		expect(yAxisUnitSelector).toHaveTextContent(SECONDS_UNIT_LABEL);
 
@@ -269,7 +269,7 @@ describe('Explorer', () => {
 
 		renderExplorer();
 
-		const yAxisUnitSelector = screen.queryByTestId(BUILDER_UNITS_FILTER_TEST_ID);
+		const yAxisUnitSelector = screen.queryByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
 		expect(yAxisUnitSelector).not.toBeInTheDocument();
 
 		// One chart per query toggle should be disabled
@@ -287,8 +287,8 @@ describe('Explorer', () => {
 
 		renderExplorer();
 
-		const yAxisUnitSelector = screen.queryByTestId(BUILDER_UNITS_FILTER_TEST_ID);
+		const yAxisUnitSelector = screen.queryByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
 		expect(yAxisUnitSelector).toBeInTheDocument();
-		expect(yAxisUnitSelector).toHaveTextContent('Select unit');
+		expect(yAxisUnitSelector).toHaveTextContent('Please select a unit');
 	});
 });
