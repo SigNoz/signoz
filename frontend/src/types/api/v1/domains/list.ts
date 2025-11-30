@@ -11,10 +11,10 @@ export interface GettableAuthDomain {
 	orgId: string;
 	ssoEnabled: boolean;
 	ssoType: string;
+	authNProviderInfo: AuthNProviderInfo;
 	samlConfig?: SAMLConfig;
 	googleAuthConfig?: GoogleAuthConfig;
 	oidcConfig?: OIDCConfig;
-	authNProviderInfo?: AuthNProviderInfo;
 }
 
 export interface SAMLConfig {

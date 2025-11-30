@@ -6,6 +6,7 @@ import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/v1/domains/id/delete';
 import listAllDomain from 'api/v1/domains/list';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
+import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useState } from 'react';
 import { useQuery } from 'react-query';
@@ -38,22 +39,15 @@ const columns: ColumnsType<GettableAuthDomain> = [
 		key: 'relayState',
 		width: 80,
 		render: (_, record: GettableAuthDomain): JSX.Element => {
-			const relayPath = record.authNProviderInfo?.relayStatePath ?? '';
+			const relayPath = record.authNProviderInfo.relayStatePath;
+			if (!relayPath) {
+				return (
+					<Typography.Text style={{ paddingLeft: '32px' }}>N/A</Typography.Text>
+				);
+			}
 
-			if (!relayPath) return <Typography.Text>N/A</Typography.Text>;
-
-			const baseUrl =
-				typeof window !== 'undefined'
-					? `${window.location.protocol}//${window.location.host}`
-					: '';
-
-			const normalizedRelayPath = relayPath.startsWith('/')
-				? relayPath
-				: `/${relayPath}`;
-
-			const href = `${baseUrl}${normalizedRelayPath}`;
-
-			return <Typography.Text copyable={{ text: href }}>{href}</Typography.Text>;
+			const href = `${window.location.origin}/${relayPath}`;
+			return <CopyToClipboard textToCopy={href} />;
 		},
 	},
 	{
