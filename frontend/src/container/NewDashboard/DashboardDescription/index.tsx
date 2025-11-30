@@ -37,7 +37,7 @@ import {
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
@@ -49,6 +49,7 @@ import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
 
 import DashboardGraphSlider from '../ComponentsSlider';
+import { linkifyText } from './utils';
 import { Base64Icons } from '../DashboardSettings/General/utils';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
@@ -476,7 +477,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				</div>
 			)}
 			{!isEmpty(description) && (
-				<section className="dashboard-description-section">{description}</section>
+				<section className="dashboard-description-section">
+					{linkifyText(description)}
+				</section>
 			)}
 
 			{!isEmpty(selectedData.variables) && (
