@@ -33,6 +33,10 @@ function LogsExplorerTable({
 			loading={isLoading}
 			rootClassName="logs-table"
 			sticky
+			downloadOption={{
+				isDownloadEnabled: true,
+				fileName: 'logs-table-export',
+			}}
 		/>
 	);
 }
