@@ -12,6 +12,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/authn/authnstore/sqlauthnstore"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
+	cachtypes "github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
@@ -142,6 +144,17 @@ func New(
 		cacheProviderFactories,
 		config.Cache.Provider,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	cacheForTraceDetail, err := memorycache.New(context.TODO(), providerSettings, cachtypes.Config{
+		Provider: "memory",
+		Memory: cachtypes.Memory{
+			NumCounters: 10 * 10000,
+			MaxCost:     1 << 27, // 128 MB
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +343,9 @@ func New(
 		prometheus,
 		telemetrystore.Cluster(),
 		config.Querier.FluxInterval,
+		cacheForTraceDetail,
 		cache,
+		nil,
 	)
 
 	// Initialize rules manager

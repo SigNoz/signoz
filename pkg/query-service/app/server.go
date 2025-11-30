@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -73,13 +74,26 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		return nil, err
 	}
 
+	cacheForTraceDetail, err := memorycache.New(context.TODO(), signoz.Instrumentation.ToProviderSettings(), cache.Config{
+		Provider: "memory",
+		Memory: cache.Memory{
+			NumCounters: 10 * 10000,
+			MaxCost:     1 << 27, // 128 MB
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	reader := clickhouseReader.NewReader(
 		signoz.SQLStore,
 		signoz.TelemetryStore,
 		signoz.Prometheus,
 		signoz.TelemetryStore.Cluster(),
 		config.Querier.FluxInterval,
+		cacheForTraceDetail,
 		signoz.Cache,
+		nil,
 	)
 
 	rm, err := makeRulesManager(
