@@ -14,8 +14,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
-	"github.com/SigNoz/signoz/pkg/modules/metricsmodule"
-	"github.com/SigNoz/signoz/pkg/modules/metricsmodule/implmetricsmodule"
+	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -62,7 +62,7 @@ type Modules struct {
 	Session        session.Module
 	Services       services.Module
 	SpanPercentile spanpercentile.Module
-	Metrics        metricsmodule.Module
+	Metrics        metricsexplorer.Module
 }
 
 func NewModules(
@@ -97,10 +97,10 @@ func NewModules(
 		QuickFilter:    quickfilter,
 		TraceFunnel:    impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport:  implrawdataexport.NewModule(querier),
-		AuthDomain:     implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)),
-		Session:        implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore)), tokenizer, orgGetter),
+		AuthDomain:     implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs),
+		Session:        implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
 		SpanPercentile: implspanpercentile.NewModule(querier, providerSettings),
 		Services:       implservices.NewModule(querier, telemetryStore),
-		Metrics:        implmetricsmodule.NewModule(telemetryStore, telemetryMetadataStore, cache, providerSettings),
+		Metrics:        implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, providerSettings),
 	}
 }

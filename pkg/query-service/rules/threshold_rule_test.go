@@ -784,7 +784,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), readerCache)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil, readerCache, options)
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
@@ -899,7 +899,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		)
 		assert.NoError(t, err)
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), readerCache)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil, readerCache, options)
 
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1019,7 +1019,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil, nil, options)
 
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1156,7 +1156,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil, nil, options)
 
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1423,7 +1423,7 @@ func TestMultipleThresholdRule(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), readerCache)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil, readerCache, options)
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {

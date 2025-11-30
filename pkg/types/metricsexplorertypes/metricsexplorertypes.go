@@ -1,4 +1,4 @@
-package metricsmoduletypes
+package metricsexplorertypes
 
 import (
 	"encoding/json"
