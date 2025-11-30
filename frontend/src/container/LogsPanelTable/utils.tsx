@@ -1,6 +1,10 @@
 import { ColumnsType } from 'antd/es/table';
 import { Typography } from 'antd/lib';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
+import {
+	LOG_FIELD_BODY_KEY,
+	LOG_FIELD_TIMESTAMP_KEY,
+} from 'lib/logs/flatLogData';
 // import Typography from 'antd/es/typography/Typography';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ReactNode } from 'react';
@@ -18,15 +22,15 @@ export const getLogPanelColumnsList = (
 
 	const columns: ColumnsType<RowData> =
 		selectedLogFields?.map((field: IField) => {
-			const { name } = field;
+			const { name, key, displayName } = field;
 
 			return {
-				title: name,
-				dataIndex: name,
-				key: name,
-				width: name === 'body' ? 350 : 100,
+				title: displayName,
+				dataIndex: key,
+				key,
+				width: key === LOG_FIELD_BODY_KEY ? 350 : 100,
 				render: (value: ReactNode): JSX.Element => {
-					if (name === 'timestamp') {
+					if (key === LOG_FIELD_TIMESTAMP_KEY) {
 						return (
 							<Typography.Text>
 								{formatTimezoneAdjustedTimestamp(value as string)}
@@ -34,7 +38,7 @@ export const getLogPanelColumnsList = (
 						);
 					}
 
-					if (name === 'body') {
+					if (key === LOG_FIELD_BODY_KEY) {
 						return (
 							<Typography.Paragraph ellipsis={{ rows: 1 }} data-testid={name}>
 								{value}
