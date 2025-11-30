@@ -82,10 +82,13 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		case telemetrytypes.FieldDataTypeBool:
 			return logsV2Columns["attributes_bool"], nil
 		}
+	case telemetrytypes.FieldContextBody:
+		// body context fields are stored in the body column
+		return logsV2Columns["body"], nil
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
 		col, ok := logsV2Columns[key.Name]
 		if !ok {
-			// check if the key has body JSON search
+			// check if the key has body JSON search (backward compatibility)
 			if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
 				return logsV2Columns["body"], nil
 			}
@@ -103,8 +106,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		return "", err
 	}
 
-	switch column.Type {
-	case schema.JSONColumnType{}:
+	// schema.JSONColumnType{} now can not be used in switch cases, so we need to check if the column is a JSON column
+	if column.IsJSONColumn() {
 		// json is only supported for resource context as of now
 		if key.FieldContext != telemetrytypes.FieldContextResource {
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
@@ -121,7 +124,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		} else {
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		}
-
+	}
+	switch column.Type {
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,

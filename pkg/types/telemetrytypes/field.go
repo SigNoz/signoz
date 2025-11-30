@@ -17,6 +17,10 @@ var (
 	FieldSelectorMatchTypeFuzzy = FieldSelectorMatchType{valuer.NewString("fuzzy")}
 )
 
+// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries
+// e.g., "body.status" where "body." is the prefix
+const BodyJSONStringSearchPrefix = `body.`
+
 type TelemetryFieldKey struct {
 	Name          string        `json:"name"`
 	Description   string        `json:"description,omitempty"`
@@ -24,7 +28,10 @@ type TelemetryFieldKey struct {
 	Signal        Signal        `json:"signal,omitempty"`
 	FieldContext  FieldContext  `json:"fieldContext,omitempty"`
 	FieldDataType FieldDataType `json:"fieldDataType,omitempty"`
-	Materialized  bool          `json:"-"`
+
+	JSONDataType *JSONDataType       `json:"-,omitempty"`
+	Indexes      []JSONDataTypeIndex `json:"-"`
+	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
 }
 
 func (f TelemetryFieldKey) String() string {

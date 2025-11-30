@@ -589,10 +589,9 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
 			FullTextColumn:     b.fullTextColumn,
-			JsonBodyPrefix:     b.jsonBodyPrefix,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
-        }, start, end)
+		}, start, end)
 
 		if err != nil {
 			return nil, err
