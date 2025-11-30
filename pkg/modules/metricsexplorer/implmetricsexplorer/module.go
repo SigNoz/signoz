@@ -11,9 +11,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -231,8 +233,9 @@ func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, me
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, constants.MetricsExplorerClickhouseThreads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
 	}
@@ -288,8 +291,9 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, constants.MetricsExplorerClickhouseThreads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch metrics metadata from timeseries table")
 	}
@@ -400,9 +404,10 @@ func (m *module) checkForLabelInMetric(ctx context.Context, metricName string, l
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, constants.MetricsExplorerClickhouseThreads)
 	var hasLabel bool
 	db := m.telemetryStore.ClickhouseDB()
-	err := db.QueryRow(ctx, query, args...).Scan(&hasLabel)
+	err := db.QueryRow(valueCtx, query, args...).Scan(&hasLabel)
 	if err != nil {
 		return false, errors.WrapInternalf(err, errors.CodeInternal, "error checking metric label %q", label)
 	}
@@ -428,8 +433,9 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 
 	query, args := ib.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, constants.MetricsExplorerClickhouseThreads)
 	db := m.telemetryStore.ClickhouseDB()
-	if err := db.Exec(ctx, query, args...); err != nil {
+	if err := db.Exec(valueCtx, query, args...); err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to insert metrics metadata")
 	}
 
@@ -580,8 +586,9 @@ func (m *module) fetchMetricsStatsWithSamples(
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, constants.MetricsExplorerClickhouseThreads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute metrics stats with samples query")
 	}
@@ -649,8 +656,9 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplo
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, constants.MetricsExplorerClickhouseThreads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute timeseries treemap query")
 	}
@@ -748,8 +756,9 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, constants.MetricsExplorerClickhouseThreads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute samples treemap query")
 	}
