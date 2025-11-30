@@ -458,7 +458,6 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		return sqlbuilder.NewWhereClause(), nil
 	}
 
-	// TODO(nikhilmantri0902, srikanthccv): if this is the right way of dealing with  whereClauseSelectors
 	whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(expression)
 	for idx := range whereClauseSelectors {
 		whereClauseSelectors[idx].Signal = telemetrytypes.SignalMetrics
@@ -483,8 +482,8 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		FieldKeys: keys,
 	}
 
-	startNs := uint64(startMillis * 1_000_000)
-	endNs := uint64(endMillis * 1_000_000)
+	startNs := querybuilder.ToNanoSecs(uint64(startMillis))
+	endNs := querybuilder.ToNanoSecs(uint64(endMillis))
 
 	whereClause, err := querybuilder.PrepareWhereClause(expression, opts, startNs, endNs)
 	if err != nil {
