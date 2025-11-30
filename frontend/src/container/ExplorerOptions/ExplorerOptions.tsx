@@ -393,15 +393,21 @@ function ExplorerOptions({
 			backwardCompatibleOptions = omit(options, 'version');
 		}
 
+		// Use the correct default columns based on the current data source
+		const defaultColumns =
+			sourcepage === DataSource.TRACES
+				? defaultTraceSelectedColumns
+				: defaultLogsSelectedColumns;
+
 		if (extraData.selectColumns?.length) {
 			handleOptionsChange({
 				...backwardCompatibleOptions,
 				selectColumns: extraData.selectColumns,
 			});
-		} else if (!isEqual(defaultTraceSelectedColumns, options.selectColumns)) {
+		} else if (!isEqual(defaultColumns, options.selectColumns)) {
 			handleOptionsChange({
 				...backwardCompatibleOptions,
-				selectColumns: defaultTraceSelectedColumns,
+				selectColumns: defaultColumns,
 			});
 		}
 	};
