@@ -21,7 +21,7 @@ func generateMetricMetadataCacheKey(metricName string) string {
 
 func getStatsOrderByColumn(order *qbtypes.OrderBy) (string, string, error) {
 	if order == nil {
-		return sqlColumnTimeSeries, qbtypes.OrderDirectionDesc.StringValue(), nil
+		return sqlColumnSamples, qbtypes.OrderDirectionDesc.StringValue(), nil
 	}
 
 	var columnName string
