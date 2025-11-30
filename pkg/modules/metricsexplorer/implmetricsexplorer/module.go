@@ -96,7 +96,6 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsex
 	}, nil
 }
 
-// GetTreemap will return metrics treemap information once implemented.
 func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.TreemapRequest) (*metricsexplorertypes.TreemapResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
@@ -108,7 +107,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 	}
 
 	resp := &metricsexplorertypes.TreemapResponse{}
-	switch req.Treemap {
+	switch req.Mode {
 	case metricsexplorertypes.TreemapModeSamples:
 		entries, err := m.computeSamplesTreemap(ctx, req, filterWhereClause)
 		if err != nil {
@@ -279,11 +278,11 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"metric_name",
-		"ANY_VALUE(description) AS description",
-		"ANY_VALUE(type) AS metric_type",
-		"ANY_VALUE(unit) AS metric_unit",
-		"ANY_VALUE(temporality) AS temporality",
-		"ANY_VALUE(is_monotonic) AS is_monotonic",
+		"anyLast(description) AS description",
+		"anyLast(type) AS metric_type",
+		"anyLast(unit) AS metric_unit",
+		"anyLast(temporality) AS temporality",
+		"anyLast(is_monotonic) AS is_monotonic",
 	)
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4TableName))
 	sb.Where(sb.In("metric_name", args...))
@@ -377,7 +376,7 @@ func (m *module) validateMetricLabels(ctx context.Context, req *metricsexplorert
 			return err
 		}
 		if !hasLabel {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as histogram type", req.MetricName)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as histogram type: histogram metrics require the 'le' (less than or equal) label for bucket boundaries", req.MetricName)
 		}
 	}
 
@@ -387,7 +386,7 @@ func (m *module) validateMetricLabels(ctx context.Context, req *metricsexplorert
 			return err
 		}
 		if !hasLabel {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as summary type", req.MetricName)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as summary type: summary metrics require the 'quantile' label for quantile values", req.MetricName)
 		}
 	}
 
