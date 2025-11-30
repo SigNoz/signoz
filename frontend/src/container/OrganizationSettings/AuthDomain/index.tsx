@@ -42,7 +42,7 @@ const columns: ColumnsType<GettableAuthDomain> = [
 			const relayPath = record.authNProviderInfo.relayStatePath;
 			if (!relayPath) {
 				return (
-					<Typography.Text style={{ paddingLeft: '32px' }}>N/A</Typography.Text>
+					<Typography.Text style={{ paddingLeft: '6px' }}>N/A</Typography.Text>
 				);
 			}
 
