@@ -14,6 +14,7 @@ type Handler interface {
 	GetTreemap(http.ResponseWriter, *http.Request)
 	GetMetricMetadata(http.ResponseWriter, *http.Request)
 	UpdateMetricMetadata(http.ResponseWriter, *http.Request)
+	GetMetricDashboards(http.ResponseWriter, *http.Request)
 }
 
 // Module represents the metrics module interface.
@@ -22,4 +23,5 @@ type Module interface {
 	GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.TreemapRequest) (*metricsexplorertypes.TreemapResponse, error)
 	GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, error)
 	UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.UpdateMetricMetadataRequest) error
+	GetMetricDashboards(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardsResponse, error)
 }
