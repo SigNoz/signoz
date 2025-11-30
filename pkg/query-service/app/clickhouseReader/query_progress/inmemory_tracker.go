@@ -19,7 +19,7 @@ type inMemoryQueryProgressTracker struct {
 
 func (tracker *inMemoryQueryProgressTracker) ReportQueryStarted(
 	queryId string,
-) (postQueryCleanup func(), err *model.ApiError) {
+) (postQueryCleanup func(), apiErr *model.ApiError) {
 	tracker.lock.Lock()
 	defer tracker.lock.Unlock()
 

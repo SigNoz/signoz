@@ -985,14 +985,14 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 	keys := make(map[string]v3.AttributeKey)
 
 	if rule.AlertType == ruletypes.AlertTypeLogs {
-		logFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
-		if err == nil {
+		logFields, apiErr := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
+		if apiErr == nil {
 			params := &v3.QueryRangeParamsV3{
 				CompositeQuery: rule.RuleCondition.CompositeQuery,
 			}
 			keys = model.GetLogFieldsV3(ctx, params, logFields)
 		} else {
-			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
+			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(apiErr))
 		}
 	} else if rule.AlertType == ruletypes.AlertTypeTraces {
 		traceFields, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
@@ -4295,9 +4295,9 @@ func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.
 		return
 	}
 
-	response, err := aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
-	if err != nil {
-		RespondError(w, err, nil)
+	response, apiErr := aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
 		return
 	}
 
@@ -4453,10 +4453,9 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
-			logsFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, errQuriesByName)
+			logsFields, apiErr := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
+			if apiErr != nil {
+				RespondError(w, apiErr, errQuriesByName)
 				return
 			}
 			// get the fields if any logs query is present
@@ -4493,12 +4492,12 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	// Hook up query progress tracking if requested
 	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
 	if len(queryIdHeader) > 0 {
-		onQueryFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
+		onQueryFinished, apiErr := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
 
-		if err != nil {
+		if apiErr != nil {
 			zap.L().Error(
 				"couldn't report query start for progress tracking",
-				zap.String("queryId", queryIdHeader), zap.Error(err),
+				zap.String("queryId", queryIdHeader), zap.Error(apiErr),
 			)
 
 		} else {
@@ -4809,10 +4808,9 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
 			// get the fields if any logs query is present
-			logsFields, err := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, nil)
+			logsFields, apiErr := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
+			if apiErr != nil {
+				RespondError(w, apiErr, nil)
 				return
 			}
 			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
