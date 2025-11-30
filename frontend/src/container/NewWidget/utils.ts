@@ -1,6 +1,6 @@
 import { DefaultOptionType } from 'antd/es/select';
 import { omitIdFromQuery } from 'components/ExplorerCard/utils';
-import { PrecisionOptionsEnum } from 'components/Graph/yAxisConfig';
+import { PrecisionOptionsEnum } from 'components/Graph/types';
 import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,

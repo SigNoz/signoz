@@ -1,6 +1,10 @@
 package metrictypes
 
 import (
+	"database/sql/driver"
+	"strings"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -17,10 +21,108 @@ var (
 	Unknown     = Temporality{valuer.NewString("")}
 )
 
+func (t Temporality) Value() (driver.Value, error) {
+	switch t {
+	case Delta:
+		return "Delta", nil
+	case Cumulative:
+		return "Cumulative", nil
+	case Unspecified:
+		return "Unspecified", nil
+	case Unknown:
+		return "", nil
+	default:
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "temporality: unsupported value %q", t.StringValue())
+	}
+}
+
+func (t *Temporality) Scan(src interface{}) error {
+	if src == nil {
+		*t = Unknown
+		return nil
+	}
+
+	var val string
+	switch v := src.(type) {
+	case string:
+		val = v
+	case []byte:
+		val = string(v)
+	default:
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "temporality: cannot scan %T", src)
+	}
+
+	switch strings.ToLower(strings.TrimSpace(val)) {
+	case "delta":
+		*t = Delta
+	case "cumulative":
+		*t = Cumulative
+	case "unspecified":
+		*t = Unspecified
+	default:
+		*t = Unknown
+	}
+
+	return nil
+}
+
 // Type is the type of the metric in OTLP data model
 // Read more here https://opentelemetry.io/docs/specs/otel/metrics/data-model/#metric-points
 type Type struct {
 	valuer.String
+}
+
+func (t Type) Value() (driver.Value, error) {
+	switch t {
+	case GaugeType:
+		return "Gauge", nil
+	case SumType:
+		return "Sum", nil
+	case HistogramType:
+		return "Histogram", nil
+	case SummaryType:
+		return "Summary", nil
+	case ExpHistogramType:
+		return "ExponentialHistogram", nil
+	case UnspecifiedType:
+		return "", nil
+	default:
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "metric type: unsupported value %q", t.StringValue())
+	}
+}
+
+func (t *Type) Scan(src interface{}) error {
+	if src == nil {
+		*t = UnspecifiedType
+		return nil
+	}
+
+	var val string
+	switch v := src.(type) {
+	case string:
+		val = v
+	case []byte:
+		val = string(v)
+	default:
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "metric type: cannot scan %T", src)
+	}
+
+	switch strings.ToLower(strings.TrimSpace(val)) {
+	case "gauge":
+		*t = GaugeType
+	case "sum":
+		*t = SumType
+	case "histogram":
+		*t = HistogramType
+	case "summary":
+		*t = SummaryType
+	case "exponentialhistogram":
+		*t = ExpHistogramType
+	default:
+		*t = UnspecifiedType
+	}
+
+	return nil
 }
 
 var (

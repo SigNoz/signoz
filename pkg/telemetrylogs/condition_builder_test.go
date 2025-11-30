@@ -258,6 +258,108 @@ func TestConditionFor(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			name: "Regexp operator - body field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "body",
+				FieldContext: telemetrytypes.FieldContextLog,
+			},
+			operator:      qbtypes.FilterOperatorRegexp,
+			value:         "error.*failed",
+			expectedSQL:   "match(LOWER(body), LOWER(?))",
+			expectedArgs:  []any{"error.*failed"},
+			expectedError: nil,
+		},
+		{
+			name: "Not Regexp operator - body field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "body",
+				FieldContext: telemetrytypes.FieldContextLog,
+			},
+			operator:      qbtypes.FilterOperatorNotRegexp,
+			value:         "debug|trace",
+			expectedSQL:   "NOT match(LOWER(body), LOWER(?))",
+			expectedArgs:  []any{"debug|trace"},
+			expectedError: nil,
+		},
+		{
+			name: "Regexp operator - string attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "http.url",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorRegexp,
+			value:         "^https://.*\\.example\\.com.*$",
+			expectedSQL:   "(match(attributes_string['http.url'], ?) AND mapContains(attributes_string, 'http.url') = ?)",
+			expectedArgs:  []any{"^https://.*\\.example\\.com.*$", true},
+			expectedError: nil,
+		},
+		{
+			name: "Not Regexp operator - string attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "http.url",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorNotRegexp,
+			value:         "^http://localhost.*",
+			expectedSQL:   "WHERE NOT match(attributes_string['http.url'], ?)",
+			expectedArgs:  []any{"^http://localhost.*"},
+			expectedError: nil,
+		},
+		{
+			name: "Regexp operator - resource attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+			operator:      qbtypes.FilterOperatorRegexp,
+			value:         "frontend-.*",
+			expectedSQL:   "(match(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL), ?) AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL) IS NOT NULL)",
+			expectedArgs:  []any{"frontend-.*"},
+			expectedError: nil,
+		},
+		{
+			name: "Not Regexp operator - resource attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+			operator:      qbtypes.FilterOperatorNotRegexp,
+			value:         "test-.*",
+			expectedSQL:   "WHERE NOT match(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL), ?)",
+			expectedArgs:  []any{"test-.*"},
+			expectedError: nil,
+		},
+		{
+			name: "Regexp operator - severity_text",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "severity_text",
+				FieldContext: telemetrytypes.FieldContextLog,
+			},
+			operator:      qbtypes.FilterOperatorRegexp,
+			value:         "ERROR|FATAL|CRITICAL",
+			expectedSQL:   "match(severity_text, ?)",
+			expectedArgs:  []any{"ERROR|FATAL|CRITICAL"},
+			expectedError: nil,
+		},
+		{
+			name: "Not Regexp operator - severity_text",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "severity_text",
+				FieldContext: telemetrytypes.FieldContextLog,
+			},
+			operator:      qbtypes.FilterOperatorNotRegexp,
+			value:         "DEBUG|TRACE",
+			expectedSQL:   "NOT match(severity_text, ?)",
+			expectedArgs:  []any{"DEBUG|TRACE"},
+			expectedError: nil,
+		},
+		{
 			name: "Non-existent column",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "nonexistent_field",
@@ -276,7 +378,7 @@ func TestConditionFor(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-            cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
+			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {
@@ -331,7 +433,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-                cond, err := conditionBuilder.ConditionFor(ctx, &key, tc.operator, tc.value, sb, 0, 0)
+				cond, err := conditionBuilder.ConditionFor(ctx, &key, tc.operator, tc.value, sb, 0, 0)
 				sb.Where(cond)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)
@@ -520,6 +622,46 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			expectedSQL:   `(JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ? OR JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ? OR JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ?)`,
 			expectedError: nil,
 		},
+		{
+			name: "Regexp operator - json body string",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.method",
+			},
+			operator:      qbtypes.FilterOperatorRegexp,
+			value:         "GET|POST|PUT",
+			expectedSQL:   `match(JSON_VALUE(body, '$."http"."method"'), ?)`,
+			expectedError: nil,
+		},
+		{
+			name: "Not Regexp operator - json body string",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.method",
+			},
+			operator:      qbtypes.FilterOperatorNotRegexp,
+			value:         "DELETE|PATCH",
+			expectedSQL:   `NOT match(JSON_VALUE(body, '$."http"."method"'), ?)`,
+			expectedError: nil,
+		},
+		{
+			name: "Regexp operator - json body with dots in path",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.user.email",
+			},
+			operator:      qbtypes.FilterOperatorRegexp,
+			value:         "^.*@example\\.com$",
+			expectedSQL:   `match(JSON_VALUE(body, '$."user"."email"'), ?)`,
+			expectedError: nil,
+		},
+		{
+			name: "Not Regexp operator - json body nested path",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.response.headers.content-type",
+			},
+			operator:      qbtypes.FilterOperatorNotRegexp,
+			value:         "^text/.*",
+			expectedSQL:   `NOT match(JSON_VALUE(body, '$."response"."headers"."content-type"'), ?)`,
+			expectedError: nil,
+		},
 	}
 
 	fm := NewFieldMapper()
@@ -528,7 +670,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-            cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
+			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

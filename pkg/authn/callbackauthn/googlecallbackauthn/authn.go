@@ -24,28 +24,26 @@ var (
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
 type AuthN struct {
-	oidcProvider *oidc.Provider
-	store        authtypes.AuthNStore
+	store authtypes.AuthNStore
 }
 
 func New(ctx context.Context, store authtypes.AuthNStore) (*AuthN, error) {
-	oidcProvider, err := oidc.NewProvider(ctx, issuerURL)
-	if err != nil {
-		return nil, err
-	}
-
 	return &AuthN{
-		oidcProvider: oidcProvider,
-		store:        store,
+		store: store,
 	}, nil
 }
 
 func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
+	oidcProvider, err := oidc.NewProvider(ctx, issuerURL)
+	if err != nil {
+		return "", err
+	}
+
 	if authDomain.AuthDomainConfig().AuthNProvider != authtypes.AuthNProviderGoogleAuth {
 		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "domain type is not google")
 	}
 
-	oauth2Config := a.oauth2Config(siteURL, authDomain)
+	oauth2Config := a.oauth2Config(siteURL, authDomain, oidcProvider)
 
 	return oauth2Config.AuthCodeURL(
 		authtypes.NewState(siteURL, authDomain.StorableAuthDomain().ID).URL.String(),
@@ -54,6 +52,11 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 }
 
 func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtypes.CallbackIdentity, error) {
+	oidcProvider, err := oidc.NewProvider(ctx, issuerURL)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := query.Get("error"); err != "" {
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: error while authenticating").WithAdditional(query.Get("error_description"))
 	}
@@ -68,7 +71,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, err
 	}
 
-	oauth2Config := a.oauth2Config(state.URL, authDomain)
+	oauth2Config := a.oauth2Config(state.URL, authDomain, oidcProvider)
 	token, err := oauth2Config.Exchange(ctx, query.Get("code"))
 	if err != nil {
 		var retrieveError *oauth2.RetrieveError
@@ -84,7 +87,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google: no id_token in token response")
 	}
 
-	verifier := a.oidcProvider.Verifier(&oidc.Config{ClientID: authDomain.AuthDomainConfig().Google.ClientID})
+	verifier := oidcProvider.Verifier(&oidc.Config{ClientID: authDomain.AuthDomainConfig().Google.ClientID})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to verify token").WithAdditional(err.Error())
@@ -114,11 +117,17 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 
 }
 
-func (a *AuthN) oauth2Config(siteURL *url.URL, authDomain *authtypes.AuthDomain) *oauth2.Config {
+func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDomain) *authtypes.AuthNProviderInfo {
+	return &authtypes.AuthNProviderInfo{
+		RelayStatePath: nil,
+	}
+}
+
+func (a *AuthN) oauth2Config(siteURL *url.URL, authDomain *authtypes.AuthDomain, provider *oidc.Provider) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     authDomain.AuthDomainConfig().Google.ClientID,
 		ClientSecret: authDomain.AuthDomainConfig().Google.ClientSecret,
-		Endpoint:     a.oidcProvider.Endpoint(),
+		Endpoint:     provider.Endpoint(),
 		Scopes:       scopes,
 		RedirectURL: (&url.URL{
 			Scheme: siteURL.Scheme,

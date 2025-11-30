@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
-import { getToolTipValue, PrecisionOption } from 'components/Graph/yAxisConfig';
+import { PrecisionOption } from 'components/Graph/types';
+import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
 import { uPlotXAxisValuesFormat } from './constants';

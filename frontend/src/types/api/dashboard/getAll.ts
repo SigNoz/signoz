@@ -1,4 +1,4 @@
-import { PrecisionOption } from 'components/Graph/yAxisConfig';
+import { PrecisionOption } from 'components/Graph/types';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';

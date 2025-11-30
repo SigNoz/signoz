@@ -14,7 +14,7 @@
 		"jest": "jest",
 		"jest:coverage": "jest --coverage",
 		"jest:watch": "jest --watch",
-		"postinstall": "yarn i18n:generate-hash && (is-ci || yarn husky:configure)",
+		"postinstall": "yarn i18n:generate-hash && (is-ci || yarn husky:configure)  && node scripts/update-registry.js",
 		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
 		"commitlint": "commitlint --edit $1",
 		"test": "jest",

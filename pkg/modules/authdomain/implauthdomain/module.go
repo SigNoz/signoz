@@ -3,17 +3,19 @@ package implauthdomain
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	store authtypes.AuthDomainStore
+	store  authtypes.AuthDomainStore
+	authNs map[authtypes.AuthNProvider]authn.AuthN
 }
 
-func NewModule(store authtypes.AuthDomainStore) authdomain.Module {
-	return &module{store: store}
+func NewModule(store authtypes.AuthDomainStore, authNs map[authtypes.AuthNProvider]authn.AuthN) authdomain.Module {
+	return &module{store: store, authNs: authNs}
 }
 
 func (module *module) Create(ctx context.Context, domain *authtypes.AuthDomain) error {
@@ -22,6 +24,13 @@ func (module *module) Create(ctx context.Context, domain *authtypes.AuthDomain) 
 
 func (module *module) Get(ctx context.Context, id valuer.UUID) (*authtypes.AuthDomain, error) {
 	return module.store.Get(ctx, id)
+}
+
+func (module *module) GetAuthNProviderInfo(ctx context.Context, domain *authtypes.AuthDomain) *authtypes.AuthNProviderInfo {
+	if callbackAuthN, ok := module.authNs[domain.AuthDomainConfig().AuthNProvider].(authn.CallbackAuthN); ok {
+		return callbackAuthN.ProviderInfo(ctx, domain)
+	}
+	return &authtypes.AuthNProviderInfo{}
 }
 
 func (module *module) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.AuthDomain, error) {

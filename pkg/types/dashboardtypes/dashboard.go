@@ -334,6 +334,7 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime uint64, widgetInde
 				PromQL        []map[string]any `json:"promql"`
 				QueryType     string           `json:"queryType"`
 			} `json:"query"`
+			FillGaps bool `json:"fillSpans"`
 		} `json:"widgets"`
 	}
 
@@ -413,6 +414,10 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime uint64, widgetInde
 		"requestType":   dashboard.getQueryRequestTypeFromPanelType(widgetData.PanelTypes),
 		"compositeQuery": map[string]any{
 			"queries": compositeQueries,
+		},
+		"formatOptions": map[string]any{
+			"fillGaps":               widgetData.FillGaps,
+			"formatTableResultForUI": widgetData.PanelTypes == "table",
 		},
 	}
 
