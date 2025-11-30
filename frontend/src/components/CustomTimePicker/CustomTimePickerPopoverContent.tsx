@@ -47,6 +47,7 @@ interface CustomTimePickerPopoverContentProps {
 	isOpenedFromFooter: boolean;
 	setIsOpenedFromFooter: Dispatch<SetStateAction<boolean>>;
 	onExitLiveLogs: () => void;
+	showRecentlyUsed: boolean;
 }
 
 interface RecentlyUsedDateTimeRange {
@@ -72,6 +73,7 @@ function CustomTimePickerPopoverContent({
 	isOpenedFromFooter,
 	setIsOpenedFromFooter,
 	onExitLiveLogs,
+	showRecentlyUsed = true,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { pathname } = useLocation();
 
@@ -224,33 +226,35 @@ function CustomTimePickerPopoverContent({
 								<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
 							</div>
 
-							<div className="recently-used-container">
-								<div className="time-heading">RECENTLY USED</div>
-								<div className="recently-used-range">
-									{recentlyUsedTimeRanges.map((range: RecentlyUsedDateTimeRange) => (
-										<div
-											className="recently-used-range-item"
-											role="button"
-											tabIndex={0}
-											onKeyDown={(e): void => {
-												if (e.key === 'Enter' || e.key === ' ') {
+							{showRecentlyUsed && (
+								<div className="recently-used-container">
+									<div className="time-heading">RECENTLY USED</div>
+									<div className="recently-used-range">
+										{recentlyUsedTimeRanges.map((range: RecentlyUsedDateTimeRange) => (
+											<div
+												className="recently-used-range-item"
+												role="button"
+												tabIndex={0}
+												onKeyDown={(e): void => {
+													if (e.key === 'Enter' || e.key === ' ') {
+														handleExitLiveLogs();
+														onCustomDateHandler([dayjs(range.from), dayjs(range.to)]);
+														setIsOpen(false);
+													}
+												}}
+												key={range.value}
+												onClick={(): void => {
 													handleExitLiveLogs();
 													onCustomDateHandler([dayjs(range.from), dayjs(range.to)]);
 													setIsOpen(false);
-												}
-											}}
-											key={range.value}
-											onClick={(): void => {
-												handleExitLiveLogs();
-												onCustomDateHandler([dayjs(range.from), dayjs(range.to)]);
-												setIsOpen(false);
-											}}
-										>
-											{range.label}
-										</div>
-									))}
+												}}
+											>
+												{range.label}
+											</div>
+										))}
+									</div>
 								</div>
-							</div>
+							)}
 						</div>
 					)}
 				</div>

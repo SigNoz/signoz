@@ -34,6 +34,7 @@ import {
 	OrgOnboarding,
 	PasswordReset,
 	PipelinePage,
+	PublicDashboardPage,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -168,6 +169,13 @@ const routes: AppRoutes[] = [
 		component: NewDashboardPage,
 		isPrivate: true,
 		key: 'DASHBOARD',
+	},
+	{
+		path: ROUTES.PUBLIC_DASHBOARD,
+		exact: false,
+		component: PublicDashboardPage,
+		isPrivate: false,
+		key: 'PUBLIC_DASHBOARD',
 	},
 	{
 		path: ROUTES.DASHBOARD_WIDGET,

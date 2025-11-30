@@ -81,6 +81,7 @@ const ROUTES = {
 	METER_EXPLORER: '/meter/explorer',
 	METER_EXPLORER_VIEWS: '/meter/explorer/views',
 	HOME_PAGE: '/',
+	PUBLIC_DASHBOARD: '/public/dashboard/:dashboardId',
 } as const;
 
 export default ROUTES;

@@ -1,0 +1,132 @@
+.public-dashboard-setting-container {
+	border-radius: 3px;
+	border: 1px solid var(--bg-slate-500);
+	padding: 16px !important;
+
+	.public-dashboard-setting-content {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+
+		.public-dashboard-setting-content-title {
+			margin-bottom: 16px;
+		}
+
+		.timerange-enabled-checkbox {
+			margin-bottom: 8px;
+		}
+
+		.default-time-range-select {
+			margin-bottom: 8px;
+
+			.default-time-range-select-label {
+				margin-bottom: 4px;
+
+				.default-time-range-select-label-text {
+					font-size: 12px;
+					font-weight: 500;
+				}
+			}
+
+			.ant-select-selector {
+				display: flex;
+				height: 32px;
+				padding: 6px;
+				justify-content: center;
+				align-items: center;
+				border-radius: 2px 0px 0px 2px;
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-300);
+
+				.ant-select-selection-item {
+					display: flex;
+					align-items: center;
+
+					.list-item-image {
+						height: 16px;
+						width: 16px;
+					}
+				}
+			}
+		}
+
+		.public-dashboard-url {
+			.url-label-container {
+				margin-bottom: 4px;
+
+				.url-label {
+					font-size: 12px;
+					font-weight: 500;
+				}
+			}
+
+			.url-container {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-300);
+				border-radius: 4px;
+				padding: 0px 4px;
+
+				.url-text {
+					flex: 1;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+				}
+			}
+		}
+
+		.default-time-range-select-dropdown {
+			width: 200px;
+		}
+
+		.public-dashboard-setting-callout {
+			margin-top: 12px;
+			background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
+			padding: 12px 8px;
+			border-radius: 3px;
+
+			.public-dashboard-setting-callout-text {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+
+				font-size: 11px;
+				font-weight: 400;
+				color: var(--text-robin-300);
+			}
+		}
+	}
+
+	.public-dashboard-setting-actions {
+		margin-top: 32px;
+		display: flex;
+		gap: 8px;
+		justify-content: flex-end;
+	}
+}
+
+.lightMode {
+	.public-dashboard-setting-container {
+		border: 1px solid var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
+
+		.public-dashboard-setting-content {
+			.default-time-range-select {
+				.ant-select-selector {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-100);
+				}
+			}
+
+			.public-dashboard-url {
+				.url-container {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-100);
+				}
+			}
+		}
+	}
+}

@@ -304,14 +304,19 @@ function WidgetHeader({
 								data-testid="widget-header-search"
 							/>
 						)}
-						<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
-							<MoreOutlined
-								data-testid="widget-header-options"
-								className={`widget-header-more-options ${
-									parentHover ? 'widget-header-hover' : ''
-								} ${globalSearchAvailable ? 'widget-header-more-options-visible' : ''}`}
-							/>
-						</Dropdown>
+
+						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
+							<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
+								<MoreOutlined
+									data-testid="widget-header-options"
+									className={`widget-header-more-options ${
+										parentHover ? 'widget-header-hover' : ''
+									} ${
+										globalSearchAvailable ? 'widget-header-more-options-visible' : ''
+									}`}
+								/>
+							</Dropdown>
+						)}
 					</div>
 				</>
 			)}

@@ -3,12 +3,19 @@ import './Description.styles.scss';
 import { Button } from 'antd';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { isFunction } from 'lodash-es';
 import { useRef, useState } from 'react';
 
 import DashboardSettingsContent from '../DashboardSettings';
 import { DrawerContainer } from './styles';
 
-function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
+function SettingsDrawer({
+	drawerTitle,
+	onClose,
+}: {
+	drawerTitle: string;
+	onClose?: (() => void) | undefined;
+}): JSX.Element {
 	const [visible, setVisible] = useState<boolean>(false);
 
 	const variableViewModeRef = useRef<() => void>();
@@ -17,9 +24,13 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 		setVisible(true);
 	};
 
-	const onClose = (): void => {
+	const handleClose = (): void => {
 		setVisible(false);
 		variableViewModeRef?.current?.();
+
+		if (isFunction(onClose)) {
+			onClose();
+		}
 	};
 
 	return (
@@ -38,7 +49,7 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 				title={drawerTitle}
 				placement="right"
 				width="50%"
-				onClose={onClose}
+				onClose={handleClose}
 				open={visible}
 				rootClassName="settings-container-root"
 			>
@@ -49,5 +60,9 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 		</>
 	);
 }
+
+SettingsDrawer.defaultProps = {
+	onClose: undefined,
+};
 
 export default SettingsDrawer;

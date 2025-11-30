@@ -1,6 +1,5 @@
 .settings-tabs {
 	.ant-tabs-nav-list {
-		width: 228px;
 		height: 32px;
 		flex-shrink: 0;
 		border-radius: 2px;
@@ -11,6 +10,10 @@
 
 		.ant-tabs-tab + .ant-tabs-tab {
 			margin: 0px;
+		}
+
+		.ant-tabs-tab:not(:last-child) {
+			border-right: 1px solid var(--bg-slate-400) !important;
 		}
 
 		.overview-btn {
@@ -27,6 +30,13 @@
 			justify-content: center;
 		}
 
+		.public-dashboard-btn {
+			width: 150px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
 		.ant-tabs-ink-bar {
 			display: none;
 		}
@@ -38,6 +48,11 @@
 			}
 
 			.variables-btn {
+				border-radius: 2px 0px 0px 2px;
+				background: var(--bg-slate-400);
+			}
+
+			.public-dashboard-btn {
 				border-radius: 2px 0px 0px 2px;
 				background: var(--bg-slate-400);
 			}
@@ -61,6 +76,10 @@
 				}
 
 				.variables-btn {
+					background: var(--bg-vanilla-300);
+				}
+
+				.public-dashboard-btn {
 					background: var(--bg-vanilla-300);
 				}
 			}
