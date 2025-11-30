@@ -220,3 +220,23 @@ type TreemapResponse struct {
 	TimeSeries []TreemapEntry `json:"timeseries"`
 	Samples    []TreemapEntry `json:"samples"`
 }
+
+// MetricAttribute represents a single attribute with its values and count.
+type MetricAttribute struct {
+	Key        string   `json:"key"`
+	Value      []string `json:"value"`
+	ValueCount uint64   `json:"valueCount"`
+}
+
+// MetricAttributesRequest represents the payload for the metric attributes endpoint.
+type MetricAttributesRequest struct {
+	MetricName string `json:"metricName"`
+	Start      *int64 `json:"start,omitempty"`
+	End        *int64 `json:"end,omitempty"`
+}
+
+// MetricAttributesResponse is the output structure for the metric attributes endpoint.
+type MetricAttributesResponse struct {
+	Attributes []MetricAttribute `json:"attributes"`
+	TotalKeys  int64             `json:"totalKeys"`
+}
