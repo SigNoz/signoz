@@ -12,7 +12,7 @@ function ExapandableRow({ allAlerts }: ExapandableRowProps): JSX.Element {
 		<>
 			{allAlerts.map((alert) => {
 				const { labels } = alert;
-				const labelsObject = Object.keys(labels);
+				const labelsObject = Object.keys(labels || {});
 
 				const tags = labelsObject.filter((e) => e !== 'severity');
 
@@ -33,11 +33,11 @@ function ExapandableRow({ allAlerts }: ExapandableRowProps): JSX.Element {
 						</TableCell>
 
 						<TableCell minWidth="90px" overflowX="scroll">
-							<Typography>{labels.alertname}</Typography>
+							<Typography>{labels?.alertname}</Typography>
 						</TableCell>
 
 						<TableCell minWidth="90px">
-							<Typography>{labels.severity}</Typography>
+							<Typography>{labels?.severity}</Typography>
 						</TableCell>
 
 						<TableCell minWidth="90px">
@@ -50,7 +50,7 @@ function ExapandableRow({ allAlerts }: ExapandableRowProps): JSX.Element {
 						<TableCell minWidth="90px" overflowX="scroll">
 							<div>
 								{tags.map((e) => (
-									<Tag key={e}>{`${e}:${labels[e]}`}</Tag>
+									<Tag key={e}>{`${e}:${labels?.[e]}`}</Tag>
 								))}
 							</div>
 						</TableCell>
