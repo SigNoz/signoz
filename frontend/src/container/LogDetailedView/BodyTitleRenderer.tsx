@@ -7,6 +7,9 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useNotifications } from 'hooks/useNotifications';
+import { useCallback } from 'react';
+import { useCopyToClipboard } from 'react-use';
 
 import { TitleWrapper } from './BodyTitleRenderer.styles';
 import { DROPDOWN_KEY } from './constant';
@@ -24,6 +27,8 @@ function BodyTitleRenderer({
 	value,
 }: BodyTitleRendererProps): JSX.Element {
 	const { onAddToQuery } = useActiveLog();
+	const [, setCopy] = useCopyToClipboard();
+	const { notifications } = useNotifications();
 
 	const filterHandler = (isFilterIn: boolean) => (): void => {
 		if (parentIsArray) {
@@ -75,18 +80,53 @@ function BodyTitleRenderer({
 		onClick: onClickHandler,
 	};
 
-	const handleTextSelection = (e: React.MouseEvent): void => {
-		// Prevent tree node click when user is trying to select text
-		e.stopPropagation();
-	};
+	const handleNodeClick = useCallback(
+		(e: React.MouseEvent): void => {
+			// Prevent tree node expansion/collapse
+			e.stopPropagation();
+			const cleanedKey = removeObjectFromString(nodeKey);
+			let copyText: string;
+
+			// Check if value is an object or array
+			const isObject = typeof value === 'object' && value !== null;
+
+			if (isObject) {
+				// For objects/arrays, stringify the entire structure
+				copyText = `"${cleanedKey}": ${JSON.stringify(value, null, 2)}`;
+			} else if (parentIsArray) {
+				// For array elements, copy just the value
+				copyText = `"${cleanedKey}": ${value}`;
+			} else {
+				// For primitive values, format as JSON key-value pair
+				const valueStr = typeof value === 'string' ? `"${value}"` : String(value);
+				copyText = `"${cleanedKey}": ${valueStr}`;
+			}
+
+			setCopy(copyText);
+
+			if (copyText) {
+				const notificationMessage = isObject
+					? `${cleanedKey} object copied to clipboard`
+					: `${cleanedKey} copied to clipboard`;
+
+				notifications.success({
+					message: notificationMessage,
+					key: notificationMessage,
+				});
+			}
+		},
+		[nodeKey, parentIsArray, setCopy, value, notifications],
+	);
 
 	return (
-		<TitleWrapper onMouseDown={handleTextSelection}>
-			<Dropdown menu={menu} trigger={['click']}>
-				<SettingOutlined style={{ marginRight: 8 }} className="hover-reveal" />
-			</Dropdown>
+		<TitleWrapper onClick={handleNodeClick}>
+			{typeof value !== 'object' && (
+				<Dropdown menu={menu} trigger={['click']}>
+					<SettingOutlined style={{ marginRight: 8 }} className="hover-reveal" />
+				</Dropdown>
+			)}
 			{title.toString()}{' '}
-			{!parentIsArray && (
+			{!parentIsArray && typeof value !== 'object' && (
 				<span>
 					: <span style={{ color: orange[6] }}>{`${value}`}</span>
 				</span>

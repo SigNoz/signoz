@@ -202,9 +202,7 @@ export default function TableViewActions(
 	if (record.field === 'body') {
 		return (
 			<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
-				<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
-					<BodyContent fieldData={fieldData} record={record} bodyHtml={bodyHtml} />
-				</CopyClipboardHOC>
+				<BodyContent fieldData={fieldData} record={record} bodyHtml={bodyHtml} />
 				{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
 					<span className="action-btn">
 						<Tooltip title="Filter for value">
