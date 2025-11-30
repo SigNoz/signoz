@@ -550,11 +550,15 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(event: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
 													});
-													history.push(ROUTES.LOGS_EXPLORER);
+													if (event && (event.ctrlKey || event.metaKey)) {
+														window.open(ROUTES.LOGS_EXPLORER, '_blank');
+													} else {
+														history.push(ROUTES.LOGS_EXPLORER);
+													}
 												}}
 											>
 												Open Logs Explorer
@@ -564,11 +568,15 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(event: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
 													});
-													history.push(ROUTES.TRACES_EXPLORER);
+													if (event && (event.ctrlKey || event.metaKey)) {
+														window.open(ROUTES.TRACES_EXPLORER, '_blank');
+													} else {
+														history.push(ROUTES.TRACES_EXPLORER);
+													}
 												}}
 											>
 												Open Traces Explorer
@@ -578,11 +586,15 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(event: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
 													});
-													history.push(ROUTES.METRICS_EXPLORER_EXPLORER);
+													if (event && (event.ctrlKey || event.metaKey)) {
+														window.open(ROUTES.METRICS_EXPLORER_EXPLORER, '_blank');
+													} else {
+														history.push(ROUTES.METRICS_EXPLORER_EXPLORER);
+													}
 												}}
 											>
 												Open Metrics Explorer
@@ -619,11 +631,15 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Plus size={14} />}
-												onClick={(): void => {
+												onClick={(event: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
 													});
-													history.push(ROUTES.ALL_DASHBOARD);
+													if (event && (event.ctrlKey || event.metaKey)) {
+														window.open(ROUTES.ALL_DASHBOARD, '_blank');
+													} else {
+														history.push(ROUTES.ALL_DASHBOARD);
+													}
 												}}
 											>
 												Create dashboard
@@ -661,11 +677,15 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Plus size={14} />}
-												onClick={(): void => {
+												onClick={(event: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
 													});
-													history.push(ROUTES.ALERTS_NEW);
+													if (event && (event.ctrlKey || event.metaKey)) {
+														window.open(ROUTES.ALERTS_NEW, '_blank');
+													} else {
+														history.push(ROUTES.ALERTS_NEW);
+													}
 												}}
 											>
 												Create an alert

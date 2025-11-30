@@ -118,7 +118,7 @@ export default function ServiceTraces({
 							<Button
 								type="default"
 								className="periscope-btn secondary"
-								onClick={(): void => {
+								onClick={(event: React.MouseEvent): void => {
 									logEvent('Homepage: Get Started clicked', {
 										source: 'Service Traces',
 									});
@@ -127,7 +127,11 @@ export default function ServiceTraces({
 										activeLicense &&
 										activeLicense.platform === LicensePlatform.CLOUD
 									) {
-										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+										if (event && (event.ctrlKey || event.metaKey)) {
+											window.open(ROUTES.GET_STARTED_WITH_CLOUD, '_blank');
+										} else {
+											history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+										}
 									} else {
 										window?.open(
 											DOCS_LINKS.ADD_DATA_SOURCE,
@@ -172,13 +176,17 @@ export default function ServiceTraces({
 						dataSource={top5Services}
 						pagination={false}
 						className="services-table"
-						onRow={(record): { onClick: () => void } => ({
-							onClick: (): void => {
+						onRow={(record): { onClick: (event: React.MouseEvent) => void } => ({
+							onClick: (event: React.MouseEvent): void => {
 								logEvent('Homepage: Service clicked', {
 									serviceName: record.serviceName,
 								});
 
-								safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+								if (event && (event.ctrlKey || event.metaKey)) {
+									window.open(`${ROUTES.APPLICATION}/${record.serviceName}`, '_blank');
+								} else {
+									safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+								}
 							},
 						})}
 					/>
