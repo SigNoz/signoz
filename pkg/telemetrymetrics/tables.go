@@ -107,6 +107,21 @@ func WhichTSTableToUse(
 	return start, end, distributedTableName, localTableName
 }
 
+// CountExpressionForSamplesTable returns the count expression for a given samples table name.
+// For non-aggregated tables (distributed_samples_v4, exp_hist), it returns "count(*)".
+// For aggregated tables (distributed_samples_v4_agg_5m, distributed_samples_v4_agg_30m), it returns "sum(count)".
+func CountExpressionForSamplesTable(tableName string) string {
+	// Non-aggregated tables use count(*)
+	if tableName == SamplesV4TableName ||
+		tableName == SamplesV4LocalTableName ||
+		tableName == ExpHistogramTableName ||
+		tableName == ExpHistogramLocalTableName {
+		return "count(*)"
+	}
+	// Aggregated tables use sum(count)
+	return "sum(count)"
+}
+
 // start and end are in milliseconds
 // we have three tables for samples
 // 1. distributed_samples_v4
@@ -118,40 +133,32 @@ func WhichSamplesTableToUse(
 	metricType metrictypes.Type,
 	timeAggregation metrictypes.TimeAggregation,
 	tableHints *metrictypes.MetricTableHints,
-) (string, string) {
-
+) string {
 	// if we have a hint for the table, we need to use it
 	// the hint will be used to override the default table selection logic
 	if tableHints != nil {
 		if tableHints.SamplesTableName != "" {
-			// Determine count expression based on table name
-			var countExp string
-			if tableHints.SamplesTableName == SamplesV4TableName {
-				countExp = "count(*)"
-			} else {
-				countExp = "sum(count)"
-			}
-			return tableHints.SamplesTableName, countExp
+			return tableHints.SamplesTableName
 		}
 	}
 
 	// we don't have any aggregated table for sketches (yet)
 	if metricType == metrictypes.ExpHistogramType {
-		return ExpHistogramLocalTableName, "count(*)"
+		return ExpHistogramLocalTableName
 	}
 
 	// if the time aggregation is count_distinct, we need to use the distributed_samples_v4 table
 	// because the aggregated tables don't support count_distinct
 	if timeAggregation == metrictypes.TimeAggregationCountDistinct {
-		return SamplesV4TableName, "count(*)"
+		return SamplesV4TableName
 	}
 
 	if end-start < oneDayInMilliseconds+offsetBucket {
-		return SamplesV4TableName, "count(*)"
+		return SamplesV4TableName
 	} else if end-start < oneWeekInMilliseconds+offsetBucket {
-		return SamplesV4Agg5mTableName, "sum(count)"
+		return SamplesV4Agg5mTableName
 	} else {
-		return SamplesV4Agg30mTableName, "sum(count)"
+		return SamplesV4Agg30mTableName
 	}
 }
 
@@ -162,7 +169,7 @@ func AggregationColumnForSamplesTable(
 	timeAggregation metrictypes.TimeAggregation,
 	tableHints *metrictypes.MetricTableHints,
 ) string {
-	tableName, _ := WhichSamplesTableToUse(start, end, metricType, timeAggregation, tableHints)
+	tableName := WhichSamplesTableToUse(start, end, metricType, timeAggregation, tableHints)
 	var aggregationColumn string
 	switch temporality {
 	case metrictypes.Delta:

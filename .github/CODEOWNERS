@@ -6,6 +6,10 @@
 /frontend/src/container/MetricsApplication @srikanthccv
 /frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
 
+# Onboarding
+/frontend/src/container/OnboardingV2Container/onboarding-configs/onboarding-config-with-links.json @makeavish
+/frontend/src/container/OnboardingV2Container/AddDataSource/AddDataSource.tsx @makeavish
+
 # Dashboard, Alert, Metrics, Service Map, Services
 /frontend/src/container/ListOfDashboard/ @srikanthccv
 /frontend/src/container/NewDashboard/ @srikanthccv
