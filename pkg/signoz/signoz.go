@@ -2,7 +2,6 @@ package signoz
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
@@ -370,7 +369,7 @@ func New(
 
 	rulesManager, err := rules.NewManager(managerOpts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create rules manager: %w", err)
+		return nil, err
 	}
 
 	// Initialize telemetry metadata store
