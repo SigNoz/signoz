@@ -105,16 +105,7 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 		comment.Set("user_id", claims.UserID)
 		comment.Set("org_id", claims.OrgID)
 
-		r = r.WithContext(ctxtypes.NewContextWithComment(ctx, comment))
-
-		next.ServeHTTP(w, r)
-
-		apiKey.LastUsed = time.Now()
-		_, err = a.store.BunDB().NewUpdate().Model(&apiKey).Column("last_used").Where("token = ?", apiKeyToken).Where("revoked = false").Exec(r.Context())
-		if err != nil {
-			a.logger.ErrorContext(r.Context(), "failed to update last used of api key", "error", err)
-		}
-
+		next.ServeHTTP(w, r.WithContext(ctxtypes.NewContextWithComment(ctx, comment)))
 	})
 
 }
