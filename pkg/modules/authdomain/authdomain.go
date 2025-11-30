@@ -29,6 +29,9 @@ type Module interface {
 
 	// Delete an existing auth domain by id.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
+
+	// Get the IDP info of the domain provided.
+	GetAuthNProviderInfo(context.Context, *authtypes.AuthDomain) (*authtypes.AuthNProviderInfo)
 }
 
 type Handler interface {
