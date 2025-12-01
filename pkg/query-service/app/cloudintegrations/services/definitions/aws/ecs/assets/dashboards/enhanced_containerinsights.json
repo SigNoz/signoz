@@ -1145,7 +1145,7 @@
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Netword IO (Receive)",
+      "title": "Network IO (Receive)",
       "yAxisUnit": "binBps"
     },
     {
