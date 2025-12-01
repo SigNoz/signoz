@@ -11,8 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/authn/authnstore/sqlauthnstore"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
-	cachtypes "github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
@@ -41,12 +39,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/zeus"
 
 	"github.com/SigNoz/signoz/pkg/web"
-
-	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/rules"
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
-	"go.uber.org/zap"
 )
 
 type SigNoz struct {
@@ -143,17 +135,6 @@ func New(
 		cacheProviderFactories,
 		config.Cache.Provider,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	cacheForTraceDetail, err := memorycache.New(context.TODO(), providerSettings, cachtypes.Config{
-		Provider: "memory",
-		Memory: cachtypes.Memory{
-			NumCounters: 10 * 10000,
-			MaxCost:     1 << 27, // 128 MB
-		},
-	})
 	if err != nil {
 		return nil, err
 	}
@@ -335,43 +316,6 @@ func New(
 		return nil, err
 	}
 
-	// Initialize reader for rules manager
-	reader := clickhouseReader.NewReader(
-		sqlstore,
-		telemetrystore,
-		prometheus,
-		telemetrystore.Cluster(),
-		config.Querier.FluxInterval,
-		cacheForTraceDetail,
-		cache,
-		nil,
-	)
-
-	// Initialize rules manager
-	ruleStore := sqlrulestore.NewRuleStore(sqlstore)
-	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
-	managerOpts := &rules.ManagerOptions{
-		TelemetryStore:   telemetrystore,
-		Prometheus:       prometheus,
-		Context:          ctx,
-		Logger:           zap.L(),
-		Reader:           reader,
-		Querier:          querier,
-		SLogger:          providerSettings.Logger,
-		Cache:            cache,
-		EvalDelay:        constants.GetEvalDelay(),
-		OrgGetter:        orgGetter,
-		Alertmanager:     alertmanager,
-		RuleStore:        ruleStore,
-		MaintenanceStore: maintenanceStore,
-		SqlStore:         sqlstore,
-	}
-
-	rulesManager, err := rules.NewManager(managerOpts)
-	if err != nil {
-		return nil, err
-	}
-
 	// Initialize telemetry metadata store
 	// TODO: consolidate other telemetrymetadata.NewTelemetryMetaStore initializations to reuse this instance instead.
 	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
@@ -395,7 +339,7 @@ func New(
 	)
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, rulesManager)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings, querier, licensing)
