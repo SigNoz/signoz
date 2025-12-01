@@ -235,6 +235,25 @@ type MetricAttributesRequest struct {
 	End        *int64 `json:"end,omitempty"`
 }
 
+// Validate ensures MetricAttributesRequest contains acceptable values.
+func (req *MetricAttributesRequest) Validate() error {
+	if req == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required")
+	}
+
+	if req.Start != nil && req.End != nil {
+		if *req.Start >= *req.End {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "start (%d) must be less than end (%d)", *req.Start, *req.End)
+		}
+	}
+
+	return nil
+}
+
 // MetricAttributesResponse is the output structure for the metric attributes endpoint.
 type MetricAttributesResponse struct {
 	Attributes []MetricAttribute `json:"attributes"`

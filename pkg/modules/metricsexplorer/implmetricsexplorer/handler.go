@@ -146,15 +146,8 @@ func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	// Extract metricName from query parameters
-	metricName := strings.TrimSpace(req.URL.Query().Get("metricName"))
-	if metricName == "" {
-		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName query parameter is required"))
-		return
-	}
-
 	var in metricsexplorertypes.MetricAttributesRequest
-	in.MetricName = metricName
+	in.MetricName = strings.TrimSpace(req.URL.Query().Get("metricName"))
 
 	// Parse optional start from query parameters
 	if startStr := req.URL.Query().Get("start"); startStr != "" {
@@ -176,24 +169,12 @@ func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request)
 		in.End = &endVal
 	}
 
-	// Validate that start < end if both are present
-	if in.Start != nil && in.End != nil {
-		if *in.Start >= *in.End {
-			render.Error(rw, errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"invalid time range: start (%d) must be less than end (%d)",
-				*in.Start,
-				*in.End,
-			))
-			return
-		}
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
+	if err := in.Validate(); err != nil {
 		render.Error(rw, err)
 		return
 	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	out, err := h.module.GetMetricAttributes(req.Context(), orgID, &in)
 	if err != nil {

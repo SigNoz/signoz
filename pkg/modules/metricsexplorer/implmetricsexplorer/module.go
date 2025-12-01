@@ -191,18 +191,8 @@ func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, re
 }
 
 func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.MetricAttributesRequest) (*metricsexplorertypes.MetricAttributesResponse, error) {
-	if req == nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
-	}
-
-	if req.MetricName == "" {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required")
-	}
-
-	if req.Start != nil && req.End != nil {
-		if *req.Start >= *req.End {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start (%d) must be less than end (%d)", *req.Start, *req.End)
-		}
+	if err := req.Validate(); err != nil {
+		return nil, err
 	}
 
 	attributes, err := m.fetchMetricAttributes(ctx, req.MetricName, req.Start, req.End)
