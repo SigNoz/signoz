@@ -71,11 +71,6 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 			return nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to scan body JSON key row")
 		}
 
-		indexes, err := getJSONPathIndexes(ctx, telemetryStore, path)
-		if err != nil {
-			return nil, false, err
-		}
-
 		for _, typ := range typesArray {
 			mapping, found := telemetrytypes.MappingStringToJSONDataType[typ]
 			if !found {
@@ -87,7 +82,6 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 				FieldContext:  telemetrytypes.FieldContextBody,
 				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[mapping],
 				JSONDataType:  &mapping,
-				Indexes:       indexes,
 			})
 		}
 
@@ -103,8 +97,14 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 		return nil, false, err
 	}
 
+	indexes, err := getJSONPathIndexes(ctx, telemetryStore, paths...)
+	if err != nil {
+		return nil, false, err
+	}
+
 	for _, fieldKey := range fieldKeys {
 		fieldKey.Materialized = promoted.Contains(fieldKey.Name)
+		fieldKey.Indexes = indexes[fieldKey.Name]
 	}
 
 	return fieldKeys, rowCount <= limit, nil
@@ -156,43 +156,51 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 	return query, args, limit, nil
 }
 
-func getJSONPathIndexes(ctx context.Context, telemetryStore telemetrystore.TelemetryStore, path string) ([]telemetrytypes.JSONDataTypeIndex, error) {
-	// return empty slice if path is an array
-	if strings.Contains(path, telemetrylogs.ArraySep) || strings.Contains(path, telemetrylogs.ArrayAnyIndex) {
+func getJSONPathIndexes(ctx context.Context, telemetryStore telemetrystore.TelemetryStore, paths ...string) (map[string][]telemetrytypes.JSONDataTypeIndex, error) {
+	filteredPaths := []string{}
+	for _, path := range paths {
+		if strings.Contains(path, telemetrylogs.ArraySep) || strings.Contains(path, telemetrylogs.ArrayAnyIndex) {
+			continue
+		}
+		filteredPaths = append(filteredPaths, path)
+	}
+	if len(filteredPaths) == 0 {
 		return nil, nil
 	}
 
-	// list indexes for the path
-	indexes, err := ListLogsJSONIndexes(ctx, telemetryStore, path)
+	// list indexes for the paths
+	indexesMap, err := ListLogsJSONIndexes(ctx, telemetryStore, filteredPaths...)
 	if err != nil {
-		return nil, err
+		return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to list JSON path indexes")
 	}
 
 	// build a set of indexes
-	cleanIndexes := []telemetrytypes.JSONDataTypeIndex{}
-	for _, index := range indexes {
-		columnExpr, columnType, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
-		if err != nil {
-			return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to unfold JSON sub column index expression: %s", index.Expression)
-		}
+	cleanIndexes := make(map[string][]telemetrytypes.JSONDataTypeIndex)
+	for path, indexes := range indexesMap {
+		for _, index := range indexes {
+			columnExpr, columnType, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
+			if err != nil {
+				return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to unfold JSON sub column index expression: %s", index.Expression)
+			}
 
-		jsonDataType, found := telemetrytypes.MappingStringToJSONDataType[columnType]
-		if !found {
-			return nil, errors.NewInternalf(CodeUnknownJSONDataType, "failed to map column type to JSON data type: %s", columnType)
-		}
+			jsonDataType, found := telemetrytypes.MappingStringToJSONDataType[columnType]
+			if !found {
+				return nil, errors.NewInternalf(CodeUnknownJSONDataType, "failed to map column type to JSON data type: %s", columnType)
+			}
 
-		if jsonDataType == telemetrytypes.String {
-			cleanIndexes = append(cleanIndexes, telemetrytypes.JSONDataTypeIndex{
-				Type:             telemetrytypes.String,
-				ColumnExpression: columnExpr,
-				IndexExpression:  index.Expression,
-			})
-		} else if strings.HasPrefix(index.Type, "minmax") {
-			cleanIndexes = append(cleanIndexes, telemetrytypes.JSONDataTypeIndex{
-				Type:             jsonDataType,
-				ColumnExpression: columnExpr,
-				IndexExpression:  index.Expression,
-			})
+			if jsonDataType == telemetrytypes.String {
+				cleanIndexes[path] = append(cleanIndexes[path], telemetrytypes.JSONDataTypeIndex{
+					Type:             telemetrytypes.String,
+					ColumnExpression: columnExpr,
+					IndexExpression:  index.Expression,
+				})
+			} else if strings.HasPrefix(index.Type, "minmax") {
+				cleanIndexes[path] = append(cleanIndexes[path], telemetrytypes.JSONDataTypeIndex{
+					Type:             jsonDataType,
+					ColumnExpression: columnExpr,
+					IndexExpression:  index.Expression,
+				})
+			}
 		}
 	}
 
@@ -221,7 +229,7 @@ func buildListLogsJSONIndexesQuery(cluster string, filters ...string) (string, [
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 
-func ListLogsJSONIndexes(ctx context.Context, telemetryStore telemetrystore.TelemetryStore, filters ...string) ([]schemamigrator.Index, error) {
+func ListLogsJSONIndexes(ctx context.Context, telemetryStore telemetrystore.TelemetryStore, filters ...string) (map[string][]schemamigrator.Index, error) {
 	query, args := buildListLogsJSONIndexesQuery(telemetryStore.Cluster(), filters...)
 	rows, err := telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -229,7 +237,7 @@ func ListLogsJSONIndexes(ctx context.Context, telemetryStore telemetrystore.Tele
 	}
 	defer rows.Close()
 
-	indexes := []schemamigrator.Index{}
+	indexesMap := make(map[string][]schemamigrator.Index)
 	for rows.Next() {
 		var name string
 		var typeFull string
@@ -238,7 +246,7 @@ func ListLogsJSONIndexes(ctx context.Context, telemetryStore telemetrystore.Tele
 		if err := rows.Scan(&name, &typeFull, &expr, &granularity); err != nil {
 			return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to scan string indexed column")
 		}
-		indexes = append(indexes, schemamigrator.Index{
+		indexesMap[name] = append(indexesMap[name], schemamigrator.Index{
 			Name:        name,
 			Type:        typeFull,
 			Expression:  expr,
@@ -246,7 +254,7 @@ func ListLogsJSONIndexes(ctx context.Context, telemetryStore telemetrystore.Tele
 		})
 	}
 
-	return indexes, nil
+	return indexesMap, nil
 }
 
 func ListPromotedPaths(ctx context.Context, conn clickhouse.Conn) (map[string]struct{}, error) {
