@@ -151,12 +151,7 @@ func (h *handler) GetMetricHighlights(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
+	orgID := valuer.MustNewUUID(claims.OrgID)
 	highlights, err := h.module.GetMetricHighlights(req.Context(), orgID, metricName)
 	if err != nil {
 		render.Error(rw, err)
