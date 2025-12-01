@@ -100,7 +100,7 @@ function renderTimeSeries(
 				metricNames={[]}
 				metrics={[]}
 				isMetricUnitsError={false}
-				setIsMetricDetailsOpen={mockSetIsMetricDetailsOpen}
+				handleOpenMetricDetails={mockSetIsMetricDetailsOpen}
 				yAxisUnit="count"
 				setYAxisUnit={mockSetYAxisUnit}
 				// eslint-disable-next-line react/jsx-props-no-spreading
