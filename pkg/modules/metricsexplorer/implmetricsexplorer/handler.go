@@ -151,11 +151,7 @@ func (h *handler) GetMetricAlerts(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	out, err := h.module.GetMetricAlerts(req.Context(), orgID, metricName)
 	if err != nil {
