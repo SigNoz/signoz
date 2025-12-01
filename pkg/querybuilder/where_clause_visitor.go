@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	grammar "github.com/SigNoz/signoz/pkg/parser/grammar"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
@@ -844,7 +843,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	// Note: Skip this logic if body json query is enabled so we can look up the key inside fields
 	//
 	// TODO(Piyush): After entire migration this is supposed to be removed.
-	if !constants.BodyJSONQueryEnabled && fieldKey.FieldContext == telemetrytypes.FieldContextBody {
+	if !BodyJSONQueryEnabled && fieldKey.FieldContext == telemetrytypes.FieldContextBody {
 		fieldKeysForName = append(fieldKeysForName, &fieldKey)
 	}
 

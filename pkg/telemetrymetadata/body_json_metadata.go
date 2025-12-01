@@ -132,8 +132,8 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 		} else {
 			// Pattern matching for metadata API (defaults to LIKE behavior for other operators)
 			orClauses = append(orClauses, sb.Like("path", querybuilder.FormatValueForContains(keyName)))
-			limit += fieldKeySelector.Limit
 		}
+		limit += fieldKeySelector.Limit
 	}
 	sb.Where(sb.Or(orClauses...))
 
@@ -195,7 +195,6 @@ func getJSONPathIndexes(ctx context.Context, telemetryStore telemetrystore.Telem
 }
 
 func buildListLogsJSONIndexesQuery(cluster string, filters ...string) (string, []any) {
-	// Build a better query using GROUP BY to deduplicate at database level
 	// This aggregates all types per path and gets the max last_seen, then applies LIMIT
 	sb := sqlbuilder.Select(
 		"name", "type_full", "expr", "granularity",
