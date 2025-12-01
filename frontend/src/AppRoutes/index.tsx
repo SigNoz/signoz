@@ -7,11 +7,12 @@ import AppLoading from 'components/AppLoading/AppLoading';
 import KBarCommandPalette from 'components/KBarCommandPalette/KBarCommandPalette';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
-import UserpilotRouteTracker from 'components/UserpilotRouteTracker/UserpilotRouteTracker';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
+import Hex from 'crypto-js/enc-hex';
+import HmacSHA256 from 'crypto-js/hmac-sha256';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -33,7 +34,6 @@ import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
-import { Userpilot } from 'userpilot';
 import { extractDomain } from 'utils/app';
 
 import { Home } from './pageComponents';
@@ -120,18 +120,6 @@ function App(): JSX.Element {
 						paidUser: !!trialInfo?.trialConvertedToSubscription,
 					});
 				}
-
-				Userpilot.identify(email, {
-					email,
-					name: displayName,
-					orgName,
-					tenant_id: hostNameParts[0],
-					data_region: hostNameParts[1],
-					tenant_url: hostname,
-					company_domain: domain,
-					source: 'signoz-ui',
-					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
-				});
 
 				posthog?.identify(id, {
 					email,
@@ -268,11 +256,20 @@ function App(): JSX.Element {
 				!showAddCreditCardModal &&
 				(isCloudUser || isEnterpriseSelfHostedUser)
 			) {
+				const email = user.email || '';
+				const secret = process.env.PYLON_IDENTITY_SECRET || '';
+				let emailHash = '';
+
+				if (email && secret) {
+					emailHash = HmacSHA256(email, Hex.parse(secret)).toString(Hex);
+				}
+
 				window.pylon = {
 					chat_settings: {
 						app_id: process.env.PYLON_APP_ID,
 						email: user.email,
 						name: user.displayName || user.email,
+						email_hash: emailHash,
 					},
 				};
 			}
@@ -304,10 +301,6 @@ function App(): JSX.Element {
 					api_host: 'https://us.i.posthog.com',
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 				});
-			}
-
-			if (process.env.USERPILOT_KEY) {
-				Userpilot.initialize(process.env.USERPILOT_KEY);
 			}
 
 			if (!isSentryInitialized) {
@@ -370,7 +363,6 @@ function App(): JSX.Element {
 				<Router history={history}>
 					<CompatRouter>
 						<KBarCommandPaletteProvider>
-							<UserpilotRouteTracker />
 							<KBarCommandPalette />
 							<NotificationProvider>
 								<ErrorModalProvider>
