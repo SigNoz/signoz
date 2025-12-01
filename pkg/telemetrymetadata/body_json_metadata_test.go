@@ -115,7 +115,7 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 			cluster: "test-cluster",
 			filters: nil,
 			expectedSQL: "SELECT name, type_full, expr, granularity FROM clusterAllReplicas('test-cluster', system.data_skipping_indices) " +
-				"WHERE (database = ?) AND (table = ?) AND (expr ILIKE ? OR expr ILIKE ?)",
+				"WHERE database = ? AND table = ? AND (LOWER(expr) LIKE LOWER(?) OR LOWER(expr) LIKE LOWER(?))",
 			expectedArgs: []any{
 				telemetrylogs.DBName,
 				telemetrylogs.LogsV2LocalTableName,
@@ -128,7 +128,7 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 			cluster: "test-cluster",
 			filters: []string{"foo", "bar"},
 			expectedSQL: "SELECT name, type_full, expr, granularity FROM clusterAllReplicas('test-cluster', system.data_skipping_indices) " +
-				"WHERE (database = ?) AND (table = ?) AND (expr ILIKE ? OR expr ILIKE ?) AND (expr ILIKE ? OR expr ILIKE ?)",
+				"WHERE database = ? AND table = ? AND (LOWER(expr) LIKE LOWER(?) OR LOWER(expr) LIKE LOWER(?)) AND (LOWER(expr) LIKE LOWER(?) OR LOWER(expr) LIKE LOWER(?))",
 			expectedArgs: []any{
 				telemetrylogs.DBName,
 				telemetrylogs.LogsV2LocalTableName,
