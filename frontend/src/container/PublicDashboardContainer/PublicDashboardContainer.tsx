@@ -13,8 +13,8 @@ import {
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import GetMinMax from 'lib/getMinMax';
-import { useEffect, useMemo, useState } from 'react';
-import RGL, { Layout, WidthProvider } from 'react-grid-layout';
+import { useMemo, useState } from 'react';
+import RGL, { WidthProvider } from 'react-grid-layout';
 import { SuccessResponseV2 } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { PublicDashboardDataProps } from 'types/api/dashboard/public/get';
@@ -99,13 +99,9 @@ function PublicDashboardContainer({
 		dashboard?.data?.layout,
 	]);
 
-	const [currentPanelMap, setCurrentPanelMap] = useState<
-		Record<string, { widgets: Layout[]; collapsed: boolean }>
-	>({});
-
-	useEffect(() => {
-		setCurrentPanelMap(dashboard?.data?.panelMap || {});
-	}, [dashboard?.data?.panelMap]);
+	const currentPanelMap = useMemo(() => dashboard?.data?.panelMap || {}, [
+		dashboard?.data?.panelMap,
+	]);
 
 	const handleTimeChange = (
 		interval: Time | CustomTimeType,
