@@ -7,11 +7,20 @@ import {
 } from '@testing-library/react';
 import { MetricDetails } from 'api/metricsExplorer/getMetricDetails';
 import { initialQueriesMap } from 'constants/queryBuilder';
+import * as useUpdateMetricMetadataHooks from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import TimeSeries from '../TimeSeries';
 import { TimeSeriesProps } from '../types';
+
+const mockUpdateMetricMetadata = jest.fn();
+jest
+	.spyOn(useUpdateMetricMetadataHooks, 'useUpdateMetricMetadata')
+	.mockReturnValue({
+		mutate: mockUpdateMetricMetadata,
+		isLoading: false,
+	} as any);
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
 	const base = initialQueriesMap.metrics;
@@ -128,6 +137,23 @@ describe('TimeSeries', () => {
 		);
 	});
 
+	it('clicking on warning icon tooltip should open metric details modal', async () => {
+		const { container } = renderTimeSeries({
+			metricUnits: ['', 'count'],
+			metricNames: ['metric1', 'metric2'],
+			metrics: [mockMetric, mockMetric],
+			yAxisUnit: 'seconds',
+		});
+
+		const alertIcon = container.querySelector('.no-unit-warning') as HTMLElement;
+		fireEvent.mouseOver(alertIcon);
+
+		const metricDetailsLink = await screen.findByText(/metric details/i);
+		fireEvent.click(metricDetailsLink);
+
+		expect(mockSetIsMetricDetailsOpen).toHaveBeenCalledWith('metric1');
+	});
+
 	it('shows Save unit button when metric had no unit but one is selected', () => {
 		const { getByText, getByRole } = renderTimeSeries({
 			metricUnits: [''],
@@ -143,5 +169,28 @@ describe('TimeSeries', () => {
 		const yesButton = getByRole('button', { name: /Yes/i });
 		expect(yesButton).toBeInTheDocument();
 		expect(yesButton).toBeEnabled();
+	});
+
+	it('clicking on save unit button shoould upated metric metadata', () => {
+		const { getByRole } = renderTimeSeries({
+			metricUnits: [''],
+			metricNames: ['metric1'],
+			metrics: [mockMetric],
+			yAxisUnit: 'seconds',
+		});
+
+		const yesButton = getByRole('button', { name: /Yes/i });
+		fireEvent.click(yesButton);
+
+		expect(mockUpdateMetricMetadata).toHaveBeenCalledWith(
+			{
+				metricName: 'metric1',
+				payload: expect.objectContaining({ unit: 'seconds' }),
+			},
+			expect.objectContaining({
+				onSuccess: expect.any(Function),
+				onError: expect.any(Function),
+			}),
+		);
 	});
 });

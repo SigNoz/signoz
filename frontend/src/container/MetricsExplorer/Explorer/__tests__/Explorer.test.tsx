@@ -291,4 +291,33 @@ describe('Explorer', () => {
 		expect(yAxisUnitSelector).toBeInTheDocument();
 		expect(yAxisUnitSelector).toHaveTextContent('Please select a unit');
 	});
+
+	it('one chart per query should be off and disabled when there is only one query', () => {
+		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
+			units: ['seconds'],
+			isLoading: false,
+			isError: false,
+			metrics: [mockMetric],
+		});
+
+		renderExplorer();
+
+		const oneChartPerQueryToggle = screen.getByRole('switch');
+		expect(oneChartPerQueryToggle).not.toBeChecked();
+		expect(oneChartPerQueryToggle).toBeDisabled();
+	});
+
+	it('one chart per query should enabled by default when there are multiple metrics with the same unit', () => {
+		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
+			units: ['seconds', 'seconds'],
+			isLoading: false,
+			isError: false,
+			metrics: [mockMetric, mockMetric],
+		});
+
+		renderExplorer();
+
+		const oneChartPerQueryToggle = screen.getByRole('switch');
+		expect(oneChartPerQueryToggle).toBeChecked();
+	});
 });
