@@ -244,7 +244,7 @@ LokiとSigNozを比較したベンチマークを公開しています。[こち
 
 ## ドキュメント
 
-ドキュメントはhttps://signoz.io/docs/でご覧いただけます。不明な点や不足している情報がある場合は、`documentation`ラベルを付けてGitHub issueを作成するか、Slackコミュニティチャンネルでお問い合わせください。
+ドキュメントは https://signoz.io/docs/ でご覧いただけます。不明な点や不足している情報がある場合は、`documentation`ラベルを付けてGitHub issueを作成するか、Slackコミュニティチャンネルでお問い合わせください。
 
 <br /><br />
 
@@ -253,7 +253,7 @@ LokiとSigNozを比較したベンチマークを公開しています。[こち
 
 分散トレーシング、オブザーバビリティ、SigNozについて詳しく知りたい方、また他のユーザーやコントリビューターとつながりたい方は、[Slackコミュニティ](https://signoz.io/slack)にご参加ください。
 
-アイデア、質問、フィードバックがある場合は、[Github Discussions](https://github.com/SigNoz/signoz/discussions)で共有してください。
+アイデア、質問、フィードバックがある場合は、[GitHub Discussions](https://github.com/SigNoz/signoz/discussions)で共有してください。
 
 いつもながら、素晴らしいコントリビューターの皆さんに感謝します！
 
