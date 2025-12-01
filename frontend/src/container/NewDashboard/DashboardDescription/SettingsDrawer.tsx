@@ -3,19 +3,12 @@ import './Description.styles.scss';
 import { Button } from 'antd';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { isFunction } from 'lodash-es';
 import { useRef, useState } from 'react';
 
 import DashboardSettingsContent from '../DashboardSettings';
 import { DrawerContainer } from './styles';
 
-function SettingsDrawer({
-	drawerTitle,
-	onClose,
-}: {
-	drawerTitle: string;
-	onClose?: (() => void) | undefined;
-}): JSX.Element {
+function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 	const [visible, setVisible] = useState<boolean>(false);
 
 	const variableViewModeRef = useRef<() => void>();
@@ -27,10 +20,6 @@ function SettingsDrawer({
 	const handleClose = (): void => {
 		setVisible(false);
 		variableViewModeRef?.current?.();
-
-		if (isFunction(onClose)) {
-			onClose();
-		}
 	};
 
 	return (
@@ -60,9 +49,5 @@ function SettingsDrawer({
 		</>
 	);
 }
-
-SettingsDrawer.defaultProps = {
-	onClose: undefined,
-};
 
 export default SettingsDrawer;

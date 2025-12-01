@@ -303,17 +303,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const {
 		data: publicDashboardResponse,
-		refetch: refetchPublicDashboardData,
+		// refetch: refetchPublicDashboardData,
 		isLoading: isLoadingPublicDashboardData,
 		isFetching: isFetchingPublicDashboardData,
 		error: errorPublicDashboardData,
 		isError: isErrorPublicDashboardData,
 	} = useGetPublicDashboardMeta(selectedDashboard?.id || '');
-
-	const handleCloseSettingsDrawer = (): void => {
-		// refresh the public dashboard data
-		refetchPublicDashboardData();
-	};
 
 	useEffect(() => {
 		if (!isLoadingPublicDashboardData && !isFetchingPublicDashboardData) {
@@ -502,10 +497,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						/>
 					</Popover>
 					{!isDashboardLocked && editDashboard && (
-						<SettingsDrawer
-							drawerTitle="Dashboard Configuration"
-							onClose={handleCloseSettingsDrawer}
-						/>
+						<SettingsDrawer drawerTitle="Dashboard Configuration" />
 					)}
 					{!isDashboardLocked && addPanelPermission && (
 						<Button
