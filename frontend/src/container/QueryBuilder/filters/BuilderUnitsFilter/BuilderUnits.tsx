@@ -45,7 +45,6 @@ function BuilderUnitsFilter({
 				optionFilterProp="label"
 				placeholder="Select unit"
 				filterOption={filterOption}
-				data-testid="builder-units-filter"
 			/>
 		</Space>
 	);

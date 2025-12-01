@@ -15,7 +15,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { AlertTriangle } from 'lucide-react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQueries, useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -199,6 +199,28 @@ function TimeSeries({
 		);
 	};
 
+	const noUnitWarning = useCallback(
+		(metricName: string): JSX.Element => (
+			<Tooltip
+				className="no-unit-warning"
+				title={
+					<Typography.Text>
+						This metric does not have a unit. Please set one for it in the{' '}
+						<Typography.Link
+							onClick={(): void => handleOpenMetricDetails(metricName)}
+						>
+							metric details
+						</Typography.Link>{' '}
+						page.
+					</Typography.Text>
+				}
+			>
+				<AlertTriangle size={16} color={Color.BG_AMBER_400} />
+			</Tooltip>
+		),
+		[handleOpenMetricDetails],
+	);
+
 	return (
 		<>
 			<div className="y-axis-unit-selector-container">
@@ -251,24 +273,7 @@ function TimeSeries({
 							// eslint-disable-next-line react/no-array-index-key
 							key={index}
 						>
-							{isMetricUnitEmpty && (
-								<Tooltip
-									className="no-unit-warning"
-									title={
-										<Typography.Text>
-											This metric does not have a unit. Please set one for it in the{' '}
-											<Typography.Link
-												onClick={(): void => handleOpenMetricDetails(metricNames[index])}
-											>
-												metric details
-											</Typography.Link>{' '}
-											page.
-										</Typography.Text>
-									}
-								>
-									<AlertTriangle size={16} color={Color.BG_AMBER_400} />
-								</Tooltip>
-							)}
+							{isMetricUnitEmpty && noUnitWarning(metricNames[index])}
 							<TimeSeriesView
 								isFilterApplied={false}
 								isError={queries[index].isError}
