@@ -19,6 +19,17 @@ import { useThemeMode } from 'hooks/useDarkMode';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import {
+	BellDot,
+	BugIcon,
+	DraftingCompass,
+	HardDrive,
+	Home,
+	LayoutGrid,
+	ListMinus,
+	ScrollText,
+	Settings,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useMutation } from 'react-query';
 import { UserPreference } from 'types/api/preferences/preference';
@@ -33,12 +44,19 @@ type CmdAction = {
 	shortcut?: string[];
 	keywords?: string;
 	section?: string;
+	icon?: React.ReactNode;
 	roles?: UserRole[];
 	perform: () => void;
 };
 
 type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
-export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
+export function CmdKPalette({
+	role,
+	isLoggedInState,
+}: {
+	role: UserRole;
+	isLoggedInState: boolean;
+}): JSX.Element | null {
 	const { open, setOpen } = useCmdK();
 
 	const { updateUserPreferenceInContext } = useAppContext();
@@ -115,6 +133,7 @@ export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
 				shortcut: ['shift + h'],
 				keywords: 'home',
 				section: 'Navigation',
+				icon: <Home size={12} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.HOME),
 			},
@@ -124,6 +143,7 @@ export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
 				shortcut: ['shift + d'],
 				keywords: 'dashboards',
 				section: 'Navigation',
+				icon: <LayoutGrid size={12} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.ALL_DASHBOARD),
 			},
@@ -133,6 +153,7 @@ export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
 				shortcut: ['shift + s'],
 				keywords: 'services monitoring',
 				section: 'Navigation',
+				icon: <HardDrive size={12} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.APPLICATION),
 			},
@@ -142,6 +163,7 @@ export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
 				shortcut: ['shift + t'],
 				keywords: 'traces',
 				section: 'Navigation',
+				icon: <DraftingCompass size={12} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.TRACES_EXPLORER),
 			},
@@ -151,6 +173,7 @@ export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
 				shortcut: ['shift + l'],
 				keywords: 'logs',
 				section: 'Navigation',
+				icon: <ScrollText size={12} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.LOGS),
 			},
@@ -160,6 +183,7 @@ export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
 				shortcut: ['shift + a'],
 				keywords: 'alerts',
 				section: 'Navigation',
+				icon: <BellDot size={12} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.LIST_ALL_ALERT),
 			},
@@ -169,6 +193,7 @@ export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
 				shortcut: ['shift + e'],
 				keywords: 'exceptions errors',
 				section: 'Navigation',
+				icon: <BugIcon size={12} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.ALL_ERROR),
 			},
@@ -178,6 +203,7 @@ export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
 				shortcut: ['shift + m'],
 				keywords: 'messaging queues mq',
 				section: 'Navigation',
+				icon: <ListMinus size={12} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.MESSAGING_QUEUES_OVERVIEW),
 			},
@@ -186,6 +212,7 @@ export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
 				name: 'Go to Account Settings',
 				keywords: 'account settings',
 				section: 'Navigation',
+				icon: <Settings size={12} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.MY_SETTINGS),
 			},
@@ -232,7 +259,6 @@ export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
 				perform: (): void => handleThemeChange(THEME_MODE.SYSTEM),
 			},
 		],
-		// include stable callbacks that actions reference
 		[onClickHandler, handleOpenSidebar, handleCloseSidebar, handleThemeChange],
 	);
 
@@ -270,6 +296,9 @@ export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
 	const handleSelect = (action: CmdAction): (() => void) => (): void =>
 		handleInvoke(action);
 
+	if (!isLoggedInState) {
+		return null;
+	}
 	return (
 		<CommandDialog open={open} onOpenChange={setOpen}>
 			<CommandInput placeholder="Search…" className="cmdk-input-wrapper" />
@@ -285,11 +314,15 @@ export function CmdKPalette({ role }: { role: UserRole }): JSX.Element {
 									value={it.name}
 									className={theme === 'light' ? 'cmdk-item-light' : 'cmdk-item'}
 								>
-									<img
-										src="/Icons/expand.svg"
-										alt="expand-icon"
-										className="cmd-expand-icon"
-									/>
+									{it.icon ? (
+										<span className="cmd-item-icon">{it.icon}</span>
+									) : (
+										<img
+											src="/Icons/expand.svg"
+											alt="expand-icon"
+											className="cmd-expand-icon"
+										/>
+									)}
 									{it.name}
 									{it.shortcut && it.shortcut.length > 0 && (
 										<CommandShortcut>{it.shortcut.join(' • ')}</CommandShortcut>
