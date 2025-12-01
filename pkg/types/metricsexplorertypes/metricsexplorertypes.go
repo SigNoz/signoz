@@ -223,10 +223,10 @@ type TreemapResponse struct {
 
 // MetricDashboard represents a dashboard/widget referencing a metric.
 type MetricDashboard struct {
-	DashboardName string `json:"dashboard_name"`
-	DashboardID   string `json:"dashboard_id"`
-	WidgetID      string `json:"widget_id"`
-	WidgetName    string `json:"widget_name"`
+	DashboardName string `json:"dashboardName"`
+	DashboardID   string `json:"dashboardID"`
+	WidgetID      string `json:"widgetID"`
+	WidgetName    string `json:"widgetName"`
 }
 
 // MetricDashboardsResponse represents the response for metric dashboards endpoint.
