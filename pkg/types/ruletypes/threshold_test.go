@@ -1,6 +1,7 @@
 package ruletypes
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,7 +9,7 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
-func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
+func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 	target := 100.0
 
 	tests := []struct {
@@ -21,7 +22,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "milliseconds to seconds conversion - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        CriticalThresholdName,
 				TargetValue: &target, // 100ms
 				TargetUnit:  "ms",
 				MatchType:   AtleastOnce,
@@ -39,7 +40,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "milliseconds to seconds conversion - should not alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        WarningThresholdName,
 				TargetValue: &target, // 100ms
 				TargetUnit:  "ms",
 				MatchType:   AtleastOnce,
@@ -57,7 +58,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "seconds to milliseconds conversion - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        CriticalThresholdName,
 				TargetValue: &target, // 100s
 				TargetUnit:  "s",
 				MatchType:   AtleastOnce,
@@ -76,7 +77,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "bytes to kibibytes conversion - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        InfoThresholdName,
 				TargetValue: &target, // 100 bytes
 				TargetUnit:  "bytes",
 				MatchType:   AtleastOnce,
@@ -94,7 +95,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "kibibytes to mebibytes conversion - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        ErrorThresholdName,
 				TargetValue: &target, // 100KiB
 				TargetUnit:  "kbytes",
 				MatchType:   AtleastOnce,
@@ -113,7 +114,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "milliseconds to seconds with ValueIsBelow - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        WarningThresholdName,
 				TargetValue: &target, // 100ms
 				TargetUnit:  "ms",
 				MatchType:   AtleastOnce,
@@ -131,7 +132,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "milliseconds to seconds with OnAverage - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        CriticalThresholdName,
 				TargetValue: &target, // 100ms
 				TargetUnit:  "ms",
 				MatchType:   OnAverage,
@@ -151,7 +152,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "decimal megabytes to gigabytes with InTotal - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        WarningThresholdName,
 				TargetValue: &target, // 100MB
 				TargetUnit:  "decmbytes",
 				MatchType:   InTotal,
@@ -171,7 +172,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "milliseconds to seconds with AllTheTimes - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        InfoThresholdName,
 				TargetValue: &target, // 100ms
 				TargetUnit:  "ms",
 				MatchType:   AllTheTimes,
@@ -191,7 +192,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "kilobytes to megabytes with Last - should not alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        ErrorThresholdName,
 				TargetValue: &target, // 100kB
 				TargetUnit:  "deckbytes",
 				MatchType:   Last,
@@ -211,7 +212,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "bytes per second to kilobytes per second - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        CriticalThresholdName,
 				TargetValue: &target, // 100 bytes/s
 				TargetUnit:  "Bps",
 				MatchType:   AtleastOnce,
@@ -230,7 +231,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "same unit - no conversion needed - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        InfoThresholdName,
 				TargetValue: &target, // 100ms
 				TargetUnit:  "ms",
 				MatchType:   AtleastOnce,
@@ -249,7 +250,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 		{
 			name: "empty unit - no conversion - should alert",
 			threshold: BasicRuleThreshold{
-				Name:        "test",
+				Name:        ErrorThresholdName,
 				TargetValue: &target, // 100 (unitless)
 				TargetUnit:  "",
 				MatchType:   AtleastOnce,
@@ -269,7 +270,7 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			thresholds := BasicRuleThresholds{tt.threshold}
-			vector, err := thresholds.ShouldAlert(tt.series, tt.ruleUnit)
+			vector, err := thresholds.Eval(tt.series, tt.ruleUnit, EvalData{})
 			assert.NoError(t, err)
 
 			alert := len(vector) > 0
@@ -280,15 +281,51 @@ func TestBasicRuleThresholdShouldAlert_UnitConversion(t *testing.T) {
 
 				hasThresholdLabel := false
 				for _, label := range sample.Metric {
-					if label.Name == LabelThresholdName && label.Value == "test" {
+					if label.Name == LabelThresholdName && label.Value == tt.threshold.Name {
 						hasThresholdLabel = true
 						break
 					}
 				}
 				assert.True(t, hasThresholdLabel)
+				hasSeverityLabel := false
+				for _, label := range sample.Metric {
+					if label.Name == LabelSeverityName && label.Value == strings.ToLower(tt.threshold.Name) {
+						hasSeverityLabel = true
+						break
+					}
+				}
+				assert.True(t, hasSeverityLabel)
 				assert.Equal(t, *tt.threshold.TargetValue, sample.Target)
 				assert.Equal(t, tt.threshold.TargetUnit, sample.TargetUnit)
 			}
 		})
 	}
+}
+
+func TestPrepareSampleLabelsForRule(t *testing.T) {
+	alertAllHashes := make(map[uint64]struct{})
+	thresholdName := "test"
+	for range 50_000 {
+		sampleLabels := map[string]string{
+			"service":   "test",
+			"env":       "prod",
+			"tier":      "backend",
+			"namespace": "default",
+			"pod":       "test-pod",
+			"container": "test-container",
+			"node":      "test-node",
+			"cluster":   "test-cluster",
+			"region":    "test-region",
+			"az":        "test-az",
+			"hostname":  "test-hostname",
+			"ip":        "192.168.1.1",
+			"port":      "8080",
+		}
+		lbls := PrepareSampleLabelsForRule(sampleLabels, thresholdName)
+		assert.True(t, lbls.Has(LabelThresholdName), "LabelThresholdName not found in labels")
+		alertAllHashes[lbls.Hash()] = struct{}{}
+	}
+	t.Logf("Total hashes: %d", len(alertAllHashes))
+	// there should be only one hash for all the samples
+	assert.Equal(t, 1, len(alertAllHashes), "Expected only one hash for all the samples")
 }

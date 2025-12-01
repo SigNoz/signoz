@@ -5,9 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 
 	"io"
@@ -532,10 +532,15 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Delete)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost) // Deprecated Usage, use the below endpoint /v2/services
+	router.HandleFunc("/api/v2/services", am.ViewAccess(aH.Signoz.Handlers.Services.Get)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v2/service/top_operations", am.ViewAccess(aH.Signoz.Handlers.Services.GetTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_operations", am.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", am.ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v2/service/entry_point_operations", am.ViewAccess(aH.Signoz.Handlers.Services.GetEntryPointOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/entry_point_operations", am.ViewAccess(aH.getEntryPointOps)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", am.ViewAccess(aH.getUsage)).Methods(http.MethodGet)
@@ -654,6 +659,11 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.Au
 	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
 		am.ViewAccess(ah.UpdateMetricsMetadata)).
 		Methods(http.MethodPost)
+	// v2 endpoints
+	router.HandleFunc("/api/v2/metrics/stats", am.ViewAccess(ah.Signoz.Handlers.Metrics.GetStats)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/metrics/treemap", am.ViewAccess(ah.Signoz.Handlers.Metrics.GetTreemap)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/metrics/metadata", am.ViewAccess(ah.Signoz.Handlers.Metrics.GetMetricMetadata)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/metrics/{metric_name}/metadata", am.ViewAccess(ah.Signoz.Handlers.Metrics.UpdateMetricMetadata)).Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -975,14 +985,14 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 	keys := make(map[string]v3.AttributeKey)
 
 	if rule.AlertType == ruletypes.AlertTypeLogs {
-		logFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
-		if err == nil {
+		logFields, apiErr := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
+		if apiErr == nil {
 			params := &v3.QueryRangeParamsV3{
 				CompositeQuery: rule.RuleCondition.CompositeQuery,
 			}
 			keys = model.GetLogFieldsV3(ctx, params, logFields)
 		} else {
-			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
+			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(apiErr))
 		}
 	} else if rule.AlertType == ruletypes.AlertTypeTraces {
 		traceFields, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
@@ -1786,7 +1796,7 @@ func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWrite
 	}
 	traceID := mux.Vars(r)["traceId"]
 	if traceID == "" {
-		RespondError(w, model.BadRequest(errors.New("traceID is required")), nil)
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "traceID is required"))
 		return
 	}
 
@@ -1820,7 +1830,7 @@ func (aH *APIHandler) GetFlamegraphSpansForTrace(w http.ResponseWriter, r *http.
 
 	traceID := mux.Vars(r)["traceId"]
 	if traceID == "" {
-		RespondError(w, model.BadRequest(errors.New("traceID is required")), nil)
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "traceID is required"))
 		return
 	}
 
@@ -1921,9 +1931,9 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	claims, errv2 := authtypes.ClaimsFromContext(ctx)
-	if errv2 != nil {
-		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, errors.NewInternalf(errors.CodeInternal, "failed to get org id from context"))
 		return
 	}
 
@@ -1990,17 +2000,15 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	claims, errv2 := authtypes.ClaimsFromContext(ctx)
-	if errv2 != nil {
-		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
-
 	result, apiErr := aH.reader.GetTTL(r.Context(), claims.OrgID, ttlParams)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
-
 	aH.WriteJSON(w, r, result)
 }
 
@@ -2065,7 +2073,7 @@ func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	if aH.SetupCompleted {
-		RespondError(w, &model.ApiError{Err: errors.New("self-registration is disabled"), Typ: model.ErrorBadData}, nil)
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "self-registration is disabled"))
 		return
 	}
 
@@ -3448,7 +3456,7 @@ func (aH *APIHandler) InstallIntegration(w http.ResponseWriter, r *http.Request)
 	}
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
-		RespondError(w, model.UnauthorizedError(errors.New("unauthorized")), nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -4059,7 +4067,7 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, model.GetLogsAggregatesResponse{})
 }
 
-func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
+func parseAgentConfigVersion(r *http.Request) (int, error) {
 	versionString := mux.Vars(r)["version"]
 
 	if versionString == "latest" {
@@ -4069,11 +4077,11 @@ func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	version64, err := strconv.ParseInt(versionString, 0, 8)
 
 	if err != nil {
-		return 0, model.BadRequestStr("invalid version number")
+		return 0, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid version number")
 	}
 
 	if version64 <= 0 {
-		return 0, model.BadRequestStr("invalid version number")
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid version number")
 	}
 
 	return int(version64), nil
@@ -4083,16 +4091,13 @@ func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 	req := logparsingpipeline.PipelinesPreviewRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to decode request body"))
 		return
 	}
 
-	resultLogs, apiErr := aH.LogsParsingPipelineController.PreviewLogsPipelines(
-		r.Context(), &req,
-	)
-
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	resultLogs, err := aH.LogsParsingPipelineController.PreviewLogsPipelines(r.Context(), &req)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -4100,9 +4105,9 @@ func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 }
 
 func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -4114,35 +4119,33 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
-		RespondError(w, model.WrapApiError(err, "Failed to parse agent config version"), nil)
+		render.Error(w, err)
 		return
 	}
 
 	var payload *logparsingpipeline.PipelinesResponse
-	var apierr *model.ApiError
-
 	if version != -1 {
-		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), orgID, version)
+		payload, err = aH.listLogsPipelinesByVersion(r.Context(), orgID, version)
 	} else {
-		payload, apierr = aH.listLogsPipelines(context.Background(), orgID)
+		payload, err = aH.listLogsPipelines(r.Context(), orgID)
 	}
-
-	if apierr != nil {
-		RespondError(w, apierr, payload)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
+
 	aH.Respond(w, payload)
 }
 
 // listLogsPipelines lists logs piplines for latest version
 func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID valuer.UUID) (
-	*logparsingpipeline.PipelinesResponse, *model.ApiError,
+	*logparsingpipeline.PipelinesResponse, error,
 ) {
 	// get lateset agent config
 	latestVersion := -1
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, orgID, opamptypes.ElementTypeLogPipelines)
-	if err != nil && err.Type() != model.ErrorNotFound {
-		return nil, model.WrapApiError(err, "failed to get latest agent config version")
+	if err != nil && !errorsV2.Ast(err, errorsV2.TypeNotFound) {
+		return nil, err
 	}
 
 	if lastestConfig != nil {
@@ -4151,14 +4154,14 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID valuer.UUID) 
 
 	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, orgID, latestVersion)
 	if err != nil {
-		return nil, model.WrapApiError(err, "failed to get pipelines")
+		return nil, err
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
 	history, err := agentConf.GetConfigHistory(ctx, orgID, opamptypes.ElementTypeLogPipelines, limit)
 	if err != nil {
-		return nil, model.WrapApiError(err, "failed to get config history")
+		return nil, err
 	}
 	payload.History = history
 	return payload, nil
@@ -4166,18 +4169,18 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID valuer.UUID) 
 
 // listLogsPipelinesByVersion lists pipelines along with config version history
 func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, orgID valuer.UUID, version int) (
-	*logparsingpipeline.PipelinesResponse, *model.ApiError,
+	*logparsingpipeline.PipelinesResponse, error,
 ) {
 	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, orgID, version)
 	if err != nil {
-		return nil, model.WrapApiError(err, "failed to get pipelines by version")
+		return nil, err
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
 	history, err := agentConf.GetConfigHistory(ctx, orgID, opamptypes.ElementTypeLogPipelines, limit)
 	if err != nil {
-		return nil, model.WrapApiError(err, "failed to retrieve agent config history")
+		return nil, err
 	}
 
 	payload.History = history
@@ -4213,14 +4216,14 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 	createPipeline := func(
 		ctx context.Context,
 		postable []pipelinetypes.PostablePipeline,
-	) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
+	) (*logparsingpipeline.PipelinesResponse, error) {
 		if len(postable) == 0 {
 			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")
 		}
 
-		validationErr := aH.LogsParsingPipelineController.ValidatePipelines(ctx, postable)
-		if validationErr != nil {
-			return nil, validationErr
+		err := aH.LogsParsingPipelineController.ValidatePipelines(ctx, postable)
+		if err != nil {
+			return nil, err
 		}
 
 		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, orgID, userID, postable)
@@ -4228,7 +4231,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	res, err := createPipeline(r.Context(), req.Pipelines)
 	if err != nil {
-		RespondError(w, err, nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -4292,9 +4295,9 @@ func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.
 		return
 	}
 
-	response, err := aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
-	if err != nil {
-		RespondError(w, err, nil)
+	response, apiErr := aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
 		return
 	}
 
@@ -4450,10 +4453,9 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
-			logsFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, errQuriesByName)
+			logsFields, apiErr := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
+			if apiErr != nil {
+				RespondError(w, apiErr, errQuriesByName)
 				return
 			}
 			// get the fields if any logs query is present
@@ -4490,12 +4492,12 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	// Hook up query progress tracking if requested
 	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
 	if len(queryIdHeader) > 0 {
-		onQueryFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
+		onQueryFinished, apiErr := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
 
-		if err != nil {
+		if apiErr != nil {
 			zap.L().Error(
 				"couldn't report query start for progress tracking",
-				zap.String("queryId", queryIdHeader), zap.Error(err),
+				zap.String("queryId", queryIdHeader), zap.Error(apiErr),
 			)
 
 		} else {
@@ -4806,10 +4808,9 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
 			// get the fields if any logs query is present
-			logsFields, err := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, nil)
+			logsFields, apiErr := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
+			if apiErr != nil {
+				RespondError(w, apiErr, nil)
 				return
 			}
 			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)

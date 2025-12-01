@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authn/authnstore/sqlauthnstore"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -25,9 +26,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
+	"github.com/SigNoz/signoz/pkg/telemetrymeter"
+	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 
@@ -36,23 +43,25 @@ import (
 
 type SigNoz struct {
 	*factory.Registry
-	Instrumentation instrumentation.Instrumentation
-	Analytics       analytics.Analytics
-	Cache           cache.Cache
-	Web             web.Web
-	SQLStore        sqlstore.SQLStore
-	TelemetryStore  telemetrystore.TelemetryStore
-	Prometheus      prometheus.Prometheus
-	Alertmanager    alertmanager.Alertmanager
-	Querier         querier.Querier
-	Zeus            zeus.Zeus
-	Licensing       licensing.Licensing
-	Emailing        emailing.Emailing
-	Sharder         sharder.Sharder
-	StatsReporter   statsreporter.StatsReporter
-	Tokenizer       pkgtokenizer.Tokenizer
-	Modules         Modules
-	Handlers        Handlers
+	Instrumentation        instrumentation.Instrumentation
+	Analytics              analytics.Analytics
+	Cache                  cache.Cache
+	Web                    web.Web
+	SQLStore               sqlstore.SQLStore
+	TelemetryStore         telemetrystore.TelemetryStore
+	TelemetryMetadataStore telemetrytypes.MetadataStore
+	Prometheus             prometheus.Prometheus
+	Alertmanager           alertmanager.Alertmanager
+	Querier                querier.Querier
+	Zeus                   zeus.Zeus
+	Licensing              licensing.Licensing
+	Emailing               emailing.Emailing
+	Sharder                sharder.Sharder
+	StatsReporter          statsreporter.StatsReporter
+	Tokenizer              pkgtokenizer.Tokenizer
+	Authz                  authz.AuthZ
+	Modules                Modules
+	Handlers               Handlers
 }
 
 func New(
@@ -69,6 +78,7 @@ func New(
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
+	authzCallback func(context.Context, sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -243,6 +253,13 @@ func New(
 		return nil, err
 	}
 
+	// Initialize authz
+	authzProviderFactory := authzCallback(ctx, sqlstore)
+	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 
@@ -299,11 +316,33 @@ func New(
 		return nil, err
 	}
 
+	// Initialize telemetry metadata store
+	// TODO: consolidate other telemetrymetadata.NewTelemetryMetaStore initializations to reuse this instance instead.
+	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
+		providerSettings,
+		telemetrystore,
+		telemetrytraces.DBName,
+		telemetrytraces.TagAttributesV2TableName,
+		telemetrytraces.SpanAttributesKeysTblName,
+		telemetrytraces.SpanIndexV3TableName,
+		telemetrymetrics.DBName,
+		telemetrymetrics.AttributesMetadataTableName,
+		telemetrymeter.DBName,
+		telemetrymeter.SamplesAgg1dTableName,
+		telemetrylogs.DBName,
+		telemetrylogs.LogsV2TableName,
+		telemetrylogs.TagAttributesV2TableName,
+		telemetrylogs.LogAttributeKeysTblName,
+		telemetrylogs.LogResourceKeysTblName,
+		telemetrymetadata.DBName,
+		telemetrymetadata.AttributesMetadataLocalTableName,
+	)
+
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, authNs)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings)
+	handlers := NewHandlers(modules, providerSettings, querier, licensing)
 
 	// Create a list of all stats collectors
 	statsCollectors := []statsreporter.StatsCollector{
@@ -337,28 +376,31 @@ func New(
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
 		factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizer),
+		factory.NewNamedService(factory.MustNewName("authz"), authz),
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &SigNoz{
-		Registry:        registry,
-		Analytics:       analytics,
-		Instrumentation: instrumentation,
-		Cache:           cache,
-		Web:             web,
-		SQLStore:        sqlstore,
-		TelemetryStore:  telemetrystore,
-		Prometheus:      prometheus,
-		Alertmanager:    alertmanager,
-		Querier:         querier,
-		Zeus:            zeus,
-		Licensing:       licensing,
-		Emailing:        emailing,
-		Sharder:         sharder,
-		Tokenizer:       tokenizer,
-		Modules:         modules,
-		Handlers:        handlers,
+		Registry:               registry,
+		Analytics:              analytics,
+		Instrumentation:        instrumentation,
+		Cache:                  cache,
+		Web:                    web,
+		SQLStore:               sqlstore,
+		TelemetryStore:         telemetrystore,
+		TelemetryMetadataStore: telemetryMetadataStore,
+		Prometheus:             prometheus,
+		Alertmanager:           alertmanager,
+		Querier:                querier,
+		Zeus:                   zeus,
+		Licensing:              licensing,
+		Emailing:               emailing,
+		Sharder:                sharder,
+		Tokenizer:              tokenizer,
+		Authz:                  authz,
+		Modules:                modules,
+		Handlers:               handlers,
 	}, nil
 }

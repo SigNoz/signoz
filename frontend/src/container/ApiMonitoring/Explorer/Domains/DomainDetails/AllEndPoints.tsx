@@ -1,4 +1,5 @@
 import { Select } from 'antd';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import {
 	getAllEndpointsWidgetData,
@@ -264,6 +265,7 @@ function AllEndPoints({
 					customOnDragSelect={(): void => {}}
 					customTimeRange={timeRange}
 					customOnRowClick={onRowClick}
+					version={ENTITY_VERSION_V5}
 				/>
 			</div>
 		</div>

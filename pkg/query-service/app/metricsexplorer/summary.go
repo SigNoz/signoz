@@ -62,23 +62,23 @@ func (receiver *SummaryService) FilterValues(ctx context.Context, orgID valuer.U
 		response.FilterValues = filterValues
 		return &response, nil
 	case "metric_unit":
-		attributes, err := receiver.reader.GetAllMetricFilterUnits(ctx, params)
-		if err != nil {
-			return nil, err
+		attributes, apiErr := receiver.reader.GetAllMetricFilterUnits(ctx, params)
+		if apiErr != nil {
+			return nil, apiErr
 		}
 		response.FilterValues = attributes
 		return &response, nil
 	case "metric_type":
-		attributes, err := receiver.reader.GetAllMetricFilterTypes(ctx, params)
-		if err != nil {
-			return nil, err
+		attributes, apiErr := receiver.reader.GetAllMetricFilterTypes(ctx, params)
+		if apiErr != nil {
+			return nil, apiErr
 		}
 		response.FilterValues = attributes
 		return &response, nil
 	default:
-		attributes, err := receiver.reader.GetAllMetricFilterAttributeValues(ctx, params)
-		if err != nil {
-			return nil, err
+		attributes, apiErr := receiver.reader.GetAllMetricFilterAttributeValues(ctx, params)
+		if apiErr != nil {
+			return nil, apiErr
 		}
 		response.FilterValues = attributes
 		return &response, nil
@@ -108,45 +108,45 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, orgID val
 	})
 
 	g.Go(func() error {
-		dataPoints, err := receiver.reader.GetMetricsDataPoints(ctx, metricName)
-		if err != nil {
-			return err
+		dataPoints, apiErr := receiver.reader.GetMetricsDataPoints(ctx, metricName)
+		if apiErr != nil {
+			return apiErr.ToError()
 		}
 		metricDetailsDTO.Samples = dataPoints
 		return nil
 	})
 
 	g.Go(func() error {
-		lastReceived, err := receiver.reader.GetMetricsLastReceived(ctx, metricName)
-		if err != nil {
-			return err
+		lastReceived, apiErr := receiver.reader.GetMetricsLastReceived(ctx, metricName)
+		if apiErr != nil {
+			return apiErr.ToError()
 		}
 		metricDetailsDTO.LastReceived = lastReceived
 		return nil
 	})
 
 	g.Go(func() error {
-		totalSeries, err := receiver.reader.GetTotalTimeSeriesForMetricName(ctx, metricName)
-		if err != nil {
-			return err
+		totalSeries, apiErr := receiver.reader.GetTotalTimeSeriesForMetricName(ctx, metricName)
+		if apiErr != nil {
+			return apiErr.ToError()
 		}
 		metricDetailsDTO.TimeSeriesTotal = totalSeries
 		return nil
 	})
 
 	g.Go(func() error {
-		activeSeries, err := receiver.reader.GetActiveTimeSeriesForMetricName(ctx, metricName, 120*time.Minute)
-		if err != nil {
-			return err
+		activeSeries, apiErr := receiver.reader.GetActiveTimeSeriesForMetricName(ctx, metricName, 120*time.Minute)
+		if apiErr != nil {
+			return apiErr.ToError()
 		}
 		metricDetailsDTO.TimeSeriesActive = activeSeries
 		return nil
 	})
 
 	g.Go(func() error {
-		attributes, err := receiver.reader.GetAttributesForMetricName(ctx, metricName, nil, nil, nil)
-		if err != nil {
-			return err
+		attributes, apiErr := receiver.reader.GetAttributesForMetricName(ctx, metricName, nil, nil, nil)
+		if apiErr != nil {
+			return apiErr.ToError()
 		}
 		if attributes != nil {
 			metricDetailsDTO.Attributes = *attributes

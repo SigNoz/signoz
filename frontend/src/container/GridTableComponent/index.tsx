@@ -49,15 +49,27 @@ function GridTableComponent({
 	panelType,
 	queryRangeRequest,
 	decimalPrecision,
+	hiddenColumns = [],
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
 
 	// create columns and dataSource in the ui friendly structure
 	// use the query from the widget here to extract the legend information
-	const { columns, dataSource: originalDataSource } = useMemo(
+	const { columns: allColumns, dataSource: originalDataSource } = useMemo(
 		() => createColumnsAndDataSource((data as unknown) as TableData, query),
 		[query, data],
+	);
+
+	// Filter out hidden columns from being displayed
+	const columns = useMemo(
+		() =>
+			allColumns.filter(
+				(column) =>
+					!('dataIndex' in column) ||
+					!hiddenColumns.includes(column.dataIndex as string),
+			),
+		[allColumns, hiddenColumns],
 	);
 
 	const createDataInCorrectFormat = useCallback(

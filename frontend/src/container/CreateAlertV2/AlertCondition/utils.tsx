@@ -1,18 +1,21 @@
 import { Button, Flex, Switch, Typography } from 'antd';
 import { BaseOptionType, DefaultOptionType, SelectProps } from 'antd/es/select';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
-import { Y_AXIS_CATEGORIES } from 'components/YAxisUnitSelector/constants';
+import { YAxisSource } from 'components/YAxisUnitSelector/types';
+import { getYAxisCategories } from 'components/YAxisUnitSelector/utils';
 import ROUTES from 'constants/routes';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 } from 'container/CreateAlertV2/context/types';
 import { getSelectedQueryOptions } from 'container/FormAlertRules/utils';
+import { ArrowRight } from 'lucide-react';
 import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { USER_ROLES } from 'types/roles';
 
+import { ROUTING_POLICIES_ROUTE } from './constants';
 import { RoutingPolicyBannerProps } from './types';
 
 export function getQueryNames(currentQuery: Query): BaseOptionType[] {
@@ -37,7 +40,8 @@ export function getQueryNames(currentQuery: Query): BaseOptionType[] {
 }
 
 export function getCategoryByOptionId(id: string): string | undefined {
-	return Y_AXIS_CATEGORIES.find((category) =>
+	const categories = getYAxisCategories(YAxisSource.ALERTS);
+	return categories.find((category) =>
 		category.units.some((unit) => unit.id === id),
 	)?.name;
 }
@@ -45,14 +49,15 @@ export function getCategoryByOptionId(id: string): string | undefined {
 export function getCategorySelectOptionByName(
 	name: string,
 ): DefaultOptionType[] {
+	const categories = getYAxisCategories(YAxisSource.ALERTS);
 	return (
-		Y_AXIS_CATEGORIES.find((category) => category.name === name)?.units.map(
-			(unit) => ({
+		categories
+			.find((category) => category.name === name)
+			?.units.map((unit) => ({
 				label: unit.name,
 				value: unit.id,
 				'data-testid': `threshold-unit-select-option-${unit.id}`,
-			}),
-		) || []
+			})) || []
 	);
 }
 
@@ -400,16 +405,27 @@ export function RoutingPolicyBanner({
 			<Typography.Text>
 				Use <strong>Routing Policies</strong> for dynamic routing
 			</Typography.Text>
-			<Switch
-				checked={notificationSettings.routingPolicies}
-				data-testid="routing-policies-switch"
-				onChange={(value): void => {
-					setNotificationSettings({
-						type: 'SET_ROUTING_POLICIES',
-						payload: value,
-					});
-				}}
-			/>
+			<div className="routing-policies-info-banner-right">
+				<Switch
+					checked={notificationSettings.routingPolicies}
+					data-testid="routing-policies-switch"
+					onChange={(value): void => {
+						setNotificationSettings({
+							type: 'SET_ROUTING_POLICIES',
+							payload: value,
+						});
+					}}
+				/>
+				<Button
+					href={ROUTING_POLICIES_ROUTE}
+					type="link"
+					className="view-routing-policies-button"
+					data-testid="view-routing-policies-button"
+				>
+					View Routing Policies
+					<ArrowRight size={14} />
+				</Button>
+			</div>
 		</div>
 	);
 }

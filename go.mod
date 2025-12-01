@@ -4,16 +4,16 @@ go 1.24.0
 
 require (
 	dario.cat/mergo v1.0.1
-	github.com/AfterShip/clickhouse-sql-parser v0.4.11
+	github.com/AfterShip/clickhouse-sql-parser v0.4.16
 	github.com/ClickHouse/clickhouse-go/v2 v2.40.1
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
 	github.com/SigNoz/signoz-otel-collector v0.129.4
-	github.com/allegro/bigcache/v3 v3.1.0
 	github.com/antlr4-go/antlr/v4 v4.13.1
 	github.com/antonmedv/expr v1.15.3
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/coreos/go-oidc/v3 v3.14.1
+	github.com/dgraph-io/ristretto/v2 v2.3.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/go-co-op/gocron v1.30.1
 	github.com/go-openapi/runtime v0.28.0
@@ -37,7 +37,6 @@ require (
 	github.com/openfga/api/proto v0.0.0-20250909172242-b4b2a12f5c67
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20250428093642-7aeebe78bbfe
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/alertmanager v0.28.1
 	github.com/prometheus/client_golang v1.23.2

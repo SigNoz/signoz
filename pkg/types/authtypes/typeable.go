@@ -11,18 +11,21 @@ import (
 var (
 	ErrCodeAuthZUnavailable = errors.MustNewCode("authz_unavailable")
 	ErrCodeAuthZForbidden   = errors.MustNewCode("authz_forbidden")
+	ErrCodeAuthZInvalidType = errors.MustNewCode("authz_invalid_type")
 )
 
 var (
-	TypeUser         = Type{valuer.NewString("user")}
-	TypeRole         = Type{valuer.NewString("role")}
-	TypeOrganization = Type{valuer.NewString("organization")}
-	TypeResource     = Type{valuer.NewString("resource")}
-	TypeResources    = Type{valuer.NewString("resources")}
+	TypeUser          = Type{valuer.NewString("user")}
+	TypeAnonymous     = Type{valuer.NewString("anonymous")}
+	TypeRole          = Type{valuer.NewString("role")}
+	TypeOrganization  = Type{valuer.NewString("organization")}
+	TypeMetaResource  = Type{valuer.NewString("metaresource")}
+	TypeMetaResources = Type{valuer.NewString("metaresources")}
 )
 
 var (
 	TypeableUser         = &typeableUser{}
+	TypeableAnonymous    = &typeableAnonymous{}
 	TypeableRole         = &typeableRole{}
 	TypeableOrganization = &typeableOrganization{}
 )
@@ -53,12 +56,12 @@ func NewType(input string) (Type, error) {
 		return TypeRole, nil
 	case "organization":
 		return TypeOrganization, nil
-	case "resource":
-		return TypeResource, nil
-	case "resources":
-		return TypeResources, nil
+	case "metaresource":
+		return TypeMetaResource, nil
+	case "metaresources":
+		return TypeMetaResources, nil
 	default:
-		return Type{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type: %s", input)
+		return Type{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidType, "invalid type: %s", input)
 	}
 }
 
@@ -69,12 +72,12 @@ func (typed *Type) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	shadow, err := NewType(str)
+	alias, err := NewType(str)
 	if err != nil {
 		return err
 	}
 
-	*typed = shadow
+	*typed = alias
 	return nil
 }
 
@@ -86,21 +89,21 @@ func NewTypeableFromType(typed Type, name Name) (Typeable, error) {
 		return TypeableUser, nil
 	case TypeOrganization:
 		return TypeableOrganization, nil
-	case TypeResource:
-		resource, err := NewTypeableResource(name)
+	case TypeMetaResource:
+		resource, err := NewTypeableMetaResource(name)
 		if err != nil {
 			return nil, err
 		}
 		return resource, nil
-	case TypeResources:
-		resources, err := NewTypeableResources(name)
+	case TypeMetaResources:
+		resources, err := NewTypeableMetaResources(name)
 		if err != nil {
 			return nil, err
 		}
 		return resources, nil
 	}
 
-	return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid type")
+	return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidType, "invalid type %s", typed)
 }
 
 func MustNewTypeableFromType(typed Type, name Name) Typeable {
