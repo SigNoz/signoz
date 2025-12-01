@@ -1,0 +1,42 @@
+.cmdk-section-heading [cmdk-group-heading] {
+  text-transform: uppercase;
+  color: #62687C;
+}
+
+/* Hide scrollbar but keep scroll */
+.cmdk-list-scroll {
+  scrollbar-width: none; /* Firefox */
+}
+
+.cmdk-list-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.cmdk-list-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+
+.cmdk-input-wrapper {
+margin-left: 8px;
+}
+
+.cmdk-item-light:hover {
+    cursor: pointer;
+    background-color: #f3f4f6 !important;
+}
+
+.cmdk-item-light[data-selected="true"] {
+    background-color: #e5e7eb !important;
+    color: #000;
+}
+
+.cmdk-item {
+    cursor: pointer;
+}
+
+.cmd-expand-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+}
