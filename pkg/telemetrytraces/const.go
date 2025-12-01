@@ -41,13 +41,13 @@ var (
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
-		"kind": {
-			Name:          "kind",
-			Description:   "Span kind enum (number). Use `kind_string` instead. Learn more [here](https://opentelemetry.io/docs/concepts/signals/traces/#span-kind)",
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  telemetrytypes.FieldContextSpan,
-			FieldDataType: telemetrytypes.FieldDataTypeNumber,
-		},
+		// "kind": {
+		// 	Name:          "kind",
+		// 	Description:   "Span kind enum (number). Use `kind_string` instead. Learn more [here](https://opentelemetry.io/docs/concepts/signals/traces/#span-kind)",
+		// 	Signal:        telemetrytypes.SignalTraces,
+		// 	FieldContext:  telemetrytypes.FieldContextSpan,
+		// 	FieldDataType: telemetrytypes.FieldDataTypeNumber,
+		// },
 		"kind_string": {
 			Name:          "kind_string",
 			Description:   "Span kind enum (string). Known values are ['Client', 'Server', 'Internal', 'Producer', 'Consumer']. Learn more [here](https://opentelemetry.io/docs/concepts/signals/traces/#span-kind)",
@@ -133,6 +133,13 @@ var (
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"kind": {
+			Name:          "kind",
+			Description:   "Span kind enum (number). Use `kind_string` instead. Learn more [here](https://opentelemetry.io/docs/concepts/signals/traces/#span-kind)",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeNumber,
 		},
 	}
 
