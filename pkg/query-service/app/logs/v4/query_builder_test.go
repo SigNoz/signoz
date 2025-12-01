@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_getClickhouseKey(t *testing.T) {
@@ -1211,8 +1210,9 @@ func TestPrepareLogsQuery(t *testing.T) {
 				t.Errorf("PrepareLogsQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-
-			assert.Equal(t, tt.want, got)
+			if got != tt.want {
+				t.Errorf("PrepareLogsQuery() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
