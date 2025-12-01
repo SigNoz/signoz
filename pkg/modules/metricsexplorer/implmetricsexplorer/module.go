@@ -228,7 +228,7 @@ func (m *module) GetMetricAlerts(ctx context.Context, orgID valuer.UUID, metricN
 		for _, queryEnvelope := range ruleData.RuleCondition.CompositeQuery.Queries {
 			// Check based on query type
 			switch queryEnvelope.Type {
-			case qbtypes.QueryTypeBuilder, qbtypes.QueryTypeSubQuery:
+			case qbtypes.QueryTypeBuilder:
 				// Cast to QueryBuilderQuery[MetricAggregation] for metrics
 				if spec, ok := queryEnvelope.Spec.(qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]); ok {
 					// Check if signal is metrics
