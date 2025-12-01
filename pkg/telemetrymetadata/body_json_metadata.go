@@ -11,6 +11,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/constants"
+	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -57,7 +58,8 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 	}
 	defer rows.Close()
 
-	paths := []*telemetrytypes.TelemetryFieldKey{}
+	fieldKeys := []*telemetrytypes.TelemetryFieldKey{}
+	paths := []string{}
 	rowCount := 0
 	for rows.Next() {
 		var path string
@@ -67,11 +69,6 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 		err = rows.Scan(&path, &typesArray, &lastSeen)
 		if err != nil {
 			return nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to scan body JSON key row")
-		}
-
-		promoted, err := IsPathPromoted(ctx, telemetryStore.ClickhouseDB(), path)
-		if err != nil {
-			return nil, false, err
 		}
 
 		indexes, err := getJSONPathIndexes(ctx, telemetryStore, path)
@@ -84,25 +81,33 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 			if !found {
 				return nil, false, errors.NewInternalf(CodeUnknownJSONDataType, "failed to map type string to JSON data type: %s", typ)
 			}
-			paths = append(paths, &telemetrytypes.TelemetryFieldKey{
+			fieldKeys = append(fieldKeys, &telemetrytypes.TelemetryFieldKey{
 				Name:          path,
 				Signal:        telemetrytypes.SignalLogs,
 				FieldContext:  telemetrytypes.FieldContextBody,
 				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[mapping],
 				JSONDataType:  &mapping,
 				Indexes:       indexes,
-				Materialized:  promoted,
 			})
 		}
 
+		paths = append(paths, path)
 		rowCount++
 	}
-
 	if rows.Err() != nil {
 		return nil, false, errors.WrapInternalf(rows.Err(), CodeFailIterateBodyJSONKeys, "error iterating body JSON keys")
 	}
 
-	return paths, rowCount <= limit, nil
+	promoted, err := GetPromotedPaths(ctx, telemetryStore.ClickhouseDB(), paths...)
+	if err != nil {
+		return nil, false, err
+	}
+
+	for _, fieldKey := range fieldKeys {
+		fieldKey.Materialized = promoted.Contains(fieldKey.Name)
+	}
+
+	return fieldKeys, rowCount <= limit, nil
 }
 
 func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySelector) (string, []any, int, error) {
@@ -428,6 +433,31 @@ func IsPathPromoted(ctx context.Context, conn clickhouse.Conn, path string) (boo
 	defer rows.Close()
 
 	return rows.Next(), nil
+}
+
+// GetPromotedPaths checks if a specific path is promoted
+func GetPromotedPaths(ctx context.Context, conn clickhouse.Conn, paths ...string) (*utils.ConcurrentSet[string], error) {
+	sb := sqlbuilder.Select("path").From(fmt.Sprintf("%s.%s", DBName, PromotedPathsTableName))
+	for _, path := range paths {
+		sb.Or(sb.Equal("path", path))
+	}
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	rows, err := conn.Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, CodeFailCheckPathPromoted, "failed to get promoted paths")
+	}
+	defer rows.Close()
+
+	promotedPaths := utils.NewConcurrentSet[string]()
+	for rows.Next() {
+		var path string
+		if err := rows.Scan(&path); err != nil {
+			return nil, errors.WrapInternalf(err, CodeFailCheckPathPromoted, "failed to scan promoted path")
+		}
+		promotedPaths.Insert(path)
+	}
+
+	return promotedPaths, nil
 }
 
 // TODO(Piyush): Remove this function
