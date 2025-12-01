@@ -104,22 +104,39 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 
 func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 	testCases := []struct {
-		name        string
-		cluster     string
-		filters     []string
-		expectedSQL string
+		name         string
+		cluster      string
+		filters      []string
+		expectedSQL  string
+		expectedArgs []any
 	}{
 		{
-			name:        "No filters",
-			cluster:     "test-cluster",
-			filters:     nil,
-			expectedSQL: "SELECT name, type_full, expr, granularity FROM clusterAllReplicas('test-cluster', system.data_skipping_indices) WHERE (database = ?) AND (table = ?) AND (expr ILIKE ? OR expr ILIKE ?)",
+			name:    "No filters",
+			cluster: "test-cluster",
+			filters: nil,
+			expectedSQL: "SELECT name, type_full, expr, granularity FROM clusterAllReplicas('test-cluster', system.data_skipping_indices) " +
+				"WHERE (database = ?) AND (table = ?) AND (expr ILIKE ? OR expr ILIKE ?)",
+			expectedArgs: []any{
+				telemetrylogs.DBName,
+				telemetrylogs.LogsV2LocalTableName,
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyJSONColumnPrefix)),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
+			},
 		},
 		{
-			name:        "With filters",
-			cluster:     "test-cluster",
-			filters:     []string{"foo", "bar"},
-			expectedSQL: "SELECT name, type_full, expr, granularity FROM clusterAllReplicas('test-cluster', system.data_skipping_indices) WHERE (database = ?) AND (table = ?) AND (expr ILIKE ? OR expr ILIKE ?) AND (expr ILIKE ? OR expr ILIKE ?)",
+			name:    "With filters",
+			cluster: "test-cluster",
+			filters: []string{"foo", "bar"},
+			expectedSQL: "SELECT name, type_full, expr, granularity FROM clusterAllReplicas('test-cluster', system.data_skipping_indices) " +
+				"WHERE (database = ?) AND (table = ?) AND (expr ILIKE ? OR expr ILIKE ?) AND (expr ILIKE ? OR expr ILIKE ?)",
+			expectedArgs: []any{
+				telemetrylogs.DBName,
+				telemetrylogs.LogsV2LocalTableName,
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyJSONColumnPrefix)),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains("foo")),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains("bar")),
+			},
 		},
 	}
 
@@ -128,19 +145,7 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 			query, args := buildListLogsJSONIndexesQuery(tc.cluster, tc.filters...)
 
 			require.Equal(t, tc.expectedSQL, query)
-
-			expectedArgs := []any{
-				telemetrylogs.DBName,
-				telemetrylogs.LogsV2LocalTableName,
-				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyJSONColumnPrefix)),
-				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
-			}
-
-			for _, f := range tc.filters {
-				expectedArgs = append(expectedArgs, fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(f)))
-			}
-
-			require.Equal(t, expectedArgs, args)
+			require.Equal(t, tc.expectedArgs, args)
 		})
 	}
 }
