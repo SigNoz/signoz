@@ -51,10 +51,10 @@ type CmdAction = {
 
 type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
 export function CmdKPalette({
-	role,
+	userRole,
 	isLoggedInState,
 }: {
-	role: UserRole;
+	userRole: UserRole;
 	isLoggedInState: boolean;
 }): JSX.Element | null {
 	const { open, setOpen } = useCmdK();
@@ -133,7 +133,7 @@ export function CmdKPalette({
 				shortcut: ['shift + h'],
 				keywords: 'home',
 				section: 'Navigation',
-				icon: <Home size={12} />,
+				icon: <Home size={14} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.HOME),
 			},
@@ -143,7 +143,7 @@ export function CmdKPalette({
 				shortcut: ['shift + d'],
 				keywords: 'dashboards',
 				section: 'Navigation',
-				icon: <LayoutGrid size={12} />,
+				icon: <LayoutGrid size={14} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.ALL_DASHBOARD),
 			},
@@ -153,7 +153,7 @@ export function CmdKPalette({
 				shortcut: ['shift + s'],
 				keywords: 'services monitoring',
 				section: 'Navigation',
-				icon: <HardDrive size={12} />,
+				icon: <HardDrive size={14} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.APPLICATION),
 			},
@@ -163,7 +163,7 @@ export function CmdKPalette({
 				shortcut: ['shift + t'],
 				keywords: 'traces',
 				section: 'Navigation',
-				icon: <DraftingCompass size={12} />,
+				icon: <DraftingCompass size={14} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.TRACES_EXPLORER),
 			},
@@ -173,7 +173,7 @@ export function CmdKPalette({
 				shortcut: ['shift + l'],
 				keywords: 'logs',
 				section: 'Navigation',
-				icon: <ScrollText size={12} />,
+				icon: <ScrollText size={14} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.LOGS),
 			},
@@ -183,7 +183,7 @@ export function CmdKPalette({
 				shortcut: ['shift + a'],
 				keywords: 'alerts',
 				section: 'Navigation',
-				icon: <BellDot size={12} />,
+				icon: <BellDot size={14} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.LIST_ALL_ALERT),
 			},
@@ -193,7 +193,7 @@ export function CmdKPalette({
 				shortcut: ['shift + e'],
 				keywords: 'exceptions errors',
 				section: 'Navigation',
-				icon: <BugIcon size={12} />,
+				icon: <BugIcon size={14} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.ALL_ERROR),
 			},
@@ -203,7 +203,7 @@ export function CmdKPalette({
 				shortcut: ['shift + m'],
 				keywords: 'messaging queues mq',
 				section: 'Navigation',
-				icon: <ListMinus size={12} />,
+				icon: <ListMinus size={14} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.MESSAGING_QUEUES_OVERVIEW),
 			},
@@ -212,7 +212,7 @@ export function CmdKPalette({
 				name: 'Go to Account Settings',
 				keywords: 'account settings',
 				section: 'Navigation',
-				icon: <Settings size={12} />,
+				icon: <Settings size={14} />,
 				roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 				perform: (): void => onClickHandler(ROUTES.MY_SETTINGS),
 			},
@@ -264,8 +264,8 @@ export function CmdKPalette({
 
 	// RBAC filter: show action if no roles set OR current user role is included
 	const permitted = useMemo(
-		() => actions.filter((a) => !a.roles || a.roles.includes(role)),
-		[actions, role],
+		() => actions.filter((a) => !a.roles || a.roles.includes(userRole)),
+		[actions, userRole],
 	);
 
 	// group permitted actions by section

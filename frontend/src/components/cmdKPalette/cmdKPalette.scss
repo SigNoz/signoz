@@ -35,12 +35,17 @@ margin-left: 8px;
     cursor: pointer;
 }
 
+[cmdk-item] svg {
+  width: auto;
+  height: auto;
+ }
+
 .cmd-item-icon {
     margin-right: 8px;
 }
 
 .cmd-expand-icon {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     margin-right: 8px;
 }
