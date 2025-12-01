@@ -61,6 +61,11 @@ func (provider *Provider) Storage() storage.Queryable {
 	return provider.db
 }
 
+// DB returns the underlying TSDB instance for testing purposes
+func (provider *Provider) DB() *tsdb.DB {
+	return provider.db
+}
+
 func (provider *Provider) Close() error {
 	if err := provider.db.Close(); err != nil {
 		return err
