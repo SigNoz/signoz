@@ -113,12 +113,12 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 		if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 1, ttl); !ok {
 			return errors.New(errors.TypeInternal, errors.CodeInternal, "error writing to cache")
 		}
-		
+
 		provider.cc.Wait()
 		return nil
 	}
 
-	toCache, err := data.MarshalBinary()
+	toCache, err := provider.marshalBinary(ctx, data)
 	cost := int64(len(toCache))
 	if err != nil {
 		return err
@@ -176,7 +176,7 @@ func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey s
 
 	if fromCache, ok := cachedData.([]byte); ok {
 		span.SetAttributes(attribute.Bool("memory.cloneable", false))
-		if err = dest.UnmarshalBinary(fromCache); err != nil {
+		if err = provider.unmarshalBinary(ctx, dest, fromCache); err != nil {
 			return err
 		}
 
@@ -201,4 +201,20 @@ func (provider *provider) DeleteMany(_ context.Context, orgID valuer.UUID, cache
 	for _, cacheKey := range cacheKeys {
 		provider.cc.Del(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 	}
+}
+
+func (provider *provider) marshalBinary(ctx context.Context, toMarshal cachetypes.Cacheable) ([]byte, error) {
+	_, span := provider.settings.Tracer().Start(ctx, "json.marshalbinary", trace.WithAttributes(
+		attribute.String(semconv.AttributeDBSystem, "memory"),
+	))
+	defer span.End()
+	return toMarshal.MarshalBinary()
+}
+
+func (provider *provider) unmarshalBinary(ctx context.Context, dest cachetypes.Cacheable, fromCache []byte) error {
+	_, span := provider.settings.Tracer().Start(ctx, "json.unmarshalbinary", trace.WithAttributes(
+		attribute.String(semconv.AttributeDBSystem, "memory"),
+	))
+	defer span.End()
+	return dest.UnmarshalBinary(fromCache)
 }
