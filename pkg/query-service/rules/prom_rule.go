@@ -130,7 +130,6 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	r.logger.InfoContext(ctx, "evaluating promql query", "rule_name", r.Name(), "query", q)
 	res, err := r.RunAlertQuery(ctx, q, start, end, interval)
 	if err != nil {
-		// We can remove this as this is not there in threshold and anomaly rules
 		r.SetHealth(ruletypes.HealthBad)
 		r.SetLastError(err)
 		return nil, err

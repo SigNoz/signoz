@@ -49,5 +49,8 @@ func (provider *Provider) Storage() storage.Queryable {
 }
 
 func (provider *Provider) Close() error {
+	if provider.engine != nil {
+		provider.engine.Close()
+	}
 	return nil
 }
