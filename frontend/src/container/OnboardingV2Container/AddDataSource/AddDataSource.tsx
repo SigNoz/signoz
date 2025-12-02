@@ -298,10 +298,16 @@ function OnboardingAddDataSource(): JSX.Element {
 
 		dataSources.forEach((dataSource) => {
 			dataSource.tags.forEach((tag) => {
-				if (!groupedDataSources[tag]) {
-					groupedDataSources[tag] = [];
+				const existingKey = Object.keys(groupedDataSources).find(
+					(key) => key.toLowerCase() === tag.toLowerCase(),
+				);
+
+				const keyToUse = existingKey || tag;
+
+				if (!groupedDataSources[keyToUse]) {
+					groupedDataSources[keyToUse] = [];
 				}
-				groupedDataSources[tag].push(dataSource);
+				groupedDataSources[keyToUse].push(dataSource);
 			});
 		});
 
@@ -374,10 +380,8 @@ function OnboardingAddDataSource(): JSX.Element {
 			return;
 		}
 
-		const filteredDataSources = onboardingConfigWithLinks.filter(
-			(dataSource) =>
-				dataSource.tags.includes(category) ||
-				dataSource.tags.some((tag) => tag.toLowerCase().includes(category)),
+		const filteredDataSources = onboardingConfigWithLinks.filter((dataSource) =>
+			dataSource.tags.some((tag) => tag.toLowerCase() === category.toLowerCase()),
 		);
 
 		setSelectedCategory(category);
@@ -427,7 +431,7 @@ function OnboardingAddDataSource(): JSX.Element {
 				...setupStepItemsBase.slice(2),
 			]);
 		} else if (step === 3) {
-			switch (selectedDataSource?.module) {
+			switch (selectedDataSource?.module?.toLowerCase()) {
 				case 'apm':
 					history.push(ROUTES.APPLICATION);
 					break;
@@ -462,7 +466,7 @@ function OnboardingAddDataSource(): JSX.Element {
 					history.push(ROUTES.API_MONITORING);
 					break;
 				default:
-					history.push(ROUTES.APPLICATION);
+					history.push(ROUTES.HOME);
 			}
 		}
 	};

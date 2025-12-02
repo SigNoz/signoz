@@ -41,10 +41,39 @@
 			"signoz"
 		],
 		"imgUrl": "/Logos/datadog.svg",
-		"link": "https://signoz.io/docs/migration/migrate-from-datadog/"
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/metrics.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-datadog/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/traces.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-datadog/traces/"
+				},
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/logs.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-datadog/logs/"
+				},
+				{
+					"key": "dashboards",
+					"label": "Dashboards",
+					"imgUrl": "/Logos/dashboards.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-datadog/dashboards/"
+				}
+			]
+		}
 	},
 	{
-		"dataSource": "migrate-from-lgtm",
+		"dataSource": "migrate-from-grafana",
 		"label": "From Grafana",
 		"tags": [
 			"migrate to SigNoz"
@@ -67,7 +96,30 @@
 			"tempo"
 		],
 		"imgUrl": "/Logos/grafana.svg",
-		"link": "https://signoz.io/docs/migration/migrate-from-grafana/"
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/metrics.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-grafana/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/traces.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-grafana/traces/"
+				},
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/logs.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-grafana/logs/"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "migrate-from-elk",
@@ -94,7 +146,30 @@
 			"signoz"
 		],
 		"imgUrl": "/Logos/elk.svg",
-		"link": "https://signoz.io/docs/migration/migrate-from-elk-to-signoz/"
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/metrics.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-elk/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/traces.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-elk/traces/"
+				},
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/logs.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-elk/logs/"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "migrate-from-newrelic",
@@ -121,7 +196,54 @@
 			"signoz"
 		],
 		"imgUrl": "/Logos/newrelic.svg",
-		"link": "https://signoz.io/docs/migration/migrate-from-newrelic-to-signoz/"
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/metrics.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-newrelic/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/traces.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-newrelic/traces/"
+				},
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/logs.svg",
+					"link": "https://signoz.io/docs/migration/migrate-from-newrelic/logs/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "migrate-from-honeycomb",
+		"label": "From Honeycomb",
+		"tags": [
+			"migrate to SigNoz"
+		],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"apm migration",
+			"from honeycomb",
+			"home",
+			"honeycomb",
+			"migrate",
+			"migrate to signoz",
+			"migrate-from-honeycomb",
+			"migration",
+			"migration guide",
+			"opentelemetry",
+			"otel",
+			"signoz"
+		],
+		"imgUrl": "/Logos/honeycomb.svg",
+		"link": "https://signoz.io/docs/migration/migrate-from-honeycomb/data/"
 	},
 	{
 		"dataSource": "migrate-signoz-self-host-to-cloud",
@@ -899,6 +1021,12 @@
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
 					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/"
 				}
 			]
 		}
@@ -1472,7 +1600,7 @@
 	},
 	{
 		"dataSource": "opentelemetry-cloudflare",
-		"label": "Cloudflare - Tracing",
+		"label": "Cloudflare Tracing",
 		"imgUrl": "/Logos/cloudflare.svg",
 		"tags": [
 			"apm/traces"
@@ -1483,7 +1611,6 @@
 			"apm/traces",
 			"application performance monitoring",
 			"cloudflare",
-			"cloudflare - tracing",
 			"cloudflare apm",
 			"cloudflare instrumentation",
 			"cloudflare metrics",
@@ -2060,112 +2187,115 @@
 		"link": "https://signoz.io/docs/userguide/collecting_application_logs_otel_sdk_python/"
 	},
 	{
-		"dataSource": "nodejs-pino-logs",
-		"label": "Pino Logs",
-		"imgUrl": "/Logos/pino.svg",
+		"dataSource": "nodejs-logs",
+		"label": "Node.js Logs",
+		"imgUrl": "/Logos/nodejs.svg",
 		"tags": [
 			"logs"
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
+			"bunyan",
+			"collect nodejs logs",
+			"default logger",
+			"log aggregation nodejs",
+			"log collection nodejs",
 			"logging",
 			"logs",
+			"node js logs",
 			"nodejs",
-			"nodejs pino logging",
-			"nodejs-pino-logs",
+			"nodejs bunyan logs",
+			"nodejs logging",
+			"nodejs logs to signoz",
+			"nodejs pino logs",
+			"nodejs winston logs",
+			"opentelemetry",
+			"otel",
 			"pino",
-			"pino log collection",
-			"pino log exporter",
-			"pino log forwarding",
-			"pino logger nodejs",
-			"pino logs",
-			"pino logs to signoz",
-			"pino opentelemetry integration",
-			"pino structured logs",
-			"pino to otel"
+			"winston"
 		],
-		"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-pino-logs/"
+		"question": {
+			"desc": "Which logger are you using?",
+			"type": "select",
+			"options": [
+				{
+					"key": "nodejs-default-logger",
+					"label": "Default Logger",
+					"imgUrl": "/Logos/nodejs.svg",
+					"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-logs/"
+				},
+				{
+					"key": "nodejs-bunyan-logs",
+					"label": "Bunyan",
+					"imgUrl": "/Logos/logs.svg",
+					"link": "https://signoz.io/docs/logs-management/send-logs/opentelemetry-nodejs-bunyan-logs/"
+				},
+				{
+					"key": "nodejs-winston-logs",
+					"label": "Winston",
+					"imgUrl": "/Logos/winston.svg",
+					"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-winston-logs/"
+				},
+				{
+					"key": "nodejs-pino-logs",
+					"label": "Pino",
+					"imgUrl": "/Logos/pino.svg",
+					"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-pino-logs/"
+				}
+			]
+		}
 	},
 	{
-		"dataSource": "nodejs-winston-logs",
-		"label": "Winston Logs",
-		"imgUrl": "/Logos/winston.svg",
+		"dataSource": "golang-logs",
+		"label": "Golang Logs",
+		"imgUrl": "/Logos/go.svg",
 		"tags": [
 			"logs"
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
-			"logging",
-			"logs",
-			"nodejs",
-			"nodejs winston logging",
-			"nodejs-winston-logs",
-			"otel winston exporter",
-			"winston",
-			"winston log collector",
-			"winston log forwarding",
-			"winston log transport",
-			"winston logs",
-			"winston logs to signoz",
-			"winston nodejs observability",
-			"winston opentelemetry integration",
-			"winston structured logs"
-		],
-		"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-winston-logs/"
-	},
-	{
-		"dataSource": "golang-zap-logs",
-		"label": "Zap Logs",
-		"imgUrl": "/Logos/zap.svg",
-		"tags": [
-			"logs"
-		],
-		"module": "logs",
-		"relatedSearchKeywords": [
-			"collect zap logs",
+			"go",
 			"golang",
-			"golang logging zap",
-			"golang zap logging",
-			"golang-zap-logs",
-			"logging",
-			"logs",
-			"opentelemetry zap integration",
-			"zap",
-			"zap log exporter",
-			"zap logger otel",
-			"zap logs",
-			"zap logs to signoz",
-			"zap observability golang",
-			"zap structured logs"
-		],
-		"link": "https://signoz.io/docs/logs-management/send-logs/zap-to-signoz/"
-	},
-	{
-		"dataSource": "golang-logrus-logs",
-		"label": "Logrus Logs",
-		"imgUrl": "/Logos/logrus.svg",
-		"tags": [
-			"logs"
-		],
-		"module": "logs",
-		"relatedSearchKeywords": [
-			"golang",
-			"golang logrus collector",
-			"golang logrus logging",
-			"golang-logrus-logs",
-			"logging",
+			"golang logs",
+			"go logging",
+			"go structured logs",
+			"go zerolog",
+			"go zap",
+			"go logrus",
+			"golang zerolog",
+			"golang zap",
+			"golang logrus",
 			"logrus",
-			"logrus json logs",
-			"logrus log forwarding",
-			"logrus logs",
-			"logrus observability golang",
-			"logrus otel exporter",
-			"logrus structured logging",
-			"logrus to signoz",
 			"logs",
-			"opentelemetry logrus integration"
+			"opentelemetry",
+			"otel",
+			"zap",
+			"zerolog"
 		],
-		"link": "https://signoz.io/docs/logs-management/send-logs/logrus-to-signoz/"
+		"question": {
+			"desc": "Which logger are you using?",
+			"type": "select",
+			"options": [
+				{
+					"key": "golang-zerolog-logs",
+					"label": "Zerolog",
+					"imgUrl": "/Logos/logs.svg",
+					"link": "https://signoz.io/docs/logs-management/send-logs/zerolog-to-signoz/"
+				},
+				{
+					"key": "golang-logrus-logs",
+					"label": "Logrus",
+					"imgUrl": "/Logos/logrus.svg",
+					"link": "https://signoz.io/docs/logs-management/send-logs/logrus-to-signoz/"
+				},
+				{
+					"key": "golang-zap-logs",
+					"label": "Zap",
+					"imgUrl": "/Logos/zap.svg",
+					"link": "https://signoz.io/docs/logs-management/send-logs/zap-to-signoz/"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "hostmetrics",
@@ -3432,36 +3562,6 @@
 		"link": "https://signoz.io/docs/llm/opentelemetry-openai-monitoring/"
 	},
 	{
-		"dataSource": "llm-monitoring",
-		"label": "LLM Monitoring",
-		"imgUrl": "/Logos/llm-monitoring.svg",
-		"tags": [
-			"LLM Monitoring"
-		],
-		"module": "apm",
-		"relatedSearchKeywords": [
-			"apm",
-			"application performance monitoring",
-			"large language model observability",
-			"llm",
-			"llm inference monitoring",
-			"llm latency metrics",
-			"llm monitoring",
-			"llm monitoring with signoz",
-			"llm performance tracking",
-			"llm response time tracing",
-			"llm-monitoring",
-			"monitor openai",
-			"monitoring",
-			"observability",
-			"openai telemetry",
-			"otel llm integration",
-			"traces",
-			"tracing"
-		],
-		"link": "https://signoz.io/docs/community/llm-monitoring/"
-	},
-	{
 		"dataSource": "anthropic-api",
 		"label": "Anthropic API",
 		"imgUrl": "/Logos/anthropic-api-monitoring.svg",
@@ -3891,7 +3991,7 @@
 		"label": "External API Monitoring Setup",
 		"imgUrl": "/Logos/external-api-monitoring.svg",
 		"tags": [
-			"api-monitoring"
+			"apm/traces"
 		],
 		"module": "api-monitoring",
 		"relatedSearchKeywords": [
@@ -4325,38 +4425,68 @@
 		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-swiftui/"
 	},
 	{
-		"dataSource": "web-vitals",
-		"label": "Web Vitals",
-		"imgUrl": "/Logos/llm-monitoring.svg",
+		"dataSource": "frontend-web-vitals-metrics",
+		"label": "Web Vitals (Metrics)",
+		"imgUrl": "/Logos/metrics.svg",
 		"tags": [
-			"Frontend Monitoring"
+			"Frontend Monitoring",
+			"Metrics"
 		],
-		"module": "apm",
+		"module": "metrics",
 		"relatedSearchKeywords": [
-			"apm",
-			"application performance monitoring",
-			"browser performance tracing",
-			"core web vitals",
-			"frontend",
+			"core web vitals metrics",
+			"frontend metrics",
 			"frontend monitoring",
-			"frontend observability",
 			"frontend performance metrics",
 			"lcp fcp fid cls",
 			"measure page load performance",
-			"monitoring",
-			"observability",
-			"opentelemetry web vitals",
+			"metrics",
+			"opentelemetry web vitals metrics",
+			"user experience metrics",
+			"web metrics",
+			"web vitals metrics",
+			"web vitals monitoring",
+			"react",
+			"angular",
+			"vuejs",
+			"nuxtjs",
+			"svelte",
+			"nextjs"
+		],
+		"link": "https://signoz.io/docs/frontend-monitoring/web-vitals-with-metrics/"
+	},
+	{
+		"dataSource": "frontend-web-vitals-traces",
+		"label": "Web Vitals (Traces)",
+		"imgUrl": "/Logos/traces.svg",
+		"tags": [
+			"Frontend Monitoring",
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"browser performance tracing",
+			"core web vitals traces",
+			"frontend monitoring",
+			"frontend observability",
+			"frontend tracing",
+			"lcp fcp fid cls traces",
+			"measure page load performance",
+			"opentelemetry web vitals traces",
 			"traces",
 			"tracing",
-			"user experience metrics",
-			"vitals",
-			"web",
-			"web vitals",
-			"web vitals monitoring",
+			"user experience tracing",
+			"web tracing",
+			"web vitals traces",
 			"web vitals to signoz",
-			"web-vitals"
+			"react",
+			"angular",
+			"vuejs",
+			"nuxtjs",
+			"svelte",
+			"nextjs"
 		],
-		"link": "https://signoz.io/docs/frontend-monitoring/opentelemetry-web-vitals/"
+		"link": "https://signoz.io/docs/frontend-monitoring/web-vitals-with-traces/"
 	},
 	{
 		"dataSource": "document-load",
@@ -4388,7 +4518,13 @@
 			"opentelemetry page load",
 			"otel document load time",
 			"traces",
-			"tracing"
+			"tracing",
+			"react",
+			"angular",
+			"vuejs",
+			"nuxtjs",
+			"svelte",
+			"nextjs"
 		],
 		"link": "https://signoz.io/docs/frontend-monitoring/document-load/"
 	},
@@ -5094,7 +5230,7 @@
 		"label": "Traefik",
 		"imgUrl": "/Logos/opentelemetry.svg",
 		"tags": [
-			"infrastructure"
+			"infrastructure monitoring"
 		],
 		"module": "infrastructure",
 		"relatedSearchKeywords": [
@@ -5150,9 +5286,9 @@
 		"label": "JVM",
 		"imgUrl": "/Logos/java.svg",
 		"tags": [
-			"runtime"
+			"metrics"
 		],
-		"module": "runtime",
+		"module": "metrics",
 		"relatedSearchKeywords": [
 			"java virtual machine",
 			"jvm",
@@ -5167,9 +5303,9 @@
 		"label": "JMX",
 		"imgUrl": "/Logos/java.svg",
 		"tags": [
-			"runtime"
+			"metrics"
 		],
-		"module": "runtime",
+		"module": "metrics",
 		"relatedSearchKeywords": [
 			"java management extensions",
 			"jmx",
@@ -5185,7 +5321,7 @@
 		"imgUrl": "/Logos/other-metrics.svg",
 		"tags": [
 			"metrics",
-			"infrastructure"
+			"infrastructure monitoring"
 		],
 		"module": "metrics",
 		"relatedSearchKeywords": [
@@ -5206,7 +5342,7 @@
 		"imgUrl": "/Logos/opentelemetry.svg",
 		"tags": [
 			"metrics",
-			"infrastructure"
+			"infrastructure monitoring"
 		],
 		"module": "metrics",
 		"relatedSearchKeywords": [
@@ -5223,30 +5359,6 @@
 			"telemetry"
 		],
 		"link": "https://signoz.io/docs/userguide/otel-metrics-receivers/"
-	},
-	{
-		"dataSource": "datadog-receiver",
-		"label": "Datadog Receiver",
-		"imgUrl": "/Logos/datadog.svg",
-		"tags": [
-			"migration",
-			"infrastructure"
-		],
-		"module": "metrics",
-		"relatedSearchKeywords": [
-			"datadog",
-			"datadog agent",
-			"datadog receiver",
-			"datadog-receiver",
-			"infrastructure",
-			"metrics",
-			"migrate from datadog",
-			"migration",
-			"opentelemetry datadog",
-			"receiver",
-			"telemetry"
-		],
-		"link": "https://signoz.io/docs/migration/opentelemetry-datadog-receiver/"
 	},
 	{
 		"dataSource": "llm-community-integrations",
@@ -5311,25 +5423,128 @@
 		"link": "https://signoz.io/docs/semantic-kernel-observability"
 	},
 	{
-		"dataSource": "frontend-monitoring",
-		"label": "Frontend Monitoring",
-		"imgUrl": "/Logos/llm-monitoring.svg",
+		"dataSource": "frontend-logs",
+		"label": "Frontend Logs",
+		"imgUrl": "/Logos/logs.svg",
+		"tags": [
+			"Frontend Monitoring",
+			"Logs"	
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"browser logs",
+			"collect frontend logs",
+			"frontend",
+			"frontend logging",
+			"frontend logs",
+			"frontend monitoring",
+			"frontend observability",
+			"javascript logs",
+			"js logs",
+			"opentelemetry frontend logs",
+			"react",
+			"angular",
+			"vuejs",
+			"nuxtjs",
+			"svelte",
+			"nextjs"
+		],
+		"link": "https://signoz.io/docs/frontend-monitoring/sending-logs-with-opentelemetry/"
+	},
+	{
+		"dataSource": "frontend-traces",
+		"label": "Frontend Traces",
+		"imgUrl": "/Logos/traces.svg",
 		"tags": [
 			"Frontend Monitoring"
 		],
 		"module": "apm",
 		"relatedSearchKeywords": [
-			"apm",
-			"application performance monitoring",
+			"browser traces",
+			"collect frontend traces",
 			"frontend",
 			"frontend monitoring",
 			"frontend observability",
 			"frontend telemetry",
-			"monitoring",
-			"observability",
-			"traces",
-			"tracing"
+			"frontend tracing",
+			"javascript tracing",
+			"js tracing",
+			"opentelemetry frontend traces",
+			"spa tracing",
+			"react",
+			"angular",
+			"vuejs",
+			"nuxtjs",
+			"svelte",
+			"nextjs"
 		],
-		"link": "https://signoz.io/docs/frontend-monitoring/"
+		"link": "https://signoz.io/docs/frontend-monitoring/sending-traces-with-opentelemetry/"
+	},
+	{
+		"dataSource": "frontend-metrics",
+		"label": "Frontend Metrics",
+		"imgUrl": "/Logos/metrics.svg",
+		"tags": [
+			"Frontend Monitoring",
+			"Metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"browser metrics",
+			"collect frontend metrics",
+			"frontend",
+			"frontend metrics",
+			"frontend monitoring",
+			"frontend observability",
+			"frontend performance metrics",
+			"javascript metrics",
+			"js metrics",
+			"opentelemetry frontend metrics",
+			"react",
+			"angular",
+			"vuejs",
+			"nuxtjs",
+			"svelte",
+			"nextjs"
+		],
+		"link": "https://signoz.io/docs/frontend-monitoring/sending-metrics-with-opentelemetry/"
+	},
+	{
+		"dataSource": "fly-io",
+		"label": "Fly.io",
+		"imgUrl": "/Logos/fly-io.svg",
+		"tags": [
+			"Infrastructure monitoring",
+			"Metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"fly.io",
+			"fly",
+			"metrics",
+			"infrastructure",
+			"cloud",
+			"monitoring"
+		],
+		"link": "https://signoz.io/docs/metrics-management/fly-metrics/"
+	},
+	{
+		"dataSource": "envoy",
+		"label": "Envoy",
+		"imgUrl": "/Logos/envoy.svg",
+		"tags": [
+			"Infrastructure monitoring",
+			"Metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"envoy",
+			"proxy",
+			"metrics",
+			"infrastructure",
+			"service mesh",
+			"monitoring"
+		],
+		"link": "https://signoz.io/docs/userguide/envoy-metrics/"
 	}
 ]
