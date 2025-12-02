@@ -200,7 +200,10 @@ func (m *defaultFieldMapper) getColumn(
 			return indexV3Columns[oldToNew[key.Name]], nil
 		}
 		if _, ok := IntrinsicFieldsDeprecated[key.Name]; ok {
-			return indexV3Columns[oldToNew[key.Name]], nil
+			// Check if we have a mapping for the deprecated intrinsic field
+			if _, ok := indexV3Columns[oldToNew[key.Name]]; ok {
+				return indexV3Columns[oldToNew[key.Name]], nil
+			}
 		}
 
 		if col, ok := indexV3Columns[key.Name]; ok {

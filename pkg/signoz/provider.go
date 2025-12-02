@@ -142,6 +142,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAuthzFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddPublicDashboardsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRoleFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateAuthzFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -153,6 +154,9 @@ func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFacto
 			}),
 			telemetrystore.TelemetryStoreHookFactoryFunc(func(s string) factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
 				return telemetrystorehook.NewLoggingFactory()
+			}),
+			telemetrystore.TelemetryStoreHookFactoryFunc(func(s string) factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
+				return telemetrystorehook.NewInstrumentationFactory(s)
 			}),
 		),
 	)
