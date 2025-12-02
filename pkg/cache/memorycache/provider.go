@@ -204,13 +204,17 @@ func (provider *provider) DeleteMany(_ context.Context, orgID valuer.UUID, cache
 }
 
 func (provider *provider) marshalBinary(ctx context.Context, toMarshal cachetypes.Cacheable) ([]byte, error) {
-	_, span := provider.settings.Tracer().Start(ctx, "binary.Marshal")
+	_, span := provider.settings.Tracer().Start(ctx, "binary.Marshal", trace.WithAttributes(
+		attribute.String(semconv.AttributeDBSystem, "memory"),
+	))
 	defer span.End()
 	return toMarshal.MarshalBinary()
 }
 
 func (provider *provider) unmarshalBinary(ctx context.Context, dest cachetypes.Cacheable, fromCache []byte) error {
-	_, span := provider.settings.Tracer().Start(ctx, "binary.Unmarshal")
+	_, span := provider.settings.Tracer().Start(ctx, "binary.Unmarshal", trace.WithAttributes(
+		attribute.String(semconv.AttributeDBSystem, "memory"),
+	))
 	defer span.End()
 	return dest.UnmarshalBinary(fromCache)
 }
