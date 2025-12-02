@@ -15,7 +15,6 @@ import (
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
@@ -559,63 +558,14 @@ func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) ([]string, []st
 	var metricNames []string
 	var groupedFields []string
 
-	compositeQuery := r.ruleCondition.CompositeQuery
+	result, err := r.queryParser.AnalyzeCompositeQuery(ctx, r.ruleCondition.CompositeQuery)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	for _, query := range compositeQuery.Queries {
-		switch query.Type {
-		case qbtypes.QueryTypeBuilder:
-			switch spec := query.Spec.(type) {
-			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
-				// extract group by fields
-				for _, groupBy := range spec.GroupBy {
-					if groupBy.Name != "" {
-						groupedFields = append(groupedFields, groupBy.Name)
-					}
-				}
-				// extract metric names
-				for _, aggregation := range spec.Aggregations {
-					if aggregation.MetricName != "" {
-						metricNames = append(metricNames, aggregation.MetricName)
-					}
-				}
-			default:
-				// TODO: add support for Traces and Logs Aggregation types
-				if r.logger != nil {
-					r.logger.WarnContext(ctx, "unsupported QueryBuilderQuery type: %T", spec)
-				}
-				continue
-			}
-		case qbtypes.QueryTypePromQL:
-			spec, ok := query.Spec.(qbtypes.PromQuery)
-			if !ok || spec.Query == "" {
-				continue
-			}
-			result, err := r.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, spec.Query)
-			if err != nil {
-				return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "error while analyzing query filter: %s", err.Error())
-			}
-			metricNames = append(metricNames, result.MetricNames...)
-			for _, col := range result.GroupByColumns {
-				groupedFields = append(groupedFields, col.OriginField)
-			}
-		case qbtypes.QueryTypeClickHouseSQL:
-			spec, ok := query.Spec.(qbtypes.ClickHouseQuery)
-			if !ok || spec.Query == "" {
-				continue
-			}
-			result, err := r.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, spec.Query)
-			if err != nil {
-				return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "error while analyzing query filter: %s", err.Error())
-			}
-			metricNames = append(metricNames, result.MetricNames...)
-			for _, col := range result.GroupByColumns {
-				groupedFields = append(groupedFields, col.OriginField)
-			}
-		default:
-			if r.logger != nil {
-				r.logger.WarnContext(ctx, fmt.Sprintf("unsupported query type: %s", query.Type), "rule_name", r.Name())
-			}
-		}
+	metricNames = result.MetricNames
+	for _, col := range result.GroupByColumns {
+		groupedFields = append(groupedFields, col.OriginField)
 	}
 
 	return metricNames, groupedFields, nil
