@@ -1,3 +1,4 @@
+import { ApiRoutingPolicy } from 'api/routingPolicies/getRoutingPolicies';
 import { IAppContext, IUser } from 'providers/App/types';
 import { Channels } from 'types/api/channels/getAll';
 
@@ -71,6 +72,8 @@ export function getUseRoutingPoliciesMockData(
 		isPolicyDetailsModalActionLoading: false,
 		isErrorChannels: false,
 		refreshChannels: jest.fn(),
+		isFetchingRoutingPolicies: false,
+		refetchRoutingPolicies: jest.fn(),
 		...overrides,
 	};
 }
@@ -117,5 +120,43 @@ export function getAppContextMockState(
 		toggleChangelogModal: jest.fn(),
 		versionData: null,
 		hasEditPermission: false,
+	};
+}
+
+export function mockLocation(pathname: string): jest.Mock {
+	return jest.fn().mockReturnValue({
+		pathname,
+	});
+}
+
+export function mockQueryParams(
+	params: Record<string, string | null>,
+): URLSearchParams {
+	const realUrlQuery = new URLSearchParams();
+	Object.entries(params).forEach(([key, value]) => {
+		if (value !== null) {
+			realUrlQuery.set(key, value);
+		}
+	});
+
+	return Object.create(URLSearchParams.prototype, {
+		toString: { value: (): string => realUrlQuery.toString() },
+		get: { value: (key: string): string | null => realUrlQuery.get(key) },
+	});
+}
+
+export function convertRoutingPolicyToApiResponse(
+	routingPolicy: RoutingPolicy,
+): ApiRoutingPolicy {
+	return {
+		id: routingPolicy.id,
+		name: routingPolicy.name,
+		expression: routingPolicy.expression,
+		channels: routingPolicy.channels,
+		description: routingPolicy.description || '',
+		createdAt: routingPolicy.createdAt || '',
+		updatedAt: routingPolicy.updatedAt || '',
+		createdBy: routingPolicy.createdBy || '',
+		updatedBy: routingPolicy.updatedBy || '',
 	};
 }
