@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/queryparser/queryfilterextractor"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	// internal dependencies for actual parsing logic will be added here
 )
 
 type queryParserImpl struct {
