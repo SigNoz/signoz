@@ -40,13 +40,16 @@ export default function RightToolbarActions({
 	if (showLiveLogs) return <div />;
 
 	return (
-		<div>
+		<div className="right-toolbar">
 			{isLoadingQueries ? (
-				<div className="loading-container">
-					<Button className="loading-btn" loading={isLoadingQueries} />
+				<div className="query-in-progress-container">
+					<Button
+						className="periscope-btn ghost query-in-progress-btn"
+						loading={isLoadingQueries}
+					/>
 					<Button
 						icon={<X size={14} />}
-						className="cancel-run"
+						className="periscope-btn secondary cancel-run"
 						onClick={(): void => {
 							if (listQueryKeyRef?.current) {
 								queryClient.cancelQueries(listQueryKeyRef.current);
@@ -56,18 +59,18 @@ export default function RightToolbarActions({
 							}
 						}}
 					>
-						Cancel Run
+						Cancel
 					</Button>
 				</div>
 			) : (
 				<Button
 					type="primary"
-					className="right-toolbar"
+					className="periscope-btn primary run-query-btn"
 					disabled={isLoadingQueries}
 					onClick={onStageRunQuery}
 					icon={<Play size={14} />}
 				>
-					Stage & Run Query
+					Run Query
 				</Button>
 			)}
 		</div>

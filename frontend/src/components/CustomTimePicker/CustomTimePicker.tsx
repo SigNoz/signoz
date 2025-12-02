@@ -2,7 +2,8 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './CustomTimePicker.styles.scss';
 
-import { Input, Popover, Tooltip, Typography } from 'antd';
+import type { InputRef } from 'antd';
+import { Input, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -15,7 +16,6 @@ import {
 import dayjs from 'dayjs';
 import { isValidTimeFormat } from 'lib/getMinMax';
 import { defaultTo, isFunction, noop } from 'lodash-es';
-import debounce from 'lodash-es/debounce';
 import { CheckCircle, ChevronDown, Clock } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -25,13 +25,13 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
 
@@ -64,6 +64,150 @@ interface CustomTimePickerProps {
 	onExitLiveLogs?: () => void;
 }
 
+const formatSelectedTimeValue = (selectedTime: string): string => {
+	console.log('selectedTime', selectedTime);
+
+	// format valid time format to 12-hour format
+	// 1m -> Last 1 minute
+	// 1h -> Last 1 hour
+	// 1d -> Last 1 day
+	// 1w -> Last 1 week
+	// 30m -> Last 30 minutes
+	// 6h -> Last 6 hours
+	// 3d -> Last 3 days
+	// 1w -> Last 1 week
+	// 1month -> Last 1 month
+	// 2months -> Last 2 months
+
+	// parse the string to generate the label
+	const regex = /^(\d+)([mhdw])$/;
+	const match = regex.exec(selectedTime);
+	if (match) {
+		const value = match[1];
+		const unit = match[2];
+
+		const intValue = parseInt(value, 10);
+
+		switch (unit) {
+			case 'm':
+				return `Last ${value} minutes`;
+			case 'h':
+				return `Last ${value} hour${intValue > 1 ? 's' : ''}`;
+			case 'd':
+				return `Last ${value} day${intValue > 1 ? 's' : ''}`;
+			case 'w':
+				return `Last ${value} week${intValue > 1 ? 's' : ''}`;
+			case 'month':
+				return `Last ${value} month${intValue > 1 ? 's' : ''}`;
+			default:
+				return '';
+		}
+	}
+
+	return '';
+};
+
+const getSelectedTimeRangeLabel = (
+	selectedTime: string,
+	selectedTimeValue: string,
+): string => {
+	let selectedTimeLabel = '';
+
+	if (selectedTime === 'custom') {
+		// TODO(shaheer): if the user preference is 12 hour format, then convert the date range string to 12-hour format (pick this up while working on 12/24 hour preference feature)
+		// // Convert the date range string to 12-hour format
+		// const dates = selectedTimeValue.split(' - ');
+		// if (dates.length === 2) {
+		// 	const startDate = dayjs(dates[0], DATE_TIME_FORMATS.UK_DATETIME);
+		// 	const endDate = dayjs(dates[1], DATE_TIME_FORMATS.UK_DATETIME);
+
+		// 	return `${startDate.format(DATE_TIME_FORMATS.UK_DATETIME)} - ${endDate.format(
+		// 		DATE_TIME_FORMATS.UK_DATETIME,
+		// 	)}`;
+		// }
+		return selectedTimeValue;
+	}
+
+	for (let index = 0; index < Options.length; index++) {
+		if (Options[index].value === selectedTime) {
+			selectedTimeLabel = Options[index].label;
+		}
+	}
+
+	for (
+		let index = 0;
+		index < RelativeDurationSuggestionOptions.length;
+		index++
+	) {
+		if (RelativeDurationSuggestionOptions[index].value === selectedTime) {
+			selectedTimeLabel = RelativeDurationSuggestionOptions[index].label;
+		}
+	}
+
+	for (let index = 0; index < FixedDurationSuggestionOptions.length; index++) {
+		if (FixedDurationSuggestionOptions[index].value === selectedTime) {
+			selectedTimeLabel = FixedDurationSuggestionOptions[index].label;
+		}
+	}
+
+	if (isValidTimeFormat(selectedTime)) {
+		selectedTimeLabel = formatSelectedTimeValue(selectedTime);
+	}
+
+	return selectedTimeLabel;
+};
+
+// const getFormattedSelectedTimeValue = (
+// 	selectedTime: string,
+// 	selectedTimeValue: string,
+// ): string => {
+// 	console.log('selectedTime', selectedTime);
+// 	console.log('selectedTimeValue', selectedTimeValue);
+
+// 	if (selectedTime === 'custom') {
+// 		// TODO(shaheer): if the user preference is 12 hour format, then convert the date range string to 12-hour format (pick this up while working on 12/24 hour preference feature)
+// 		// // Convert the date range string to 12-hour format
+// 		// const dates = selectedTimeValue.split(' - ');
+// 		// if (dates.length === 2) {
+// 		// 	const startDate = dayjs(dates[0], DATE_TIME_FORMATS.UK_DATETIME);
+// 		// 	const endDate = dayjs(dates[1], DATE_TIME_FORMATS.UK_DATETIME);
+
+// 		// 	return `${startDate.format(DATE_TIME_FORMATS.UK_DATETIME)} - ${endDate.format(
+// 		// 		DATE_TIME_FORMATS.UK_DATETIME,
+// 		// 	)}`;
+// 		// }
+// 		return selectedTimeValue;
+// 	}
+
+// 	for (let index = 0; index < Options.length; index++) {
+// 		if (Options[index].value === selectedTime) {
+// 			return Options[index].label;
+// 		}
+// 	}
+
+// 	for (
+// 		let index = 0;
+// 		index < RelativeDurationSuggestionOptions.length;
+// 		index++
+// 	) {
+// 		if (RelativeDurationSuggestionOptions[index].value === selectedTime) {
+// 			return RelativeDurationSuggestionOptions[index].label;
+// 		}
+// 	}
+
+// 	for (let index = 0; index < FixedDurationSuggestionOptions.length; index++) {
+// 		if (FixedDurationSuggestionOptions[index].value === selectedTime) {
+// 			return FixedDurationSuggestionOptions[index].label;
+// 		}
+// 	}
+
+// 	if (isValidTimeFormat(selectedTime)) {
+// 		return selectedTime;
+// 	}
+
+// 	return '';
+// };
+
 function CustomTimePicker({
 	onSelect,
 	onError,
@@ -91,18 +235,34 @@ function CustomTimePicker({
 		(state) => state.globalTime,
 	);
 
-	const [inputValue, setInputValue] = useState('');
+	const inputRef = useRef<InputRef | null>(null);
+
+	const [value, setValue] = useState<string>('');
+
 	const [inputStatus, setInputStatus] = useState<'' | 'error' | 'success'>('');
 	const [inputErrorMessage, setInputErrorMessage] = useState<string | null>(
 		null,
 	);
 	const location = useLocation();
+
+	const [showDateTimeOptions, setShowDateTimeOptions] = useState(open);
+
 	const [isInputFocused, setIsInputFocused] = useState(false);
 
 	const [activeView, setActiveView] = useState<ViewType>(DEFAULT_VIEW);
 
 	const { timezone, browserTimezone } = useTimezone();
+
 	const activeTimezoneOffset = timezone.offset;
+
+	useEffect(() => {
+		setShowDateTimeOptions(open);
+	}, [open]);
+
+	useEffect(() => {
+		setValue(getSelectedTimeRangeLabel(selectedTime, selectedValue));
+	}, [selectedTime, selectedValue]);
+
 	const isTimezoneOverridden = useMemo(
 		() => timezone.offset !== browserTimezone.offset,
 		[timezone, browserTimezone],
@@ -120,60 +280,14 @@ function CustomTimePicker({
 
 	const [isOpenedFromFooter, setIsOpenedFromFooter] = useState(false);
 
-	const getSelectedTimeRangeLabel = (
-		selectedTime: string,
-		selectedTimeValue: string,
-	): string => {
-		if (selectedTime === 'custom') {
-			// TODO(shaheer): if the user preference is 12 hour format, then convert the date range string to 12-hour format (pick this up while working on 12/24 hour preference feature)
-			// // Convert the date range string to 12-hour format
-			// const dates = selectedTimeValue.split(' - ');
-			// if (dates.length === 2) {
-			// 	const startDate = dayjs(dates[0], DATE_TIME_FORMATS.UK_DATETIME);
-			// 	const endDate = dayjs(dates[1], DATE_TIME_FORMATS.UK_DATETIME);
-
-			// 	return `${startDate.format(DATE_TIME_FORMATS.UK_DATETIME)} - ${endDate.format(
-			// 		DATE_TIME_FORMATS.UK_DATETIME,
-			// 	)}`;
-			// }
-			return selectedTimeValue;
-		}
-
-		for (let index = 0; index < Options.length; index++) {
-			if (Options[index].value === selectedTime) {
-				return Options[index].label;
-			}
-		}
-
-		for (
-			let index = 0;
-			index < RelativeDurationSuggestionOptions.length;
-			index++
-		) {
-			if (RelativeDurationSuggestionOptions[index].value === selectedTime) {
-				return RelativeDurationSuggestionOptions[index].label;
-			}
-		}
-
-		for (let index = 0; index < FixedDurationSuggestionOptions.length; index++) {
-			if (FixedDurationSuggestionOptions[index].value === selectedTime) {
-				return FixedDurationSuggestionOptions[index].label;
-			}
-		}
-
-		if (isValidTimeFormat(selectedTime)) {
-			return selectedTime;
-		}
-
-		return '';
-	};
-
 	useEffect(() => {
 		if (showLiveLogs) {
 			setSelectedTimePlaceholderValue('Live');
 		} else {
 			const value = getSelectedTimeRangeLabel(selectedTime, selectedValue);
 			setSelectedTimePlaceholderValue(value);
+
+			setValue(value);
 		}
 	}, [selectedTime, selectedValue, showLiveLogs]);
 
@@ -181,25 +295,52 @@ function CustomTimePicker({
 		setOpen(false);
 	};
 
-	const handleOpenChange = (newOpen: boolean): void => {
-		setOpen(newOpen);
-		if (!newOpen) {
-			setCustomDTPickerVisible?.(false);
-			setActiveView('datetime');
+	const handleCustomDateChange = (inputValue: string): void => {
+		const dates = inputValue.split(' - ');
+
+		const startDate = dayjs(dates[0], DATE_TIME_FORMATS.UK_DATETIME_SECONDS);
+		const endDate = dayjs(dates[1], DATE_TIME_FORMATS.UK_DATETIME_SECONDS);
+
+		if (!startDate.isValid() || !endDate.isValid()) {
+			setInputStatus('error');
+			onError(true);
+			setInputErrorMessage('Please enter valid date range');
+
+			return;
 		}
+
+		if (startDate.isAfter(endDate)) {
+			setInputStatus('error');
+			onError(true);
+			setInputErrorMessage('Start date should be before end date');
+
+			return;
+		}
+
+		onCustomDateHandler?.([startDate, endDate]);
+
+		setInputStatus('success');
+		onError(false);
+		setInputErrorMessage(null);
 	};
 
-	const debouncedHandleInputChange = debounce((inputValue): void => {
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const handleDateTimeChange = (inputValue: string): void => {
+		if (!inputValue || inputValue === '') {
+			return;
+		}
+
 		const isValidFormat = /^(\d+)([mhdw])$/.test(inputValue);
-		if (isValidFormat) {
+
+		if (inputValue && isValidFormat) {
 			setInputStatus('success');
 			onError(false);
 			setInputErrorMessage(null);
 
 			const match = inputValue.match(/^(\d+)([mhdw])$/);
 
-			const value = parseInt(match[1], 10);
-			const unit = match[2];
+			const value = match ? parseInt(match[1], 10) : 0;
+			const unit = match ? match[2] : null;
 
 			const currentTime = dayjs();
 			const maxAllowedMinTime = currentTime.subtract(
@@ -239,6 +380,8 @@ function CustomTimePicker({
 					timeStr: inputValue,
 				});
 			}
+		} else if (selectedTime === 'custom') {
+			handleCustomDateChange(inputValue);
 		} else {
 			setInputStatus('error');
 			onError(true);
@@ -247,21 +390,6 @@ function CustomTimePicker({
 				onCustomTimeStatusUpdate(false);
 			}
 		}
-	}, 300);
-
-	const handleInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
-		const inputValue = event.target.value;
-
-		if (inputValue.length > 0) {
-			setOpen(false);
-		} else {
-			setOpen(true);
-		}
-
-		setInputValue(inputValue);
-
-		// Call the debounced function with the input value
-		debouncedHandleInputChange(inputValue);
 	};
 
 	const handleSelect = (label: string, value: string): void => {
@@ -273,12 +401,19 @@ function CustomTimePicker({
 		onSelect(value);
 		setSelectedTimePlaceholderValue(label);
 		setInputStatus('');
+
+		inputRef.current?.input?.blur();
+		setIsInputFocused(false);
 		onError(false);
 		setInputErrorMessage(null);
-		setInputValue('');
 		if (value !== 'custom') {
 			hide();
 		}
+	};
+
+	const handleRecentlyUsedTimeRangeClick = (): void => {
+		setInputStatus('');
+		inputRef.current?.input?.blur();
 	};
 
 	const content = (
@@ -286,6 +421,10 @@ function CustomTimePicker({
 			<div className="time-options-container">
 				{items?.map(({ value, label }) => (
 					<div
+						onMouseDown={(e): void => {
+							// Prevent blur when clicking on options
+							e.preventDefault();
+						}}
 						onClick={(): void => {
 							handleSelect(label, value);
 						}}
@@ -304,19 +443,82 @@ function CustomTimePicker({
 
 	const handleFocus = (): void => {
 		setIsInputFocused(true);
-		setActiveView('datetime');
+		setInputStatus('');
+		setInputErrorMessage(null);
+
+		// Get the raw/editable format for the current selection
+		let editableValue = selectedTime;
+
+		// If it's a custom time, use the selectedValue (date range string)
+		if (selectedTime === 'custom') {
+			editableValue = selectedValue;
+		}
+		// If it's a predefined option, convert back to raw format
+		else if (selectedTime && selectedTime !== 'custom') {
+			// For predefined options, use the selectedTime as is (like "5m", "1h")
+			editableValue = selectedTime;
+		}
+
+		// Update state with the raw format for editing
+		setValue(editableValue);
+
+		setOpen(true);
+		// setCustomDTPickerVisible?.(true);
+		setShowDateTimeOptions(true);
+	};
+
+	const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
+		// Update the value state for controlled input
+		setValue(e.target.value);
+	};
+
+	const handleEnter = (): void => {
+		const newVal = value;
+		setValue('');
+
+		setIsInputFocused(false);
+		if (newVal !== selectedValue) {
+			handleDateTimeChange(newVal);
+		}
+		if (inputRef.current?.input) {
+			inputRef.current.input.blur();
+		}
 	};
 
 	const handleBlur = (): void => {
+		if (!isInputFocused) {
+			return;
+		}
+
+		// Don't close if custom date picker is visible
+		if (customDateTimeVisible) {
+			return;
+		}
+
 		setIsInputFocused(false);
+
+		const newVal = value;
+		setValue('');
+
+		if (newVal !== selectedValue) {
+			handleDateTimeChange(newVal);
+		}
+		if (inputRef.current?.input) {
+			inputRef.current.input.blur();
+		}
+
+		setOpen(false);
+		setCustomDTPickerVisible?.(false);
+		setShowDateTimeOptions(false);
 	};
+
+	// No need for manual DOM sync with controlled input
 
 	// this is required as TopNav component wraps the components and we need to clear the state on path change
 	useEffect(() => {
 		setInputStatus('');
 		onError(false);
 		setInputErrorMessage(null);
-		setInputValue('');
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname]);
 
@@ -333,7 +535,7 @@ function CustomTimePicker({
 	};
 
 	const getTooltipTitle = (): string => {
-		if (selectedTime === 'custom' && inputValue === '' && !open) {
+		if (selectedTime === 'custom' && value === '' && !open) {
 			return `${dayjs(minTime / 1000_000)
 				.tz(timezone.value)
 				.format(DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS)} - ${dayjs(
@@ -357,7 +559,7 @@ function CustomTimePicker({
 
 		return (
 			<div className="time-input-prefix">
-				{inputValue && inputStatus === 'success' ? (
+				{value && inputStatus === 'success' ? (
 					<CheckCircle size={14} color="#51E7A8" />
 				) : (
 					<Tooltip title="Enter time in format (e.g., 1m, 2h, 3d, 4w)">
@@ -371,57 +573,55 @@ function CustomTimePicker({
 	return (
 		<div className="custom-time-picker">
 			<Tooltip title={getTooltipTitle()} placement="top">
-				<Popover
-					className={cx(
-						'timeSelection-input-container',
-						selectedTime === 'custom' && inputValue === '' ? 'custom-time' : '',
-					)}
-					placement="bottomRight"
-					getPopupContainer={popupContainer}
-					rootClassName="date-time-root"
-					content={
-						newPopover ? (
-							<CustomTimePickerPopoverContent
-								setIsOpen={setOpen}
-								customDateTimeVisible={defaultTo(customDateTimeVisible, false)}
-								setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
-								onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
-								onSelectHandler={handleSelect}
-								onGoLive={defaultTo(onGoLive, noop)}
-								onExitLiveLogs={defaultTo(onExitLiveLogs, noop)}
-								options={items}
-								selectedTime={selectedTime}
-								activeView={activeView}
-								setActiveView={setActiveView}
-								setIsOpenedFromFooter={setIsOpenedFromFooter}
-								isOpenedFromFooter={isOpenedFromFooter}
-							/>
-						) : (
-							content
-						)
-					}
-					arrow={false}
-					trigger="click"
-					open={open}
-					onOpenChange={handleOpenChange}
-					style={{
-						padding: 0,
-					}}
-				>
-					<Input
-						className="timeSelection-input"
-						type="text"
-						status={inputValue && inputStatus === 'error' ? 'error' : ''}
-						placeholder={
-							isInputFocused
-								? 'Time Format (1m or 2h or 3d or 4w)'
-								: selectedTimePlaceholderValue
+				<div className="date-time-picker-container">
+					{/* <Popover
+						className={cx(
+							'timeSelection-input-container',
+							selectedTime === 'custom' && inputValue === '' ? 'custom-time' : '',
+						)}
+						placement="bottomRight"
+						getPopupContainer={popupContainer}
+						rootClassName="date-time-root"
+						content={
+							newPopover ? (
+								<CustomTimePickerPopoverContent
+									setIsOpen={setOpen}
+									customDateTimeVisible={defaultTo(customDateTimeVisible, false)}
+									setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
+									onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
+									onSelectHandler={handleSelect}
+									onGoLive={defaultTo(onGoLive, noop)}
+									onExitLiveLogs={defaultTo(onExitLiveLogs, noop)}
+									options={items}
+									selectedTime={selectedTime}
+									activeView={activeView}
+									setActiveView={setActiveView}
+									setIsOpenedFromFooter={setIsOpenedFromFooter}
+									isOpenedFromFooter={isOpenedFromFooter}
+								/>
+							) : (
+								content
+							)
 						}
-						value={inputValue}
-						onFocus={handleFocus}
-						onClick={handleFocus}
+						arrow={false}
+						trigger="click"
+						open={open}
+					> */}
+
+					<Input
+						className={cx(
+							'date-time-picker-input timeSelection-input',
+							selectedTime === 'custom' ? 'custom-time' : '',
+						)}
+						type="text"
+						status={value && inputStatus === 'error' ? 'error' : ''}
+						placeholder={selectedTimePlaceholderValue}
+						ref={inputRef}
+						value={isInputFocused ? value : ''}
+						onChange={handleChange}
 						onBlur={handleBlur}
-						onChange={handleInputChange}
+						onPressEnter={handleEnter}
+						onClick={handleFocus}
 						data-1p-ignore
 						prefix={getInputPrefix()}
 						suffix={
@@ -431,18 +631,45 @@ function CustomTimePicker({
 										<span>{activeTimezoneOffset}</span>
 									</div>
 								)}
-								<ChevronDown
-									size={14}
-									className="cursor-pointer time-input-suffix-icon-badge"
-									onClick={(e): void => {
-										e.stopPropagation();
-										handleViewChange('datetime');
-									}}
-								/>
+								<ChevronDown size={14} />
 							</div>
 						}
 					/>
-				</Popover>
+
+					{showDateTimeOptions && (
+						<div
+							className="date-time-picker-content date-time-root"
+							onMouseDown={(e): void => {
+								// Prevent blur when clicking inside the popover
+								e.preventDefault();
+							}}
+						>
+							{newPopover ? (
+								<CustomTimePickerPopoverContent
+									setIsOpen={setOpen}
+									customDateTimeVisible={defaultTo(customDateTimeVisible, false)}
+									setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
+									onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
+									onHandleRecentlyUsedTimeRangeClick={defaultTo(
+										handleRecentlyUsedTimeRangeClick,
+										noop,
+									)}
+									onSelectHandler={handleSelect}
+									onGoLive={defaultTo(onGoLive, noop)}
+									onExitLiveLogs={defaultTo(onExitLiveLogs, noop)}
+									options={items}
+									selectedTime={selectedTime}
+									activeView={activeView}
+									setActiveView={setActiveView}
+									setIsOpenedFromFooter={setIsOpenedFromFooter}
+									isOpenedFromFooter={isOpenedFromFooter}
+								/>
+							) : (
+								content
+							)}
+						</div>
+					)}
+				</div>
 			</Tooltip>
 			{inputStatus === 'error' && inputErrorMessage && (
 				<Typography.Title level={5} className="valid-format-error">
