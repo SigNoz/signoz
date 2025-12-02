@@ -367,13 +367,13 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				if (isCurrentlyPinned) {
 					return prevItems.filter((i) => i.key !== item.key);
 				}
-				return [item, ...prevItems];
+				return [...prevItems, item];
 			});
 
 			// Get the updated pinned menu items for preference update
 			const updatedPinnedItems = pinnedMenuItems.some((i) => i.key === item.key)
 				? pinnedMenuItems.filter((i) => i.key !== item.key)
-				: [item, ...pinnedMenuItems];
+				: [...pinnedMenuItems, item];
 
 			// Update user preference with the ordered list of item keys
 			updateNavShortcutsPreference(updatedPinnedItems);
