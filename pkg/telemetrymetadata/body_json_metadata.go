@@ -33,6 +33,7 @@ var (
 	CodeFailScanJSONValue       = errors.MustNewCode("fail_scan_json_value")
 	CodeFailScanVariant         = errors.MustNewCode("fail_scan_variant")
 	CodeFailBuildJSONPathsQuery = errors.MustNewCode("fail_build_json_paths_query")
+	CodeNoPathsToQueryIndexes   = errors.MustNewCode("no_paths_to_query_indexes_provided")
 )
 
 // GetBodyJSONPaths extracts body JSON paths from the path_types table
@@ -44,6 +45,9 @@ var (
 //
 // searchOperator: LIKE for pattern matching, EQUAL for exact match
 // Returns: (paths, error)
+// TODO(Piyush): Remove this lint skip
+//
+// nolint:unused
 func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.TelemetryStore,
 	fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 
@@ -156,6 +160,9 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 	return query, args, limit, nil
 }
 
+// TODO(Piyush): Remove this lint skip
+//
+// nolint:unused
 func getJSONPathIndexes(ctx context.Context, telemetryStore telemetrystore.TelemetryStore, paths ...string) (map[string][]telemetrytypes.JSONDataTypeIndex, error) {
 	filteredPaths := []string{}
 	for _, path := range paths {
@@ -165,7 +172,7 @@ func getJSONPathIndexes(ctx context.Context, telemetryStore telemetrystore.Telem
 		filteredPaths = append(filteredPaths, path)
 	}
 	if len(filteredPaths) == 0 {
-		return nil, nil
+		return nil, errors.NewInternalf(CodeNoPathsToQueryIndexes, "no paths to query indexes provided")
 	}
 
 	// list indexes for the paths
