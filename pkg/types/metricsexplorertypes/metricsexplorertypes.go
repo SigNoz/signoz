@@ -261,7 +261,7 @@ func (req *MetricAttributesRequest) UnmarshalJSON(data []byte) error {
 // MetricAttribute represents a single attribute with its values and count.
 type MetricAttribute struct {
 	Key        string   `json:"key"`
-	Value      []string `json:"value"`
+	Values     []string `json:"values"`
 	ValueCount uint64   `json:"valueCount"`
 }
 

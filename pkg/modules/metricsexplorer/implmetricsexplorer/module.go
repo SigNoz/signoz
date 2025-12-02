@@ -825,7 +825,7 @@ func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, s
 	attributes := make([]metricsexplorertypes.MetricAttribute, 0)
 	for rows.Next() {
 		var attr metricsexplorertypes.MetricAttribute
-		if err := rows.Scan(&attr.Key, &attr.Value, &attr.ValueCount); err != nil {
+		if err := rows.Scan(&attr.Key, &attr.Values, &attr.ValueCount); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metric attribute row")
 		}
 		attributes = append(attributes, attr)
