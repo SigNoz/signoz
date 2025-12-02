@@ -852,30 +852,22 @@ func (m *module) getMetricDataPoints(ctx context.Context, metricName string) (ui
 
 // getMetricLastReceived returns the last received timestamp for a metric.
 func (m *module) getMetricLastReceived(ctx context.Context, metricName string) (uint64, error) {
-	// Build CTE for aggregated table MAX
-	aggCTE := sqlbuilder.NewSelectBuilder()
-	aggCTE.Select("MAX(unix_milli) AS max_time")
-	aggCTE.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4Agg30mLocalTableName))
-	aggCTE.Where(aggCTE.E("metric_name", metricName))
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("MAX(last_reported_unix_milli) AS last_received_time")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(sb.E("metric_name", metricName))
 
-	// Build query with CTE
-	cteBuilder := sqlbuilder.With(
-		sqlbuilder.CTEQuery("__agg_max_time").As(aggCTE),
-	)
-
-	// Build main query: get MAX from raw samples table where unix_milli > aggregated MAX
-	finalSB := cteBuilder.Select("MAX(unix_milli) AS last_received_time")
-	finalSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4TableName))
-	finalSB.Where(finalSB.E("metric_name", metricName))
-	finalSB.Where("unix_milli > (SELECT max_time FROM __agg_max_time)")
-
-	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	db := m.telemetryStore.ClickhouseDB()
 	var lastReceived sql.NullInt64
 	err := db.QueryRow(ctx, query, args...).Scan(&lastReceived)
 	if err != nil {
 		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get last received timestamp")
+	}
+
+	if !lastReceived.Valid {
+		return 0, nil
 	}
 
 	return uint64(lastReceived.Int64), nil
