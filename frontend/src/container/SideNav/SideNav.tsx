@@ -168,6 +168,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const [hasScroll, setHasScroll] = useState(false);
 	const navTopSectionRef = useRef<HTMLDivElement>(null);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const prevSidebarOpenRef = useRef<boolean>(isPinned);
+	const userManuallyCollapsedRef = useRef<boolean>(false);
 
 	const checkScroll = useCallback((): void => {
 		if (navTopSectionRef.current) {
@@ -300,7 +302,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		setShowVersionUpdateNotification,
 	] = useState(false);
 
-	const [isMoreMenuCollapsed, setIsMoreMenuCollapsed] = useState(false);
+	const [isMoreMenuCollapsed, setIsMoreMenuCollapsed] = useState(!isPinned);
+	const [isHovered, setIsHovered] = useState(false);
 
 	const [
 		isReorderShortcutNavItemsModalOpen,
@@ -404,6 +407,21 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			setTempPinnedMenuItems(pinnedMenuItems);
 		}
 	}, [isReorderShortcutNavItemsModalOpen, pinnedMenuItems]);
+
+	useEffect(() => {
+		const isSidebarOpen = isPinned || isHovered;
+		const wasSidebarOpen = prevSidebarOpenRef.current;
+
+		if (!isSidebarOpen) {
+			// Sidebar is collapsed - always collapse more menu and reset manual collapse flag
+			setIsMoreMenuCollapsed(true);
+			userManuallyCollapsedRef.current = false;
+		} else if (!wasSidebarOpen && !userManuallyCollapsedRef.current) {
+			// Sidebar just opened (transitioned from collapsed) - auto-expand only if user didn't manually collapse
+			setIsMoreMenuCollapsed(false);
+		}
+		prevSidebarOpenRef.current = isSidebarOpen;
+	}, [isPinned, isHovered]);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -857,6 +875,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					isPinned && 'pinned',
 					isDropdownOpen && 'dropdown-open',
 				)}
+				onMouseEnter={(): void => setIsHovered(true)}
+				onMouseLeave={(): void => setIsHovered(false)}
 			>
 				<div className="brand-container">
 					<div className="brand">
@@ -1005,10 +1025,21 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									<div
 										className="nav-section-title"
 										onClick={(): void => {
+											// Only allow toggling when sidebar is pinned or hovered
+											if (!isPinned && !isHovered) {
+												return;
+											}
+											const newCollapsedState = !isMoreMenuCollapsed;
 											logEvent('Sidebar V2: More menu clicked', {
 												action: isMoreMenuCollapsed ? 'expand' : 'collapse',
 											});
-											setIsMoreMenuCollapsed(!isMoreMenuCollapsed);
+											setIsMoreMenuCollapsed(newCollapsedState);
+											// Track if user manually collapsed it
+											if (newCollapsedState) {
+												userManuallyCollapsedRef.current = true;
+											} else {
+												userManuallyCollapsedRef.current = false;
+											}
 										}}
 									>
 										<div className="nav-section-title-icon">
