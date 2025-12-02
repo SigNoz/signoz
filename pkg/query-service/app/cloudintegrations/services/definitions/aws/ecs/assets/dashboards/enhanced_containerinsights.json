@@ -1031,7 +1031,7 @@
             {
               "aggregations": [
                 {
-                  "metricName": "aws_ECS_ContainerInsights_NetworkRxBytes_max",
+                  "metricName": "aws_ECS_ContainerInsights_ContainerNetworkRxBytes_max",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
                   "temporality": "",
