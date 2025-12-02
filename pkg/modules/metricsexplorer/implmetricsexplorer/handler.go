@@ -2,7 +2,6 @@ package implmetricsexplorer
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -147,29 +146,7 @@ func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request)
 	}
 
 	var in metricsexplorertypes.MetricAttributesRequest
-	in.MetricName = strings.TrimSpace(req.URL.Query().Get("metricName"))
-
-	// Parse optional start from query parameters
-	if startStr := req.URL.Query().Get("start"); startStr != "" {
-		startVal, err := strconv.ParseInt(startStr, 10, 64)
-		if err != nil {
-			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time %q: %v", startStr, err))
-			return
-		}
-		in.Start = &startVal
-	}
-
-	// Parse optional end from query parameters
-	if endStr := req.URL.Query().Get("end"); endStr != "" {
-		endVal, err := strconv.ParseInt(endStr, 10, 64)
-		if err != nil {
-			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time %q: %v", endStr, err))
-			return
-		}
-		in.End = &endVal
-	}
-
-	if err := in.Validate(); err != nil {
+	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
 		render.Error(rw, err)
 		return
 	}

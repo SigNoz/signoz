@@ -221,13 +221,6 @@ type TreemapResponse struct {
 	Samples    []TreemapEntry `json:"samples"`
 }
 
-// MetricAttribute represents a single attribute with its values and count.
-type MetricAttribute struct {
-	Key        string   `json:"key"`
-	Value      []string `json:"value"`
-	ValueCount uint64   `json:"valueCount"`
-}
-
 // MetricAttributesRequest represents the payload for the metric attributes endpoint.
 type MetricAttributesRequest struct {
 	MetricName string `json:"metricName"`
@@ -252,6 +245,24 @@ func (req *MetricAttributesRequest) Validate() error {
 	}
 
 	return nil
+}
+
+// UnmarshalJSON validates input immediately after decoding.
+func (req *MetricAttributesRequest) UnmarshalJSON(data []byte) error {
+	type raw MetricAttributesRequest
+	var decoded raw
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	*req = MetricAttributesRequest(decoded)
+	return req.Validate()
+}
+
+// MetricAttribute represents a single attribute with its values and count.
+type MetricAttribute struct {
+	Key        string   `json:"key"`
+	Value      []string `json:"value"`
+	ValueCount uint64   `json:"valueCount"`
 }
 
 // MetricAttributesResponse is the output structure for the metric attributes endpoint.
