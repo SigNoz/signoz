@@ -11,6 +11,10 @@ import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useHandleLogsPagination } from 'hooks/infraMonitoring/useHandleLogsPagination';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
+import {
+	LOG_FIELD_BODY_KEY,
+	LOG_FIELD_TIMESTAMP_KEY,
+} from 'lib/logs/flatLogData';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { Virtuoso } from 'react-virtuoso';
@@ -75,11 +79,15 @@ function EntityLogs({
 						dataType: 'string',
 						type: '',
 						name: 'body',
+						displayName: 'Body',
+						key: LOG_FIELD_BODY_KEY,
 					},
 					{
 						dataType: 'string',
 						type: '',
 						name: 'timestamp',
+						displayName: 'Timestamp',
+						key: LOG_FIELD_TIMESTAMP_KEY,
 					},
 				]}
 			/>

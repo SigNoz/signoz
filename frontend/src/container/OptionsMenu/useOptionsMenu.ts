@@ -16,11 +16,6 @@ import {
 	QueryKeyRequestProps,
 	QueryKeySuggestionsResponseProps,
 } from 'types/api/querySuggestions/types';
-import {
-	FieldContext,
-	FieldDataType,
-	SignalType,
-} from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -35,7 +30,11 @@ import {
 	OptionsMenuConfig,
 	OptionsQuery,
 } from './types';
-import { getOptionsFromKeys } from './utils';
+import {
+	createTelemetryFieldKey,
+	getOptionsFromKeys,
+	resolveColumnConflicts,
+} from './utils';
 
 interface UseOptionsMenuProps {
 	storageKey?: string;
@@ -104,28 +103,19 @@ const useOptionsMenu = ({
 			return [];
 		}
 
-		const attributesData = initialAttributesResult?.reduce(
-			(acc: TelemetryFieldKey[], attributeResponse): TelemetryFieldKey[] => {
-				const suggestions =
-					Object.values(attributeResponse?.data?.data?.data?.keys || {}).flat() ||
-					[];
+		// Collect all suggestions from all API responses first
+		const allSuggestions =
+			initialAttributesResult?.flatMap((attributeResponse) =>
+				Object.values(attributeResponse?.data?.data?.data?.keys || {})
+					.flat()
+					.map((suggestion) => createTelemetryFieldKey(suggestion)),
+			) || [];
 
-				const mappedSuggestions: TelemetryFieldKey[] = suggestions.map(
-					(suggestion) => ({
-						name: suggestion.name,
-						signal: suggestion.signal as SignalType,
-						fieldDataType: suggestion.fieldDataType as FieldDataType,
-						fieldContext: suggestion.fieldContext as FieldContext,
-					}),
-				);
-
-				return [...acc, ...mappedSuggestions];
-			},
-			[],
-		);
+		// Resolve conflicts and deduplicate once at the end for better performance
+		const attributesData = resolveColumnConflicts(allSuggestions);
 
 		let initialSelected: TelemetryFieldKey[] = (initialOptions?.selectColumns
-			?.map((column) => attributesData.find(({ name }) => name === column))
+			?.map((column) => attributesData.find(({ key }) => key === column))
 			.filter((e) => !!e) || []) as TelemetryFieldKey[];
 
 		if (dataSource === DataSource.TRACES) {
@@ -133,13 +123,15 @@ const useOptionsMenu = ({
 				?.map((col) => {
 					if (col && Object.keys(AllTraceFilterKeyValue).includes(col?.name)) {
 						const metaData = defaultTraceSelectedColumns.find(
-							(coln) => coln.name === col.name,
+							(coln) => coln.key === col.key,
 						);
 
-						return {
-							...metaData,
-							name: metaData?.name || '',
-						};
+						if (metaData) {
+							return {
+								...metaData,
+								name: metaData.name,
+							};
+						}
 					}
 					return col;
 				})
@@ -187,40 +179,23 @@ const useOptionsMenu = ({
 		const searchedAttributesDataList = Object.values(
 			searchedAttributesDataV5?.data.data.keys || {},
 		).flat();
+
 		if (searchedAttributesDataList.length) {
-			if (dataSource === DataSource.LOGS) {
-				const logsSelectedColumns: TelemetryFieldKey[] = defaultLogsSelectedColumns.map(
-					(e) => ({
-						...e,
-						name: e.name,
-						signal: e.signal as SignalType,
-						fieldContext: e.fieldContext as FieldContext,
-						fieldDataType: e.fieldDataType as FieldDataType,
-					}),
-				);
-				return [
-					...logsSelectedColumns,
-					...searchedAttributesDataList
-						.filter((attribute) => attribute.name !== 'body')
-						// eslint-disable-next-line sonarjs/no-identical-functions
-						.map((e) => ({
-							...e,
-							name: e.name,
-							signal: e.signal as SignalType,
-							fieldContext: e.fieldContext as FieldContext,
-							fieldDataType: e.fieldDataType as FieldDataType,
-						})),
-				];
-			}
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			return searchedAttributesDataList.map((e) => ({
-				...e,
-				name: e.name,
-				signal: e.signal as SignalType,
-				fieldContext: e.fieldContext as FieldContext,
-				fieldDataType: e.fieldDataType as FieldDataType,
-			}));
+			// Map all attributes with proper key and displayName
+			const mappedAttributes = searchedAttributesDataList.map((e) =>
+				createTelemetryFieldKey(e),
+			);
+
+			// Combine with default columns and resolve conflicts
+			const allColumns =
+				dataSource === DataSource.LOGS
+					? [...defaultLogsSelectedColumns, ...mappedAttributes]
+					: mappedAttributes;
+
+			// Resolve conflicts with deduplication
+			return resolveColumnConflicts(allColumns);
 		}
+
 		if (dataSource === DataSource.TRACES) {
 			return defaultTraceSelectedColumns.map((e) => ({
 				...e,
@@ -234,19 +209,10 @@ const useOptionsMenu = ({
 	const initialOptionsQuery: OptionsQuery = useMemo(() => {
 		let defaultColumns: TelemetryFieldKey[] = defaultOptionsQuery.selectColumns;
 		if (dataSource === DataSource.TRACES) {
-			defaultColumns = defaultTraceSelectedColumns.map((e) => ({
-				...e,
-				name: e.name,
-			}));
+			defaultColumns = defaultTraceSelectedColumns;
 		} else if (dataSource === DataSource.LOGS) {
 			// eslint-disable-next-line sonarjs/no-identical-functions
-			defaultColumns = defaultLogsSelectedColumns.map((e) => ({
-				...e,
-				name: e.name,
-				signal: e.signal as SignalType,
-				fieldContext: e.fieldContext as FieldContext,
-				fieldDataType: e.fieldDataType as FieldDataType,
-			}));
+			defaultColumns = defaultLogsSelectedColumns;
 		}
 
 		const finalSelectColumns = initialOptions?.selectColumns
@@ -261,7 +227,7 @@ const useOptionsMenu = ({
 	}, [dataSource, initialOptions, initialSelectedColumns]);
 
 	const selectedColumnKeys = useMemo(
-		() => preferences?.columns?.map(({ name }) => name) || [],
+		() => preferences?.columns?.map(({ key }) => key) || [],
 		[preferences?.columns],
 	);
 
@@ -290,7 +256,7 @@ const useOptionsMenu = ({
 				const column = [
 					...searchedAttributeKeys,
 					...(preferences?.columns || []),
-				].find(({ name }) => name === key);
+				].find((column) => column.key === key);
 
 				if (!column) return acc;
 				return [...acc, column];
@@ -319,7 +285,7 @@ const useOptionsMenu = ({
 	const handleRemoveSelectedColumn = useCallback(
 		(columnKey: string) => {
 			const newSelectedColumns = preferences?.columns?.filter(
-				({ name }) => name !== columnKey,
+				(column) => column.key !== columnKey,
 			);
 
 			if (!newSelectedColumns?.length && dataSource !== DataSource.LOGS) {

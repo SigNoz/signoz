@@ -558,8 +558,10 @@ export const getDefaultWidgetData = (
 	decimalPrecision: PrecisionOptionsEnum.TWO, // default decimal precision
 	selectedLogFields: defaultLogsSelectedColumns.map((field) => ({
 		...field,
+		key: field.key ?? '',
 		type: field.fieldContext ?? '',
 		dataType: field.fieldDataType ?? '',
+		displayName: field.displayName || field.name,
 	})),
 	selectedTracesFields: defaultTraceSelectedColumns,
 });
