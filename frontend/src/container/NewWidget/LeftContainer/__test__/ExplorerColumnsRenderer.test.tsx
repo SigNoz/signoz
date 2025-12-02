@@ -450,4 +450,58 @@ describe('ExplorerColumnsRenderer', () => {
 			}
 		});
 	});
+
+	it('does not show isRoot or isEntryPoint in add column dropdown (traces, dashboard table panel)', async () => {
+		(useQueryBuilder as jest.Mock).mockReturnValue({
+			currentQuery: {
+				builder: {
+					queryData: [
+						{
+							dataSource: DataSource.TRACES,
+							aggregateOperator: 'count',
+						},
+					],
+				},
+			},
+		});
+		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+			data: {
+				data: {
+					data: {
+						keys: {
+							attributeKeys: [
+								{ name: 'isRoot', dataType: 'bool', type: '' },
+								{ name: 'isEntryPoint', dataType: 'bool', type: '' },
+								{ name: 'duration', dataType: 'number', type: '' },
+								{ name: 'serviceName', dataType: 'string', type: '' },
+							],
+						},
+					},
+				},
+			},
+			isLoading: false,
+			isError: false,
+		});
+
+		render(
+			<Wrapper>
+				<ExplorerColumnsRenderer
+					selectedLogFields={[]}
+					setSelectedLogFields={mockSetSelectedLogFields}
+					selectedTracesFields={[]}
+					setSelectedTracesFields={mockSetSelectedTracesFields}
+				/>
+			</Wrapper>,
+		);
+
+		await userEvent.click(screen.getByTestId('add-columns-button'));
+
+		// Visible columns should appear
+		expect(screen.getByText('duration')).toBeInTheDocument();
+		expect(screen.getByText('serviceName')).toBeInTheDocument();
+
+		// Hidden columns should NOT appear
+		expect(screen.queryByText('isRoot')).not.toBeInTheDocument();
+		expect(screen.queryByText('isEntryPoint')).not.toBeInTheDocument();
+	});
 });

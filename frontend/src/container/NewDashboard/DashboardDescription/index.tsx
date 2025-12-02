@@ -17,6 +17,7 @@ import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
@@ -29,6 +30,7 @@ import {
 	FileJson,
 	FolderKanban,
 	Fullscreen,
+	Globe,
 	LayoutGrid,
 	LockKeyhole,
 	PenLine,
@@ -127,6 +129,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const [isPanelNameModalOpen, setIsPanelNameModalOpen] = useState<boolean>(
 		false,
 	);
+
+	const [isPublicDashboard, setIsPublicDashboard] = useState<boolean>(false);
 
 	let isAuthor = false;
 
@@ -297,6 +301,38 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		safeNavigate(generatedUrl);
 	}
 
+	const {
+		data: publicDashboardResponse,
+		// refetch: refetchPublicDashboardData,
+		isLoading: isLoadingPublicDashboardData,
+		isFetching: isFetchingPublicDashboardData,
+		error: errorPublicDashboardData,
+		isError: isErrorPublicDashboardData,
+	} = useGetPublicDashboardMeta(selectedDashboard?.id || '');
+
+	useEffect(() => {
+		if (!isLoadingPublicDashboardData && !isFetchingPublicDashboardData) {
+			if (isErrorPublicDashboardData) {
+				const errorDetails = errorPublicDashboardData?.getErrorDetails();
+
+				if (errorDetails?.error?.code === 'public_dashboard_not_found') {
+					setIsPublicDashboard(false);
+				}
+			} else {
+				const publicDashboardData = publicDashboardResponse?.data;
+				if (publicDashboardData?.publicPath) {
+					setIsPublicDashboard(true);
+				}
+			}
+		}
+	}, [
+		isLoadingPublicDashboardData,
+		isFetchingPublicDashboardData,
+		isErrorPublicDashboardData,
+		errorPublicDashboardData,
+		publicDashboardResponse?.data,
+	]);
+
 	return (
 		<Card className="dashboard-description-container">
 			<div className="dashboard-header">
@@ -333,11 +369,21 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							className="dashboard-title"
 							data-testid="dashboard-title"
 						>
-							{' '}
 							{title}
 						</Typography.Text>
 					</Tooltip>
-					{isDashboardLocked && <LockKeyhole size={14} />}
+
+					{isPublicDashboard && (
+						<Tooltip title="This dashboard is publicly accessible">
+							<Globe size={14} className="public-dashboard-icon" />
+						</Tooltip>
+					)}
+
+					{isDashboardLocked && (
+						<Tooltip title="This dashboard is locked">
+							<LockKeyhole size={14} className="lock-dashboard-icon" />
+						</Tooltip>
+					)}
 				</div>
 				<div className="right-section">
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
