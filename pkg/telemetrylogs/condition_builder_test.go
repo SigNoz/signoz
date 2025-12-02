@@ -641,7 +641,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Regexp operator - json body string",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.method",
+				Name:         "http.method",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorRegexp,
 			value:         "GET|POST|PUT",
@@ -651,7 +652,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Not Regexp operator - json body string",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.method",
+				Name:         "http.method",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorNotRegexp,
 			value:         "DELETE|PATCH",
@@ -661,7 +663,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Regexp operator - json body with dots in path",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.user.email",
+				Name:         "user.email",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorRegexp,
 			value:         "^.*@example\\.com$",
@@ -671,7 +674,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Not Regexp operator - json body nested path",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.response.headers.content-type",
+				Name:         "response.headers.content-type",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorNotRegexp,
 			value:         "^text/.*",
