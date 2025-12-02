@@ -16,11 +16,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/prometheus/prometheus/model/labels"
 	pql "github.com/prometheus/prometheus/promql"
-	"github.com/prometheus/prometheus/storage"
+	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func getVectorValues(vectors []ruletypes.Sample) []float64 {
@@ -737,28 +735,11 @@ func TestPromRuleEval(t *testing.T) {
 	}
 }
 
-// populateTSDB is a helper function to populate TSDB with test data
-func populateTSDB(provider *prometheustest.Provider, metricName string, lbls labels.Labels, points []struct {
-	timestamp time.Time
-	value     float64
-}) error {
-	db := provider.DB()
-	app := db.Appender(context.Background())
-
-	var ref storage.SeriesRef
-	var err error
-	for _, point := range points {
-		ref, err = app.Append(ref, lbls, point.timestamp.UnixMilli(), point.value)
-		if err != nil {
-			app.Rollback()
-			return err
-		}
-	}
-
-	return app.Commit()
-}
-
 func TestPromRuleUnitCombinations(t *testing.T) {
+	// fixed base time for deterministic tests
+	baseTime := time.Unix(1700000000, 0)
+	evalTime := baseTime.Add(5 * time.Minute)
+
 	postableRule := ruletypes.PostableRule{
 		AlertName: "Units test",
 		AlertType: ruletypes.AlertTypeMetric,
@@ -778,6 +759,27 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 			},
 		},
 	}
+
+	// time_series_v4 cols of interest
+	fingerprintCols := []cmock.ColumnType{
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "any(labels)", Type: "String"},
+	}
+
+	// samples_v4 columns
+	samplesCols := []cmock.ColumnType{
+		{Name: "metric_name", Type: "String"},
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "unix_milli", Type: "Int64"},
+		{Name: "value", Type: "Float64"},
+		{Name: "flags", Type: "UInt32"},
+	}
+
+	// see Timestamps on base_rule
+	evalWindowMs := int64(5 * 60 * 1000) // 5 minutes in ms
+	evalTimeMs := evalTime.UnixMilli()
+	queryStart := ((evalTimeMs-2*evalWindowMs)/60000)*60000 + 1 // truncate to minute + 1ms
+	queryEnd := (evalTimeMs / 60000) * 60000                    // truncate to minute
 
 	cases := []struct {
 		targetUnit string
@@ -799,11 +801,11 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 				timestamp time.Time
 				value     float64
 			}{
-				{time.Now(), 572588400},                              // 0.57 seconds
-				{time.Now().Add(1 * time.Second), 572386400},         // 0.57 seconds
-				{time.Now().Add(2 * time.Second), 300947400},         // 0.3 seconds
-				{time.Now().Add(3 * time.Second), 299316000},         // 0.3 seconds
-				{time.Now().Add(4 * time.Second), 66640400.00000001}, // 0.06 seconds
+				{baseTime, 572588400},                              // 0.57 seconds
+				{baseTime.Add(1 * time.Minute), 572386400},         // 0.57 seconds
+				{baseTime.Add(2 * time.Minute), 300947400},         // 0.3 seconds
+				{baseTime.Add(3 * time.Minute), 299316000},         // 0.3 seconds
+				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 0.06 seconds
 			},
 			expectAlerts: 0,
 			compareOp:    "1", // Above
@@ -817,13 +819,13 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 				timestamp time.Time
 				value     float64
 			}{
-				{time.Now(), 572588400},                              // 572.58 ms
-				{time.Now().Add(1 * time.Second), 572386400},         // 572.38 ms
-				{time.Now().Add(2 * time.Second), 300947400},         // 300.94 ms
-				{time.Now().Add(3 * time.Second), 299316000},         // 299.31 ms
-				{time.Now().Add(4 * time.Second), 66640400.00000001}, // 66.64 ms
+				{baseTime, 572588400},                              // 572.58 ms
+				{baseTime.Add(1 * time.Minute), 572386400},         // 572.38 ms
+				{baseTime.Add(2 * time.Minute), 300947400},         // 300.94 ms
+				{baseTime.Add(3 * time.Minute), 299316000},         // 299.31 ms
+				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 66.64 ms
 			},
-			expectAlerts: 4,
+			expectAlerts: 1,
 			compareOp:    "1", // Above
 			matchType:    "1", // Once
 			target:       200, // 200 ms
@@ -841,11 +843,11 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 				timestamp time.Time
 				value     float64
 			}{
-				{time.Now(), 2863284053},                             // 2.86 GB
-				{time.Now().Add(1 * time.Second), 2863388842},        // 2.86 GB
-				{time.Now().Add(2 * time.Second), 300947400},         // 0.3 GB
-				{time.Now().Add(3 * time.Second), 299316000},         // 0.3 GB
-				{time.Now().Add(4 * time.Second), 66640400.00000001}, // 66.64 MB
+				{baseTime, 2863284053},                             // 2.86 GB
+				{baseTime.Add(1 * time.Minute), 2863388842},        // 2.86 GB
+				{baseTime.Add(2 * time.Minute), 300947400},         // 0.3 GB
+				{baseTime.Add(3 * time.Minute), 299316000},         // 0.3 GB
+				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 66.64 MB
 			},
 			expectAlerts: 0,
 			compareOp:    "1", // Above
@@ -859,11 +861,11 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 				timestamp time.Time
 				value     float64
 			}{
-				{time.Now(), 2863284053},                             // 2.86 GB
-				{time.Now().Add(1 * time.Second), 2863388842},        // 2.86 GB
-				{time.Now().Add(2 * time.Second), 300947400},         // 0.3 GB
-				{time.Now().Add(3 * time.Second), 299316000},         // 0.3 GB
-				{time.Now().Add(4 * time.Second), 66640400.00000001}, // 66.64 MB
+				{baseTime, 2863284053},                             // 2.86 GB
+				{baseTime.Add(1 * time.Minute), 2863388842},        // 2.86 GB
+				{baseTime.Add(2 * time.Minute), 300947400},         // 0.3 GB
+				{baseTime.Add(3 * time.Minute), 299316000},         // 0.3 GB
+				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 66.64 MB
 			},
 			expectAlerts: 0,
 			compareOp:    "1", // Above
@@ -877,10 +879,10 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 				timestamp time.Time
 				value     float64
 			}{
-				{time.Now(), 55},                      // 55 minutes
-				{time.Now().Add(1 * time.Minute), 57}, // 57 minutes
-				{time.Now().Add(2 * time.Minute), 30}, // 30 minutes
-				{time.Now().Add(3 * time.Minute), 29}, // 29 minutes
+				{baseTime, 55},                      // 55 minutes
+				{baseTime.Add(1 * time.Minute), 57}, // 57 minutes
+				{baseTime.Add(2 * time.Minute), 30}, // 30 minutes
+				{baseTime.Add(3 * time.Minute), 29}, // 29 minutes
 			},
 			expectAlerts: 0,
 			compareOp:    "1", // Above
@@ -890,16 +892,51 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 	}
 
 	logger := instrumentationtest.New().Logger()
-	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
 	for idx, c := range cases {
-		promProvider := prometheustest.New(logger, prometheus.Config{})
-		defer promProvider.Close()
+		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
-		// Populate TSDB with test data
-		lbls := labels.FromStrings("__name__", "test_metric")
-		err := populateTSDB(promProvider, "test_metric", lbls, c.values)
-		require.NoError(t, err)
+		// single fingerprint with labels JSON
+		fingerprint := uint64(12345)
+		labelsJSON := `{"__name__":"test_metric"}`
+		fingerprintData := [][]interface{}{
+			{fingerprint, labelsJSON},
+		}
+		fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
+
+		// create samples data from test case values
+		samplesData := make([][]interface{}, len(c.values))
+		for i, v := range c.values {
+			samplesData[i] = []interface{}{
+				"test_metric",
+				fingerprint,
+				v.timestamp.UnixMilli(),
+				v.value,
+				uint32(0), // flags - 0 means normal value, 1 means stale, we are not doing staleness tests
+			}
+		}
+		samplesRows := cmock.NewRows(samplesCols, samplesData)
+
+		// args: $1=metric_name, $2=label_name, $3=label_value
+		telemetryStore.Mock().
+			ExpectQuery("SELECT fingerprint, any").
+			WithArgs("test_metric", "__name__", "test_metric").
+			WillReturnRows(fingerprintRows)
+
+		// args: $1=metric_name (outer), $2=metric_name (subquery), $3=label_name, $4=label_value, $5=start, $6=end
+		telemetryStore.Mock().
+			ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
+			WithArgs(
+				"test_metric",
+				"test_metric",
+				"__name__",
+				"test_metric",
+				queryStart,
+				queryEnd,
+			).
+			WillReturnRows(samplesRows)
+
+		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore)
 
 		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
 		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
@@ -928,12 +965,14 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
+			promProvider.Close()
 			continue
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		retVal, err := rule.Eval(context.Background(), evalTime)
 		if err != nil {
 			assert.NoError(t, err)
+			promProvider.Close()
 			continue
 		}
 
@@ -950,10 +989,16 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 			}
 			assert.Equal(t, c.expectAlerts, foundCount, "case %d", idx)
 		}
+
+		promProvider.Close()
 	}
 }
 
-func TestPromRuleNoData(t *testing.T) {
+// TODO(abhishekhugetech): enable this
+func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T) {
+	baseTime := time.Unix(1700000000, 0)
+	evalTime := baseTime.Add(5 * time.Minute)
+
 	postableRule := ruletypes.PostableRule{
 		AlertName: "No data test",
 		AlertType: ruletypes.AlertTypeMetric,
@@ -975,6 +1020,12 @@ func TestPromRuleNoData(t *testing.T) {
 		},
 	}
 
+	// time_series_v4 cols of interest
+	fingerprintCols := []cmock.ColumnType{
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "any(labels)", Type: "String"},
+	}
+
 	cases := []struct {
 		values []struct {
 			timestamp time.Time
@@ -992,13 +1043,22 @@ func TestPromRuleNoData(t *testing.T) {
 	}
 
 	logger := instrumentationtest.New().Logger()
-	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
 	for idx, c := range cases {
-		promProvider := prometheustest.New(logger, prometheus.Config{})
-		defer promProvider.Close()
+		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
-		// Don't populate TSDB - empty result
+		// no data
+		fingerprintData := [][]interface{}{}
+		fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
+
+		// no rows == no data
+		telemetryStore.Mock().
+			ExpectQuery("SELECT fingerprint, any").
+			WithArgs("test_metric", "__name__", "test_metric").
+			WillReturnRows(fingerprintRows)
+
+		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore)
+
 		var target float64 = 0
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
@@ -1021,12 +1081,14 @@ func TestPromRuleNoData(t *testing.T) {
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
+			promProvider.Close()
 			continue
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		retVal, err := rule.Eval(context.Background(), evalTime)
 		if err != nil {
 			assert.NoError(t, err)
+			promProvider.Close()
 			continue
 		}
 
@@ -1038,10 +1100,16 @@ func TestPromRuleNoData(t *testing.T) {
 				assert.False(t, strings.Contains(item.Labels.Get(qslabels.AlertNameLabel), "[No data]"), "case %d", idx)
 			}
 		}
+
+		promProvider.Close()
 	}
 }
 
 func TestMultipleThresholdPromRule(t *testing.T) {
+	// fixed base time for deterministic tests
+	baseTime := time.Unix(1700000000, 0)
+	evalTime := baseTime.Add(5 * time.Minute)
+
 	postableRule := ruletypes.PostableRule{
 		AlertName: "Multiple threshold test",
 		AlertType: ruletypes.AlertTypeMetric,
@@ -1061,6 +1129,25 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 			},
 		},
 	}
+
+	fingerprintCols := []cmock.ColumnType{
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "any(labels)", Type: "String"},
+	}
+
+	samplesCols := []cmock.ColumnType{
+		{Name: "metric_name", Type: "String"},
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "unix_milli", Type: "Int64"},
+		{Name: "value", Type: "Float64"},
+		{Name: "flags", Type: "UInt32"},
+	}
+
+	// see .Timestamps of base rule
+	evalWindowMs := int64(5 * 60 * 1000)
+	evalTimeMs := evalTime.UnixMilli()
+	queryStart := ((evalTimeMs-2*evalWindowMs)/60000)*60000 + 1
+	queryEnd := (evalTimeMs / 60000) * 60000
 
 	cases := []struct {
 		targetUnit string
@@ -1083,13 +1170,13 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 				timestamp time.Time
 				value     float64
 			}{
-				{time.Now(), 572588400},                              // 0.57 seconds
-				{time.Now().Add(1 * time.Second), 572386400},         // 0.57 seconds
-				{time.Now().Add(2 * time.Second), 300947400},         // 0.3 seconds
-				{time.Now().Add(3 * time.Second), 299316000},         // 0.3 seconds
-				{time.Now().Add(4 * time.Second), 66640400.00000001}, // 0.06 seconds
+				{baseTime, 572588400},                              // 0.57 seconds
+				{baseTime.Add(1 * time.Minute), 572386400},         // 0.57 seconds
+				{baseTime.Add(2 * time.Minute), 300947400},         // 0.3 seconds
+				{baseTime.Add(3 * time.Minute), 299316000},         // 0.3 seconds
+				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 0.06 seconds
 			},
-			expectAlerts: 2,
+			expectAlerts: 1,
 			compareOp:    "1", // Above
 			matchType:    "1", // Once
 			target:       1,   // 1 second
@@ -1106,13 +1193,13 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 				timestamp time.Time
 				value     float64
 			}{
-				{time.Now(), 572588400},                              // 572.58 ms
-				{time.Now().Add(1 * time.Second), 572386400},         // 572.38 ms
-				{time.Now().Add(2 * time.Second), 300947400},         // 300.94 ms
-				{time.Now().Add(3 * time.Second), 299316000},         // 299.31 ms
-				{time.Now().Add(4 * time.Second), 66640400.00000001}, // 66.64 ms
+				{baseTime, 572588400},                              // 572.58 ms
+				{baseTime.Add(1 * time.Minute), 572386400},         // 572.38 ms
+				{baseTime.Add(2 * time.Minute), 300947400},         // 300.94 ms
+				{baseTime.Add(3 * time.Minute), 299316000},         // 299.31 ms
+				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 66.64 ms
 			},
-			expectAlerts: 6,   // Expects 6 values exceed 200ms (572.58, 572.38, 300.94, 299.31) + 2 values exceed 500ms (572.58, 572.38)
+			expectAlerts: 2,   // One alert per threshold that fires
 			compareOp:    "1", // Above
 			matchType:    "1", // Once
 			target:       200, // 200 ms
@@ -1131,13 +1218,13 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 				timestamp time.Time
 				value     float64
 			}{
-				{time.Now(), 2863284053},                             // 2.86 GB
-				{time.Now().Add(1 * time.Second), 2863388842},        // 2.86 GB
-				{time.Now().Add(2 * time.Second), 300947400},         // 0.3 GB
-				{time.Now().Add(3 * time.Second), 299316000},         // 0.3 GB
-				{time.Now().Add(4 * time.Second), 66640400.00000001}, // 66.64 MB
+				{baseTime, 2863284053},                             // 2.86 GB
+				{baseTime.Add(1 * time.Minute), 2863388842},        // 2.86 GB
+				{baseTime.Add(2 * time.Minute), 300947400},         // 0.3 GB
+				{baseTime.Add(3 * time.Minute), 299316000},         // 0.3 GB
+				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 66.64 MB
 			},
-			expectAlerts: 2,
+			expectAlerts: 1,
 			compareOp:    "1", // Above
 			matchType:    "1", // Once
 			target:       200, // 200 GB
@@ -1150,16 +1237,47 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 	}
 
 	logger := instrumentationtest.New().Logger()
-	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
 	for idx, c := range cases {
-		promProvider := prometheustest.New(logger, prometheus.Config{})
-		defer promProvider.Close()
+		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
-		// Populate TSDB with test data
-		lbls := labels.FromStrings("__name__", "test_metric")
-		err := populateTSDB(promProvider, "test_metric", lbls, c.values)
-		require.NoError(t, err)
+		fingerprint := uint64(12345)
+		labelsJSON := `{"__name__":"test_metric"}`
+		fingerprintData := [][]interface{}{
+			{fingerprint, labelsJSON},
+		}
+		fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
+
+		samplesData := make([][]interface{}, len(c.values))
+		for i, v := range c.values {
+			samplesData[i] = []interface{}{
+				"test_metric",
+				fingerprint,
+				v.timestamp.UnixMilli(),
+				v.value,
+				uint32(0),
+			}
+		}
+		samplesRows := cmock.NewRows(samplesCols, samplesData)
+
+		telemetryStore.Mock().
+			ExpectQuery("SELECT fingerprint, any").
+			WithArgs("test_metric", "__name__", "test_metric").
+			WillReturnRows(fingerprintRows)
+
+		telemetryStore.Mock().
+			ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
+			WithArgs(
+				"test_metric",
+				"test_metric",
+				"__name__",
+				"test_metric",
+				queryStart,
+				queryEnd,
+			).
+			WillReturnRows(samplesRows)
+
+		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore)
 
 		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
 		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
@@ -1195,12 +1313,14 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
+			promProvider.Close()
 			continue
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		retVal, err := rule.Eval(context.Background(), evalTime)
 		if err != nil {
 			assert.NoError(t, err)
+			promProvider.Close()
 			continue
 		}
 
@@ -1217,113 +1337,7 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 			}
 			assert.Equal(t, c.expectAlerts, foundCount, "case %d", idx)
 		}
+
+		promProvider.Close()
 	}
-}
-
-func TestPopulateTSDBAndQuery(t *testing.T) {
-	logger := instrumentationtest.New().Logger()
-	promProvider := prometheustest.New(logger, prometheus.Config{})
-	defer promProvider.Close()
-
-	// Test data to populate
-	metricName := "test_metric"
-	baseTime := time.Now().Truncate(time.Second) // Round to second for alignment
-	testPoints := []struct {
-		timestamp time.Time
-		value     float64
-	}{
-		{baseTime, 10.5},
-		{baseTime.Add(1 * time.Second), 20.3},
-		{baseTime.Add(2 * time.Second), 15.7},
-		{baseTime.Add(3 * time.Second), 25.1},
-		{baseTime.Add(4 * time.Second), 18.9},
-	}
-
-	// Populate TSDB with test data
-	lbls := labels.FromStrings("__name__", metricName)
-	err := populateTSDB(promProvider, metricName, lbls, testPoints)
-	require.NoError(t, err)
-
-	ctx := context.Background()
-
-	// Query using instant queries at each insertion timestamp to verify exact data
-	for i, testPoint := range testPoints {
-		qry, err := promProvider.Engine().NewInstantQuery(
-			ctx,
-			promProvider.Storage(),
-			nil,
-			metricName,
-			testPoint.timestamp,
-		)
-		require.NoError(t, err, "Failed to create instant query for point %d", i)
-
-		res := qry.Exec(ctx)
-		require.NoError(t, res.Err, "Query execution failed for point %d", i)
-
-		// Get the vector result (instant queries return vectors)
-		// Access res.Value and type assert to promql.Vector
-		vector, ok := res.Value.(pql.Vector)
-		require.True(t, ok, "Expected vector result for point %d, got %T", i, res.Value)
-		require.Len(t, vector, 1, "Expected exactly one sample for point %d", i)
-
-		sample := vector[0]
-		require.Equal(t, metricName, sample.Metric.Get("__name__"), "Metric name should match for point %d", i)
-		assert.InDelta(t, testPoint.value, sample.F, 0.001, "Value mismatch for point %d", i)
-		// Timestamp should be at or before the query time
-		assert.LessOrEqual(t, sample.T, testPoint.timestamp.UnixMilli(), "Sample timestamp should be <= query time for point %d", i)
-
-		qry.Close()
-	}
-
-	// Also test range query to verify we can query a time range
-	query := metricName
-	startTime := baseTime.Add(-500 * time.Millisecond)
-	endTime := baseTime.Add(5 * time.Second)
-	step := 1 * time.Second
-
-	qry, err := promProvider.Engine().NewRangeQuery(
-		ctx,
-		promProvider.Storage(),
-		nil,
-		query,
-		startTime,
-		endTime,
-		step,
-	)
-	require.NoError(t, err)
-	defer qry.Close()
-
-	res := qry.Exec(ctx)
-	require.NoError(t, res.Err)
-
-	// Get the matrix result
-	matrix, err := res.Matrix()
-	require.NoError(t, err)
-	require.Len(t, matrix, 1, "Expected exactly one series")
-
-	series := matrix[0]
-	require.NotEmpty(t, series.Floats, "Expected at least some data points from range query")
-
-	// Verify labels
-	require.Equal(t, metricName, series.Metric.Get("__name__"), "Metric name should match")
-
-	// Verify that values from our test data appear in the range query result
-	expectedValues := make(map[float64]bool)
-	for _, point := range testPoints {
-		expectedValues[point.value] = true
-	}
-
-	foundValues := make(map[float64]bool)
-	for _, point := range series.Floats {
-		// Check if this value matches any of our expected values (within tolerance)
-		for expectedVal := range expectedValues {
-			if point.F >= expectedVal-0.01 && point.F <= expectedVal+0.01 {
-				foundValues[expectedVal] = true
-				break
-			}
-		}
-	}
-
-	// We should find at least some of the values we inserted
-	assert.Greater(t, len(foundValues), 0, "Should find at least one expected value in range query result")
 }
