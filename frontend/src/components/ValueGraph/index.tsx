@@ -3,7 +3,7 @@ import './ValueGraph.styles.scss';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getBackgroundColorAndThresholdCheck } from './utils';
@@ -17,11 +17,14 @@ function ValueGraph({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [fontSize, setFontSize] = useState('2.5vw');
 
-	// Parse value to separate number and unit (prefix and suffix)
-	const matches = value.match(/^([^\d.]*)?([\d.]+[KMB]?)([^\d.]*)?$/);
-	const numericValue = matches?.[2] || value;
-	const prefixUnit = matches?.[1]?.trim() || '';
-	const suffixUnit = matches?.[3]?.trim() || '';
+	const { numericValue, prefixUnit, suffixUnit } = useMemo(() => {
+		const matches = value.match(/^([^\d.]*)?([\d.]+[KMB]?)([^\d.]*)?$/);
+		return {
+			numericValue: matches?.[2] || value,
+			prefixUnit: matches?.[1]?.trim() || '',
+			suffixUnit: matches?.[3]?.trim() || '',
+		};
+	}, [value]);
 
 	// Adjust font size based on container size
 	useEffect(() => {
