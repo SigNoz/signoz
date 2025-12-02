@@ -139,8 +139,8 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	return (
 		<div className="error-details-container">
-			<Typography>{errorDetail.exceptionType}</Typography>
-			<Typography>{errorDetail.exceptionMessage}</Typography>
+			<Typography.Title level={4}>{errorDetail.exceptionType}</Typography.Title>
+			<Typography.Text>{errorDetail.exceptionMessage}</Typography.Text>
 			<Divider />
 
 			<EventContainer>
