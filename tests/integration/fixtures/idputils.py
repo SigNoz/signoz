@@ -71,6 +71,7 @@ def create_saml_client(
                     "saml_signature_canonicalization_method": "http://www.w3.org/2001/10/xml-exc-c14n#",
                     "saml.onetimeuse.condition": "false",
                     "saml.server.signature.keyinfo.xmlSigKeyInfoKeyNameTransformer": "NONE",
+                    "saml_assertion_consumer_url_post": urljoin(f"{signoz.self.host_configs['8080'].base()}", callback_path)
                 },
                 "authenticationFlowBindingOverrides": {},
                 "fullScopeAllowed": True,
