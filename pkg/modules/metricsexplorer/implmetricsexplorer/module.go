@@ -796,10 +796,7 @@ func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, s
 		"groupUniqArray(1000)(attr_string_value) AS values",
 		"count(DISTINCT attr_string_value) AS valueCount",
 	)
-	// TODO(nikhilmantri0902, srikanthccv): should FINAL be used here? Final gives a more accurate response
-	// by letting asynchronous merging happen in case of aggregating merge tree. But do we need such an
-	// accurate answer here vs the extra cost used with final?
-	sb.From(fmt.Sprintf("%s.%s FINAL", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
 	sb.Where(sb.E("metric_name", metricName))
 	sb.Where("NOT startsWith(attr_name, '__')")
 
