@@ -26,6 +26,11 @@ type UseGetQueryRange = (
 	version: string,
 	options?: UseGetQueryRangeOptions,
 	headers?: Record<string, string>,
+	publicQueryMeta?: {
+		isPublic: boolean;
+		widgetIndex: number;
+		publicDashboardId: string;
+	},
 ) => UseQueryResult<
 	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
 	Error
@@ -36,6 +41,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 	version,
 	options,
 	headers,
+	publicQueryMeta,
 ) => {
 	const { selectedDashboard } = useDashboard();
 
@@ -156,6 +162,8 @@ export const useGetQueryRange: UseGetQueryRange = (
 				dynamicVariables,
 				signal,
 				headers,
+				undefined,
+				publicQueryMeta,
 			),
 		...options,
 		retry,
