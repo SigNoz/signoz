@@ -17,10 +17,11 @@ function ValueGraph({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [fontSize, setFontSize] = useState('2.5vw');
 
-	// Parse value to separate number and unit (assuming unit is at the end)
-	const matches = value.match(/([\d.]+[KMB]?)(.*)$/);
-	const numericValue = matches?.[1] || value;
-	const unit = matches?.[2]?.trim() || '';
+	// Parse value to separate number and unit (prefix and suffix)
+	const matches = value.match(/^([^\d.]*)?([\d.]+[KMB]?)([^\d.]*)?$/);
+	const numericValue = matches?.[2] || value;
+	const prefixUnit = matches?.[1]?.trim() || '';
+	const suffixUnit = matches?.[3]?.trim() || '';
 
 	// Adjust font size based on container size
 	useEffect(() => {
@@ -65,8 +66,24 @@ function ValueGraph({
 			}}
 		>
 			<div className="value-text-container">
+				{prefixUnit && (
+					<Typography.Text
+						className="value-graph-unit"
+						data-testid="value-graph-prefix-unit"
+						style={{
+							color:
+								threshold.thresholdFormat === 'Text'
+									? threshold.thresholdColor
+									: undefined,
+							fontSize: `calc(${fontSize} * 0.7)`,
+						}}
+					>
+						{prefixUnit}
+					</Typography.Text>
+				)}
 				<Typography.Text
 					className="value-graph-text"
+					data-testid="value-graph-text"
 					style={{
 						color:
 							threshold.thresholdFormat === 'Text'
@@ -77,9 +94,10 @@ function ValueGraph({
 				>
 					{numericValue}
 				</Typography.Text>
-				{unit && (
+				{suffixUnit && (
 					<Typography.Text
 						className="value-graph-unit"
+						data-testid="value-graph-suffix-unit"
 						style={{
 							color:
 								threshold.thresholdFormat === 'Text'
@@ -88,7 +106,7 @@ function ValueGraph({
 							fontSize: `calc(${fontSize} * 0.7)`,
 						}}
 					>
-						{unit}
+						{suffixUnit}
 					</Typography.Text>
 				)}
 			</div>
