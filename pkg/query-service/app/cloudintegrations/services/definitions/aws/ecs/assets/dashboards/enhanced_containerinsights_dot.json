@@ -1183,7 +1183,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId != \"\" And TaskId in $TaskId"
+                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId != \"\" AND TaskId in $TaskId"
               },
               "functions": [],
               "groupBy": [
@@ -1572,5 +1572,5 @@
       "yAxisUnit": "Bps"
     }
   ],
-  "uuid": "019ada51-9b8a-75b8-aa67-8fd35114855c"
+  "uuid": "019add91-55bd-778b-8459-60e19b691b6e"
 }
