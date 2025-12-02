@@ -93,8 +93,7 @@ def test_create_auth_domain(
         f"{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}",
         {
             "saml_idp_initiated_sso_url_name": "idp-initiated-saml-test",
-            "saml_idp_initiated_sso_relay_state": relay_state_url,
-            "saml_assertion_consumer_url_post": signoz.self.host_configs["8080"].get("/api/v1/complete/saml")
+            "saml_idp_initiated_sso_relay_state": relay_state_url
         }
     )
 
