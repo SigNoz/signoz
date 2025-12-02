@@ -404,9 +404,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		if hasLogsQuery {
 			// check if any enrichment is required for logs if yes then enrich them
 			if logsv3.EnrichmentRequired(params) {
-				logsFields, err := r.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(params.CompositeQuery))
-				if err != nil {
-					return nil, err
+				logsFields, apiErr := r.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(params.CompositeQuery))
+				if apiErr != nil {
+					return nil, apiErr.ToError()
 				}
 				logsKeys := model.GetLogFieldsV3(ctx, params, logsFields)
 				r.logsKeys = logsKeys
@@ -488,7 +488,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 				continue
 			}
 		}
-		resultSeries, err := r.Threshold.ShouldAlert(*series, r.Unit())
+		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+			ActiveAlerts: r.ActiveAlertsLabelFP(),
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -565,7 +567,9 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 				continue
 			}
 		}
-		resultSeries, err := r.Threshold.ShouldAlert(*series, r.Unit())
+		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+			ActiveAlerts: r.ActiveAlertsLabelFP(),
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -666,13 +670,14 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		// Links with timestamps should go in annotations since labels
 		// is used alert grouping, and we want to group alerts with the same
 		// label set, but different timestamps, together.
-		if r.typ == ruletypes.AlertTypeTraces {
+		switch r.typ {
+		case ruletypes.AlertTypeTraces:
 			link := r.prepareLinksToTraces(ctx, ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
 				r.logger.InfoContext(ctx, "adding traces link to annotations", "link", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link))
 				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
 			}
-		} else if r.typ == ruletypes.AlertTypeLogs {
+		case ruletypes.AlertTypeLogs:
 			link := r.prepareLinksToLogs(ctx, ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
 				r.logger.InfoContext(ctx, "adding logs link to annotations", "link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link))
@@ -698,6 +703,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 			GeneratorURL:      r.GeneratorURL(),
 			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
 			Missing:           smpl.IsMissing,
+			IsRecovering:      smpl.IsRecovering,
 		}
 	}
 
@@ -711,6 +717,9 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
+			// Update the recovering and missing state of existing alert
+			alert.IsRecovering = a.IsRecovering
+			alert.Missing = a.Missing
 			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
 				alert.Receivers = ruleReceiverMap[v]
 			}
@@ -735,6 +744,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 				delete(r.Active, fp)
 			}
 			if a.State != model.StateInactive {
+				r.logger.DebugContext(ctx, "converting firing alert to inActive", "name", r.Name())
 				a.State = model.StateInactive
 				a.ResolvedAt = ts
 				itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
@@ -752,12 +762,37 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		}
 
 		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
+			r.logger.DebugContext(ctx, "converting pending alert to firing", "name", r.Name())
 			a.State = model.StateFiring
 			a.FiredAt = ts
 			state := model.StateFiring
 			if a.Missing {
 				state = model.StateNoData
 			}
+			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
+				RuleID:       r.ID(),
+				RuleName:     r.Name(),
+				State:        state,
+				StateChanged: true,
+				UnixMilli:    ts.UnixMilli(),
+				Labels:       model.LabelsString(labelsJSON),
+				Fingerprint:  a.QueryResultLables.Hash(),
+				Value:        a.Value,
+			})
+		}
+
+		// We need to change firing alert to recovering if the returned sample meets recovery threshold
+		changeAlertingToRecovering := a.State == model.StateFiring && a.IsRecovering
+		// We need to change recovering alerts to firing if the returned sample meets target threshold
+		changeRecoveringToFiring := a.State == model.StateRecovering && !a.IsRecovering && !a.Missing
+		// in any of the above case we need to update the status of alert
+		if changeAlertingToRecovering || changeRecoveringToFiring {
+			state := model.StateRecovering
+			if changeRecoveringToFiring {
+				state = model.StateFiring
+			}
+			a.State = state
+			r.logger.DebugContext(ctx, "converting alert state", "name", r.Name(), "state", state)
 			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
 				RuleID:       r.ID(),
 				RuleName:     r.Name(),

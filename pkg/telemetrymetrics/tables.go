@@ -8,6 +8,8 @@ import (
 
 const (
 	DBName                           = "signoz_metrics"
+	UpdatedMetadataTableName         = "distributed_updated_metadata"
+	UpdatedMetadataLocalTableName    = "updated_metadata"
 	SamplesV4TableName               = "distributed_samples_v4"
 	SamplesV4LocalTableName          = "samples_v4"
 	SamplesV4Agg5mTableName          = "distributed_samples_v4_agg_5m"
@@ -41,29 +43,36 @@ var (
 	offsetBucket = uint64(60 * time.Minute.Milliseconds())
 )
 
+// WhichTSTableToUse returns adjusted start, adjusted end, distributed table name, local table name
+// in that order
 func WhichTSTableToUse(
 	start, end uint64,
 	tableHints *metrictypes.MetricTableHints,
-) (uint64, uint64, string) {
+) (uint64, uint64, string, string) {
 	// if we have a hint for the table, we need to use it
 	// the hint will be used to override the default table selection logic
 	if tableHints != nil {
 		if tableHints.TimeSeriesTableName != "" {
+			var distributedTableName string
 			switch tableHints.TimeSeriesTableName {
 			case TimeseriesV4LocalTableName:
 				// adjust the start time to nearest 1 hour
 				start = start - (start % (oneHourInMilliseconds))
+				distributedTableName = TimeseriesV4TableName
 			case TimeseriesV46hrsLocalTableName:
 				// adjust the start time to nearest 6 hours
 				start = start - (start % (sixHoursInMilliseconds))
+				distributedTableName = TimeseriesV46hrsTableName
 			case TimeseriesV41dayLocalTableName:
 				// adjust the start time to nearest 1 day
 				start = start - (start % (oneDayInMilliseconds))
+				distributedTableName = TimeseriesV41dayTableName
 			case TimeseriesV41weekLocalTableName:
 				// adjust the start time to nearest 1 week
 				start = start - (start % (oneWeekInMilliseconds))
+				distributedTableName = TimeseriesV41weekTableName
 			}
-			return start, end, tableHints.TimeSeriesTableName
+			return start, end, distributedTableName, tableHints.TimeSeriesTableName
 		}
 	}
 
@@ -71,26 +80,46 @@ func WhichTSTableToUse(
 	// else if time range is less than 1 day and greater than 6 hours, we need to use the `time_series_v4_6hrs` table
 	// else if time range is less than 1 week and greater than 1 day, we need to use the `time_series_v4_1day` table
 	// else we need to use the `time_series_v4_1week` table
-	var tableName string
+	var distributedTableName string
+	var localTableName string
 	if end-start < sixHoursInMilliseconds {
 		// adjust the start time to nearest 1 hour
 		start = start - (start % (oneHourInMilliseconds))
-		tableName = TimeseriesV4LocalTableName
+		distributedTableName = TimeseriesV4TableName
+		localTableName = TimeseriesV4LocalTableName
 	} else if end-start < oneDayInMilliseconds {
 		// adjust the start time to nearest 6 hours
 		start = start - (start % (sixHoursInMilliseconds))
-		tableName = TimeseriesV46hrsLocalTableName
+		distributedTableName = TimeseriesV46hrsTableName
+		localTableName = TimeseriesV46hrsLocalTableName
 	} else if end-start < oneWeekInMilliseconds {
 		// adjust the start time to nearest 1 day
 		start = start - (start % (oneDayInMilliseconds))
-		tableName = TimeseriesV41dayLocalTableName
+		distributedTableName = TimeseriesV41dayTableName
+		localTableName = TimeseriesV41dayLocalTableName
 	} else {
 		// adjust the start time to nearest 1 week
 		start = start - (start % (oneWeekInMilliseconds))
-		tableName = TimeseriesV41weekLocalTableName
+		distributedTableName = TimeseriesV41weekTableName
+		localTableName = TimeseriesV41weekLocalTableName
 	}
 
-	return start, end, tableName
+	return start, end, distributedTableName, localTableName
+}
+
+// CountExpressionForSamplesTable returns the count expression for a given samples table name.
+// For non-aggregated tables (distributed_samples_v4, exp_hist), it returns "count(*)".
+// For aggregated tables (distributed_samples_v4_agg_5m, distributed_samples_v4_agg_30m), it returns "sum(count)".
+func CountExpressionForSamplesTable(tableName string) string {
+	// Non-aggregated tables use count(*)
+	if tableName == SamplesV4TableName ||
+		tableName == SamplesV4LocalTableName ||
+		tableName == ExpHistogramTableName ||
+		tableName == ExpHistogramLocalTableName {
+		return "count(*)"
+	}
+	// Aggregated tables use sum(count)
+	return "sum(count)"
 }
 
 // start and end are in milliseconds
@@ -105,7 +134,6 @@ func WhichSamplesTableToUse(
 	timeAggregation metrictypes.TimeAggregation,
 	tableHints *metrictypes.MetricTableHints,
 ) string {
-
 	// if we have a hint for the table, we need to use it
 	// the hint will be used to override the default table selection logic
 	if tableHints != nil {

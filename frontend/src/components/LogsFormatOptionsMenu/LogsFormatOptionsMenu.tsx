@@ -471,11 +471,13 @@ function LogsFormatOptionsMenu({
 			rootClassName="format-options-popover"
 			destroyTooltipOnHide
 		>
-			<Button
-				className="periscope-btn ghost"
-				icon={<Sliders size={14} />}
-				data-testid="periscope-btn-format-options"
-			/>
+			<Tooltip title="Options">
+				<Button
+					className="periscope-btn ghost"
+					icon={<Sliders size={14} />}
+					data-testid="periscope-btn-format-options"
+				/>
+			</Tooltip>
 		</Popover>
 	);
 }
