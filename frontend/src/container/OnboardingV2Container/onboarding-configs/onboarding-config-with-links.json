@@ -925,7 +925,7 @@
 					"key": "react-native",
 					"label": "React Native",
 					"imgUrl": "/Logos/reactjs.svg",
-					"link": "/docs/instrumentation/opentelemetry-react-native/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-react-native/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -935,19 +935,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "/docs/instrumentation/opentelemetry-react-native/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-react-native/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "/docs/instrumentation/opentelemetry-react-native/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-react-native/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "/docs/instrumentation/opentelemetry-react-native/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-react-native/"
 							}
 						]
 					}
@@ -2977,12 +2977,6 @@
 					"label": "Metrics",
 					"imgUrl": "/Logos/azure-blob-storage.svg",
 					"link": "https://signoz.io/docs/azure-monitoring/az-blob-storage/metrics/"
-				},
-				{
-					"key": "tracing",
-					"label": "Traces",
-					"imgUrl": "/Logos/azure-blob-storage.svg",
-					"link": "https://signoz.io/docs/azure-monitoring/az-blob-storage/tracing/"
 				}
 			]
 		}
