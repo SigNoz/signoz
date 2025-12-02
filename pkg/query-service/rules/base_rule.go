@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/parser/queryfilterextractor"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -93,6 +93,8 @@ type BaseRule struct {
 
 	// newGroupEvalDelay is the grace period for new alert groups
 	newGroupEvalDelay *time.Duration
+
+	queryParser queryparser.QueryParser
 }
 
 type RuleOption func(*BaseRule)
@@ -124,6 +126,12 @@ func WithLogger(logger *slog.Logger) RuleOption {
 func WithSQLStore(sqlstore sqlstore.SQLStore) RuleOption {
 	return func(r *BaseRule) {
 		r.sqlstore = sqlstore
+	}
+}
+
+func WithQueryParser(queryParser queryparser.QueryParser) RuleOption {
+	return func(r *BaseRule) {
+		r.queryParser = queryParser
 	}
 }
 
@@ -582,14 +590,9 @@ func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) ([]string, []st
 			if !ok || spec.Query == "" {
 				continue
 			}
-			// use queryfilterextractor to extract metric names and group by fields
-			extractor, extractErr := queryfilterextractor.NewExtractor(queryfilterextractor.ExtractorPromQL)
-			if extractErr != nil {
-				return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error while creating PromQL extractor: %s", extractErr.Error())
-			}
-			result, extractErr := extractor.Extract(spec.Query)
-			if extractErr != nil {
-				return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "error while extracting metric names and group by fields: %s", extractErr.Error())
+			result, err := r.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, spec.Query)
+			if err != nil {
+				return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "error while analyzing query filter: %s", err.Error())
 			}
 			metricNames = append(metricNames, result.MetricNames...)
 			for _, col := range result.GroupByColumns {
@@ -600,14 +603,9 @@ func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) ([]string, []st
 			if !ok || spec.Query == "" {
 				continue
 			}
-			// use queryfilterextractor to extract metric names and group by fields
-			extractor, extractErr := queryfilterextractor.NewExtractor(queryfilterextractor.ExtractorCH)
-			if extractErr != nil {
-				return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error while creating ClickHouse extractor: %s", extractErr.Error())
-			}
-			result, extractErr := extractor.Extract(spec.Query)
-			if extractErr != nil {
-				return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "error while extracting metric names and group by fields: %s", extractErr.Error())
+			result, err := r.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, spec.Query)
+			if err != nil {
+				return nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "error while analyzing query filter: %s", err.Error())
 			}
 			metricNames = append(metricNames, result.MetricNames...)
 			for _, col := range result.GroupByColumns {

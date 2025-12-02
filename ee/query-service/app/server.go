@@ -10,6 +10,7 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	"go.opentelemetry.io/otel/propagation"
@@ -107,6 +108,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.Modules.OrgGetter,
 		signoz.Querier,
 		signoz.Instrumentation.Logger(),
+		signoz.QueryParser,
 	)
 
 	if err != nil {
@@ -348,7 +350,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, logger *slog.Logger) (*baserules.Manager, error) {
+func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, logger *slog.Logger, queryParser queryparser.QueryParser) (*baserules.Manager, error) {
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
@@ -369,6 +371,7 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		RuleStore:           ruleStore,
 		MaintenanceStore:    maintenanceStore,
 		SqlStore:            sqlstore,
+		QueryParser:         queryParser,
 	}
 
 	// create Manager

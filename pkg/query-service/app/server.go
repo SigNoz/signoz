@@ -108,6 +108,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.Modules.OrgGetter,
 		signoz.Querier,
 		signoz.Instrumentation.Logger(),
+		signoz.QueryParser,
 	)
 	if err != nil {
 		return nil, err
@@ -335,6 +336,7 @@ func makeRulesManager(
 	orgGetter organization.Getter,
 	querier querier.Querier,
 	logger *slog.Logger,
+	queryParser queryparser.QueryParser,
 ) (*rules.Manager, error) {
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
@@ -354,6 +356,7 @@ func makeRulesManager(
 		RuleStore:        ruleStore,
 		MaintenanceStore: maintenanceStore,
 		SqlStore:         sqlstore,
+		QueryParser:      queryParser,
 	}
 
 	// create Manager
