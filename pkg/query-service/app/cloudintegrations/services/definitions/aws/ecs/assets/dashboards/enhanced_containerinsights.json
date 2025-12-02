@@ -232,7 +232,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ServiceName = $Service AND TaskId in $TaskId "
+                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [],
@@ -364,7 +364,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId"
+                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service"
               },
               "functions": [],
               "groupBy": [],
@@ -496,7 +496,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service"
+                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [],
@@ -628,7 +628,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster"
+                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service"
               },
               "functions": [],
               "groupBy": [],
@@ -901,7 +901,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId != \"\" AND TaskId in $TaskId"
+                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [
@@ -1042,7 +1042,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId != \"\" AND TaskId in $TaskId"
+                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [
@@ -1183,7 +1183,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId != \"\" AND TaskId in $TaskId"
+                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [
