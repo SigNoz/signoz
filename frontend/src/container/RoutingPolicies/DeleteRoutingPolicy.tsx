@@ -1,5 +1,5 @@
 import { Button, Modal, Typography } from 'antd';
-import { Trash2, X } from 'lucide-react';
+import { Loader, Trash2, X } from 'lucide-react';
 
 import { DeleteRoutingPolicyProps } from './types';
 
@@ -9,6 +9,12 @@ function DeleteRoutingPolicy({
 	routingPolicy,
 	isDeletingRoutingPolicy,
 }: DeleteRoutingPolicyProps): JSX.Element {
+	const deleteButtonIcon = isDeletingRoutingPolicy ? (
+		<Loader size={16} />
+	) : (
+		<Trash2 size={16} />
+	);
+
 	return (
 		<Modal
 			className="delete-policy-modal"
@@ -28,7 +34,8 @@ function DeleteRoutingPolicy({
 				</Button>,
 				<Button
 					key="submit"
-					icon={<Trash2 size={16} />}
+					type="primary"
+					icon={deleteButtonIcon}
 					onClick={handleDelete}
 					className="delete-btn"
 					disabled={isDeletingRoutingPolicy}
@@ -38,7 +45,9 @@ function DeleteRoutingPolicy({
 			]}
 		>
 			<Typography.Text className="delete-text">
-				{`Are you sure you want to delete ${routingPolicy?.name} routing policy? Deleting a routing policy is irreversible and cannot be undone.`}
+				Are you sure you want to delete <strong>{routingPolicy?.name}</strong>{' '}
+				routing policy? Deleting a routing policy is irreversible and cannot be
+				undone.
 			</Typography.Text>
 		</Modal>
 	);

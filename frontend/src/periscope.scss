@@ -160,12 +160,18 @@
 		min-width: 0;
 
 		.ant-select {
+			font-family: 'Space Mono', monospace !important;
+
 			border: none;
 			height: 36px;
 		}
 
 		.ant-select-selector {
 			border: none;
+		}
+
+		.ant-select-selection-placeholder {
+			color: var(--bg-vanilla-400);
 		}
 	}
 

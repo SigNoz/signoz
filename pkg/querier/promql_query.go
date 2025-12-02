@@ -16,6 +16,7 @@ import (
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/promql/parser"
 )
 
 type promqlQuery struct {
@@ -59,8 +60,50 @@ func (q *promqlQuery) Window() (uint64, uint64) {
 	return q.tr.From, q.tr.To
 }
 
+// removeAllVarMatchers removes label matchers from a PromQL query that reference variables with __all__ value.
+// This method parses the query, walks the AST to remove matching matchers, and returns the modified query string.
+// If parsing or walking fails, it returns an error.
+func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.VariableItem) (string, error) {
+	// Find all variables that have __all__ value
+	allVars := make(map[string]bool)
+	for k, v := range vars {
+		if v.Type == qbv5.DynamicVariableType {
+			if allVal, ok := v.Value.(string); ok && allVal == "__all__" {
+				allVars[k] = true
+			}
+		}
+	}
+
+	// If no variables have __all__ value, return the query unchanged
+	if len(allVars) == 0 {
+		return query, nil
+	}
+
+	expr, err := parser.ParseExpr(query)
+	if err != nil {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query %q", query)
+	}
+
+	// Create visitor and walk the AST
+	visitor := &allVarRemover{allVars: allVars}
+	if err := parser.Walk(visitor, expr, nil); err != nil {
+		q.logger.ErrorContext(context.TODO(), "unexpected error while removing __all__ variable matchers", "error", err, "query", query)
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while removing __all__ variable matchers")
+	}
+
+	// Convert the modified AST back to a string
+	return expr.String(), nil
+}
+
 // TODO(srikanthccv): cleanup the templating logic
 func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem, start, end uint64) (string, error) {
+	// First, remove label matchers that use variables with __all__ value.
+	// This must happen before variable substitution so we can detect variable references
+	// in their original form ($var, {{var}}, [[var]]).
+	query, err := q.removeAllVarMatchers(query, vars)
+	if err != nil {
+		return "", err
+	}
 	varsData := map[string]any{}
 	for k, v := range vars {
 		varsData[k] = formatValueForProm(v.Value)
@@ -83,7 +126,7 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 	}
 
 	tmpl := template.New("promql-query")
-	tmpl, err := tmpl.Parse(query)
+	tmpl, err = tmpl.Parse(query)
 	if err != nil {
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while replacing template variables")
 	}
