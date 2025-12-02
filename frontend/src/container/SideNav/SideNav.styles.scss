@@ -174,6 +174,31 @@
 			background: var(--Slate-500, #161922);
 
 			box-shadow: none !important;
+
+			color: var(--bg-vanilla-400, #c0c1c3);
+
+			svg {
+				color: var(--bg-vanilla-400, #c0c1c3);
+			}
+
+			.nav-item-label {
+				color: var(--bg-vanilla-400, #c0c1c3);
+			}
+
+			&:hover:not(:disabled) {
+				background: var(--bg-slate-400, #1d212d);
+				border-color: var(--bg-slate-400, #1d212d);
+
+				color: var(--bg-vanilla-100, #fff);
+
+				svg {
+					color: var(--bg-vanilla-100, #fff);
+				}
+
+				.nav-item-label {
+					color: var(--bg-vanilla-100, #fff);
+				}
+			}
 		}
 	}
 
@@ -1039,7 +1064,6 @@
 				display: flex;
 				align-items: center;
 				border-radius: 2px;
-				border-radius: 2px;
 				background: var(--Robin-500, #4e74f8) !important;
 				color: var(--bg-vanilla-100) !important;
 				font-family: Inter;
@@ -1110,8 +1134,32 @@
 		.get-started-nav-items {
 			.get-started-btn {
 				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-				color: var(--bg-ink-400);
+				background: var(--bg-vanilla-200);
+				color: var(--bg-slate-50, #62687c);
+
+				svg {
+					color: var(--bg-slate-50, #62687c);
+				}
+
+				.nav-item-label {
+					color: var(--bg-ink-400, #62687c);
+				}
+
+				// Hover state (light mode)
+				&:hover:not(:disabled) {
+					background: var(--bg-vanilla-300);
+					border-color: var(--bg-vanilla-300);
+
+					color: var(--bg-slate-500, #161922);
+
+					svg {
+						color: var(--bg-slate-500, #161922);
+					}
+
+					.nav-item-label {
+						color: var(--bg-slate-500, #161922);
+					}
+				}
 			}
 		}
 
