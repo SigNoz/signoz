@@ -1,10 +1,10 @@
 package queryparser
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/parsertypes"
 )
@@ -24,7 +24,7 @@ func (a *API) AnalyzeQueryFilter(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 255*1024)
 
 	var req parsertypes.QueryFilterAnalyzeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
 		render.Error(w, err)
 		return
 	}
