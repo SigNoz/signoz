@@ -55,8 +55,8 @@ func (cacheable *CacheableB) UnmarshalBinary(data []byte) error {
 
 func TestCloneableSetWithNilPointer(t *testing.T) {
 	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}})
 	require.NoError(t, err)
 
@@ -66,8 +66,8 @@ func TestCloneableSetWithNilPointer(t *testing.T) {
 
 func TestCacheableSetWithNilPointer(t *testing.T) {
 	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}})
 	require.NoError(t, err)
 
@@ -77,8 +77,8 @@ func TestCacheableSetWithNilPointer(t *testing.T) {
 
 func TestCloneableSetGet(t *testing.T) {
 	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}})
 	require.NoError(t, err)
 
@@ -106,8 +106,8 @@ func TestCloneableSetGet(t *testing.T) {
 
 func TestCacheableSetGet(t *testing.T) {
 	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}})
 	require.NoError(t, err)
 
@@ -135,8 +135,8 @@ func TestCacheableSetGet(t *testing.T) {
 
 func TestGetWithNilPointer(t *testing.T) {
 	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}})
 	require.NoError(t, err)
 
@@ -146,8 +146,8 @@ func TestGetWithNilPointer(t *testing.T) {
 
 func TestSetGetWithDifferentTypes(t *testing.T) {
 	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}})
 	require.NoError(t, err)
 
@@ -167,8 +167,8 @@ func TestSetGetWithDifferentTypes(t *testing.T) {
 
 func TestCloneableConcurrentSetGet(t *testing.T) {
 	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
 	}})
 	require.NoError(t, err)
 

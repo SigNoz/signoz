@@ -35,7 +35,7 @@ export interface TagFilterItem {
 	id: string;
 	key?: BaseAutocompleteData;
 	op: string;
-	value: string[] | string | number | boolean;
+	value: (string | number | boolean)[] | string | number | boolean;
 }
 
 export interface TagFilter {
