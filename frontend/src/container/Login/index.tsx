@@ -282,6 +282,7 @@ function Login(): JSX.Element | null {
 							autoFocus
 							disabled={versionLoading}
 							className="login-form-input"
+							onPressEnter={onNextHandler}
 						/>
 					</FormContainer.Item>
 				</ParentContainer>

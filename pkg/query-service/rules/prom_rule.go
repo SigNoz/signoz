@@ -119,14 +119,9 @@ func (r *PromRule) getPqlQuery() (string, error) {
 	return "", fmt.Errorf("invalid promql rule query")
 }
 
-func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
-
-	prevState := r.State()
-
+func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
 	start, end := r.Timestamps(ts)
 	interval := 60 * time.Second // TODO(srikanthccv): this should be configurable
-
-	valueFormatter := formatter.FromUnit(r.Unit())
 
 	q, err := r.getPqlQuery()
 	if err != nil {
@@ -140,12 +135,35 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		return nil, err
 	}
 
+	var resultVector ruletypes.Vector
+	for _, series := range res {
+		resultSeries, err := r.Threshold.Eval(toCommonSeries(series), r.Unit(), ruletypes.EvalData{
+			ActiveAlerts: r.ActiveAlertsLabelFP(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		resultVector = append(resultVector, resultSeries...)
+	}
+	return resultVector, nil
+}
+
+func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
+	prevState := r.State()
+	valueFormatter := formatter.FromUnit(r.Unit())
+
+	// prepare query, run query get data and filter the data based on the threshold
+	results, err := r.buildAndRunQuery(ctx, ts)
+	if err != nil {
+		return nil, err
+	}
+
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
 	resultFPs := map[uint64]struct{}{}
 
-	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
+	var alerts = make(map[uint64]*ruletypes.Alert, len(results))
 
 	ruleReceivers := r.Threshold.GetRuleReceivers()
 	ruleReceiverMap := make(map[string][]string)
@@ -153,87 +171,76 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		ruleReceiverMap[value.Name] = value.Channels
 	}
 
-	for _, series := range res {
+	for _, result := range results {
+		l := make(map[string]string, len(result.Metric))
+		for _, lbl := range result.Metric {
+			l[lbl.Name] = lbl.Value
+		}
+		r.logger.DebugContext(ctx, "alerting for series", "rule_name", r.Name(), "series", result)
 
-		if len(series.Floats) == 0 {
-			continue
+		threshold := valueFormatter.Format(result.Target, result.TargetUnit)
+
+		tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(result.V, r.Unit()), threshold)
+		// Inject some convenience variables that are easier to remember for users
+		// who are not used to Go's templating system.
+		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
+
+		expand := func(text string) string {
+
+			tmpl := ruletypes.NewTemplateExpander(
+				ctx,
+				defs+text,
+				"__alert_"+r.Name(),
+				tmplData,
+				times.Time(timestamp.FromTime(ts)),
+				nil,
+			)
+			result, err := tmpl.Expand()
+			if err != nil {
+				result = fmt.Sprintf("<error expanding template: %s>", err)
+				r.logger.WarnContext(ctx, "Expanding alert template failed", "rule_name", r.Name(), "error", err, "data", tmplData)
+			}
+			return result
 		}
 
-		results, err := r.Threshold.ShouldAlert(toCommonSeries(series), r.Unit())
-		if err != nil {
+		lb := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel)
+		resultLabels := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel).Labels()
+
+		for name, value := range r.labels.Map() {
+			lb.Set(name, expand(value))
+		}
+
+		lb.Set(qslabels.AlertNameLabel, r.Name())
+		lb.Set(qslabels.AlertRuleIdLabel, r.ID())
+		lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
+
+		annotations := make(qslabels.Labels, 0, len(r.annotations.Map()))
+		for name, value := range r.annotations.Map() {
+			annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
+		}
+
+		lbs := lb.Labels()
+		h := lbs.Hash()
+		resultFPs[h] = struct{}{}
+
+		if _, ok := alerts[h]; ok {
+			err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
+			// We have already acquired the lock above hence using SetHealth and
+			// SetLastError will deadlock.
+			r.health = ruletypes.HealthBad
+			r.lastError = err
 			return nil, err
 		}
-
-		for _, result := range results {
-			l := make(map[string]string, len(series.Metric))
-			for _, lbl := range series.Metric {
-				l[lbl.Name] = lbl.Value
-			}
-			r.logger.DebugContext(ctx, "alerting for series", "rule_name", r.Name(), "series", series)
-
-			threshold := valueFormatter.Format(result.Target, result.TargetUnit)
-
-			tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(result.V, r.Unit()), threshold)
-			// Inject some convenience variables that are easier to remember for users
-			// who are not used to Go's templating system.
-			defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
-
-			expand := func(text string) string {
-
-				tmpl := ruletypes.NewTemplateExpander(
-					ctx,
-					defs+text,
-					"__alert_"+r.Name(),
-					tmplData,
-					times.Time(timestamp.FromTime(ts)),
-					nil,
-				)
-				result, err := tmpl.Expand()
-				if err != nil {
-					result = fmt.Sprintf("<error expanding template: %s>", err)
-					r.logger.WarnContext(ctx, "Expanding alert template failed", "rule_name", r.Name(), "error", err, "data", tmplData)
-				}
-				return result
-			}
-
-			lb := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel)
-			resultLabels := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel).Labels()
-
-			for name, value := range r.labels.Map() {
-				lb.Set(name, expand(value))
-			}
-
-			lb.Set(qslabels.AlertNameLabel, r.Name())
-			lb.Set(qslabels.AlertRuleIdLabel, r.ID())
-			lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
-
-			annotations := make(qslabels.Labels, 0, len(r.annotations.Map()))
-			for name, value := range r.annotations.Map() {
-				annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
-			}
-
-			lbs := lb.Labels()
-			h := lbs.Hash()
-			resultFPs[h] = struct{}{}
-
-			if _, ok := alerts[h]; ok {
-				err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
-				// We have already acquired the lock above hence using SetHealth and
-				// SetLastError will deadlock.
-				r.health = ruletypes.HealthBad
-				r.lastError = err
-				return nil, err
-			}
-			alerts[h] = &ruletypes.Alert{
-				Labels:            lbs,
-				QueryResultLables: resultLabels,
-				Annotations:       annotations,
-				ActiveAt:          ts,
-				State:             model.StatePending,
-				Value:             result.V,
-				GeneratorURL:      r.GeneratorURL(),
-				Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
-			}
+		alerts[h] = &ruletypes.Alert{
+			Labels:            lbs,
+			QueryResultLables: resultLabels,
+			Annotations:       annotations,
+			ActiveAt:          ts,
+			State:             model.StatePending,
+			Value:             result.V,
+			GeneratorURL:      r.GeneratorURL(),
+			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
+			IsRecovering:      result.IsRecovering,
 		}
 	}
 
@@ -245,6 +252,9 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		if alert, ok := r.Active[h]; ok && alert.State != model.StateInactive {
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
+			// Update the recovering and missing state of existing alert
+			alert.IsRecovering = a.IsRecovering
+			alert.Missing = a.Missing
 			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
 				alert.Receivers = ruleReceiverMap[v]
 			}
@@ -304,6 +314,29 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			})
 		}
 
+		// We need to change firing alert to recovering if the returned sample meets recovery threshold
+		changeAlertingToRecovering := a.State == model.StateFiring && a.IsRecovering
+		// We need to change recovering alerts to firing if the returned sample meets target threshold
+		changeRecoveringToFiring := a.State == model.StateRecovering && !a.IsRecovering && !a.Missing
+		// in any of the above case we need to update the status of alert
+		if changeAlertingToRecovering || changeRecoveringToFiring {
+			state := model.StateRecovering
+			if changeRecoveringToFiring {
+				state = model.StateFiring
+			}
+			a.State = state
+			r.logger.DebugContext(ctx, "converting alert state", "name", r.Name(), "state", state)
+			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
+				RuleID:       r.ID(),
+				RuleName:     r.Name(),
+				State:        state,
+				StateChanged: true,
+				UnixMilli:    ts.UnixMilli(),
+				Labels:       model.LabelsString(labelsJSON),
+				Fingerprint:  a.QueryResultLables.Hash(),
+				Value:        a.Value,
+			})
+		}
 	}
 	r.health = ruletypes.HealthGood
 	r.lastError = err

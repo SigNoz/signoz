@@ -256,7 +256,7 @@ func (m *Manager) UninstallIntegration(
 func (m *Manager) GetPipelinesForInstalledIntegrations(
 	ctx context.Context,
 	orgId string,
-) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
+) ([]pipelinetypes.GettablePipeline, error) {
 	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx, orgId)
 	if apiErr != nil {
 		return nil, apiErr
@@ -293,7 +293,7 @@ func (m *Manager) dashboardUuid(integrationId string, dashboardId string) string
 }
 
 func (m *Manager) parseDashboardUuid(dashboardUuid string) (
-	integrationId string, dashboardId string, err *model.ApiError,
+	integrationId string, dashboardId string, apiErr *model.ApiError,
 ) {
 	parts := strings.SplitN(dashboardUuid, "--", 3)
 	if len(parts) != 3 || parts[0] != "integration" {

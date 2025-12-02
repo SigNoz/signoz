@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -17,20 +18,23 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
+)
+
+var (
+	CodeRawPipelinesMarshalFailed = errors.MustNewCode("raw_pipelines_marshal_failed")
 )
 
 // Controller takes care of deployment cycle of log parsing pipelines.
 type LogParsingPipelineController struct {
 	Repo
 
-	GetIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, *model.ApiError)
+	GetIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, error)
 }
 
 func NewLogParsingPipelinesController(
 	sqlStore sqlstore.SQLStore,
-	getIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, *model.ApiError),
+	getIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, error),
 ) (*LogParsingPipelineController, error) {
 	repo := NewRepo(sqlStore)
 	return &LogParsingPipelineController{
@@ -53,7 +57,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	orgID valuer.UUID,
 	userID valuer.UUID,
 	postable []pipelinetypes.PostablePipeline,
-) (*PipelinesResponse, *model.ApiError) {
+) (*PipelinesResponse, error) {
 	var pipelines []pipelinetypes.GettablePipeline
 
 	// scan through postable pipelines, to select the existing pipelines or insert missing ones
@@ -68,9 +72,9 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 		// the same pipeline id.
 		r.ID = uuid.NewString()
 		r.OrderID = idx + 1
-		pipeline, apiErr := ic.insertPipeline(ctx, orgID, &r)
-		if apiErr != nil {
-			return nil, model.WrapApiError(apiErr, "failed to insert pipeline")
+		pipeline, err := ic.insertPipeline(ctx, orgID, &r)
+		if err != nil {
+			return nil, err
 		}
 		pipelines = append(pipelines, *pipeline)
 
@@ -90,13 +94,12 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	return ic.GetPipelinesByVersion(ctx, orgID, cfg.Version)
 }
 
-func (ic *LogParsingPipelineController) ValidatePipelines(
-	ctx context.Context,
+func (ic *LogParsingPipelineController) ValidatePipelines(ctx context.Context,
 	postedPipelines []pipelinetypes.PostablePipeline,
-) *model.ApiError {
+) error {
 	for _, p := range postedPipelines {
 		if err := p.IsValid(); err != nil {
-			return model.BadRequestStr(err.Error())
+			return errors.WithAdditionalf(err, "invalid pipeline: %s", p.Name)
 		}
 	}
 
@@ -121,39 +124,29 @@ func (ic *LogParsingPipelineController) ValidatePipelines(
 	}
 
 	sampleLogs := []model.SignozLog{{Body: ""}}
-	_, _, simulationErr := SimulatePipelinesProcessing(
-		ctx, gettablePipelines, sampleLogs,
-	)
-	if simulationErr != nil {
-		return model.BadRequest(fmt.Errorf(
-			"invalid pipelines config: %w", simulationErr.ToError(),
-		))
-	}
-
-	return nil
+	_, _, err := SimulatePipelinesProcessing(ctx, gettablePipelines, sampleLogs)
+	return err
 }
 
 // Returns effective list of pipelines including user created
 // pipelines and pipelines for installed integrations
 func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 	ctx context.Context, orgID valuer.UUID, version int,
-) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
+) ([]pipelinetypes.GettablePipeline, error) {
 
 	result := []pipelinetypes.GettablePipeline{}
 	if version >= 0 {
-		savedPipelines, errors := ic.getPipelinesByVersion(ctx, orgID.String(), version)
-		if errors != nil {
-			zap.L().Error("failed to get pipelines for version", zap.Int("version", version), zap.Errors("errors", errors))
-			return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version %v", errors))
+		savedPipelines, err := ic.getPipelinesByVersion(ctx, orgID.String(), version)
+		if err != nil {
+			zap.L().Error("failed to get pipelines for version", zap.Int("version", version), zap.Error(err))
+			return nil, err
 		}
 		result = savedPipelines
 	}
 
-	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx, orgID.String())
-	if apiErr != nil {
-		return nil, model.WrapApiError(
-			apiErr, "could not get pipelines for installed integrations",
-		)
+	integrationPipelines, err := ic.GetIntegrationPipelines(ctx, orgID.String())
+	if err != nil {
+		return nil, err
 	}
 
 	// Filter out any integration pipelines included in pipelines saved by user
@@ -194,12 +187,11 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 // GetPipelinesByVersion responds with version info and associated pipelines
 func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 	ctx context.Context, orgId valuer.UUID, version int,
-) (*PipelinesResponse, *model.ApiError) {
-
-	pipelines, errors := ic.getEffectivePipelinesByVersion(ctx, orgId, version)
-	if errors != nil {
-		zap.L().Error("failed to get pipelines for version", zap.Int("version", version), zap.Error(errors))
-		return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version %v", errors))
+) (*PipelinesResponse, error) {
+	pipelines, err := ic.getEffectivePipelinesByVersion(ctx, orgId, version)
+	if err != nil {
+		zap.L().Error("failed to get pipelines for version", zap.Int("version", version), zap.Error(err))
+		return nil, err
 	}
 
 	var configVersion *opamptypes.AgentConfigVersion
@@ -207,7 +199,7 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 		cv, err := agentConf.GetConfigVersion(ctx, orgId, opamptypes.ElementTypeLogPipelines, version)
 		if err != nil {
 			zap.L().Error("failed to get config for version", zap.Int("version", version), zap.Error(err))
-			return nil, model.WrapApiError(err, "failed to get config for given version")
+			return nil, err
 		}
 		configVersion = cv
 	}
@@ -231,11 +223,8 @@ type PipelinesPreviewResponse struct {
 func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 	ctx context.Context,
 	request *PipelinesPreviewRequest,
-) (*PipelinesPreviewResponse, *model.ApiError) {
-	result, collectorLogs, err := SimulatePipelinesProcessing(
-		ctx, request.Pipelines, request.Logs,
-	)
-
+) (*PipelinesPreviewResponse, error) {
+	result, collectorLogs, err := SimulatePipelinesProcessing(ctx, request.Pipelines, request.Logs)
 	if err != nil {
 		return nil, err
 	}
@@ -256,33 +245,27 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	orgId valuer.UUID,
 	currentConfYaml []byte,
 	configVersion *opamptypes.AgentConfigVersion,
-) (
-	recommendedConfYaml []byte,
-	serializedSettingsUsed string,
-	apiErr *model.ApiError,
-) {
+) ([]byte, string, error) {
 	pipelinesVersion := -1
 	if configVersion != nil {
 		pipelinesVersion = configVersion.Version
 	}
 
-	pipelinesResp, apiErr := pc.GetPipelinesByVersion(
+	pipelinesResp, err := pc.GetPipelinesByVersion(
 		context.Background(), orgId, pipelinesVersion,
 	)
-	if apiErr != nil {
-		return nil, "", apiErr
+	if err != nil {
+		return nil, "", err
 	}
 
-	updatedConf, apiErr := GenerateCollectorConfigWithPipelines(
-		currentConfYaml, pipelinesResp.Pipelines,
-	)
-	if apiErr != nil {
-		return nil, "", model.WrapApiError(apiErr, "could not marshal yaml for updated conf")
+	updatedConf, err := GenerateCollectorConfigWithPipelines(currentConfYaml, pipelinesResp.Pipelines)
+	if err != nil {
+		return nil, "", err
 	}
 
 	rawPipelineData, err := json.Marshal(pipelinesResp.Pipelines)
 	if err != nil {
-		return nil, "", model.BadRequest(errors.Wrap(err, "could not serialize pipelines to JSON"))
+		return nil, "", errors.WrapInternalf(err, CodeRawPipelinesMarshalFailed, "could not serialize pipelines to JSON")
 	}
 
 	return updatedConf, string(rawPipelineData), nil
