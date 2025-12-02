@@ -364,7 +364,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId"
+                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service"
               },
               "functions": [],
               "groupBy": [],
