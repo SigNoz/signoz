@@ -794,7 +794,7 @@ func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, s
 	sb.Select(
 		"attr_name AS key",
 		"groupUniqArray(1000)(attr_string_value) AS values",
-		"count(DISTINCT attr_string_value) AS valueCount",
+		"uniq(attr_string_value) AS valueCount",
 	)
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
 	sb.Where(sb.E("metric_name", metricName))
