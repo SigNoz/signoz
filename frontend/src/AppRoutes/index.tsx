@@ -214,7 +214,10 @@ function App(): JSX.Element {
 	]);
 
 	useEffect(() => {
-		if (pathname === ROUTES.ONBOARDING) {
+		if (
+			pathname === ROUTES.ONBOARDING ||
+			pathname.startsWith('/public/dashboard/')
+		) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			window.Pylon('hideChatBubble');
