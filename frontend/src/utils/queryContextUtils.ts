@@ -1339,8 +1339,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 			else if (
 				currentPair &&
 				currentPair.key &&
-				(isConjunctionToken(token.type) ||
-					(token.type === FilterQueryLexer.KEY && isQueryPairComplete(currentPair)))
+				(isConjunctionToken(token.type) || token.type === FilterQueryLexer.KEY)
 			) {
 				queryPairs.push({
 					key: currentPair.key,
