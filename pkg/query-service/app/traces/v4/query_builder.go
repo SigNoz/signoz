@@ -53,9 +53,14 @@ func getClickHouseTracesColumnDataType(columnDataType v3.AttributeKeyDataType) s
 
 func getColumnName(key v3.AttributeKey, replaceAlias bool) string {
 	if replaceAlias {
+		// It should be in DeprecatedStaticFieldsTraces
 		if _, ok := constants.DeprecatedStaticFieldsTraces[key.Key]; ok {
+			// It should not be in NewStaticFieldsTraces
 			if _, ok := constants.NewStaticFieldsTraces[key.Key]; !ok {
-				key = constants.NewStaticFieldsTraces[constants.OldToNewTraceFieldsMap[key.Key]]
+				// It should have a mapping in OldToNewTraceFieldsMap
+				if _, ok := constants.OldToNewTraceFieldsMap[key.Key]; ok {
+					key = constants.NewStaticFieldsTraces[constants.OldToNewTraceFieldsMap[key.Key]]
+				}
 			}
 		}
 	}

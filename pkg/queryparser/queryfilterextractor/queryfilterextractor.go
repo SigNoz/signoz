@@ -4,11 +4,18 @@
 // This is useful for metrics discovery, and query analysis.
 package queryfilterextractor
 
-import "github.com/SigNoz/signoz/pkg/errors"
+import (
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
 
-const (
-	ExtractorCH     = "qfe_ch"
-	ExtractorPromQL = "qfe_promql"
+type ExtractorType struct {
+	valuer.String
+}
+
+var (
+	ExtractorTypeClickHouseSQL = ExtractorType{valuer.NewString("qfe_ch")}
+	ExtractorTypePromQL        = ExtractorType{valuer.NewString("qfe_promql")}
 )
 
 // ColumnInfo represents a column in the query
@@ -46,13 +53,13 @@ type FilterExtractor interface {
 	Extract(query string) (*FilterResult, error)
 }
 
-func NewExtractor(extractorType string) (FilterExtractor, error) {
+func NewExtractor(extractorType ExtractorType) (FilterExtractor, error) {
 	switch extractorType {
-	case ExtractorCH:
+	case ExtractorTypeClickHouseSQL:
 		return NewClickHouseFilterExtractor(), nil
-	case ExtractorPromQL:
+	case ExtractorTypePromQL:
 		return NewPromQLFilterExtractor(), nil
 	default:
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid extractor type: %s", extractorType)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid extractor type: %s", extractorType)
 	}
 }

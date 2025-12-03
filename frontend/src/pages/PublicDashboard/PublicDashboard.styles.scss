@@ -1,0 +1,83 @@
+.public-dashboard-page {
+	.public-dashboard-error-container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		height: 100%;
+		width: 100%;
+		padding: 64px 0px;
+
+		.public-dashboard-error-content-header {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+
+			.brand {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 12px;
+
+				margin-bottom: 12px;
+
+				.brand-logo {
+					width: 40px;
+					height: 40px;
+				}
+
+				.brand-title {
+					font-size: 20px;
+					font-weight: 600;
+					color: var(--bg-vanilla-100, #ffffff); // White text for dark theme
+					margin: 0;
+				}
+			}
+
+			.brand-tagline {
+				margin-bottom: 24px;
+
+				.ant-typography {
+					color: var(--bg-vanilla-400, #c0c1c3); // Light gray text for dark theme
+				}
+			}
+		}
+
+		.public-dashboard-error-content {
+			margin: 128px 0px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			flex-direction: column;
+			padding: 32px 0px;
+			gap: 8px;
+
+			.ant-typography {
+				margin: 0;
+			}
+
+			.public-dashboard-error-message {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 8px;
+				margin-top: 12px;
+			}
+
+			.public-dashboard-error-message-icon {
+				color: var(--bg-vanilla-400, #c0c1c3); // Light gray text for dark theme
+			}
+		}
+	}
+}
+
+.lightMode {
+	.public-dashboard-error-container {
+		.public-dashboard-error-content-header {
+			.brand-title {
+				color: var(--bg-ink-400, #121317) !important; // Dark text for light theme
+			}
+		}
+	}
+}

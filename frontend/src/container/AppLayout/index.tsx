@@ -35,6 +35,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import useTabVisibility from 'hooks/useTabFocus';
+import { useKBar } from 'kbar';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -184,6 +185,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { t } = useTranslation(['titles']);
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+
+	const { query, disabled } = useKBar((state) => ({
+		disabled: state.disabled,
+	}));
+
+	// disable the kbar command palette when not logged in
+	useEffect(() => {
+		if (isLoggedIn) {
+			query.disable(false);
+		} else {
+			query.disable(true);
+		}
+	}, [isLoggedIn, query, disabled]);
 
 	const changelogForTenant = isCloudUserVal
 		? DeploymentType.CLOUD_ONLY
@@ -391,6 +405,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
+
+	const isPublicDashboard = pathname.startsWith('/public/dashboard/');
+
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED ||
 		pathname === ROUTES.ONBOARDING ||
@@ -399,7 +416,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
 		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
 		pathname === ROUTES.GET_STARTED_AWS_MONITORING ||
-		pathname === ROUTES.GET_STARTED_AZURE_MONITORING;
+		pathname === ROUTES.GET_STARTED_AZURE_MONITORING ||
+		isPublicDashboard;
 
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 
