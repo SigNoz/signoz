@@ -24,6 +24,7 @@
 	.brand-container {
 		padding: 8px 18px;
 		max-width: 100%;
+		background: linear-gradient(0deg, rgba(11, 12, 14, 0) 0%, #0b0c0e 27%);
 	}
 
 	.brand-company-meta {
@@ -457,9 +458,32 @@
 		.nav-wrapper {
 			.nav-top-section {
 				.shortcut-nav-items {
-					.nav-section-title,
+					.nav-section-title {
+						display: flex;
+						justify-content: center;
+						padding: 0;
+
+						.nav-section-title-text {
+							display: none;
+						}
+
+						.nav-section-title-icon.reorder {
+							display: none;
+						}
+					}
+
 					.nav-section-subtitle {
 						display: none;
+					}
+
+					.nav-items-section {
+						display: none;
+					}
+
+					.nav-title-section {
+						margin-top: 0;
+						margin-bottom: 0;
+						gap: 0;
 					}
 				}
 			}
@@ -1169,6 +1193,10 @@
 					color: var(--bg-slate-400);
 				}
 			}
+		}
+
+		.brand-container {
+			background: linear-gradient(0deg, rgba(255, 255, 255, 0) 0%, #fff 27%);
 		}
 
 		.nav-wrapper {
