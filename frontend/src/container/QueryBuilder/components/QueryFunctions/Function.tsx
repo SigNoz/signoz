@@ -12,7 +12,7 @@ import {
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { debounce, isNil } from 'lodash-es';
 import { X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
@@ -55,17 +55,6 @@ export default function Function({
 		functionValue !== undefined ? String(functionValue) : '',
 	);
 	const inputRef = useRef<InputRef>(null);
-	const mirrorRef = useRef<HTMLSpanElement>(null);
-
-	useEffect(() => {
-		if (!mirrorRef.current || !inputRef.current?.input) return;
-
-		const mirrorWidth = mirrorRef.current.offsetWidth + 24; // padding
-		const newWidth = Math.min(150, Math.max(70, mirrorWidth));
-
-		// AntD input actual DOM element is inputRef.current.input
-		inputRef.current.input.style.width = `${newWidth}px`;
-	}, [value]);
 
 	const debouncedhandleUpdateFunctionArgs = useMemo(
 		() => debounce(handleUpdateFunctionArgs, 500),
@@ -109,28 +98,20 @@ export default function Function({
 			/>
 
 			{showInput && (
-				<>
-					<OverflowInputToolTip
-						ref={inputRef}
-						className="query-function-value"
-						autoFocus
-						value={value}
-						onChange={(event): void => {
-							const newVal = event.target.value;
-							setValue(newVal);
-							debouncedhandleUpdateFunctionArgs(funcData, index, event.target.value);
-						}}
-						tooltipPlacement="top"
-						style={{
-							width: 70,
-							minWidth: 70,
-							maxWidth: 150,
-						}}
-					/>
-					<span ref={mirrorRef} className="query-function-mirror">
-						{value || ' '}
-					</span>
-				</>
+				<OverflowInputToolTip
+					ref={inputRef}
+					autoFocus
+					value={value}
+					onChange={(event): void => {
+						const newVal = event.target.value;
+						setValue(newVal);
+						debouncedhandleUpdateFunctionArgs(funcData, index, event.target.value);
+					}}
+					tooltipPlacement="top"
+					minAutoWidth={70}
+					maxAutoWidth={150}
+					className="overflow-input"
+				/>
 			)}
 
 			<Button
