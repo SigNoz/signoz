@@ -77,7 +77,7 @@ func (p *queryParserImpl) AnalyzeCompositeQuery(ctx context.Context, compositeQu
 			}
 			res, err := p.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, spec.Query)
 			if err != nil {
-				return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "error while analyzing query filter: %s", err.Error())
+				return nil, err
 			}
 			result.MetricNames = append(result.MetricNames, res.MetricNames...)
 			result.GroupByColumns = append(result.GroupByColumns, res.GroupByColumns...)
@@ -88,7 +88,7 @@ func (p *queryParserImpl) AnalyzeCompositeQuery(ctx context.Context, compositeQu
 			}
 			res, err := p.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, spec.Query)
 			if err != nil {
-				return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "error while analyzing query filter: %s", err.Error())
+				return nil, err
 			}
 			result.MetricNames = append(result.MetricNames, res.MetricNames...)
 			result.GroupByColumns = append(result.GroupByColumns, res.GroupByColumns...)
