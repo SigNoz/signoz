@@ -22,6 +22,7 @@ import {
 	getListQuery,
 	getQueryByPanelType,
 } from 'container/LogsExplorerViews/explorerUtils';
+import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
@@ -109,6 +110,8 @@ function LogsExplorerViewsContainer({
 	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
 
 	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
+
+	const [yAxisUnit, setYAxisUnit] = useState<string>('');
 
 	const listQuery = useMemo(() => getListQuery(stagedQuery) || null, [
 		stagedQuery,
@@ -350,6 +353,10 @@ function LogsExplorerViewsContainer({
 		orderBy,
 	]);
 
+	const onUnitChangeHandler = useCallback((value: string): void => {
+		setYAxisUnit(value);
+	}, []);
+
 	const chartData = useMemo(() => {
 		if (!stagedQuery) return [];
 
@@ -457,15 +464,24 @@ function LogsExplorerViewsContainer({
 					)}
 
 					{selectedPanelType === PANEL_TYPES.TIME_SERIES && !showLiveLogs && (
-						<TimeSeriesView
-							isLoading={isLoading || isFetching}
-							data={data}
-							isError={isError}
-							error={error as APIError}
-							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
-							dataSource={DataSource.LOGS}
-							setWarning={setWarning}
-						/>
+						<div className="time-series-view-container">
+							<div className="time-series-view-container-header">
+								<BuilderUnitsFilter
+									onChange={onUnitChangeHandler}
+									yAxisUnit={yAxisUnit}
+								/>
+							</div>
+							<TimeSeriesView
+								isLoading={isLoading || isFetching}
+								data={data}
+								isError={isError}
+								error={error as APIError}
+								yAxisUnit={yAxisUnit}
+								isFilterApplied={!isEmpty(listQuery?.filters?.items)}
+								dataSource={DataSource.LOGS}
+								setWarning={setWarning}
+							/>
+						</div>
 					)}
 
 					{selectedPanelType === PANEL_TYPES.TABLE && !showLiveLogs && (
