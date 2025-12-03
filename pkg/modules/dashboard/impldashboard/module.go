@@ -3,6 +3,7 @@ package impldashboard
 import (
 	"context"
 	"maps"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -11,30 +12,34 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	store     dashboardtypes.Store
-	settings  factory.ScopedProviderSettings
-	analytics analytics.Analytics
-	orgGetter organization.Getter
-	role      role.Module
+	store       dashboardtypes.Store
+	settings    factory.ScopedProviderSettings
+	analytics   analytics.Analytics
+	orgGetter   organization.Getter
+	role        role.Module
+	queryParser queryparser.QueryParser
 }
 
-func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module) dashboard.Module {
+func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module, queryParser queryparser.QueryParser) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/impldashboard")
 	return &module{
-		store:     NewStore(sqlstore),
-		settings:  scopedProviderSettings,
-		analytics: analytics,
-		orgGetter: orgGetter,
-		role:      role,
+		store:       NewStore(sqlstore),
+		settings:    scopedProviderSettings,
+		analytics:   analytics,
+		orgGetter:   orgGetter,
+		role:        role,
+		queryParser: queryParser,
 	}
 }
 
@@ -298,8 +303,8 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 
 			// Check all three query types
 			module.checkBuilderQueriesForMetricNames(query, metricNames, foundMetrics)
-			module.checkClickHouseQueriesForMetricNames(query, metricNames, foundMetrics)
-			module.checkPromQLQueriesForMetricNames(query, metricNames, foundMetrics)
+			module.checkClickHouseQueriesForMetricNames(ctx, query, metricNames, foundMetrics)
+			module.checkPromQLQueriesForMetricNames(ctx, query, metricNames, foundMetrics)
 
 			// Add widget to results for all found metrics
 			for metricName := range foundMetrics {
@@ -387,7 +392,7 @@ func (module *module) checkBuilderQueriesForMetricNames(query map[string]interfa
 }
 
 // checkClickHouseQueriesForMetricNames checks clickhouse_sql[] array for metric names in query strings
-func (module *module) checkClickHouseQueriesForMetricNames(query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
+func (module *module) checkClickHouseQueriesForMetricNames(ctx context.Context, query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
 	clickhouseSQL, ok := query["clickhouse_sql"].([]interface{})
 	if !ok {
 		return
@@ -409,9 +414,17 @@ func (module *module) checkClickHouseQueriesForMetricNames(query map[string]inte
 			continue
 		}
 
-		// Search for metric names in the query string
+		// Parse query to extract metric names
+		result, err := module.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, queryStr)
+		if err != nil {
+			// Log debug and continue - parsing errors shouldn't break the search
+			module.settings.Logger().DebugContext(ctx, "failed to parse ClickHouse query", "query", queryStr, "error", err)
+			continue
+		}
+
+		// Check if any of the search metric names are in the extracted metric names
 		for _, metricName := range metricNames {
-			if strings.Contains(queryStr, metricName) {
+			if slices.Contains(result.MetricNames, metricName) {
 				foundMetrics[metricName] = true
 			}
 		}
@@ -419,7 +432,7 @@ func (module *module) checkClickHouseQueriesForMetricNames(query map[string]inte
 }
 
 // checkPromQLQueriesForMetricNames checks promql[] array for metric names in query strings
-func (module *module) checkPromQLQueriesForMetricNames(query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
+func (module *module) checkPromQLQueriesForMetricNames(ctx context.Context, query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
 	promQL, ok := query["promql"].([]interface{})
 	if !ok {
 		return
@@ -441,9 +454,17 @@ func (module *module) checkPromQLQueriesForMetricNames(query map[string]interfac
 			continue
 		}
 
-		// Search for metric names in the query string
+		// Parse query to extract metric names
+		result, err := module.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, queryStr)
+		if err != nil {
+			// Log debug and continue - parsing errors shouldn't break the search
+			module.settings.Logger().DebugContext(ctx, "failed to parse PromQL query", "query", queryStr, "error", err)
+			continue
+		}
+
+		// Check if any of the search metric names are in the extracted metric names
 		for _, metricName := range metricNames {
-			if strings.Contains(queryStr, metricName) {
+			if slices.Contains(result.MetricNames, metricName) {
 				foundMetrics[metricName] = true
 			}
 		}

@@ -38,6 +38,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
@@ -79,12 +80,13 @@ func NewModules(
 	authNs map[authtypes.AuthNProvider]authn.AuthN,
 	authz authz.AuthZ,
 	cache cache.Cache,
+	queryParser queryparser.QueryParser,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
 	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics)
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
-	dashboard := impldashboard.NewModule(sqlstore, providerSettings, analytics, orgGetter, implrole.NewModule(implrole.NewStore(sqlstore), authz, nil))
+	dashboard := impldashboard.NewModule(sqlstore, providerSettings, analytics, orgGetter, implrole.NewModule(implrole.NewStore(sqlstore), authz, nil), queryParser)
 
 	return Modules{
 		OrgGetter:       orgGetter,
