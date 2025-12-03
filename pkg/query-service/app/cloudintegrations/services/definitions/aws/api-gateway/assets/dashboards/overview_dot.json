@@ -514,7 +514,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -691,7 +690,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "max",
-              "stepInterval": 60,
               "timeAggregation": "max"
             }
           ],
@@ -868,7 +866,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -1045,7 +1042,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "max",
-              "stepInterval": 60,
               "timeAggregation": "max"
             }
           ],
@@ -1222,7 +1218,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -1399,7 +1394,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -1582,7 +1576,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -1759,7 +1752,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -1936,7 +1928,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -2113,7 +2104,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "max",
-              "stepInterval": 60,
               "timeAggregation": "max"
             }
           ],
@@ -2290,7 +2280,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -2473,7 +2462,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -2650,7 +2638,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -2827,7 +2814,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -3004,7 +2990,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -3181,7 +3166,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
@@ -3385,7 +3369,6 @@
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "max",
-              "stepInterval": 60,
               "timeAggregation": "max"
             }
           ],
