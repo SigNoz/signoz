@@ -519,79 +519,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "rest-requests-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -695,79 +626,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "rest-latency-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -871,79 +733,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "rest-5xx-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -1047,79 +840,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "rest-integ-latency-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -1223,79 +947,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "rest-cache-hit-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -1399,79 +1054,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "rest-cache-miss-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -1581,79 +1167,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "http-count-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -1757,79 +1274,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "http-4xx-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -1933,79 +1381,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "http-5xx-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -2109,79 +1488,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "http-latency-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -2285,79 +1595,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "http-data-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -2467,79 +1708,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "ws-connect-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -2643,79 +1815,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "ws-message-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -2819,79 +1922,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "ws-client-error-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -2995,79 +2029,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "ws-exec-error-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -3171,79 +2136,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "ws-integ-error-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -3374,79 +2270,10 @@
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "id": "common-integ-latency-query",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
+      
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
