@@ -196,7 +196,7 @@
       },
       {
         "id": "overview_multi_api",
-        "title": "Api Gateway Overview",
+        "title": "API Gateway Overview",
         "description": "API Gateway Metrics for multiple types of APIs provided by AWS API Gateway",
         "image": "file://assets/dashboards/overview.png",
         "definition": "file://assets/dashboards/overview_multiapi.json"
