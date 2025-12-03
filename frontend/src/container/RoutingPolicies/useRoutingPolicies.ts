@@ -8,8 +8,11 @@ import { useCreateRoutingPolicy } from 'hooks/routingPolicies/useCreateRoutingPo
 import { useDeleteRoutingPolicy } from 'hooks/routingPolicies/useDeleteRoutingPolicy';
 import { useGetRoutingPolicies } from 'hooks/routingPolicies/useGetRoutingPolicies';
 import { useUpdateRoutingPolicy } from 'hooks/routingPolicies/useUpdateRoutingPolicy';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
+import { useHistory } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
@@ -28,9 +31,11 @@ import {
 
 function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	const queryClient = useQueryClient();
+	const urlQuery = useUrlQuery();
+	const history = useHistory();
 
 	// Local state
-	const [searchTerm, setSearchTerm] = useState('');
+	const [searchTerm, setSearchTerm] = useState(urlQuery.get('search') || '');
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [
 		policyDetailsModalState,
@@ -44,9 +49,27 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		setSelectedRoutingPolicy,
 	] = useState<RoutingPolicy | null>(null);
 
+	const updateUrlWithSearch = useDebouncedFn((value) => {
+		const searchValue = value as string;
+		if (searchValue) {
+			urlQuery.set('search', searchValue);
+		} else {
+			urlQuery.delete('search');
+		}
+		const url = `/alerts?${urlQuery.toString()}`;
+		history.replace(url);
+	}, 300);
+
+	const handleSearch = (value: string): void => {
+		setSearchTerm(value);
+		updateUrlWithSearch(value);
+	};
+
 	// Routing Policies list
 	const {
 		data: routingPolicies,
+		refetch: refetchRoutingPolicies,
+		isFetching: isFetchingRoutingPolicies,
 		isLoading: isLoadingRoutingPolicies,
 		isError: isErrorRoutingPolicies,
 	} = useGetRoutingPolicies();
@@ -55,8 +78,10 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		const unfilteredRoutingPolicies = mapApiResponseToRoutingPolicies(
 			routingPolicies as SuccessResponseV2<GetRoutingPoliciesResponse>,
 		);
-		return unfilteredRoutingPolicies.filter((routingPolicy) =>
-			routingPolicy.name.toLowerCase().includes(searchTerm.toLowerCase()),
+		return unfilteredRoutingPolicies.filter(
+			(routingPolicy) =>
+				routingPolicy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				routingPolicy.description?.toLowerCase().includes(searchTerm.toLowerCase()),
 		);
 	}, [routingPolicies, searchTerm]);
 
@@ -213,7 +238,9 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		selectedRoutingPolicy,
 		routingPoliciesData,
 		isLoadingRoutingPolicies,
+		isFetchingRoutingPolicies,
 		isErrorRoutingPolicies,
+		refetchRoutingPolicies,
 		// Channels
 		channels,
 		isLoadingChannels,
@@ -221,7 +248,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		refreshChannels,
 		// Search
 		searchTerm,
-		setSearchTerm,
+		setSearchTerm: handleSearch,
 		// Delete Modal
 		isDeleteModalOpen,
 		handleDeleteModalOpen,

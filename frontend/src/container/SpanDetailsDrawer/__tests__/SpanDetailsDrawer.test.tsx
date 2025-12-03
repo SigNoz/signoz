@@ -385,7 +385,7 @@ describe('SpanDetailsDrawer', () => {
 		renderSpanDetailsDrawer();
 
 		// Verify logs tab is visible
-		const logsButton = screen.getByRole('radio', { name: /logs/i });
+		const logsButton = screen.getByRole('button', { name: /logs/i });
 		expect(logsButton).toBeInTheDocument();
 		expect(logsButton).toBeVisible();
 	});
@@ -394,7 +394,7 @@ describe('SpanDetailsDrawer', () => {
 		renderSpanDetailsDrawer();
 
 		// Click on logs tab
-		const logsButton = screen.getByRole('radio', { name: /logs/i });
+		const logsButton = screen.getByRole('button', { name: /logs/i });
 		fireEvent.click(logsButton);
 
 		// Wait for logs view to open and logs to be displayed
@@ -415,7 +415,7 @@ describe('SpanDetailsDrawer', () => {
 		renderSpanDetailsDrawer();
 
 		// Click on logs tab to trigger API calls
-		const logsButton = screen.getByRole('radio', { name: /logs/i });
+		const logsButton = screen.getByRole('button', { name: /logs/i });
 		fireEvent.click(logsButton);
 
 		// Wait for all API calls to complete
@@ -456,7 +456,7 @@ describe('SpanDetailsDrawer', () => {
 		renderSpanDetailsDrawer();
 
 		// Click on logs tab to trigger API calls
-		const logsButton = screen.getByRole('radio', { name: /logs/i });
+		const logsButton = screen.getByRole('button', { name: /logs/i });
 		fireEvent.click(logsButton);
 
 		// Wait for all API calls to complete
@@ -490,7 +490,7 @@ describe('SpanDetailsDrawer', () => {
 		renderSpanDetailsDrawer();
 
 		// Open logs view
-		const logsButton = screen.getByRole('radio', { name: /logs/i });
+		const logsButton = screen.getByRole('button', { name: /logs/i });
 		fireEvent.click(logsButton);
 
 		// Wait for logs to load
@@ -536,7 +536,7 @@ describe('SpanDetailsDrawer', () => {
 		renderSpanDetailsDrawer();
 
 		// Open logs view
-		const logsButton = screen.getByRole('radio', { name: /logs/i });
+		const logsButton = screen.getByRole('button', { name: /logs/i });
 		fireEvent.click(logsButton);
 
 		// Wait for logs to load
@@ -582,7 +582,7 @@ describe('SpanDetailsDrawer', () => {
 		renderSpanDetailsDrawer();
 
 		// Open logs view
-		const logsButton = screen.getByRole('radio', { name: /logs/i });
+		const logsButton = screen.getByRole('button', { name: /logs/i });
 		fireEvent.click(logsButton);
 
 		// Wait for logs to load
@@ -611,7 +611,7 @@ describe('SpanDetailsDrawer', () => {
 		renderSpanDetailsDrawer();
 
 		// Open logs view
-		const logsButton = screen.getByRole('radio', { name: /logs/i });
+		const logsButton = screen.getByRole('button', { name: /logs/i });
 		fireEvent.click(logsButton);
 
 		// Wait for all API calls to complete first
