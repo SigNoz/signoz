@@ -9,12 +9,15 @@ import (
 	_ "net/http/pprof" // http profiler
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+
 	"github.com/gorilla/handlers"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -29,7 +32,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -131,6 +133,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
+		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
 	})
 	if err != nil {
 		return nil, err

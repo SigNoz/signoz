@@ -138,9 +138,9 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	return (
-		<>
-			<Typography>{errorDetail.exceptionType}</Typography>
-			<Typography>{errorDetail.exceptionMessage}</Typography>
+		<div className="error-details-container">
+			<Typography.Title level={4}>{errorDetail.exceptionType}</Typography.Title>
+			<Typography.Text>{errorDetail.exceptionMessage}</Typography.Text>
 			<Divider />
 
 			<EventContainer>
@@ -200,7 +200,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 					<ResizeTable columns={columns} tableLayout="fixed" dataSource={data} />
 				</Space>
 			</EditorContainer>
-		</>
+		</div>
 	);
 }
 

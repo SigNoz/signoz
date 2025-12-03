@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
@@ -32,10 +33,11 @@ type module struct {
 	logger                 *slog.Logger
 	cache                  cache.Cache
 	ruleStore              ruletypes.RuleStore
+	queryParser            queryparser.QueryParser
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, providerSettings factory.ProviderSettings) metricsexplorer.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, queryParser queryparser.QueryParser, providerSettings factory.ProviderSettings) metricsexplorer.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -46,6 +48,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		telemetryMetadataStore: telemetryMetadataStore,
 		cache:                  cache,
 		ruleStore:              ruleStore,
+		queryParser:            queryParser,
 	}
 }
 
@@ -243,15 +246,35 @@ func (m *module) GetMetricAlerts(ctx context.Context, orgID valuer.UUID, metricN
 				}
 			case qbtypes.QueryTypePromQL:
 				if spec, ok := queryEnvelope.Spec.(qbtypes.PromQuery); ok {
-					if strings.Contains(spec.Query, metricName) {
-						found = true
+					result, err := m.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, spec.Query)
+					if err != nil {
+						m.logger.DebugContext(ctx, "failed to parse PromQL query", "query", spec.Query, "error", err)
+						continue
+					}
+					for _, extractedMetricName := range result.MetricNames {
+						if extractedMetricName == metricName {
+							found = true
+							break
+						}
+					}
+					if found {
 						break
 					}
 				}
 			case qbtypes.QueryTypeClickHouseSQL:
 				if spec, ok := queryEnvelope.Spec.(qbtypes.ClickHouseQuery); ok {
-					if strings.Contains(spec.Query, metricName) {
-						found = true
+					result, err := m.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, spec.Query)
+					if err != nil {
+						m.logger.DebugContext(ctx, "failed to parse ClickHouse query", "query", spec.Query, "error", err)
+						continue
+					}
+					for _, extractedMetricName := range result.MetricNames {
+						if extractedMetricName == metricName {
+							found = true
+							break
+						}
+					}
+					if found {
 						break
 					}
 				}

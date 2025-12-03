@@ -38,6 +38,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -80,6 +81,7 @@ func NewModules(
 	authNs map[authtypes.AuthNProvider]authn.AuthN,
 	authz authz.AuthZ,
 	cache cache.Cache,
+	queryParser queryparser.QueryParser,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -105,6 +107,6 @@ func NewModules(
 		Session:         implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
 		SpanPercentile:  implspanpercentile.NewModule(querier, providerSettings),
 		Services:        implservices.NewModule(querier, telemetryStore),
-		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, providerSettings),
+		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, queryParser, providerSettings),
 	}
 }
