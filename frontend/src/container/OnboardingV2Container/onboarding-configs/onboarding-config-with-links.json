@@ -4424,7 +4424,7 @@
 		"imgUrl": "/Logos/metrics.svg",
 		"tags": [
 			"Frontend Monitoring",
-			"Metrics"
+			"metrics"
 		],
 		"module": "metrics",
 		"relatedSearchKeywords": [
@@ -5422,7 +5422,7 @@
 		"imgUrl": "/Logos/logs.svg",
 		"tags": [
 			"Frontend Monitoring",
-			"Logs"	
+			"logs"	
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
@@ -5480,7 +5480,7 @@
 		"imgUrl": "/Logos/metrics.svg",
 		"tags": [
 			"Frontend Monitoring",
-			"Metrics"
+			"metrics"
 		],
 		"module": "metrics",
 		"relatedSearchKeywords": [
@@ -5508,8 +5508,8 @@
 		"label": "Fly.io",
 		"imgUrl": "/Logos/fly-io.svg",
 		"tags": [
-			"Infrastructure monitoring",
-			"Metrics"
+			"infrastructure monitoring",
+			"metrics"
 		],
 		"module": "metrics",
 		"relatedSearchKeywords": [
@@ -5527,8 +5527,8 @@
 		"label": "Envoy",
 		"imgUrl": "/Logos/envoy.svg",
 		"tags": [
-			"Infrastructure monitoring",
-			"Metrics"
+			"infrastructure monitoring",
+			"metrics"
 		],
 		"module": "metrics",
 		"relatedSearchKeywords": [
