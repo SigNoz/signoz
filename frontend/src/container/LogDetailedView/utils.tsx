@@ -39,9 +39,17 @@ export const computeDataNode = (
 	valueIsArray: boolean,
 	value: unknown,
 	nodeKey: string,
+	parentIsArray: boolean,
 ): DataNode => ({
 	key: uniqueId(),
-	title: `${key} ${valueIsArray ? '[...]' : ''}`,
+	title: (
+		<BodyTitleRenderer
+			title={`${key} ${valueIsArray ? '[...]' : ''}`}
+			nodeKey={nodeKey}
+			value={value}
+			parentIsArray={parentIsArray}
+		/>
+	),
 	// eslint-disable-next-line @typescript-eslint/no-use-before-define
 	children: jsonToDataNodes(
 		value as Record<string, unknown>,
@@ -67,7 +75,7 @@ export function jsonToDataNodes(
 
 		if (parentIsArray) {
 			if (typeof value === 'object' && value !== null) {
-				return computeDataNode(key, valueIsArray, value, nodeKey);
+				return computeDataNode(key, valueIsArray, value, nodeKey, parentIsArray);
 			}
 
 			return {
@@ -85,7 +93,7 @@ export function jsonToDataNodes(
 		}
 
 		if (typeof value === 'object' && value !== null) {
-			return computeDataNode(key, valueIsArray, value, nodeKey);
+			return computeDataNode(key, valueIsArray, value, nodeKey, parentIsArray);
 		}
 		return {
 			key: uniqueId(),
