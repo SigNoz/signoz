@@ -6,7 +6,14 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Dispatch, memo, SetStateAction, useEffect, useMemo } from 'react';
+import {
+	Dispatch,
+	memo,
+	MutableRefObject,
+	SetStateAction,
+	useEffect,
+	useMemo,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -17,9 +24,11 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 function TableView({
 	setWarning,
 	setIsLoadingQueries,
+	queryKeyRef,
 }: {
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
+	queryKeyRef?: MutableRefObject<any>;
 }): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
@@ -27,6 +36,22 @@ function TableView({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const queryKey = useMemo(
+		() => [
+			REACT_QUERY_KEY.GET_QUERY_RANGE,
+			globalSelectedTime,
+			maxTime,
+			minTime,
+			stagedQuery,
+		],
+		[globalSelectedTime, maxTime, minTime, stagedQuery],
+	);
+
+	if (queryKeyRef) {
+		// eslint-disable-next-line no-param-reassign
+		queryKeyRef.current = queryKey;
+	}
 
 	const { data, isLoading, isFetching, isError, error } = useGetQueryRange(
 		{
@@ -40,13 +65,7 @@ function TableView({
 		},
 		ENTITY_VERSION_V5,
 		{
-			queryKey: [
-				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				globalSelectedTime,
-				maxTime,
-				minTime,
-				stagedQuery,
-			],
+			queryKey,
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.TABLE,
 		},
 	);
@@ -88,5 +107,9 @@ function TableView({
 		</Space.Compact>
 	);
 }
+
+TableView.defaultProps = {
+	queryKeyRef: undefined,
+};
 
 export default memo(TableView);
