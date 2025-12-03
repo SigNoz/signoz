@@ -599,7 +599,7 @@
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
       "title": "Requests",
-      "yAxisUnit": "none"
+      "yAxisUnit": "cpm"
     },
     {
       "bucketCount": 30,
@@ -1667,7 +1667,7 @@
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
       "title": "Requests",
-      "yAxisUnit": "none"
+      "yAxisUnit": "cpm"
     },
     {
       "bucketCount": 30,
