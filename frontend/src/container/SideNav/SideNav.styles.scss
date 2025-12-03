@@ -281,6 +281,11 @@
 							display: none;
 							cursor: pointer;
 							margin-left: auto;
+							transition: color 0.2s;
+
+							&:hover {
+								color: var(--bg-vanilla-100, #fff);
+							}
 						}
 					}
 
@@ -583,6 +588,11 @@
 						.nav-section-title-icon {
 							&.reorder {
 								display: flex;
+								transition: color 0.2s;
+
+								&:hover {
+									color: var(--bg-vanilla-100, #fff);
+								}
 							}
 						}
 					}
@@ -742,6 +752,11 @@
 						.nav-section-title-icon {
 							&.reorder {
 								display: flex;
+								transition: color 0.2s;
+
+								&:hover {
+									color: var(--bg-vanilla-100, #fff);
+								}
 							}
 						}
 					}
@@ -1200,6 +1215,20 @@
 		}
 
 		.nav-wrapper {
+			.nav-top-section {
+				.shortcut-nav-items {
+					.nav-section-title {
+						.nav-section-title-icon {
+							&.reorder {
+								&:hover {
+									color: var(--bg-slate-400, #1d212d);
+								}
+							}
+						}
+					}
+				}
+			}
+
 			.secondary-nav-items {
 				border-top: 1px solid var(--bg-vanilla-300);
 
@@ -1214,9 +1243,43 @@
 			}
 		}
 
+		&.pinned {
+			.nav-wrapper {
+				.nav-top-section {
+					.shortcut-nav-items {
+						.nav-section-title {
+							.nav-section-title-icon {
+								&.reorder {
+									&:hover {
+										color: var(--bg-slate-400, #1d212d);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
 		&:not(.pinned):hover,
 		&.dropdown-open {
 			background: var(--bg-vanilla-100);
+
+			.nav-wrapper {
+				.nav-top-section {
+					.shortcut-nav-items {
+						.nav-section-title {
+							.nav-section-title-icon {
+								&.reorder {
+									&:hover {
+										color: var(--bg-slate-400, #1d212d);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 

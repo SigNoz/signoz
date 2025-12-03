@@ -1001,15 +1001,17 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										<div className="nav-section-title-text">SHORTCUTS</div>
 
 										{pinnedMenuItems.length > 1 && (
-											<div
-												className="nav-section-title-icon reorder"
-												onClick={(): void => {
-													logEvent('Sidebar V2: Manage shortcuts clicked', {});
-													setIsReorderShortcutNavItemsModalOpen(true);
-												}}
-											>
-												<Logs size={16} />
-											</div>
+											<Tooltip title="Manage shortcuts" placement="right">
+												<div
+													className="nav-section-title-icon reorder"
+													onClick={(): void => {
+														logEvent('Sidebar V2: Manage shortcuts clicked', {});
+														setIsReorderShortcutNavItemsModalOpen(true);
+													}}
+												>
+													<Logs size={16} />
+												</div>
+											</Tooltip>
 										)}
 									</div>
 
