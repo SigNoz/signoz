@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
@@ -62,6 +63,7 @@ type SigNoz struct {
 	Authz                  authz.AuthZ
 	Modules                Modules
 	Handlers               Handlers
+	QueryParser            queryparser.QueryParser
 }
 
 func New(
@@ -309,6 +311,9 @@ func New(
 		return nil, err
 	}
 
+	// Initialize query parser
+	queryParser := queryparser.New(providerSettings)
+
 	// Initialize authns
 	store := sqlauthnstore.NewStore(sqlstore)
 	authNs, err := authNsCallback(ctx, providerSettings, store, licensing)
@@ -402,5 +407,6 @@ func New(
 		Authz:                  authz,
 		Modules:                modules,
 		Handlers:               handlers,
+		QueryParser:            queryParser,
 	}, nil
 }
