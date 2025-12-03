@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"time"
 
@@ -251,13 +252,8 @@ func (m *module) GetMetricAlerts(ctx context.Context, orgID valuer.UUID, metricN
 						m.logger.DebugContext(ctx, "failed to parse PromQL query", "query", spec.Query, "error", err)
 						continue
 					}
-					for _, extractedMetricName := range result.MetricNames {
-						if extractedMetricName == metricName {
-							found = true
-							break
-						}
-					}
-					if found {
+					if slices.Contains(result.MetricNames, metricName) {
+						found = true
 						break
 					}
 				}
@@ -268,13 +264,8 @@ func (m *module) GetMetricAlerts(ctx context.Context, orgID valuer.UUID, metricN
 						m.logger.DebugContext(ctx, "failed to parse ClickHouse query", "query", spec.Query, "error", err)
 						continue
 					}
-					for _, extractedMetricName := range result.MetricNames {
-						if extractedMetricName == metricName {
-							found = true
-							break
-						}
-					}
-					if found {
+					if slices.Contains(result.MetricNames, metricName) {
+						found = true
 						break
 					}
 				}
