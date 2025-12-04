@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './Function.styles.scss';
 
-import { Button, Flex, InputRef, Select } from 'antd';
+import { Button, Flex, Select } from 'antd';
 import cx from 'classnames';
 import OverflowInputToolTip from 'components/OverflowInputToolTip';
 import {
@@ -12,7 +12,7 @@ import {
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { debounce, isNil } from 'lodash-es';
 import { X } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
@@ -54,7 +54,6 @@ export default function Function({
 	const [value, setValue] = useState<string>(
 		functionValue !== undefined ? String(functionValue) : '',
 	);
-	const inputRef = useRef<InputRef>(null);
 
 	const debouncedhandleUpdateFunctionArgs = useMemo(
 		() => debounce(handleUpdateFunctionArgs, 500),
@@ -99,7 +98,6 @@ export default function Function({
 
 			{showInput && (
 				<OverflowInputToolTip
-					ref={inputRef}
 					autoFocus
 					value={value}
 					onChange={(event): void => {
