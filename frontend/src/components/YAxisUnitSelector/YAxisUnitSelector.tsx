@@ -78,6 +78,7 @@ function YAxisUnitSelector({
 				className={classNames({
 					'warning-state': incompatibleUnitMessage,
 				})}
+				data-testid={dataTestId}
 			>
 				{categories.map((category) => (
 					<Select.OptGroup key={category.name} label={category.name}>
