@@ -94,7 +94,12 @@ describe('YAxisUnitSelector', () => {
 
 	it('shows warning message when incompatible unit is selected', () => {
 		render(
-			<YAxisUnitSelector value="By" onChange={mockOnChange} initialValue="s" />,
+			<YAxisUnitSelector
+				source={YAxisSource.ALERTS}
+				value="By"
+				onChange={mockOnChange}
+				initialValue="s"
+			/>,
 		);
 		const warningIcon = screen.getByLabelText('warning');
 		expect(warningIcon).toBeInTheDocument();
@@ -108,7 +113,12 @@ describe('YAxisUnitSelector', () => {
 
 	it('does not show warning message when compatible unit is selected', () => {
 		render(
-			<YAxisUnitSelector value="s" onChange={mockOnChange} initialValue="s" />,
+			<YAxisUnitSelector
+				source={YAxisSource.ALERTS}
+				value="s"
+				onChange={mockOnChange}
+				initialValue="s"
+			/>,
 		);
 		const warningIcon = screen.queryByLabelText('warning');
 		expect(warningIcon).not.toBeInTheDocument();

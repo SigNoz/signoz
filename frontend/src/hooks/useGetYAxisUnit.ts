@@ -25,15 +25,24 @@ function useGetYAxisUnit(selectedQueryName?: string): UseGetYAxisUnitResult {
 		}
 		// If a selected query name is provided, return the metric name for that query only
 		if (selectedQueryName) {
-			return [
-				currentQuery?.builder?.queryData?.find(
-					(query) => query.queryName === selectedQueryName,
-				)?.aggregateAttribute?.key ?? '',
-			];
+			const currentMetricNames: string[] = [];
+			currentQuery?.builder?.queryData?.forEach((query) => {
+				if (
+					query.queryName === selectedQueryName &&
+					query.aggregateAttribute?.key
+				) {
+					currentMetricNames.push(query.aggregateAttribute?.key);
+				}
+			});
+			return currentMetricNames.length ? currentMetricNames : null;
 		}
-		return currentQuery?.builder?.queryData?.map(
-			(query) => query.aggregateAttribute?.key ?? '',
-		);
+		const currentMetricNames: string[] = [];
+		currentQuery?.builder?.queryData?.forEach((query) => {
+			if (query.aggregateAttribute?.key) {
+				currentMetricNames.push(query.aggregateAttribute?.key);
+			}
+		});
+		return currentMetricNames.length ? currentMetricNames : null;
 	}, [
 		selectedQueryName,
 		currentQuery?.builder?.queryData,

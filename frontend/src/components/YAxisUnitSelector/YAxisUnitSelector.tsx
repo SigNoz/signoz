@@ -1,7 +1,6 @@
 import './styles.scss';
 
 import { WarningFilled } from '@ant-design/icons';
-import { Color } from '@signozhq/design-tokens';
 import { Select, Tooltip } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 import classNames from 'classnames';
@@ -75,7 +74,7 @@ function YAxisUnitSelector({
 				suffixIcon={
 					incompatibleUnitMessage ? (
 						<Tooltip title={incompatibleUnitMessage}>
-							<WarningFilled color={Color.BG_AMBER_500} />
+							<WarningFilled />
 						</Tooltip>
 					) : null
 				}

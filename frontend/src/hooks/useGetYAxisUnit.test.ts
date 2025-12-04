@@ -19,7 +19,7 @@ const mockUseGetMetricUnits = useGetMetricUnits as jest.MockedFunction<
 	typeof useGetMetricUnits
 >;
 
-function createMockStagedQuery(
+function createMockCurrentQuery(
 	queryType: EQueryType,
 	queryData: Query['builder']['queryData'] = [],
 ): Query {
@@ -41,9 +41,9 @@ describe('useGetYAxisUnit', () => {
 		jest.clearAllMocks();
 	});
 
-	it('should return undefined yAxisUnit and not call useGetMetricUnits when stagedQuery is null', async () => {
+	it('should return undefined yAxisUnit and not call useGetMetricUnits when currentQuery is null', async () => {
 		mockUseQueryBuilder.mockReturnValue(({
-			stagedQuery: null,
+			currentQuery: undefined,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 		mockUseGetMetricUnits.mockReturnValue({
 			units: [],
@@ -61,10 +61,10 @@ describe('useGetYAxisUnit', () => {
 	});
 
 	it('should return undefined yAxisUnit when queryType is PROM', async () => {
-		const mockStagedQuery = createMockStagedQuery(EQueryType.PROM);
+		const mockCurrentQuery = createMockCurrentQuery(EQueryType.PROM);
 
 		mockUseQueryBuilder.mockReturnValue(({
-			stagedQuery: mockStagedQuery,
+			currentQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 
 		mockUseGetMetricUnits.mockReturnValue({
@@ -81,9 +81,9 @@ describe('useGetYAxisUnit', () => {
 	});
 
 	it('should return undefined yAxisUnit when queryType is CLICKHOUSE', async () => {
-		const mockStagedQuery = createMockStagedQuery(EQueryType.CLICKHOUSE);
+		const mockCurrentQuery = createMockCurrentQuery(EQueryType.CLICKHOUSE);
 		mockUseQueryBuilder.mockReturnValue(({
-			stagedQuery: mockStagedQuery,
+			currentQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 		mockUseGetMetricUnits.mockReturnValue({
 			units: [],
@@ -101,7 +101,7 @@ describe('useGetYAxisUnit', () => {
 	});
 
 	it('should return undefined yAxisUnit when dataSource is TRACES', async () => {
-		const mockStagedQuery = createMockStagedQuery(EQueryType.QUERY_BUILDER, [
+		const mockCurrentQuery = createMockCurrentQuery(EQueryType.QUERY_BUILDER, [
 			{
 				dataSource: DataSource.TRACES,
 				aggregateAttribute: { key: 'trace_metric' },
@@ -109,7 +109,7 @@ describe('useGetYAxisUnit', () => {
 		]);
 
 		mockUseQueryBuilder.mockReturnValue(({
-			stagedQuery: mockStagedQuery,
+			currentQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 		mockUseGetMetricUnits.mockReturnValue({
 			units: [],
@@ -127,7 +127,7 @@ describe('useGetYAxisUnit', () => {
 	});
 
 	it('should return undefined yAxisUnit when dataSource is LOGS', async () => {
-		const mockStagedQuery = createMockStagedQuery(EQueryType.QUERY_BUILDER, [
+		const mockCurrentQuery = createMockCurrentQuery(EQueryType.QUERY_BUILDER, [
 			{
 				dataSource: DataSource.LOGS,
 				aggregateAttribute: { key: 'log_metric' },
@@ -135,7 +135,7 @@ describe('useGetYAxisUnit', () => {
 		]);
 
 		mockUseQueryBuilder.mockReturnValue(({
-			stagedQuery: mockStagedQuery,
+			currentQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 		mockUseGetMetricUnits.mockReturnValue({
 			units: [],
@@ -153,7 +153,7 @@ describe('useGetYAxisUnit', () => {
 	});
 
 	it('should extract all metric names from queryData', () => {
-		const mockStagedQuery = createMockStagedQuery(EQueryType.QUERY_BUILDER, [
+		const mockCurrentQuery = createMockCurrentQuery(EQueryType.QUERY_BUILDER, [
 			{
 				dataSource: DataSource.METRICS,
 				aggregateAttribute: { key: 'metric1' },
@@ -167,7 +167,7 @@ describe('useGetYAxisUnit', () => {
 		]);
 
 		mockUseQueryBuilder.mockReturnValue(({
-			stagedQuery: mockStagedQuery,
+			currentQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 		mockUseGetMetricUnits.mockReturnValue({
 			units: [],
@@ -185,7 +185,7 @@ describe('useGetYAxisUnit', () => {
 	});
 
 	it('should extract metric name for the selected query only', () => {
-		const mockStagedQuery = createMockStagedQuery(EQueryType.QUERY_BUILDER, [
+		const mockCurrentQuery = createMockCurrentQuery(EQueryType.QUERY_BUILDER, [
 			{
 				dataSource: DataSource.METRICS,
 				aggregateAttribute: { key: 'metric1' },
@@ -199,7 +199,7 @@ describe('useGetYAxisUnit', () => {
 		]);
 
 		mockUseQueryBuilder.mockReturnValue(({
-			stagedQuery: mockStagedQuery,
+			currentQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 
 		mockUseGetMetricUnits.mockReturnValue({
@@ -215,7 +215,7 @@ describe('useGetYAxisUnit', () => {
 	});
 
 	it('should return undefined when units array is empty', async () => {
-		const mockStagedQuery = createMockStagedQuery(EQueryType.QUERY_BUILDER, [
+		const mockCurrentQuery = createMockCurrentQuery(EQueryType.QUERY_BUILDER, [
 			{
 				dataSource: DataSource.METRICS,
 				aggregateAttribute: { key: 'metric1' },
@@ -224,7 +224,7 @@ describe('useGetYAxisUnit', () => {
 		]);
 
 		mockUseQueryBuilder.mockReturnValue(({
-			stagedQuery: mockStagedQuery,
+			currentQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 
 		mockUseGetMetricUnits.mockReturnValue({
@@ -240,7 +240,7 @@ describe('useGetYAxisUnit', () => {
 	});
 
 	it('should return the unit when there is a single non-empty unit', async () => {
-		const mockStagedQuery = createMockStagedQuery(EQueryType.QUERY_BUILDER, [
+		const mockCurrentQuery = createMockCurrentQuery(EQueryType.QUERY_BUILDER, [
 			{
 				dataSource: DataSource.METRICS,
 				aggregateAttribute: { key: 'metric1' },
@@ -249,7 +249,7 @@ describe('useGetYAxisUnit', () => {
 		]);
 
 		mockUseQueryBuilder.mockReturnValue(({
-			stagedQuery: mockStagedQuery,
+			currentQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 
 		mockUseGetMetricUnits.mockReturnValue({
@@ -265,7 +265,7 @@ describe('useGetYAxisUnit', () => {
 	});
 
 	it('should return undefined when there is a single empty unit', async () => {
-		const mockStagedQuery = createMockStagedQuery(EQueryType.QUERY_BUILDER, [
+		const mockCurrentQuery = createMockCurrentQuery(EQueryType.QUERY_BUILDER, [
 			{
 				dataSource: DataSource.METRICS,
 				aggregateAttribute: { key: 'metric1' },
@@ -274,7 +274,7 @@ describe('useGetYAxisUnit', () => {
 		]);
 
 		mockUseQueryBuilder.mockReturnValue(({
-			stagedQuery: mockStagedQuery,
+			currentQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 
 		mockUseGetMetricUnits.mockReturnValue({
@@ -290,7 +290,7 @@ describe('useGetYAxisUnit', () => {
 	});
 
 	it('should return the unit when all units are the same and non-empty', async () => {
-		const mockStagedQuery = createMockStagedQuery(EQueryType.QUERY_BUILDER, [
+		const mockCurrentQuery = createMockCurrentQuery(EQueryType.QUERY_BUILDER, [
 			{
 				dataSource: DataSource.METRICS,
 				aggregateAttribute: { key: 'metric1' },
@@ -304,7 +304,7 @@ describe('useGetYAxisUnit', () => {
 		]);
 
 		mockUseQueryBuilder.mockReturnValue(({
-			stagedQuery: mockStagedQuery,
+			currentQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 
 		mockUseGetMetricUnits.mockReturnValue({
@@ -320,7 +320,7 @@ describe('useGetYAxisUnit', () => {
 	});
 
 	it('should return undefined when units are different', async () => {
-		const mockStagedQuery = createMockStagedQuery(EQueryType.QUERY_BUILDER, [
+		const mockCurrentQuery = createMockCurrentQuery(EQueryType.QUERY_BUILDER, [
 			{
 				dataSource: DataSource.METRICS,
 				aggregateAttribute: { key: 'metric2' },
@@ -334,7 +334,7 @@ describe('useGetYAxisUnit', () => {
 		]);
 
 		mockUseQueryBuilder.mockReturnValue(({
-			stagedQuery: mockStagedQuery,
+			currentQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 
 		mockUseGetMetricUnits.mockReturnValue({
