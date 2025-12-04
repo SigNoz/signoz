@@ -54,18 +54,20 @@ function OverflowInputToolTip({
 	const tooltipTitle = !disabled && isOverflowing ? String(value ?? '') : '';
 
 	return (
-		<Tooltip title={tooltipTitle} placement={tooltipPlacement}>
-			<Input
-				{...rest}
-				value={value}
-				defaultValue={defaultValue}
-				onChange={onChange}
-				disabled={disabled}
-				ref={inputRef}
-				className={cx('overflow-input', className)}
-			/>
+		<>
 			<span ref={mirrorRef} aria-hidden className="overflow-input-mirror" />
-		</Tooltip>
+			<Tooltip title={tooltipTitle} placement={tooltipPlacement}>
+				<Input
+					{...rest}
+					value={value}
+					defaultValue={defaultValue}
+					onChange={onChange}
+					disabled={disabled}
+					ref={inputRef}
+					className={cx('overflow-input', className)}
+				/>
+			</Tooltip>
+		</>
 	);
 }
 
