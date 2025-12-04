@@ -1,7 +1,6 @@
 import React, {
 	createContext,
 	ReactNode,
-	useCallback,
 	useContext,
 	useMemo,
 	useState,
@@ -23,8 +22,13 @@ export function CmdKProvider({
 }): JSX.Element {
 	const [open, setOpen] = useState<boolean>(false);
 
-	const openCmdK = useCallback((): void => setOpen(true), []);
-	const closeCmdK = useCallback((): void => setOpen(false), []);
+	function openCmdK(): void {
+		setOpen(true);
+	}
+
+	function closeCmdK(): void {
+		setOpen(false);
+	}
 
 	const value = useMemo<CmdKContextType>(
 		() => ({
@@ -33,7 +37,7 @@ export function CmdKProvider({
 			openCmdK,
 			closeCmdK,
 		}),
-		[open, setOpen, openCmdK, closeCmdK],
+		[open],
 	);
 
 	return <CmdKContext.Provider value={value}>{children}</CmdKContext.Provider>;

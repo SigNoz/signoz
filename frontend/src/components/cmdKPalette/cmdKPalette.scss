@@ -1,6 +1,6 @@
 .cmdk-section-heading [cmdk-group-heading] {
   text-transform: uppercase;
-  color: #62687C;
+  color: var(--bg-slate-100);
 }
 
 /* Hide scrollbar but keep scroll */
@@ -41,11 +41,5 @@ margin-left: 8px;
  }
 
 .cmd-item-icon {
-    margin-right: 8px;
-}
-
-.cmd-expand-icon {
-    width: 14px;
-    height: 14px;
     margin-right: 8px;
 }
