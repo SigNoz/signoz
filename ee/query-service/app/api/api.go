@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/ingestion"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -38,6 +39,7 @@ type APIHandlerOptions struct {
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	Gateway                       *httputil.ReverseProxy
 	GatewayUrl                    string
+	IngestionConfig               ingestion.Config
 	// Querier Influx Interval
 	FluxInterval time.Duration
 }
@@ -104,6 +106,9 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/checkout", am.AdminAccess(ah.LicensingAPI.Checkout)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/billing", am.AdminAccess(ah.getBilling)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/portal", am.AdminAccess(ah.LicensingAPI.Portal)).Methods(http.MethodPost)
+
+	// ingestion
+	router.HandleFunc("/api/v1/ingestion/config", am.ViewAccess(ah.getIngestionConfig)).Methods(http.MethodGet)
 
 	// dashboards
 	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.Signoz.Handlers.Dashboard.CreatePublic)).Methods(http.MethodPost)
