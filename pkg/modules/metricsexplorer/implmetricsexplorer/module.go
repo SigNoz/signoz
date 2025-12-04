@@ -714,7 +714,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 	)
 	sampleCountsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
 	sampleCountsSB.Where(sampleCountsSB.Between("unix_milli", req.Start, req.End))
-	sampleCountsSB.Where("metric_name IN (SELECT metric_name FROM __metric_candidates)")
+	sampleCountsSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __metric_candidates)")
 
 	if filterWhereClause != nil {
 		fingerprintSB := sqlbuilder.NewSelectBuilder()
@@ -724,7 +724,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 		fingerprintSB.Where("NOT startsWith(metric_name, 'signoz')")
 		fingerprintSB.Where(fingerprintSB.E("__normalized", false))
 		fingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
-		fingerprintSB.Where("metric_name IN (SELECT metric_name FROM __metric_candidates)")
+		fingerprintSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __metric_candidates)")
 		fingerprintSB.GroupBy("fingerprint")
 
 		sampleCountsSB.Where("fingerprint IN (SELECT fingerprint FROM __filtered_fingerprints)")
