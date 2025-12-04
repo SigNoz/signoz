@@ -2,8 +2,10 @@ package implmetricsexplorer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"time"
 
@@ -12,11 +14,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
@@ -29,10 +33,12 @@ type module struct {
 	condBuilder            qbtypes.ConditionBuilder
 	logger                 *slog.Logger
 	cache                  cache.Cache
+	ruleStore              ruletypes.RuleStore
+	queryParser            queryparser.QueryParser
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings) metricsexplorer.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, queryParser queryparser.QueryParser, providerSettings factory.ProviderSettings) metricsexplorer.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -42,6 +48,8 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		logger:                 providerSettings.Logger,
 		telemetryMetadataStore: telemetryMetadataStore,
 		cache:                  cache,
+		ruleStore:              ruleStore,
+		queryParser:            queryParser,
 	}
 }
 
@@ -188,6 +196,97 @@ func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, re
 	}
 
 	return nil
+}
+
+func (m *module) GetMetricAlerts(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricAlertsResponse, error) {
+	if metricName == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+
+	// Get all stored rules for the organization
+	storedRules, err := m.ruleStore.GetStoredRules(ctx, orgID.String())
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get stored rules")
+	}
+
+	alerts := make([]metricsexplorertypes.MetricAlert, 0)
+	seen := make(map[string]bool)
+
+	for _, storedRule := range storedRules {
+		var ruleData ruletypes.PostableRule
+		if err := json.Unmarshal([]byte(storedRule.Data), &ruleData); err != nil {
+			m.logger.WarnContext(ctx, "failed to unmarshal rule data", "rule_id", storedRule.ID.StringValue(), "error", err)
+			continue
+		}
+
+		// Check conditions: must be metric-based alert with valid composite query
+		if ruleData.AlertType != ruletypes.AlertTypeMetric ||
+			ruleData.RuleCondition == nil ||
+			ruleData.RuleCondition.CompositeQuery == nil {
+			continue
+		}
+
+		// Search for metricName in the Queries array (v5 format only)
+		// TODO check if we need to support v3 query format structs
+		found := false
+		for _, queryEnvelope := range ruleData.RuleCondition.CompositeQuery.Queries {
+			// Check based on query type
+			switch queryEnvelope.Type {
+			case qbtypes.QueryTypeBuilder:
+				// Cast to QueryBuilderQuery[MetricAggregation] for metrics
+				if spec, ok := queryEnvelope.Spec.(qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]); ok {
+					// Check if signal is metrics
+					if spec.Signal == telemetrytypes.SignalMetrics {
+						for _, agg := range spec.Aggregations {
+							if agg.MetricName == metricName {
+								found = true
+								break
+							}
+						}
+					}
+				}
+			case qbtypes.QueryTypePromQL:
+				if spec, ok := queryEnvelope.Spec.(qbtypes.PromQuery); ok {
+					result, err := m.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, spec.Query)
+					if err != nil {
+						m.logger.DebugContext(ctx, "failed to parse PromQL query", "query", spec.Query, "error", err)
+						continue
+					}
+					if slices.Contains(result.MetricNames, metricName) {
+						found = true
+						break
+					}
+				}
+			case qbtypes.QueryTypeClickHouseSQL:
+				if spec, ok := queryEnvelope.Spec.(qbtypes.ClickHouseQuery); ok {
+					result, err := m.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, spec.Query)
+					if err != nil {
+						m.logger.DebugContext(ctx, "failed to parse ClickHouse query", "query", spec.Query, "error", err)
+						continue
+					}
+					if slices.Contains(result.MetricNames, metricName) {
+						found = true
+						break
+					}
+				}
+			}
+			if found {
+				break
+			}
+		}
+
+		if found && !seen[storedRule.ID.StringValue()] {
+			seen[storedRule.ID.StringValue()] = true
+			alerts = append(alerts, metricsexplorertypes.MetricAlert{
+				AlertName: ruleData.AlertName,
+				AlertID:   storedRule.ID.StringValue(),
+			})
+		}
+	}
+
+	return &metricsexplorertypes.MetricAlertsResponse{
+		Alerts: alerts,
+	}, nil
 }
 
 func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, []string) {
