@@ -12,10 +12,7 @@ import {
 	Switch,
 	Typography,
 } from 'antd';
-import {
-	PrecisionOption,
-	PrecisionOptionsEnum,
-} from 'components/Graph/yAxisConfig';
+import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import GraphTypes, {

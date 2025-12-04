@@ -15,7 +15,6 @@ import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapp
 import { useOptionsMenu } from 'container/OptionsMenu';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import TimeSeriesView from 'container/TimeSeriesView';
 import Toolbar from 'container/Toolbar/Toolbar';
 import {
 	getExportQueryData,
@@ -50,6 +49,8 @@ import {
 	getExplorerViewFromUrl,
 } from 'utils/explorerUtils';
 import { v4 } from 'uuid';
+
+import TimeSeriesView from './TimeSeriesView';
 
 function TracesExplorer(): JSX.Element {
 	const {

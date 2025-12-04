@@ -1402,14 +1402,15 @@ func Test_querier_Traces_runWindowBasedListQueryDesc(t *testing.T) {
 			}
 
 			// Create reader and querier
-			reader := clickhouseReader.NewReaderFromClickhouseConnection(
-				options,
+			reader := clickhouseReader.NewReader(
 				nil,
 				telemetryStore,
-				prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
+				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),
 				"",
 				time.Duration(time.Second),
 				nil,
+				nil,
+				options,
 			)
 
 			q := &querier{
@@ -1626,14 +1627,15 @@ func Test_querier_Traces_runWindowBasedListQueryAsc(t *testing.T) {
 			}
 
 			// Create reader and querier
-			reader := clickhouseReader.NewReaderFromClickhouseConnection(
-				options,
+			reader := clickhouseReader.NewReader(
 				nil,
 				telemetryStore,
-				prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
+				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),
 				"",
 				time.Duration(time.Second),
 				nil,
+				nil,
+				options,
 			)
 
 			q := &querier{
@@ -1925,14 +1927,15 @@ func Test_querier_Logs_runWindowBasedListQueryDesc(t *testing.T) {
 			}
 
 			// Create reader and querier
-			reader := clickhouseReader.NewReaderFromClickhouseConnection(
-				options,
+			reader := clickhouseReader.NewReader(
 				nil,
 				telemetryStore,
-				prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
+				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),
 				"",
 				time.Duration(time.Second),
 				nil,
+				nil,
+				options,
 			)
 
 			q := &querier{
@@ -2151,14 +2154,15 @@ func Test_querier_Logs_runWindowBasedListQueryAsc(t *testing.T) {
 			}
 
 			// Create reader and querier
-			reader := clickhouseReader.NewReaderFromClickhouseConnection(
-				options,
+			reader := clickhouseReader.NewReader(
 				nil,
 				telemetryStore,
-				prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
+				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),
 				"",
 				time.Duration(time.Second),
 				nil,
+				nil,
+				options,
 			)
 
 			q := &querier{

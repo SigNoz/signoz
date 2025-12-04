@@ -3,6 +3,9 @@ import './TimeSeriesView.styles.scss';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
+import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
+import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
@@ -11,6 +14,7 @@ import {
 	SetStateAction,
 	useEffect,
 	useMemo,
+	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -18,9 +22,6 @@ import { Warning } from 'types/api';
 import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-
-import TimeSeriesView from './TimeSeriesView';
-import { convertDataValueToMs } from './utils';
 
 function TimeSeriesViewContainer({
 	dataSource = DataSource.TRACES,
@@ -30,11 +31,6 @@ function TimeSeriesViewContainer({
 	queryKeyRef,
 }: TimeSeriesViewProps): JSX.Element {
 	const { stagedQuery, currentQuery, panelType } = useQueryBuilder();
-
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
 
 	const isValidToConvertToMs = useMemo(() => {
 		const isValid: boolean[] = [];
@@ -54,6 +50,19 @@ function TimeSeriesViewContainer({
 
 		return isValid.every(Boolean);
 	}, [currentQuery]);
+
+	const [yAxisUnit, setYAxisUnit] = useState<string>(
+		isValidToConvertToMs ? 'ms' : 'short',
+	);
+
+	const onUnitChangeHandler = (value: string): void => {
+		setYAxisUnit(value);
+	};
+
+	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const queryKey = useMemo(
 		() => [
@@ -110,16 +119,21 @@ function TimeSeriesViewContainer({
 	}, [isLoading, isFetching, setIsLoadingQueries]);
 
 	return (
-		<TimeSeriesView
-			isFilterApplied={isFilterApplied}
-			isError={isError}
-			error={error as APIError}
-			isLoading={isLoading || isFetching}
-			data={responseData}
-			yAxisUnit={isValidToConvertToMs ? 'ms' : 'short'}
-			dataSource={dataSource}
-			setWarning={setWarning}
-		/>
+		<div className="trace-explorer-time-series-view-container">
+			<div className="trace-explorer-time-series-view-container-header">
+				<BuilderUnitsFilter onChange={onUnitChangeHandler} yAxisUnit={yAxisUnit} />
+			</div>
+			<TimeSeriesView
+				isFilterApplied={isFilterApplied}
+				isError={isError}
+				error={error as APIError}
+				isLoading={isLoading || isFetching}
+				data={responseData}
+				yAxisUnit={yAxisUnit}
+				dataSource={dataSource}
+				setWarning={setWarning}
+			/>
+		</div>
 	);
 }
 
