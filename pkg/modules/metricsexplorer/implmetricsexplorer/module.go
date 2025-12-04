@@ -190,6 +190,22 @@ func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, re
 	return nil
 }
 
+func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.MetricAttributesRequest) (*metricsexplorertypes.MetricAttributesResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	attributes, err := m.fetchMetricAttributes(ctx, req.MetricName, req.Start, req.End)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metricsexplorertypes.MetricAttributesResponse{
+		Attributes: attributes,
+		TotalKeys:  int64(len(attributes)),
+	}, nil
+}
+
 func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, []string) {
 	hits := make(map[string]*metricsexplorertypes.MetricMetadata)
 	misses := make([]string, 0)
@@ -770,4 +786,54 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 	}
 
 	return entries, nil
+}
+
+func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, start, end *int64) ([]metricsexplorertypes.MetricAttribute, error) {
+	// Build query using sqlbuilder
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"attr_name AS key",
+		"groupUniqArray(1000)(attr_string_value) AS values",
+		"uniq(attr_string_value) AS valueCount",
+	)
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(sb.E("metric_name", metricName))
+	sb.Where("NOT startsWith(attr_name, '__')")
+
+	// Add time range filtering if provided
+	if start != nil {
+		// Filter by start time: attributes that were active at or after start time
+		sb.Where(sb.GE("last_reported_unix_milli", *start))
+	}
+	if end != nil {
+		// Filter by end time: attributes that were active at or before end time
+		sb.Where(sb.LE("first_reported_unix_milli", *end))
+	}
+
+	sb.GroupBy("attr_name")
+	sb.OrderBy("valueCount DESC")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch metric attributes")
+	}
+	defer rows.Close()
+
+	attributes := make([]metricsexplorertypes.MetricAttribute, 0)
+	for rows.Next() {
+		var attr metricsexplorertypes.MetricAttribute
+		if err := rows.Scan(&attr.Key, &attr.Values, &attr.ValueCount); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metric attribute row")
+		}
+		attributes = append(attributes, attr)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metric attribute rows")
+	}
+
+	return attributes, nil
 }
