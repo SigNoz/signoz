@@ -29,27 +29,24 @@ function OverflowInputToolTip({
 	const [isOverflowing, setIsOverflowing] = useState<boolean>(false);
 
 	useEffect(() => {
-		const el = inputRef.current?.input;
-		if (!el) {
+		const input = inputRef.current?.input;
+		const mirror = mirrorRef.current;
+		if (!input || !mirror) {
 			setIsOverflowing(false);
 			return;
 		}
-		setIsOverflowing(el.scrollWidth > el.clientWidth);
-	}, [value, disabled]);
 
-	useEffect(() => {
-		const input = inputRef.current?.input;
-		const mirror = mirrorRef.current;
-		if (!input || !mirror) return;
-
-		// mirror text content
 		mirror.textContent = String(value ?? '') || ' ';
-
-		// measure + clamp
 		const mirrorWidth = mirror.offsetWidth + 24;
 		const newWidth = Math.min(maxAutoWidth, Math.max(minAutoWidth, mirrorWidth));
 		input.style.width = `${newWidth}px`;
-	}, [value, minAutoWidth, maxAutoWidth]);
+
+		// consider clamped when mirrorWidth reaches maxAutoWidth (allow -5px tolerance)
+		const isClamped = mirrorWidth >= maxAutoWidth - 5;
+		const overflow = input.scrollWidth > input.clientWidth && isClamped;
+
+		setIsOverflowing(overflow);
+	}, [value, disabled, minAutoWidth, maxAutoWidth]);
 
 	const tooltipTitle = !disabled && isOverflowing ? String(value ?? '') : '';
 
