@@ -409,7 +409,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
 	const openInNewTab = (path: string): void => {
-		window.open(path, '_blank');
+		window.open(path, '_blank', 'noopener,noreferrer');
 	};
 
 	const onClickGetStarted = (event: MouseEvent): void => {
@@ -754,7 +754,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		);
 
 		if (item && !('type' in item) && item.isExternal && item.url) {
-			window.open(item.url, '_blank');
+			window.open(item.url, '_blank', 'noopener,noreferrer');
 		}
 
 		if (item && !('type' in item)) {

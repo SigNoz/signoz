@@ -85,7 +85,7 @@ function TracesTableComponent({
 				event.preventDefault();
 				event.stopPropagation();
 				if (event.ctrlKey || event.metaKey) {
-					window.open(getTraceLink(record), '_blank');
+					window.open(getTraceLink(record), '_blank', 'noopener,noreferrer');
 				} else {
 					history.push(getTraceLink(record));
 				}
