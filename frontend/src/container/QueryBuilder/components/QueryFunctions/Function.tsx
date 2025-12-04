@@ -1,5 +1,4 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import './Function.styles.scss';
 
 import { Button, Flex, Select } from 'antd';
 import cx from 'classnames';
@@ -108,7 +107,7 @@ export default function Function({
 					tooltipPlacement="top"
 					minAutoWidth={70}
 					maxAutoWidth={150}
-					className="overflow-input"
+					className="query-function-value"
 				/>
 			)}
 
