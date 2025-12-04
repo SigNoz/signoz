@@ -17,7 +17,7 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 		setVisible(true);
 	};
 
-	const onClose = (): void => {
+	const handleClose = (): void => {
 		setVisible(false);
 		variableViewModeRef?.current?.();
 	};
@@ -38,7 +38,7 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 				title={drawerTitle}
 				placement="right"
 				width="50%"
-				onClose={onClose}
+				onClose={handleClose}
 				open={visible}
 				rootClassName="settings-container-root"
 			>

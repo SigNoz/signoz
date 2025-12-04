@@ -1,55 +1,42 @@
 package prometheustest
 
 import (
-	"log/slog"
-	"os"
-	"time"
+	"context"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/storage"
-	"github.com/prometheus/prometheus/tsdb"
+	"github.com/prometheus/prometheus/storage/remote"
 )
 
 var _ prometheus.Prometheus = (*Provider)(nil)
 
 type Provider struct {
-	db     *tsdb.DB
-	dir    string
-	engine *prometheus.Engine
+	queryable storage.SampleAndChunkQueryable
+	engine    *prometheus.Engine
 }
 
-func New(logger *slog.Logger, cfg prometheus.Config, outOfOrderTimeWindow ...int64) *Provider {
-	dir, err := os.MkdirTemp("", "test_storage")
-	if err != nil {
-		panic(err)
-	}
+var stCallback = func() (int64, error) {
+	return int64(model.Latest), nil
+}
 
-	// Tests just load data for a series sequentially. Thus we
-	// need a long appendable window.
-	opts := tsdb.DefaultOptions()
-	opts.MinBlockDuration = int64(24 * time.Hour / time.Millisecond)
-	opts.MaxBlockDuration = int64(24 * time.Hour / time.Millisecond)
-	opts.RetentionDuration = 0
-	opts.EnableNativeHistograms = true
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config prometheus.Config, telemetryStore telemetrystore.TelemetryStore) *Provider {
 
-	// Set OutOfOrderTimeWindow if provided, otherwise use default (0)
-	if len(outOfOrderTimeWindow) > 0 {
-		opts.OutOfOrderTimeWindow = outOfOrderTimeWindow[0]
-	} else {
-		opts.OutOfOrderTimeWindow = 0 // Default value is zero
-	}
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/prometheus/prometheustest")
 
-	db, err := tsdb.Open(dir, nil, nil, opts, tsdb.NewDBStats())
-	if err != nil {
-		panic(err)
-	}
+	engine := prometheus.NewEngine(settings.Logger(), config)
 
-	engine := prometheus.NewEngine(logger, cfg)
+	readClient := clickhouseprometheus.NewReadClient(settings, telemetryStore)
+
+	queryable := remote.NewSampleAndChunkQueryableClient(readClient, labels.EmptyLabels(), []*labels.Matcher{}, false, stCallback)
 
 	return &Provider{
-		db:     db,
-		dir:    dir,
-		engine: engine,
+		engine:    engine,
+		queryable: queryable,
 	}
 }
 
@@ -58,12 +45,12 @@ func (provider *Provider) Engine() *prometheus.Engine {
 }
 
 func (provider *Provider) Storage() storage.Queryable {
-	return provider.db
+	return provider.queryable
 }
 
 func (provider *Provider) Close() error {
-	if err := provider.db.Close(); err != nil {
-		return err
+	if provider.engine != nil {
+		provider.engine.Close()
 	}
-	return os.RemoveAll(provider.dir)
+	return nil
 }
