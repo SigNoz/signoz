@@ -2,10 +2,10 @@ package thirdpartyapi
 
 import (
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 	"net"
-	"regexp"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -287,11 +287,6 @@ func shouldIncludeRow(row *qbtypes.RawRow) bool {
 	return true
 }
 
-func containsKindStringOverride(expression string) bool {
-	kindStringPattern := regexp.MustCompile(`kind_string\s*[!=<>]+`)
-	return kindStringPattern.MatchString(expression)
-}
-
 func mergeGroupBy(base, additional []qbtypes.GroupByKey) []qbtypes.GroupByKey {
 	return append(base, additional...)
 }
@@ -400,6 +395,8 @@ func buildRpsQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEn
 }
 
 func buildErrorQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
+	filter := buildBaseFilter(req.Filter)
+	filter.Expression = fmt.Sprintf("has_error = true AND (%s)", filter.Expression)
 	return qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -409,7 +406,7 @@ func buildErrorQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.Query
 			Aggregations: []qbtypes.TraceAggregation{
 				{Expression: "count()"},
 			},
-			Filter:  buildErrorFilter(req.Filter),
+			Filter:  filter,
 			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
 		},
 	}
@@ -526,25 +523,9 @@ func buildBaseFilter(additionalFilter *qbtypes.Filter) *qbtypes.Filter {
 		urlPathKeyLegacy, urlPathKey)
 
 	if additionalFilter != nil && additionalFilter.Expression != "" {
-		if containsKindStringOverride(additionalFilter.Expression) {
-			return &qbtypes.Filter{Expression: baseExpression}
-		}
+		// even if it contains kind_string we add with an AND so it doesn't matter if the user is overriding it.
 		baseExpression = fmt.Sprintf("(%s) AND (%s)", baseExpression, additionalFilter.Expression)
 	}
 
 	return &qbtypes.Filter{Expression: baseExpression}
-}
-
-func buildErrorFilter(additionalFilter *qbtypes.Filter) *qbtypes.Filter {
-	errorExpression := fmt.Sprintf("has_error = true AND (%s EXISTS OR %s EXISTS) AND kind_string = 'Client'",
-		urlPathKeyLegacy, urlPathKey)
-
-	if additionalFilter != nil && additionalFilter.Expression != "" {
-		if containsKindStringOverride(additionalFilter.Expression) {
-			return &qbtypes.Filter{Expression: errorExpression}
-		}
-		errorExpression = fmt.Sprintf("(%s) AND (%s)", errorExpression, additionalFilter.Expression)
-	}
-
-	return &qbtypes.Filter{Expression: errorExpression}
 }
