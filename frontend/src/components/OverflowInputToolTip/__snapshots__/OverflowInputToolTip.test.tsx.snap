@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OverflowInputToolTip matches snapshot 1`] = `
+<div>
+  <span>
+    <input
+      class="ant-input css-dev-only-do-not-override-2i2tap overflow-input"
+      style="width: 70px;"
+      type="text"
+      value="Snapshot"
+    />
+    <span
+      aria-hidden="true"
+      class="overflow-input-mirror"
+    >
+      Snapshot
+    </span>
+  </span>
+</div>
+`;

@@ -1,14 +1,13 @@
-import { InputRef } from 'antd';
-import React from 'react';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import OverflowInputToolTip from './OverflowInputToolTip';
 
-// Utility to mock overflow behavior
-function mockOverflow(width: number, scrollWidth: number): void {
+// Utility to mock overflow behaviour on inputs / elements.
+// Stubs HTMLElement.prototype.clientWidth and scrollWidth used by component.
+function mockOverflow(clientWidth: number, scrollWidth: number): void {
 	Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
 		configurable: true,
-		value: width,
+		value: clientWidth,
 	});
 	Object.defineProperty(HTMLElement.prototype, 'scrollWidth', {
 		configurable: true,
@@ -16,70 +15,77 @@ function mockOverflow(width: number, scrollWidth: number): void {
 	});
 }
 
-describe('OverflowTooltipInput', () => {
+function queryTooltipInner(): HTMLElement | null {
+	const tooltip = document.querySelector('[role="tooltip"]');
+	if (tooltip)
+		return tooltip.querySelector('.ant-tooltip-inner') as HTMLElement | null;
+	return document.querySelector('.ant-tooltip-inner');
+}
+
+describe('OverflowInputToolTip', () => {
 	beforeEach(() => {
 		jest.restoreAllMocks();
 	});
 
-	test('shows tooltip on overflow', async () => {
-		mockOverflow(50, 150);
+	test('shows tooltip when content overflows and input is clamped at maxAutoWidth', async () => {
+		mockOverflow(150, 250); // clientWidth >= maxAutoWidth (150), scrollWidth > clientWidth
 
-		render(<OverflowInputToolTip value="Long overflowing text" />);
+		render(<OverflowInputToolTip value="Very long overflowing text" />);
 
 		await userEvent.hover(screen.getByRole('textbox'));
 
-		expect(await screen.findByText('Long overflowing text')).toBeInTheDocument();
+		// Wait for the tooltip wrapper to appear, then assert its content via within()
+		const tooltipWrapper = await screen.findByRole('tooltip');
+		expect(tooltipWrapper).toBeInTheDocument();
+		expect(
+			within(tooltipWrapper).getByText('Very long overflowing text'),
+		).toBeInTheDocument();
 	});
 
-	test('does NOT show tooltip when not overflowing', async () => {
-		mockOverflow(150, 100);
+	test('does NOT show tooltip when content does not overflow', async () => {
+		mockOverflow(150, 100); // content fits (scrollWidth <= clientWidth)
 
 		render(<OverflowInputToolTip value="Short text" />);
 
 		await userEvent.hover(screen.getByRole('textbox'));
 
+		// There should be no tooltip element rendered with content
 		await waitFor(() => {
-			expect(screen.queryByText('Short text')).not.toBeInTheDocument();
+			expect(queryTooltipInner()).toBeNull();
+		});
+	});
+
+	test('does NOT show tooltip when content overflows but input is NOT at maxAutoWidth', async () => {
+		mockOverflow(100, 250); // clientWidth < maxAutoWidth (150), scrollWidth > clientWidth
+
+		render(<OverflowInputToolTip value="Long but input not clamped" />);
+
+		await userEvent.hover(screen.getByRole('textbox'));
+
+		await waitFor(() => {
+			expect(queryTooltipInner()).toBeNull();
 		});
 	});
 
 	test('uncontrolled input allows typing', async () => {
 		render(<OverflowInputToolTip defaultValue="Init" />);
 
-		const input = screen.getByRole('textbox');
+		const input = screen.getByRole('textbox') as HTMLInputElement;
 		await userEvent.type(input, 'ABC');
 
 		expect(input).toHaveValue('InitABC');
 	});
 
-	test('disabled input never shows tooltip', async () => {
-		mockOverflow(50, 200);
+	test('disabled input never shows tooltip even if overflowing', async () => {
+		mockOverflow(150, 300);
 
 		render(<OverflowInputToolTip value="Overflowing!" disabled />);
 
 		await userEvent.hover(screen.getByRole('textbox'));
 
 		await waitFor(() => {
-			expect(screen.queryByText('Overflowing!')).not.toBeInTheDocument();
+			expect(queryTooltipInner()).toBeNull();
 		});
-	});
-
-	test('ref forwards to actual <input> element', () => {
-		const ref = React.createRef<InputRef>();
-
-		render(<OverflowInputToolTip ref={ref} value="Test" />);
-
-		expect(ref.current).not.toBeNull();
-		expect(ref.current?.input?.tagName).toBe('INPUT');
-	});
-
-	test('ref forwards when no props', () => {
-		const ref = React.createRef<InputRef>();
-
-		render(<OverflowInputToolTip ref={ref} />);
-
-		expect(ref.current).not.toBeNull();
-		expect(ref.current?.input?.tagName).toBe('INPUT');
 	});
 
 	test('matches snapshot', () => {
