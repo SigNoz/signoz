@@ -23,12 +23,12 @@ margin-left: 8px;
 
 .cmdk-item-light:hover {
     cursor: pointer;
-    background-color: #f3f4f6 !important;
+    background-color: var(--bg-vanilla-200) !important;
 }
 
 .cmdk-item-light[data-selected="true"] {
-    background-color: #e5e7eb !important;
-    color: #000;
+    background-color: var(--bg-vanilla-300) !important;
+    color: var(--bg-ink-500);
 }
 
 .cmdk-item {
