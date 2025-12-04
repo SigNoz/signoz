@@ -4,12 +4,12 @@ import './HomeChecklist.styles.scss';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
 import { ArrowRight, ArrowRightToLine, BookOpenText } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';
+import { genericNavigate } from 'utils/genericNavigate';
 
 export type ChecklistItem = {
 	id: string;
@@ -92,15 +92,7 @@ function HomeChecklist({
 														});
 
 														const checkForNewTabAndNavigate = (): void => {
-															if (event && (event.ctrlKey || event.metaKey)) {
-																window.open(
-																	item.toRoute || '',
-																	'_blank',
-																	'noopener,noreferrer',
-																);
-															} else {
-																history.push(item.toRoute || '');
-															}
+															genericNavigate(item.toRoute || '', event);
 														};
 
 														if (item.toRoute !== ROUTES.GET_STARTED_WITH_CLOUD) {

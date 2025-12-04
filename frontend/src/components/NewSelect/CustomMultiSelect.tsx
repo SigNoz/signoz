@@ -28,6 +28,7 @@ import React, {
 	useState,
 } from 'react';
 import { Virtuoso } from 'react-virtuoso';
+import { isShortcutKey } from 'utils/isShortcutKey';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';
@@ -902,7 +903,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			const lastVisibleChipIndex = getLastVisibleChipIndex();
 
 			// Handle special keyboard combinations
-			const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+			const isCtrlOrCmd = isShortcutKey(e);
 
 			// Handle Ctrl+A (select all)
 			if (isCtrlOrCmd && e.key === 'a') {

@@ -30,6 +30,7 @@ import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { isIngestionActive } from 'utils/app';
+import { genericNavigate } from 'utils/genericNavigate';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -554,15 +555,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
 													});
-													if (event && (event.ctrlKey || event.metaKey)) {
-														window.open(
-															ROUTES.LOGS_EXPLORER,
-															'_blank',
-															'noopener,noreferrer',
-														);
-													} else {
-														history.push(ROUTES.LOGS_EXPLORER);
-													}
+													genericNavigate(ROUTES.LOGS_EXPLORER, event);
 												}}
 											>
 												Open Logs Explorer
@@ -576,15 +569,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
 													});
-													if (event && (event.ctrlKey || event.metaKey)) {
-														window.open(
-															ROUTES.TRACES_EXPLORER,
-															'_blank',
-															'noopener,noreferrer',
-														);
-													} else {
-														history.push(ROUTES.TRACES_EXPLORER);
-													}
+													genericNavigate(ROUTES.TRACES_EXPLORER, event);
 												}}
 											>
 												Open Traces Explorer
@@ -598,15 +583,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
 													});
-													if (event && (event.ctrlKey || event.metaKey)) {
-														window.open(
-															ROUTES.METRICS_EXPLORER_EXPLORER,
-															'_blank',
-															'noopener,noreferrer',
-														);
-													} else {
-														history.push(ROUTES.METRICS_EXPLORER_EXPLORER);
-													}
+													genericNavigate(ROUTES.METRICS_EXPLORER_EXPLORER, event);
 												}}
 											>
 												Open Metrics Explorer
@@ -647,15 +624,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
 													});
-													if (event && (event.ctrlKey || event.metaKey)) {
-														window.open(
-															ROUTES.ALL_DASHBOARD,
-															'_blank',
-															'noopener,noreferrer',
-														);
-													} else {
-														history.push(ROUTES.ALL_DASHBOARD);
-													}
+													genericNavigate(ROUTES.ALL_DASHBOARD, event);
 												}}
 											>
 												Create dashboard
@@ -697,11 +666,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
 													});
-													if (event && (event.ctrlKey || event.metaKey)) {
-														window.open(ROUTES.ALERTS_NEW, '_blank', 'noopener,noreferrer');
-													} else {
-														history.push(ROUTES.ALERTS_NEW);
-													}
+													genericNavigate(ROUTES.ALERTS_NEW, event);
 												}}
 											>
 												Create an alert

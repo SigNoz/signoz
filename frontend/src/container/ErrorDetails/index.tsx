@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
+import { genericNavigate } from 'utils/genericNavigate';
 
 import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
@@ -118,15 +119,11 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			traceId: errorDetail.traceID,
 			exceptionId: errorDetail?.errorId,
 		});
-		if (event.ctrlKey || event.metaKey) {
-			window.open(
-				`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`,
-				'_blank',
-				'noopener,noreferrer',
-			);
-		} else {
-			history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
-		}
+
+		genericNavigate(
+			`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`,
+			event,
+		);
 	};
 
 	const logEventCalledRef = useRef(false);

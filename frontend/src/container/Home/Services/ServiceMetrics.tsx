@@ -11,7 +11,6 @@ import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import history from 'lib/history';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
@@ -29,6 +28,8 @@ import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
+import { genericNavigate } from 'utils/genericNavigate';
+import { isShortcutKey } from 'utils/isShortcutKey';
 
 import { FeatureKeys } from '../../../constants/features';
 import { DOCS_LINKS } from '../constants';
@@ -73,15 +74,7 @@ const EmptyState = memo(
 									activeLicenseV3 &&
 									activeLicenseV3.platform === LicensePlatform.CLOUD
 								) {
-									if (event && (event.ctrlKey || event.metaKey)) {
-										window.open(
-											ROUTES.GET_STARTED_WITH_CLOUD,
-											'_blank',
-											'noopener,noreferrer',
-										);
-									} else {
-										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
-									}
+									genericNavigate(ROUTES.GET_STARTED_WITH_CLOUD, event);
 								} else {
 									window?.open(
 										DOCS_LINKS.ADD_DATA_SOURCE,
@@ -296,7 +289,7 @@ function ServiceMetrics({
 			logEvent('Homepage: Service clicked', {
 				serviceName: record.serviceName,
 			});
-			if (event && (event.ctrlKey || event.metaKey)) {
+			if (event && isShortcutKey(event)) {
 				window.open(
 					`${ROUTES.APPLICATION}/${record.serviceName}`,
 					'_blank',

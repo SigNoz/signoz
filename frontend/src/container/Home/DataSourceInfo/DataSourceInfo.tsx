@@ -10,6 +10,7 @@ import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
+import { genericNavigate } from 'utils/genericNavigate';
 
 import { DOCS_LINKS } from '../constants';
 
@@ -92,15 +93,7 @@ function DataSourceInfo({
 										activeLicense &&
 										activeLicense.platform === LicensePlatform.CLOUD
 									) {
-										if (event && (event.ctrlKey || event.metaKey)) {
-											window.open(
-												ROUTES.GET_STARTED_WITH_CLOUD,
-												'_blank',
-												'noopener,noreferrer',
-											);
-										} else {
-											history.push(ROUTES.GET_STARTED_WITH_CLOUD);
-										}
+										genericNavigate(ROUTES.GET_STARTED_WITH_CLOUD, event);
 									} else {
 										window.open(
 											DOCS_LINKS.ADD_DATA_SOURCE,

@@ -32,6 +32,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { genericNavigate } from 'utils/genericNavigate';
 import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -262,11 +263,7 @@ function Application(): JSX.Element {
 				queryString,
 			);
 
-			if (event && (event.ctrlKey || event.metaKey)) {
-				window.open(newPath, '_blank', 'noopener,noreferrer');
-			} else {
-				history.push(newPath);
-			}
+			genericNavigate(newPath, event);
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stepInterval],

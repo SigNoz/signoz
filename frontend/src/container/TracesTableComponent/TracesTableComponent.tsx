@@ -84,7 +84,7 @@ function TracesTableComponent({
 			onClick: (event): void => {
 				event.preventDefault();
 				event.stopPropagation();
-				if (event.metaKey || event.ctrlKey) {
+				if (event.ctrlKey || event.metaKey) {
 					window.open(getTraceLink(record), '_blank');
 				} else {
 					history.push(getTraceLink(record));

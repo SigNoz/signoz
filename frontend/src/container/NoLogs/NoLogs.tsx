@@ -5,10 +5,10 @@ import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
 import { ArrowUpRight } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 import DOCLINKS from 'utils/docLinks';
+import { genericNavigate } from 'utils/genericNavigate';
 
 export default function NoLogs({
 	dataSource,
@@ -41,11 +41,7 @@ export default function NoLogs({
 			} else {
 				link = ROUTES.GET_STARTED_LOGS_MANAGEMENT;
 			}
-			if (e && (e.ctrlKey || e.metaKey)) {
-				window.open(link, '_blank', REL_NOOPENER_NOREFERRER);
-			} else {
-				history.push(link);
-			}
+			genericNavigate(link, e);
 		} else if (dataSource === 'traces') {
 			window.open(
 				DOCLINKS.TRACES_EXPLORER_EMPTY_STATE,

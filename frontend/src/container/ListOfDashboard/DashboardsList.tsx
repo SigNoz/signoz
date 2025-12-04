@@ -86,6 +86,7 @@ import {
 	Widgets,
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
+import { isShortcutKey } from 'utils/isShortcutKey';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
@@ -298,7 +299,7 @@ function DashboardsList(): JSX.Element {
 					version: ENTITY_VERSION_V5,
 				});
 
-				if (event && (event.ctrlKey || event.metaKey)) {
+				if (event && isShortcutKey(event)) {
 					window.open(
 						generatePath(ROUTES.DASHBOARD, {
 							dashboardId: response.data.id,
@@ -425,7 +426,7 @@ function DashboardsList(): JSX.Element {
 
 				const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
 					event.stopPropagation();
-					if (event.metaKey || event.ctrlKey) {
+					if (isShortcutKey(event)) {
 						window.open(getLink(), '_blank');
 					} else {
 						safeNavigate(getLink());

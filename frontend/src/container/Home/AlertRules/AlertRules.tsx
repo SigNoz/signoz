@@ -3,7 +3,6 @@ import getAll from 'api/alerts/getAll';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
@@ -13,6 +12,7 @@ import { useQuery } from 'react-query';
 import { Link, useLocation } from 'react-router-dom';
 import { GettableAlert } from 'types/api/alerts/get';
 import { USER_ROLES } from 'types/roles';
+import { genericNavigate } from 'utils/genericNavigate';
 
 export default function AlertRules({
 	onUpdateChecklistDoneItem,
@@ -134,15 +134,7 @@ export default function AlertRules({
 
 		params.set(QueryParams.ruleId, record.id.toString());
 
-		if (event && (event.ctrlKey || event.metaKey)) {
-			window.open(
-				`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`,
-				'_blank',
-				'noopener,noreferrer',
-			);
-		} else {
-			history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
-		}
+		genericNavigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`, event);
 	};
 
 	const renderAlertRules = (): JSX.Element => (

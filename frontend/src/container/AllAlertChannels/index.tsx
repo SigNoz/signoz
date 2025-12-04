@@ -8,7 +8,6 @@ import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
-import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect } from 'react';
@@ -17,6 +16,7 @@ import { useQuery } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
+import { genericNavigate } from 'utils/genericNavigate';
 
 import AlertChannelsComponent from './AlertChannels';
 import { Button, ButtonContainer, RightActionContainer } from './styles';
@@ -31,11 +31,7 @@ function AlertChannels(): JSX.Element {
 		user.role,
 	);
 	const onToggleHandler = useCallback((event: React.MouseEvent) => {
-		if (event.ctrlKey || event.metaKey) {
-			window.open(ROUTES.CHANNELS_NEW, '_blank', 'noopener,noreferrer');
-		} else {
-			history.push(ROUTES.CHANNELS_NEW);
-		}
+		genericNavigate(ROUTES.CHANNELS_NEW, event);
 	}, []);
 
 	const { isLoading, data, error } = useQuery<

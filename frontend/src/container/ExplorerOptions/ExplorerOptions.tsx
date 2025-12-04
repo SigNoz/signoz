@@ -73,6 +73,7 @@ import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { panelTypeToExplorerView } from 'utils/explorerUtils';
+import { genericNavigate } from 'utils/genericNavigate';
 
 import { PreservedViewsTypes } from './constants';
 import ExplorerOptionsHideArea from './ExplorerOptionsHideArea';
@@ -211,21 +212,12 @@ function ExplorerOptions({
 
 			const stringifiedQuery = handleConditionalQueryModification(defaultQuery);
 
-			if (event && (event.ctrlKey || event.metaKey)) {
-				window.open(
-					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-						stringifiedQuery,
-					)}`,
-					'_blank',
-					'noopener,noreferrer',
-				);
-			} else {
-				history.push(
-					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-						stringifiedQuery,
-					)}`,
-				);
-			}
+			genericNavigate(
+				`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+					stringifiedQuery,
+				)}`,
+				event,
+			);
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleConditionalQueryModification, history],
