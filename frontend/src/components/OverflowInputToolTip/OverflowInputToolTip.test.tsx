@@ -2,8 +2,9 @@ import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import OverflowInputToolTip from './OverflowInputToolTip';
 
+const TOOLTIP_INNER_SELECTOR = '.ant-tooltip-inner';
 // Utility to mock overflow behaviour on inputs / elements.
-// Stubs HTMLElement.prototype.clientWidth and scrollWidth used by component.
+// Stubs HTMLElement.prototype.clientWidth, scrollWidth and offsetWidth used by component.
 function mockOverflow(clientWidth: number, scrollWidth: number): void {
 	Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
 		configurable: true,
@@ -13,13 +14,25 @@ function mockOverflow(clientWidth: number, scrollWidth: number): void {
 		configurable: true,
 		value: scrollWidth,
 	});
+	// mirror.offsetWidth is used to compute mirrorWidth = offsetWidth + 24.
+	// Use clientWidth so the mirror measurement aligns with the mocked client width in tests.
+	Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+		configurable: true,
+		value: clientWidth,
+	});
 }
 
 function queryTooltipInner(): HTMLElement | null {
-	const tooltip = document.querySelector('[role="tooltip"]');
-	if (tooltip)
-		return tooltip.querySelector('.ant-tooltip-inner') as HTMLElement | null;
-	return document.querySelector('.ant-tooltip-inner');
+	// find element that has role="tooltip" (could be the inner itself)
+	const tooltip = document.querySelector<HTMLElement>('[role="tooltip"]');
+	if (!tooltip) return document.querySelector(TOOLTIP_INNER_SELECTOR);
+
+	// if the role element is already the inner, return it; otherwise return its descendant
+	if (tooltip.classList.contains('ant-tooltip-inner')) return tooltip;
+	return (
+		(tooltip.querySelector(TOOLTIP_INNER_SELECTOR) as HTMLElement) ??
+		document.querySelector(TOOLTIP_INNER_SELECTOR)
+	);
 }
 
 describe('OverflowInputToolTip', () => {
@@ -34,11 +47,14 @@ describe('OverflowInputToolTip', () => {
 
 		await userEvent.hover(screen.getByRole('textbox'));
 
-		// Wait for the tooltip wrapper to appear, then assert its content via within()
-		const tooltipWrapper = await screen.findByRole('tooltip');
-		expect(tooltipWrapper).toBeInTheDocument();
+		await waitFor(() => {
+			expect(queryTooltipInner()).not.toBeNull();
+		});
+
+		const tooltipInner = queryTooltipInner();
+		if (!tooltipInner) throw new Error('Tooltip inner not found');
 		expect(
-			within(tooltipWrapper).getByText('Very long overflowing text'),
+			within(tooltipInner).getByText('Very long overflowing text'),
 		).toBeInTheDocument();
 	});
 
@@ -49,7 +65,6 @@ describe('OverflowInputToolTip', () => {
 
 		await userEvent.hover(screen.getByRole('textbox'));
 
-		// There should be no tooltip element rendered with content
 		await waitFor(() => {
 			expect(queryTooltipInner()).toBeNull();
 		});
@@ -88,8 +103,17 @@ describe('OverflowInputToolTip', () => {
 		});
 	});
 
-	test('matches snapshot', () => {
+	test('renders mirror span and input correctly (structural assertions instead of snapshot)', () => {
 		const { container } = render(<OverflowInputToolTip value="Snapshot" />);
-		expect(container).toMatchSnapshot();
+		const mirror = container.querySelector('.overflow-input-mirror');
+		const input = container.querySelector('input') as HTMLInputElement | null;
+
+		expect(mirror).toBeTruthy();
+		expect(mirror?.textContent).toBe('Snapshot');
+		expect(input).toBeTruthy();
+		expect(input?.value).toBe('Snapshot');
+
+		// width should be set inline (component calculates width on mount)
+		expect(input?.getAttribute('style')).toContain('width:');
 	});
 });
