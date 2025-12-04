@@ -792,6 +792,12 @@ function FormAlertRules({
 		alertDef.condition.selectedQueryName,
 	);
 
+	useEffect(() => {
+		if (initialYAxisUnit && !yAxisUnit) {
+			setYAxisUnit(initialYAxisUnit);
+		}
+	}, [initialYAxisUnit, yAxisUnit]);
+
 	return (
 		<>
 			{Element}

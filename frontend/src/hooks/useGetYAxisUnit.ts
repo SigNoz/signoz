@@ -12,32 +12,32 @@ interface UseGetYAxisUnitResult {
 }
 
 function useGetYAxisUnit(selectedQueryName?: string): UseGetYAxisUnitResult {
-	const { stagedQuery } = useQueryBuilder();
+	const { currentQuery } = useQueryBuilder();
 	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
 	const metricNames: string[] | null = useMemo(() => {
-		if (stagedQuery?.queryType !== EQueryType.QUERY_BUILDER) {
+		if (currentQuery?.queryType !== EQueryType.QUERY_BUILDER) {
 			return null;
 		}
-		const dataSource = stagedQuery?.builder?.queryData?.[0]?.dataSource;
+		const dataSource = currentQuery?.builder?.queryData?.[0]?.dataSource;
 		if (dataSource !== DataSource.METRICS) {
 			return null;
 		}
 		// If a selected query name is provided, return the metric name for that query only
 		if (selectedQueryName) {
 			return [
-				stagedQuery?.builder?.queryData?.find(
+				currentQuery?.builder?.queryData?.find(
 					(query) => query.queryName === selectedQueryName,
 				)?.aggregateAttribute?.key ?? '',
 			];
 		}
-		return stagedQuery?.builder?.queryData?.map(
+		return currentQuery?.builder?.queryData?.map(
 			(query) => query.aggregateAttribute?.key ?? '',
 		);
 	}, [
 		selectedQueryName,
-		stagedQuery?.builder?.queryData,
-		stagedQuery?.queryType,
+		currentQuery?.builder?.queryData,
+		currentQuery?.queryType,
 	]);
 
 	const { units, isLoading, isError } = useGetMetricUnits(

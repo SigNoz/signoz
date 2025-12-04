@@ -28,10 +28,14 @@ function YAxisUnitSelector({
 
 	const incompatibleUnitMessage = useMemo(() => {
 		if (!initialValue || !value || loading) return '';
-		if (initialValue !== value) {
-			const initialUniversalUnit = getUniversalNameFromMetricUnit(initialValue);
-			const currentUniversalUnit = getUniversalNameFromMetricUnit(value);
-			return `Unit mismatch. Saved unit is ${initialUniversalUnit}, but ${currentUniversalUnit} is selected.`;
+		const initialUniversalUnit = mapMetricUnitToUniversalUnit(initialValue);
+		const currentUniversalUnit = mapMetricUnitToUniversalUnit(value);
+		if (initialUniversalUnit !== currentUniversalUnit) {
+			const initialUniversalUnitName = getUniversalNameFromMetricUnit(
+				initialValue,
+			);
+			const currentUniversalUnitName = getUniversalNameFromMetricUnit(value);
+			return `Unit mismatch. Saved unit is ${initialUniversalUnitName}, but ${currentUniversalUnitName} is selected.`;
 		}
 		return '';
 	}, [initialValue, value, loading]);
