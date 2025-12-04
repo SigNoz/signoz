@@ -220,3 +220,16 @@ type TreemapResponse struct {
 	TimeSeries []TreemapEntry `json:"timeseries"`
 	Samples    []TreemapEntry `json:"samples"`
 }
+
+// MetricDashboard represents a dashboard/widget referencing a metric.
+type MetricDashboard struct {
+	DashboardName string `json:"dashboardName"`
+	DashboardID   string `json:"dashboardID"`
+	WidgetID      string `json:"widgetID"`
+	WidgetName    string `json:"widgetName"`
+}
+
+// MetricDashboardsResponse represents the response for metric dashboards endpoint.
+type MetricDashboardsResponse struct {
+	Dashboards []MetricDashboard `json:"dashboards"`
+}

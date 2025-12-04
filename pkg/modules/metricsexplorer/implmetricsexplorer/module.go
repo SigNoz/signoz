@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
@@ -29,10 +30,11 @@ type module struct {
 	condBuilder            qbtypes.ConditionBuilder
 	logger                 *slog.Logger
 	cache                  cache.Cache
+	dashboardModule        dashboard.Module
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings) metricsexplorer.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, dashboardModule dashboard.Module, providerSettings factory.ProviderSettings) metricsexplorer.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -42,6 +44,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		logger:                 providerSettings.Logger,
 		telemetryMetadataStore: telemetryMetadataStore,
 		cache:                  cache,
+		dashboardModule:        dashboardModule,
 	}
 }
 
@@ -188,6 +191,34 @@ func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, re
 	}
 
 	return nil
+}
+
+func (m *module) GetMetricDashboards(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardsResponse, error) {
+	if metricName == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+
+	data, err := m.dashboardModule.GetByMetricNames(ctx, orgID, []string{metricName})
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get dashboards for metric")
+	}
+
+	dashboards := make([]metricsexplorertypes.MetricDashboard, 0)
+	if dashboardList, ok := data[metricName]; ok {
+		dashboards = make([]metricsexplorertypes.MetricDashboard, 0, len(dashboardList))
+		for _, item := range dashboardList {
+			dashboards = append(dashboards, metricsexplorertypes.MetricDashboard{
+				DashboardName: item["dashboard_name"],
+				DashboardID:   item["dashboard_id"],
+				WidgetID:      item["widget_id"],
+				WidgetName:    item["widget_name"],
+			})
+		}
+	}
+
+	return &metricsexplorertypes.MetricDashboardsResponse{
+		Dashboards: dashboards,
+	}, nil
 }
 
 func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, []string) {
