@@ -44,6 +44,15 @@ export default function NavItem({
 				isActive ? 'active' : '',
 				isDisabled ? 'disabled' : '',
 			)}
+			onMouseDown={(event): void => {
+				if (
+					event.button === 1 &&
+					!isDisabled &&
+					!(event.target as Element).closest?.('.nav-item-pin-icon')
+				) {
+					onClick(event);
+				}
+			}}
 			onClick={(event): void => {
 				if (isDisabled) {
 					return;
