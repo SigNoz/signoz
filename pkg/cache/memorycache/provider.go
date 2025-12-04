@@ -107,6 +107,7 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 
 	// To make sure ristretto does not go into no-op
 	if ttl < 0 {
+		provider.settings.Logger().Warn("ttl is less than 0, setting it to 0")
 		ttl = 0
 	}
 
