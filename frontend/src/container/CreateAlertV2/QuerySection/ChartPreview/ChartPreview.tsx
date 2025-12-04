@@ -6,7 +6,7 @@ import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { AlertDef } from 'types/api/alerts/def';
@@ -32,6 +32,12 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
 		selectedQueryName,
 	);
+
+	useEffect(() => {
+		if (initialYAxisUnit && !yAxisUnit) {
+			setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: initialYAxisUnit });
+		}
+	}, [initialYAxisUnit, setAlertState, yAxisUnit]);
 
 	const headline = (
 		<div className="chart-preview-headline">
