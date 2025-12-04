@@ -74,20 +74,29 @@ export function CmdKPalette({
 	);
 
 	// toggle palette with ⌘/Ctrl+K
-	useEffect((): (() => void) => {
-		const onKey = (e: KeyboardEvent): void => {
-			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-				e.preventDefault();
-				setOpen((s) => !s);
-			}
+	function handleGlobalCmdK(
+		e: KeyboardEvent,
+		setOpen: React.Dispatch<React.SetStateAction<boolean>>,
+	): void {
+		if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+			e.preventDefault();
+			setOpen((s) => !s);
+		}
+	}
+
+	const cmdKEffect = (): void | (() => void) => {
+		const listener = (e: KeyboardEvent): void => {
+			handleGlobalCmdK(e, setOpen);
 		};
 
-		window.addEventListener('keydown', onKey);
+		window.addEventListener('keydown', listener);
 
 		return (): void => {
-			window.removeEventListener('keydown', onKey);
+			window.removeEventListener('keydown', listener);
 		};
-	}, [setOpen]);
+	};
+
+	useEffect(cmdKEffect, [setOpen]);
 
 	function handleThemeChange(value: string): void {
 		logEvent('Account Settings: Theme Changed', { theme: value });
