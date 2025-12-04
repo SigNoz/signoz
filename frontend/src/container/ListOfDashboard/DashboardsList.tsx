@@ -427,7 +427,7 @@ function DashboardsList(): JSX.Element {
 				const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
 					event.stopPropagation();
 					if (isShortcutKey(event)) {
-						window.open(getLink(), '_blank');
+						window.open(getLink(), '_blank', 'noopener,noreferrer');
 					} else {
 						safeNavigate(getLink());
 					}
