@@ -229,14 +229,16 @@ function Application(): JSX.Element {
 	 * @param timestamp - The timestamp in seconds
 	 * @param apmToTraceQuery - query object
 	 * @param isViewLogsClicked - Whether this is for viewing logs vs traces
+	 * @param event - Click event to handle opening in new tab
 	 * @returns A callback function that handles the navigation when executed
 	 */
 	const onErrorTrackHandler = useCallback(
 		(
 			timestamp: number,
 			apmToTraceQuery: Query,
+			event: React.MouseEvent,
 			isViewLogsClicked?: boolean,
-		): ((event: React.MouseEvent) => void) => (event: React.MouseEvent): void => {
+		): void => {
 			const endTime = secondsToMilliseconds(timestamp);
 			const startTime = secondsToMilliseconds(timestamp - stepInterval);
 
@@ -261,7 +263,7 @@ function Application(): JSX.Element {
 			);
 
 			if (event && (event.ctrlKey || event.metaKey)) {
-				window.open(newPath, '_blank');
+				window.open(newPath, '_blank', 'noopener,noreferrer');
 			} else {
 				history.push(newPath);
 			}
@@ -332,7 +334,8 @@ function Application(): JSX.Element {
 								apmToTraceQuery,
 								stepInterval,
 								safeNavigate,
-							})(event)
+								event,
+							})
 						}
 					>
 						View Traces
@@ -364,7 +367,8 @@ function Application(): JSX.Element {
 									apmToTraceQuery,
 									stepInterval,
 									safeNavigate,
-								})(event)
+									event,
+								})
 							}
 						>
 							View Traces
@@ -380,10 +384,10 @@ function Application(): JSX.Element {
 						<GraphControlsPanel
 							id="Error_button"
 							onViewLogsClick={(event: React.MouseEvent): void =>
-								onErrorTrackHandler(selectedTimeStamp, logErrorQuery, true)(event)
+								onErrorTrackHandler(selectedTimeStamp, logErrorQuery, event, true)
 							}
 							onViewTracesClick={(event: React.MouseEvent): void =>
-								onErrorTrackHandler(selectedTimeStamp, errorTrackQuery)(event)
+								onErrorTrackHandler(selectedTimeStamp, errorTrackQuery, event)
 							}
 						/>
 

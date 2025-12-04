@@ -93,7 +93,11 @@ function HomeChecklist({
 
 														const checkForNewTabAndNavigate = (): void => {
 															if (event && (event.ctrlKey || event.metaKey)) {
-																window.open(item.toRoute || '', '_blank');
+																window.open(
+																	item.toRoute || '',
+																	'_blank',
+																	'noopener,noreferrer',
+																);
 															} else {
 																history.push(item.toRoute || '');
 															}

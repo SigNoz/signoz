@@ -32,7 +32,7 @@ function AlertChannels(): JSX.Element {
 	);
 	const onToggleHandler = useCallback((event: React.MouseEvent) => {
 		if (event.ctrlKey || event.metaKey) {
-			window.open(ROUTES.CHANNELS_NEW, '_blank');
+			window.open(ROUTES.CHANNELS_NEW, '_blank', 'noopener,noreferrer');
 		} else {
 			history.push(ROUTES.CHANNELS_NEW);
 		}

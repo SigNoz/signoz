@@ -555,7 +555,11 @@ export default function Home(): JSX.Element {
 														source: 'Logs',
 													});
 													if (event && (event.ctrlKey || event.metaKey)) {
-														window.open(ROUTES.LOGS_EXPLORER, '_blank');
+														window.open(
+															ROUTES.LOGS_EXPLORER,
+															'_blank',
+															'noopener,noreferrer',
+														);
 													} else {
 														history.push(ROUTES.LOGS_EXPLORER);
 													}
@@ -573,7 +577,11 @@ export default function Home(): JSX.Element {
 														source: 'Traces',
 													});
 													if (event && (event.ctrlKey || event.metaKey)) {
-														window.open(ROUTES.TRACES_EXPLORER, '_blank');
+														window.open(
+															ROUTES.TRACES_EXPLORER,
+															'_blank',
+															'noopener,noreferrer',
+														);
 													} else {
 														history.push(ROUTES.TRACES_EXPLORER);
 													}
@@ -591,7 +599,11 @@ export default function Home(): JSX.Element {
 														source: 'Metrics',
 													});
 													if (event && (event.ctrlKey || event.metaKey)) {
-														window.open(ROUTES.METRICS_EXPLORER_EXPLORER, '_blank');
+														window.open(
+															ROUTES.METRICS_EXPLORER_EXPLORER,
+															'_blank',
+															'noopener,noreferrer',
+														);
 													} else {
 														history.push(ROUTES.METRICS_EXPLORER_EXPLORER);
 													}
@@ -636,7 +648,11 @@ export default function Home(): JSX.Element {
 														source: 'Dashboards',
 													});
 													if (event && (event.ctrlKey || event.metaKey)) {
-														window.open(ROUTES.ALL_DASHBOARD, '_blank');
+														window.open(
+															ROUTES.ALL_DASHBOARD,
+															'_blank',
+															'noopener,noreferrer',
+														);
 													} else {
 														history.push(ROUTES.ALL_DASHBOARD);
 													}
@@ -682,7 +698,7 @@ export default function Home(): JSX.Element {
 														source: 'Alerts',
 													});
 													if (event && (event.ctrlKey || event.metaKey)) {
-														window.open(ROUTES.ALERTS_NEW, '_blank');
+														window.open(ROUTES.ALERTS_NEW, '_blank', 'noopener,noreferrer');
 													} else {
 														history.push(ROUTES.ALERTS_NEW);
 													}

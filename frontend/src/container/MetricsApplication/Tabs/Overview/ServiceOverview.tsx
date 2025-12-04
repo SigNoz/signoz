@@ -112,7 +112,8 @@ function ServiceOverview({
 						isViewLogsClicked: true,
 						stepInterval,
 						safeNavigate,
-					})(event)
+						event,
+					})
 				}
 				onViewTracesClick={(event: React.MouseEvent): void =>
 					onViewTracePopupClick({
@@ -122,7 +123,8 @@ function ServiceOverview({
 						apmToTraceQuery,
 						stepInterval,
 						safeNavigate,
-					})(event)
+						event,
+					})
 				}
 			/>
 			<Card data-testid="service_latency">

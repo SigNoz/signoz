@@ -17,6 +17,8 @@ export default function NoLogs({
 }): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
+	const REL_NOOPENER_NOREFERRER = 'noopener,noreferrer';
+
 	const handleLinkClick = (
 		e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
 	): void => {
@@ -40,16 +42,28 @@ export default function NoLogs({
 				link = ROUTES.GET_STARTED_LOGS_MANAGEMENT;
 			}
 			if (e && (e.ctrlKey || e.metaKey)) {
-				window.open(link, '_blank');
+				window.open(link, '_blank', REL_NOOPENER_NOREFERRER);
 			} else {
 				history.push(link);
 			}
 		} else if (dataSource === 'traces') {
-			window.open(DOCLINKS.TRACES_EXPLORER_EMPTY_STATE, '_blank');
+			window.open(
+				DOCLINKS.TRACES_EXPLORER_EMPTY_STATE,
+				'_blank',
+				REL_NOOPENER_NOREFERRER,
+			);
 		} else if (dataSource === DataSource.METRICS) {
-			window.open(DOCLINKS.METRICS_EXPLORER_EMPTY_STATE, '_blank');
+			window.open(
+				DOCLINKS.METRICS_EXPLORER_EMPTY_STATE,
+				'_blank',
+				REL_NOOPENER_NOREFERRER,
+			);
 		} else {
-			window.open(`${DOCLINKS.USER_GUIDE}${dataSource}/`, '_blank');
+			window.open(
+				`${DOCLINKS.USER_GUIDE}${dataSource}/`,
+				'_blank',
+				REL_NOOPENER_NOREFERRER,
+			);
 		}
 	};
 	return (

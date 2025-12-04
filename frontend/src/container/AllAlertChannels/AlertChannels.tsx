@@ -28,6 +28,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 						channelId: id,
 					}),
 					'_blank',
+					'noopener,noreferrer',
 				);
 			} else {
 				history.push(

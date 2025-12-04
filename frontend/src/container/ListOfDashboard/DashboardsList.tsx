@@ -304,6 +304,7 @@ function DashboardsList(): JSX.Element {
 							dashboardId: response.data.id,
 						}),
 						'_blank',
+						'noopener,noreferrer',
 					);
 				} else {
 					safeNavigate(

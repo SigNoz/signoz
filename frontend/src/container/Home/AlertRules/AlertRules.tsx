@@ -116,7 +116,6 @@ export default function AlertRules({
 
 	const onEditHandler = (
 		record: GettableAlert,
-	): ((event?: React.MouseEvent | React.KeyboardEvent) => void) => (
 		event?: React.MouseEvent | React.KeyboardEvent,
 	): void => {
 		logEvent('Homepage: Alert clicked', {
@@ -136,7 +135,11 @@ export default function AlertRules({
 		params.set(QueryParams.ruleId, record.id.toString());
 
 		if (event && (event.ctrlKey || event.metaKey)) {
-			window.open(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`, '_blank');
+			window.open(
+				`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`,
+				'_blank',
+				'noopener,noreferrer',
+			);
 		} else {
 			history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 		}
@@ -151,10 +154,10 @@ export default function AlertRules({
 						tabIndex={0}
 						className="alert-rule-item home-data-item"
 						key={rule.id}
-						onClick={(event: React.MouseEvent): void => onEditHandler(rule)(event)}
+						onClick={(event: React.MouseEvent): void => onEditHandler(rule, event)}
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter') {
-								onEditHandler(rule)(e);
+								onEditHandler(rule, e);
 							}
 						}}
 					>

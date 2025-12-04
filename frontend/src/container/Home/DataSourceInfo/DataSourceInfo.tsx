@@ -93,7 +93,11 @@ function DataSourceInfo({
 										activeLicense.platform === LicensePlatform.CLOUD
 									) {
 										if (event && (event.ctrlKey || event.metaKey)) {
-											window.open(ROUTES.GET_STARTED_WITH_CLOUD, '_blank');
+											window.open(
+												ROUTES.GET_STARTED_WITH_CLOUD,
+												'_blank',
+												'noopener,noreferrer',
+											);
 										} else {
 											history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 										}

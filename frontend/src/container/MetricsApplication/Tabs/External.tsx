@@ -253,7 +253,8 @@ function External(): JSX.Element {
 								apmToTraceQuery: errorApmToTraceQuery,
 								stepInterval,
 								safeNavigate,
-							})(event)
+								event,
+							})
 						}
 						onViewAPIMonitoringClick={(event: React.MouseEvent): void =>
 							onViewAPIMonitoringPopupClick({
@@ -263,7 +264,8 @@ function External(): JSX.Element {
 								isError: true,
 								stepInterval: 300,
 								safeNavigate,
-							})(event)
+								event,
+							})
 						}
 					/>
 					<Card data-testid="external_call_error_percentage">
@@ -299,7 +301,8 @@ function External(): JSX.Element {
 								apmToTraceQuery,
 								stepInterval,
 								safeNavigate,
-							})(event)
+								event,
+							})
 						}
 						onViewAPIMonitoringClick={(event: React.MouseEvent): void =>
 							onViewAPIMonitoringPopupClick({
@@ -309,7 +312,8 @@ function External(): JSX.Element {
 								isError: false,
 								stepInterval: 300,
 								safeNavigate,
-							})(event)
+								event,
+							})
 						}
 					/>
 
@@ -348,7 +352,8 @@ function External(): JSX.Element {
 								apmToTraceQuery,
 								stepInterval,
 								safeNavigate,
-							})(event)
+								event,
+							})
 						}
 						onViewAPIMonitoringClick={(event: React.MouseEvent): void =>
 							onViewAPIMonitoringPopupClick({
@@ -358,7 +363,8 @@ function External(): JSX.Element {
 								isError: false,
 								stepInterval: 300,
 								safeNavigate,
-							})(event)
+								event,
+							})
 						}
 					/>
 					<Card data-testid="external_call_rps_by_address">
@@ -394,7 +400,8 @@ function External(): JSX.Element {
 								apmToTraceQuery,
 								stepInterval,
 								safeNavigate,
-							})(event)
+								event,
+							})
 						}
 						onViewAPIMonitoringClick={(event: React.MouseEvent): void =>
 							onViewAPIMonitoringPopupClick({
@@ -404,7 +411,8 @@ function External(): JSX.Element {
 								isError: false,
 								stepInterval: 300,
 								safeNavigate,
-							})(event)
+								event,
+							})
 						}
 					/>
 

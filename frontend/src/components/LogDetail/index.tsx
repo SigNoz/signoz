@@ -151,6 +151,7 @@ function LogDetailInner({
 			window.open(
 				`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`,
 				'_blank',
+				'noopener,noreferrer',
 			);
 		} else {
 			safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`);
@@ -247,7 +248,7 @@ function LogDetailInner({
 							<Button
 								className="open-in-explorer-btn"
 								icon={<Compass size={16} />}
-								onClick={(event: React.MouseEvent): void => handleOpenInExplorer(event)}
+								onClick={handleOpenInExplorer}
 							>
 								Open in Explorer
 							</Button>

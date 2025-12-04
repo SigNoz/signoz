@@ -122,6 +122,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			window.open(
 				`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`,
 				'_blank',
+				'noopener,noreferrer',
 			);
 		} else {
 			history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);

@@ -217,6 +217,7 @@ function ExplorerOptions({
 						stringifiedQuery,
 					)}`,
 					'_blank',
+					'noopener,noreferrer',
 				);
 			} else {
 				history.push(

@@ -74,7 +74,11 @@ const EmptyState = memo(
 									activeLicenseV3.platform === LicensePlatform.CLOUD
 								) {
 									if (event && (event.ctrlKey || event.metaKey)) {
-										window.open(ROUTES.GET_STARTED_WITH_CLOUD, '_blank');
+										window.open(
+											ROUTES.GET_STARTED_WITH_CLOUD,
+											'_blank',
+											'noopener,noreferrer',
+										);
 									} else {
 										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 									}
@@ -293,7 +297,11 @@ function ServiceMetrics({
 				serviceName: record.serviceName,
 			});
 			if (event && (event.ctrlKey || event.metaKey)) {
-				window.open(`${ROUTES.APPLICATION}/${record.serviceName}`, '_blank');
+				window.open(
+					`${ROUTES.APPLICATION}/${record.serviceName}`,
+					'_blank',
+					'noopener,noreferrer',
+				);
 			} else {
 				safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
 			}
