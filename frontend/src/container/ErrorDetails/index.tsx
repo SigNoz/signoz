@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
+import { genericNavigate } from 'utils/genericNavigate';
 
 import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
@@ -111,14 +112,18 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			value: errorDetail[key as keyof GetByErrorTypeAndServicePayload],
 		}));
 
-	const onClickTraceHandler = (): void => {
+	const onClickTraceHandler = (event: React.MouseEvent): void => {
 		logEvent('Exception: Navigate to trace detail page', {
 			groupId: errorDetail?.groupID,
 			spanId: errorDetail.spanID,
 			traceId: errorDetail.traceID,
 			exceptionId: errorDetail?.errorId,
 		});
-		history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
+
+		genericNavigate(
+			`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`,
+			event,
+		);
 	};
 
 	const logEventCalledRef = useRef(false);
@@ -185,7 +190,10 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 			<DashedContainer>
 				<Typography>{t('see_trace_graph')}</Typography>
-				<Button onClick={onClickTraceHandler} type="primary">
+				<Button
+					onClick={(event: React.MouseEvent): void => onClickTraceHandler(event)}
+					type="primary"
+				>
 					{t('see_error_in_trace_graph')}
 				</Button>
 			</DashedContainer>

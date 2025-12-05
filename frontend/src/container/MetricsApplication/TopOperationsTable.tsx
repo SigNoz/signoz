@@ -17,6 +17,7 @@ import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isShortcutKey } from 'utils/isShortcutKey';
 import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from './Tabs/types';
@@ -115,7 +116,7 @@ function TopOperationsTable({
 						e.stopPropagation();
 						e.preventDefault();
 
-						if (e.metaKey || e.ctrlKey) {
+						if (isShortcutKey(e)) {
 							handleOnClick(text, true); // open in new tab
 						} else {
 							handleOnClick(text, false); // open in current tab
