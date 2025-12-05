@@ -22,6 +22,20 @@
 		line-height: 24px;
 	}
 }
+.log-text {
+	min-width: 2.5rem;
+	white-space: nowrap;
+	display: inline-block;
+	max-width: 20vw;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+.dark .log-text {
+	color: rgba(255, 255, 255, 0.45);
+}
+.lightMode .log-text {
+	color: rgba(0, 0, 0, 0.45);
+}
 .log-value {
 	color: var(--text-vanilla-400, #c0c1c3);
 	font-size: 14px;
