@@ -295,3 +295,10 @@ export const MetricsExplorer = Loadable(
 export const ApiMonitoring = Loadable(
 	() => import(/* webpackChunkName: "ApiMonitoring" */ 'pages/ApiMonitoring'),
 );
+
+export const PublicDashboardPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Public Dashboard Page" */ 'pages/PublicDashboard'
+		),
+);

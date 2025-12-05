@@ -137,3 +137,27 @@ func (h *handler) GetMetricMetadata(rw http.ResponseWriter, req *http.Request) {
 
 	render.Success(rw, http.StatusOK, metadata)
 }
+
+func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	var in metricsexplorertypes.MetricAttributesRequest
+	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	out, err := h.module.GetMetricAttributes(req.Context(), orgID, &in)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, out)
+}

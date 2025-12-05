@@ -62,6 +62,8 @@ interface CustomTimePickerProps {
 	showLiveLogs?: boolean;
 	onGoLive?: () => void;
 	onExitLiveLogs?: () => void;
+	/** When false, hides the "Recently Used" time ranges section */
+	showRecentlyUsed?: boolean;
 }
 
 function CustomTimePicker({
@@ -81,6 +83,7 @@ function CustomTimePicker({
 	onGoLive,
 	onExitLiveLogs,
 	showLiveLogs,
+	showRecentlyUsed = true,
 }: CustomTimePickerProps): JSX.Element {
 	const [
 		selectedTimePlaceholderValue,
@@ -395,6 +398,7 @@ function CustomTimePicker({
 								setActiveView={setActiveView}
 								setIsOpenedFromFooter={setIsOpenedFromFooter}
 								isOpenedFromFooter={isOpenedFromFooter}
+								showRecentlyUsed={showRecentlyUsed}
 							/>
 						) : (
 							content
@@ -464,4 +468,5 @@ CustomTimePicker.defaultProps = {
 	onCustomTimeStatusUpdate: noop,
 	onExitLiveLogs: noop,
 	showLiveLogs: false,
+	showRecentlyUsed: true,
 };

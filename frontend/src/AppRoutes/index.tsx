@@ -22,7 +22,6 @@ import { StatusCodes } from 'http-status-codes';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
-import AlertRuleProvider from 'providers/Alert';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
@@ -214,7 +213,10 @@ function App(): JSX.Element {
 	]);
 
 	useEffect(() => {
-		if (pathname === ROUTES.ONBOARDING) {
+		if (
+			pathname === ROUTES.ONBOARDING ||
+			pathname.startsWith('/public/dashboard/')
+		) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			window.Pylon('hideChatBubble');
@@ -371,26 +373,24 @@ function App(): JSX.Element {
 											<QueryBuilderProvider>
 												<DashboardProvider>
 													<KeyboardHotkeysProvider>
-														<AlertRuleProvider>
-															<AppLayout>
-																<PreferenceContextProvider>
-																	<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																		<Switch>
-																			{routes.map(({ path, component, exact }) => (
-																				<Route
-																					key={`${path}`}
-																					exact={exact}
-																					path={path}
-																					component={component}
-																				/>
-																			))}
-																			<Route exact path="/" component={Home} />
-																			<Route path="*" component={NotFound} />
-																		</Switch>
-																	</Suspense>
-																</PreferenceContextProvider>
-															</AppLayout>
-														</AlertRuleProvider>
+														<AppLayout>
+															<PreferenceContextProvider>
+																<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+																	<Switch>
+																		{routes.map(({ path, component, exact }) => (
+																			<Route
+																				key={`${path}`}
+																				exact={exact}
+																				path={path}
+																				component={component}
+																			/>
+																		))}
+																		<Route exact path="/" component={Home} />
+																		<Route path="*" component={NotFound} />
+																	</Switch>
+																</Suspense>
+															</PreferenceContextProvider>
+														</AppLayout>
 													</KeyboardHotkeysProvider>
 												</DashboardProvider>
 											</QueryBuilderProvider>
