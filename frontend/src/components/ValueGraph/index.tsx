@@ -18,7 +18,9 @@ function ValueGraph({
 	const [fontSize, setFontSize] = useState('2.5vw');
 
 	const { numericValue, prefixUnit, suffixUnit } = useMemo(() => {
-		const matches = value.match(/^([^\d.]*)?([\d.]+[KMB]?)([^\d.]*)?$/);
+		const matches = value.match(
+			/^([^\d.]*)?([\d.]+(?:[eE][+-]?[\d]+)?[KMB]?)([^\d.]*)?$/,
+		);
 		return {
 			numericValue: matches?.[2] || value,
 			prefixUnit: matches?.[1]?.trim() || '',

@@ -30,6 +30,8 @@ const mockGetBackgroundColorAndThresholdCheck = getBackgroundColorAndThresholdCh
 >;
 
 const TEST_ID_VALUE_GRAPH_TEXT = 'value-graph-text';
+const TEST_ID_VALUE_GRAPH_PREFIX_UNIT = 'value-graph-prefix-unit';
+const TEST_ID_VALUE_GRAPH_SUFFIX_UNIT = 'value-graph-suffix-unit';
 
 describe('ValueGraph', () => {
 	beforeEach(() => {
@@ -50,7 +52,7 @@ describe('ValueGraph', () => {
 		);
 
 		expect(getByTestId(TEST_ID_VALUE_GRAPH_TEXT)).toHaveTextContent('42');
-		expect(getByTestId('value-graph-suffix-unit')).toHaveTextContent('ms');
+		expect(getByTestId(TEST_ID_VALUE_GRAPH_SUFFIX_UNIT)).toHaveTextContent('ms');
 	});
 
 	it('renders value with prefix unit', () => {
@@ -59,7 +61,7 @@ describe('ValueGraph', () => {
 		);
 
 		expect(getByTestId(TEST_ID_VALUE_GRAPH_TEXT)).toHaveTextContent('100');
-		expect(getByTestId('value-graph-prefix-unit')).toHaveTextContent('$');
+		expect(getByTestId(TEST_ID_VALUE_GRAPH_PREFIX_UNIT)).toHaveTextContent('$');
 	});
 
 	it('renders value with both prefix and suffix units', () => {
@@ -68,8 +70,8 @@ describe('ValueGraph', () => {
 		);
 
 		expect(getByTestId(TEST_ID_VALUE_GRAPH_TEXT)).toHaveTextContent('100');
-		expect(getByTestId('value-graph-prefix-unit')).toHaveTextContent('$');
-		expect(getByTestId('value-graph-suffix-unit')).toHaveTextContent('USD');
+		expect(getByTestId(TEST_ID_VALUE_GRAPH_PREFIX_UNIT)).toHaveTextContent('$');
+		expect(getByTestId(TEST_ID_VALUE_GRAPH_SUFFIX_UNIT)).toHaveTextContent('USD');
 	});
 
 	it('renders value with K suffix', () => {
@@ -179,5 +181,38 @@ describe('ValueGraph', () => {
 		);
 
 		expect(getByTestId(TEST_ID_VALUE_GRAPH_TEXT)).toHaveTextContent('2.3B');
+	});
+
+	it('handles scientific notation values', () => {
+		const { getByTestId } = render(
+			<ValueGraph value="1e-9" rawValue={1e-9} thresholds={[]} />,
+		);
+
+		expect(getByTestId(TEST_ID_VALUE_GRAPH_TEXT)).toHaveTextContent('1e-9');
+	});
+
+	it('handles scientific notation with suffix unit', () => {
+		const { getByTestId } = render(
+			<ValueGraph value="1e-9%" rawValue={1e-9} thresholds={[]} />,
+		);
+
+		expect(getByTestId(TEST_ID_VALUE_GRAPH_TEXT)).toHaveTextContent('1e-9');
+		expect(getByTestId(TEST_ID_VALUE_GRAPH_SUFFIX_UNIT)).toHaveTextContent('%');
+	});
+
+	it('handles scientific notation with uppercase E', () => {
+		const { getByTestId } = render(
+			<ValueGraph value="1E-9" rawValue={1e-9} thresholds={[]} />,
+		);
+
+		expect(getByTestId(TEST_ID_VALUE_GRAPH_TEXT)).toHaveTextContent('1E-9');
+	});
+
+	it('handles scientific notation with positive exponent', () => {
+		const { getByTestId } = render(
+			<ValueGraph value="1e+9" rawValue={1e9} thresholds={[]} />,
+		);
+
+		expect(getByTestId(TEST_ID_VALUE_GRAPH_TEXT)).toHaveTextContent('1e+9');
 	});
 });
