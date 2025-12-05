@@ -6,18 +6,19 @@ import '@testing-library/jest-dom/extend-expect';
 // ---- Mocks (must run BEFORE importing the component) ----
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-// ---- Now import test helpers & component ----
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import { CmdKPalette } from '../cmdKPalette';
 
 const HOME_LABEL = 'Go to Home';
+
 beforeAll(() => {
 	Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
 		configurable: true,
 		value: jest.fn(),
 	});
 });
+
 afterAll(() => {
 	// restore
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -25,14 +26,10 @@ afterAll(() => {
 	delete (HTMLElement.prototype as any).scrollIntoView;
 });
 
-// mock history.push
-// at top of your test file (replace existing history mock)
-// put at top of test file (before other imports)
+// mock history.push / replace / go / location
 jest.mock('lib/history', () => {
-	// shared location object (used by code that reads history.location.search)
 	const location = { pathname: '/', search: '', hash: '' };
 
-	// simple internal stack to show different semantics for push vs replace
 	const stack: { pathname: string; search: string }[] = [
 		{ pathname: '/', search: '' },
 	];
@@ -42,11 +39,9 @@ jest.mock('lib/history', () => {
 		const pathname = rawPath || '/';
 		const search = path.includes('?') ? `?${rawQuery || ''}` : '';
 
-		// update public location
 		location.pathname = pathname;
 		location.search = search;
 
-		// append new history entry
 		stack.push({ pathname, search });
 		return undefined;
 	});
@@ -56,11 +51,9 @@ jest.mock('lib/history', () => {
 		const pathname = rawPath || '/';
 		const search = path.includes('?') ? `?${rawQuery || ''}` : '';
 
-		// update public location
 		location.pathname = pathname;
 		location.search = search;
 
-		// overwrite the current entry instead of appending
 		if (stack.length > 0) {
 			stack[stack.length - 1] = { pathname, search };
 		} else {
@@ -88,6 +81,7 @@ jest.mock('lib/history', () => {
 		__stack: stack,
 	};
 });
+
 // Mock ResizeObserver for Jest/jsdom
 class ResizeObserver {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, class-methods-use-this
@@ -157,15 +151,8 @@ describe('CmdKPalette', () => {
 		jest.clearAllMocks();
 	});
 
-	test('returns null when not logged in', () => {
-		const { container } = render(
-			<CmdKPalette userRole="ADMIN" isLoggedInState={false} />,
-		);
-		expect(container).toBeEmptyDOMElement();
-	});
-
-	test('renders navigation and settings groups and items when logged in', () => {
-		render(<CmdKPalette userRole="ADMIN" isLoggedInState />);
+	test('renders navigation and settings groups and items', () => {
+		render(<CmdKPalette userRole="ADMIN" />);
 
 		expect(screen.getByText('Navigation')).toBeInTheDocument();
 		expect(screen.getByText('Settings')).toBeInTheDocument();
@@ -177,7 +164,7 @@ describe('CmdKPalette', () => {
 	});
 
 	test('clicking a navigation item calls history.push with correct route', async () => {
-		render(<CmdKPalette userRole="ADMIN" isLoggedInState />);
+		render(<CmdKPalette userRole="ADMIN" />);
 
 		const homeItem = screen.getByText(HOME_LABEL);
 		await userEvent.click(homeItem);
@@ -186,30 +173,36 @@ describe('CmdKPalette', () => {
 	});
 
 	test('role-based filtering (basic smoke)', () => {
-		render(<CmdKPalette userRole="VIEWER" isLoggedInState />);
+		render(<CmdKPalette userRole="VIEWER" />);
+
+		// VIEWER still sees basic navigation items
 		expect(screen.getByText(HOME_LABEL)).toBeInTheDocument();
 	});
 
-	test('keyboard shortcut toggles open via setOpen', () => {
-		render(<CmdKPalette userRole="ADMIN" isLoggedInState />);
+	test('keyboard shortcut opens palette via setOpen', () => {
+		render(<CmdKPalette userRole="ADMIN" />);
 
 		const event = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true });
 		window.dispatchEvent(event);
 
-		expect(mockSetOpen).toHaveBeenCalled();
+		expect(mockSetOpen).toHaveBeenCalledWith(true);
 	});
 
 	test('items render with icons when provided', () => {
-		render(<CmdKPalette userRole="ADMIN" isLoggedInState />);
+		render(<CmdKPalette userRole="ADMIN" />);
+
 		const iconHolders = document.querySelectorAll('.cmd-item-icon');
 		expect(iconHolders.length).toBeGreaterThan(0);
 		expect(screen.getByText(HOME_LABEL)).toBeInTheDocument();
 	});
 
 	test('closing the palette via handleInvoke sets open to false', async () => {
-		render(<CmdKPalette userRole="ADMIN" isLoggedInState />);
+		render(<CmdKPalette userRole="ADMIN" />);
+
 		const dashItem = screen.getByText('Go to Dashboards');
 		await userEvent.click(dashItem);
-		expect(mockSetOpen).toHaveBeenCalled();
+
+		// last call from handleInvoke should set open to false
+		expect(mockSetOpen).toHaveBeenCalledWith(false);
 	});
 });

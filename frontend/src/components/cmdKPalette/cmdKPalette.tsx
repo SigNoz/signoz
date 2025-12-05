@@ -78,7 +78,7 @@ export function CmdKPalette({
 	): void {
 		if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
 			e.preventDefault();
-			setOpen((s) => !s);
+			setOpen(true);
 		}
 	}
 
@@ -91,6 +91,7 @@ export function CmdKPalette({
 
 		return (): void => {
 			window.removeEventListener('keydown', listener);
+			setOpen(false);
 		};
 	};
 

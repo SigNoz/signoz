@@ -1,3 +1,15 @@
+/* Overlay stays below content */
+[data-slot='dialog-overlay'] {
+	z-index: 50;
+}
+
+/* Dialog content always above overlay */
+[data-slot='dialog-content'] {
+	position: fixed;
+	z-index: 60;
+}
+
+
 .cmdk-section-heading [cmdk-group-heading] {
   text-transform: uppercase;
   color: var(--bg-slate-100);
