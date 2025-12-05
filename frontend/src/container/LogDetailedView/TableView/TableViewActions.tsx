@@ -60,8 +60,9 @@ const BodyContent: React.FC<{
 	fieldData: Record<string, string>;
 	record: DataType;
 	bodyHtml: { __html: string };
-}> = React.memo(({ fieldData, record, bodyHtml }) => {
-	const { isLoading, treeData, error } = useAsyncJSONProcessing(
+	textToCopy: string;
+}> = React.memo(({ fieldData, record, bodyHtml, textToCopy }) => {
+	const { isLoading, treeData } = useAsyncJSONProcessing(
 		fieldData.value,
 		record.field === 'body',
 	);
@@ -80,23 +81,15 @@ const BodyContent: React.FC<{
 		);
 	}
 
-	if (record.field === 'body' && error) {
-		return (
-			<span
-				style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
-			>
-				Error parsing Body JSON
-			</span>
-		);
-	}
-
 	if (record.field === 'body') {
 		return (
-			<span
-				style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
-			>
-				<span dangerouslySetInnerHTML={bodyHtml} />
-			</span>
+			<CopyClipboardHOC entityKey="body" textToCopy={textToCopy}>
+				<span
+					style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
+				>
+					<span dangerouslySetInnerHTML={bodyHtml} />
+				</span>
+			</CopyClipboardHOC>
 		);
 	}
 
@@ -172,7 +165,12 @@ export default function TableViewActions(
 		switch (record.field) {
 			case 'body':
 				return (
-					<BodyContent fieldData={fieldData} record={record} bodyHtml={bodyHtml} />
+					<BodyContent
+						fieldData={fieldData}
+						record={record}
+						bodyHtml={bodyHtml}
+						textToCopy={textToCopy}
+					/>
 				);
 
 			case 'timestamp':
@@ -194,6 +192,7 @@ export default function TableViewActions(
 		record,
 		fieldData,
 		bodyHtml,
+		textToCopy,
 		formatTimezoneAdjustedTimestamp,
 		cleanTimestamp,
 	]);
@@ -202,7 +201,12 @@ export default function TableViewActions(
 	if (record.field === 'body') {
 		return (
 			<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
-				<BodyContent fieldData={fieldData} record={record} bodyHtml={bodyHtml} />
+				<BodyContent
+					fieldData={fieldData}
+					record={record}
+					bodyHtml={bodyHtml}
+					textToCopy={textToCopy}
+				/>
 				{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
 					<span className="action-btn">
 						<Tooltip title="Filter for value">
