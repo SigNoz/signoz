@@ -278,6 +278,19 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		q.logger.DebugContext(ctx, "fetched metric temporalities", "metric_temporality", metricTemporality)
 	}
 
+	// Fetch type for all metrics at once (e.g., Gauge, Sum, Histogram, ExponentialHistogram)
+	var metricType map[string]metrictypes.Type
+	if len(metricNames) > 0 {
+		var err error
+		metricType, err = q.metadataStore.FetchTypeMulti(ctx, metricNames...)
+		if err != nil {
+			q.logger.WarnContext(ctx, "failed to fetch metric type", "error", err, "metrics", metricNames)
+			// Continue without type - statement builder will handle unspecified
+			metricType = make(map[string]metrictypes.Type)
+		}
+		q.logger.DebugContext(ctx, "fetched metric types", "metric_type", metricType)
+	}
+
 	queries := make(map[string]qbtypes.Query)
 	steps := make(map[string]qbtypes.Step)
 
@@ -370,6 +383,12 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					// TODO(srikanthccv): warn when the metric is missing
 					if spec.Aggregations[i].Temporality == metrictypes.Unknown {
 						spec.Aggregations[i].Temporality = metrictypes.Unspecified
+					}
+					// Populate Type from metadata if not set (needed for exponential histograms)
+					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
+						if mtype, ok := metricType[spec.Aggregations[i].MetricName]; ok && mtype != metrictypes.UnspecifiedType {
+							spec.Aggregations[i].Type = mtype
+						}
 					}
 				}
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
