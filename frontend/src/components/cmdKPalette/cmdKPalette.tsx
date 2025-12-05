@@ -53,10 +53,8 @@ type CmdAction = {
 type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
 export function CmdKPalette({
 	userRole,
-	isLoggedInState,
 }: {
 	userRole: UserRole;
-	isLoggedInState: boolean;
 }): JSX.Element | null {
 	const { open, setOpen } = useCmdK();
 
@@ -304,9 +302,6 @@ export function CmdKPalette({
 		}
 	};
 
-	if (!isLoggedInState) {
-		return null;
-	}
 	return (
 		<CommandDialog open={open} onOpenChange={setOpen} position="top" offset={110}>
 			<CommandInput placeholder="Search…" className="cmdk-input-wrapper" />

@@ -365,9 +365,9 @@ function App(): JSX.Element {
 				<Router history={history}>
 					<CompatRouter>
 						<CmdKProvider>
-							<CmdKPalette userRole={user.role} isLoggedInState={isLoggedInState} />
 							<NotificationProvider>
 								<ErrorModalProvider>
+									{isLoggedInState && <CmdKPalette userRole={user.role} />}
 									<PrivateRoute>
 										<ResourceProvider>
 											<QueryBuilderProvider>
