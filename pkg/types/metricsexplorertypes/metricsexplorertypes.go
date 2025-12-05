@@ -140,11 +140,11 @@ type UpdateMetricMetadataRequest struct {
 
 // TreemapRequest represents the payload for the metrics treemap endpoint.
 type TreemapRequest struct {
-	Filter  *qbtypes.Filter `json:"filter,omitempty"`
-	Start   int64           `json:"start"`
-	End     int64           `json:"end"`
-	Limit   int             `json:"limit"`
-	Treemap TreemapMode     `json:"treemap"`
+	Filter *qbtypes.Filter `json:"filter,omitempty"`
+	Start  int64           `json:"start"`
+	End    int64           `json:"end"`
+	Limit  int             `json:"limit"`
+	Mode   TreemapMode     `json:"mode"`
 }
 
 // Validate enforces basic constraints on TreemapRequest.
@@ -182,11 +182,11 @@ func (req *TreemapRequest) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
 	}
 
-	if req.Treemap != TreemapModeSamples && req.Treemap != TreemapModeTimeSeries {
+	if req.Mode != TreemapModeSamples && req.Mode != TreemapModeTimeSeries {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"invalid treemap mode %q: supported values are %q or %q",
-			req.Treemap,
+			req.Mode,
 			TreemapModeSamples,
 			TreemapModeTimeSeries,
 		)

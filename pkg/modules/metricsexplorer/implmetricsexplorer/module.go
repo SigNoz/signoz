@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -29,10 +30,11 @@ type module struct {
 	condBuilder            qbtypes.ConditionBuilder
 	logger                 *slog.Logger
 	cache                  cache.Cache
+	config                 metricsexplorer.Config
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings) metricsexplorer.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config) metricsexplorer.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -42,6 +44,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		logger:                 providerSettings.Logger,
 		telemetryMetadataStore: telemetryMetadataStore,
 		cache:                  cache,
+		config:                 cfg,
 	}
 }
 
@@ -94,7 +97,6 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsex
 	}, nil
 }
 
-// GetTreemap will return metrics treemap information once implemented.
 func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.TreemapRequest) (*metricsexplorertypes.TreemapResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
@@ -106,7 +108,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 	}
 
 	resp := &metricsexplorertypes.TreemapResponse{}
-	switch req.Treemap {
+	switch req.Mode {
 	case metricsexplorertypes.TreemapModeSamples:
 		entries, err := m.computeSamplesTreemap(ctx, req, filterWhereClause)
 		if err != nil {
@@ -247,8 +249,9 @@ func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, me
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
 	}
@@ -292,11 +295,11 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"metric_name",
-		"ANY_VALUE(description) AS description",
-		"ANY_VALUE(type) AS metric_type",
-		"ANY_VALUE(unit) AS metric_unit",
-		"ANY_VALUE(temporality) AS temporality",
-		"ANY_VALUE(is_monotonic) AS is_monotonic",
+		"anyLast(description) AS description",
+		"anyLast(type) AS metric_type",
+		"anyLast(unit) AS metric_unit",
+		"anyLast(temporality) AS temporality",
+		"anyLast(is_monotonic) AS is_monotonic",
 	)
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4TableName))
 	sb.Where(sb.In("metric_name", args...))
@@ -304,8 +307,9 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch metrics metadata from timeseries table")
 	}
@@ -389,7 +393,7 @@ func (m *module) validateMetricLabels(ctx context.Context, req *metricsexplorert
 			return err
 		}
 		if !hasLabel {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as histogram type", req.MetricName)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as histogram type: histogram metrics require the 'le' (less than or equal) label for bucket boundaries", req.MetricName)
 		}
 	}
 
@@ -399,7 +403,7 @@ func (m *module) validateMetricLabels(ctx context.Context, req *metricsexplorert
 			return err
 		}
 		if !hasLabel {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as summary type", req.MetricName)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as summary type: summary metrics require the 'quantile' label for quantile values", req.MetricName)
 		}
 	}
 
@@ -416,9 +420,10 @@ func (m *module) checkForLabelInMetric(ctx context.Context, metricName string, l
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	var hasLabel bool
 	db := m.telemetryStore.ClickhouseDB()
-	err := db.QueryRow(ctx, query, args...).Scan(&hasLabel)
+	err := db.QueryRow(valueCtx, query, args...).Scan(&hasLabel)
 	if err != nil {
 		return false, errors.WrapInternalf(err, errors.CodeInternal, "error checking metric label %q", label)
 	}
@@ -444,8 +449,9 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 
 	query, args := ib.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	if err := db.Exec(ctx, query, args...); err != nil {
+	if err := db.Exec(valueCtx, query, args...); err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to insert metrics metadata")
 	}
 
@@ -474,7 +480,6 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		return sqlbuilder.NewWhereClause(), nil
 	}
 
-	// TODO(nikhilmantri0902, srikanthccv): if this is the right way of dealing with  whereClauseSelectors
 	whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(expression)
 	for idx := range whereClauseSelectors {
 		whereClauseSelectors[idx].Signal = telemetrytypes.SignalMetrics
@@ -499,8 +504,8 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		FieldKeys: keys,
 	}
 
-	startNs := uint64(startMillis * 1_000_000)
-	endNs := uint64(endMillis * 1_000_000)
+	startNs := querybuilder.ToNanoSecs(uint64(startMillis))
+	endNs := querybuilder.ToNanoSecs(uint64(endMillis))
 
 	whereClause, err := querybuilder.PrepareWhereClause(expression, opts, startNs, endNs)
 	if err != nil {
@@ -597,8 +602,9 @@ func (m *module) fetchMetricsStatsWithSamples(
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute metrics stats with samples query")
 	}
@@ -666,8 +672,9 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplo
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute timeseries treemap query")
 	}
@@ -725,7 +732,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 	)
 	sampleCountsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
 	sampleCountsSB.Where(sampleCountsSB.Between("unix_milli", req.Start, req.End))
-	sampleCountsSB.Where("metric_name IN (SELECT metric_name FROM __metric_candidates)")
+	sampleCountsSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __metric_candidates)")
 
 	if filterWhereClause != nil {
 		fingerprintSB := sqlbuilder.NewSelectBuilder()
@@ -735,7 +742,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 		fingerprintSB.Where("NOT startsWith(metric_name, 'signoz')")
 		fingerprintSB.Where(fingerprintSB.E("__normalized", false))
 		fingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
-		fingerprintSB.Where("metric_name IN (SELECT metric_name FROM __metric_candidates)")
+		fingerprintSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __metric_candidates)")
 		fingerprintSB.GroupBy("fingerprint")
 
 		sampleCountsSB.Where("fingerprint IN (SELECT fingerprint FROM __filtered_fingerprints)")
@@ -765,8 +772,9 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute samples treemap query")
 	}
@@ -815,8 +823,9 @@ func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, s
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch metric attributes")
 	}
