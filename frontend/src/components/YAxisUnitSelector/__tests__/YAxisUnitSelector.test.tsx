@@ -91,4 +91,36 @@ describe('YAxisUnitSelector', () => {
 		expect(screen.getByText('Bytes (B)')).toBeInTheDocument();
 		expect(screen.getByText('Seconds (s)')).toBeInTheDocument();
 	});
+
+	it('shows warning message when incompatible unit is selected', () => {
+		render(
+			<YAxisUnitSelector
+				source={YAxisSource.ALERTS}
+				value="By"
+				onChange={mockOnChange}
+				initialValue="s"
+			/>,
+		);
+		const warningIcon = screen.getByLabelText('warning');
+		expect(warningIcon).toBeInTheDocument();
+		fireEvent.mouseOver(warningIcon);
+		return screen
+			.findByText(
+				'Unit mismatch. Saved unit is Seconds (s), but Bytes (B) is selected.',
+			)
+			.then((el) => expect(el).toBeInTheDocument());
+	});
+
+	it('does not show warning message when compatible unit is selected', () => {
+		render(
+			<YAxisUnitSelector
+				source={YAxisSource.ALERTS}
+				value="s"
+				onChange={mockOnChange}
+				initialValue="s"
+			/>,
+		);
+		const warningIcon = screen.queryByLabelText('warning');
+		expect(warningIcon).not.toBeInTheDocument();
+	});
 });
