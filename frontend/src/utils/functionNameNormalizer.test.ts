@@ -59,6 +59,9 @@ describe('functionNameNormalizer', () => {
 			expect(normalizeFunctionName('median5')).toBe(QueryFunctionsTypes.MEDIAN_5);
 			expect(normalizeFunctionName('median7')).toBe(QueryFunctionsTypes.MEDIAN_7);
 			expect(normalizeFunctionName('anomaly')).toBe(QueryFunctionsTypes.ANOMALY);
+			expect(normalizeFunctionName('fillzero')).toBe(
+				QueryFunctionsTypes.FILL_ZERO,
+			);
 		});
 	});
 
