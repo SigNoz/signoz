@@ -46,13 +46,6 @@ export const Container = styled(Card)<{
 			getActiveLogBackground($isActiveLog, $isDarkMode, $logType)}
 `;
 
-export const Text = styled(Typography.Text)`
-	&&& {
-		min-width: 2.5rem;
-		white-space: nowrap;
-	}
-`;
-
 export const TextContainer = styled.div`
 	display: flex;
 	overflow: hidden;
