@@ -33,7 +33,6 @@ type filterExpressionVisitor struct {
 	mainErrorURL       string
 	builder            *sqlbuilder.SelectBuilder
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
-	jsonBodyPrefix     string
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	skipResourceFilter bool
 	skipFullTextFilter bool
@@ -53,7 +52,6 @@ type FilterExprVisitorOpts struct {
 	FieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
 	Builder            *sqlbuilder.SelectBuilder
 	FullTextColumn     *telemetrytypes.TelemetryFieldKey
-	JsonBodyPrefix     string
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
@@ -73,7 +71,6 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		fieldKeys:          opts.FieldKeys,
 		builder:            opts.Builder,
 		fullTextColumn:     opts.FullTextColumn,
-		jsonBodyPrefix:     opts.JsonBodyPrefix,
 		jsonKeyToKey:       opts.JsonKeyToKey,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
@@ -173,7 +170,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return &PreparedWhereClause{whereClause, visitor.warnings, visitor.mainWarnURL}, nil
+	return &PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type
@@ -718,7 +715,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 			conds = append(conds, fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", key.Name, v.builder.Var(value[0])))
 		} else {
 			// this is that all other functions only support array fields
-			if strings.HasPrefix(key.Name, v.jsonBodyPrefix) {
+			if key.FieldContext == telemetrytypes.FieldContextBody {
 				fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
 			} else {
 				// TODO(add docs for json body search)
@@ -809,10 +806,8 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 
 // VisitKey handles field/column references
 func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
-
 	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(ctx.GetText())
-
-	keyName := strings.TrimPrefix(fieldKey.Name, v.jsonBodyPrefix)
+	keyName := fieldKey.Name
 
 	fieldKeysForName := v.fieldKeys[keyName]
 
@@ -846,10 +841,11 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	// if there is a field with the same name as attribute/resource attribute
 	// Since it will ORed with the fieldKeysForName, it will not result empty
 	// when either of them have values
-	if strings.HasPrefix(fieldKey.Name, v.jsonBodyPrefix) && v.jsonBodyPrefix != "" {
-		if keyName != "" {
-			fieldKeysForName = append(fieldKeysForName, &fieldKey)
-		}
+	// Note: Skip this logic if body json query is enabled so we can look up the key inside fields
+	//
+	// TODO(Piyush): After entire migration this is supposed to be removed.
+	if !BodyJSONQueryEnabled && fieldKey.FieldContext == telemetrytypes.FieldContextBody {
+		fieldKeysForName = append(fieldKeysForName, &fieldKey)
 	}
 
 	if len(fieldKeysForName) == 0 {
@@ -860,7 +856,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 			return v.fieldKeys[keyWithContext]
 		}
 
-		if strings.HasPrefix(fieldKey.Name, v.jsonBodyPrefix) && v.jsonBodyPrefix != "" && keyName == "" {
+		if fieldKey.FieldContext == telemetrytypes.FieldContextBody && keyName == "" {
 			v.errors = append(v.errors, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
 		} else if !v.ignoreNotFoundKeys {
 			// TODO(srikanthccv): do we want to return an error here?

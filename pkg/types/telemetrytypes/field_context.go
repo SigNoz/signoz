@@ -36,6 +36,9 @@ import (
 //
 // - Use `log.` for explicit log context
 //   - `log.severity_text` will always resolve to `severity_text` of log record
+//
+// - Use `body.` to indicate and enforce body context
+//   - `body.key` will look for `key` in the body field
 type FieldContext struct {
 	valuer.String
 }
@@ -49,6 +52,7 @@ var (
 	FieldContextScope       = FieldContext{valuer.NewString("scope")}
 	FieldContextAttribute   = FieldContext{valuer.NewString("attribute")}
 	FieldContextEvent       = FieldContext{valuer.NewString("event")}
+	FieldContextBody        = FieldContext{valuer.NewString("body")}
 	FieldContextUnspecified = FieldContext{valuer.NewString("")}
 
 	// Map string representations to FieldContext values
@@ -65,6 +69,7 @@ var (
 		"point":      FieldContextAttribute,
 		"attribute":  FieldContextAttribute,
 		"event":      FieldContextEvent,
+		"body":       FieldContextBody,
 		"spanfield":  FieldContextSpan,
 		"span":       FieldContextSpan,
 		"logfield":   FieldContextLog,
@@ -144,6 +149,8 @@ func (f FieldContext) TagType() string {
 		return "metricfield"
 	case FieldContextEvent:
 		return "eventfield"
+	case FieldContextBody:
+		return "body"
 	}
 	return ""
 }
