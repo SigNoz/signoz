@@ -25,8 +25,11 @@ function NoFilterTable({
 			dataIndex: 'status',
 			width: 80,
 			key: 'status',
-			sorter: (a, b): number =>
-				b.labels.severity.length - a.labels.severity.length,
+			sorter: (a, b): number => {
+				const severityLengthOfA = a.labels?.severity?.length || 0;
+				const severityLengthOfB = b.labels?.severity?.length || 0;
+				return severityLengthOfA - severityLengthOfB;
+			},
 			render: (value): JSX.Element => <AlertStatus severity={value.state} />,
 		},
 		{
@@ -48,7 +51,7 @@ function NoFilterTable({
 			key: 'tags',
 			width: 100,
 			render: (labels): JSX.Element => {
-				const objectKeys = Object.keys(labels);
+				const objectKeys = Object.keys(labels ?? {});
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
 
 				if (withOutSeverityKeys.length === 0) {
@@ -65,15 +68,16 @@ function NoFilterTable({
 			dataIndex: 'labels',
 			key: 'severity',
 			width: 100,
+			// eslint-disable-next-line sonarjs/no-identical-functions
 			sorter: (a, b): number => {
-				const severityValueA = a.labels.severity;
-				const severityValueB = b.labels.severity;
-				return severityValueA.length - severityValueB.length;
+				const severityLengthOfA = a.labels?.severity?.length || 0;
+				const severityLengthOfB = b.labels?.severity?.length || 0;
+				return severityLengthOfA - severityLengthOfB;
 			},
 			render: (value): JSX.Element => {
-				const objectKeys = Object.keys(value);
+				const objectKeys = Object.keys(value ?? {});
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
-				const severityValue = value[withSeverityKey];
+				const severityValue = value?.[withSeverityKey];
 
 				return <Typography>{severityValue}</Typography>;
 			},
