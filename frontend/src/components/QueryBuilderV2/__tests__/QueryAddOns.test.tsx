@@ -183,4 +183,67 @@ describe('QueryAddOns', () => {
 		expect(screen.getByTestId('limit-content')).toBeInTheDocument();
 		expect(limitInput.value).toBe('7');
 	});
+
+	it('shows reduce-to add-on when showReduceTo is true', () => {
+		render(
+			<QueryAddOns
+				query={baseQuery()}
+				version="v5"
+				isListViewPanel={false}
+				showReduceTo
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		expect(screen.getByTestId('query-add-on-reduce_to')).toBeInTheDocument();
+	});
+
+	it('auto-opens reduce-to content when reduceTo is set', () => {
+		render(
+			<QueryAddOns
+				query={baseQuery({ reduceTo: 'sum' })}
+				version="v5"
+				isListViewPanel={false}
+				showReduceTo
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		expect(screen.getByTestId('reduce-to-content')).toBeInTheDocument();
+	});
+
+	it('calls handleSetQueryData when reduce-to value changes', () => {
+		const query = baseQuery({ reduceTo: 'avg' });
+		render(
+			<QueryAddOns
+				query={query}
+				version="v5"
+				isListViewPanel={false}
+				showReduceTo
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		fireEvent.click(
+			screen
+				.getByTestId('reduce-to-content')
+				.querySelector('[data-testid="reduce-to"]')!,
+		);
+
+		expect(mockHandleSetQueryData).toHaveBeenCalledWith(0, {
+			...query,
+			aggregations: [
+				{
+					...(query.aggregations?.[0] as any),
+					reduceTo: 'sum',
+				},
+			],
+		});
+	});
 });
