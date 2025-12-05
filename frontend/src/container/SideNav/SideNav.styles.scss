@@ -35,6 +35,7 @@
 	.brand {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 
 		max-width: 100%;
 		overflow: hidden;
@@ -164,7 +165,6 @@
 			align-items: center;
 			justify-content: center;
 			padding: 8px;
-			margin-left: 2px;
 			gap: 8px;
 
 			width: 100%;
@@ -267,7 +267,7 @@
 					align-items: center;
 					gap: 8px;
 
-					padding: 0 20px;
+					padding: 0 18px;
 
 					.nav-section-title-text {
 						display: none;
@@ -546,6 +546,38 @@
 
 		border-radius: 12px;
 		background: var(--bg-slate-300);
+	}
+
+	&:not(.pinned) {
+		.nav-item {
+			.nav-item-data {
+				justify-content: center;
+			}
+		}
+
+		.shortcut-nav-items,
+		.more-nav-items {
+			.nav-section-title {
+				padding: 0 22px !important;
+			}
+		}
+
+		:hover,
+		&.dropdown-open {
+			.nav-item {
+				.nav-item-data {
+					flex-grow: 1;
+					justify-content: flex-start;
+				}
+			}
+
+			.shortcut-nav-items,
+			.more-nav-items {
+				.nav-section-title {
+					padding: 0 18px !important;
+				}
+			}
+		}
 	}
 
 	&:not(.pinned):hover,
@@ -984,6 +1016,12 @@
 .help-support-dropdown {
 	.ant-dropdown-menu-item {
 		min-height: 32px;
+	}
+}
+
+.secondary-nav-items {
+	.nav-item-data {
+		margin-left: 10px !important;
 	}
 }
 
