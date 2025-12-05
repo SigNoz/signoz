@@ -30,10 +30,11 @@ type module struct {
 	condBuilder            qbtypes.ConditionBuilder
 	logger                 *slog.Logger
 	cache                  cache.Cache
+	config                 metricsexplorer.Config
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings) metricsexplorer.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config) metricsexplorer.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -43,6 +44,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		logger:                 providerSettings.Logger,
 		telemetryMetadataStore: telemetryMetadataStore,
 		cache:                  cache,
+		config:                 cfg,
 	}
 }
 
@@ -231,7 +233,7 @@ func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, me
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, MetricsExplorerClickhouseThreads)
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
@@ -289,7 +291,7 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, MetricsExplorerClickhouseThreads)
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
@@ -402,7 +404,7 @@ func (m *module) checkForLabelInMetric(ctx context.Context, metricName string, l
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, MetricsExplorerClickhouseThreads)
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	var hasLabel bool
 	db := m.telemetryStore.ClickhouseDB()
 	err := db.QueryRow(valueCtx, query, args...).Scan(&hasLabel)
@@ -431,7 +433,7 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 
 	query, args := ib.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, MetricsExplorerClickhouseThreads)
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
 	if err := db.Exec(valueCtx, query, args...); err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to insert metrics metadata")
@@ -584,7 +586,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, MetricsExplorerClickhouseThreads)
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
@@ -654,7 +656,7 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplo
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, MetricsExplorerClickhouseThreads)
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
@@ -754,7 +756,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, MetricsExplorerClickhouseThreads)
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {

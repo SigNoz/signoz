@@ -2,8 +2,6 @@ package implmetricsexplorer
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -16,22 +14,6 @@ const (
 	sqlColumnTimeSeries = "timeseries"
 	sqlColumnSamples    = "samples"
 )
-
-var (
-	MetricsExplorerClickhouseThreads = getOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
-)
-
-func getOrDefaultEnvInt(key string, fallback int) int {
-	v := os.Getenv(key)
-	if len(v) == 0 {
-		return fallback
-	}
-	intVal, err := strconv.Atoi(v)
-	if err != nil {
-		return fallback
-	}
-	return intVal
-}
 
 func generateMetricMetadataCacheKey(metricName string) string {
 	return fmt.Sprintf("metrics::metadata::%s", metricName)
