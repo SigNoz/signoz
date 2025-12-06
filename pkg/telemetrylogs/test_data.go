@@ -2,8 +2,10 @@ package telemetrylogs
 
 import (
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 )
 
 // Helper function to limit string length for display
@@ -950,4 +952,21 @@ func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryF
 		}
 	}
 	return keysMap
+}
+
+// buildKeyEvolutionMetadataForResourcesString returns key evolution metadata for resources_string.
+// This can be used to populate a mock key evolution metadata store in tests.
+func buildKeyEvolutionMetadataForResourcesString(releaseTime time.Time) *telemetrytypes.KeyEvolutionMetadataKey {
+	return &telemetrytypes.KeyEvolutionMetadataKey{
+		BaseColumn:     "resources_string",
+		BaseColumnType: "Map(LowCardinality(String), String)",
+		NewColumn:      "resource",
+		NewColumnType:  "JSON(max_dynamic_paths=100)",
+		ReleaseTime:    releaseTime,
+	}
+}
+
+// setupResourcesStringEvolutionMetadata sets up resources_string evolution metadata in the mock store.
+func setupResourcesStringEvolutionMetadata(m *telemetrytypestest.MockKeyEvolutionMetadataStore, releaseTime time.Time) {
+	m.Add("resources_string", buildKeyEvolutionMetadataForResourcesString(releaseTime))
 }

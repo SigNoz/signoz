@@ -56,13 +56,16 @@ var (
 )
 
 type fieldMapper struct {
-	evolutionMetadata *KeyEvolutionMetadata
+	evolutionMetadataStore telemetrytypes.KeyEvolutionMetadataStore
 }
 
-func NewFieldMapper() qbtypes.FieldMapper {
-	// this can take evolution metadata as an argument and store it in the field mapper
+func NewFieldMapper(evolutionMetadataStore telemetrytypes.KeyEvolutionMetadataStore) qbtypes.FieldMapper {
+	// If no store is provided, use the global singleton instance
+	if evolutionMetadataStore == nil {
+		evolutionMetadataStore = GetGlobalInstance()
+	}
 	return &fieldMapper{
-		evolutionMetadata: NewKeyEvolutionMetadata(),
+		evolutionMetadataStore: evolutionMetadataStore,
 	}
 }
 
@@ -120,16 +123,24 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 
 		// Check all evolutions for this key to see if any were released after tsStart.
 		// If so, it means the new column wasn't available yet at tsStart, so we need to check the old column.
-		evolutions := m.evolutionMetadata.Get(baseColumn.Name)
+		evolutions := m.evolutionMetadataStore.Get(baseColumn.Name)
 
 		// restricting now to just one entry where we know we changes from map to json
 		if len(evolutions) > 0 && evolutions[0].ReleaseTime.After(tsStartTime) {
 			return fmt.Sprintf("%s.`%s`::String", column.Name, key.Name), nil
 		}
 
-		// evolutions not present or not released after tsStart, so we use the old column
-		oldKeyName := fmt.Sprintf("%s['%s']", baseColumn.Name, key.Name)
-		return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, baseColumn.Name, key.Name, oldKeyName), nil
+		if key.Materialized {
+			oldKeyName := telemetrytypes.FieldKeyToMaterializedColumnName(key)
+			oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, %s==true, %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldKeyNameExists, oldKeyName), nil
+		} else {
+			attrVal := fmt.Sprintf("%s['%s']", baseColumn.Name, key.Name)
+			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, baseColumn.Name, key.Name, attrVal), nil
+		}
+		// // evolutions not present or not released after tsStart, so we use the old column
+		// oldKeyName := fmt.Sprintf("%s['%s']", baseColumn.Name, key.Name)
+		// return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, baseColumn.Name, key.Name, oldKeyName), nil
 
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},

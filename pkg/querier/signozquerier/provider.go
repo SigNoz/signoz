@@ -100,8 +100,13 @@ func newProvider(
 		traceAggExprRewriter,
 	)
 
+	// Initialize the global key evolution metadata singleton with TelemetryStore
+	// This ensures only one goroutine fetches from ClickHouse regardless of how many FieldMappers are created
+	keyEvolutionMetadata := telemetrylogs.GetGlobalInstance()
+	keyEvolutionMetadata.Initialize(telemetryStore, settings.Logger)
+
 	// Create log statement builder
-	logFieldMapper := telemetrylogs.NewFieldMapper()
+	logFieldMapper := telemetrylogs.NewFieldMapper(nil)
 	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
 	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
 		settings,

@@ -8,6 +8,7 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -165,7 +166,8 @@ func TestGetColumn(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	mockStore := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	fm := NewFieldMapper(mockStore)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -186,8 +188,6 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		tsStart        uint64
-		tsEnd          uint64
 		key            telemetrytypes.TelemetryFieldKey
 		expectedResult string
 		expectedError  error
@@ -232,7 +232,7 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
-			name: "Map column type - resource attribute",
+			name: "Map column type - resource attribute - json",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
@@ -241,7 +241,7 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
-			name: "Map column type - resource attribute - Materialized",
+			name: "Map column type - resource attribute - Materialized - json",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "service.name",
 				FieldContext:  telemetrytypes.FieldContextResource,
@@ -249,30 +249,6 @@ func TestGetFieldKeyName(t *testing.T) {
 				Materialized:  true,
 			},
 			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL)",
-			expectedError:  nil,
-		},
-		{
-			name:    "Map column type - resource attribute",
-			tsStart: uint64(time.Now().Add(10 * time.Second).UnixNano()),
-			tsEnd:   uint64(time.Now().Add(20 * time.Second).UnixNano()),
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "service.name",
-				FieldContext: telemetrytypes.FieldContextResource,
-			},
-			expectedResult: "resource.`service.name`::String",
-			expectedError:  nil,
-		},
-		{
-			name:    "Map column type - resource attribute - Materialized",
-			tsStart: uint64(time.Now().Add(10 * time.Second).UnixNano()),
-			tsEnd:   uint64(time.Now().Add(20 * time.Second).UnixNano()),
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "service.name",
-				FieldContext:  telemetrytypes.FieldContextResource,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-				Materialized:  true,
-			},
-			expectedResult: "resource.`service.name`::String",
 			expectedError:  nil,
 		},
 		{
@@ -288,7 +264,93 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper()
+			mockStore := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+			fm := NewFieldMapper(mockStore)
+			result, err := fm.FieldFor(ctx, 0, 0, &tc.key)
+
+			if tc.expectedError != nil {
+				assert.Equal(t, tc.expectedError, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestFieldForWithEvolutionMetadata(t *testing.T) {
+	ctx := context.Background()
+
+	// Create a test release time
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	releaseTimeNano := uint64(releaseTime.UnixNano())
+
+	// Common test key
+	serviceNameKey := telemetrytypes.TelemetryFieldKey{
+		Name:         "service.name",
+		FieldContext: telemetrytypes.FieldContextResource,
+	}
+
+	// Common expected results
+	jsonOnlyResult := "resource.`service.name`::String"
+	fallbackResult := "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)"
+
+	// Set up stores once
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	setupResourcesStringEvolutionMetadata(storeWithMetadata, releaseTime)
+
+	storeWithoutMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+
+	testCases := []struct {
+		name           string
+		tsStart        uint64
+		tsEnd          uint64
+		key            telemetrytypes.TelemetryFieldKey
+		mockStore      *telemetrytypestest.MockKeyEvolutionMetadataStore
+		expectedResult string
+		expectedError  error
+	}{
+		{
+			name:           "Resource attribute - tsStart before release time (use new JSON column only)",
+			tsStart:        releaseTimeNano - uint64(24*time.Hour.Nanoseconds()),
+			tsEnd:          releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
+			key:            serviceNameKey,
+			mockStore:      storeWithMetadata,
+			expectedResult: jsonOnlyResult,
+			expectedError:  nil,
+		},
+		{
+			name:           "Resource attribute - tsStart after release time (use fallback with multiIf)",
+			tsStart:        releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
+			tsEnd:          releaseTimeNano + uint64(48*time.Hour.Nanoseconds()),
+			key:            serviceNameKey,
+			mockStore:      storeWithMetadata,
+			expectedResult: fallbackResult,
+			expectedError:  nil,
+		},
+		{
+			name:           "Resource attribute - no evolution metadata (use fallback with multiIf)",
+			tsStart:        releaseTimeNano,
+			tsEnd:          releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
+			key:            serviceNameKey,
+			mockStore:      storeWithoutMetadata,
+			expectedResult: fallbackResult,
+			expectedError:  nil,
+		},
+		{
+			name:           "Resource attribute - tsStart exactly at release time (use fallback with multiIf)",
+			tsStart:        releaseTimeNano,
+			tsEnd:          releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
+			key:            serviceNameKey,
+			mockStore:      storeWithMetadata,
+			expectedResult: fallbackResult,
+			expectedError:  nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fm := NewFieldMapper(tc.mockStore)
 			result, err := fm.FieldFor(ctx, tc.tsStart, tc.tsEnd, &tc.key)
 
 			if tc.expectedError != nil {
