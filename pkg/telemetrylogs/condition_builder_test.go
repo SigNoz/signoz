@@ -6,6 +6,7 @@ import (
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -372,7 +373,8 @@ func TestConditionFor(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	fm := NewFieldMapper(storeWithMetadata)
 	conditionBuilder := NewConditionBuilder(fm)
 
 	for _, tc := range testCases {
@@ -425,7 +427,8 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	fm := NewFieldMapper(storeWithMetadata)
 	conditionBuilder := NewConditionBuilder(fm)
 
 	for _, tc := range testCases {
@@ -664,7 +667,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	fm := NewFieldMapper(storeWithMetadata)
 	conditionBuilder := NewConditionBuilder(fm)
 
 	for _, tc := range testCases {

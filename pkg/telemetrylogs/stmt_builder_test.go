@@ -196,7 +196,8 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
@@ -317,7 +318,8 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
@@ -426,7 +428,8 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
@@ -500,7 +503,8 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
@@ -596,7 +600,8 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()

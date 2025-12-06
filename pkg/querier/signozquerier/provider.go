@@ -100,8 +100,11 @@ func newProvider(
 		traceAggExprRewriter,
 	)
 
+	// Initialize the global key evolution metadata singleton with TelemetryStore
+	keyEvolutionMetadata := telemetrylogs.NewKeyEvolutionMetadata(telemetryStore, settings.Logger)
+
 	// Create log statement builder
-	logFieldMapper := telemetrylogs.NewFieldMapper()
+	logFieldMapper := telemetrylogs.NewFieldMapper(keyEvolutionMetadata)
 	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
 	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
 		settings,
