@@ -14,9 +14,9 @@ import (
 
 const (
 	// KeyEvolutionMetadataTableName is the table name for key evolution metadata
-	KeyEvolutionMetadataTableName = "key_evolution_metadata"
+	KeyEvolutionMetadataTableName = "distributed_column_key_evolution_metadata"
 	// KeyEvolutionMetadataDBName is the database name for key evolution metadata
-	KeyEvolutionMetadataDBName = "signoz_metadata"
+	KeyEvolutionMetadataDBName = "signoz_logs"
 	// KeyEvolutionMetadataFetchInterval is the interval at which metadata is fetched from ClickHouse
 	KeyEvolutionMetadataFetchInterval = 5 * time.Minute
 )
@@ -26,8 +26,6 @@ var (
 	globalInstance *KeyEvolutionMetadata
 	// globalOnce ensures the singleton is initialized only once
 	globalOnce sync.Once
-	// globalInitOnce ensures the goroutine is started only once
-	globalInitOnce sync.Once
 )
 
 // KeyEvolutionMetadata manages key evolution metadata with thread-safe access.
@@ -42,50 +40,27 @@ type KeyEvolutionMetadata struct {
 	started        bool
 }
 
-// GetGlobalInstance returns the singleton instance of KeyEvolutionMetadata.
-// This ensures only one instance exists regardless of how many times NewFieldMapper is called.
-func GetGlobalInstance() *KeyEvolutionMetadata {
+// NewKeyEvolutionMetadata initializes the global instance with the provided telemetry store and logger.
+// It ensures only one instance exists (singleton pattern) and starts the background fetcher if telemetryStore is provided.
+// Returns the global instance, which will be initialized on first call.
+func NewKeyEvolutionMetadata(telemetryStore telemetrystore.TelemetryStore, logger *slog.Logger) *KeyEvolutionMetadata {
 	globalOnce.Do(func() {
 		globalInstance = &KeyEvolutionMetadata{
-			keys:     make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey),
-			stopChan: make(chan struct{}),
+			keys:           make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey),
+			telemetryStore: telemetryStore,
+			logger:         logger,
+			stopChan:       make(chan struct{}),
 		}
-		// Initialize with dummy data as fallback
-		globalInstance.initializeWithDummyData()
+
+		// Start the background goroutine only once
+		globalInstance.startBackgroundFetcher()
 	})
 	return globalInstance
 }
 
-// Initialize sets up the KeyEvolutionMetadata with a TelemetryStore and starts the background goroutine.
-// This should be called once during application startup. The goroutine will only start once,
-// even if Initialize is called multiple times.
-func (k *KeyEvolutionMetadata) Initialize(telemetryStore telemetrystore.TelemetryStore, logger *slog.Logger) {
-	k.mu.Lock()
-	k.telemetryStore = telemetryStore
-	if logger != nil {
-		k.logger = logger
-	} else {
-		k.logger = slog.Default()
-	}
-	k.mu.Unlock()
-
-	// Start the background goroutine only once
-	globalInitOnce.Do(func() {
-		k.startBackgroundFetcher()
-	})
-}
-
 // startBackgroundFetcher starts a goroutine that periodically fetches metadata from ClickHouse.
-// Only one goroutine will run regardless of how many times Initialize is called.
+// Only one goroutine will run regardless of how many times NewKeyEvolutionMetadata is called.
 func (k *KeyEvolutionMetadata) startBackgroundFetcher() {
-	k.mu.Lock()
-	if k.started {
-		k.mu.Unlock()
-		return
-	}
-	k.started = true
-	k.mu.Unlock()
-
 	go func() {
 		ticker := time.NewTicker(KeyEvolutionMetadataFetchInterval)
 		defer ticker.Stop()
@@ -106,21 +81,13 @@ func (k *KeyEvolutionMetadata) startBackgroundFetcher() {
 
 // fetchFromClickHouse fetches key evolution metadata from ClickHouse database.
 func (k *KeyEvolutionMetadata) fetchFromClickHouse() {
-	k.mu.RLock()
 	store := k.telemetryStore
 	logger := k.logger
-	k.mu.RUnlock()
-
-	if store == nil {
-		// TelemetryStore not initialized, skip fetch
-		return
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	db := store.ClickhouseDB()
-	if db == nil {
+	if store.ClickhouseDB() == nil {
 		logger.Warn("ClickHouse connection not available for key evolution metadata fetch")
 		return
 	}
@@ -139,10 +106,9 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse() {
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := store.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		// Table might not exist yet, log as debug instead of error
-		logger.Debug("Failed to fetch key evolution metadata from ClickHouse", "error", err)
+		logger.Warn("Failed to fetch key evolution metadata from ClickHouse", "error", err)
 		return
 	}
 	defer rows.Close()
@@ -156,7 +122,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse() {
 			baseColumnType string
 			newColumn      string
 			newColumnType  string
-			releaseTime    time.Time
+			releaseTime    uint64
 		)
 
 		if err := rows.Scan(&baseColumn, &baseColumnType, &newColumn, &newColumnType, &releaseTime); err != nil {
@@ -169,7 +135,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse() {
 			BaseColumnType: baseColumnType,
 			NewColumn:      newColumn,
 			NewColumnType:  newColumnType,
-			ReleaseTime:    releaseTime,
+			ReleaseTime:    time.Unix(0, int64(releaseTime)),
 		}
 
 		newKeys[baseColumn] = append(newKeys[baseColumn], key)
@@ -186,24 +152,6 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse() {
 	k.mu.Unlock()
 
 	logger.Debug("Successfully fetched key evolution metadata from ClickHouse", "count", len(newKeys))
-}
-
-// initializeWithDummyData initializes the metadata with dummy data as a fallback.
-func (k *KeyEvolutionMetadata) initializeWithDummyData() {
-	nanoTimestamp := int64(1763960572502890000)
-	t := time.Unix(0, nanoTimestamp)
-	metadata := map[string][]*telemetrytypes.KeyEvolutionMetadataKey{
-		"resources_string": {
-			{
-				BaseColumn:     "resources_string",
-				BaseColumnType: "Map(LowCardinality(String), String)",
-				NewColumn:      "resource",
-				NewColumnType:  "JSON(max_dynamic_paths=100)",
-				ReleaseTime:    t,
-			},
-		},
-	}
-	k.keys = metadata
 }
 
 // Add adds a metadata key for the given key name.
@@ -239,10 +187,4 @@ func (k *KeyEvolutionMetadata) Get(keyName string) []*telemetrytypes.KeyEvolutio
 // This is primarily for testing purposes.
 func (k *KeyEvolutionMetadata) Stop() {
 	close(k.stopChan)
-}
-
-// NewKeyEvolutionMetadata creates a new KeyEvolutionMetadata instance with dummy data.
-// Deprecated: Use GetGlobalInstance() instead to get the singleton instance.
-func NewKeyEvolutionMetadata() *KeyEvolutionMetadata {
-	return GetGlobalInstance()
 }

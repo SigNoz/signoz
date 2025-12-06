@@ -311,21 +311,21 @@ func TestFieldForWithEvolutionMetadata(t *testing.T) {
 		expectedError  error
 	}{
 		{
-			name:           "Resource attribute - tsStart before release time (use new JSON column only)",
+			name:           "Resource attribute - tsStart before release time (use fallback with multiIf)",
 			tsStart:        releaseTimeNano - uint64(24*time.Hour.Nanoseconds()),
 			tsEnd:          releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
 			key:            serviceNameKey,
 			mockStore:      storeWithMetadata,
-			expectedResult: jsonOnlyResult,
+			expectedResult: fallbackResult,
 			expectedError:  nil,
 		},
 		{
-			name:           "Resource attribute - tsStart after release time (use fallback with multiIf)",
+			name:           "Resource attribute - tsStart after release time (use new json column)",
 			tsStart:        releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
 			tsEnd:          releaseTimeNano + uint64(48*time.Hour.Nanoseconds()),
 			key:            serviceNameKey,
 			mockStore:      storeWithMetadata,
-			expectedResult: fallbackResult,
+			expectedResult: jsonOnlyResult,
 			expectedError:  nil,
 		},
 		{

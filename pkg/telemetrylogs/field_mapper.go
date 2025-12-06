@@ -60,10 +60,6 @@ type fieldMapper struct {
 }
 
 func NewFieldMapper(evolutionMetadataStore telemetrytypes.KeyEvolutionMetadataStore) qbtypes.FieldMapper {
-	// If no store is provided, use the global singleton instance
-	if evolutionMetadataStore == nil {
-		evolutionMetadataStore = GetGlobalInstance()
-	}
 	return &fieldMapper{
 		evolutionMetadataStore: evolutionMetadataStore,
 	}
@@ -126,7 +122,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 		evolutions := m.evolutionMetadataStore.Get(baseColumn.Name)
 
 		// restricting now to just one entry where we know we changes from map to json
-		if len(evolutions) > 0 && evolutions[0].ReleaseTime.After(tsStartTime) {
+		if len(evolutions) > 0 && evolutions[0].ReleaseTime.Before(tsStartTime) {
 			return fmt.Sprintf("%s.`%s`::String", column.Name, key.Name), nil
 		}
 
