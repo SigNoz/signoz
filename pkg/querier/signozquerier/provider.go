@@ -101,7 +101,6 @@ func newProvider(
 	)
 
 	// Initialize the global key evolution metadata singleton with TelemetryStore
-	// This ensures only one goroutine fetches from ClickHouse regardless of how many FieldMappers are created
 	keyEvolutionMetadata := telemetrylogs.NewKeyEvolutionMetadata(telemetryStore, settings.Logger)
 
 	// Create log statement builder
