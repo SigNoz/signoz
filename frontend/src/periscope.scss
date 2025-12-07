@@ -93,11 +93,24 @@
 	}
 
 	&.danger {
-		color: var(--bg-cherry-500) !important;
 		border-radius: 2px;
-		border: 1px solid rgba(255, 184, 0, 0.1);
-		background: rgba(255, 184, 0, 0.1) !important;
+		color: var(--text-vanilla-100) !important;
+		text-align: center;
+		font-variant-numeric: slashed-zero;
+
+		/* Label/Small/500 */
+		font-family: Inter;
+		font-size: 11px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 100%; /* 11px */
+		background: var(--bg-cherry-500);
+
 		box-shadow: none !important;
+
+		&:hover {
+			border: 1px solid var(--bg-cherry-600) !important;
+		}
 	}
 }
 

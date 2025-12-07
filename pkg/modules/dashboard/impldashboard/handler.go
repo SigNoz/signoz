@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/transition"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -244,7 +245,7 @@ func (handler *handler) CreatePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, nil)
+	render.Success(rw, http.StatusCreated, types.Identifiable{ID: publicDashboard.ID})
 }
 
 func (handler *handler) GetPublic(rw http.ResponseWriter, r *http.Request) {

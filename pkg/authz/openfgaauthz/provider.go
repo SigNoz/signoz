@@ -52,6 +52,7 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 	opts := []openfgapkgserver.OpenFGAServiceV1Option{
 		openfgapkgserver.WithDatastore(store),
 		openfgapkgserver.WithLogger(NewLogger(scopedProviderSettings.Logger())),
+		openfgapkgserver.WithContextPropagationToDatastore(true),
 	}
 	openfgaServer, err := openfgapkgserver.NewServerWithOpts(opts...)
 	if err != nil {
