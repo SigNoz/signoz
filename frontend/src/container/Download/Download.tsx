@@ -19,9 +19,11 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 				dataIndex: item,
 			};
 		});
+		// Excel sheet names have a 31 character limit
+		const sheetName = fileName.length > 31 ? fileName.slice(0, 31) : fileName;
 		const excel = new Excel();
 		excel
-			.addSheet(fileName)
+			.addSheet(sheetName)
 			.addColumns(headers)
 			.addDataSource(data, {
 				str2Percent: true,
