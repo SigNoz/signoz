@@ -59,13 +59,11 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 		<Tooltip title="Download" placement="top">
 			<Dropdown menu={menu} trigger={['click']}>
 				<Button
-					className="download-button"
+					className="periscope-btn ghost"
 					loading={isLoading}
-					size="small"
-					type="link"
-				>
-					<DownloadIcon size={20} />
-				</Button>
+					disabled={isLoading}
+					icon={<DownloadIcon size={18} />}
+				/>
 			</Dropdown>
 		</Tooltip>
 	);

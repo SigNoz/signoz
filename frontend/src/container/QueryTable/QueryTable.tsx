@@ -1,12 +1,11 @@
 import './QueryTable.styles.scss';
 
-import type { TablePaginationConfig } from 'antd/es/table';
+import { Pagination as AntPagination } from 'antd';
 import cx from 'classnames';
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
-import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
-import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
+import { DEFAULT_PER_PAGE_OPTIONS, Pagination } from 'hooks/queryPagination';
 import {
 	createTableColumnsFromQuery,
 	RowData,
@@ -136,22 +135,6 @@ export function QueryTable({
 		[tableColumns, isQueryTypeBuilder, enableDrillDown, handleColumnClick],
 	);
 
-	const [pageSize, setPageSize] = useState(
-		getDefaultPaginationConfig(PER_PAGE_OPTIONS).limit,
-	);
-	const paginationConfig = {
-		pageSize,
-		showSizeChanger: true,
-		pageSizeOptions: PER_PAGE_OPTIONS,
-		hideOnSinglePage: false,
-		position: ['topRight'] as TablePaginationConfig['position'],
-		onChange: (_page: number, newPageSize: number): void => {
-			if (newPageSize !== pageSize) {
-				setPageSize(newPageSize);
-			}
-		},
-	};
-
 	const [filterTable, setFilterTable] = useState<RowData[] | null>(null);
 
 	const onTableSearch = useCallback(
@@ -173,10 +156,46 @@ export function QueryTable({
 		onTableSearch(searchTerm);
 	}, [newDataSource, onTableSearch, searchTerm]);
 
+	const [pagination, setPagination] = useState<Pagination>({
+		limit: 10,
+		offset: 0,
+	});
+
+	const paginatedData = useMemo(() => {
+		const source = filterTable ?? newDataSource;
+		return source.slice(pagination.offset, pagination.offset + pagination.limit);
+	}, [filterTable, newDataSource, pagination.offset, pagination.limit]);
+
+	const handlePageChange = useCallback(
+		(page: number, pageSize: number): void => {
+			setPagination({
+				limit: pageSize,
+				offset: (page - 1) * pageSize,
+			});
+		},
+		[],
+	);
+
+	const currentPage = Math.floor(pagination.offset / pagination.limit) + 1;
+	const totalItems = filterTable?.length ?? newDataSource.length;
+
 	return (
 		<>
 			{isDownloadEnabled && (
-				<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+				<div className="query-table-controls">
+					<AntPagination
+						current={currentPage}
+						pageSize={pagination.limit}
+						total={totalItems}
+						onChange={handlePageChange}
+						showSizeChanger
+						pageSizeOptions={PER_PAGE_OPTIONS}
+						disabled={loading as boolean}
+						showTotal={(total, range): string =>
+							`${range[0]}-${range[1]} of ${total} items`
+						}
+					/>
+
 					<Download
 						data={downloadableData}
 						fileName={`${fileName}-${servicename}-${getFormattedTimestamp()}`}
@@ -188,9 +207,9 @@ export function QueryTable({
 				<ResizeTable
 					columns={columnsWithClickHandlers}
 					tableLayout="fixed"
-					dataSource={filterTable === null ? newDataSource : filterTable}
+					dataSource={filterTable === null ? paginatedData : filterTable}
 					scroll={{ x: 'max-content' }}
-					pagination={paginationConfig}
+					pagination={false}
 					widgetId={widgetId}
 					shouldPersistColumnWidths
 					sticky={sticky}
