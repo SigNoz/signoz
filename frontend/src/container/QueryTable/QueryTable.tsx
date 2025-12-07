@@ -161,6 +161,11 @@ export function QueryTable({
 		offset: 0,
 	});
 
+	// Reset pagination to first page when data changes
+	useEffect(() => {
+		setPagination((prev) => ({ ...prev, offset: 0 }));
+	}, [newDataSource, filterTable]);
+
 	const paginatedData = useMemo(() => {
 		const source = filterTable ?? newDataSource;
 		return source.slice(pagination.offset, pagination.offset + pagination.limit);
