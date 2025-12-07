@@ -181,28 +181,28 @@ export function QueryTable({
 
 	return (
 		<>
-			{isDownloadEnabled && (
-				<div className="query-table-controls">
-					<AntPagination
-						current={currentPage}
-						pageSize={pagination.limit}
-						total={totalItems}
-						onChange={handlePageChange}
-						showSizeChanger
-						pageSizeOptions={PER_PAGE_OPTIONS}
-						disabled={loading as boolean}
-						showTotal={(total, range): string =>
-							`${range[0]}-${range[1]} of ${total} items`
-						}
-					/>
-
+			<div className="query-table-controls">
+				<AntPagination
+					current={currentPage}
+					pageSize={pagination.limit}
+					total={totalItems}
+					onChange={handlePageChange}
+					showSizeChanger
+					pageSizeOptions={PER_PAGE_OPTIONS}
+					disabled={loading as boolean}
+					showTotal={(total, range): string =>
+						`${range[0]}-${range[1]} of ${total} items`
+					}
+				/>
+				{isDownloadEnabled && (
 					<Download
 						data={downloadableData}
 						fileName={`${fileName}-${servicename}-${getFormattedTimestamp()}`}
 						isLoading={loading as boolean}
 					/>
-				</div>
-			)}
+				)}
+			</div>
+
 			<div className="query-table">
 				<ResizeTable
 					columns={columnsWithClickHandlers}
