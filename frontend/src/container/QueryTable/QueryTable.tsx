@@ -207,7 +207,7 @@ export function QueryTable({
 				<ResizeTable
 					columns={columnsWithClickHandlers}
 					tableLayout="fixed"
-					dataSource={filterTable === null ? paginatedData : filterTable}
+					dataSource={paginatedData}
 					scroll={{ x: 'max-content' }}
 					pagination={false}
 					widgetId={widgetId}
