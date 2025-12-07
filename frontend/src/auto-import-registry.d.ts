@@ -14,6 +14,7 @@ import '@signozhq/badge';
 import '@signozhq/button';
 import '@signozhq/calendar';
 import '@signozhq/callout';
+import '@signozhq/checkbox';
 import '@signozhq/design-tokens';
 import '@signozhq/input';
 import '@signozhq/popover';
