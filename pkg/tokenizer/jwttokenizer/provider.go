@@ -263,7 +263,7 @@ func (provider *provider) getOrSetIdentity(ctx context.Context, orgID, userID va
 		return nil, err
 	}
 
-	err = provider.cache.Set(ctx, orgID, identityCacheKey(identity.UserID), identity, -1)
+	err = provider.cache.Set(ctx, orgID, identityCacheKey(identity.UserID), identity, 0)
 	if err != nil {
 		provider.settings.Logger().ErrorContext(ctx, "failed to cache identity", "error", err)
 	}

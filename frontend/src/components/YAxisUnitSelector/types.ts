@@ -5,11 +5,11 @@ export interface YAxisUnitSelectorProps {
 	loading?: boolean;
 	disabled?: boolean;
 	'data-testid'?: string;
+	source: YAxisSource;
 }
 
 export enum UniversalYAxisUnit {
 	// Time
-	WEEKS = 'wk',
 	DAYS = 'd',
 	HOURS = 'h',
 	MINUTES = 'min',
@@ -17,6 +17,14 @@ export enum UniversalYAxisUnit {
 	MICROSECONDS = 'us',
 	MILLISECONDS = 'ms',
 	NANOSECONDS = 'ns',
+	DURATION_MS = 'dtdurationms',
+	DURATION_S = 'dtdurations',
+	DURATION_HMS = 'dthms',
+	DURATION_DHMS = 'dtdhms',
+	TIMETICKS = 'timeticks',
+	CLOCK_MS = 'clockms',
+	CLOCK_S = 'clocks',
+	TIME_HERTZ = 'hertz',
 
 	// Data
 	BYTES = 'By',
@@ -29,6 +37,17 @@ export enum UniversalYAxisUnit {
 	ZETTABYTES = 'ZBy',
 	YOTTABYTES = 'YBy',
 
+	// Binary (IEC) Data
+	BYTES_IEC = 'bytes',
+	KIBIBYTES = 'KiBy',
+	MEBIBYTES = 'MiBy',
+	GIBIBYTES = 'GiBy',
+	TEBIBYTES = 'TiBy',
+	PEBIBYTES = 'PiBy',
+	EXBIBYTES = 'EiBy',
+	ZEBIBYTES = 'ZiBy',
+	YOBIBYTES = 'YiBy',
+
 	// Data Rate
 	BYTES_SECOND = 'By/s',
 	KILOBYTES_SECOND = 'kBy/s',
@@ -39,9 +58,21 @@ export enum UniversalYAxisUnit {
 	EXABYTES_SECOND = 'EBy/s',
 	ZETTABYTES_SECOND = 'ZBy/s',
 	YOTTABYTES_SECOND = 'YBy/s',
+	DATA_RATE_PACKETS_PER_SECOND = 'pps',
+
+	// Binary (IEC) Data Rate
+	KIBIBYTES_SECOND = 'KiBy/s',
+	MEBIBYTES_SECOND = 'MiBy/s',
+	GIBIBYTES_SECOND = 'GiBy/s',
+	TEBIBYTES_SECOND = 'TiBy/s',
+	PEBIBYTES_SECOND = 'PiBy/s',
+	EXBIBYTES_SECOND = 'EiBy/s',
+	ZEBIBYTES_SECOND = 'ZiBy/s',
+	YOBIBYTES_SECOND = 'YiBy/s',
 
 	// Bits
 	BITS = 'bit',
+	BITS_IEC = 'bits',
 	KILOBITS = 'kbit',
 	MEGABITS = 'Mbit',
 	GIGABITS = 'Gbit',
@@ -61,6 +92,16 @@ export enum UniversalYAxisUnit {
 	EXABITS_SECOND = 'Ebit/s',
 	ZETTABITS_SECOND = 'Zbit/s',
 	YOTTABITS_SECOND = 'Ybit/s',
+
+	// Binary (IEC) Bit Rate
+	KIBIBITS_SECOND = 'Kibit/s',
+	MEBIBITS_SECOND = 'Mibit/s',
+	GIBIBITS_SECOND = 'Gibit/s',
+	TEBIBITS_SECOND = 'Tibit/s',
+	PEBIBITS_SECOND = 'Pibit/s',
+	EXBIBITS_SECOND = 'Eibit/s',
+	ZEBIBITS_SECOND = 'Zibit/s',
+	YOBIBITS_SECOND = 'Yibit/s',
 
 	// Count
 	COUNT = '{count}',
@@ -87,7 +128,231 @@ export enum UniversalYAxisUnit {
 	// Percent
 	PERCENT = '%',
 	PERCENT_UNIT = 'percentunit',
+
+	// Boolean
+	TRUE_FALSE = '{bool}',
+	YES_NO = '{bool_yn}',
+	ON_OFF = 'bool_on_off',
+
+	// None
 	NONE = '1',
+
+	// Hash rate
+	HASH_RATE_HASHES_PER_SECOND = 'Hs',
+	HASH_RATE_KILOHASHES_PER_SECOND = 'KHs',
+	HASH_RATE_MEGAHASHES_PER_SECOND = 'MHs',
+	HASH_RATE_GIGAHASHES_PER_SECOND = 'GHs',
+	HASH_RATE_TERAHASHES_PER_SECOND = 'THs',
+	HASH_RATE_PETAHASHES_PER_SECOND = 'PHs',
+	HASH_RATE_EXAHASHES_PER_SECOND = 'EHs',
+
+	// Miscellaneous
+	MISC_STRING = 'string',
+	MISC_SHORT = 'short',
+	MISC_HUMIDITY = 'humidity',
+	MISC_DECIBEL = 'dB',
+	MISC_HEXADECIMAL = 'hex',
+	MISC_HEXADECIMAL_0X = 'hex0x',
+	MISC_SCIENTIFIC_NOTATION = 'sci',
+	MISC_LOCALE_FORMAT = 'locale',
+	MISC_PIXELS = 'pixel',
+
+	// Acceleration
+	ACCELERATION_METERS_PER_SECOND_SQUARED = 'accMS2',
+	ACCELERATION_FEET_PER_SECOND_SQUARED = 'accFS2',
+	ACCELERATION_G_UNIT = 'accG',
+
+	// Angular
+	ANGULAR_DEGREE = 'degree',
+	ANGULAR_RADIAN = 'radian',
+	ANGULAR_GRADIAN = 'grad',
+	ANGULAR_ARC_MINUTE = 'arcmin',
+	ANGULAR_ARC_SECOND = 'arcsec',
+
+	// Area
+	AREA_SQUARE_METERS = 'areaM2',
+	AREA_SQUARE_FEET = 'areaF2',
+	AREA_SQUARE_MILES = 'areaMI2',
+
+	// FLOPs
+	FLOPS_FLOPS = 'flops',
+	FLOPS_MFLOPS = 'mflops',
+	FLOPS_GFLOPS = 'gflops',
+	FLOPS_TFLOPS = 'tflops',
+	FLOPS_PFLOPS = 'pflops',
+	FLOPS_EFLOPS = 'eflops',
+	FLOPS_ZFLOPS = 'zflops',
+	FLOPS_YFLOPS = 'yflops',
+
+	// Concentration
+	CONCENTRATION_PPM = 'ppm',
+	CONCENTRATION_PPB = 'conppb',
+	CONCENTRATION_NG_M3 = 'conngm3',
+	CONCENTRATION_NG_NORMAL_CUBIC_METER = 'conngNm3',
+	CONCENTRATION_UG_M3 = 'conμgm3',
+	CONCENTRATION_UG_NORMAL_CUBIC_METER = 'conμgNm3',
+	CONCENTRATION_MG_M3 = 'conmgm3',
+	CONCENTRATION_MG_NORMAL_CUBIC_METER = 'conmgNm3',
+	CONCENTRATION_G_M3 = 'congm3',
+	CONCENTRATION_G_NORMAL_CUBIC_METER = 'congNm3',
+	CONCENTRATION_MG_PER_DL = 'conmgdL',
+	CONCENTRATION_MMOL_PER_L = 'conmmolL',
+
+	// Currency
+	CURRENCY_USD = 'currencyUSD',
+	CURRENCY_GBP = 'currencyGBP',
+	CURRENCY_EUR = 'currencyEUR',
+	CURRENCY_JPY = 'currencyJPY',
+	CURRENCY_RUB = 'currencyRUB',
+	CURRENCY_UAH = 'currencyUAH',
+	CURRENCY_BRL = 'currencyBRL',
+	CURRENCY_DKK = 'currencyDKK',
+	CURRENCY_ISK = 'currencyISK',
+	CURRENCY_NOK = 'currencyNOK',
+	CURRENCY_SEK = 'currencySEK',
+	CURRENCY_CZK = 'currencyCZK',
+	CURRENCY_CHF = 'currencyCHF',
+	CURRENCY_PLN = 'currencyPLN',
+	CURRENCY_BTC = 'currencyBTC',
+	CURRENCY_MBTC = 'currencymBTC',
+	CURRENCY_UBTC = 'currencyμBTC',
+	CURRENCY_ZAR = 'currencyZAR',
+	CURRENCY_INR = 'currencyINR',
+	CURRENCY_KRW = 'currencyKRW',
+	CURRENCY_IDR = 'currencyIDR',
+	CURRENCY_PHP = 'currencyPHP',
+	CURRENCY_VND = 'currencyVND',
+
+	// Datetime
+	DATETIME_ISO = 'dateTimeAsIso',
+	DATETIME_ISO_NO_DATE_IF_TODAY = 'dateTimeAsIsoNoDateIfToday',
+	DATETIME_US = 'dateTimeAsUS',
+	DATETIME_US_NO_DATE_IF_TODAY = 'dateTimeAsUSNoDateIfToday',
+	DATETIME_LOCAL = 'dateTimeAsLocal',
+	DATETIME_LOCAL_NO_DATE_IF_TODAY = 'dateTimeAsLocalNoDateIfToday',
+	DATETIME_SYSTEM = 'dateTimeAsSystem',
+	DATETIME_FROM_NOW = 'dateTimeFromNow',
+
+	// Power/Electrical
+	POWER_WATT = 'watt',
+	POWER_KILOWATT = 'kwatt',
+	POWER_MEGAWATT = 'megwatt',
+	POWER_GIGAWATT = 'gwatt',
+	POWER_MILLIWATT = 'mwatt',
+	POWER_WATT_PER_SQUARE_METER = 'Wm2',
+	POWER_VOLT_AMPERE = 'voltamp',
+	POWER_KILOVOLT_AMPERE = 'kvoltamp',
+	POWER_VOLT_AMPERE_REACTIVE = 'voltampreact',
+	POWER_KILOVOLT_AMPERE_REACTIVE = 'kvoltampreact',
+	POWER_WATT_HOUR = 'watth',
+	POWER_WATT_HOUR_PER_KG = 'watthperkg',
+	POWER_KILOWATT_HOUR = 'kwatth',
+	POWER_KILOWATT_MINUTE = 'kwattm',
+	POWER_AMPERE_HOUR = 'amph',
+	POWER_KILOAMPERE_HOUR = 'kamph',
+	POWER_MILLIAMPERE_HOUR = 'mamph',
+	POWER_JOULE = 'joule',
+	POWER_ELECTRON_VOLT = 'ev',
+	POWER_AMPERE = 'amp',
+	POWER_KILOAMPERE = 'kamp',
+	POWER_MILLIAMPERE = 'mamp',
+	POWER_VOLT = 'volt',
+	POWER_KILOVOLT = 'kvolt',
+	POWER_MILLIVOLT = 'mvolt',
+	POWER_DECIBEL_MILLIWATT = 'dBm',
+	POWER_OHM = 'ohm',
+	POWER_KILOOHM = 'kohm',
+	POWER_MEGAOHM = 'Mohm',
+	POWER_FARAD = 'farad',
+	POWER_MICROFARAD = 'µfarad',
+	POWER_NANOFARAD = 'nfarad',
+	POWER_PICOFARAD = 'pfarad',
+	POWER_FEMTOFARAD = 'ffarad',
+	POWER_HENRY = 'henry',
+	POWER_MILLIHENRY = 'mhenry',
+	POWER_MICROHENRY = 'µhenry',
+	POWER_LUMENS = 'lumens',
+
+	// Flow
+	FLOW_GALLONS_PER_MINUTE = 'flowgpm',
+	FLOW_CUBIC_METERS_PER_SECOND = 'flowcms',
+	FLOW_CUBIC_FEET_PER_SECOND = 'flowcfs',
+	FLOW_CUBIC_FEET_PER_MINUTE = 'flowcfm',
+	FLOW_LITERS_PER_HOUR = 'litreh',
+	FLOW_LITERS_PER_MINUTE = 'flowlpm',
+	FLOW_MILLILITERS_PER_MINUTE = 'flowmlpm',
+	FLOW_LUX = 'lux',
+
+	// Force
+	FORCE_NEWTON_METERS = 'forceNm',
+	FORCE_KILONEWTON_METERS = 'forcekNm',
+	FORCE_NEWTONS = 'forceN',
+	FORCE_KILONEWTONS = 'forcekN',
+
+	// Mass
+	MASS_MILLIGRAM = 'massmg',
+	MASS_GRAM = 'massg',
+	MASS_POUND = 'masslb',
+	MASS_KILOGRAM = 'masskg',
+	MASS_METRIC_TON = 'masst',
+
+	// Length
+	LENGTH_MILLIMETER = 'lengthmm',
+	LENGTH_INCH = 'lengthin',
+	LENGTH_FOOT = 'lengthft',
+	LENGTH_METER = 'lengthm',
+	LENGTH_KILOMETER = 'lengthkm',
+	LENGTH_MILE = 'lengthmi',
+
+	// Pressure
+	PRESSURE_MILLIBAR = 'pressurembar',
+	PRESSURE_BAR = 'pressurebar',
+	PRESSURE_KILOBAR = 'pressurekbar',
+	PRESSURE_PASCAL = 'pressurepa',
+	PRESSURE_HECTOPASCAL = 'pressurehpa',
+	PRESSURE_KILOPASCAL = 'pressurekpa',
+	PRESSURE_INCHES_HG = 'pressurehg',
+	PRESSURE_PSI = 'pressurepsi',
+
+	// Radiation
+	RADIATION_BECQUEREL = 'radbq',
+	RADIATION_CURIE = 'radci',
+	RADIATION_GRAY = 'radgy',
+	RADIATION_RAD = 'radrad',
+	RADIATION_SIEVERT = 'radsv',
+	RADIATION_MILLISIEVERT = 'radmsv',
+	RADIATION_MICROSIEVERT = 'radusv',
+	RADIATION_REM = 'radrem',
+	RADIATION_EXPOSURE_C_PER_KG = 'radexpckg',
+	RADIATION_ROENTGEN = 'radr',
+	RADIATION_SIEVERT_PER_HOUR = 'radsvh',
+	RADIATION_MILLISIEVERT_PER_HOUR = 'radmsvh',
+	RADIATION_MICROSIEVERT_PER_HOUR = 'radusvh',
+
+	// Rotation speed
+	ROTATION_SPEED_REVOLUTIONS_PER_MINUTE = 'rotrpm',
+	ROTATION_SPEED_HERTZ = 'rothz',
+	ROTATION_SPEED_RADIANS_PER_SECOND = 'rotrads',
+	ROTATION_SPEED_DEGREES_PER_SECOND = 'rotdegs',
+
+	// Temperature
+	TEMPERATURE_CELSIUS = 'celsius',
+	TEMPERATURE_FAHRENHEIT = 'fahrenheit',
+	TEMPERATURE_KELVIN = 'kelvin',
+
+	// Velocity
+	VELOCITY_METERS_PER_SECOND = 'velocityms',
+	VELOCITY_KILOMETERS_PER_HOUR = 'velocitykmh',
+	VELOCITY_MILES_PER_HOUR = 'velocitymph',
+	VELOCITY_KNOT = 'velocityknot',
+
+	// Volume
+	VOLUME_MILLILITER = 'mlitre',
+	VOLUME_LITER = 'litre',
+	VOLUME_CUBIC_METER = 'm3',
+	VOLUME_NORMAL_CUBIC_METER = 'Nm3',
+	VOLUME_CUBIC_DECIMETER = 'dm3',
+	VOLUME_GALLON = 'gallons',
 }
 
 export enum YAxisUnit {
@@ -293,6 +558,15 @@ export enum YAxisUnit {
 	UCUM_PEBIBYTES = 'PiBy',
 	OPEN_METRICS_PEBIBYTES = 'pebibytes',
 
+	UCUM_EXBIBYTES = 'EiBy',
+	OPEN_METRICS_EXBIBYTES = 'exbibytes',
+
+	UCUM_ZEBIBYTES = 'ZiBy',
+	OPEN_METRICS_ZEBIBYTES = 'zebibytes',
+
+	UCUM_YOBIBYTES = 'YiBy',
+	OPEN_METRICS_YOBIBYTES = 'yobibytes',
+
 	UCUM_KIBIBYTES_SECOND = 'KiBy/s',
 	OPEN_METRICS_KIBIBYTES_SECOND = 'kibibytes_per_second',
 
@@ -322,6 +596,24 @@ export enum YAxisUnit {
 
 	UCUM_PEBIBITS_SECOND = 'Pibit/s',
 	OPEN_METRICS_PEBIBITS_SECOND = 'pebibits_per_second',
+
+	UCUM_EXBIBYTES_SECOND = 'EiBy/s',
+	OPEN_METRICS_EXBIBYTES_SECOND = 'exbibytes_per_second',
+
+	UCUM_EXBIBITS_SECOND = 'Eibit/s',
+	OPEN_METRICS_EXBIBITS_SECOND = 'exbibits_per_second',
+
+	UCUM_ZEBIBYTES_SECOND = 'ZiBy/s',
+	OPEN_METRICS_ZEBIBYTES_SECOND = 'zebibytes_per_second',
+
+	UCUM_ZEBIBITS_SECOND = 'Zibit/s',
+	OPEN_METRICS_ZEBIBITS_SECOND = 'zebibits_per_second',
+
+	UCUM_YOBIBYTES_SECOND = 'YiBy/s',
+	OPEN_METRICS_YOBIBYTES_SECOND = 'yobibytes_per_second',
+
+	UCUM_YOBIBITS_SECOND = 'Yibit/s',
+	OPEN_METRICS_YOBIBITS_SECOND = 'yobibits_per_second',
 
 	UCUM_TRUE_FALSE = '{bool}',
 	OPEN_METRICS_TRUE_FALSE = 'boolean_true_false',
@@ -363,4 +655,28 @@ export enum YAxisUnit {
 	OPEN_METRICS_WRITES_MINUTE = 'writes_per_minute',
 
 	OPEN_METRICS_PERCENT_UNIT = 'percentunit',
+}
+
+export interface ScaledValue {
+	value: number;
+	label: string;
+}
+
+export interface UnitFamilyConfig {
+	units: UniversalYAxisUnit[];
+	scaleFactor: number;
+}
+
+export interface YAxisCategory {
+	name: string;
+	units: {
+		name: string;
+		id: UniversalYAxisUnit;
+	}[];
+}
+
+export enum YAxisSource {
+	ALERTS = 'alerts',
+	DASHBOARDS = 'dashboards',
+	EXPLORER = 'explorer',
 }

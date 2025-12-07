@@ -859,6 +859,13 @@
         "description": "Overview of ECS ContainerInsights",
         "image": "file://assets/dashboards/containerinsights.png",
         "definition": "file://assets/dashboards/containerinsights.json"
+      },
+      {
+        "id": "enhanced_containerinsights",
+        "title": "ECS Enhanced ContainerInsights",
+        "description": "Enhanced ECS ContainerInsights",
+        "image": "file://assets/dashboards/enhanced_containerinsights.png",
+        "definition": "file://assets/dashboards/enhanced_containerinsights.json"
       }
     ]
   }

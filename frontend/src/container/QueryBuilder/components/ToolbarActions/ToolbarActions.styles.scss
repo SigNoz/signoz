@@ -116,12 +116,11 @@
 		flex: 1 0 0;
 		border-radius: 2px;
 		background: var(--bg-cherry-500);
-		border-color: none;
+		border: none;
 	}
 	.cancel-run:hover {
 		background-color: #ff7875 !important;
 		color: var(--bg-vanilla-100) !important;
-		border: none;
 	}
 }
 

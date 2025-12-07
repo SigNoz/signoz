@@ -183,6 +183,7 @@ function ExplorerColumnsRenderer({
 					searchText={searchText}
 					isAttributeKeySelected={isAttributeKeySelected}
 					handleCheckboxChange={handleCheckboxChange}
+					dataSource={initialDataSource}
 				/>
 			),
 		},
