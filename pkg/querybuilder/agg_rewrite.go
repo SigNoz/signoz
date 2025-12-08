@@ -16,8 +16,6 @@ import (
 )
 
 type aggExprRewriter struct {
-	startNs          uint64
-	endNs            uint64
 	logger           *slog.Logger
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
 	fieldMapper      qbtypes.FieldMapper
@@ -82,8 +80,9 @@ func (r *aggExprRewriter) Rewrite(
 	}
 
 	visitor := newExprVisitor(
-		r.startNs,
-		r.endNs,
+		ctx,
+		startNs,
+		endNs,
 		r.logger,
 		keys,
 		r.fullTextColumn,
@@ -116,7 +115,7 @@ func (r *aggExprRewriter) RewriteMulti(
 	var errs []error
 	var chArgsList [][]any
 	for i, e := range exprs {
-		w, chArgs, err := r.Rewrite(ctx, r.startNs, r.endNs, e, rateInterval, keys)
+		w, chArgs, err := r.Rewrite(ctx, startNs, endNs, e, rateInterval, keys)
 		if err != nil {
 			errs = append(errs, err)
 			out[i] = e
@@ -133,6 +132,7 @@ func (r *aggExprRewriter) RewriteMulti(
 
 // exprVisitor walks FunctionExpr nodes and applies the mappers.
 type exprVisitor struct {
+	ctx     context.Context
 	startNs uint64
 	endNs   uint64
 	chparser.DefaultASTVisitor
@@ -149,6 +149,7 @@ type exprVisitor struct {
 }
 
 func newExprVisitor(
+	ctx context.Context,
 	startNs uint64,
 	endNs uint64,
 	logger *slog.Logger,
@@ -160,6 +161,7 @@ func newExprVisitor(
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *exprVisitor {
 	return &exprVisitor{
+		ctx:              ctx,
 		startNs:          startNs,
 		endNs:            endNs,
 		logger:           logger,
@@ -236,7 +238,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i := 0; i < len(args)-1; i++ {
 			origVal := args[i].String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
-			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonBodyPrefix, v.jsonKeyToKey)
+			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonBodyPrefix, v.jsonKeyToKey)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
@@ -254,7 +256,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i, arg := range args {
 			orig := arg.String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
-			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonBodyPrefix, v.jsonKeyToKey)
+			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonBodyPrefix, v.jsonKeyToKey)
 			if err != nil {
 				return err
 			}
