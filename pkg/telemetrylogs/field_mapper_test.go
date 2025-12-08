@@ -305,7 +305,6 @@ func TestFieldForWithEvolutionMetadata(t *testing.T) {
 	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
 	setupResourcesStringEvolutionMetadata(ctx, storeWithMetadata, orgId, releaseTime)
 	storeWithoutMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
-	setupResourcesStringEvolutionMetadata(ctx, storeWithoutMetadata, orgId, releaseTime)
 
 	testCases := []struct {
 		name           string
