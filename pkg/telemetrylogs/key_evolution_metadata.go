@@ -63,7 +63,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID va
 	defer cancel()
 
 	if store.ClickhouseDB() == nil {
-		logger.Warn("ClickHouse connection not available for key evolution metadata fetch")
+		logger.WarnContext(ctx, "ClickHouse connection not available for key evolution metadata fetch")
 		return
 	}
 
@@ -83,7 +83,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID va
 
 	rows, err := store.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		logger.Warn("Failed to fetch key evolution metadata from ClickHouse", "error", err)
+		logger.WarnContext(ctx, "Failed to fetch key evolution metadata from ClickHouse", "error", err)
 		return
 	}
 	defer rows.Close()
@@ -101,7 +101,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID va
 		)
 
 		if err := rows.Scan(&baseColumn, &baseColumnType, &newColumn, &newColumnType, &releaseTime); err != nil {
-			logger.Warn("Failed to scan key evolution metadata row", "error", err)
+			logger.WarnContext(ctx, "Failed to scan key evolution metadata row", "error", err)
 			continue
 		}
 
@@ -117,7 +117,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID va
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Warn("Error iterating key evolution metadata rows", "error", err)
+		logger.WarnContext(ctx, "Error iterating key evolution metadata rows", "error", err)
 		return
 	}
 
@@ -126,11 +126,11 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID va
 		cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
 		cachedData := &CachedKeyEvolutionMetadata{Keys: keys}
 		if err := k.cache.Set(ctx, orgID, cacheKey, cachedData, 24*time.Hour); err != nil {
-			logger.Warn("Failed to set key evolution metadata in cache", "key", keyName, "error", err)
+			logger.WarnContext(ctx, "Failed to set key evolution metadata in cache", "key", keyName, "error", err)
 		}
 	}
 
-	logger.Debug("Successfully fetched key evolution metadata from ClickHouse", "count", len(metadataByKey))
+	logger.DebugContext(ctx, "Successfully fetched key evolution metadata from ClickHouse", "count", len(metadataByKey))
 }
 
 // Add adds a metadata key for the given key name and orgId.
@@ -144,7 +144,7 @@ func (k *KeyEvolutionMetadata) Add(ctx context.Context, orgId valuer.UUID, keyNa
 
 	cachedData.Keys = append(cachedData.Keys, key)
 	if err := k.cache.Set(ctx, orgId, cacheKey, &cachedData, 24*time.Hour); err != nil {
-		k.logger.Warn("Failed to set key evolution metadata in cache", "key", keyName, "error", err)
+		k.logger.WarnContext(ctx, "Failed to set key evolution metadata in cache", "key", keyName, "error", err)
 	}
 }
 
