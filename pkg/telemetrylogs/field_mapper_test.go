@@ -6,9 +6,11 @@ import (
 	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -280,6 +282,10 @@ func TestGetFieldKeyName(t *testing.T) {
 
 func TestFieldForWithEvolutionMetadata(t *testing.T) {
 	ctx := context.Background()
+	orgId := valuer.GenerateUUID()
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: orgId.String(),
+	})
 
 	// Create a test release time
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
@@ -297,9 +303,9 @@ func TestFieldForWithEvolutionMetadata(t *testing.T) {
 
 	// Set up stores once
 	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
-	setupResourcesStringEvolutionMetadata(ctx, storeWithMetadata, "", releaseTime)
-
+	setupResourcesStringEvolutionMetadata(ctx, storeWithMetadata, orgId, releaseTime)
 	storeWithoutMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	setupResourcesStringEvolutionMetadata(ctx, storeWithoutMetadata, orgId, releaseTime)
 
 	testCases := []struct {
 		name           string

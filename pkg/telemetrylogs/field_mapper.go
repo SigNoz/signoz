@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 
 	"golang.org/x/exp/maps"
@@ -119,13 +120,16 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 		tsStartTime := time.Unix(0, int64(tsStart))
 
 		// Extract orgId from context
-		orgId := ""
+		var orgID valuer.UUID
 		if claims, err := authtypes.ClaimsFromContext(ctx); err == nil {
-			orgId = claims.OrgID
+			orgID, err = valuer.NewUUID(claims.OrgID)
+			if err != nil {
+				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid orgId %s", claims.OrgID)
+			}
 		}
 
 		// get all evolution for the column
-		evolutions := m.evolutionMetadataStore.Get(ctx, orgId, baseColumn.Name)
+		evolutions := m.evolutionMetadataStore.Get(ctx, orgID, baseColumn.Name)
 
 		// restricting now to just one entry where we know we changes from map to json
 		if len(evolutions) > 0 && evolutions[0].ReleaseTime.Before(tsStartTime) {

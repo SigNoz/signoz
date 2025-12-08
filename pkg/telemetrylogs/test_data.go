@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // Helper function to limit string length for display
@@ -968,6 +969,6 @@ func buildKeyEvolutionMetadataForResourcesString(releaseTime time.Time) *telemet
 }
 
 // setupResourcesStringEvolutionMetadata sets up resources_string evolution metadata in the mock store.
-func setupResourcesStringEvolutionMetadata(ctx context.Context, m *telemetrytypestest.MockKeyEvolutionMetadataStore, orgId string, releaseTime time.Time) {
+func setupResourcesStringEvolutionMetadata(ctx context.Context, m *telemetrytypestest.MockKeyEvolutionMetadataStore, orgId valuer.UUID, releaseTime time.Time) {
 	m.Add(ctx, orgId, "resources_string", buildKeyEvolutionMetadataForResourcesString(releaseTime))
 }

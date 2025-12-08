@@ -135,42 +135,31 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID va
 
 // Add adds a metadata key for the given key name and orgId.
 // This is primarily for testing purposes. In production, data should come from ClickHouse.
-func (k *KeyEvolutionMetadata) Add(ctx context.Context, orgId, keyName string, key *telemetrytypes.KeyEvolutionMetadataKey) {
-	orgID, err := valuer.NewUUID(orgId)
-	if err != nil {
-		k.logger.Warn("Invalid orgId in Add", "orgId", orgId, "error", err)
-		return
-	}
-
+func (k *KeyEvolutionMetadata) Add(ctx context.Context, orgId valuer.UUID, keyName string, key *telemetrytypes.KeyEvolutionMetadataKey) {
 	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
 	var cachedData CachedKeyEvolutionMetadata
-	if err := k.cache.Get(ctx, orgID, cacheKey, &cachedData); err != nil {
+	if err := k.cache.Get(ctx, orgId, cacheKey, &cachedData); err != nil {
 		cachedData = CachedKeyEvolutionMetadata{Keys: []*telemetrytypes.KeyEvolutionMetadataKey{}}
 	}
 
 	cachedData.Keys = append(cachedData.Keys, key)
-	if err := k.cache.Set(ctx, orgID, cacheKey, &cachedData, 24*time.Hour); err != nil {
+	if err := k.cache.Set(ctx, orgId, cacheKey, &cachedData, 24*time.Hour); err != nil {
 		k.logger.Warn("Failed to set key evolution metadata in cache", "key", keyName, "error", err)
 	}
 }
 
 // Get retrieves all metadata keys for the given key name and orgId from cache.
 // Returns an empty slice if the key is not found in cache.
-func (k *KeyEvolutionMetadata) Get(ctx context.Context, orgId, keyName string) []*telemetrytypes.KeyEvolutionMetadataKey {
-	orgID, err := valuer.NewUUID(orgId)
-	if err != nil {
-		k.logger.Warn("Invalid orgId in Get", "orgId", orgId, "error", err)
-		return nil
-	}
+func (k *KeyEvolutionMetadata) Get(ctx context.Context, orgId valuer.UUID, keyName string) []*telemetrytypes.KeyEvolutionMetadataKey {
 
 	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
 	var cachedData CachedKeyEvolutionMetadata
-	if err := k.cache.Get(ctx, orgID, cacheKey, &cachedData); err != nil {
+	if err := k.cache.Get(ctx, orgId, cacheKey, &cachedData); err != nil {
 		// Cache miss - fetch from ClickHouse and try again
-		k.fetchFromClickHouse(ctx, orgID)
+		k.fetchFromClickHouse(ctx, orgId)
 
 		// Check cache again after fetching
-		if err := k.cache.Get(ctx, orgID, cacheKey, &cachedData); err != nil {
+		if err := k.cache.Get(ctx, orgId, cacheKey, &cachedData); err != nil {
 			return nil
 		}
 	}

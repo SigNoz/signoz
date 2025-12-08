@@ -12,6 +12,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -215,11 +216,12 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	orgId := valuer.GenerateUUID()
 	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: "test-org-id",
+		OrgID: orgId.String(),
 	})
 	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
-	setupResourcesStringEvolutionMetadata(ctx, storeWithMetadata, "test-org-id", releaseTime)
+	setupResourcesStringEvolutionMetadata(ctx, storeWithMetadata, orgId, releaseTime)
 
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)

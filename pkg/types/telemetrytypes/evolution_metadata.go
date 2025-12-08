@@ -3,6 +3,8 @@ package telemetrytypes
 import (
 	"context"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type KeyEvolutionMetadataKey struct {
@@ -14,6 +16,6 @@ type KeyEvolutionMetadataKey struct {
 }
 
 type KeyEvolutionMetadataStore interface {
-	Get(ctx context.Context, orgId, keyName string) []*KeyEvolutionMetadataKey
-	Add(ctx context.Context, orgId, keyName string, key *KeyEvolutionMetadataKey)
+	Get(ctx context.Context, orgId valuer.UUID, keyName string) []*KeyEvolutionMetadataKey
+	Add(ctx context.Context, orgId valuer.UUID, keyName string, key *KeyEvolutionMetadataKey)
 }

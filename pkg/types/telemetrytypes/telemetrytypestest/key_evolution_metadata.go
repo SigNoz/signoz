@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // MockKeyEvolutionMetadataStore implements the KeyEvolutionMetadataStore interface for testing purposes
@@ -20,11 +21,11 @@ func NewMockKeyEvolutionMetadataStore() *MockKeyEvolutionMetadataStore {
 
 // Get retrieves all metadata keys for the given key name and orgId.
 // Returns an empty slice if the key is not found.
-func (m *MockKeyEvolutionMetadataStore) Get(ctx context.Context, orgId, keyName string) []*telemetrytypes.KeyEvolutionMetadataKey {
+func (m *MockKeyEvolutionMetadataStore) Get(ctx context.Context, orgId valuer.UUID, keyName string) []*telemetrytypes.KeyEvolutionMetadataKey {
 	if m.metadata == nil {
 		return nil
 	}
-	orgMetadata, orgExists := m.metadata[orgId]
+	orgMetadata, orgExists := m.metadata[orgId.String()]
 	if !orgExists {
 		return nil
 	}
@@ -39,12 +40,12 @@ func (m *MockKeyEvolutionMetadataStore) Get(ctx context.Context, orgId, keyName 
 }
 
 // Add adds a metadata key for the given key name and orgId
-func (m *MockKeyEvolutionMetadataStore) Add(ctx context.Context, orgId, keyName string, key *telemetrytypes.KeyEvolutionMetadataKey) {
+func (m *MockKeyEvolutionMetadataStore) Add(ctx context.Context, orgId valuer.UUID, keyName string, key *telemetrytypes.KeyEvolutionMetadataKey) {
 	if m.metadata == nil {
 		m.metadata = make(map[string]map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
 	}
-	if m.metadata[orgId] == nil {
-		m.metadata[orgId] = make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
+	if m.metadata[orgId.String()] == nil {
+		m.metadata[orgId.String()] = make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
 	}
-	m.metadata[orgId][keyName] = append(m.metadata[orgId][keyName], key)
+	m.metadata[orgId.String()][keyName] = append(m.metadata[orgId.String()][keyName], key)
 }
