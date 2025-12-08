@@ -218,7 +218,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 				FullTextColumn:   v.fullTextColumn,
 				JsonBodyPrefix:   v.jsonBodyPrefix,
 				JsonKeyToKey:     v.jsonKeyToKey,
-			}, 0, 0,
+			}, v.startNs, v.endNs,
 		)
 		if err != nil {
 			return err
