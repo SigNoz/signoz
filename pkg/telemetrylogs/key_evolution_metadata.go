@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -17,15 +18,6 @@ const (
 	KeyEvolutionMetadataTableName = "distributed_column_key_evolution_metadata"
 	// KeyEvolutionMetadataDBName is the database name for key evolution metadata
 	KeyEvolutionMetadataDBName = "signoz_logs"
-	// KeyEvolutionMetadataFetchInterval is the interval at which metadata is fetched from ClickHouse
-	KeyEvolutionMetadataFetchInterval = 5 * time.Minute
-)
-
-var (
-	// globalInstance is the singleton instance of KeyEvolutionMetadata
-	globalInstance *KeyEvolutionMetadata
-	// globalOnce ensures the singleton is initialized only once
-	globalOnce sync.Once
 )
 
 // KeyEvolutionMetadata manages key evolution metadata with thread-safe access.
@@ -36,47 +28,18 @@ type KeyEvolutionMetadata struct {
 	keys           map[string][]*telemetrytypes.KeyEvolutionMetadataKey
 	telemetryStore telemetrystore.TelemetryStore
 	logger         *slog.Logger
-	stopChan       chan struct{}
-	started        bool
+	cache          cache.Cache
 }
 
 // NewKeyEvolutionMetadata initializes the global instance with the provided telemetry store and logger.
 // It ensures only one instance exists (singleton pattern) and starts the background fetcher if telemetryStore is provided.
 // Returns the global instance, which will be initialized on first call.
 func NewKeyEvolutionMetadata(telemetryStore telemetrystore.TelemetryStore, logger *slog.Logger) *KeyEvolutionMetadata {
-	globalOnce.Do(func() {
-		globalInstance = &KeyEvolutionMetadata{
-			keys:           make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey),
-			telemetryStore: telemetryStore,
-			logger:         logger,
-			stopChan:       make(chan struct{}),
-		}
-
-		// Start the background goroutine only once
-		globalInstance.startBackgroundFetcher()
-	})
-	return globalInstance
-}
-
-// startBackgroundFetcher starts a goroutine that periodically fetches metadata from ClickHouse.
-// Only one goroutine will run regardless of how many times NewKeyEvolutionMetadata is called.
-func (k *KeyEvolutionMetadata) startBackgroundFetcher() {
-	go func() {
-		ticker := time.NewTicker(KeyEvolutionMetadataFetchInterval)
-		defer ticker.Stop()
-
-		// Fetch immediately on startup
-		k.fetchFromClickHouse()
-
-		for {
-			select {
-			case <-ticker.C:
-				k.fetchFromClickHouse()
-			case <-k.stopChan:
-				return
-			}
-		}
-	}()
+	return &KeyEvolutionMetadata{
+		keys:           make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey),
+		telemetryStore: telemetryStore,
+		logger:         logger,
+	}
 }
 
 // fetchFromClickHouse fetches key evolution metadata from ClickHouse database.
@@ -84,7 +47,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse() {
 	store := k.telemetryStore
 	logger := k.logger
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if store.ClickhouseDB() == nil {
@@ -166,8 +129,27 @@ func (k *KeyEvolutionMetadata) Add(keyName string, key *telemetrytypes.KeyEvolut
 }
 
 // Get retrieves all metadata keys for the given key name.
+// If the key is not found in cache, it fetches from ClickHouse and updates the cache.
 // Returns an empty slice if the key is not found.
 func (k *KeyEvolutionMetadata) Get(keyName string) []*telemetrytypes.KeyEvolutionMetadataKey {
+	// First, check if the key exists in cache
+	k.mu.RLock()
+	if k.keys != nil {
+		keys, exists := k.keys[keyName]
+		if exists {
+			k.mu.RUnlock()
+			// Return a copy to prevent external modification
+			result := make([]*telemetrytypes.KeyEvolutionMetadataKey, len(keys))
+			copy(result, keys)
+			return result
+		}
+	}
+	k.mu.RUnlock()
+
+	// Fetch all keys from ClickHouse (this will update the entire cache)
+	k.fetchFromClickHouse()
+
+	// Check cache again after fetching
 	k.mu.RLock()
 	defer k.mu.RUnlock()
 	if k.keys == nil {
@@ -181,10 +163,4 @@ func (k *KeyEvolutionMetadata) Get(keyName string) []*telemetrytypes.KeyEvolutio
 	result := make([]*telemetrytypes.KeyEvolutionMetadataKey, len(keys))
 	copy(result, keys)
 	return result
-}
-
-// Stop stops the background fetcher goroutine.
-// This is primarily for testing purposes.
-func (k *KeyEvolutionMetadata) Stop() {
-	close(k.stopChan)
 }
