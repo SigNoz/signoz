@@ -29,9 +29,6 @@ type KeyEvolutionMetadata struct {
 	logger         *slog.Logger
 }
 
-// NewKeyEvolutionMetadata initializes the global instance with the provided telemetry store and logger.
-// It ensures only one instance exists (singleton pattern) and starts the background fetcher if telemetryStore is provided.
-// Returns the global instance, which will be initialized on first call.
 func NewKeyEvolutionMetadata(telemetryStore telemetrystore.TelemetryStore, logger *slog.Logger) *KeyEvolutionMetadata {
 	return &KeyEvolutionMetadata{
 		keys:           make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey),
@@ -40,7 +37,6 @@ func NewKeyEvolutionMetadata(telemetryStore telemetrystore.TelemetryStore, logge
 	}
 }
 
-// fetchFromClickHouse fetches key evolution metadata from ClickHouse database.
 func (k *KeyEvolutionMetadata) fetchFromClickHouse() {
 	store := k.telemetryStore
 	logger := k.logger
