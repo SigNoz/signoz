@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -28,7 +27,6 @@ type KeyEvolutionMetadata struct {
 	keys           map[string][]*telemetrytypes.KeyEvolutionMetadataKey
 	telemetryStore telemetrystore.TelemetryStore
 	logger         *slog.Logger
-	cache          cache.Cache
 }
 
 // NewKeyEvolutionMetadata initializes the global instance with the provided telemetry store and logger.

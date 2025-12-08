@@ -117,8 +117,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 		baseColumn := logsV2Columns["resources_string"]
 		tsStartTime := time.Unix(0, int64(tsStart))
 
-		// Check all evolutions for this key to see if any were released after tsStart.
-		// If so, it means the new column wasn't available yet at tsStart, so we need to check the old column.
+		// get all evolution for the column
 		evolutions := m.evolutionMetadataStore.Get(baseColumn.Name)
 
 		// restricting now to just one entry where we know we changes from map to json
@@ -134,10 +133,6 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 			attrVal := fmt.Sprintf("%s['%s']", baseColumn.Name, key.Name)
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, baseColumn.Name, key.Name, attrVal), nil
 		}
-		// // evolutions not present or not released after tsStart, so we use the old column
-		// oldKeyName := fmt.Sprintf("%s['%s']", baseColumn.Name, key.Name)
-		// return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, baseColumn.Name, key.Name, oldKeyName), nil
-
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,
