@@ -1,16 +1,27 @@
 import { Checkbox, Empty } from 'antd';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { AxiosResponse } from 'axios';
+import FieldVariantBadges from 'components/FieldVariantBadges/FieldVariantBadges';
 import Spinner from 'components/Spinner';
 import { EXCLUDED_COLUMNS } from 'container/OptionsMenu/constants';
-import { QueryKeySuggestionsResponseProps } from 'types/api/querySuggestions/types';
+import {
+	getUniqueColumnKey,
+	getVariantCounts,
+} from 'container/OptionsMenu/utils';
+import {
+	QueryKeyDataSuggestionsProps,
+	QueryKeySuggestionsResponseProps,
+} from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 
 type ExplorerAttributeColumnsProps = {
 	isLoading: boolean;
 	data: AxiosResponse<QueryKeySuggestionsResponseProps> | undefined;
 	searchText: string;
-	isAttributeKeySelected: (key: string) => boolean;
-	handleCheckboxChange: (key: string) => void;
+	isAttributeKeySelected: (
+		attributeKey: QueryKeyDataSuggestionsProps,
+	) => boolean;
+	handleCheckboxChange: (attributeKey: QueryKeyDataSuggestionsProps) => void;
 	dataSource: DataSource;
 };
 
@@ -38,6 +49,12 @@ function ExplorerAttributeColumns({
 					attributeKey.name.toLowerCase().includes(searchText.toLowerCase()) &&
 					!EXCLUDED_COLUMNS[dataSource].includes(attributeKey.name),
 			) || [];
+
+	// Detect which column names have multiple variants
+	const nameCounts = getVariantCounts(
+		filteredAttributeKeys as TelemetryFieldKey[],
+	);
+
 	if (filteredAttributeKeys.length === 0) {
 		return (
 			<div className="attribute-columns">
@@ -48,16 +65,26 @@ function ExplorerAttributeColumns({
 
 	return (
 		<div className="attribute-columns">
-			{filteredAttributeKeys.map((attributeKey: any) => (
-				<Checkbox
-					checked={isAttributeKeySelected(attributeKey.name)}
-					onChange={(): void => handleCheckboxChange(attributeKey.name)}
-					style={{ padding: 0 }}
-					key={attributeKey.name}
-				>
-					{attributeKey.name}
-				</Checkbox>
-			))}
+			{filteredAttributeKeys.map((attributeKey) => {
+				const hasVariants = nameCounts[attributeKey.name] > 1;
+				return (
+					<Checkbox
+						checked={isAttributeKeySelected(attributeKey)}
+						onChange={(): void => handleCheckboxChange(attributeKey)}
+						key={getUniqueColumnKey(attributeKey)}
+					>
+						<span className="attribute-column-label-wrapper">
+							<span>{attributeKey.name}</span>
+							{hasVariants && (
+								<FieldVariantBadges
+									fieldDataType={attributeKey.fieldDataType}
+									fieldContext={attributeKey.fieldContext}
+								/>
+							)}
+						</span>
+					</Checkbox>
+				);
+			})}
 		</div>
 	);
 }

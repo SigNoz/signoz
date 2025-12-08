@@ -5,6 +5,12 @@ import { ColumnsType } from 'antd/es/table';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
+import {
+	getColumnTitle,
+	getFieldVariantsByName,
+	getUniqueColumnKey,
+	getVariantCounts,
+} from 'container/OptionsMenu/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useTimezone } from 'providers/Timezone';
@@ -50,30 +56,41 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	);
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
+		// Detect which column names have multiple variants
+		const variantCounts = getVariantCounts(fields);
+
+		// Group fields by name to analyze variants
+		const fieldVariantsByName = getFieldVariantsByName(fields);
+
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
 			.filter((e) => !['id', 'body', 'timestamp'].includes(e.name))
-			.map(({ name }) => ({
-				title: name,
-				dataIndex: name,
-				accessorKey: name,
-				id: name.toLowerCase().replace(/\./g, '_'),
-				key: name,
-				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
-					props: {
-						style: isListViewPanel
-							? defaultListViewPanelStyle
-							: getDefaultCellStyle(isDarkMode),
-					},
-					children: (
-						<Typography.Paragraph
-							ellipsis={{ rows: linesPerRow }}
-							className={cx('paragraph', fontSize)}
-						>
-							{field}
-						</Typography.Paragraph>
-					),
-				}),
-			}));
+			.map((field) => {
+				const hasVariants = variantCounts[field.name] > 1;
+				const variants = fieldVariantsByName[field.name] || [];
+				const title = getColumnTitle(field, hasVariants, variants);
+				return {
+					title,
+					dataIndex: field.name,
+					accessorKey: field.name,
+					id: field.name.toLowerCase().replace(/\./g, '_'),
+					key: getUniqueColumnKey(field),
+					render: (cellField): ColumnTypeRender<Record<string, unknown>> => ({
+						props: {
+							style: isListViewPanel
+								? defaultListViewPanelStyle
+								: getDefaultCellStyle(isDarkMode),
+						},
+						children: (
+							<Typography.Paragraph
+								ellipsis={{ rows: linesPerRow }}
+								className={cx('paragraph', fontSize)}
+							>
+								{cellField}
+							</Typography.Paragraph>
+						),
+					}),
+				};
+			});
 
 		if (isListViewPanel) {
 			return [...fieldColumns];

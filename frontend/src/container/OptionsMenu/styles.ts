@@ -10,7 +10,7 @@ export const OptionsContainer = styled(Card)`
 `;
 
 export const OptionsContentWrapper = styled(Space)`
-	min-width: 11rem;
+	width: 21rem;
 	padding: 0.25rem 0.5rem;
 `;
 

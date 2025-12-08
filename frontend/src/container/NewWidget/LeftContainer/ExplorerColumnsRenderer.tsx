@@ -6,8 +6,13 @@ import './ExplorerColumnsRenderer.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Divider, Dropdown, Input, Tooltip, Typography } from 'antd';
 import { MenuProps } from 'antd/lib';
-import { FieldDataType } from 'api/v5/v5';
+import { FieldDataType, TelemetryFieldKey } from 'api/v5/v5';
+import FieldVariantBadges from 'components/FieldVariantBadges/FieldVariantBadges';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import {
+	getUniqueColumnKey,
+	getVariantCounts,
+} from 'container/OptionsMenu/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -26,6 +31,7 @@ import {
 	Droppable,
 	DropResult,
 } from 'react-beautiful-dnd';
+import { IField } from 'types/api/logs/fields';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WidgetGraphProps } from '../types';
@@ -82,64 +88,87 @@ function ExplorerColumnsRenderer({
 		},
 	);
 
-	const isAttributeKeySelected = (key: string): boolean => {
+	const isAttributeKeySelected = (attribute: any): boolean => {
+		const uniqueKey = getUniqueColumnKey(attribute);
+
 		if (initialDataSource === DataSource.LOGS && selectedLogFields) {
-			return selectedLogFields.some((field) => field.name === key);
+			return selectedLogFields.some(
+				(field) => getUniqueColumnKey(field) === uniqueKey,
+			);
 		}
 		if (initialDataSource === DataSource.TRACES && selectedTracesFields) {
-			return selectedTracesFields.some((field) => field.name === key);
+			return selectedTracesFields.some(
+				(field) => getUniqueColumnKey(field) === uniqueKey,
+			);
 		}
 		return false;
 	};
 
-	const handleCheckboxChange = (key: string): void => {
+	const handleCheckboxChange = (attribute: any): void => {
+		const uniqueKey = getUniqueColumnKey(attribute);
+
 		if (
 			initialDataSource === DataSource.LOGS &&
 			setSelectedLogFields !== undefined
 		) {
 			if (selectedLogFields) {
-				if (isAttributeKeySelected(key)) {
+				if (isAttributeKeySelected(attribute)) {
 					setSelectedLogFields(
-						selectedLogFields.filter((field) => field.name !== key),
+						selectedLogFields.filter(
+							(field) => getUniqueColumnKey(field) !== uniqueKey,
+						),
 					);
 				} else {
 					setSelectedLogFields([
 						...selectedLogFields,
-						{ dataType: 'string', name: key, type: '' },
+						{
+							name: attribute.name,
+							dataType: attribute.fieldDataType || 'string',
+							type: attribute.fieldContext || '',
+							fieldDataType: attribute.fieldDataType || 'string',
+							fieldContext: attribute.fieldContext || 'log',
+						} as IField & { fieldDataType: string; fieldContext: string },
 					]);
 				}
 			} else {
-				setSelectedLogFields([{ dataType: 'string', name: key, type: '' }]);
+				setSelectedLogFields([
+					{
+						name: attribute.name,
+						dataType: attribute.fieldDataType || 'string',
+						type: attribute.fieldContext || '',
+						fieldDataType: attribute.fieldDataType || 'string',
+						fieldContext: attribute.fieldContext || 'log',
+					} as IField & { fieldDataType: string; fieldContext: string },
+				]);
 			}
 		} else if (
 			initialDataSource === DataSource.TRACES &&
 			setSelectedTracesFields !== undefined
 		) {
-			const selectedField = Object.values(data?.data?.data?.keys || {})
-				?.flat()
-				?.find((attributeKey) => attributeKey.name === key);
-
 			if (selectedTracesFields) {
-				if (isAttributeKeySelected(key)) {
+				if (isAttributeKeySelected(attribute)) {
 					setSelectedTracesFields(
-						selectedTracesFields.filter((field) => field.name !== key),
+						selectedTracesFields.filter(
+							(field) => getUniqueColumnKey(field) !== uniqueKey,
+						),
 					);
-				} else if (selectedField) {
+				} else {
 					setSelectedTracesFields([
 						...selectedTracesFields,
 						{
-							...selectedField,
-							fieldDataType: selectedField.fieldDataType as FieldDataType,
+							...attribute,
+							fieldDataType: attribute.fieldDataType as FieldDataType,
 						},
 					]);
 				}
-			} else if (selectedField)
+			} else {
 				setSelectedTracesFields([
 					{
-						...selectedField,
-						fieldDataType: selectedField.fieldDataType as FieldDataType,
+						...attribute,
+						fieldDataType: attribute.fieldDataType as FieldDataType,
 					},
 				]);
+			}
 		}
 		setOpen(false);
 	};
@@ -189,14 +218,18 @@ function ExplorerColumnsRenderer({
 		},
 	];
 
-	const removeSelectedLogField = (name: string): void => {
+	const removeSelectedLogField = (field: any): void => {
+		const uniqueKey = getUniqueColumnKey(field);
+
 		if (
 			initialDataSource === DataSource.LOGS &&
 			setSelectedLogFields &&
 			selectedLogFields
 		) {
 			setSelectedLogFields(
-				selectedLogFields.filter((field) => field.name !== name),
+				selectedLogFields.filter(
+					(field) => getUniqueColumnKey(field) !== uniqueKey,
+				),
 			);
 		}
 		if (
@@ -205,7 +238,9 @@ function ExplorerColumnsRenderer({
 			selectedTracesFields
 		) {
 			setSelectedTracesFields(
-				selectedTracesFields.filter((field) => field.name !== name),
+				selectedTracesFields.filter(
+					(field) => getUniqueColumnKey(field) !== uniqueKey,
+				),
 			);
 		}
 	};
@@ -248,6 +283,11 @@ function ExplorerColumnsRenderer({
 
 	const isDarkMode = useIsDarkMode();
 
+	// Detect which column names have multiple variants from API data
+	const allAttributeKeys =
+		Object.values(data?.data?.data?.keys || {})?.flat() || [];
+	const nameCounts = getVariantCounts(allAttributeKeys as TelemetryFieldKey[]);
+
 	return (
 		<div className="explorer-columns-renderer">
 			<div className="title">
@@ -271,7 +311,7 @@ function ExplorerColumnsRenderer({
 								>
 									{initialDataSource === DataSource.LOGS &&
 										selectedLogFields &&
-										selectedLogFields.map((field, index) => (
+										selectedLogFields.map((field: TelemetryFieldKey, index) => (
 											// eslint-disable-next-line react/no-array-index-key
 											<Draggable key={index} draggableId={index.toString()} index={index}>
 												{(dragProvided): JSX.Element => (
@@ -283,12 +323,22 @@ function ExplorerColumnsRenderer({
 													>
 														<div className="explorer-column-title">
 															<GripVertical size={12} color="#5A5A5A" />
-															{field.name}
+															<span className="column-name-wrapper">
+																{field.name}
+																{nameCounts[field.name] > 1 && (
+																	<span className="badges-container">
+																		<FieldVariantBadges
+																			fieldDataType={field.fieldDataType}
+																			fieldContext={field.fieldContext}
+																		/>
+																	</span>
+																)}
+															</span>
 														</div>
 														<Trash2
 															size={12}
 															color="red"
-															onClick={(): void => removeSelectedLogField(field.name)}
+															onClick={(): void => removeSelectedLogField(field)}
 															data-testid="trash-icon"
 														/>
 													</div>
@@ -309,14 +359,22 @@ function ExplorerColumnsRenderer({
 													>
 														<div className="explorer-column-title">
 															<GripVertical size={12} color="#5A5A5A" />
-															{field?.name || (field as any)?.key}
+															<span className="column-name-wrapper">
+																{field?.name || (field as any)?.key}
+																{nameCounts[field?.name || (field as any)?.key] > 1 && (
+																	<span className="badges-container">
+																		<FieldVariantBadges
+																			fieldDataType={(field as any).fieldDataType}
+																			fieldContext={(field as any).fieldContext}
+																		/>
+																	</span>
+																)}
+															</span>
 														</div>
 														<Trash2
 															size={12}
 															color="red"
-															onClick={(): void =>
-																removeSelectedLogField(field?.name || (field as any)?.key)
-															}
+															onClick={(): void => removeSelectedLogField(field)}
 															data-testid="trash-icon"
 														/>
 													</div>

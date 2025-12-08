@@ -1,5 +1,5 @@
 .field-variant-badges-container {
-	display: flex;
+	display: inline-flex;
 	align-items: center;
 	gap: 4px;
 	flex-shrink: 0;
@@ -52,7 +52,6 @@
 		}
 
 		&.attribute {
-			border-radius: 50px;
 			background: color-mix(in srgb, var(--bg-sienna-400) 10%, transparent);
 			color: var(--bg-sienna-400);
 
@@ -66,7 +65,6 @@
 		}
 
 		&.resource {
-			border-radius: 50px;
 			background: color-mix(in srgb, var(--bg-aqua-400) 10%, transparent);
 			color: var(--bg-aqua-400);
 

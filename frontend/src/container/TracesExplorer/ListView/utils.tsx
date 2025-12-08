@@ -3,6 +3,12 @@ import { ColumnsType } from 'antd/es/table';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
+import {
+	getColumnTitle,
+	getFieldVariantsByName,
+	getUniqueColumnKey,
+	getVariantCounts,
+} from 'container/OptionsMenu/utils';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { formUrlParams } from 'container/TraceDetail/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
@@ -79,15 +85,22 @@ export const getListColumns = (
 		},
 	];
 
+	const variantCounts = getVariantCounts(selectedColumns);
+
+	// Group fields by name to analyze variants
+	const fieldVariantsByName = getFieldVariantsByName(selectedColumns);
+
 	const columns: ColumnsType<RowData> =
 		selectedColumns.map((props) => {
 			const name = props?.name || (props as any)?.key;
-			const fieldDataType = props?.fieldDataType || (props as any)?.dataType;
-			const fieldContext = props?.fieldContext || (props as any)?.type;
+			const hasVariants = variantCounts[name] > 1;
+			const variants = fieldVariantsByName[name] || [];
+			const title = getColumnTitle(props, hasVariants, variants);
+
 			return {
-				title: name,
+				title,
 				dataIndex: name,
-				key: `${name}-${fieldDataType}-${fieldContext}`,
+				key: getUniqueColumnKey(props),
 				width: 145,
 				render: (value, item): JSX.Element => {
 					if (value === '') {

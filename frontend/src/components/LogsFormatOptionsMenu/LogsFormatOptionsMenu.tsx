@@ -6,8 +6,14 @@ import './LogsFormatOptionsMenu.styles.scss';
 import { Button, Input, InputNumber, Popover, Tooltip, Typography } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 import cx from 'classnames';
+import FieldVariantBadges from 'components/FieldVariantBadges/FieldVariantBadges';
 import { LogViewMode } from 'container/LogsTable';
 import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
+import {
+	getNamesWithVariants,
+	getUniqueColumnKey,
+	getVariantCounts,
+} from 'container/OptionsMenu/utils';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import {
 	Check,
@@ -26,6 +32,7 @@ interface LogsFormatOptionsMenuProps {
 	config: OptionsMenuConfig;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function OptionsMenu({
 	items,
 	selectedOptionFormat,
@@ -49,6 +56,14 @@ function OptionsMenu({
 	const [selectedValue, setSelectedValue] = useState<string | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);
 	const initialMouseEnterRef = useRef<boolean>(false);
+
+	// Detect which column names have multiple variants in dropdown options
+	const namesWithVariantsInOptions = getNamesWithVariants(
+		addColumn?.options || [],
+	);
+
+	// Detect which column names have multiple variants in selected columns
+	const selectedColumnVariantCounts = getVariantCounts(addColumn?.value || []);
 
 	const onChange = useCallback(
 		(key: LogViewMode) => {
@@ -301,33 +316,46 @@ function OptionsMenu({
 						)}
 
 						<div className="column-format-new-options" ref={listRef}>
-							{addColumn?.options?.map(({ label, value }, index) => (
-								<div
-									className={cx('column-name', value === selectedValue && 'selected')}
-									key={value}
-									onMouseEnter={(): void => {
-										if (!initialMouseEnterRef.current) {
-											setSelectedValue(value as string | null);
-										}
+							{addColumn?.options?.map((option, index) => {
+								const { label, value, fieldDataType, fieldContext } = option;
+								return (
+									<div
+										className={cx('column-name', value === selectedValue && 'selected')}
+										key={value}
+										onMouseEnter={(): void => {
+											if (!initialMouseEnterRef.current) {
+												setSelectedValue(value as string | null);
+											}
 
-										initialMouseEnterRef.current = true;
-									}}
-									onMouseMove={(): void => {
-										// this is added to handle the mouse move explicit event and not the re-rendered on mouse enter event
-										setSelectedValue(value as string | null);
-									}}
-									onClick={(eve): void => {
-										eve.stopPropagation();
-										handleColumnSelection(index, addColumn?.options || []);
-									}}
-								>
-									<div className="name">
-										<Tooltip placement="left" title={label}>
-											{label}
-										</Tooltip>
+											initialMouseEnterRef.current = true;
+										}}
+										onMouseMove={(): void => {
+											// this is added to handle the mouse move explicit event and not the re-rendered on mouse enter event
+											setSelectedValue(value as string | null);
+										}}
+										onClick={(eve): void => {
+											eve.stopPropagation();
+											handleColumnSelection(index, addColumn?.options || []);
+										}}
+									>
+										<div className="name-wrapper">
+											<Tooltip placement="left" title={label}>
+												<span className="name">{label}</span>
+											</Tooltip>
+											{fieldDataType &&
+												typeof label === 'string' &&
+												namesWithVariantsInOptions.has(label) && (
+													<span className="field-variant-badges">
+														<FieldVariantBadges
+															fieldDataType={fieldDataType}
+															fieldContext={fieldContext}
+														/>
+													</span>
+												)}
+										</div>
 									</div>
-								</div>
-							))}
+								);
+							})}
 						</div>
 					</div>
 				</div>
@@ -416,22 +444,34 @@ function OptionsMenu({
 									)}
 
 									<div className="column-format">
-										{addColumn?.value?.map(({ name }) => (
-											<div className="column-name" key={name}>
-												<div className="name">
-													<Tooltip placement="left" title={name}>
-														{name}
+										{addColumn?.value?.map((column) => {
+											const uniqueKey = getUniqueColumnKey(column);
+											const showBadge = selectedColumnVariantCounts[column.name] > 1;
+											return (
+												<div className="column-name" key={uniqueKey}>
+													<Tooltip placement="left" title={column.name}>
+														<div className="name-wrapper">
+															<span className="name">{column.name}</span>
+															{showBadge && (
+																<span className="field-variant-badges">
+																	<FieldVariantBadges
+																		fieldDataType={column.fieldDataType}
+																		fieldContext={column.fieldContext}
+																	/>
+																</span>
+															)}
+														</div>
 													</Tooltip>
+													{addColumn?.value?.length > 1 && (
+														<X
+															className="delete-btn"
+															size={14}
+															onClick={(): void => addColumn.onRemove(uniqueKey)}
+														/>
+													)}
 												</div>
-												{addColumn?.value?.length > 1 && (
-													<X
-														className="delete-btn"
-														size={14}
-														onClick={(): void => addColumn.onRemove(name)}
-													/>
-												)}
-											</div>
-										))}
+											);
+										})}
 										{addColumn && addColumn?.value?.length === 0 && (
 											<div className="column-name no-columns-selected">
 												No columns selected

@@ -314,6 +314,23 @@
 								background-color: var(--bg-ink-200);
 								cursor: pointer;
 							}
+							.name-wrapper {
+								display: flex;
+								justify-content: space-between;
+								align-items: center;
+								gap: 8px;
+								width: 100%;
+								min-width: 0;
+								.name {
+									flex: 1;
+									min-width: 0;
+									overflow: hidden;
+									text-overflow: ellipsis;
+									white-space: nowrap;
+								}
+
+								cursor: pointer;
+							}
 						}
 
 						&::-webkit-scrollbar {
@@ -402,12 +419,20 @@
 								cursor: pointer;
 							}
 
-							.name {
-								flex: 1;
-								overflow: hidden;
-								white-space: nowrap;
-								overflow: hidden;
-								text-overflow: ellipsis;
+							.name-wrapper {
+								display: flex;
+								justify-content: space-between;
+								align-items: center;
+								width: calc(100% - 26px);
+								gap: 8px;
+								min-width: 0;
+								.name {
+									flex: 1;
+									min-width: 0;
+									white-space: nowrap;
+									overflow: hidden;
+									text-overflow: ellipsis;
+								}
 
 								cursor: pointer;
 							}
