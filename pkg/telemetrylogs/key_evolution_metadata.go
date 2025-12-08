@@ -2,13 +2,16 @@ package telemetrylogs
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
-	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -17,31 +20,46 @@ const (
 	KeyEvolutionMetadataTableName = "distributed_column_key_evolution_metadata"
 	// KeyEvolutionMetadataDBName is the database name for key evolution metadata
 	KeyEvolutionMetadataDBName = "signoz_logs"
+	// KeyEvolutionMetadataCacheKeyPrefix is the prefix for cache keys
+	KeyEvolutionMetadataCacheKeyPrefix = "key_evolution_metadata:"
 )
 
-// KeyEvolutionMetadata manages key evolution metadata with thread-safe access.
-// It can be updated from a database source at regular intervals.
+// CachedKeyEvolutionMetadata is a cacheable type for storing key evolution metadata
+type CachedKeyEvolutionMetadata struct {
+	Keys []*telemetrytypes.KeyEvolutionMetadataKey `json:"keys"`
+}
+
+var _ cachetypes.Cacheable = (*CachedKeyEvolutionMetadata)(nil)
+
+func (c *CachedKeyEvolutionMetadata) MarshalBinary() ([]byte, error) {
+	return json.Marshal(c)
+}
+
+func (c *CachedKeyEvolutionMetadata) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, c)
+}
+
 // Each key can have multiple evolution entries, allowing for multiple column transitions over time.
+// The cache is organized by orgId, then by key name.
 type KeyEvolutionMetadata struct {
-	mu             sync.RWMutex
-	keys           map[string][]*telemetrytypes.KeyEvolutionMetadataKey
+	cache          cache.Cache
 	telemetryStore telemetrystore.TelemetryStore
 	logger         *slog.Logger
 }
 
-func NewKeyEvolutionMetadata(telemetryStore telemetrystore.TelemetryStore, logger *slog.Logger) *KeyEvolutionMetadata {
+func NewKeyEvolutionMetadata(telemetryStore telemetrystore.TelemetryStore, cache cache.Cache, logger *slog.Logger) *KeyEvolutionMetadata {
 	return &KeyEvolutionMetadata{
-		keys:           make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey),
+		cache:          cache,
 		telemetryStore: telemetryStore,
 		logger:         logger,
 	}
 }
 
-func (k *KeyEvolutionMetadata) fetchFromClickHouse() {
+func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID valuer.UUID) {
 	store := k.telemetryStore
 	logger := k.logger
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	if store.ClickhouseDB() == nil {
@@ -49,7 +67,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse() {
 		return
 	}
 
-	// Build query to fetch all key evolution metadata
+	// Build query to fetch all key evolution metadata for the org
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"base_column",
@@ -70,8 +88,8 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse() {
 	}
 	defer rows.Close()
 
-	// Build new metadata map
-	newKeys := make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
+	// Group metadata by base_column
+	metadataByKey := make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
 
 	for rows.Next() {
 		var (
@@ -95,7 +113,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse() {
 			ReleaseTime:    time.Unix(0, int64(releaseTime)),
 		}
 
-		newKeys[baseColumn] = append(newKeys[baseColumn], key)
+		metadataByKey[baseColumn] = append(metadataByKey[baseColumn], key)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -103,58 +121,62 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse() {
 		return
 	}
 
-	// Update the keys map atomically
-	k.mu.Lock()
-	k.keys = newKeys
-	k.mu.Unlock()
-
-	logger.Debug("Successfully fetched key evolution metadata from ClickHouse", "count", len(newKeys))
-}
-
-// Add adds a metadata key for the given key name.
-// This is primarily for testing purposes. In production, data should come from ClickHouse.
-func (k *KeyEvolutionMetadata) Add(keyName string, key *telemetrytypes.KeyEvolutionMetadataKey) {
-	k.mu.Lock()
-	defer k.mu.Unlock()
-	if k.keys == nil {
-		k.keys = make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
-	}
-	k.keys[keyName] = append(k.keys[keyName], key)
-}
-
-// Get retrieves all metadata keys for the given key name.
-// If the key is not found in cache, it fetches from ClickHouse and updates the cache.
-// Returns an empty slice if the key is not found.
-func (k *KeyEvolutionMetadata) Get(keyName string) []*telemetrytypes.KeyEvolutionMetadataKey {
-	// First, check if the key exists in cache
-	k.mu.RLock()
-	if k.keys != nil {
-		keys, exists := k.keys[keyName]
-		if exists {
-			k.mu.RUnlock()
-			// Return a copy to prevent external modification
-			result := make([]*telemetrytypes.KeyEvolutionMetadataKey, len(keys))
-			copy(result, keys)
-			return result
+	// Store each key's metadata in cache
+	for keyName, keys := range metadataByKey {
+		cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
+		cachedData := &CachedKeyEvolutionMetadata{Keys: keys}
+		if err := k.cache.Set(ctx, orgID, cacheKey, cachedData, 24*time.Hour); err != nil {
+			logger.Warn("Failed to set key evolution metadata in cache", "key", keyName, "error", err)
 		}
 	}
-	k.mu.RUnlock()
 
-	// Fetch all keys from ClickHouse (this will update the entire cache)
-	k.fetchFromClickHouse()
+	logger.Debug("Successfully fetched key evolution metadata from ClickHouse", "count", len(metadataByKey))
+}
 
-	// Check cache again after fetching
-	k.mu.RLock()
-	defer k.mu.RUnlock()
-	if k.keys == nil {
+// Add adds a metadata key for the given key name and orgId.
+// This is primarily for testing purposes. In production, data should come from ClickHouse.
+func (k *KeyEvolutionMetadata) Add(ctx context.Context, orgId, keyName string, key *telemetrytypes.KeyEvolutionMetadataKey) {
+	orgID, err := valuer.NewUUID(orgId)
+	if err != nil {
+		k.logger.Warn("Invalid orgId in Add", "orgId", orgId, "error", err)
+		return
+	}
+
+	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
+	var cachedData CachedKeyEvolutionMetadata
+	if err := k.cache.Get(ctx, orgID, cacheKey, &cachedData); err != nil {
+		cachedData = CachedKeyEvolutionMetadata{Keys: []*telemetrytypes.KeyEvolutionMetadataKey{}}
+	}
+
+	cachedData.Keys = append(cachedData.Keys, key)
+	if err := k.cache.Set(ctx, orgID, cacheKey, &cachedData, 24*time.Hour); err != nil {
+		k.logger.Warn("Failed to set key evolution metadata in cache", "key", keyName, "error", err)
+	}
+}
+
+// Get retrieves all metadata keys for the given key name and orgId from cache.
+// Returns an empty slice if the key is not found in cache.
+func (k *KeyEvolutionMetadata) Get(ctx context.Context, orgId, keyName string) []*telemetrytypes.KeyEvolutionMetadataKey {
+	orgID, err := valuer.NewUUID(orgId)
+	if err != nil {
+		k.logger.Warn("Invalid orgId in Get", "orgId", orgId, "error", err)
 		return nil
 	}
-	keys, exists := k.keys[keyName]
-	if !exists {
-		return nil
+
+	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
+	var cachedData CachedKeyEvolutionMetadata
+	if err := k.cache.Get(ctx, orgID, cacheKey, &cachedData); err != nil {
+		// Cache miss - fetch from ClickHouse and try again
+		k.fetchFromClickHouse(ctx, orgID)
+
+		// Check cache again after fetching
+		if err := k.cache.Get(ctx, orgID, cacheKey, &cachedData); err != nil {
+			return nil
+		}
 	}
+
 	// Return a copy to prevent external modification
-	result := make([]*telemetrytypes.KeyEvolutionMetadataKey, len(keys))
-	copy(result, keys)
+	result := make([]*telemetrytypes.KeyEvolutionMetadataKey, len(cachedData.Keys))
+	copy(result, cachedData.Keys)
 	return result
 }

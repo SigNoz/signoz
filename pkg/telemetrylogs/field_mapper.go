@@ -8,6 +8,7 @@ import (
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -117,8 +118,14 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 		baseColumn := logsV2Columns["resources_string"]
 		tsStartTime := time.Unix(0, int64(tsStart))
 
+		// Extract orgId from context
+		orgId := ""
+		if claims, err := authtypes.ClaimsFromContext(ctx); err == nil {
+			orgId = claims.OrgID
+		}
+
 		// get all evolution for the column
-		evolutions := m.evolutionMetadataStore.Get(baseColumn.Name)
+		evolutions := m.evolutionMetadataStore.Get(ctx, orgId, baseColumn.Name)
 
 		// restricting now to just one entry where we know we changes from map to json
 		if len(evolutions) > 0 && evolutions[0].ReleaseTime.Before(tsStartTime) {

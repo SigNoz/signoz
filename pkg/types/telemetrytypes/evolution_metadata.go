@@ -1,6 +1,9 @@
 package telemetrytypes
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type KeyEvolutionMetadataKey struct {
 	BaseColumn     string
@@ -11,6 +14,6 @@ type KeyEvolutionMetadataKey struct {
 }
 
 type KeyEvolutionMetadataStore interface {
-	Get(keyName string) []*KeyEvolutionMetadataKey
-	Add(keyName string, key *KeyEvolutionMetadataKey)
+	Get(ctx context.Context, orgId, keyName string) []*KeyEvolutionMetadataKey
+	Add(ctx context.Context, orgId, keyName string, key *KeyEvolutionMetadataKey)
 }

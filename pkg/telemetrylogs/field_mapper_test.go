@@ -297,7 +297,7 @@ func TestFieldForWithEvolutionMetadata(t *testing.T) {
 
 	// Set up stores once
 	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
-	setupResourcesStringEvolutionMetadata(storeWithMetadata, releaseTime)
+	setupResourcesStringEvolutionMetadata(ctx, storeWithMetadata, "", releaseTime)
 
 	storeWithoutMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
 

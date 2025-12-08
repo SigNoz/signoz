@@ -2,13 +2,13 @@ package telemetrylogs
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
@@ -214,8 +214,12 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		},
 	}
 
+	ctx := context.Background()
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: "test-org-id",
+	})
 	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
-	setupResourcesStringEvolutionMetadata(storeWithMetadata, releaseTime)
+	setupResourcesStringEvolutionMetadata(ctx, storeWithMetadata, "test-org-id", releaseTime)
 
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
@@ -241,8 +245,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			fmt.Println("startTs", c.startTs, "endTs", c.endTs)
-			q, err := statementBuilder.Build(context.Background(), c.startTs, c.endTs, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, c.startTs, c.endTs, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)

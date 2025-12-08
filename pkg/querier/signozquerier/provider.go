@@ -101,7 +101,7 @@ func newProvider(
 	)
 
 	// Initialize the global key evolution metadata singleton with TelemetryStore
-	keyEvolutionMetadata := telemetrylogs.NewKeyEvolutionMetadata(telemetryStore, settings.Logger)
+	keyEvolutionMetadata := telemetrylogs.NewKeyEvolutionMetadata(telemetryStore, cache, settings.Logger)
 
 	// Create log statement builder
 	logFieldMapper := telemetrylogs.NewFieldMapper(keyEvolutionMetadata)

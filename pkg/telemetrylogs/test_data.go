@@ -1,6 +1,7 @@
 package telemetrylogs
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -967,6 +968,6 @@ func buildKeyEvolutionMetadataForResourcesString(releaseTime time.Time) *telemet
 }
 
 // setupResourcesStringEvolutionMetadata sets up resources_string evolution metadata in the mock store.
-func setupResourcesStringEvolutionMetadata(m *telemetrytypestest.MockKeyEvolutionMetadataStore, releaseTime time.Time) {
-	m.Add("resources_string", buildKeyEvolutionMetadataForResourcesString(releaseTime))
+func setupResourcesStringEvolutionMetadata(ctx context.Context, m *telemetrytypestest.MockKeyEvolutionMetadataStore, orgId string, releaseTime time.Time) {
+	m.Add(ctx, orgId, "resources_string", buildKeyEvolutionMetadataForResourcesString(releaseTime))
 }
