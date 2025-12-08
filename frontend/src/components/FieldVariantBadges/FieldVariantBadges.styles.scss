@@ -1,0 +1,82 @@
+.field-variant-badges-container {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+}
+
+.field-badge {
+	&.data-type {
+		display: flex;
+		height: 20px;
+		padding: 4px 8px;
+		justify-content: center;
+		align-items: center;
+		gap: 4px;
+		border-radius: 20px;
+		background: color-mix(in srgb, var(--bg-vanilla-100) 8%, transparent);
+		white-space: nowrap;
+		font-family: Inter;
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px;
+		letter-spacing: -0.06px;
+	}
+
+	&.type-tag {
+		display: flex;
+		align-items: center;
+		height: 20px;
+		padding: 0px 6px;
+		justify-content: center;
+		gap: 4px;
+		border-radius: 50px;
+		text-transform: capitalize;
+		white-space: nowrap;
+
+		.dot {
+			width: 6px;
+			height: 6px;
+			border-radius: 50%;
+			flex-shrink: 0;
+		}
+
+		.text {
+			font-family: Inter;
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 18px;
+			letter-spacing: -0.06px;
+		}
+
+		&.attribute {
+			border-radius: 50px;
+			background: color-mix(in srgb, var(--bg-sienna-400) 10%, transparent);
+			color: var(--bg-sienna-400);
+
+			.dot {
+				background-color: var(--bg-sienna-400);
+			}
+
+			.text {
+				color: var(--bg-sienna-400);
+			}
+		}
+
+		&.resource {
+			border-radius: 50px;
+			background: color-mix(in srgb, var(--bg-aqua-400) 10%, transparent);
+			color: var(--bg-aqua-400);
+
+			.dot {
+				background-color: var(--bg-aqua-400);
+			}
+
+			.text {
+				color: var(--bg-aqua-400);
+			}
+		}
+	}
+}
