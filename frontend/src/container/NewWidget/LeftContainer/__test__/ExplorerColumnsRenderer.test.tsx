@@ -332,9 +332,21 @@ describe('ExplorerColumnsRenderer', () => {
 					data: {
 						data: {
 							keys: {
-								attributeKeys: [
-									{ name: 'trace_attribute1', dataType: 'string', type: 'tag' },
-									{ name: 'trace_attribute2', dataType: 'string', type: 'tag' },
+								trace_attribute1: [
+									{
+										name: 'trace_attribute1',
+										fieldDataType: DataTypes.String,
+										fieldContext: '',
+										signal: 'traces',
+									},
+								],
+								trace_attribute2: [
+									{
+										name: 'trace_attribute2',
+										fieldDataType: DataTypes.String,
+										fieldContext: '',
+										signal: 'traces',
+									},
 								],
 							},
 						},
@@ -362,7 +374,12 @@ describe('ExplorerColumnsRenderer', () => {
 			await userEvent.click(checkbox);
 
 			expect(mockSetSelectedTracesFields).toHaveBeenCalledWith([
-				{ name: 'trace_attribute1', dataType: 'string', type: 'tag' },
+				{
+					name: 'trace_attribute1',
+					fieldDataType: DataTypes.String,
+					fieldContext: '',
+					signal: 'traces',
+				},
 			]);
 		});
 
