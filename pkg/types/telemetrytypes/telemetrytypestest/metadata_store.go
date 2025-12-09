@@ -15,6 +15,7 @@ type MockMetadataStore struct {
 	RelatedValuesMap map[string][]string
 	AllValuesMap     map[string]*telemetrytypes.TelemetryFieldValues
 	TemporalityMap   map[string]metrictypes.Temporality
+	TypeMap          map[string]metrictypes.Type
 }
 
 // NewMockMetadataStore creates a new instance of MockMetadataStore with initialized maps
@@ -24,6 +25,7 @@ func NewMockMetadataStore() *MockMetadataStore {
 		RelatedValuesMap: make(map[string][]string),
 		AllValuesMap:     make(map[string]*telemetrytypes.TelemetryFieldValues),
 		TemporalityMap:   make(map[string]metrictypes.Temporality),
+		TypeMap:          make(map[string]metrictypes.Type),
 	}
 }
 
@@ -283,4 +285,24 @@ func (m *MockMetadataStore) FetchTemporalityMulti(ctx context.Context, metricNam
 // SetTemporality sets the temporality for a metric in the mock store
 func (m *MockMetadataStore) SetTemporality(metricName string, temporality metrictypes.Temporality) {
 	m.TemporalityMap[metricName] = temporality
+}
+
+// FetchTypeMulti fetches the type for multiple metrics
+func (m *MockMetadataStore) FetchTypeMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Type, error) {
+	result := make(map[string]metrictypes.Type)
+
+	for _, metricName := range metricNames {
+		if mtype, exists := m.TypeMap[metricName]; exists {
+			result[metricName] = mtype
+		} else {
+			result[metricName] = metrictypes.UnspecifiedType
+		}
+	}
+
+	return result, nil
+}
+
+// SetType sets the type for a metric in the mock store
+func (m *MockMetadataStore) SetType(metricName string, mtype metrictypes.Type) {
+	m.TypeMap[metricName] = mtype
 }
