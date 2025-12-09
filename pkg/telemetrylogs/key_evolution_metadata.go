@@ -67,7 +67,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID va
 		return
 	}
 
-	// Build query to fetch all key evolution metadata for the org
+	// Build query to fetch all key evolution metadata
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"base_column",
@@ -136,16 +136,8 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID va
 // Add adds a metadata key for the given key name and orgId.
 // This is primarily for testing purposes. In production, data should come from ClickHouse.
 func (k *KeyEvolutionMetadata) Add(ctx context.Context, orgId valuer.UUID, keyName string, key *telemetrytypes.KeyEvolutionMetadataKey) {
-	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
-	var cachedData CachedKeyEvolutionMetadata
-	if err := k.cache.Get(ctx, orgId, cacheKey, &cachedData); err != nil {
-		cachedData = CachedKeyEvolutionMetadata{Keys: []*telemetrytypes.KeyEvolutionMetadataKey{}}
-	}
+	k.logger.WarnContext(ctx, "Add is not implemented for key evolution metadata")
 
-	cachedData.Keys = append(cachedData.Keys, key)
-	if err := k.cache.Set(ctx, orgId, cacheKey, &cachedData, 24*time.Hour); err != nil {
-		k.logger.WarnContext(ctx, "Failed to set key evolution metadata in cache", "key", keyName, "error", err)
-	}
 }
 
 // Get retrieves all metadata keys for the given key name and orgId from cache.
