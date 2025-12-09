@@ -3,7 +3,7 @@ import './ValueGraph.styles.scss';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getBackgroundColorAndThresholdCheck } from './utils';
@@ -17,10 +17,16 @@ function ValueGraph({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [fontSize, setFontSize] = useState('2.5vw');
 
-	// Parse value to separate number and unit (assuming unit is at the end)
-	const matches = value.match(/([\d.]+[KMB]?)(.*)$/);
-	const numericValue = matches?.[1] || value;
-	const unit = matches?.[2]?.trim() || '';
+	const { numericValue, prefixUnit, suffixUnit } = useMemo(() => {
+		const matches = value.match(
+			/^([^\d.]*)?([\d.]+(?:[eE][+-]?[\d]+)?[KMB]?)([^\d.]*)?$/,
+		);
+		return {
+			numericValue: matches?.[2] || value,
+			prefixUnit: matches?.[1]?.trim() || '',
+			suffixUnit: matches?.[3]?.trim() || '',
+		};
+	}, [value]);
 
 	// Adjust font size based on container size
 	useEffect(() => {
@@ -65,8 +71,24 @@ function ValueGraph({
 			}}
 		>
 			<div className="value-text-container">
+				{prefixUnit && (
+					<Typography.Text
+						className="value-graph-unit"
+						data-testid="value-graph-prefix-unit"
+						style={{
+							color:
+								threshold.thresholdFormat === 'Text'
+									? threshold.thresholdColor
+									: undefined,
+							fontSize: `calc(${fontSize} * 0.7)`,
+						}}
+					>
+						{prefixUnit}
+					</Typography.Text>
+				)}
 				<Typography.Text
 					className="value-graph-text"
+					data-testid="value-graph-text"
 					style={{
 						color:
 							threshold.thresholdFormat === 'Text'
@@ -77,9 +99,10 @@ function ValueGraph({
 				>
 					{numericValue}
 				</Typography.Text>
-				{unit && (
+				{suffixUnit && (
 					<Typography.Text
 						className="value-graph-unit"
+						data-testid="value-graph-suffix-unit"
 						style={{
 							color:
 								threshold.thresholdFormat === 'Text'
@@ -88,7 +111,7 @@ function ValueGraph({
 							fontSize: `calc(${fontSize} * 0.7)`,
 						}}
 					>
-						{unit}
+						{suffixUnit}
 					</Typography.Text>
 				)}
 			</div>
