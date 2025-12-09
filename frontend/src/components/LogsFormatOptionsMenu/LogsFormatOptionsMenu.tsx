@@ -12,7 +12,7 @@ import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
 import {
 	getNamesWithVariants,
 	getUniqueColumnKey,
-	getVariantCounts,
+	hasMultipleVariants,
 } from 'container/OptionsMenu/utils';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import {
@@ -61,9 +61,6 @@ function OptionsMenu({
 	const namesWithVariantsInOptions = getNamesWithVariants(
 		addColumn?.options || [],
 	);
-
-	// Detect which column names have multiple variants in selected columns
-	const selectedColumnVariantCounts = getVariantCounts(addColumn?.value || []);
 
 	const onChange = useCallback(
 		(key: LogViewMode) => {
@@ -446,7 +443,11 @@ function OptionsMenu({
 									<div className="column-format">
 										{addColumn?.value?.map((column) => {
 											const uniqueKey = getUniqueColumnKey(column);
-											const showBadge = selectedColumnVariantCounts[column.name] > 1;
+											const showBadge = hasMultipleVariants(
+												column.name || '',
+												addColumn?.value || [],
+												addColumn?.allAvailableKeys,
+											);
 											return (
 												<div className="column-name" key={uniqueKey}>
 													<Tooltip placement="left" title={column.name}>

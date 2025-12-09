@@ -6,10 +6,10 @@ import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
 import {
-	getColumnTitle,
+	getColumnTitleWithTooltip,
 	getFieldVariantsByName,
 	getUniqueColumnKey,
-	getVariantCounts,
+	hasMultipleVariants,
 } from 'container/OptionsMenu/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -37,6 +37,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		fontSize,
 		appendTo = 'center',
 		isListViewPanel,
+		allAvailableKeys,
 	} = props;
 
 	const isDarkMode = useIsDarkMode();
@@ -56,18 +57,25 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	);
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
-		// Detect which column names have multiple variants
-		const variantCounts = getVariantCounts(fields);
-
 		// Group fields by name to analyze variants
 		const fieldVariantsByName = getFieldVariantsByName(fields);
 
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
 			.filter((e) => !['id', 'body', 'timestamp'].includes(e.name))
 			.map((field) => {
-				const hasVariants = variantCounts[field.name] > 1;
+				const hasVariants = hasMultipleVariants(
+					field.name || '',
+					fields,
+					allAvailableKeys,
+				);
 				const variants = fieldVariantsByName[field.name] || [];
-				const title = getColumnTitle(field, hasVariants, variants);
+				const title = getColumnTitleWithTooltip(
+					field,
+					hasVariants,
+					variants,
+					fields,
+					allAvailableKeys,
+				);
 				return {
 					title,
 					dataIndex: field.name,
@@ -194,6 +202,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		fontSize,
 		formatTimezoneAdjustedTimestamp,
 		bodyColumnStyle,
+		allAvailableKeys,
 	]);
 
 	return { columns, dataSource: flattenLogData };

@@ -8,6 +8,7 @@ import { getColumnWidth, RowData } from 'lib/query/createTableColumnsFromQuery';
 import { debounce, set } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
+	ReactNode,
 	SyntheticEvent,
 	useCallback,
 	useEffect,
@@ -76,7 +77,7 @@ function ResizeTable({
 				...(onDragColumn && {
 					title: (
 						<DragSpanStyle className="dragHandler">
-							{col?.title?.toString() || ''}
+							{typeof col?.title === 'string' ? col.title : (col?.title as ReactNode)}
 						</DragSpanStyle>
 					),
 				}),

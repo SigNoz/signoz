@@ -7,9 +7,11 @@ import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Controls from 'container/Controls';
+import { extractTelemetryFieldKeys } from 'container/OptionsMenu/utils';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { useLogsData } from 'hooks/useLogsData';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -27,6 +29,7 @@ import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 import { getLogPanelColumnsList } from './utils';
 
@@ -59,14 +62,31 @@ function LogsPanelComponent({
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
+	// Fetch available keys to detect variants
+
+	const { data: keysData } = useGetQueryKeySuggestions(
+		{
+			searchText: '',
+			signal: DataSource.LOGS,
+		},
+		{
+			queryKey: [DataSource.LOGS, LogsAggregatorOperator.NOOP, ''],
+		},
+	);
+
+	// Extract all available keys from API response
+	const allAvailableKeys = useMemo(() => extractTelemetryFieldKeys(keysData), [
+		keysData,
+	]);
+
 	const columns = useMemo(
 		() =>
 			getLogPanelColumnsList(
 				widget.selectedLogFields,
 				formatTimezoneAdjustedTimestamp,
+				allAvailableKeys,
 			),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[widget.selectedLogFields],
+		[widget.selectedLogFields, formatTimezoneAdjustedTimestamp, allAvailableKeys],
 	);
 
 	const dataLength =

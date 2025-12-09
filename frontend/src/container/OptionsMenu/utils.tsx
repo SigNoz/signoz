@@ -1,7 +1,32 @@
-import { SelectProps } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { SelectProps, Tooltip } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
+import { AxiosResponse } from 'axios';
+import { ReactNode } from 'react';
+import {
+	QueryKeyDataSuggestionsProps,
+	QueryKeySuggestionsResponseProps,
+} from 'types/api/querySuggestions/types';
+
+import { ColumnTitleIcon, ColumnTitleWrapper } from './styles';
+
+/**
+ * Extracts all available keys from API response and transforms them into TelemetryFieldKey format
+ * @param keysData - The response data from useGetQueryKeySuggestions hook
+ * @returns Array of TelemetryFieldKey objects
+ */
+export const extractTelemetryFieldKeys = (
+	keysData?: AxiosResponse<QueryKeySuggestionsResponseProps>,
+): TelemetryFieldKey[] => {
+	const keysList = Object.values(keysData?.data?.data?.keys || {})?.flat() || [];
+	return keysList.map((key) => ({
+		name: key.name,
+		fieldDataType: key.fieldDataType,
+		fieldContext: key.fieldContext,
+		signal: key.signal,
+	})) as TelemetryFieldKey[];
+};
 
 /**
  * Creates a unique key for a column by combining context, name, and dataType
@@ -16,7 +41,8 @@ export const getUniqueColumnKey = (
 		('fieldDataType' in column && column.fieldDataType) ||
 		('dataType' in column && column.dataType) ||
 		'string';
-	const context = column.fieldContext || 'attribute';
+	const context =
+		column.fieldContext || ('type' in column && column.type) || 'attribute';
 	return `${context}::${name}::${dataType}`;
 };
 
@@ -145,6 +171,58 @@ export const getColumnTitle = <
 	return name;
 };
 
+/**
+ * Checks if another field with the same name but different unique key exists in availableKeys
+ * This indicates a conflicted column scenario
+ */
+const hasConflictingField = <
+	T extends Partial<QueryKeyDataSuggestionsProps> | Partial<TelemetryFieldKey>
+>(
+	field: T,
+	availableKeys?: TelemetryFieldKey[],
+): boolean => {
+	if (!availableKeys || availableKeys.length === 0) return false;
+
+	const fieldName = field.name || '';
+	const fieldUniqueKey = getUniqueColumnKey(field as TelemetryFieldKey);
+
+	return availableKeys.some(
+		(key) => key.name === fieldName && getUniqueColumnKey(key) !== fieldUniqueKey,
+	);
+};
+
+/**
+ * Returns column title as ReactNode with tooltip icon if conflicting field exists
+ * Shows tooltip when another field with the same name but different type/context exists
+ */
+export const getColumnTitleWithTooltip = <
+	T extends Partial<QueryKeyDataSuggestionsProps> | Partial<TelemetryFieldKey>
+>(
+	field: T,
+	hasVariants: boolean,
+	variants: T[],
+	selectedColumns: TelemetryFieldKey[],
+	availableKeys?: TelemetryFieldKey[],
+): ReactNode => {
+	const title = getColumnTitle(field, hasVariants, variants);
+	const hasConflict = hasConflictingField(field, availableKeys);
+
+	if (hasConflict) {
+		return (
+			<ColumnTitleWrapper>
+				{title}
+				<Tooltip title="The same column with a different type or context exists">
+					<ColumnTitleIcon>
+						<InfoCircleOutlined />
+					</ColumnTitleIcon>
+				</Tooltip>
+			</ColumnTitleWrapper>
+		);
+	}
+
+	return title;
+};
+
 export const getOptionsFromKeys = (
 	keys: TelemetryFieldKey[],
 	selectedKeys: (string | undefined)[],
@@ -169,4 +247,34 @@ export const getOptionsFromKeys = (
 	return options.filter(
 		({ value }) => !selectedKeys.find((selectedKey) => selectedKey === value),
 	);
+};
+
+/**
+ * Determines if a column name has multiple variants
+ * Checks both selected columns and available keys (from search) to detect conflicts
+ * Reuses getVariantCounts for consistency
+ */
+export const hasMultipleVariants = (
+	columnName: string,
+	selectedColumns: TelemetryFieldKey[],
+	availableKeys?: TelemetryFieldKey[],
+): boolean => {
+	// Combine selected columns with available keys (if provided)
+	const allKeys = availableKeys
+		? [...selectedColumns, ...availableKeys]
+		: selectedColumns;
+
+	// Deduplicate by unique key to avoid counting same variant twice
+	const uniqueKeysMap = new Map<string, TelemetryFieldKey>();
+	allKeys.forEach((key) => {
+		const uniqueKey = getUniqueColumnKey(key);
+		if (!uniqueKeysMap.has(uniqueKey)) {
+			uniqueKeysMap.set(uniqueKey, key);
+		}
+	});
+
+	const deduplicatedKeys = Array.from(uniqueKeysMap.values());
+	const variantCounts = getVariantCounts(deduplicatedKeys);
+
+	return variantCounts[columnName] > 1;
 };

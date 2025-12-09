@@ -170,7 +170,7 @@ const useOptionsMenu = ({
 			...initialQueryParamsV5,
 			searchText: debouncedSearchText,
 		},
-		{ queryKey: [debouncedSearchText, isFocused], enabled: isFocused },
+		{ queryKey: [debouncedSearchText, isFocused] },
 	);
 
 	// const {
@@ -430,6 +430,7 @@ const useOptionsMenu = ({
 					preferences?.columns.filter((item) => has(item, 'name')) ||
 					defaultOptionsQuery.selectColumns.filter((item) => has(item, 'name')),
 				options: optionsFromAttributeKeys || [],
+				allAvailableKeys: searchedAttributeKeys,
 				onFocus: handleFocus,
 				onBlur: handleBlur,
 				onSelect: handleSelectColumns,
@@ -453,6 +454,7 @@ const useOptionsMenu = ({
 			isSearchedAttributesFetchingV5,
 			preferences,
 			optionsFromAttributeKeys,
+			searchedAttributeKeys,
 			handleSelectColumns,
 			handleRemoveSelectedColumn,
 			handleSearchAttribute,

@@ -8,7 +8,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
-import { forwardRef, memo, useCallback, useMemo } from 'react';
+import { forwardRef, memo, ReactNode, useCallback, useMemo } from 'react';
 import {
 	TableComponents,
 	TableVirtuoso,
@@ -139,7 +139,9 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 									{...(isDragColumn && { className: `dragHandler ${column.key}` })}
 									columnKey={column.key as string}
 								>
-									{(column.title as string).replace(/^\w/, (c) => c.toUpperCase())}
+									{typeof column.title === 'string'
+										? column.title.replace(/^\w/, (c) => c.toUpperCase())
+										: (column.title as ReactNode)}
 								</TableHeaderCellStyled>
 							);
 						})}

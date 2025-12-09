@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { FieldTitle } from '../styles';
 import { OptionsMenuConfig } from '../types';
-import { getUniqueColumnKey, getVariantCounts } from '../utils';
+import { getUniqueColumnKey, hasMultipleVariants } from '../utils';
 import {
 	AddColumnItem,
 	AddColumnSelect,
@@ -40,9 +40,6 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 
 	if (!config) return null;
 
-	// Detect which column names have multiple variants in selected columns
-	const selectedColumnVariantCounts = getVariantCounts(config.value || []);
-
 	return (
 		<AddColumnWrapper direction="vertical">
 			<FieldTitle>{t('options_menu.addColumn')}</FieldTitle>
@@ -69,7 +66,11 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 
 			{config.value?.map((column) => {
 				const uniqueKey = getUniqueColumnKey(column);
-				const showBadge = selectedColumnVariantCounts[column.name] > 1;
+				const showBadge = hasMultipleVariants(
+					column.name || '',
+					config.value || [],
+					config.allAvailableKeys,
+				);
 				return (
 					<AddColumnItem key={uniqueKey}>
 						<NameWrapper>

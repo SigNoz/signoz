@@ -1,10 +1,11 @@
 import { ColumnsType } from 'antd/es/table';
 import { Typography } from 'antd/lib';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import {
-	getColumnTitle,
+	getColumnTitleWithTooltip,
 	getFieldVariantsByName,
 	getUniqueColumnKey,
-	getVariantCounts,
+	hasMultipleVariants,
 } from 'container/OptionsMenu/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 // import Typography from 'antd/es/typography/Typography';
@@ -19,9 +20,9 @@ export const getLogPanelColumnsList = (
 		input: TimestampInput,
 		format?: string,
 	) => string,
+	allAvailableKeys?: TelemetryFieldKey[],
 ): ColumnsType<RowData> => {
 	const initialColumns: ColumnsType<RowData> = [];
-	const variantCounts = getVariantCounts(selectedLogFields || []);
 
 	// Group fields by name to analyze variants
 	const fieldVariantsByName = getFieldVariantsByName(selectedLogFields || []);
@@ -29,9 +30,19 @@ export const getLogPanelColumnsList = (
 	const columns: ColumnsType<RowData> =
 		selectedLogFields?.map((field: IField) => {
 			const { name } = field;
-			const hasVariants = variantCounts[name] > 1;
+			const hasVariants = hasMultipleVariants(
+				name,
+				selectedLogFields || [],
+				allAvailableKeys,
+			);
 			const variants = fieldVariantsByName[name] || [];
-			const title = getColumnTitle(field, hasVariants, variants);
+			const title = getColumnTitleWithTooltip(
+				field,
+				hasVariants,
+				variants,
+				selectedLogFields || [],
+				allAvailableKeys,
+			);
 
 			return {
 				title,

@@ -60,7 +60,7 @@ function LogsExplorerList({
 		onSetActiveLog,
 	} = useActiveLog();
 
-	const { options } = useOptionsMenu({
+	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
 		aggregateOperator:
@@ -147,6 +147,7 @@ function LogsExplorerList({
 						fontSize: options.fontSize,
 						appendTo: 'end',
 						activeLogIndex,
+						allAvailableKeys: config.addColumn?.allAvailableKeys,
 					}}
 					infitiyTableProps={{ onEndReached }}
 				/>
@@ -195,6 +196,7 @@ function LogsExplorerList({
 		onEndReached,
 		getItemContent,
 		selectedFields,
+		config.addColumn?.allAvailableKeys,
 	]);
 
 	const isTraceToLogsNavigation = useMemo(() => {

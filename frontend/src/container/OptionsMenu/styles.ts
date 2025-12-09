@@ -17,3 +17,15 @@ export const OptionsContentWrapper = styled(Space)`
 export const FieldTitle = styled(Typography.Text)`
 	font-size: 0.75rem;
 `;
+
+export const ColumnTitleWrapper = styled.span`
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	word-break: break-word;
+`;
+
+export const ColumnTitleIcon = styled.span`
+	font-size: 12px;
+	color: var(--bg-vanilla-400);
+`;

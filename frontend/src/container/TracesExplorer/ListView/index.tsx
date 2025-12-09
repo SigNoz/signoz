@@ -186,9 +186,15 @@ function ListView({
 		const updatedColumns = getListColumns(
 			options?.selectColumns || [],
 			formatTimezoneAdjustedTimestamp,
+			config.addColumn?.allAvailableKeys,
 		);
 		return getDraggedColumns(updatedColumns, draggedColumns);
-	}, [options?.selectColumns, formatTimezoneAdjustedTimestamp, draggedColumns]);
+	}, [
+		options?.selectColumns,
+		formatTimezoneAdjustedTimestamp,
+		draggedColumns,
+		config.addColumn?.allAvailableKeys,
+	]);
 
 	const transformedQueryTableData = useMemo(
 		() => transformDataWithDate(queryTableData) || [],
