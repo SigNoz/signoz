@@ -1664,6 +1664,10 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		getLocalTableName(r.logsDB + "." + r.logsAttributeKeys),
 		getLocalTableName(r.logsDB + "." + r.logsResourceKeys),
 	}
+	distributedTableNames := []string{
+		r.logsDB + "." + r.logsTableV2,
+		r.logsDB + "." + r.logsResourceTableV2,
+	}
 
 	for _, tableName := range tableNames {
 		statusItem, err := r.checkCustomRetentionTTLStatusItem(ctx, orgID, tableName)
@@ -1683,11 +1687,17 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	queries := []string{
 		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
 			tableNames[0], r.cluster, multiIfExpr),
+		// for distributed table
+		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
+			distributedTableNames[0], r.cluster, multiIfExpr),
 	}
 
 	if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
 		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
 			tableNames[0], r.cluster, coldStorageDuration))
+		// for distributed table
+		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
+			distributedTableNames[0], r.cluster, coldStorageDuration))
 
 		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
 			tableNames[0], r.cluster, params.ColdStorageVolume))
@@ -1698,12 +1708,17 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	resourceQueries := []string{
 		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
 			tableNames[1], r.cluster, resourceMultiIfExpr),
+		// for distributed table
+		fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 DEFAULT %s`,
+			distributedTableNames[1], r.cluster, resourceMultiIfExpr),
 	}
 
 	if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
 		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
 			tableNames[1], r.cluster, coldStorageDuration))
-
+		// for distributed table
+		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
+			distributedTableNames[1], r.cluster, coldStorageDuration))
 		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
 			tableNames[1], r.cluster, params.ColdStorageVolume))
 	}
