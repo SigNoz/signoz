@@ -130,7 +130,7 @@ export const getColumnTitle = <
 	variants: T[],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): string => {
-	const name = field.name || '';
+	const name = field.name?.replace(/^\w/, (c) => c.toUpperCase()) || '';
 	if (!hasVariants) return name;
 
 	// Extract data types from variants (support both fieldDataType and dataType)
@@ -173,27 +173,48 @@ export const getColumnTitle = <
 
 /**
  * Checks if another field with the same name but different unique key exists in availableKeys
- * This indicates a conflicted column scenario
+ * and if any of those conflicting fields are NOT already selected
+ * This indicates a conflicted column scenario where user might not be aware of other variants
  */
-const hasConflictingField = <
+const hasUnselectedConflictingField = <
 	T extends Partial<QueryKeyDataSuggestionsProps> | Partial<TelemetryFieldKey>
 >(
 	field: T,
 	availableKeys?: TelemetryFieldKey[],
+	selectedColumns?: TelemetryFieldKey[],
 ): boolean => {
 	if (!availableKeys || availableKeys.length === 0) return false;
 
 	const fieldName = field.name || '';
 	const fieldUniqueKey = getUniqueColumnKey(field as TelemetryFieldKey);
 
-	return availableKeys.some(
+	// Find all conflicting fields (same name, different unique key)
+	const conflictingFields = availableKeys.filter(
 		(key) => key.name === fieldName && getUniqueColumnKey(key) !== fieldUniqueKey,
+	);
+
+	// If no conflicting fields exist, no conflict
+	if (conflictingFields.length === 0) return false;
+
+	// If no selected columns provided, assume conflict exists
+	if (!selectedColumns || selectedColumns.length === 0) return true;
+
+	// Check if all conflicting fields are already selected
+	const selectedUniqueKeys = new Set(
+		selectedColumns.map((col) => getUniqueColumnKey(col)),
+	);
+
+	// Return true if any conflicting field is NOT selected
+	return conflictingFields.some(
+		(conflictingField) =>
+			!selectedUniqueKeys.has(getUniqueColumnKey(conflictingField)),
 	);
 };
 
 /**
  * Returns column title as ReactNode with tooltip icon if conflicting field exists
- * Shows tooltip when another field with the same name but different type/context exists
+ * Shows tooltip only when another field with the same name but different type/context exists
+ * and is NOT already selected (better UX - no need to show tooltip if all variants are visible)
  */
 export const getColumnTitleWithTooltip = <
 	T extends Partial<QueryKeyDataSuggestionsProps> | Partial<TelemetryFieldKey>
@@ -205,9 +226,13 @@ export const getColumnTitleWithTooltip = <
 	availableKeys?: TelemetryFieldKey[],
 ): ReactNode => {
 	const title = getColumnTitle(field, hasVariants, variants);
-	const hasConflict = hasConflictingField(field, availableKeys);
+	const hasUnselectedConflict = hasUnselectedConflictingField(
+		field,
+		availableKeys,
+		selectedColumns,
+	);
 
-	if (hasConflict) {
+	if (hasUnselectedConflict) {
 		return (
 			<ColumnTitleWrapper>
 				{title}
