@@ -86,6 +86,7 @@ import {
 	Widgets,
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
+import { isShortcutKey } from 'utils/isShortcutKey';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
@@ -282,35 +283,48 @@ function DashboardsList(): JSX.Element {
 			refetchDashboardList,
 		})) || [];
 
-	const onNewDashboardHandler = useCallback(async () => {
-		try {
-			logEvent('Dashboard List: Create dashboard clicked', {});
-			setNewDashboardState({
-				...newDashboardState,
-				loading: true,
-			});
-			const response = await createDashboard({
-				title: t('new_dashboard_title', {
-					ns: 'dashboard',
-				}),
-				uploadedGrafana: false,
-				version: ENTITY_VERSION_V5,
-			});
+	const onNewDashboardHandler = useCallback(
+		async (event: React.MouseEvent): Promise<void> => {
+			try {
+				logEvent('Dashboard List: Create dashboard clicked', {});
+				setNewDashboardState({
+					...newDashboardState,
+					loading: true,
+				});
+				const response = await createDashboard({
+					title: t('new_dashboard_title', {
+						ns: 'dashboard',
+					}),
+					uploadedGrafana: false,
+					version: ENTITY_VERSION_V5,
+				});
 
-			safeNavigate(
-				generatePath(ROUTES.DASHBOARD, {
-					dashboardId: response.data.id,
-				}),
-			);
-		} catch (error) {
-			showErrorModal(error as APIError);
-			setNewDashboardState({
-				...newDashboardState,
-				error: true,
-				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
-			});
-		}
-	}, [newDashboardState, safeNavigate, showErrorModal, t]);
+				if (event && isShortcutKey(event)) {
+					window.open(
+						generatePath(ROUTES.DASHBOARD, {
+							dashboardId: response.data.id,
+						}),
+						'_blank',
+						'noopener,noreferrer',
+					);
+				} else {
+					safeNavigate(
+						generatePath(ROUTES.DASHBOARD, {
+							dashboardId: response.data.id,
+						}),
+					);
+				}
+			} catch (error) {
+				showErrorModal(error as APIError);
+				setNewDashboardState({
+					...newDashboardState,
+					error: true,
+					errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
+				});
+			}
+		},
+		[newDashboardState, safeNavigate, showErrorModal, t],
+	);
 
 	const onModalHandler = (uploadedGrafana: boolean): void => {
 		logEvent('Dashboard List: Import JSON clicked', {});
@@ -412,8 +426,8 @@ function DashboardsList(): JSX.Element {
 
 				const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
 					event.stopPropagation();
-					if (event.metaKey || event.ctrlKey) {
-						window.open(getLink(), '_blank');
+					if (isShortcutKey(event)) {
+						window.open(getLink(), '_blank', 'noopener,noreferrer');
 					} else {
 						safeNavigate(getLink());
 					}
@@ -639,8 +653,8 @@ function DashboardsList(): JSX.Element {
 				label: (
 					<div
 						className="create-dashboard-menu-item"
-						onClick={(): void => {
-							onNewDashboardHandler();
+						onClick={(event: React.MouseEvent): void => {
+							onNewDashboardHandler(event);
 						}}
 					>
 						<LayoutGrid size={14} /> Create dashboard
@@ -927,7 +941,9 @@ function DashboardsList(): JSX.Element {
 
 				<DashboardTemplatesModal
 					showNewDashboardTemplatesModal={showNewDashboardTemplatesModal}
-					onCreateNewDashboard={onNewDashboardHandler}
+					onCreateNewDashboard={(event: React.MouseEvent): Promise<void> =>
+						onNewDashboardHandler(event)
+					}
 					onCancel={(): void => {
 						setShowNewDashboardTemplatesModal(false);
 					}}

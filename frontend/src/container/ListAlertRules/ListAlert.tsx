@@ -39,6 +39,7 @@ import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { GettableAlert } from 'types/api/alerts/get';
+import { isShortcutKey } from 'utils/isShortcutKey';
 
 import DeleteAlert from './DeleteAlert';
 import { ColumnButton, SearchContainer } from './styles';
@@ -299,7 +300,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				const onClickHandler = (e: React.MouseEvent<HTMLElement>): void => {
 					e.stopPropagation();
 					e.preventDefault();
-					onEditHandler(record, e.metaKey || e.ctrlKey);
+					onEditHandler(record, isShortcutKey(e));
 				};
 
 				return <Typography.Link onClick={onClickHandler}>{value}</Typography.Link>;

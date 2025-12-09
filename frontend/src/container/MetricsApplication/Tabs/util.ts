@@ -22,6 +22,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { Tags } from 'types/reducer/trace';
+import { isShortcutKey } from 'utils/isShortcutKey';
 import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -43,6 +44,7 @@ interface OnViewTracePopupClickProps {
 	isViewLogsClicked?: boolean;
 	stepInterval?: number;
 	safeNavigate: (url: string) => void;
+	event: React.MouseEvent;
 }
 
 interface OnViewAPIMonitoringPopupClickProps {
@@ -53,6 +55,7 @@ interface OnViewAPIMonitoringPopupClickProps {
 	isError: boolean;
 
 	safeNavigate: (url: string) => void;
+	event: React.MouseEvent;
 }
 
 export function generateExplorerPath(
@@ -83,7 +86,7 @@ export function generateExplorerPath(
  * @param isViewLogsClicked - Whether this is for viewing logs vs traces
  * @param stepInterval - Time interval in seconds
  * @param safeNavigate - Navigation function
- 
+ * @param event - Click event to handle opening in new tab
  */
 export function onViewTracePopupClick({
 	selectedTraceTags,
@@ -93,33 +96,34 @@ export function onViewTracePopupClick({
 	isViewLogsClicked,
 	stepInterval,
 	safeNavigate,
-}: OnViewTracePopupClickProps): VoidFunction {
-	return (): void => {
-		const endTime = secondsToMilliseconds(timestamp);
-		const startTime = secondsToMilliseconds(timestamp - (stepInterval || 60));
+	event,
+}: OnViewTracePopupClickProps): void {
+	const endTime = secondsToMilliseconds(timestamp);
+	const startTime = secondsToMilliseconds(timestamp - (stepInterval || 60));
 
-		const urlParams = new URLSearchParams(window.location.search);
-		urlParams.set(QueryParams.startTime, startTime.toString());
-		urlParams.set(QueryParams.endTime, endTime.toString());
-		urlParams.delete(QueryParams.relativeTime);
-		const avialableParams = routeConfig[ROUTES.TRACE];
-		const queryString = getQueryString(avialableParams, urlParams);
+	const urlParams = new URLSearchParams(window.location.search);
+	urlParams.set(QueryParams.startTime, startTime.toString());
+	urlParams.set(QueryParams.endTime, endTime.toString());
+	urlParams.delete(QueryParams.relativeTime);
+	const avialableParams = routeConfig[ROUTES.TRACE];
+	const queryString = getQueryString(avialableParams, urlParams);
 
-		const JSONCompositeQuery = encodeURIComponent(
-			JSON.stringify(apmToTraceQuery),
-		);
+	const JSONCompositeQuery = encodeURIComponent(JSON.stringify(apmToTraceQuery));
 
-		const newPath = generateExplorerPath(
-			isViewLogsClicked,
-			urlParams,
-			servicename,
-			selectedTraceTags,
-			JSONCompositeQuery,
-			queryString,
-		);
+	const newPath = generateExplorerPath(
+		isViewLogsClicked,
+		urlParams,
+		servicename,
+		selectedTraceTags,
+		JSONCompositeQuery,
+		queryString,
+	);
 
+	if (event && isShortcutKey(event)) {
+		window.open(newPath, '_blank', 'noopener,noreferrer');
+	} else {
 		safeNavigate(newPath);
-	};
+	}
 }
 
 const generateAPIMonitoringPath = (
@@ -149,49 +153,52 @@ export function onViewAPIMonitoringPopupClick({
 	isError,
 	stepInterval,
 	safeNavigate,
-}: OnViewAPIMonitoringPopupClickProps): VoidFunction {
-	return (): void => {
-		const endTime = timestamp + (stepInterval || 60);
-		const startTime = timestamp - (stepInterval || 60);
-		const filters = {
-			items: [
-				...(isError
-					? [
-							{
-								id: uuid().slice(0, 8),
-								key: {
-									key: 'hasError',
-									dataType: DataTypes.bool,
-									type: 'tag',
-									id: 'hasError--bool--tag--true',
-								},
-								op: 'in',
-								value: ['true'],
+	event,
+}: OnViewAPIMonitoringPopupClickProps): void {
+	const endTime = timestamp + (stepInterval || 60);
+	const startTime = timestamp - (stepInterval || 60);
+	const filters = {
+		items: [
+			...(isError
+				? [
+						{
+							id: uuid().slice(0, 8),
+							key: {
+								key: 'hasError',
+								dataType: DataTypes.bool,
+								type: 'tag',
+								id: 'hasError--bool--tag--true',
 							},
-					  ]
-					: []),
-				{
-					id: uuid().slice(0, 8),
-					key: {
-						key: 'service.name',
-						dataType: DataTypes.String,
-						type: 'resource',
-					},
-					op: '=',
-					value: servicename,
+							op: 'in',
+							value: ['true'],
+						},
+				  ]
+				: []),
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'service.name',
+					dataType: DataTypes.String,
+					type: 'resource',
 				},
-			],
-			op: 'AND',
-		};
-		const newPath = generateAPIMonitoringPath(
-			domainName,
-			startTime,
-			endTime,
-			filters,
-		);
-
-		safeNavigate(newPath);
+				op: '=',
+				value: servicename,
+			},
+		],
+		op: 'AND',
 	};
+	const newPath = generateAPIMonitoringPath(
+		domainName,
+		startTime,
+		endTime,
+		filters,
+	);
+
+	if (event && isShortcutKey(event)) {
+		window.open(newPath, '_blank', 'noopener,noreferrer');
+	} else {
+		safeNavigate(newPath);
+	}
 }
 
 export function useGraphClickHandler(

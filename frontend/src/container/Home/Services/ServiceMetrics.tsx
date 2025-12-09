@@ -11,7 +11,6 @@ import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import history from 'lib/history';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
@@ -29,6 +28,8 @@ import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
+import { genericNavigate } from 'utils/genericNavigate';
+import { isShortcutKey } from 'utils/isShortcutKey';
 
 import { FeatureKeys } from '../../../constants/features';
 import { DOCS_LINKS } from '../constants';
@@ -64,7 +65,7 @@ const EmptyState = memo(
 						<Button
 							type="default"
 							className="periscope-btn secondary"
-							onClick={(): void => {
+							onClick={(event: React.MouseEvent): void => {
 								logEvent('Homepage: Get Started clicked', {
 									source: 'Service Metrics',
 								});
@@ -73,7 +74,7 @@ const EmptyState = memo(
 									activeLicenseV3 &&
 									activeLicenseV3.platform === LicensePlatform.CLOUD
 								) {
-									history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+									genericNavigate(ROUTES.GET_STARTED_WITH_CLOUD, event);
 								} else {
 									window?.open(
 										DOCS_LINKS.ADD_DATA_SOURCE,
@@ -116,7 +117,7 @@ const ServicesListTable = memo(
 		onRowClick,
 	}: {
 		services: ServicesList[];
-		onRowClick: (record: ServicesList) => void;
+		onRowClick: (record: ServicesList, event: React.MouseEvent) => void;
 	}): JSX.Element => (
 		<div className="services-list-container home-data-item-container metrics-services-list">
 			<div className="services-list">
@@ -125,8 +126,8 @@ const ServicesListTable = memo(
 					dataSource={services}
 					pagination={false}
 					className="services-table"
-					onRow={(record): { onClick: () => void } => ({
-						onClick: (): void => onRowClick(record),
+					onRow={(record): { onClick: (event: React.MouseEvent) => void } => ({
+						onClick: (event: React.MouseEvent): void => onRowClick(record, event),
 					})}
 				/>
 			</div>
@@ -284,11 +285,19 @@ function ServiceMetrics({
 	}, [onUpdateChecklistDoneItem, loadingUserPreferences, servicesExist]);
 
 	const handleRowClick = useCallback(
-		(record: ServicesList) => {
+		(record: ServicesList, event: React.MouseEvent) => {
 			logEvent('Homepage: Service clicked', {
 				serviceName: record.serviceName,
 			});
-			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+			if (event && isShortcutKey(event)) {
+				window.open(
+					`${ROUTES.APPLICATION}/${record.serviceName}`,
+					'_blank',
+					'noopener,noreferrer',
+				);
+			} else {
+				safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+			}
 		},
 		[safeNavigate],
 	);

@@ -3,7 +3,6 @@ import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useQueryService } from 'hooks/useQueryService';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import history from 'lib/history';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
@@ -15,6 +14,8 @@ import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { USER_ROLES } from 'types/roles';
+import { genericNavigate } from 'utils/genericNavigate';
+import { isShortcutKey } from 'utils/isShortcutKey';
 
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
@@ -118,7 +119,7 @@ export default function ServiceTraces({
 							<Button
 								type="default"
 								className="periscope-btn secondary"
-								onClick={(): void => {
+								onClick={(event: React.MouseEvent): void => {
 									logEvent('Homepage: Get Started clicked', {
 										source: 'Service Traces',
 									});
@@ -127,7 +128,7 @@ export default function ServiceTraces({
 										activeLicense &&
 										activeLicense.platform === LicensePlatform.CLOUD
 									) {
-										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+										genericNavigate(ROUTES.GET_STARTED_WITH_CLOUD, event);
 									} else {
 										window?.open(
 											DOCS_LINKS.ADD_DATA_SOURCE,
@@ -172,13 +173,21 @@ export default function ServiceTraces({
 						dataSource={top5Services}
 						pagination={false}
 						className="services-table"
-						onRow={(record): { onClick: () => void } => ({
-							onClick: (): void => {
+						onRow={(record): { onClick: (event: React.MouseEvent) => void } => ({
+							onClick: (event: React.MouseEvent): void => {
 								logEvent('Homepage: Service clicked', {
 									serviceName: record.serviceName,
 								});
 
-								safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+								if (event && isShortcutKey(event)) {
+									window.open(
+										`${ROUTES.APPLICATION}/${record.serviceName}`,
+										'_blank',
+										'noopener,noreferrer',
+									);
+								} else {
+									safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+								}
 							},
 						})}
 					/>
