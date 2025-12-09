@@ -168,6 +168,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		FluxInterval:                  config.Querier.FluxInterval,
 		Gateway:                       gatewayProxy,
 		GatewayUrl:                    config.Gateway.URL.String(),
+		IngestionConfig:               config.Ingestion,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts, signoz)
