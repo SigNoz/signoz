@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 export function downloadObjectAsJson(
 	exportObj: unknown,
 	exportName: string,
@@ -14,3 +16,25 @@ export function downloadObjectAsJson(
 }
 
 export const DEFAULT_ROW_NAME = 'Sample Row';
+
+export function linkifyText(text: string): ReactNode[] {
+	const urlRegex = /(https?:\/\/[^\s]+)/g;
+	const parts = text.split(urlRegex);
+
+	return parts.map((part, index) => {
+		if (part.match(urlRegex)) {
+			return (
+				<a
+					key={`link-${index}`}
+					href={part}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="dashboard-description-link"
+				>
+					{part}
+				</a>
+			);
+		}
+		return part;
+	});
+}
