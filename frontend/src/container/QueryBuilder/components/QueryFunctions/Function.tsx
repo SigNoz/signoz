@@ -24,6 +24,7 @@ interface FunctionProps {
 	handleUpdateFunctionArgs: any;
 	handleUpdateFunctionName: any;
 	handleDeleteFunction: any;
+	handleOpenFunctionsSearchModal: () => void;
 }
 
 export default function Function({
@@ -33,6 +34,7 @@ export default function Function({
 	handleUpdateFunctionArgs,
 	handleUpdateFunctionName,
 	handleDeleteFunction,
+	handleOpenFunctionsSearchModal,
 }: FunctionProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	// Normalize function name to handle backend response case sensitivity
@@ -75,25 +77,9 @@ export default function Function({
 
 	return (
 		<Flex className="query-function">
-			<Select
-				className={cx('query-function-name-selector', showInput ? 'showInput' : '')}
-				value={normalizedFunctionName}
-				disabled={disabled}
-				style={{ minWidth: '100px' }}
-				onChange={(value): void => {
-					handleUpdateFunctionName(funcData, index, value);
-				}}
-				dropdownStyle={{
-					minWidth: 200,
-					borderRadius: '4px',
-					border: isDarkMode
-						? '1px solid var(--bg-slate-400)'
-						: '1px solid var(--bg-vanilla-300)',
-					boxShadow: `4px 10px 16px 2px rgba(0, 0, 0, 0.20)`,
-				}}
-				placement="bottomRight"
-				options={functionOptions}
-			/>
+			<Button onClick={handleOpenFunctionsSearchModal}>
+				{normalizedFunctionName}
+			</Button>
 
 			{showInput && (
 				<OverflowInputToolTip
