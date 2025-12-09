@@ -222,7 +222,13 @@ describe('ExplorerColumnsRenderer', () => {
 			await userEvent.click(checkbox);
 
 			expect(mockSetSelectedLogFields).toHaveBeenCalledWith([
-				{ dataType: 'string', name: 'attribute1', type: '' },
+				{
+					dataType: 'string',
+					fieldContext: 'log',
+					fieldDataType: 'string',
+					name: 'attribute1',
+					type: '',
+				},
 			]);
 		});
 
