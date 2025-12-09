@@ -1,7 +1,14 @@
 import { cloneDeep, isEqual } from 'lodash-es';
 import { useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import {
+	Location,
+	NavigateFunction,
+	useLocation,
+	useNavigate,
+} from 'react-router-dom-v5-compat';
+import { isEventObject } from 'utils/isEventObject';
 
+// state uses 'any' because react-router's NavigateOptions interface uses it
 interface NavigateOptions {
 	replace?: boolean;
 	state?: any;
@@ -83,6 +90,74 @@ const isDefaultNavigation = (currentUrl: URL, targetUrl: URL): boolean => {
 
 	return newKeys.length > 0;
 };
+
+// Helper function to extract options from arguments
+const extractOptions = (
+	optionsOrEvent?:
+		| NavigateOptions
+		| React.MouseEvent
+		| MouseEvent
+		| KeyboardEvent,
+	options?: NavigateOptions,
+): NavigateOptions => {
+	const isEvent = isEventObject(optionsOrEvent);
+	const actualOptions = isEvent ? options : (optionsOrEvent as NavigateOptions);
+
+	const shouldOpenInNewTab =
+		isEvent && (optionsOrEvent.metaKey || optionsOrEvent.ctrlKey);
+
+	return {
+		...actualOptions,
+		newTab: shouldOpenInNewTab || actualOptions?.newTab,
+	};
+};
+
+// Helper function to create target URL
+const createTargetUrl = (
+	to: string | SafeNavigateParams,
+	location: Location,
+): URL => {
+	if (typeof to === 'string') {
+		return new URL(to, window.location.origin);
+	}
+	return new URL(
+		`${to.pathname || location.pathname}${to.search || ''}`,
+		window.location.origin,
+	);
+};
+
+// Helper function to handle new tab navigation
+const handleNewTabNavigation = (
+	to: string | SafeNavigateParams,
+	location: Location,
+): void => {
+	const targetPath =
+		typeof to === 'string'
+			? to
+			: `${to.pathname || location.pathname}${to.search || ''}`;
+	window.open(targetPath, '_blank');
+};
+
+// Helper function to perform navigation
+const performNavigation = (
+	to: string | SafeNavigateParams,
+	navigationOptions: NavigateOptions,
+	navigate: NavigateFunction,
+	location: Location,
+): void => {
+	if (typeof to === 'string') {
+		navigate(to, navigationOptions);
+	} else {
+		navigate(
+			{
+				pathname: to.pathname || location.pathname,
+				search: to.search,
+			},
+			navigationOptions,
+		);
+	}
+};
+
 export const useSafeNavigate = (
 	{ preventSameUrlNavigation }: UseSafeNavigateProps = {
 		preventSameUrlNavigation: true,
@@ -90,6 +165,11 @@ export const useSafeNavigate = (
 ): {
 	safeNavigate: (
 		to: string | SafeNavigateParams,
+		optionsOrEvent?:
+			| NavigateOptions
+			| React.MouseEvent
+			| MouseEvent
+			| KeyboardEvent,
 		options?: NavigateOptions,
 	) => void;
 } => {
@@ -97,30 +177,25 @@ export const useSafeNavigate = (
 	const location = useLocation();
 
 	const safeNavigate = useCallback(
-		(to: string | SafeNavigateParams, options?: NavigateOptions) => {
+		(
+			to: string | SafeNavigateParams,
+			optionsOrEvent?:
+				| NavigateOptions
+				| React.MouseEvent
+				| MouseEvent
+				| KeyboardEvent,
+			options?: NavigateOptions,
+		) => {
+			const finalOptions = extractOptions(optionsOrEvent, options);
 			const currentUrl = new URL(
 				`${location.pathname}${location.search}`,
 				window.location.origin,
 			);
+			const targetUrl = createTargetUrl(to, location);
 
-			let targetUrl: URL;
-
-			if (typeof to === 'string') {
-				targetUrl = new URL(to, window.location.origin);
-			} else {
-				targetUrl = new URL(
-					`${to.pathname || location.pathname}${to.search || ''}`,
-					window.location.origin,
-				);
-			}
-
-			// If newTab is true, open in new tab and return early
-			if (options?.newTab) {
-				const targetPath =
-					typeof to === 'string'
-						? to
-						: `${to.pathname || location.pathname}${to.search || ''}`;
-				window.open(targetPath, '_blank');
+			// Handle new tab navigation
+			if (finalOptions?.newTab) {
+				handleNewTabNavigation(to, location);
 				return;
 			}
 
@@ -132,23 +207,13 @@ export const useSafeNavigate = (
 			}
 
 			const navigationOptions = {
-				...options,
-				replace: isDefaultParamsNavigation || options?.replace,
+				...finalOptions,
+				replace: isDefaultParamsNavigation || finalOptions?.replace,
 			};
 
-			if (typeof to === 'string') {
-				navigate(to, navigationOptions);
-			} else {
-				navigate(
-					{
-						pathname: to.pathname || location.pathname,
-						search: to.search,
-					},
-					navigationOptions,
-				);
-			}
+			performNavigation(to, navigationOptions, navigate, location);
 		},
-		[navigate, location.pathname, location.search, preventSameUrlNavigation],
+		[navigate, location, preventSameUrlNavigation],
 	);
 
 	return { safeNavigate };
