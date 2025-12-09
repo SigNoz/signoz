@@ -132,11 +132,21 @@ function UplotPanelWrapper({
 		[selectedGraph, widget?.panelTypes, widget?.stackedBarChart],
 	);
 
-	const chartData = getUPlotChartData(
-		queryResponse?.data?.payload,
-		widget.fillSpans,
-		stackedBarChart,
-		hiddenGraph,
+	// Memoize chartData to prevent unnecessary recalculations
+	const chartData = useMemo(
+		() =>
+			getUPlotChartData(
+				queryResponse?.data?.payload,
+				widget.fillSpans,
+				stackedBarChart,
+				hiddenGraph,
+			),
+		[
+			queryResponse?.data?.payload,
+			widget.fillSpans,
+			stackedBarChart,
+			hiddenGraph,
+		],
 	);
 
 	useEffect(() => {
