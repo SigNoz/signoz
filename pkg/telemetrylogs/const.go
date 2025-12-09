@@ -48,8 +48,7 @@ var (
 		FieldContext:  telemetrytypes.FieldContextLog,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	}
-	BodyJSONStringSearchPrefix = `body.`
-	IntrinsicFields            = map[string]telemetrytypes.TelemetryFieldKey{
+	IntrinsicFields = map[string]telemetrytypes.TelemetryFieldKey{
 		"body": {
 			Name:          "body",
 			Signal:        telemetrytypes.SignalLogs,

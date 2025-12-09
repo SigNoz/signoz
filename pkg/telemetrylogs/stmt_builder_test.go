@@ -32,7 +32,6 @@ func resourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.LogAggregation
 		cb,
 		mockMetadataStore,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 }
@@ -175,11 +174,11 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -191,7 +190,6 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -232,7 +230,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -260,7 +258,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
 				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -268,11 +266,11 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -284,7 +282,6 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -325,7 +322,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND match(LOWER(body), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND match(LOWER(body), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "hello", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -353,7 +350,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (match(LOWER(body), LOWER(?))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (match(LOWER(body), LOWER(?))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
 				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "hello", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -369,7 +366,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (JSON_VALUE(body, '$.\"status\"') = ? AND JSON_EXISTS(body, '$.\"status\"')) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (JSON_VALUE(body, '$.\"status\"') = ? AND JSON_EXISTS(body, '$.\"status\"')) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{uint64(1747945619), uint64(1747983448), "success", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -377,11 +374,11 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -393,9 +390,10 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
+
+	//
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -451,11 +449,11 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -467,7 +465,6 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -509,7 +506,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND true)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((LOWER(body) LIKE LOWER(?))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND true)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((LOWER(body) LIKE LOWER(?))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "%error%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -538,7 +535,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND true) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (LOWER(body) LIKE LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND true) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (LOWER(body) LIKE LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
 				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "%error%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -547,11 +544,11 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -563,7 +560,6 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 

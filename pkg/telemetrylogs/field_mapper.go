@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz-otel-collector/utils"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -28,6 +30,11 @@ var (
 		"severity_text":      {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
 		"severity_number":    {Name: "severity_number", Type: schema.ColumnTypeUInt8},
 		"body":               {Name: "body", Type: schema.ColumnTypeString},
+		LogsV2BodyJSONColumn: {Name: LogsV2BodyJSONColumn, Type: schema.JSONColumnType{
+			MaxDynamicTypes: utils.ToPointer(uint(32)),
+			MaxDynamicPaths: utils.ToPointer(uint(0)),
+		}},
+		LogsV2BodyPromotedColumn: {Name: LogsV2BodyPromotedColumn, Type: schema.JSONColumnType{}},
 		"attributes_string": {Name: "attributes_string", Type: schema.MapColumnType{
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
@@ -61,7 +68,7 @@ func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
 
-func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		return logsV2Columns["resource"], nil
@@ -83,13 +90,23 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 			return logsV2Columns["attributes_bool"], nil
 		}
 	case telemetrytypes.FieldContextBody:
-		// body context fields are stored in the body column
+		// Body context is for JSON body fields
+		// Use body_json if feature flag is enabled
+		if constants.BodyJSONQueryEnabled {
+			return logsV2Columns[LogsV2BodyJSONColumn], nil
+		}
+		// Fall back to legacy body column
 		return logsV2Columns["body"], nil
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
 		col, ok := logsV2Columns[key.Name]
 		if !ok {
-			// check if the key has body JSON search (backward compatibility)
-			if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+			// check if the key has body JSON search
+			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
+				// Use body_json if feature flag is enabled and we have a body condition builder
+				if constants.BodyJSONQueryEnabled {
+					return logsV2Columns[LogsV2BodyJSONColumn], nil
+				}
+				// Fall back to legacy body column
 				return logsV2Columns["body"], nil
 			}
 			return nil, qbtypes.ErrColumnNotFound
@@ -106,25 +123,42 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		return "", err
 	}
 
+	if !constants.BodyJSONQueryEnabled && key.FieldContext == telemetrytypes.FieldContextBody {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
+	}
+
 	// schema.JSONColumnType{} now can not be used in switch cases, so we need to check if the column is a JSON column
 	if column.IsJSONColumn() {
 		// json is only supported for resource context as of now
-		if key.FieldContext != telemetrytypes.FieldContextResource {
+		switch key.FieldContext {
+		case telemetrytypes.FieldContextResource:
+			oldColumn := logsV2Columns["resources_string"]
+			oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
+
+			// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
+			// once clickHouse dependency is updated, we need to check if we can remove it.
+			if key.Materialized {
+				oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
+				oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+				return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, %s==true, %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldKeyNameExists, oldKeyName), nil
+			}
+			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
+		case telemetrytypes.FieldContextBody:
+			if strings.Contains(key.Name, ArraySep) || strings.Contains(key.Name, ArrayAnyIndex) {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", key.Name)
+			}
+			expr := fmt.Sprintf("dynamicElement(%s, '%s')", BodyJSONColumnPrefix+key.Name, key.JSONDataType.StringValue())
+			if key.Materialized {
+				expr = fmt.Sprintf("coalesce(%s, %s)", expr, fmt.Sprintf("dynamicElement(%s, '%s')", BodyPromotedColumnPrefix+key.Name, key.JSONDataType.StringValue()))
+			}
+			// returning qbtypes.ErrColumnNotFound is a hack that will trigger the fallback expr logic to include all the types for the key
+			return expr, qbtypes.ErrColumnNotFound
+		default:
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
-		oldColumn := logsV2Columns["resources_string"]
-		oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
 
-		// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
-		// once clickHouse dependency is updated, we need to check if we can remove it.
-		if key.Materialized {
-			oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
-			oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
-			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, %s==true, %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldKeyNameExists, oldKeyName), nil
-		} else {
-			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
-		}
 	}
+
 	switch column.Type {
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},

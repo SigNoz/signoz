@@ -43,7 +43,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/model"

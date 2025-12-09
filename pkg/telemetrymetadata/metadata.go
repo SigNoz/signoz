@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -572,6 +573,14 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 	}
 
+	if constants.BodyJSONQueryEnabled {
+		bodyJSONPaths, finished, err := getBodyJSONPaths(ctx, t.telemetrystore, fieldKeySelectors) // LIKE for pattern matching
+		if err != nil {
+			t.logger.Error("failed to extract body JSON paths", "error", err)
+		}
+		keys = append(keys, bodyJSONPaths...)
+		complete = complete && finished
+	}
 	return keys, complete, nil
 }
 
@@ -978,7 +987,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
 			FieldKeys:        keys,
-        }, 0, 0)
+		}, 0, 0)
 		if err == nil {
 			sb.AddWhereClause(whereClause.WhereClause)
 		} else {
@@ -1002,20 +1011,20 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 			// search on attributes
 			key.FieldContext = telemetrytypes.FieldContextAttribute
-            cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
 			if err == nil {
 				conds = append(conds, cond)
 			}
 
 			// search on resource
 			key.FieldContext = telemetrytypes.FieldContextResource
-            cond, err = t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err = t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
 			if err == nil {
 				conds = append(conds, cond)
 			}
 			key.FieldContext = origContext
 		} else {
-            cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
 			if err == nil {
 				conds = append(conds, cond)
 			}
@@ -1162,6 +1171,10 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 	limit := fieldValueSelector.Limit
 	if limit == 0 {
 		limit = 50
+	}
+
+	if strings.HasPrefix(fieldValueSelector.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
+		return ListJSONValues(ctx, t.telemetrystore.ClickhouseDB(), fieldValueSelector.Name, limit)
 	}
 
 	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(t.logsDBName + "." + t.logsFieldsTblName)
