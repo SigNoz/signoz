@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
-	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
 )
 
 type JSONAccessBranchType string
@@ -74,10 +73,6 @@ func (n *JSONAccessNode) Alias() string {
 }
 
 func (n *JSONAccessNode) FieldPath() string {
-	key := n.Name
-	if keycheck.IsBacktickRequired(key) {
-		key = "`" + key + "`"
-	}
-
+	key := "`" + n.Name + "`"
 	return n.Parent.Alias() + "." + key
 }

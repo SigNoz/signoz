@@ -208,7 +208,8 @@ func TestNode_FieldPath(t *testing.T) {
 				Name:   "user",
 				Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
 			},
-			expected: LogsV2BodyJSONColumn + ".user",
+			// FieldPath() always wraps the field name in backticks
+			expected: LogsV2BodyJSONColumn + ".`user`",
 		},
 		{
 			name: "Field path with backtick-required key",
@@ -227,7 +228,8 @@ func TestNode_FieldPath(t *testing.T) {
 					Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
 				},
 			},
-			expected: "`" + LogsV2BodyJSONColumn + ".user`.age",
+			// FieldPath() always wraps the field name in backticks
+			expected: "`" + LogsV2BodyJSONColumn + ".user`.`age`",
 		},
 		{
 			name: "Array element field path",
@@ -238,7 +240,8 @@ func TestNode_FieldPath(t *testing.T) {
 					Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
 				},
 			},
-			expected: "`" + LogsV2BodyJSONColumn + ".education`.name",
+			// FieldPath() always wraps the field name in backticks
+			expected: "`" + LogsV2BodyJSONColumn + ".education`.`name`",
 		},
 	}
 
