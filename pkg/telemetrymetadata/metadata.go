@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"slices"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -16,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 )
@@ -51,6 +54,7 @@ type telemetryMetaStore struct {
 
 	fm               qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
+	temporalityCache *TemporalityCache
 }
 
 func escapeForLike(s string) string {
@@ -60,6 +64,7 @@ func escapeForLike(s string) string {
 func NewTelemetryMetaStore(
 	settings factory.ProviderSettings,
 	telemetrystore telemetrystore.TelemetryStore,
+	cache cache.Cache,
 	tracesDBName string,
 	tracesFieldsTblName string,
 	spanAttributesKeysTblName string,
@@ -103,6 +108,34 @@ func NewTelemetryMetaStore(
 
 	t.fm = fm
 	t.conditionBuilder = conditionBuilder
+
+	if cache != nil &&
+		strings.ToLower(os.Getenv("TEMPORALITY_CACHE_ENABLED")) != "false" {
+		// TODO(srikanthccv): is there a ever a case to make this configurable?
+		temporalityCacheConfig := DefaultTemporalityCacheConfig()
+		t.temporalityCache = NewTemporalityCache(
+			settings,
+			cache,
+			temporalityCacheConfig,
+			func(ctx context.Context, orgID valuer.UUID, metricName string) (metrictypes.Temporality, error) {
+				temporalityMap, err := t.fetchTemporalityMultiDirect(ctx, metricName)
+				if err != nil {
+					return metrictypes.Unknown, err
+				}
+				temporality, ok := temporalityMap[metricName]
+				if !ok {
+					return metrictypes.Unknown, nil
+				}
+				return temporality, nil
+			},
+		)
+
+		t.temporalityCache.SetRefreshMultiCallback(func(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]metrictypes.Temporality, error) {
+			return t.fetchTemporalityMultiDirect(ctx, metricNames...)
+		})
+	} else {
+		t.logger.Info("skipping temporality cache")
+	}
 
 	return t
 }
@@ -1466,12 +1499,20 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 	return values, complete, nil
 }
 
-func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error) {
+func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, orgID valuer.UUID, metricName string) (metrictypes.Temporality, error) {
 	if metricName == "" {
 		return metrictypes.Unknown, errors.Newf(errors.TypeInternal, errors.CodeInternal, "metric name cannot be empty")
 	}
 
-	temporalityMap, err := t.FetchTemporalityMulti(ctx, metricName)
+	if t.temporalityCache != nil {
+		return t.temporalityCache.Get(ctx, orgID, metricName)
+	}
+
+	return t.fetchTemporalityDirect(ctx, metricName)
+}
+
+func (t *telemetryMetaStore) fetchTemporalityDirect(ctx context.Context, metricName string) (metrictypes.Temporality, error) {
+	temporalityMap, err := t.fetchTemporalityMultiDirect(ctx, metricName)
 	if err != nil {
 		return metrictypes.Unknown, err
 	}
@@ -1484,11 +1525,20 @@ func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, metricName st
 	return temporality, nil
 }
 
-func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]metrictypes.Temporality, error) {
 	if len(metricNames) == 0 {
 		return make(map[string]metrictypes.Temporality), nil
 	}
 
+	if t.temporalityCache != nil {
+		return t.temporalityCache.GetMulti(ctx, orgID, metricNames)
+	}
+
+	return t.fetchTemporalityMultiDirect(ctx, metricNames...)
+}
+
+// fetchTemporalityMultiDirect fetches temporalities directly from database without cache
+func (t *telemetryMetaStore) fetchTemporalityMultiDirect(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
 	result := make(map[string]metrictypes.Temporality)
 	metricsTemporality, err := t.fetchMetricsTemporality(ctx, metricNames...)
 	if err != nil {
