@@ -1,13 +1,16 @@
 import { Color } from '@signozhq/design-tokens';
+import { render, screen } from '@testing-library/react';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 
 import { defaultPostableAlertRuleV2 } from '../constants';
+import * as context from '../context';
 import { INITIAL_ALERT_STATE } from '../context/constants';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 } from '../context/types';
+import { createMockAlertContextState } from '../EvaluationSettings/__tests__/testUtils';
 import {
 	getAdvancedOptionsStateFromAlertDef,
 	getColorForThreshold,
@@ -16,6 +19,7 @@ import {
 	getNotificationSettingsStateFromAlertDef,
 	getThresholdStateFromAlertDef,
 	parseGoTime,
+	Spinner,
 } from '../utils';
 
 describe('CreateAlertV2 utils', () => {
@@ -354,5 +358,49 @@ describe('CreateAlertV2 utils', () => {
 				notificationSettingsState: expect.any(Object),
 			});
 		});
+	});
+
+	describe('Spinner', () => {
+		it('should return null when not creating or updating or testing alert rule', () => {
+			jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
+				createMockAlertContextState({
+					isCreatingAlertRule: false,
+					isUpdatingAlertRule: false,
+					isTestingAlertRule: false,
+				}),
+			);
+			render(<Spinner />);
+			expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
+		});
+	});
+
+	it('should return the spinner when creating  alert rule', () => {
+		jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
+			createMockAlertContextState({
+				isCreatingAlertRule: true,
+			}),
+		);
+		render(<Spinner />);
+		expect(screen.getByTestId('spinner')).toBeInTheDocument();
+	});
+
+	it('should return the spinner when updating alert rule', () => {
+		jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
+			createMockAlertContextState({
+				isUpdatingAlertRule: true,
+			}),
+		);
+		render(<Spinner />);
+		expect(screen.getByTestId('spinner')).toBeInTheDocument();
+	});
+
+	it('should return the spinner when testing alert rule', () => {
+		jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
+			createMockAlertContextState({
+				isTestingAlertRule: true,
+			}),
+		);
+		render(<Spinner />);
+		expect(screen.getByTestId('spinner')).toBeInTheDocument();
 	});
 });
