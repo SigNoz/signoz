@@ -9,6 +9,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
+	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -35,37 +37,39 @@ import (
 )
 
 type Handlers struct {
-	Organization   organization.Handler
-	Preference     preference.Handler
-	User           user.Handler
-	SavedView      savedview.Handler
-	Apdex          apdex.Handler
-	Dashboard      dashboard.Handler
-	QuickFilter    quickfilter.Handler
-	TraceFunnel    tracefunnel.Handler
-	RawDataExport  rawdataexport.Handler
-	AuthDomain     authdomain.Handler
-	Session        session.Handler
-	SpanPercentile spanpercentile.Handler
-	Services       services.Handler
-	Promote        promote.Handler
+	Organization    organization.Handler
+	Preference      preference.Handler
+	User            user.Handler
+	SavedView       savedview.Handler
+	Apdex           apdex.Handler
+	Dashboard       dashboard.Handler
+	QuickFilter     quickfilter.Handler
+	TraceFunnel     tracefunnel.Handler
+	RawDataExport   rawdataexport.Handler
+	AuthDomain      authdomain.Handler
+	Session         session.Handler
+	SpanPercentile  spanpercentile.Handler
+	Services        services.Handler
+	MetricsExplorer metricsexplorer.Handler
+	Promote         promote.Handler
 }
 
 func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing) Handlers {
 	return Handlers{
-		Organization:   implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
-		Preference:     implpreference.NewHandler(modules.Preference),
-		User:           impluser.NewHandler(modules.User, modules.UserGetter),
-		SavedView:      implsavedview.NewHandler(modules.SavedView),
-		Apdex:          implapdex.NewHandler(modules.Apdex),
-		Dashboard:      impldashboard.NewHandler(modules.Dashboard, providerSettings, querier, licensing),
-		QuickFilter:    implquickfilter.NewHandler(modules.QuickFilter),
-		TraceFunnel:    impltracefunnel.NewHandler(modules.TraceFunnel),
-		RawDataExport:  implrawdataexport.NewHandler(modules.RawDataExport),
-		AuthDomain:     implauthdomain.NewHandler(modules.AuthDomain),
-		Session:        implsession.NewHandler(modules.Session),
-		Services:       implservices.NewHandler(modules.Services),
-		SpanPercentile: implspanpercentile.NewHandler(modules.SpanPercentile),
-		Promote:        implpromote.NewHandler(modules.Promote),
+		Organization:    implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
+		Preference:      implpreference.NewHandler(modules.Preference),
+		User:            impluser.NewHandler(modules.User, modules.UserGetter),
+		SavedView:       implsavedview.NewHandler(modules.SavedView),
+		Apdex:           implapdex.NewHandler(modules.Apdex),
+		Dashboard:       impldashboard.NewHandler(modules.Dashboard, providerSettings, querier, licensing),
+		QuickFilter:     implquickfilter.NewHandler(modules.QuickFilter),
+		TraceFunnel:     impltracefunnel.NewHandler(modules.TraceFunnel),
+		RawDataExport:   implrawdataexport.NewHandler(modules.RawDataExport),
+		AuthDomain:      implauthdomain.NewHandler(modules.AuthDomain),
+		Session:         implsession.NewHandler(modules.Session),
+		Services:        implservices.NewHandler(modules.Services),
+		MetricsExplorer: implmetricsexplorer.NewHandler(modules.MetricsExplorer),
+		SpanPercentile:  implspanpercentile.NewHandler(modules.SpanPercentile),
+		Promote:         implpromote.NewHandler(modules.Promote),
 	}
 }

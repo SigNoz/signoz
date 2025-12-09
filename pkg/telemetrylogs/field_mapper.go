@@ -106,8 +106,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		return "", err
 	}
 
-	// schema.JSONColumnType{} now can not be used in switch cases, so we need to check if the column is a JSON column
-	if column.IsJSONColumn() {
+	switch column.Type.GetType() {
+	case schema.ColumnTypeEnumJSON:
 		// json is only supported for resource context as of now
 		if key.FieldContext != telemetrytypes.FieldContextResource {
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
@@ -124,41 +124,32 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		} else {
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		}
-	}
-	switch column.Type {
-	case schema.ColumnTypeString,
-		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		schema.ColumnTypeUInt64,
-		schema.ColumnTypeUInt32,
-		schema.ColumnTypeUInt8:
+	case schema.ColumnTypeEnumLowCardinality:
+		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+		case schema.ColumnTypeEnumString:
+			return column.Name, nil
+		default:
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+		}
+	case schema.ColumnTypeEnumString,
+		schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
 		return column.Name, nil
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeString,
-	}:
-		// a key could have been materialized, if so return the materialized column name
-		if key.Materialized {
-			return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+	case schema.ColumnTypeEnumMap:
+		keyType := column.Type.(schema.MapColumnType).KeyType
+		if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 		}
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeFloat64,
-	}:
-		// a key could have been materialized, if so return the materialized column name
-		if key.Materialized {
-			return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+
+		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
+			// a key could have been materialized, if so return the materialized column name
+			if key.Materialized {
+				return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+			}
+			return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
+		default:
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
 		}
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeBool,
-	}:
-		// a key could have been materialized, if so return the materialized column name
-		if key.Materialized {
-			return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
-		}
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
 	}
 	// should not reach here
 	return column.Name, nil

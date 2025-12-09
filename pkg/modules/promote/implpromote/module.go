@@ -36,7 +36,13 @@ func NewModule(store telemetrystore.TelemetryStore) promote.Module {
 }
 
 func (m *module) ListBodySkipIndexes(ctx context.Context) ([]schemamigrator.Index, error) {
-	return telemetrymetadata.ListLogsJSONIndexes(ctx, m.store)
+	indexes, err := telemetrymetadata.ListLogsJSONIndexes(ctx, m.store)
+	if err != nil {
+		return nil, err
+	}
+	// Flatten the map values (which are slices) into a single slice
+	indexSlices := slices.Collect(maps.Values(indexes))
+	return slices.Concat(indexSlices...), nil
 }
 
 func (m *module) ListPromotedPaths(ctx context.Context) ([]string, error) {
