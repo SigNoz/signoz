@@ -100,8 +100,10 @@ func newProvider(
 		traceAggExprRewriter,
 	)
 
+	logsKeyEvolutionMetadata := telemetrylogs.NewKeyEvolutionMetadata(telemetryStore, cache, settings.Logger)
+
 	// Create log statement builder
-	logFieldMapper := telemetrylogs.NewFieldMapper()
+	logFieldMapper := telemetrylogs.NewFieldMapper(logsKeyEvolutionMetadata)
 	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
 	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
 		settings,

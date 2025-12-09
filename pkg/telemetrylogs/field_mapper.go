@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 
 	"golang.org/x/exp/maps"
@@ -55,10 +58,13 @@ var (
 )
 
 type fieldMapper struct {
+	evolutionMetadataStore telemetrytypes.KeyEvolutionMetadataStore
 }
 
-func NewFieldMapper() qbtypes.FieldMapper {
-	return &fieldMapper{}
+func NewFieldMapper(evolutionMetadataStore telemetrytypes.KeyEvolutionMetadataStore) qbtypes.FieldMapper {
+	return &fieldMapper{
+		evolutionMetadataStore: evolutionMetadataStore,
+	}
 }
 
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
@@ -97,7 +103,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	column, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -109,19 +115,35 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		if key.FieldContext != telemetrytypes.FieldContextResource {
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
-		oldColumn := logsV2Columns["resources_string"]
-		oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
 
-		// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
-		// once clickHouse dependency is updated, we need to check if we can remove it.
+		baseColumn := logsV2Columns["resources_string"]
+		tsStartTime := time.Unix(0, int64(tsStart))
+
+		// Extract orgId from context
+		var orgID valuer.UUID
+		if claims, err := authtypes.ClaimsFromContext(ctx); err == nil {
+			orgID, err = valuer.NewUUID(claims.OrgID)
+			if err != nil {
+				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid orgId %s", claims.OrgID)
+			}
+		}
+
+		// get all evolution for the column
+		evolutions := m.evolutionMetadataStore.Get(ctx, orgID, baseColumn.Name)
+
+		// restricting now to just one entry where we know we changes from map to json
+		if len(evolutions) > 0 && evolutions[0].ReleaseTime.Before(tsStartTime) {
+			return fmt.Sprintf("%s.`%s`::String", column.Name, key.Name), nil
+		}
+
 		if key.Materialized {
-			oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
+			oldKeyName := telemetrytypes.FieldKeyToMaterializedColumnName(key)
 			oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, %s==true, %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldKeyNameExists, oldKeyName), nil
 		} else {
-			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
+			attrVal := fmt.Sprintf("%s['%s']", baseColumn.Name, key.Name)
+			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, baseColumn.Name, key.Name, attrVal), nil
 		}
-
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,
@@ -166,11 +188,12 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, key *telemetrytypes.Telemet
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	tsStart, tsEnd uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	colName, err := m.FieldFor(ctx, field)
+	colName, err := m.FieldFor(ctx, tsStart, tsEnd, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -180,7 +203,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 			if _, ok := logsV2Columns[field.Name]; ok {
 				// if it is, attach the column name directly
 				field.FieldContext = telemetrytypes.FieldContextLog
-				colName, _ = m.FieldFor(ctx, field)
+				colName, _ = m.FieldFor(ctx, tsStart, tsEnd, field)
 			} else {
 				// - the context is not provided
 				// - there are not keys for the field
@@ -198,12 +221,12 @@ func (m *fieldMapper) ColumnExpressionFor(
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it
-			colName, _ = m.FieldFor(ctx, keysForField[0])
+			colName, _ = m.FieldFor(ctx, tsStart, tsEnd, keysForField[0])
 		} else {
 			// select any non-empty value from the keys
 			args := []string{}
 			for _, key := range keysForField {
-				colName, _ = m.FieldFor(ctx, key)
+				colName, _ = m.FieldFor(ctx, tsStart, tsEnd, key)
 				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", colName, colName))
 			}
 			colName = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))

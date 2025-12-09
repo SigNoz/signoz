@@ -51,6 +51,8 @@ func NewAggExprRewriter(
 // and the args if the parametric aggregation function is used.
 func (r *aggExprRewriter) Rewrite(
 	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
 	expr string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -77,7 +79,12 @@ func (r *aggExprRewriter) Rewrite(
 		return "", nil, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
 	}
 
-	visitor := newExprVisitor(r.logger, keys,
+	visitor := newExprVisitor(
+		ctx,
+		startNs,
+		endNs,
+		r.logger,
+		keys,
 		r.fullTextColumn,
 		r.fieldMapper,
 		r.conditionBuilder,
@@ -98,6 +105,8 @@ func (r *aggExprRewriter) Rewrite(
 // RewriteMulti rewrites a slice of expressions.
 func (r *aggExprRewriter) RewriteMulti(
 	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
 	exprs []string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -106,7 +115,7 @@ func (r *aggExprRewriter) RewriteMulti(
 	var errs []error
 	var chArgsList [][]any
 	for i, e := range exprs {
-		w, chArgs, err := r.Rewrite(ctx, e, rateInterval, keys)
+		w, chArgs, err := r.Rewrite(ctx, startNs, endNs, e, rateInterval, keys)
 		if err != nil {
 			errs = append(errs, err)
 			out[i] = e
@@ -123,6 +132,9 @@ func (r *aggExprRewriter) RewriteMulti(
 
 // exprVisitor walks FunctionExpr nodes and applies the mappers.
 type exprVisitor struct {
+	ctx     context.Context
+	startNs uint64
+	endNs   uint64
 	chparser.DefaultASTVisitor
 	logger           *slog.Logger
 	fieldKeys        map[string][]*telemetrytypes.TelemetryFieldKey
@@ -137,6 +149,9 @@ type exprVisitor struct {
 }
 
 func newExprVisitor(
+	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
 	logger *slog.Logger,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
@@ -146,6 +161,9 @@ func newExprVisitor(
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *exprVisitor {
 	return &exprVisitor{
+		ctx:              ctx,
+		startNs:          startNs,
+		endNs:            endNs,
 		logger:           logger,
 		fieldKeys:        fieldKeys,
 		fullTextColumn:   fullTextColumn,
@@ -190,7 +208,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	if aggFunc.FuncCombinator {
 		// Map the predicate (last argument)
 		origPred := args[len(args)-1].String()
-        whereClause, err := PrepareWhereClause(
+		whereClause, err := PrepareWhereClause(
 			origPred,
 			FilterExprVisitorOpts{
 				Logger:           v.logger,
@@ -200,7 +218,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 				FullTextColumn:   v.fullTextColumn,
 				JsonBodyPrefix:   v.jsonBodyPrefix,
 				JsonKeyToKey:     v.jsonKeyToKey,
-            }, 0, 0,
+			}, v.startNs, v.endNs,
 		)
 		if err != nil {
 			return err
@@ -220,7 +238,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i := 0; i < len(args)-1; i++ {
 			origVal := args[i].String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
-			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonBodyPrefix, v.jsonKeyToKey)
+			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonBodyPrefix, v.jsonKeyToKey)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
@@ -238,7 +256,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i, arg := range args {
 			orig := arg.String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
-			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonBodyPrefix, v.jsonKeyToKey)
+			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonBodyPrefix, v.jsonKeyToKey)
 			if err != nil {
 				return err
 			}
