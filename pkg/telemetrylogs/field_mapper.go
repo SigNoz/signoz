@@ -125,8 +125,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		}
 	case schema.ColumnTypeEnumLowCardinality:
-		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType {
-		case schema.ColumnTypeString:
+		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+		case schema.ColumnTypeEnumString:
 			return column.Name, nil
 		default:
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
@@ -140,8 +140,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 		}
 
-		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType {
-		case schema.ColumnTypeString, schema.ColumnTypeBool, schema.ColumnTypeFloat64:
+		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
 			// a key could have been materialized, if so return the materialized column name
 			if key.Materialized {
 				return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil

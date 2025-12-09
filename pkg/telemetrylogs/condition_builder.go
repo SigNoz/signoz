@@ -182,8 +182,8 @@ func (c *conditionBuilder) conditionFor(
 				return sb.IsNull(tblFieldName), nil
 			}
 		case schema.ColumnTypeEnumLowCardinality:
-			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType {
-			case schema.ColumnTypeString:
+			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+			case schema.ColumnTypeEnumString:
 				value = ""
 				if operator == qbtypes.FilterOperatorExists {
 					return sb.NE(tblFieldName, value), nil
