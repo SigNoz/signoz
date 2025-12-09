@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { getYAxisFormattedValue, PrecisionOptionsEnum } from '../yAxisConfig';
+import { PrecisionOptionsEnum } from '../types';
+import { getYAxisFormattedValue } from '../yAxisConfig';
 
 const testFullPrecisionGetYAxisFormattedValue = (
 	value: string,

@@ -1,4 +1,5 @@
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
+import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
@@ -37,6 +38,7 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 				onChange={(value): void => {
 					setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: value });
 				}}
+				source={YAxisSource.ALERTS}
 			/>
 		</div>
 	);

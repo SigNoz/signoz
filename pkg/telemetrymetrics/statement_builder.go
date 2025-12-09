@@ -348,13 +348,13 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-        }, start, end)
+		}, start, end)
 		if err != nil {
 			return "", nil, err
 		}
 	}
 
-	start, end, tbl := WhichTSTableToUse(start, end, query.Aggregations[0].TableHints)
+	start, end, _, tbl := WhichTSTableToUse(start, end, query.Aggregations[0].TableHints)
 	sb.From(fmt.Sprintf("%s.%s", DBName, tbl))
 
 	sb.Select("fingerprint")
