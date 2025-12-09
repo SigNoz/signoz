@@ -163,6 +163,10 @@ function formatSingleValueForFilter(
 		if (trimmed === 'true' || trimmed === 'false') {
 			return trimmed === 'true';
 		}
+
+		if (isQuoted(value)) {
+			return unquote(value);
+		}
 	}
 
 	// Return non-string values as-is, or string values that couldn't be converted
