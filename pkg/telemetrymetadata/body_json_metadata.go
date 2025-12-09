@@ -284,6 +284,7 @@ func ListPromotedPaths(ctx context.Context, conn clickhouse.Conn) (map[string]st
 	return next, nil
 }
 
+// TODO(Piyush): Remove this if not used in future
 func ListJSONValues(ctx context.Context, conn clickhouse.Conn, path string, limit int) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	path = CleanPathPrefixes(path)
 
@@ -369,19 +370,27 @@ func ListJSONValues(ctx context.Context, conn clickhouse.Conn, path string, limi
 					values.BoolValues = append(values.BoolValues, value)
 				case []*string:
 					for _, str := range value {
-						values.StringValues = append(values.StringValues, *str)
+						if str != nil {
+							values.StringValues = append(values.StringValues, *str)
+						}
 					}
 				case []*int64:
 					for _, num := range value {
-						values.NumberValues = append(values.NumberValues, float64(*num))
+						if num != nil {
+							values.NumberValues = append(values.NumberValues, float64(*num))
+						}
 					}
 				case []*float64:
 					for _, num := range value {
-						values.NumberValues = append(values.NumberValues, float64(*num))
+						if num != nil {
+							values.NumberValues = append(values.NumberValues, float64(*num))
+						}
 					}
 				case []*bool:
 					for _, boolVal := range value {
-						values.BoolValues = append(values.BoolValues, *boolVal)
+						if boolVal != nil {
+							values.BoolValues = append(values.BoolValues, *boolVal)
+						}
 					}
 				case chcol.Variant:
 					if !value.Nil() {
@@ -391,9 +400,9 @@ func ListJSONValues(ctx context.Context, conn clickhouse.Conn, path string, limi
 					}
 				case []chcol.Variant:
 					extractedValues := make([]any, len(value))
-					for _, variant := range value {
+					for idx, variant := range value {
 						if !variant.Nil() && variant.Type() != "JSON" { // skip JSON values cuz they're relevant for nested keys
-							extractedValues = append(extractedValues, variant.Any())
+							extractedValues[idx] = variant.Any()
 						}
 					}
 					if err := consume(extractedValues); err != nil {
@@ -453,9 +462,12 @@ func IsPathPromoted(ctx context.Context, conn clickhouse.Conn, path string) (boo
 // GetPromotedPaths checks if a specific path is promoted
 func GetPromotedPaths(ctx context.Context, conn clickhouse.Conn, paths ...string) (*utils.ConcurrentSet[string], error) {
 	sb := sqlbuilder.Select("path").From(fmt.Sprintf("%s.%s", DBName, PromotedPathsTableName))
+	pathConditions := []string{}
 	for _, path := range paths {
-		sb.Or(sb.Equal("path", path))
+		pathConditions = append(pathConditions, sb.Equal("path", path))
 	}
+	sb.Where(sb.Or(pathConditions...))
+
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	rows, err := conn.Query(ctx, query, args...)
 	if err != nil {
