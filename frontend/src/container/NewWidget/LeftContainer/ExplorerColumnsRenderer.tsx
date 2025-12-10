@@ -126,7 +126,7 @@ function ExplorerColumnsRenderer({
 							dataType: attribute.fieldDataType || 'string',
 							type: attribute.fieldContext || '',
 							fieldDataType: attribute.fieldDataType || 'string',
-							fieldContext: attribute.fieldContext || 'log',
+							fieldContext: attribute.fieldContext || '',
 						} as IField & { fieldDataType: string; fieldContext: string },
 					]);
 				}
@@ -137,7 +137,7 @@ function ExplorerColumnsRenderer({
 						dataType: attribute.fieldDataType || 'string',
 						type: attribute.fieldContext || '',
 						fieldDataType: attribute.fieldDataType || 'string',
-						fieldContext: attribute.fieldContext || 'log',
+						fieldContext: attribute.fieldContext || '',
 					} as IField & { fieldDataType: string; fieldContext: string },
 				]);
 			}
