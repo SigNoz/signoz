@@ -96,7 +96,6 @@ func (h *handler) UpdateMetricMetadata(rw http.ResponseWriter, req *http.Request
 
 	// Set metric name from URL path
 	in.MetricName = metricName
-
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	err = h.module.UpdateMetricMetadata(req.Context(), orgID, &in)
@@ -136,4 +135,48 @@ func (h *handler) GetMetricMetadata(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	render.Success(rw, http.StatusOK, metadata)
+}
+
+func (h *handler) GetMetricHighlights(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	metricName := strings.TrimSpace(req.URL.Query().Get("metricName"))
+	if metricName == "" {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName query parameter is required"))
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+	highlights, err := h.module.GetMetricHighlights(req.Context(), orgID, metricName)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	render.Success(rw, http.StatusOK, highlights)
+}
+
+func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	var in metricsexplorertypes.MetricAttributesRequest
+	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+	out, err := h.module.GetMetricAttributes(req.Context(), orgID, &in)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	render.Success(rw, http.StatusOK, out)
 }
