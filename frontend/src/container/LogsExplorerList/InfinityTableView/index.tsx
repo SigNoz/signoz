@@ -1,14 +1,20 @@
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
 import { useTableView } from 'components/Logs/TableView/useTableView';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import {
+	ColumnTitleIcon,
+	ColumnTitleWrapper,
+} from 'container/OptionsMenu/styles';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
-import { forwardRef, memo, ReactNode, useCallback, useMemo } from 'react';
+import { forwardRef, memo, useCallback, useMemo } from 'react';
 import {
 	TableComponents,
 	TableVirtuoso,
@@ -127,6 +133,12 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						.filter((column) => column.key)
 						.map((column) => {
 							const isDragColumn = column.key !== 'expand';
+							const columnRecord = column as Record<string, unknown>;
+							const hasUnselectedConflict =
+								columnRecord._hasUnselectedConflict === true;
+							const titleText = (column.title as string).replace(/^\w/, (c) =>
+								c.toUpperCase(),
+							);
 
 							return (
 								<TableHeaderCellStyled
@@ -139,9 +151,16 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 									{...(isDragColumn && { className: `dragHandler ${column.key}` })}
 									columnKey={column.key as string}
 								>
-									{typeof column.title === 'string'
-										? column.title.replace(/^\w/, (c) => c.toUpperCase())
-										: (column.title as ReactNode)}
+									<ColumnTitleWrapper>
+										{titleText}
+										{hasUnselectedConflict && (
+											<Tooltip title="The same column with a different type or context exists">
+												<ColumnTitleIcon>
+													<InfoCircleOutlined />
+												</ColumnTitleIcon>
+											</Tooltip>
+										)}
+									</ColumnTitleWrapper>
 								</TableHeaderCellStyled>
 							);
 						})}

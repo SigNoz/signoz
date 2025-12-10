@@ -98,7 +98,7 @@ export const getListColumns = (
 				allAvailableKeys,
 			);
 			const variants = fieldVariantsByName[name] || [];
-			const title = getColumnTitleWithTooltip(
+			const { title, hasUnselectedConflict } = getColumnTitleWithTooltip(
 				props,
 				hasVariants,
 				variants,
@@ -110,6 +110,7 @@ export const getListColumns = (
 				title,
 				dataIndex: name,
 				key: getUniqueColumnKey(props),
+				...(hasUnselectedConflict && { _hasUnselectedConflict: true }),
 				width: 145,
 				render: (value, item): JSX.Element => {
 					if (value === '') {

@@ -36,7 +36,7 @@ export const getLogPanelColumnsList = (
 				allAvailableKeys,
 			);
 			const variants = fieldVariantsByName[name] || [];
-			const title = getColumnTitleWithTooltip(
+			const { title, hasUnselectedConflict } = getColumnTitleWithTooltip(
 				field,
 				hasVariants,
 				variants,
@@ -48,6 +48,7 @@ export const getLogPanelColumnsList = (
 				title,
 				dataIndex: name,
 				key: getUniqueColumnKey(field),
+				...(hasUnselectedConflict && { _hasUnselectedConflict: true }),
 				width: name === 'body' ? 350 : 100,
 				render: (value: ReactNode): JSX.Element => {
 					if (name === 'timestamp') {

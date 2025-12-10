@@ -69,7 +69,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					allAvailableKeys,
 				);
 				const variants = fieldVariantsByName[field.name] || [];
-				const title = getColumnTitleWithTooltip(
+				const { title, hasUnselectedConflict } = getColumnTitleWithTooltip(
 					field,
 					hasVariants,
 					variants,
@@ -80,8 +80,10 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					title,
 					dataIndex: field.name,
 					accessorKey: field.name,
-					id: field.name.toLowerCase().replace(/\./g, '_'),
+					id: getUniqueColumnKey(field),
 					key: getUniqueColumnKey(field),
+					// Store metadata for header enhancement (will be rendered via custom header component)
+					...(hasUnselectedConflict && { _hasUnselectedConflict: true }),
 					render: (cellField): ColumnTypeRender<Record<string, unknown>> => ({
 						props: {
 							style: isListViewPanel

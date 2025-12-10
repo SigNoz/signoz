@@ -1,15 +1,11 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { SelectProps, Tooltip } from 'antd';
+import { SelectProps } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { AxiosResponse } from 'axios';
-import { ReactNode } from 'react';
 import {
 	QueryKeyDataSuggestionsProps,
 	QueryKeySuggestionsResponseProps,
 } from 'types/api/querySuggestions/types';
-
-import { ColumnTitleIcon, ColumnTitleWrapper } from './styles';
 
 /**
  * Extracts all available keys from API response and transforms them into TelemetryFieldKey format
@@ -130,7 +126,7 @@ export const getColumnTitle = <
 	variants: T[],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): string => {
-	const name = field.name?.replace(/^\w/, (c) => c.toUpperCase()) || '';
+	const name = field.name || '';
 	if (!hasVariants) return name;
 
 	// Extract data types from variants (support both fieldDataType and dataType)
@@ -163,7 +159,9 @@ export const getColumnTitle = <
 	}
 
 	// Different dataTypes - show dataType
-	const dataType = 'fieldDataType' in field && field.fieldDataType;
+	const dataType =
+		('fieldDataType' in field && field.fieldDataType) ||
+		('dataType' in field && field.dataType);
 	if (dataType) {
 		return `${name} (${dataType})`;
 	}
@@ -212,9 +210,13 @@ const hasUnselectedConflictingField = <
 };
 
 /**
- * Returns column title as ReactNode with tooltip icon if conflicting field exists
+ * Returns column title as string and metadata for tooltip icon
  * Shows tooltip only when another field with the same name but different type/context exists
  * and is NOT already selected (better UX - no need to show tooltip if all variants are visible)
+ *
+ * Returns an object with:
+ * - title: string
+ * - hasUnselectedConflict: boolean
  */
 export const getColumnTitleWithTooltip = <
 	T extends Partial<QueryKeyDataSuggestionsProps> | Partial<TelemetryFieldKey>
@@ -224,7 +226,7 @@ export const getColumnTitleWithTooltip = <
 	variants: T[],
 	selectedColumns: TelemetryFieldKey[],
 	availableKeys?: TelemetryFieldKey[],
-): ReactNode => {
+): { title: string; hasUnselectedConflict: boolean } => {
 	const title = getColumnTitle(field, hasVariants, variants);
 	const hasUnselectedConflict = hasUnselectedConflictingField(
 		field,
@@ -232,20 +234,7 @@ export const getColumnTitleWithTooltip = <
 		selectedColumns,
 	);
 
-	if (hasUnselectedConflict) {
-		return (
-			<ColumnTitleWrapper>
-				{title}
-				<Tooltip title="The same column with a different type or context exists">
-					<ColumnTitleIcon>
-						<InfoCircleOutlined />
-					</ColumnTitleIcon>
-				</Tooltip>
-			</ColumnTitleWrapper>
-		);
-	}
-
-	return title;
+	return { title, hasUnselectedConflict };
 };
 
 export const getOptionsFromKeys = (

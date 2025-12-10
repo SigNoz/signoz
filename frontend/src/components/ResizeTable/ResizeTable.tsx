@@ -1,14 +1,18 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
-import { Table } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Table, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import cx from 'classnames';
+import {
+	ColumnTitleIcon,
+	ColumnTitleWrapper,
+} from 'container/OptionsMenu/styles';
 import { dragColumnParams } from 'hooks/useDragColumns/configs';
 import { getColumnWidth, RowData } from 'lib/query/createTableColumnsFromQuery';
 import { debounce, set } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
-	ReactNode,
 	SyntheticEvent,
 	useCallback,
 	useEffect,
@@ -72,20 +76,35 @@ function ResizeTable({
 
 	const mergedColumns = useMemo(
 		() =>
-			columnsData.map((col, index) => ({
-				...col,
-				...(onDragColumn && {
-					title: (
-						<DragSpanStyle className="dragHandler">
-							{typeof col?.title === 'string' ? col.title : (col?.title as ReactNode)}
-						</DragSpanStyle>
-					),
-				}),
-				onHeaderCell: (column: ColumnsType<unknown>[number]): unknown => ({
-					width: column.width,
-					onResize: handleResize(index),
-				}),
-			})) as ColumnsType<any>,
+			columnsData.map((col, index) => {
+				const columnRecord = col as Record<string, unknown>;
+				const hasUnselectedConflict = columnRecord._hasUnselectedConflict === true;
+				const titleText = col?.title?.toString();
+
+				return {
+					...col,
+					...(onDragColumn && {
+						title: (
+							<DragSpanStyle className="dragHandler">
+								<ColumnTitleWrapper>
+									{titleText}
+									{hasUnselectedConflict && (
+										<Tooltip title="The same column with a different type or context exists">
+											<ColumnTitleIcon>
+												<InfoCircleOutlined />
+											</ColumnTitleIcon>
+										</Tooltip>
+									)}
+								</ColumnTitleWrapper>
+							</DragSpanStyle>
+						),
+					}),
+					onHeaderCell: (column: ColumnsType<unknown>[number]): unknown => ({
+						width: column.width,
+						onResize: handleResize(index),
+					}),
+				};
+			}) as ColumnsType<any>,
 		[columnsData, onDragColumn, handleResize],
 	);
 

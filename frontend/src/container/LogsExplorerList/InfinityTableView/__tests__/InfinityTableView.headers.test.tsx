@@ -76,19 +76,25 @@ describe('InfinityTableView - Header Rendering Backwards Compatibility', () => {
 		{
 			// eslint-disable-next-line sonarjs/no-duplicate-string
 			key: 'http.status_code',
-			title: getColumnTitleWithTooltip(
-				mockConflictingFieldsByDatatype[0],
-				hasMultipleVariants(
-					'http.status_code',
+			...((): { title: string; _hasUnselectedConflict?: boolean } => {
+				const result = getColumnTitleWithTooltip(
+					mockConflictingFieldsByDatatype[0],
+					hasMultipleVariants(
+						'http.status_code',
+						[mockConflictingFieldsByDatatype[0]],
+						mockAllAvailableKeys,
+					),
+					getFieldVariantsByName([mockConflictingFieldsByDatatype[0]])[
+						'http.status_code'
+					] || [],
 					[mockConflictingFieldsByDatatype[0]],
 					mockAllAvailableKeys,
-				),
-				getFieldVariantsByName([mockConflictingFieldsByDatatype[0]])[
-					'http.status_code'
-				] || [],
-				[mockConflictingFieldsByDatatype[0]],
-				mockAllAvailableKeys,
-			), // ReactNode title with tooltip
+				);
+				return {
+					title: result.title,
+					...(result.hasUnselectedConflict && { _hasUnselectedConflict: true }),
+				};
+			})(),
 			dataIndex: 'http.status_code',
 		},
 	];
