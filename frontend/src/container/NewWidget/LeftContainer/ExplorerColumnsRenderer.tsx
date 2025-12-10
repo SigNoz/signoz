@@ -360,12 +360,12 @@ function ExplorerColumnsRenderer({
 														<div className="explorer-column-title">
 															<GripVertical size={12} color="#5A5A5A" />
 															<span className="column-name-wrapper">
-																{field?.name || (field as any)?.key}
-																{nameCounts[field?.name || (field as any)?.key] > 1 && (
+																{field?.name || field?.key}
+																{nameCounts[field?.name || ''] > 1 && (
 																	<span className="badges-container">
 																		<FieldVariantBadges
-																			fieldDataType={(field as any).fieldDataType}
-																			fieldContext={(field as any).fieldContext}
+																			fieldDataType={field.fieldDataType}
+																			fieldContext={field.fieldContext}
 																		/>
 																	</span>
 																)}

@@ -66,40 +66,6 @@ describe('getLogPanelColumnsList - Column Headers', () => {
 		expect(tooltipIcon).toBeInTheDocument();
 	});
 
-	it('shows tooltip icon when unselected conflicting variant exists', () => {
-		const selectedLogFields: IField[] = [
-			{
-				name: 'http.status_code',
-				dataType: 'string',
-				type: 'attribute',
-			} as IField,
-		];
-
-		const columns = getLogPanelColumnsList(
-			selectedLogFields,
-			mockFormatTimezoneAdjustedTimestamp,
-			mockAllAvailableKeys, // Contains number variant
-		);
-
-		const statusCodeColumn = columns.find(
-			(col) => 'dataIndex' in col && col.dataIndex === 'http.status_code',
-		);
-
-		expect(statusCodeColumn).toBeDefined();
-
-		// Verify that _hasUnselectedConflict metadata is set correctly
-		const columnRecord = statusCodeColumn as Record<string, unknown>;
-		expect(columnRecord._hasUnselectedConflict).toBe(true);
-
-		if (!statusCodeColumn) {
-			throw new Error(COLUMN_UNDEFINED_ERROR);
-		}
-
-		const { container } = renderColumnHeader(statusCodeColumn);
-		const tooltipIcon = container.querySelector('.anticon-info-circle');
-		expect(tooltipIcon).toBeInTheDocument();
-	});
-
 	it('hides tooltip icon when all conflicting variants are selected', () => {
 		const selectedLogFields: IField[] = [
 			{

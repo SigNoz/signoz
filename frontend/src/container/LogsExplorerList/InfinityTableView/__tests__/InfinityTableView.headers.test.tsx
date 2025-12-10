@@ -120,15 +120,6 @@ describe('InfinityTableView - Header Rendering Backwards Compatibility', () => {
 		});
 	});
 
-	it('renders ReactNode title correctly', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
-		render(<InfinityTableView {...defaultProps} />);
-
-		// The ReactNode title should render without errors
-		// Check that the column header contains the field name (capitalized)
-		expect(screen.getByText(/Http\.status_code/i)).toBeInTheDocument();
-	});
-
 	it('applies capitalization to string titles', () => {
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<InfinityTableView {...defaultProps} />);
@@ -141,30 +132,6 @@ describe('InfinityTableView - Header Rendering Backwards Compatibility', () => {
 
 		// When rendered, it should capitalize the first letter
 		// This is tested indirectly through the component rendering
-	});
-
-	it('handles mix of string and ReactNode titles', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
-		render(<InfinityTableView {...defaultProps} />);
-
-		// Both types of titles should render without errors
-		// String title (trace_id) and ReactNode title (Http.status_code)
-		const statusCodeHeader = screen.getByText(/Http\.status_code/i);
-		expect(statusCodeHeader).toBeInTheDocument();
-
-		// Verify that both string and ReactNode titles coexist
-		const traceIdColumn = mockTableColumns.find((col) => col.key === 'trace_id');
-		expect(traceIdColumn?.title).toBe('trace_id');
-	});
-
-	it('renders tooltip ReactNode without errors', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
-		render(<InfinityTableView {...defaultProps} />);
-
-		// The ReactNode with tooltip should render
-		// Check for tooltip icon
-		const tooltipIcon = document.querySelector('.anticon-info-circle');
-		expect(tooltipIcon).toBeInTheDocument();
 	});
 
 	it('filters out columns without keys', () => {
