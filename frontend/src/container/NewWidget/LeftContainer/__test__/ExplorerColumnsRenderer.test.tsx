@@ -224,7 +224,7 @@ describe('ExplorerColumnsRenderer', () => {
 			expect(mockSetSelectedLogFields).toHaveBeenCalledWith([
 				{
 					dataType: 'string',
-					fieldContext: 'log',
+					fieldContext: '',
 					fieldDataType: 'string',
 					name: 'attribute1',
 					type: '',
