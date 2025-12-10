@@ -3,6 +3,12 @@ import { ColumnsType } from 'antd/es/table';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
+import {
+	getColumnTitleWithTooltip,
+	getFieldVariantsByName,
+	getUniqueColumnKey,
+	hasMultipleVariants,
+} from 'container/OptionsMenu/utils';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { formUrlParams } from 'container/TraceDetail/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
@@ -52,6 +58,7 @@ export const getListColumns = (
 		input: TimestampInput,
 		format?: string,
 	) => string | number,
+	allAvailableKeys?: TelemetryFieldKey[],
 ): ColumnsType<RowData> => {
 	const initialColumns: ColumnsType<RowData> = [
 		{
@@ -79,15 +86,31 @@ export const getListColumns = (
 		},
 	];
 
+	// Group fields by name to analyze variants
+	const fieldVariantsByName = getFieldVariantsByName(selectedColumns);
+
 	const columns: ColumnsType<RowData> =
 		selectedColumns.map((props) => {
 			const name = props?.name || (props as any)?.key;
-			const fieldDataType = props?.fieldDataType || (props as any)?.dataType;
-			const fieldContext = props?.fieldContext || (props as any)?.type;
+			const hasVariants = hasMultipleVariants(
+				name,
+				selectedColumns,
+				allAvailableKeys,
+			);
+			const variants = fieldVariantsByName[name] || [];
+			const { title, hasUnselectedConflict } = getColumnTitleWithTooltip(
+				props,
+				hasVariants,
+				variants,
+				selectedColumns,
+				allAvailableKeys,
+			);
+
 			return {
-				title: name,
+				title,
 				dataIndex: name,
-				key: `${name}-${fieldDataType}-${fieldContext}`,
+				key: getUniqueColumnKey(props),
+				...(hasUnselectedConflict && { _hasUnselectedConflict: true }),
 				width: 145,
 				render: (value, item): JSX.Element => {
 					if (value === '') {

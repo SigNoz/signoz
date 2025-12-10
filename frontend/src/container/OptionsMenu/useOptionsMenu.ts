@@ -36,7 +36,7 @@ import {
 	OptionsMenuConfig,
 	OptionsQuery,
 } from './types';
-import { getOptionsFromKeys } from './utils';
+import { getOptionsFromKeys, getUniqueColumnKey } from './utils';
 
 interface UseOptionsMenuProps {
 	storageKey?: string;
@@ -170,7 +170,7 @@ const useOptionsMenu = ({
 			...initialQueryParamsV5,
 			searchText: debouncedSearchText,
 		},
-		{ queryKey: [debouncedSearchText, isFocused], enabled: isFocused },
+		{ queryKey: [debouncedSearchText, isFocused] },
 	);
 
 	// const {
@@ -186,7 +186,7 @@ const useOptionsMenu = ({
 
 	const searchedAttributeKeys: TelemetryFieldKey[] = useMemo(() => {
 		const searchedAttributesDataList = Object.values(
-			searchedAttributesDataV5?.data.data.keys || {},
+			searchedAttributesDataV5?.data?.data?.keys || {},
 		).flat();
 		if (searchedAttributesDataList.length) {
 			if (dataSource === DataSource.LOGS) {
@@ -230,7 +230,7 @@ const useOptionsMenu = ({
 		}
 
 		return [];
-	}, [dataSource, searchedAttributesDataV5?.data.data.keys]);
+	}, [dataSource, searchedAttributesDataV5?.data?.data?.keys]);
 
 	const initialOptionsQuery: OptionsQuery = useMemo(() => {
 		let defaultColumns: TelemetryFieldKey[] = defaultOptionsQuery.selectColumns;
@@ -262,7 +262,7 @@ const useOptionsMenu = ({
 	}, [dataSource, initialOptions, initialSelectedColumns]);
 
 	const selectedColumnKeys = useMemo(
-		() => preferences?.columns?.map(({ name }) => name) || [],
+		() => preferences?.columns?.map((col) => getUniqueColumnKey(col)) || [],
 		[preferences?.columns],
 	);
 
@@ -287,16 +287,14 @@ const useOptionsMenu = ({
 
 	const handleSelectColumns = useCallback(
 		(value: string) => {
-			const newSelectedColumnKeys = [...new Set([...selectedColumnKeys, value])];
-			const newSelectedColumns = newSelectedColumnKeys.reduce((acc, key) => {
-				const column = [
-					...searchedAttributeKeys,
-					...(preferences?.columns || []),
-				].find(({ name }) => name === key);
+			// value is now the unique key (name::dataType::context)
+			const column = searchedAttributeKeys.find(
+				(key) => getUniqueColumnKey(key) === value,
+			);
 
-				if (!column) return acc;
-				return [...acc, column];
-			}, [] as TelemetryFieldKey[]);
+			if (!column) return;
+
+			const newSelectedColumns = [...(preferences?.columns || []), column];
 
 			const optionsData: OptionsQuery = {
 				...defaultOptionsQuery,
@@ -311,7 +309,6 @@ const useOptionsMenu = ({
 		},
 		[
 			searchedAttributeKeys,
-			selectedColumnKeys,
 			preferences,
 			handleRedirectWithOptionsData,
 			updateColumns,
@@ -320,8 +317,9 @@ const useOptionsMenu = ({
 
 	const handleRemoveSelectedColumn = useCallback(
 		(columnKey: string) => {
+			// columnKey is now the unique key (name::dataType::context)
 			const newSelectedColumns = preferences?.columns?.filter(
-				({ name }) => name !== columnKey,
+				(col) => getUniqueColumnKey(col) !== columnKey,
 			);
 
 			if (!newSelectedColumns?.length && dataSource !== DataSource.LOGS) {
@@ -432,6 +430,7 @@ const useOptionsMenu = ({
 					preferences?.columns.filter((item) => has(item, 'name')) ||
 					defaultOptionsQuery.selectColumns.filter((item) => has(item, 'name')),
 				options: optionsFromAttributeKeys || [],
+				allAvailableKeys: searchedAttributeKeys,
 				onFocus: handleFocus,
 				onBlur: handleBlur,
 				onSelect: handleSelectColumns,
@@ -455,6 +454,7 @@ const useOptionsMenu = ({
 			isSearchedAttributesFetchingV5,
 			preferences,
 			optionsFromAttributeKeys,
+			searchedAttributeKeys,
 			handleSelectColumns,
 			handleRemoveSelectedColumn,
 			handleSearchAttribute,

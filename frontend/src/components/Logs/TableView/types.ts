@@ -1,4 +1,5 @@
 import { ColumnsType, ColumnType } from 'antd/es/table';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { FontSize } from 'container/OptionsMenu/types';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
@@ -28,6 +29,7 @@ export type UseTableViewProps = {
 	activeLogIndex?: number;
 	activeContextLog?: ILog | null;
 	isListViewPanel?: boolean;
+	allAvailableKeys?: TelemetryFieldKey[];
 } & LogsTableViewProps;
 
 export type ActionsColumnProps = {

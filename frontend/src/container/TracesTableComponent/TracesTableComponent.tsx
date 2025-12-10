@@ -4,6 +4,7 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import Controls from 'container/Controls';
+import { extractTelemetryFieldKeys } from 'container/OptionsMenu/utils';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
 import {
@@ -12,6 +13,7 @@ import {
 	transformDataWithDate,
 } from 'container/TracesExplorer/ListView/utils';
 import { Pagination } from 'hooks/queryPagination';
+import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import history from 'lib/history';
@@ -30,6 +32,10 @@ import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import {
+	DataSource,
+	TracesAggregatorOperator,
+} from 'types/common/queryBuilder';
 
 function TracesTableComponent({
 	widget,
@@ -54,14 +60,35 @@ function TracesTableComponent({
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
+	// Fetch available keys to detect variants
+
+	const { data: keysData } = useGetQueryKeySuggestions(
+		{
+			searchText: '',
+			signal: DataSource.TRACES,
+		},
+		{
+			queryKey: [DataSource.TRACES, TracesAggregatorOperator.NOOP, ''],
+		},
+	);
+
+	// Extract all available keys from API response
+	const allAvailableKeys = useMemo(() => extractTelemetryFieldKeys(keysData), [
+		keysData,
+	]);
+
 	const columns = useMemo(
 		() =>
 			getListColumns(
 				widget.selectedTracesFields || [],
 				formatTimezoneAdjustedTimestamp,
+				allAvailableKeys,
 			),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[widget.selectedTracesFields],
+		[
+			widget.selectedTracesFields,
+			formatTimezoneAdjustedTimestamp,
+			allAvailableKeys,
+		],
 	);
 
 	const dataLength =

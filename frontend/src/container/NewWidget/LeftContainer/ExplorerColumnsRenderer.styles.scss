@@ -60,6 +60,13 @@
 					font-family: Inter;
 					font-size: 12px;
 					cursor: grab;
+
+					.column-name-wrapper,
+					.badges-container {
+						display: flex;
+						align-items: center;
+						gap: 4px;
+					}
 				}
 
 				.lucide-trash2 {
@@ -114,6 +121,16 @@
 				flex-direction: column;
 				height: 160px;
 				overflow: scroll;
+
+				.ant-checkbox-wrapper {
+					padding: 0 !important;
+
+					.attribute-column-label-wrapper {
+						display: flex;
+						align-items: center;
+						gap: 8px;
+					}
+				}
 			}
 
 			.attribute-columns::-webkit-scrollbar {

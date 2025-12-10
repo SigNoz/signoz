@@ -38,5 +38,6 @@ export type OptionsMenuConfig = {
 		isFetching: boolean;
 		value: TelemetryFieldKey[];
 		onRemove: (key: string) => void;
+		allAvailableKeys?: TelemetryFieldKey[];
 	};
 };
