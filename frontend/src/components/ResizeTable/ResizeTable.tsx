@@ -12,7 +12,7 @@ import { dragColumnParams } from 'hooks/useDragColumns/configs';
 import { getColumnWidth, RowData } from 'lib/query/createTableColumnsFromQuery';
 import { debounce, set } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import {
+import React, {
 	SyntheticEvent,
 	useCallback,
 	useEffect,
@@ -81,30 +81,43 @@ function ResizeTable({
 				const hasUnselectedConflict = columnRecord._hasUnselectedConflict === true;
 				const titleText = col?.title?.toString();
 
+				// Render tooltip icon when there's a conflict, regardless of drag functionality
+				// Only wrap in DragSpanStyle when drag is enabled
+				const tooltipIcon = hasUnselectedConflict ? (
+					<Tooltip title="The same column with a different type or context exists">
+						<ColumnTitleIcon>
+							<InfoCircleOutlined />
+						</ColumnTitleIcon>
+					</Tooltip>
+				) : null;
+
+				const titleWithWrapper = (
+					<ColumnTitleWrapper>
+						{titleText}
+						{tooltipIcon}
+					</ColumnTitleWrapper>
+				);
+
+				let titleElement: React.ReactNode = titleText;
+				if (hasUnselectedConflict || onDragColumn) {
+					if (onDragColumn) {
+						titleElement = (
+							<DragSpanStyle className="dragHandler">{titleWithWrapper}</DragSpanStyle>
+						);
+					} else {
+						titleElement = titleWithWrapper;
+					}
+				}
+
 				return {
 					...col,
-					...(onDragColumn && {
-						title: (
-							<DragSpanStyle className="dragHandler">
-								<ColumnTitleWrapper>
-									{titleText}
-									{hasUnselectedConflict && (
-										<Tooltip title="The same column with a different type or context exists">
-											<ColumnTitleIcon>
-												<InfoCircleOutlined />
-											</ColumnTitleIcon>
-										</Tooltip>
-									)}
-								</ColumnTitleWrapper>
-							</DragSpanStyle>
-						),
-					}),
+					title: titleElement,
 					onHeaderCell: (column: ColumnsType<unknown>[number]): unknown => ({
 						width: column.width,
 						onResize: handleResize(index),
 					}),
 				};
-			}) as ColumnsType<any>,
+			}) as ColumnsType<RowData>,
 		[columnsData, onDragColumn, handleResize],
 	);
 
