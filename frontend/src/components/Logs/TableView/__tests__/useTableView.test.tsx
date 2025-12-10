@@ -1,4 +1,4 @@
-import { render, renderHook, RenderHookResult } from '@testing-library/react';
+import { renderHook, RenderHookResult } from '@testing-library/react';
 import { ColumnType } from 'antd/es/table';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import {
@@ -7,11 +7,14 @@ import {
 	mockConflictingFieldsByDatatype,
 } from 'container/OptionsMenu/__tests__/mockData';
 import { FontSize } from 'container/OptionsMenu/types';
-import { ReactElement } from 'react';
+import { renderColumnHeader } from 'tests/columnHeaderHelpers';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
 import { useTableView } from '../useTableView';
+
+const COLUMN_UNDEFINED_ERROR = 'statusCodeColumn is undefined';
+const SERVICE_NAME_COLUMN_UNDEFINED_ERROR = 'serviceNameColumn is undefined';
 
 // Mock useTimezone hook
 jest.mock('providers/Timezone', () => ({
@@ -74,8 +77,12 @@ describe('useTableView - Column Headers', () => {
 		expect(statusCodeColumn).toBeDefined();
 		expect(statusCodeColumn?.title).toBeDefined();
 
-		const { container } = render(statusCodeColumn?.title as ReactElement);
-		expect(container.textContent).toContain('Http.status_code'); // First letter is capitalized
+		if (!statusCodeColumn) {
+			throw new Error(COLUMN_UNDEFINED_ERROR);
+		}
+
+		const { container } = renderColumnHeader(statusCodeColumn);
+		expect(container.textContent).toContain('http.status_code (string)');
 		expect(container.textContent).toContain('string');
 	});
 
@@ -94,7 +101,15 @@ describe('useTableView - Column Headers', () => {
 
 		expect(statusCodeColumn).toBeDefined();
 
-		const { container } = render(statusCodeColumn?.title as ReactElement);
+		// Verify that _hasUnselectedConflict metadata is set correctly
+		const columnRecord = statusCodeColumn as Record<string, unknown>;
+		expect(columnRecord._hasUnselectedConflict).toBe(true);
+
+		if (!statusCodeColumn) {
+			throw new Error(COLUMN_UNDEFINED_ERROR);
+		}
+
+		const { container } = renderColumnHeader(statusCodeColumn);
 		const tooltipIcon = container.querySelector('.anticon-info-circle');
 		expect(tooltipIcon).toBeInTheDocument();
 	});
@@ -114,7 +129,15 @@ describe('useTableView - Column Headers', () => {
 
 		expect(statusCodeColumn).toBeDefined();
 
-		const { container } = render(statusCodeColumn?.title as ReactElement);
+		// Verify that _hasUnselectedConflict metadata is NOT set when all variants are selected
+		const columnRecord = statusCodeColumn as Record<string, unknown>;
+		expect(columnRecord._hasUnselectedConflict).toBeUndefined();
+
+		if (!statusCodeColumn) {
+			throw new Error(COLUMN_UNDEFINED_ERROR);
+		}
+
+		const { container } = renderColumnHeader(statusCodeColumn);
 		const tooltipIcon = container.querySelector('.anticon-info-circle');
 		expect(tooltipIcon).not.toBeInTheDocument();
 	});
@@ -136,8 +159,12 @@ describe('useTableView - Column Headers', () => {
 
 		expect(serviceNameColumn).toBeDefined();
 
-		const { container } = render(serviceNameColumn?.title as ReactElement);
-		expect(container.textContent).toContain('Service.name'); // First letter is capitalized
+		if (!serviceNameColumn) {
+			throw new Error(SERVICE_NAME_COLUMN_UNDEFINED_ERROR);
+		}
+
+		const { container } = renderColumnHeader(serviceNameColumn);
+		expect(container.textContent).toContain('service.name (resource)');
 		expect(container.textContent).toContain('resource');
 	});
 });

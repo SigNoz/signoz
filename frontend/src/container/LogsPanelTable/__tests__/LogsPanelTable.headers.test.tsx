@@ -1,10 +1,11 @@
-import { render } from '@testing-library/react';
 import { mockAllAvailableKeys } from 'container/OptionsMenu/__tests__/mockData';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
-import { ReactElement } from 'react';
+import { renderColumnHeader } from 'tests/columnHeaderHelpers';
 import { IField } from 'types/api/logs/fields';
 
 import { getLogPanelColumnsList } from '../utils';
+
+const COLUMN_UNDEFINED_ERROR = 'statusCodeColumn is undefined';
 
 // Mock the timezone formatter
 const mockFormatTimezoneAdjustedTimestamp = jest.fn(
@@ -48,8 +49,16 @@ describe('getLogPanelColumnsList - Column Headers', () => {
 		expect(statusCodeColumn).toBeDefined();
 		expect(statusCodeColumn?.title).toBeDefined();
 
-		const { container } = render(statusCodeColumn?.title as ReactElement);
-		expect(container.textContent).toContain('Http.status_code');
+		// Verify that _hasUnselectedConflict metadata is set correctly
+		const columnRecord = statusCodeColumn as Record<string, unknown>;
+		expect(columnRecord._hasUnselectedConflict).toBe(true);
+
+		if (!statusCodeColumn) {
+			throw new Error(COLUMN_UNDEFINED_ERROR);
+		}
+
+		const { container } = renderColumnHeader(statusCodeColumn);
+		expect(container.textContent).toContain('http.status_code (string)');
 
 		// Tooltip icon should appear
 		// eslint-disable-next-line sonarjs/no-duplicate-string
@@ -78,7 +87,15 @@ describe('getLogPanelColumnsList - Column Headers', () => {
 
 		expect(statusCodeColumn).toBeDefined();
 
-		const { container } = render(statusCodeColumn?.title as ReactElement);
+		// Verify that _hasUnselectedConflict metadata is set correctly
+		const columnRecord = statusCodeColumn as Record<string, unknown>;
+		expect(columnRecord._hasUnselectedConflict).toBe(true);
+
+		if (!statusCodeColumn) {
+			throw new Error(COLUMN_UNDEFINED_ERROR);
+		}
+
+		const { container } = renderColumnHeader(statusCodeColumn);
 		const tooltipIcon = container.querySelector('.anticon-info-circle');
 		expect(tooltipIcon).toBeInTheDocument();
 	});
@@ -109,7 +126,15 @@ describe('getLogPanelColumnsList - Column Headers', () => {
 
 		expect(statusCodeColumn).toBeDefined();
 
-		const { container } = render(statusCodeColumn?.title as ReactElement);
+		// Verify that _hasUnselectedConflict metadata is NOT set when all variants are selected
+		const columnRecord = statusCodeColumn as Record<string, unknown>;
+		expect(columnRecord._hasUnselectedConflict).toBeUndefined();
+
+		if (!statusCodeColumn) {
+			throw new Error(COLUMN_UNDEFINED_ERROR);
+		}
+
+		const { container } = renderColumnHeader(statusCodeColumn);
 		const tooltipIcon = container.querySelector('.anticon-info-circle');
 		expect(tooltipIcon).not.toBeInTheDocument();
 	});
@@ -135,7 +160,7 @@ describe('getLogPanelColumnsList - Column Headers', () => {
 
 		expect(traceIdColumn).toBeDefined();
 		expect(typeof traceIdColumn?.title).toBe('string');
-		expect(traceIdColumn?.title).toBe('Trace_id');
+		expect(traceIdColumn?.title).toBe('trace_id');
 	});
 
 	it('sets correct width for body column', () => {

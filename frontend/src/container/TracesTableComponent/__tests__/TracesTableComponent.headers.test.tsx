@@ -1,4 +1,3 @@
-import { render } from '@testing-library/react';
 import { ColumnType } from 'antd/es/table';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import {
@@ -9,10 +8,13 @@ import {
 import { getListColumns } from 'container/TracesExplorer/ListView/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { ReactElement } from 'react';
+import { renderColumnHeader } from 'tests/columnHeaderHelpers';
 
 const HTTP_STATUS_CODE = 'http.status_code';
 const SERVICE_NAME = 'service.name';
+
+const COLUMN_UNDEFINED_ERROR = 'statusCodeColumn is undefined';
+const SERVICE_NAME_COLUMN_UNDEFINED_ERROR = 'serviceNameColumn is undefined';
 
 // Mock the timezone formatter
 const mockFormatTimezoneAdjustedTimestamp = jest.fn(
@@ -52,9 +54,12 @@ describe('TracesTableComponent - Column Headers', () => {
 		expect(statusCodeColumn).toBeDefined();
 		expect(statusCodeColumn?.title).toBeDefined();
 
-		// Title should be a ReactNode with datatype
-		const { container } = render(statusCodeColumn?.title as ReactElement);
-		expect(container.textContent).toContain('Http.status_code'); // First letter is capitalized
+		if (!statusCodeColumn) {
+			throw new Error(COLUMN_UNDEFINED_ERROR);
+		}
+
+		const { container } = renderColumnHeader(statusCodeColumn);
+		expect(container.textContent).toContain('http.status_code (string)');
 		expect(container.textContent).toContain('string');
 	});
 
@@ -76,8 +81,15 @@ describe('TracesTableComponent - Column Headers', () => {
 
 		expect(statusCodeColumn).toBeDefined();
 
-		// Title should be a ReactNode with tooltip
-		const { container } = render(statusCodeColumn?.title as ReactElement);
+		// Verify that _hasUnselectedConflict metadata is set correctly
+		const columnRecord = statusCodeColumn as Record<string, unknown>;
+		expect(columnRecord._hasUnselectedConflict).toBe(true);
+
+		if (!statusCodeColumn) {
+			throw new Error(COLUMN_UNDEFINED_ERROR);
+		}
+
+		const { container } = renderColumnHeader(statusCodeColumn);
 
 		// Check for tooltip icon (InfoCircleOutlined)
 		const tooltipIcon = container.querySelector('.anticon-info-circle');
@@ -102,8 +114,15 @@ describe('TracesTableComponent - Column Headers', () => {
 
 		expect(statusCodeColumn).toBeDefined();
 
-		// Title should be a ReactNode but without tooltip icon
-		const { container } = render(statusCodeColumn?.title as ReactElement);
+		// Verify that _hasUnselectedConflict metadata is NOT set when all variants are selected
+		const columnRecord = statusCodeColumn as Record<string, unknown>;
+		expect(columnRecord._hasUnselectedConflict).toBeUndefined();
+
+		if (!statusCodeColumn) {
+			throw new Error(COLUMN_UNDEFINED_ERROR);
+		}
+
+		const { container } = renderColumnHeader(statusCodeColumn);
 
 		// Tooltip icon should NOT be present when all variants are selected
 		const tooltipIcon = container.querySelector('.anticon-info-circle');
@@ -129,9 +148,12 @@ describe('TracesTableComponent - Column Headers', () => {
 
 		expect(serviceNameColumn).toBeDefined();
 
-		// Title should include context when same datatype but different contexts
-		const { container } = render(serviceNameColumn?.title as ReactElement);
-		expect(container.textContent).toContain('Service.name'); // First letter is capitalized
+		if (!serviceNameColumn) {
+			throw new Error(SERVICE_NAME_COLUMN_UNDEFINED_ERROR);
+		}
+
+		const { container } = renderColumnHeader(serviceNameColumn);
+		expect(container.textContent).toContain('service.name (resource)');
 		expect(container.textContent).toContain('resource');
 	});
 });

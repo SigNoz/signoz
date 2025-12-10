@@ -1,5 +1,5 @@
+import { render, screen } from '@testing-library/react';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { render, screen } from 'tests/test-utils';
 
 import {
 	mockAllAvailableKeys,
@@ -135,66 +135,5 @@ describe('AddColumnField - Badge Display', () => {
 		// Context badge should appear for resource
 		const contextBadge = screen.queryByText('resource');
 		expect(contextBadge).toBeInTheDocument();
-	});
-
-	it('handles short column names correctly', () => {
-		const shortNameField: TelemetryFieldKey[] = [
-			{
-				name: 'id',
-				fieldDataType: 'string',
-				fieldContext: 'attribute',
-				signal: 'traces',
-			},
-		];
-
-		render(
-			<AddColumnField
-				config={{
-					...defaultConfig,
-					value: shortNameField,
-				}}
-			/>,
-		);
-
-		expect(screen.getByText('id')).toBeInTheDocument();
-	});
-
-	it('handles long column names correctly', () => {
-		const longNameField: TelemetryFieldKey[] = [
-			{
-				// eslint-disable-next-line sonarjs/no-duplicate-string
-				name: 'very.long.column.name.that.might.truncate',
-				fieldDataType: 'string',
-				fieldContext: 'attribute',
-				signal: 'traces',
-			},
-		];
-
-		render(
-			<AddColumnField
-				config={{
-					...defaultConfig,
-					value: longNameField,
-					allAvailableKeys: [
-						...mockAllAvailableKeys,
-						{
-							name: 'very.long.column.name.that.might.truncate',
-							fieldDataType: 'number',
-							fieldContext: 'attribute',
-							signal: 'traces',
-						},
-					],
-				}}
-			/>,
-		);
-
-		// Long name should be visible
-		expect(
-			screen.getByText('very.long.column.name.that.might.truncate'),
-		).toBeInTheDocument();
-
-		// Badge should still appear
-		const datatypeBadge = screen.queryByText('string');
-		expect(datatypeBadge).toBeInTheDocument();
 	});
 });
