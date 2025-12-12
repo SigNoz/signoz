@@ -8,6 +8,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/analytics/noopanalytics"
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
+	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/cache/rediscache"
@@ -210,6 +213,12 @@ func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetrySt
 func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
 	return factory.MustNewNamedMap(
 		signozquerier.NewFactory(telemetryStore, prometheus, cache),
+	)
+}
+
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+	return factory.MustNewNamedMap(
+		signozapiserver.NewFactory(orgGetter, authz, handlers.Organization),
 	)
 }
 

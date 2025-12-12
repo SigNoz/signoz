@@ -22,32 +22,34 @@ func registerGenerateOpenAPI(parentCmd *cobra.Command, logger *slog.Logger) {
 		Use:   "openapi",
 		Short: "Generate OpenAPI schema for SigNoz",
 		RunE: func(currCmd *cobra.Command, args []string) error {
-			return runGenerateOpenAPI(currCmd.Context(), logger)
+			return runGenerateOpenAPI(currCmd.Context())
 		},
 	}
 
 	parentCmd.AddCommand(openapiCmd)
 }
 
-func runGenerateOpenAPI(ctx context.Context, logger *slog.Logger) error {
+func runGenerateOpenAPI(ctx context.Context) error {
+	instrumentation, err := instrumentation.New(ctx, instrumentation.Config{Logs: instrumentation.LogsConfig{Level: slog.LevelInfo}}, version.Info, "signoz")
+	if err != nil {
+		return err
+	}
+
+	apiserver, err := signozapiserver.NewFactory(
+		struct{ organization.Getter }{},
+		struct{ authz.AuthZ }{},
+		struct{ organization.Handler }{},
+	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
+	if err != nil {
+		return err
+	}
+
 	refl := openapi3.NewReflector()
 	refl.SpecSchema().SetTitle("SigNoz")
 	refl.SpecSchema().SetDescription("OpenTelemetry-Native Logs, Metrics and Traces in a single pane")
 	refl.SpecSchema().SetAPIKeySecurity("X-API-Key", "SigNoz-Api-Key", openapi.InHeader, "API Key")
 
 	collector := handler.NewOpenAPICollector(refl)
-
-	// Initialize instrumentation
-	instrumentation, err := instrumentation.New(ctx, instrumentation.Config{}, version.Info, "signoz")
-	if err != nil {
-		return err
-	}
-
-	apiserver, err := signozapiserver.NewProviderFactory(struct{ organization.Getter }{}, struct{ authz.AuthZ }{}, struct{ organization.Handler }{}).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
-	if err != nil {
-		return err
-	}
-
 	if err := apiserver.Router().Walk(collector.Walker); err != nil {
 		return err
 	}

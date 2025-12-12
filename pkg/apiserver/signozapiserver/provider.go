@@ -22,7 +22,7 @@ type provider struct {
 	orgHandler organization.Handler
 }
 
-func NewProviderFactory(
+func NewFactory(
 	orgGetter organization.Getter,
 	authz authz.AuthZ,
 	orgHandler organization.Handler,
@@ -61,14 +61,17 @@ func (provider *provider) Router() *mux.Router {
 }
 
 func (provider *provider) AddToRouter(router *mux.Router) error {
-	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.orgHandler.Get, handler.Def{
-		Tags:              []string{"orgs"},
-		Summary:           "Get my organization",
-		Description:       "This endpoint returns the organization I belong to",
-		Request:           nil,
-		Response:          &types.Organization{},
-		SuccessStatusCode: http.StatusOK,
-		ErrorStatusCodes:  []int{http.StatusUnauthorized},
+	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.orgHandler.Get, handler.OpenAPIDef{
+		ID:                  "GetMyOrganization",
+		Tags:                []string{"orgs"},
+		Summary:             "Get my organization",
+		Description:         "This endpoint returns the organization I belong to",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            &types.Organization{},
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusUnauthorized},
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
