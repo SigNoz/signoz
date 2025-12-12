@@ -4038,7 +4038,8 @@ func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *middleware.Auth
 	subRouter.HandleFunc("/pipelines", am.EditAccess(aH.CreateLogsPipeline)).Methods(http.MethodPost)
 
 	// Promote and index JSON paths used in logs
-	subRouter.HandleFunc("/promote_paths", am.AdminAccess(aH.Signoz.Handlers.Promote.HandlePromote)).Methods(http.MethodGet, http.MethodPost)
+	subRouter.HandleFunc("/promote_paths", am.AdminAccess(aH.Signoz.Handlers.Promote.ListPromotedAndIndexedPaths)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/promote_paths", am.AdminAccess(aH.Signoz.Handlers.Promote.HandlePromoteAndIndexPaths)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {

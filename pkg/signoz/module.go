@@ -105,6 +105,6 @@ func NewModules(
 		SpanPercentile:  implspanpercentile.NewModule(querier, providerSettings),
 		Services:        implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, providerSettings),
-		Promote:         implpromote.NewModule(telemetryStore),
+		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
 	}
 }
