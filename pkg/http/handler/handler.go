@@ -30,6 +30,11 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef) Handler {
 	// Add internal server error
 	openAPIDef.ErrorStatusCodes = append(openAPIDef.ErrorStatusCodes, http.StatusInternalServerError)
 
+	// Add unauthorized and forbidden status codes
+	if len(openAPIDef.SecuritySchemes) > 0 {
+		openAPIDef.ErrorStatusCodes = append(openAPIDef.ErrorStatusCodes, http.StatusUnauthorized, http.StatusForbidden)
+	}
+
 	return &handler{
 		handlerFunc: handlerFunc,
 		openAPIDef:  openAPIDef,
@@ -63,10 +68,6 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 			openapi.WithContentType(handler.openAPIDef.ResponseContentType),
 			openapi.WithHTTPStatus(handler.openAPIDef.SuccessStatusCode),
 		)
-	}
-
-	if len(handler.openAPIDef.SecuritySchemes) > 0 {
-		handler.openAPIDef.ErrorStatusCodes = append(handler.openAPIDef.ErrorStatusCodes, http.StatusUnauthorized, http.StatusForbidden)
 	}
 
 	// Add error responses
