@@ -132,7 +132,9 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                    items:
+                      $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                    type: array
                   status:
                     type: string
                 type: object
@@ -143,9 +145,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-      summary: List auth domains
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List all auth domains
       tags:
-      - auth domains
+      - authdomain
     post:
       deprecated: false
       description: This endpoint creates an auth domain
@@ -173,9 +192,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+      security:
+      - api_key: []
+      - tokenizer: []
       summary: Create auth domain
       tags:
-      - auth domains
+      - authdomain
   /api/v1/domains/{id}:
     delete:
       deprecated: false
@@ -301,7 +341,7 @@ paths:
             schema:
               $ref: '#/components/schemas/TypesPostableInvite'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
@@ -311,7 +351,7 @@ paths:
                   status:
                     type: string
                 type: object
-          description: OK
+          description: Created
         "400":
           content:
             application/json:
@@ -330,6 +370,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
       security:
       - api_key: []
       - tokenizer: []
