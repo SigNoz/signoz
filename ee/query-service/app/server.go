@@ -242,6 +242,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	apiHandler.RegisterThirdPartyApiRoutes(r, am)
 	apiHandler.MetricExplorerRoutes(r, am)
 	apiHandler.RegisterTraceFunnelsRoutes(r, am)
+	s.signoz.APIServer.AddToRouter(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},

@@ -223,6 +223,8 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	api.MetricExplorerRoutes(r, am)
 	api.RegisterTraceFunnelsRoutes(r, am)
 
+	s.signoz.APIServer.AddToRouter(r)
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
