@@ -211,8 +211,10 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Conflict
       security:
-      - api_key: []
-      - tokenizer: []
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
       summary: Create auth domain
       tags:
       - authdomain
@@ -234,9 +236,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
       summary: Delete auth domain
       tags:
-      - auth domains
+      - authdomain
     put:
       deprecated: false
       description: This endpoint updates an auth domain
@@ -253,26 +272,38 @@ paths:
             schema:
               $ref: '#/components/schemas/AuthtypesUpdateableAuthDomain'
       responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
-                  status:
-                    type: string
-                type: object
-          description: OK
         "400":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
       summary: Update auth domain
       tags:
-      - auth domains
+      - authdomain
   /api/v1/getResetPasswordToken/{id}:
     get:
       deprecated: false

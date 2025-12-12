@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/gorilla/mux"
 )
@@ -16,11 +17,12 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		Description:         "This endpoint lists all user preferences",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            []*preferencetypes.Preference{},
+		Response:            make([]*preferencetypes.Preference, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -32,11 +34,12 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the user preference by name",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            &preferencetypes.Preference{},
+		Response:            new(preferencetypes.Preference),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -46,13 +49,14 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		Tags:                []string{"preferences"},
 		Summary:             "Update user preference",
 		Description:         "This endpoint updates the user preference by name",
-		Request:             &preferencetypes.UpdatablePreference{},
+		Request:             new(preferencetypes.UpdatablePreference),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -64,11 +68,12 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		Description:         "This endpoint lists all org preferences",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            []*preferencetypes.Preference{},
+		Response:            make([]*preferencetypes.Preference, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -80,11 +85,12 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the org preference by name",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            &preferencetypes.Preference{},
+		Response:            new(preferencetypes.Preference),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -94,13 +100,14 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		Tags:                []string{"preferences"},
 		Summary:             "Update org preference",
 		Description:         "This endpoint updates the org preference by name",
-		Request:             &preferencetypes.UpdatablePreference{},
+		Request:             new(preferencetypes.UpdatablePreference),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
