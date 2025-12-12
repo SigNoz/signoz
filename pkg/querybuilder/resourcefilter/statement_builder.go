@@ -162,7 +162,6 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			ConditionBuilder:   b.conditionBuilder,
 			FieldKeys:          keys,
 			FullTextColumn:     b.fullTextColumn,
-			JsonBodyPrefix:     b.jsonBodyPrefix,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			SkipFullTextFilter: true,
 			SkipFunctionCalls:  true,
