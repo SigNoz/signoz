@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/gorilla/mux"
 )
 
@@ -14,12 +15,12 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		Tags:                []string{"sessions"},
 		Summary:             "Deprecated create session by email password",
 		Description:         "This endpoint is deprecated and will be removed in the future",
-		Request:             &authtypes.DeprecatedPostableLogin{},
+		Request:             new(authtypes.DeprecatedPostableLogin),
 		RequestContentType:  "application/json",
-		Response:            &authtypes.DeprecatedGettableLogin{},
+		Response:            new(authtypes.DeprecatedGettableLogin),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          true,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodPost).GetError(); err != nil {
@@ -36,7 +37,7 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		Response:            new(authtypes.GettableToken),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodPost).GetError(); err != nil {
@@ -50,10 +51,10 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the context for the session",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            &authtypes.SessionContext{},
+		Response:            new(authtypes.SessionContext),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodGet).GetError(); err != nil {
@@ -65,12 +66,12 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		Tags:                []string{"sessions"},
 		Summary:             "Rotate session",
 		Description:         "This endpoint rotates the session",
-		Request:             &authtypes.PostableRotateToken{},
+		Request:             new(authtypes.PostableRotateToken),
 		RequestContentType:  "application/json",
-		Response:            &authtypes.GettableToken{},
+		Response:            new(authtypes.GettableToken),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodPost).GetError(); err != nil {
@@ -87,9 +88,9 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
-		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: ctxtypes.AuthTypeTokenizer.StringValue()}},
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -101,10 +102,10 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		Description:         "This endpoint creates a session for a user using google callback",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            &authtypes.GettableToken{},
+		Response:            new(authtypes.GettableToken),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusSeeOther,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodGet).GetError(); err != nil {
@@ -117,14 +118,14 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		Summary:     "Create session by saml callback",
 		Description: "This endpoint creates a session for a user using saml callback",
 		Request: struct {
-			RelayState   string `from:"RelayState"`
-			SAMLResponse string `from:"SAMLResponse"`
+			RelayState   string `form:"RelayState"`
+			SAMLResponse string `form:"SAMLResponse"`
 		}{},
 		RequestContentType:  "application/x-www-form-urlencoded",
-		Response:            &authtypes.GettableToken{},
+		Response:            new(authtypes.GettableToken),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusSeeOther,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusUnavailableForLegalReasons},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodPost).GetError(); err != nil {
@@ -138,10 +139,10 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		Description:         "This endpoint creates a session for a user using oidc callback",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            &authtypes.GettableToken{},
+		Response:            new(authtypes.GettableToken),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusSeeOther,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusUnavailableForLegalReasons},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodGet).GetError(); err != nil {
