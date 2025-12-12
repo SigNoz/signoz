@@ -221,6 +221,14 @@ type TreemapResponse struct {
 	Samples    []TreemapEntry `json:"samples"`
 }
 
+// MetricHighlightsResponse is the output structure for the metric highlights endpoint.
+type MetricHighlightsResponse struct {
+	DataPoints       uint64 `json:"dataPoints"`
+	LastReceived     uint64 `json:"lastReceived"`
+	TotalTimeSeries  uint64 `json:"totalTimeSeries"`
+	ActiveTimeSeries uint64 `json:"activeTimeSeries"`
+}
+
 // MetricAttributesRequest represents the payload for the metric attributes endpoint.
 type MetricAttributesRequest struct {
 	MetricName string `json:"metricName"`
