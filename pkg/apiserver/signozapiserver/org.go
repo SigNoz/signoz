@@ -16,11 +16,12 @@ func (provider *provider) addOrgRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the organization I belong to",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            &types.Organization{},
+		Response:            new(types.Organization),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -30,13 +31,14 @@ func (provider *provider) addOrgRoutes(router *mux.Router) error {
 		Tags:                []string{"orgs"},
 		Summary:             "Update my organization",
 		Description:         "This endpoint updates the organization I belong to",
-		Request:             &types.Organization{},
+		Request:             new(types.Organization),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusConflict, http.StatusBadRequest},
 		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
