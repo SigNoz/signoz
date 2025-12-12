@@ -1,0 +1,55 @@
+/* Overlay stays below content */
+[data-slot='dialog-overlay'] {
+	z-index: 50;
+}
+
+/* Dialog content always above overlay */
+[data-slot='dialog-content'] {
+	position: fixed;
+	z-index: 60;
+}
+
+.cmdk-section-heading [cmdk-group-heading] {
+	text-transform: uppercase;
+	color: var(--bg-slate-100);
+}
+
+/* Hide scrollbar but keep scroll */
+.cmdk-list-scroll {
+	scrollbar-width: none; /* Firefox */
+}
+
+.cmdk-list-scroll::-webkit-scrollbar {
+	display: none; /* Chrome, Safari, Edge */
+}
+
+.cmdk-list-scroll {
+	-webkit-overflow-scrolling: touch;
+}
+
+.cmdk-input-wrapper {
+	margin-left: 8px;
+}
+
+.cmdk-item-light:hover {
+	cursor: pointer;
+	background-color: var(--bg-vanilla-200) !important;
+}
+
+.cmdk-item-light[data-selected='true'] {
+	background-color: var(--bg-vanilla-300) !important;
+	color: var(--bg-ink-500);
+}
+
+.cmdk-item {
+	cursor: pointer;
+}
+
+[cmdk-item] svg {
+	width: auto;
+	height: auto;
+}
+
+.cmd-item-icon {
+	margin-right: 8px;
+}
