@@ -69,7 +69,10 @@ func newProvider(
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
 
-	provider.AddToRouter(router)
+	if err := provider.AddToRouter(router); err != nil {
+		return nil, err
+	}
+
 	return provider, nil
 }
 
