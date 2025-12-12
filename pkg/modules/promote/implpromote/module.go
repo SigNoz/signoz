@@ -163,7 +163,7 @@ func (m *module) PromoteAndIndexPaths(
 			}
 
 			for _, index := range it.Indexes {
-				typeIndex := schemamigrator.IndexTypeTokenBF
+				var typeIndex schemamigrator.IndexType
 				switch {
 				case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeNGramBF)):
 					typeIndex = schemamigrator.IndexTypeNGramBF
