@@ -10,7 +10,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/preference"
+	"github.com/SigNoz/signoz/pkg/modules/session"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/spf13/cobra"
 	"github.com/swaggest/openapi-go"
@@ -39,6 +43,10 @@ func runGenerateOpenAPI(ctx context.Context) error {
 		struct{ organization.Getter }{},
 		struct{ authz.AuthZ }{},
 		struct{ organization.Handler }{},
+		struct{ user.Handler }{},
+		struct{ session.Handler }{},
+		struct{ authdomain.Handler }{},
+		struct{ preference.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return err

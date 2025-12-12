@@ -21,6 +21,7 @@ type OpenAPIDef struct {
 	ResponseContentType string
 	SuccessStatusCode   int
 	ErrorStatusCodes    []int
+	Deprecated          bool
 }
 
 // Collector is a collector for OpenAPI operations

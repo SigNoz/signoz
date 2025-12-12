@@ -356,7 +356,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.APIServer,
-		NewAPIServerProviderFactories(orgGetter, authz, handlers),
+		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers),
 		"signoz",
 	)
 	if err != nil {

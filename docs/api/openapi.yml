@@ -4,8 +4,977 @@ info:
   title: SigNoz
   version: ""
 paths:
+  /api/v1/changePassword/{id}:
+    post:
+      deprecated: false
+      description: This endpoint changes the password by id
+      operationId: ChangePassword
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesChangePasswordRequest'
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Change password
+      tags:
+      - users
+  /api/v1/complete/google:
+    get:
+      deprecated: false
+      description: This endpoint creates a session for a user using google callback
+      operationId: CreateSessionByGoogleCallback
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Create session by google callback
+      tags:
+      - sessions
+  /api/v1/complete/oidc:
+    get:
+      deprecated: false
+      description: This endpoint creates a session for a user using oidc callback
+      operationId: CreateSessionByOIDCCallback
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+      summary: Create session by oidc callback
+      tags:
+      - sessions
+  /api/v1/complete/saml:
+    post:
+      deprecated: false
+      description: This endpoint creates a session for a user using saml callback
+      operationId: CreateSessionBySAMLCallback
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+      summary: Create session by saml callback
+      tags:
+      - sessions
+  /api/v1/domains:
+    get:
+      deprecated: false
+      description: This endpoint lists all auth domains
+      operationId: ListAuthDomains
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: List auth domains
+      tags:
+      - auth domains
+    post:
+      deprecated: false
+      description: This endpoint creates an auth domain
+      operationId: CreateAuthDomain
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesPostableAuthDomain'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Create auth domain
+      tags:
+      - auth domains
+  /api/v1/domains/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes an auth domain
+      operationId: DeleteAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Delete auth domain
+      tags:
+      - auth domains
+    put:
+      deprecated: false
+      description: This endpoint updates an auth domain
+      operationId: UpdateAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesUpdateableAuthDomain'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Update auth domain
+      tags:
+      - auth domains
+  /api/v1/getResetPasswordToken/{id}:
+    get:
+      deprecated: false
+      description: This endpoint returns the reset password token by id
+      operationId: GetResetPasswordToken
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Get reset password token
+      tags:
+      - users
+  /api/v1/invite:
+    get:
+      deprecated: false
+      description: This endpoint lists all invites
+      operationId: ListInvite
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: List invites
+      tags:
+      - invites
+    post:
+      deprecated: false
+      description: This endpoint creates an invite for a user
+      operationId: CreateInvite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableInvite'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Create invite
+      tags:
+      - invites
+  /api/v1/invite/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes an invite by id
+      operationId: DeleteInvite
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Delete invite
+      tags:
+      - invites
+  /api/v1/invite/{token}:
+    get:
+      deprecated: false
+      description: This endpoint gets an invite by token
+      operationId: GetInvite
+      parameters:
+      - in: path
+        name: token
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Get invite
+      tags:
+      - invites
+  /api/v1/invite/accept:
+    post:
+      deprecated: false
+      description: This endpoint accepts an invite by token
+      operationId: AcceptInvite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableAcceptInvite'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Accept invite
+      tags:
+      - invites
+  /api/v1/invite/bulk:
+    post:
+      deprecated: false
+      description: This endpoint creates a bulk invite for a user
+      operationId: CreateBulkInvite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/TypesPostableInvite'
+              type: array
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Create bulk invite
+      tags:
+      - invites
+  /api/v1/login:
+    post:
+      deprecated: true
+      description: This endpoint is deprecated and will be removed in the future
+      operationId: DeprecatedCreateSessionByEmailPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesDeprecatedPostableLogin'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Deprecated create session by email password
+      tags:
+      - sessions
+  /api/v1/org/preferences:
+    get:
+      deprecated: false
+      description: This endpoint lists all org preferences
+      operationId: ListOrgPreferences
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: List org preferences
+      tags:
+      - preferences
+  /api/v1/org/preferences/{name}:
+    get:
+      deprecated: false
+      description: This endpoint returns the org preference by name
+      operationId: GetOrgPreference
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Get org preference
+      tags:
+      - preferences
+    put:
+      deprecated: false
+      description: This endpoint updates the org preference by name
+      operationId: UpdateOrgPreference
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreferencetypesUpdatablePreference'
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Update org preference
+      tags:
+      - preferences
+  /api/v1/pats:
+    get:
+      deprecated: false
+      description: This endpoint lists all api keys
+      operationId: ListAPIKeys
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: List api keys
+      tags:
+      - api keys
+    post:
+      deprecated: false
+      description: This endpoint creates an api key
+      operationId: CreateAPIKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableAPIKey'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Create api key
+      tags:
+      - api keys
+  /api/v1/pats/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint revokes an api key
+      operationId: RevokeAPIKey
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Revoke api key
+      tags:
+      - api keys
+    put:
+      deprecated: false
+      description: This endpoint updates an api key
+      operationId: UpdateAPIKey
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableAPIKey'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Update api key
+      tags:
+      - api keys
+  /api/v1/resetPassword:
+    post:
+      deprecated: false
+      description: This endpoint resets the password by token
+      operationId: ResetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableResetPassword'
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Reset password
+      tags:
+      - users
+  /api/v1/user:
+    get:
+      deprecated: false
+      description: This endpoint lists all users
+      operationId: ListUsers
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: List users
+      tags:
+      - users
+  /api/v1/user/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes the user by id
+      operationId: DeleteUser
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Delete user
+      tags:
+      - users
+    get:
+      deprecated: false
+      description: This endpoint returns the user by id
+      operationId: GetUser
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Get user
+      tags:
+      - users
+    put:
+      deprecated: false
+      description: This endpoint updates the user by id
+      operationId: ""
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesUser'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Update user
+  /api/v1/user/me:
+    get:
+      deprecated: false
+      description: This endpoint returns the user I belong to
+      operationId: GetMyUser
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Get my user
+      tags:
+      - users
+  /api/v1/user/preferences:
+    get:
+      deprecated: false
+      description: This endpoint lists all user preferences
+      operationId: ListUserPreferences
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: List user preferences
+      tags:
+      - preferences
+  /api/v1/user/preferences/{name}:
+    get:
+      deprecated: false
+      description: This endpoint returns the user preference by name
+      operationId: GetUserPreference
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Get user preference
+      tags:
+      - preferences
+    put:
+      deprecated: false
+      description: This endpoint updates the user preference by name
+      operationId: UpdateUserPreference
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreferencetypesUpdatablePreference'
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Update user preference
+      tags:
+      - preferences
   /api/v2/orgs/me:
     get:
+      deprecated: false
       description: This endpoint returns the organization I belong to
       operationId: GetMyOrganization
       responses:
@@ -19,6 +988,7 @@ paths:
       tags:
       - orgs
     put:
+      deprecated: false
       description: This endpoint updates the organization I belong to
       operationId: UpdateMyOrganization
       requestBody:
@@ -42,8 +1012,305 @@ paths:
       summary: Update my organization
       tags:
       - orgs
+  /api/v2/sessions:
+    delete:
+      deprecated: false
+      description: This endpoint deletes the session
+      operationId: DeleteSession
+      responses:
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Delete session
+      tags:
+      - sessions
+  /api/v2/sessions/context:
+    get:
+      deprecated: false
+      description: This endpoint returns the context for the session
+      operationId: GetSessionContext
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Get session context
+      tags:
+      - sessions
+  /api/v2/sessions/email_password:
+    post:
+      deprecated: false
+      description: This endpoint creates a session for a user using email and password
+      operationId: CreateSessionByEmailPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesPostableEmailPasswordSession'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Create session by email password
+      tags:
+      - sessions
+  /api/v2/sessions/rotate:
+    post:
+      deprecated: false
+      description: This endpoint rotates the session
+      operationId: RotateSession
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesPostableRotateToken'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Rotate session
+      tags:
+      - sessions
 components:
   schemas:
+    AuthtypesAuthDomainConfig:
+      properties:
+        googleAuthConfig:
+          $ref: '#/components/schemas/AuthtypesGoogleConfig'
+        oidcConfig:
+          $ref: '#/components/schemas/AuthtypesOIDCConfig'
+        samlConfig:
+          $ref: '#/components/schemas/AuthtypesSamlConfig'
+        ssoEnabled:
+          type: boolean
+        ssoType:
+          type: string
+      type: object
+    AuthtypesAuthNProviderInfo:
+      properties:
+        relayStatePath:
+          nullable: true
+          type: string
+      type: object
+    AuthtypesAuthNSupport:
+      properties:
+        callback:
+          items:
+            $ref: '#/components/schemas/AuthtypesCallbackAuthNSupport'
+          nullable: true
+          type: array
+        password:
+          items:
+            $ref: '#/components/schemas/AuthtypesPasswordAuthNSupport'
+          nullable: true
+          type: array
+      type: object
+    AuthtypesCallbackAuthNSupport:
+      properties:
+        provider:
+          type: string
+        url:
+          type: string
+      type: object
+    AuthtypesClaimMapping:
+      properties:
+        email:
+          type: string
+      type: object
+    AuthtypesDeprecatedGettableLogin:
+      properties:
+        accessJwt:
+          type: string
+        userId:
+          type: string
+      type: object
+    AuthtypesDeprecatedPostableLogin:
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      type: object
+    AuthtypesGettableAuthDomain:
+      properties:
+        authNProviderInfo:
+          $ref: '#/components/schemas/AuthtypesAuthNProviderInfo'
+        createdAt:
+          format: date-time
+          type: string
+        googleAuthConfig:
+          $ref: '#/components/schemas/AuthtypesGoogleConfig'
+        id:
+          type: string
+        name:
+          type: string
+        oidcConfig:
+          $ref: '#/components/schemas/AuthtypesOIDCConfig'
+        orgId:
+          type: string
+        samlConfig:
+          $ref: '#/components/schemas/AuthtypesSamlConfig'
+        ssoEnabled:
+          type: boolean
+        ssoType:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    AuthtypesGettableToken:
+      properties:
+        accessToken:
+          type: string
+        expiresIn:
+          type: integer
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+      type: object
+    AuthtypesGoogleConfig:
+      properties:
+        clientId:
+          type: string
+        clientSecret:
+          type: string
+        redirectURI:
+          type: string
+      type: object
+    AuthtypesOIDCConfig:
+      properties:
+        claimMapping:
+          $ref: '#/components/schemas/AuthtypesClaimMapping'
+        clientId:
+          type: string
+        clientSecret:
+          type: string
+        getUserInfo:
+          type: boolean
+        insecureSkipEmailVerified:
+          type: boolean
+        issuer:
+          type: string
+        issuerAlias:
+          type: string
+      type: object
+    AuthtypesOrgSessionContext:
+      properties:
+        authNSupport:
+          $ref: '#/components/schemas/AuthtypesAuthNSupport'
+        id:
+          type: string
+        name:
+          type: string
+        warning:
+          $ref: '#/components/schemas/ErrorsJSON'
+      type: object
+    AuthtypesPasswordAuthNSupport:
+      properties:
+        provider:
+          type: string
+      type: object
+    AuthtypesPostableAuthDomain:
+      properties:
+        config:
+          $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+        name:
+          type: string
+      type: object
+    AuthtypesPostableEmailPasswordSession:
+      properties:
+        email:
+          type: string
+        orgId:
+          type: string
+        password:
+          type: string
+      type: object
+    AuthtypesPostableRotateToken:
+      properties:
+        refreshToken:
+          type: string
+      type: object
+    AuthtypesSamlConfig:
+      properties:
+        insecureSkipAuthNRequestsSigned:
+          type: boolean
+        samlCert:
+          type: string
+        samlEntity:
+          type: string
+        samlIdp:
+          type: string
+      type: object
+    AuthtypesSessionContext:
+      properties:
+        exists:
+          type: boolean
+        orgs:
+          items:
+            $ref: '#/components/schemas/AuthtypesOrgSessionContext'
+          nullable: true
+          type: array
+      type: object
+    AuthtypesUpdateableAuthDomain:
+      properties:
+        config:
+          $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+      type: object
     ErrorsJSON:
       properties:
         code:
@@ -62,6 +1329,35 @@ components:
         message:
           type: string
       type: object
+    PreferencetypesPreference:
+      properties:
+        allowedScopes:
+          items:
+            type: string
+          nullable: true
+          type: array
+        allowedValues:
+          items:
+            type: string
+          nullable: true
+          type: array
+        defaultValue:
+          $ref: '#/components/schemas/PreferencetypesValue'
+        description:
+          type: string
+        name:
+          type: string
+        value:
+          $ref: '#/components/schemas/PreferencetypesValue'
+        valueType:
+          type: string
+      type: object
+    PreferencetypesUpdatablePreference:
+      properties:
+        value: {}
+      type: object
+    PreferencetypesValue:
+      type: object
     RenderErrorResponse:
       properties:
         error:
@@ -74,6 +1370,73 @@ components:
         data:
           $ref: '#/components/schemas/TypesOrganization'
         status:
+          type: string
+      type: object
+    TypesChangePasswordRequest:
+      properties:
+        newPassword:
+          type: string
+        oldPassword:
+          type: string
+        userId:
+          type: string
+      type: object
+    TypesGettableAPIKey:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        createdByUser:
+          $ref: '#/components/schemas/TypesUser'
+        expiresAt:
+          format: int64
+          type: integer
+        id:
+          type: string
+        lastUsed:
+          format: int64
+          type: integer
+        name:
+          type: string
+        revoked:
+          type: boolean
+        role:
+          type: string
+        token:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+        updatedByUser:
+          $ref: '#/components/schemas/TypesUser'
+        userId:
+          type: string
+      type: object
+    TypesInvite:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        inviteLink:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        role:
+          type: string
+        token:
+          type: string
+        updatedAt:
+          format: date-time
           type: string
       type: object
     TypesOrganization:
@@ -91,6 +1454,73 @@ components:
           minimum: 0
           type: integer
         name:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    TypesPostableAPIKey:
+      properties:
+        expiresInDays:
+          format: int64
+          type: integer
+        name:
+          type: string
+        role:
+          type: string
+      type: object
+    TypesPostableAcceptInvite:
+      properties:
+        displayName:
+          type: string
+        password:
+          type: string
+        sourceUrl:
+          type: string
+        token:
+          type: string
+      type: object
+    TypesPostableInvite:
+      properties:
+        email:
+          type: string
+        frontendBaseUrl:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+      type: object
+    TypesPostableResetPassword:
+      properties:
+        password:
+          type: string
+        token:
+          type: string
+      type: object
+    TypesResetPasswordToken:
+      properties:
+        id:
+          type: string
+        passwordId:
+          type: string
+        token:
+          type: string
+      type: object
+    TypesUser:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        orgId:
+          type: string
+        role:
           type: string
         updatedAt:
           format: date-time

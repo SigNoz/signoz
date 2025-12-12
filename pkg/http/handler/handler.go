@@ -37,6 +37,7 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 	opCtx.SetTags(handler.openAPIDef.Tags...)
 	opCtx.SetSummary(handler.openAPIDef.Summary)
 	opCtx.SetDescription(handler.openAPIDef.Description)
+	opCtx.SetIsDeprecated(handler.openAPIDef.Deprecated)
 
 	// Add request structure
 	opCtx.AddReqStructure(handler.openAPIDef.Request, openapi.WithContentType(handler.openAPIDef.RequestContentType))
