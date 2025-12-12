@@ -1,0 +1,85 @@
+openapi: 3.0.3
+info:
+  description: OpenTelemetry-Native Logs, Metrics and Traces in a single pane
+  title: SigNoz
+  version: ""
+paths:
+  /api/v2/orgs/me:
+    get:
+      description: This endpoint returns the organization I belong to
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderSuccessResponse'
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+      summary: Get my organization
+      tags:
+      - orgs
+components:
+  schemas:
+    ErrorsJSON:
+      properties:
+        code:
+          type: string
+        errors:
+          items:
+            $ref: '#/components/schemas/ErrorsResponseerroradditional'
+          type: array
+        message:
+          type: string
+        url:
+          type: string
+      type: object
+    ErrorsResponseerroradditional:
+      properties:
+        message:
+          type: string
+      type: object
+    RenderErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorsJSON'
+        status:
+          type: string
+      type: object
+    RenderSuccessResponse:
+      properties:
+        data:
+          $ref: '#/components/schemas/TypesOrganization'
+        status:
+          type: string
+      type: object
+    TypesOrganization:
+      properties:
+        alias:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        id:
+          type: string
+        key:
+          minimum: 0
+          type: integer
+        name:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+  securitySchemes:
+    X-API-Key:
+      description: API Key
+      in: header
+      name: SigNoz-Api-Key
+      type: apiKey
