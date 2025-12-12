@@ -15,13 +15,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderSuccessResponse'
           description: OK
-        "401":
+      summary: Get my organization
+      tags:
+      - orgs
+    put:
+      description: This endpoint updates the organization I belong to
+      operationId: UpdateMyOrganization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesOrganization'
+      responses:
+        "400":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-      summary: Get my organization
+          description: Bad Request
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+      summary: Update my organization
       tags:
       - orgs
 components:

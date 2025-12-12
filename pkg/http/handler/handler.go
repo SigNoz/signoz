@@ -42,11 +42,13 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 	opCtx.AddReqStructure(handler.openAPIDef.Request, openapi.WithContentType(handler.openAPIDef.RequestContentType))
 
 	// Add success response
-	opCtx.AddRespStructure(
-		render.SuccessResponse{Status: render.StatusSuccess.String(), Data: handler.openAPIDef.Response},
-		openapi.WithContentType(handler.openAPIDef.ResponseContentType),
-		openapi.WithHTTPStatus(handler.openAPIDef.SuccessStatusCode),
-	)
+	if handler.openAPIDef.Response != nil {
+		opCtx.AddRespStructure(
+			render.SuccessResponse{Status: render.StatusSuccess.String(), Data: handler.openAPIDef.Response},
+			openapi.WithContentType(handler.openAPIDef.ResponseContentType),
+			openapi.WithHTTPStatus(handler.openAPIDef.SuccessStatusCode),
+		)
+	}
 
 	// Add error responses
 	for _, statusCode := range handler.openAPIDef.ErrorStatusCodes {
