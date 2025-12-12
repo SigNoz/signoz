@@ -12,7 +12,6 @@ type Module interface {
 	ListBodySkipIndexes(ctx context.Context) ([]schemamigrator.Index, error)
 	ListPromotedPaths(ctx context.Context) ([]string, error)
 	PromoteAndIndexPaths(ctx context.Context, paths ...promotetypes.PromotePath) error
-	DropIndex(ctx context.Context, path promotetypes.PromotePath) error
 }
 
 type Handler interface {

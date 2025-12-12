@@ -1,12 +1,12 @@
 package implpromote
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -36,35 +36,17 @@ func (h *handler) HandlePromote(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		h.PromotePaths(w, r)
 		return
-	case http.MethodDelete:
-		h.DropIndex(w, r)
-		return
 	default:
 		render.Error(w, errors.NewMethodNotAllowedf(errors.CodeMethodNotAllowed, "method not allowed"))
 		return
 	}
 }
 
-func (h *handler) DropIndex(w http.ResponseWriter, r *http.Request) {
-	var req promotetypes.PromotePath
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "Invalid data"))
-		return
-	}
-
-	err := h.module.DropIndex(r.Context(), req)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusOK, nil)
-}
-
 func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
 	var req []promotetypes.PromotePath
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "Invalid data"))
+
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
+		render.Error(w, err)
 		return
 	}
 

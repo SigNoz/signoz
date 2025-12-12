@@ -15,7 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
-	"github.com/huandu/go-sqlbuilder"
 )
 
 var (
@@ -23,7 +22,6 @@ var (
 	CodeFailedToSendBatch          = errors.MustNewCode("failed_to_send_batch_promoted_paths")
 	CodeFailedToAppendPath         = errors.MustNewCode("failed_to_append_path_promoted_paths")
 	CodeFailedToCreateIndex        = errors.MustNewCode("failed_to_create_index_promoted_paths")
-	CodeFailedToDropIndex          = errors.MustNewCode("failed_to_drop_index_promoted_paths")
 	CodeFailedToQueryPromotedPaths = errors.MustNewCode("failed_to_query_promoted_paths")
 )
 
@@ -105,53 +103,6 @@ func (m *module) createIndexes(ctx context.Context, indexes []schemamigrator.Ind
 	return nil
 }
 
-func (m *module) DropIndex(ctx context.Context, path promotetypes.PromotePath) error {
-	// validate the paths
-	if err := path.Validate(); err != nil {
-		return err
-	}
-
-	promoted, err := telemetrymetadata.IsPathPromoted(ctx, m.store.ClickhouseDB(), path.Path)
-	if err != nil {
-		return err
-	}
-	parentColumn := telemetrylogs.LogsV2BodyJSONColumn
-	if promoted {
-		parentColumn = telemetrylogs.LogsV2BodyPromotedColumn
-	}
-
-	for _, index := range path.Indexes {
-		typeIndex := schemamigrator.IndexTypeTokenBF
-		switch {
-		case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeNGramBF)):
-			typeIndex = schemamigrator.IndexTypeNGramBF
-		case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeTokenBF)):
-			typeIndex = schemamigrator.IndexTypeTokenBF
-		case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeMinMax)):
-			typeIndex = schemamigrator.IndexTypeMinMax
-		default:
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid index type: %s", index.Type)
-		}
-
-		alterStmt := schemamigrator.AlterTableDropIndex{
-			Database: telemetrylogs.DBName,
-			Table:    telemetrylogs.LogsV2LocalTableName,
-			Index: schemamigrator.Index{
-				Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, path.Path, index.JSONDataType.StringValue(), typeIndex),
-				Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, path.Path, index.JSONDataType.StringValue()),
-				Type:        index.Type,
-				Granularity: index.Granularity,
-			},
-		}
-		op := alterStmt.OnCluster(m.store.Cluster())
-		if err := m.store.ClickhouseDB().Exec(ctx, op.ToSQL()); err != nil {
-			return errors.WrapInternalf(err, CodeFailedToDropIndex, "failed to drop index")
-		}
-	}
-
-	return nil
-}
-
 // PromoteAndIndexPaths handles promoting paths and creating indexes in one call.
 func (m *module) PromoteAndIndexPaths(
 	ctx context.Context,
@@ -161,33 +112,18 @@ func (m *module) PromoteAndIndexPaths(
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty")
 	}
 
+	pathsStr := []string{}
 	// validate the paths
 	for _, path := range paths {
 		if err := path.Validate(); err != nil {
 			return err
 		}
+		pathsStr = append(pathsStr, path.Path)
 	}
 
-	sb := sqlbuilder.NewSelectBuilder().From(fmt.Sprintf("%s.%s", telemetrymetadata.DBName, telemetrymetadata.PromotedPathsTableName)).Select("path")
-	cond := []string{}
-	for _, path := range paths {
-		cond = append(cond, sb.Equal("path", path.Path))
-	}
-	sb.Where(sb.Or(cond...))
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	rows, err := m.store.ClickhouseDB().Query(ctx, query, args...)
+	existingPromotedPaths, err := telemetrymetadata.ListPromotedPaths(ctx, m.store.ClickhouseDB(), pathsStr...)
 	if err != nil {
-		return errors.WrapInternalf(err, CodeFailedToQueryPromotedPaths, "failed to query promoted paths")
-	}
-	defer rows.Close()
-
-	// Load existing promoted paths once
-	existingPromotedPaths := make(map[string]struct{})
-	for rows.Next() {
-		var p string
-		if err := rows.Scan(&p); err == nil {
-			existingPromotedPaths[p] = struct{}{}
-		}
+		return err
 	}
 
 	var toInsert []string

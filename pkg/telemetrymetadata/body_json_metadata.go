@@ -263,9 +263,16 @@ func ListLogsJSONIndexes(ctx context.Context, telemetryStore telemetrystore.Tele
 	return indexesMap, nil
 }
 
-func ListPromotedPaths(ctx context.Context, conn clickhouse.Conn) (map[string]struct{}, error) {
-	query := fmt.Sprintf("SELECT path FROM %s.%s", DBName, PromotedPathsTableName)
-	rows, err := conn.Query(ctx, query)
+func ListPromotedPaths(ctx context.Context, conn clickhouse.Conn, paths ...string) (map[string]struct{}, error) {
+	sb := sqlbuilder.Select("path").From(fmt.Sprintf("%s.%s", DBName, PromotedPathsTableName))
+	pathConditions := []string{}
+	for _, path := range paths {
+		pathConditions = append(pathConditions, sb.Equal("path", path))
+	}
+	sb.Where(sb.Or(pathConditions...))
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	
+	rows, err := conn.Query(ctx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, CodeFailLoadPromotedPaths, "failed to load promoted paths")
 	}
