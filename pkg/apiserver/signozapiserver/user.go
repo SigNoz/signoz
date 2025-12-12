@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/gorilla/mux"
 )
 
@@ -18,9 +19,10 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		RequestContentType:  "application/json",
 		Response:            &types.Invite{},
 		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:          false,
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: ctxtypes.AuthTypeAPIKey.StringValue()}, {Name: ctxtypes.AuthTypeTokenizer.StringValue()}},
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}

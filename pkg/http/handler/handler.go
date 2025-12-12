@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -21,6 +22,10 @@ type handler struct {
 }
 
 func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef) Handler {
+	openAPIDef.ErrorStatusCodes = slices.DeleteFunc(openAPIDef.ErrorStatusCodes, func(statusCode int) bool {
+		return statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden
+	})
+
 	return &handler{
 		handlerFunc: handlerFunc,
 		openAPIDef:  openAPIDef,
@@ -39,6 +44,11 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 	opCtx.SetDescription(handler.openAPIDef.Description)
 	opCtx.SetIsDeprecated(handler.openAPIDef.Deprecated)
 
+	// Add security schemes
+	for _, securityScheme := range handler.openAPIDef.SecuritySchemes {
+		opCtx.AddSecurity(securityScheme.Name, securityScheme.Scopes...)
+	}
+
 	// Add request structure
 	opCtx.AddReqStructure(handler.openAPIDef.Request, openapi.WithContentType(handler.openAPIDef.RequestContentType))
 
@@ -51,6 +61,10 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 		)
 	}
 
+	if len(handler.openAPIDef.SecuritySchemes) > 0 {
+		handler.openAPIDef.ErrorStatusCodes = append(handler.openAPIDef.ErrorStatusCodes, http.StatusUnauthorized, http.StatusForbidden)
+	}
+
 	// Add error responses
 	for _, statusCode := range handler.openAPIDef.ErrorStatusCodes {
 		opCtx.AddRespStructure(
@@ -59,4 +73,5 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 			openapi.WithHTTPStatus(statusCode),
 		)
 	}
+
 }

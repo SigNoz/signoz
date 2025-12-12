@@ -27,12 +27,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Change password
       tags:
       - users
@@ -42,24 +36,23 @@ paths:
       description: This endpoint creates a session for a user using google callback
       operationId: CreateSessionByGoogleCallback
       responses:
-        "200":
+        "303":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
-          description: OK
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableToken'
+                  status:
+                    type: string
+                type: object
+          description: See Other
         "400":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Create session by google callback
       tags:
       - sessions
@@ -69,24 +62,23 @@ paths:
       description: This endpoint creates a session for a user using oidc callback
       operationId: CreateSessionByOIDCCallback
       responses:
-        "200":
+        "303":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
-          description: OK
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableToken'
+                  status:
+                    type: string
+                type: object
+          description: See Other
         "400":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
         "451":
           content:
             application/json:
@@ -102,24 +94,23 @@ paths:
       description: This endpoint creates a session for a user using saml callback
       operationId: CreateSessionBySAMLCallback
       responses:
-        "200":
+        "303":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
-          description: OK
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableToken'
+                  status:
+                    type: string
+                type: object
+          description: See Other
         "400":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
         "451":
           content:
             application/json:
@@ -139,7 +130,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -147,12 +143,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: List auth domains
       tags:
       - auth domains
@@ -170,7 +160,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -178,12 +173,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Create auth domain
       tags:
       - auth domains
@@ -205,12 +194,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Delete auth domain
       tags:
       - auth domains
@@ -234,7 +217,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -242,12 +230,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Update auth domain
       tags:
       - auth domains
@@ -267,7 +249,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesResetPasswordToken'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -275,12 +262,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Get reset password token
       tags:
       - users
@@ -294,7 +275,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesInvite'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -302,12 +288,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: List invites
       tags:
       - invites
@@ -325,7 +305,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesInvite'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -339,6 +324,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+      security:
+      - api_key: []
+      - tokenizer: []
       summary: Create invite
       tags:
       - invites
@@ -360,12 +354,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Delete invite
       tags:
       - invites
@@ -385,7 +373,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesInvite'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -393,12 +386,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Get invite
       tags:
       - invites
@@ -417,7 +404,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesUser'
+                  status:
+                    type: string
+                type: object
           description: Created
         "400":
           content:
@@ -425,12 +417,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Accept invite
       tags:
       - invites
@@ -453,12 +439,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Create bulk invite
       tags:
       - invites
@@ -477,7 +457,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesDeprecatedGettableLogin'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -485,12 +470,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Deprecated create session by email password
       tags:
       - sessions
@@ -504,7 +483,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/PreferencetypesPreference'
+                    type: array
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -512,12 +498,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: List org preferences
       tags:
       - preferences
@@ -537,7 +517,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PreferencetypesPreference'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -545,12 +530,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Get org preference
       tags:
       - preferences
@@ -576,12 +555,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Update org preference
       tags:
       - preferences
@@ -595,7 +568,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/TypesGettableAPIKey'
+                    type: array
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -603,12 +583,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: List api keys
       tags:
       - api keys
@@ -626,7 +600,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesGettableAPIKey'
+                  status:
+                    type: string
+                type: object
           description: Created
         "400":
           content:
@@ -634,12 +613,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Create api key
       tags:
       - api keys
@@ -661,12 +634,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Revoke api key
       tags:
       - api keys
@@ -690,7 +657,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesGettableAPIKey'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -698,12 +670,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Update api key
       tags:
       - api keys
@@ -724,12 +690,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Reset password
       tags:
       - users
@@ -743,7 +703,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/TypesUser'
+                    type: array
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -751,12 +718,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: List users
       tags:
       - users
@@ -778,12 +739,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Delete user
       tags:
       - users
@@ -802,7 +757,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesUser'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -810,12 +770,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Get user
       tags:
       - users
@@ -839,7 +793,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesUser'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -847,12 +806,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Update user
   /api/v1/user/me:
     get:
@@ -864,7 +817,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesUser'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -872,12 +830,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Get my user
       tags:
       - users
@@ -891,7 +843,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/PreferencetypesPreference'
+                    type: array
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -899,12 +858,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: List user preferences
       tags:
       - preferences
@@ -924,7 +877,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PreferencetypesPreference'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -932,12 +890,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Get user preference
       tags:
       - preferences
@@ -963,12 +915,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Update user preference
       tags:
       - preferences
@@ -982,7 +928,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesOrganization'
+                  status:
+                    type: string
+                type: object
           description: OK
       summary: Get my organization
       tags:
@@ -1024,12 +975,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Delete session
       tags:
       - sessions
@@ -1043,7 +988,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesSessionContext'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -1051,19 +1001,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Get session context
       tags:
       - sessions
   /api/v2/sessions/email_password:
     post:
       deprecated: false
-      description: This endpoint creates a session for a user using email and password
+      description: This endpoint creates a session for a user using email and password.
       operationId: CreateSessionByEmailPassword
       requestBody:
         content:
@@ -1075,7 +1019,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableToken'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -1083,13 +1032,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-      summary: Create session by email password
+      summary: Create session by email and password
       tags:
       - sessions
   /api/v2/sessions/rotate:
@@ -1107,7 +1050,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderSuccessResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableToken'
+                  status:
+                    type: string
+                type: object
           description: OK
         "400":
           content:
@@ -1115,12 +1063,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
       summary: Rotate session
       tags:
       - sessions
@@ -1365,13 +1307,6 @@ components:
         status:
           type: string
       type: object
-    RenderSuccessResponse:
-      properties:
-        data:
-          $ref: '#/components/schemas/TypesOrganization'
-        status:
-          type: string
-      type: object
     TypesChangePasswordRequest:
       properties:
         newPassword:
@@ -1527,8 +1462,13 @@ components:
           type: string
       type: object
   securitySchemes:
-    X-API-Key:
-      description: API Key
+    api_key:
+      description: API Keys
       in: header
       name: SigNoz-Api-Key
       type: apiKey
+    tokenizer:
+      bearerFormat: Tokenizer
+      description: Tokens generated by the tokenizer
+      scheme: bearer
+      type: http

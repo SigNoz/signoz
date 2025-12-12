@@ -22,6 +22,12 @@ type OpenAPIDef struct {
 	SuccessStatusCode   int
 	ErrorStatusCodes    []int
 	Deprecated          bool
+	SecuritySchemes     []OpenAPISecurityScheme
+}
+
+type OpenAPISecurityScheme struct {
+	Name   string
+	Scopes []string
 }
 
 // Collector is a collector for OpenAPI operations
