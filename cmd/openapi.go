@@ -21,7 +21,7 @@ import (
 	"github.com/swaggest/openapi-go/openapi3"
 )
 
-func registerGenerateOpenAPI(parentCmd *cobra.Command, logger *slog.Logger) {
+func registerGenerateOpenAPI(parentCmd *cobra.Command) {
 	openapiCmd := &cobra.Command{
 		Use:   "openapi",
 		Short: "Generate OpenAPI schema for SigNoz",
