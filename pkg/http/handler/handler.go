@@ -22,9 +22,13 @@ type handler struct {
 }
 
 func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef) Handler {
+	// Remove duplicate error status codes
 	openAPIDef.ErrorStatusCodes = slices.DeleteFunc(openAPIDef.ErrorStatusCodes, func(statusCode int) bool {
-		return statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden
+		return statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden || statusCode == http.StatusInternalServerError
 	})
+
+	// Add internal server error
+	openAPIDef.ErrorStatusCodes = append(openAPIDef.ErrorStatusCodes, http.StatusInternalServerError)
 
 	return &handler{
 		handlerFunc: handlerFunc,
