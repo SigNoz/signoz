@@ -61,7 +61,7 @@ func (provider *provider) Router() *mux.Router {
 }
 
 func (provider *provider) AddToRouter(router *mux.Router) error {
-	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.orgHandler.Get, handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.authZ.AdminAccess(provider.orgHandler.Get), handler.OpenAPIDef{
 		ID:                  "GetMyOrganization",
 		Tags:                []string{"orgs"},
 		Summary:             "Get my organization",
@@ -71,8 +71,23 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		Response:            &types.Organization{},
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusUnauthorized},
+		ErrorStatusCodes:    []int{},
 	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.authZ.AdminAccess(provider.orgHandler.Update), handler.OpenAPIDef{
+		ID:                  "UpdateMyOrganization",
+		Tags:                []string{"orgs"},
+		Summary:             "Update my organization",
+		Description:         "This endpoint updates the organization I belong to",
+		Request:             &types.Organization{},
+		RequestContentType:  "application/json",
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusConflict, http.StatusBadRequest},
+	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
