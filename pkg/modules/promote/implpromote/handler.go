@@ -23,6 +23,7 @@ func NewHandler(module promote.Module) promote.Handler {
 }
 
 func (h *handler) HandlePromote(w http.ResponseWriter, r *http.Request) {
+	// TODO(Nitya): Use in multi tenant setup
 	_, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, errors.NewInternalf(errors.CodeInternal, "failed to get org id from context"))
