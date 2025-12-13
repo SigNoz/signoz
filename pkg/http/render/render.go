@@ -15,14 +15,18 @@ const (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-type response struct {
+type SuccessResponse struct {
+	Status string      `json:"status"`
+	Data   interface{} `json:"data,omitempty"`
+}
+
+type ErrorResponse struct {
 	Status string       `json:"status"`
-	Data   interface{}  `json:"data,omitempty"`
-	Error  *errors.JSON `json:"error,omitempty"`
+	Error  *errors.JSON `json:"error"`
 }
 
 func Success(rw http.ResponseWriter, httpCode int, data interface{}) {
-	body, err := json.Marshal(&response{Status: StatusSuccess.s, Data: data})
+	body, err := json.Marshal(&SuccessResponse{Status: StatusSuccess.s, Data: data})
 	if err != nil {
 		Error(rw, err)
 		return
@@ -64,7 +68,7 @@ func Error(rw http.ResponseWriter, cause error) {
 		httpCode = http.StatusUnavailableForLegalReasons
 	}
 
-	body, err := json.Marshal(&response{Status: StatusError.s, Error: errors.AsJSON(cause)})
+	body, err := json.Marshal(&ErrorResponse{Status: StatusError.s, Error: errors.AsJSON(cause)})
 	if err != nil {
 		// this should never be the case
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
