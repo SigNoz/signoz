@@ -21,6 +21,8 @@ paths:
             schema:
               $ref: '#/components/schemas/TypesChangePasswordRequest'
       responses:
+        "204":
+          description: No Content
         "400":
           content:
             application/json:
@@ -320,6 +322,8 @@ paths:
         schema:
           type: string
       responses:
+        "204":
+          description: No Content
         "400":
           content:
             application/json:
@@ -368,6 +372,8 @@ paths:
             schema:
               $ref: '#/components/schemas/AuthtypesUpdateableAuthDomain'
       responses:
+        "204":
+          description: No Content
         "400":
           content:
             application/json:
@@ -583,6 +589,8 @@ paths:
         schema:
           type: string
       responses:
+        "204":
+          description: No Content
         "400":
           content:
             application/json:
@@ -721,6 +729,8 @@ paths:
                 $ref: '#/components/schemas/TypesPostableInvite'
               type: array
       responses:
+        "201":
+          description: Created
         "400":
           content:
             application/json:
@@ -918,6 +928,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PreferencetypesUpdatablePreference'
       responses:
+        "204":
+          description: No Content
         "400":
           content:
             application/json:
@@ -1072,6 +1084,8 @@ paths:
         schema:
           type: string
       responses:
+        "204":
+          description: No Content
         "401":
           content:
             application/json:
@@ -1120,6 +1134,12 @@ paths:
             schema:
               $ref: '#/components/schemas/TypesStorableAPIKey'
       responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
         "400":
           content:
             application/json:
@@ -1169,6 +1189,8 @@ paths:
             schema:
               $ref: '#/components/schemas/TypesPostableResetPassword'
       responses:
+        "204":
+          description: No Content
         "400":
           content:
             application/json:
@@ -1247,6 +1269,8 @@ paths:
         schema:
           type: string
       responses:
+        "204":
+          description: No Content
         "401":
           content:
             application/json:
@@ -1554,6 +1578,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PreferencetypesUpdatablePreference'
       responses:
+        "204":
+          description: No Content
         "400":
           content:
             application/json:
@@ -1645,6 +1671,8 @@ paths:
             schema:
               $ref: '#/components/schemas/TypesOrganization'
       responses:
+        "204":
+          description: No Content
         "400":
           content:
             application/json:
@@ -1689,6 +1717,8 @@ paths:
       description: This endpoint deletes the session
       operationId: DeleteSession
       responses:
+        "204":
+          description: No Content
         "400":
           content:
             application/json:

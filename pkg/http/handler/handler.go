@@ -68,6 +68,12 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 			openapi.WithContentType(handler.openAPIDef.ResponseContentType),
 			openapi.WithHTTPStatus(handler.openAPIDef.SuccessStatusCode),
 		)
+	} else {
+		opCtx.AddRespStructure(
+			nil,
+			openapi.WithContentType(handler.openAPIDef.ResponseContentType),
+			openapi.WithHTTPStatus(handler.openAPIDef.SuccessStatusCode),
+		)
 	}
 
 	// Add error responses
