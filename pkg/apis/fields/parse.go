@@ -3,7 +3,6 @@ package fields
 import (
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -89,24 +88,19 @@ func parseFieldKeyRequest(r *http.Request, normalizeSearchText bool) (*telemetry
 			} else {
 				parsed := telemetrytypes.GetFieldKeyFromKeyText(searchText)
 
-				// Preserve the original text so keys remain searchable as literals.
-				if parsed.FieldContext != telemetrytypes.FieldContextUnspecified && !strings.Contains(parsed.Name, ".") {
-					name = searchText
-				} else {
-					// Preserve the first segment by treating it as an attribute key.
-					if parsed.FieldContext != telemetrytypes.FieldContextUnspecified &&
-						!telemetrytypes.IsContextPrefixAllowedForSignal(signal, parsed.FieldContext) {
-						parsed = telemetrytypes.GetFieldKeyFromKeyText("attribute." + searchText)
-						parsed.FieldContext = telemetrytypes.FieldContextUnspecified
-					}
-
-					name = parsed.Name
-					if fieldContext == telemetrytypes.FieldContextUnspecified && parsed.FieldContext != telemetrytypes.FieldContextUnspecified {
-						fieldContext = parsed.FieldContext
-					}
-					if fieldDataType == telemetrytypes.FieldDataTypeUnspecified && parsed.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-						fieldDataType = parsed.FieldDataType
-					}
+				// Normalize context-prefixed/dtyped key text.
+				if parsed.FieldContext != telemetrytypes.FieldContextUnspecified &&
+					!telemetrytypes.IsContextPrefixAllowedForSignal(signal, parsed.FieldContext) {
+					// Re-parse as an attribute key so the first segment is preserved.
+					parsed = telemetrytypes.GetFieldKeyFromKeyText("attribute." + searchText)
+					parsed.FieldContext = telemetrytypes.FieldContextUnspecified
+				}
+				name = parsed.Name
+				if fieldContext == telemetrytypes.FieldContextUnspecified && parsed.FieldContext != telemetrytypes.FieldContextUnspecified {
+					fieldContext = parsed.FieldContext
+				}
+				if fieldDataType == telemetrytypes.FieldDataTypeUnspecified && parsed.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+					fieldDataType = parsed.FieldDataType
 				}
 			}
 		}
