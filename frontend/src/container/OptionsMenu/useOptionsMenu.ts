@@ -170,7 +170,7 @@ const useOptionsMenu = ({
 			...initialQueryParamsV5,
 			searchText: debouncedSearchText,
 		},
-		{ queryKey: [debouncedSearchText, isFocused], enabled: isFocused },
+		{ queryKey: [debouncedSearchText, isFocused] },
 	);
 
 	// const {

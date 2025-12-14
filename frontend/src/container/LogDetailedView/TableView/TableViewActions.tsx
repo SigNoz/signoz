@@ -11,7 +11,14 @@ import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
-import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
+import { OptionsQuery } from 'container/OptionsMenu/types';
+import {
+	ArrowDownToDot,
+	ArrowUpFromDot,
+	Ellipsis,
+	Minus,
+	Plus,
+} from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -34,6 +41,9 @@ interface ITableViewActionsProps {
 	isfilterInLoading: boolean;
 	isfilterOutLoading: boolean;
 	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
+	onAddColumn?: (fieldName: string) => void;
+	onRemoveColumn?: (fieldName: string) => void;
+	selectedOptions?: OptionsQuery;
 	onClickHandler: (
 		operator: string,
 		fieldKey: string,
@@ -105,6 +115,7 @@ const BodyContent: React.FC<{
 
 BodyContent.displayName = 'BodyContent';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function TableViewActions(
 	props: ITableViewActionsProps,
 ): React.ReactElement {
@@ -116,6 +127,9 @@ export default function TableViewActions(
 		isfilterOutLoading,
 		onClickHandler,
 		onGroupByAttribute,
+		onAddColumn,
+		onRemoveColumn,
+		selectedOptions,
 	} = props;
 
 	const { pathname } = useLocation();
@@ -141,6 +155,13 @@ export default function TableViewActions(
 	}, [record.field, record.value]);
 
 	const fieldFilterKey = filterKeyForField(fieldData.field);
+
+	const isFieldInSelectedColumns = useMemo(() => {
+		if (!selectedOptions?.selectColumns) return false;
+		return selectedOptions.selectColumns.some(
+			(col) => col.name === fieldFilterKey,
+		);
+	}, [selectedOptions, fieldFilterKey]);
 
 	// Memoize textToCopy computation
 	const textToCopy = useMemo(() => {
@@ -250,6 +271,32 @@ export default function TableViewActions(
 								arrow={false}
 								content={
 									<div>
+										{onAddColumn && !isFieldInSelectedColumns && (
+											<Button
+												className="group-by-clause"
+												type="text"
+												icon={<Plus size={14} />}
+												onClick={(): void => {
+													onAddColumn(fieldFilterKey);
+													setIsOpen(false);
+												}}
+											>
+												Add to Columns
+											</Button>
+										)}
+										{onRemoveColumn && isFieldInSelectedColumns && (
+											<Button
+												className="group-by-clause"
+												type="text"
+												icon={<Minus size={14} />}
+												onClick={(): void => {
+													onRemoveColumn(fieldFilterKey);
+													setIsOpen(false);
+												}}
+											>
+												Remove from Columns
+											</Button>
+										)}
 										<Button
 											className="group-by-clause"
 											type="text"
@@ -330,6 +377,32 @@ export default function TableViewActions(
 							arrow={false}
 							content={
 								<div>
+									{onAddColumn && !isFieldInSelectedColumns && (
+										<Button
+											className="group-by-clause"
+											type="text"
+											icon={<Plus size={14} />}
+											onClick={(): void => {
+												onAddColumn(fieldFilterKey);
+												setIsOpen(false);
+											}}
+										>
+											Add to Columns
+										</Button>
+									)}
+									{onRemoveColumn && isFieldInSelectedColumns && (
+										<Button
+											className="group-by-clause"
+											type="text"
+											icon={<Minus size={14} />}
+											onClick={(): void => {
+												onRemoveColumn(fieldFilterKey);
+												setIsOpen(false);
+											}}
+										>
+											Remove from Columns
+										</Button>
+									)}
 									<Button
 										className="group-by-clause"
 										type="text"
@@ -360,4 +433,7 @@ export default function TableViewActions(
 
 TableViewActions.defaultProps = {
 	onGroupByAttribute: undefined,
+	onAddColumn: undefined,
+	onRemoveColumn: undefined,
+	selectedOptions: undefined,
 };
