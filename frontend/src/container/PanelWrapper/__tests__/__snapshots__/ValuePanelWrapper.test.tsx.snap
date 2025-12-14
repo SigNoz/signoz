@@ -51,7 +51,7 @@ exports[`Value panel wrappper tests should render tooltip when there are conflic
           class="ant-typography value-graph-text css-dev-only-do-not-override-2i2tap"
           style="color: Blue; font-size: 16px;"
         >
-          295
+          295.43
         </span>
         <span
           class="ant-typography value-graph-unit css-dev-only-do-not-override-2i2tap"

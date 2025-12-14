@@ -66,13 +66,7 @@ export const useGetExplorerQueryRange = (
 		ENTITY_VERSION_V5,
 		{
 			...options,
-			queryKey: [
-				key,
-				selectedTimeInterval ?? globalSelectedInterval,
-				requestData,
-				minTime,
-				maxTime,
-			],
+			queryKey: [key, globalSelectedInterval, requestData, minTime, maxTime],
 			enabled: isEnabled,
 		},
 		headers,

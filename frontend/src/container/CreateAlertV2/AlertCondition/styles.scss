@@ -67,7 +67,7 @@
 	padding-right: 72px;
 	background-color: var(--bg-ink-500);
 	border: 1px solid var(--bg-slate-400);
-	width: fit-content;
+	width: 100%;
 
 	.alert-condition-sentences {
 		display: flex;
@@ -90,7 +90,7 @@
 			}
 
 			.ant-select {
-				width: 240px !important;
+				width: 240px;
 
 				.ant-select-selector {
 					background-color: var(--bg-ink-300);
@@ -148,6 +148,7 @@
 					display: flex;
 					align-items: center;
 					gap: 8px;
+					flex-wrap: wrap;
 
 					.ant-input {
 						background-color: var(--bg-ink-400);
@@ -277,6 +278,44 @@
 			}
 		}
 	}
+
+	.routing-policies-info-banner {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		margin-top: 16px;
+		background-color: #4568dc1a;
+		border: 1px solid var(--bg-robin-500);
+		padding: 8px 16px;
+
+		.routing-policies-info-banner-right {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.view-routing-policies-button {
+				color: var(--bg-robin-500);
+				font-size: 12px;
+				font-weight: 500;
+				display: flex;
+				align-items: center;
+				gap: 4px;
+			}
+		}
+
+		.ant-typography {
+			color: var(--bg-robin-500);
+		}
+	}
+}
+
+.anomaly-threshold-container {
+	.ant-select {
+		.ant-select-selector {
+			min-width: 150px;
+		}
+	}
 }
 
 .condensed-alert-threshold-container,
@@ -293,7 +332,8 @@
 	.ant-btn {
 		display: flex;
 		align-items: center;
-		width: 240px;
+		min-width: 240px;
+		width: auto;
 		justify-content: space-between;
 		background-color: var(--bg-ink-300);
 		border: 1px solid var(--bg-slate-400);
@@ -301,6 +341,7 @@
 		.evaluate-alert-conditions-button-left {
 			color: var(--bg-vanilla-400);
 			font-size: 12px;
+			flex-shrink: 0;
 		}
 
 		.evaluate-alert-conditions-button-right {
@@ -308,12 +349,245 @@
 			align-items: center;
 			color: var(--bg-vanilla-400);
 			gap: 8px;
+			flex-shrink: 0;
 
 			.evaluate-alert-conditions-button-right-text {
 				font-size: 12px;
 				font-weight: 500;
 				background-color: var(--bg-slate-400);
 				padding: 1px 4px;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.alert-condition-container {
+		.alert-condition {
+			.alert-condition-tabs {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-300);
+
+				.explorer-view-option {
+					border-left: 0.5px solid var(--bg-vanilla-300);
+					border-bottom: 0.5px solid var(--bg-vanilla-300);
+
+					&.active-tab {
+						background-color: var(--bg-vanilla-100);
+
+						&:hover {
+							background-color: var(--bg-vanilla-100) !important;
+						}
+					}
+
+					&:disabled {
+						background-color: var(--bg-vanilla-300);
+					}
+
+					&:hover {
+						color: var(--bg-ink-400);
+					}
+				}
+			}
+		}
+	}
+
+	.alert-threshold-container,
+	.anomaly-threshold-container {
+		background-color: var(--bg-vanilla-100);
+		border: 1px solid var(--bg-vanilla-300);
+
+		.alert-condition-sentences {
+			.alert-condition-sentence {
+				.sentence-text {
+					color: var(--text-ink-400);
+				}
+
+				.ant-select {
+					.ant-select-selector {
+						background-color: var(--bg-vanilla-300);
+						border: 1px solid var(--bg-vanilla-300);
+						color: var(--text-ink-400);
+
+						&:hover {
+							border-color: var(--bg-ink-300);
+						}
+
+						&:focus {
+							border-color: var(--bg-ink-300);
+							box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+						}
+					}
+
+					.ant-select-selection-item {
+						color: var(--bg-ink-400);
+					}
+
+					.ant-select-arrow {
+						color: var(--bg-ink-400);
+					}
+				}
+			}
+		}
+
+		.thresholds-section {
+			.threshold-item {
+				.threshold-row {
+					.threshold-controls {
+						.threshold-inputs {
+							display: flex;
+							align-items: center;
+							gap: 8px;
+						}
+
+						.ant-input {
+							background-color: var(--bg-vanilla-200);
+							border: 1px solid var(--bg-vanilla-300);
+							color: var(--bg-ink-400);
+
+							&:hover {
+								border-color: var(--bg-ink-300);
+							}
+
+							&:focus {
+								border-color: var(--bg-ink-300);
+								box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+							}
+						}
+
+						.ant-select {
+							.ant-select-selector {
+								background-color: var(--bg-vanilla-200);
+								border: 1px solid var(--bg-vanilla-300);
+								color: var(--bg-ink-400);
+
+								&:hover {
+									border-color: var(--bg-ink-300);
+								}
+
+								&:focus {
+									border-color: var(--bg-ink-300);
+									box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+								}
+							}
+
+							.ant-select-selection-item {
+								color: var(--bg-ink-400);
+							}
+
+							.ant-select-arrow {
+								color: var(--bg-ink-400);
+							}
+						}
+
+						.icon-btn {
+							color: var(--bg-ink-400);
+							border: 1px solid var(--bg-vanilla-300);
+						}
+					}
+				}
+
+				.recovery-threshold-input-group {
+					.recovery-threshold-btn {
+						color: var(--bg-ink-400);
+						background-color: var(--bg-vanilla-200) !important;
+						border: 1px solid var(--bg-vanilla-300);
+					}
+
+					.ant-input {
+						background-color: var(--bg-vanilla-200);
+						border: 1px solid var(--bg-vanilla-300);
+						color: var(--bg-ink-400);
+
+						&:hover {
+							border-color: var(--bg-ink-300);
+						}
+
+						&:focus {
+							border-color: var(--bg-ink-300);
+							box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+						}
+					}
+				}
+			}
+
+			.add-threshold-btn,
+			.ant-btn.add-threshold-btn {
+				border: 1px dashed var(--bg-vanilla-300);
+				color: var(--bg-ink-300);
+				background-color: transparent;
+
+				.ant-typography {
+					color: var(--bg-ink-400);
+				}
+
+				&:hover {
+					border-color: var(--bg-ink-300);
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+	}
+
+	.condensed-evaluation-settings-container {
+		.ant-btn {
+			background-color: var(--bg-vanilla-300);
+			border: 1px solid var(--bg-vanilla-300);
+			min-width: 240px;
+			width: auto;
+
+			.evaluate-alert-conditions-button-left {
+				color: var(--bg-ink-400);
+				flex-shrink: 0;
+			}
+
+			.evaluate-alert-conditions-button-right {
+				color: var(--bg-ink-400);
+				flex-shrink: 0;
+
+				.evaluate-alert-conditions-button-right-text {
+					background-color: var(--bg-vanilla-300);
+				}
+			}
+		}
+	}
+}
+
+.highlighted-text {
+	font-weight: bold;
+	color: var(--bg-robin-400);
+	margin: 0 4px;
+}
+
+// Tooltip styles
+.tooltip-content {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+
+	.tooltip-description {
+		margin-bottom: 8px;
+
+		span {
+			font-weight: bold;
+			color: var(--bg-robin-400);
+		}
+	}
+
+	.tooltip-example {
+		margin-bottom: 8px;
+		color: #8b92a0;
+	}
+
+	.tooltip-link {
+		.tooltip-link-text {
+			color: #1890ff;
+			font-size: 11px;
+			text-decoration: none;
+
+			&:hover {
+				text-decoration: underline;
 			}
 		}
 	}

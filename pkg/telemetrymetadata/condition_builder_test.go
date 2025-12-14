@@ -53,7 +53,7 @@ func TestConditionFor(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb)
+            cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

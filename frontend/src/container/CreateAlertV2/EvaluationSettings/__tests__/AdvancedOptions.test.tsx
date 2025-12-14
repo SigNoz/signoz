@@ -28,9 +28,10 @@ describe('AdvancedOptions', () => {
 		expect(
 			screen.queryByText(MINIMUM_DATA_REQUIRED_TEXT),
 		).not.toBeInTheDocument();
-		expect(
-			screen.queryByText(ACCOUNT_FOR_DATA_DELAY_TEXT),
-		).not.toBeInTheDocument();
+		// TODO: Uncomment this when account for data delay is implemented
+		// expect(
+		// 	screen.queryByText(ACCOUNT_FOR_DATA_DELAY_TEXT),
+		// ).not.toBeInTheDocument();
 	});
 
 	it('should be able to expand the advanced options', () => {
@@ -42,9 +43,10 @@ describe('AdvancedOptions', () => {
 		expect(
 			screen.queryByText(MINIMUM_DATA_REQUIRED_TEXT),
 		).not.toBeInTheDocument();
-		expect(
-			screen.queryByText(ACCOUNT_FOR_DATA_DELAY_TEXT),
-		).not.toBeInTheDocument();
+		// TODO: Uncomment this when account for data delay is implemented
+		// expect(
+		// 	screen.queryByText(ACCOUNT_FOR_DATA_DELAY_TEXT),
+		// ).not.toBeInTheDocument();
 
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
 		fireEvent.click(collapse);
@@ -52,7 +54,8 @@ describe('AdvancedOptions', () => {
 		expect(screen.getByText('How often to check')).toBeInTheDocument();
 		expect(screen.getByText('Alert when data stops coming')).toBeInTheDocument();
 		expect(screen.getByText('Minimum data required')).toBeInTheDocument();
-		expect(screen.getByText('Account for data delay')).toBeInTheDocument();
+		// TODO: Uncomment this when account for data delay is implemented
+		// expect(screen.getByText('Account for data delay')).toBeInTheDocument();
 	});
 
 	it('"Alert when data stops coming" works as expected', () => {
@@ -112,7 +115,7 @@ describe('AdvancedOptions', () => {
 		});
 	});
 
-	it('"Account for data delay" works as expected', () => {
+	it.skip('"Account for data delay" works as expected', () => {
 		render(<AdvancedOptions />);
 
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });

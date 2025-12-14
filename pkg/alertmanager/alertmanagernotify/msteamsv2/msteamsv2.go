@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
@@ -145,7 +145,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	} else {
 		content, err := os.ReadFile(n.conf.WebhookURLFile)
 		if err != nil {
-			return false, fmt.Errorf("read webhook_url_file: %w", err)
+			return false, errors.WrapInternalf(err, errors.CodeInternal, "read webhook_url_file")
 		}
 		url = strings.TrimSpace(string(content))
 	}

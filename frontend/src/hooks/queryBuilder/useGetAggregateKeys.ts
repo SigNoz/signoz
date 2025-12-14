@@ -42,8 +42,8 @@ export const useGetAggregateKeys: UseGetAttributeKeys = (
 	}, [options?.queryKey, requestData, isInfraMonitoring, infraMonitoringEntity]);
 
 	return useQuery<SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse>({
-		queryKey,
 		queryFn: () => getAggregateKeys(requestData),
 		...options,
+		queryKey,
 	});
 };

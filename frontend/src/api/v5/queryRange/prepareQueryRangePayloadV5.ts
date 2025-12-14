@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable sonarjs/no-identical-functions */
+import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
@@ -14,6 +15,7 @@ import {
 	BaseBuilderQuery,
 	FieldContext,
 	FieldDataType,
+	Filter,
 	FunctionName,
 	GroupByKey,
 	Having,
@@ -111,6 +113,23 @@ function isDeprecatedField(fieldName: string): boolean {
 	);
 }
 
+function getFilter(queryData: IBuilderQuery): Filter {
+	const { filter } = queryData;
+	if (filter?.expression) {
+		return {
+			expression: filter.expression,
+		};
+	}
+
+	if (queryData.filters && queryData.filters?.items?.length > 0) {
+		return convertFiltersToExpression(queryData.filters);
+	}
+
+	return {
+		expression: '',
+	};
+}
+
 function createBaseSpec(
 	queryData: IBuilderQuery,
 	requestType: RequestType,
@@ -124,7 +143,7 @@ function createBaseSpec(
 	return {
 		stepInterval: queryData?.stepInterval || null,
 		disabled: queryData.disabled,
-		filter: queryData?.filter?.expression ? queryData.filter : undefined,
+		filter: getFilter(queryData),
 		groupBy:
 			queryData.groupBy?.length > 0
 				? queryData.groupBy.map(

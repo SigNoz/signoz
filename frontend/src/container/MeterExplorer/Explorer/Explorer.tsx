@@ -33,6 +33,7 @@ function Explorer(): JSX.Element {
 		handleRunQuery,
 		stagedQuery,
 		updateAllQueriesOperators,
+		handleSetQueryData,
 		currentQuery,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
@@ -49,6 +50,15 @@ function Explorer(): JSX.Element {
 			),
 		[updateAllQueriesOperators],
 	);
+
+	useEffect(() => {
+		handleSetQueryData(0, {
+			...initialQueryMeterWithType.builder.queryData[0],
+			source: 'meter',
+		});
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const exportDefaultQuery = useMemo(
 		() =>

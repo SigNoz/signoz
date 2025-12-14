@@ -2,9 +2,9 @@ package impltracefunnel
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/types"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
@@ -76,7 +76,7 @@ func (module *module) Update(ctx context.Context, funnel *traceFunnels.StorableF
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnels.StorableFunnel, error) {
 	funnels, err := module.store.List(ctx, orgID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list funnels: %v", err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list funnels")
 	}
 
 	return funnels, nil

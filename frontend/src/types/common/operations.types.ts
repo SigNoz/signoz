@@ -68,7 +68,11 @@ export type UseQueryOperations = (
 	listOfAdditionalFilters: string[];
 	handleChangeOperator: (value: string) => void;
 	handleSpaceAggregationChange: (value: string) => void;
-	handleChangeAggregatorAttribute: (value: BaseAutocompleteData) => void;
+	handleChangeAggregatorAttribute: (
+		value: BaseAutocompleteData,
+		isEditMode?: boolean,
+		attributeKeys?: BaseAutocompleteData[],
+	) => void;
 	handleChangeDataSource: (newSource: DataSource) => void;
 	handleDeleteQuery: () => void;
 	handleChangeQueryData: HandleChangeQueryData;

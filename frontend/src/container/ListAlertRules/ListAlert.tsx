@@ -1,6 +1,14 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { Flex, Input, Typography } from 'antd';
+import {
+	Button,
+	Dropdown,
+	Flex,
+	Input,
+	MenuProps,
+	Tag,
+	Typography,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
@@ -15,6 +23,7 @@ import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { sanitizeDefaultAlertQuery } from 'container/EditAlertV2/utils';
 import useSortableTable from 'hooks/ResizeTable/useSortableTable';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -28,10 +37,11 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { GettableAlert } from 'types/api/alerts/get';
 
 import DeleteAlert from './DeleteAlert';
-import { Button, ColumnButton, SearchContainer } from './styles';
+import { ColumnButton, SearchContainer } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
 import { alertActionLogEvent, filterAlerts } from './utils';
@@ -97,16 +107,46 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		});
 	}, [notificationsApi, t]);
 
-	const onClickNewAlertHandler = useCallback(() => {
+	const onClickNewAlertV2Handler = useCallback(() => {
 		logEvent('Alert: New alert button clicked', {
 			number: allAlertRules?.length,
+			layout: 'new',
+		});
+		history.push(`${ROUTES.ALERTS_NEW}?showNewCreateAlertsPage=true`);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const onClickNewClassicAlertHandler = useCallback(() => {
+		logEvent('Alert: New alert button clicked', {
+			number: allAlertRules?.length,
+			layout: 'classic',
 		});
 		history.push(ROUTES.ALERTS_NEW);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const newAlertMenuItems: MenuProps['items'] = [
+		{
+			key: 'new',
+			label: (
+				<span>
+					Try the new experience <Tag color="blue">Beta</Tag>
+				</span>
+			),
+			onClick: onClickNewAlertV2Handler,
+		},
+		{
+			key: 'classic',
+			label: 'Continue with the classic experience',
+			onClick: onClickNewClassicAlertHandler,
+		},
+	];
+
 	const onEditHandler = (record: GettableAlert, openInNewTab: boolean): void => {
-		const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
+		const compositeQuery = sanitizeDefaultAlertQuery(
+			mapQueryDataFromApi(record.condition.compositeQuery),
+			record.alertType as AlertTypes,
+		);
 		params.set(
 			QueryParams.compositeQuery,
 			encodeURIComponent(JSON.stringify(compositeQuery)),
@@ -310,47 +350,51 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			key: 'action',
 			width: 10,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
-				<DropDown
-					onDropDownItemClick={(item): void => alertActionLogEvent(item.key, record)}
-					element={[
-						<ToggleAlertState
-							key="1"
-							disabled={record.disabled}
-							setData={setData}
-							id={id}
-						/>,
-						<ColumnButton
-							key="2"
-							onClick={(): void => onEditHandler(record, false)}
-							type="link"
-							loading={editLoader}
-						>
-							Edit
-						</ColumnButton>,
-						<ColumnButton
-							key="3"
-							onClick={(): void => onEditHandler(record, true)}
-							type="link"
-							loading={editLoader}
-						>
-							Edit in New Tab
-						</ColumnButton>,
-						<ColumnButton
-							key="3"
-							onClick={onCloneHandler(record)}
-							type="link"
-							loading={cloneLoader}
-						>
-							Clone
-						</ColumnButton>,
-						<DeleteAlert
-							key="4"
-							notifications={notificationsApi}
-							setData={setData}
-							id={id}
-						/>,
-					]}
-				/>
+				<div data-testid="alert-actions">
+					<DropDown
+						onDropDownItemClick={(item): void =>
+							alertActionLogEvent(item.key, record)
+						}
+						element={[
+							<ToggleAlertState
+								key="1"
+								disabled={record.disabled}
+								setData={setData}
+								id={id}
+							/>,
+							<ColumnButton
+								key="2"
+								onClick={(): void => onEditHandler(record, false)}
+								type="link"
+								loading={editLoader}
+							>
+								Edit
+							</ColumnButton>,
+							<ColumnButton
+								key="3"
+								onClick={(): void => onEditHandler(record, true)}
+								type="link"
+								loading={editLoader}
+							>
+								Edit in New Tab
+							</ColumnButton>,
+							<ColumnButton
+								key="3"
+								onClick={onCloneHandler(record)}
+								type="link"
+								loading={cloneLoader}
+							>
+								Clone
+							</ColumnButton>,
+							<DeleteAlert
+								key="4"
+								notifications={notificationsApi}
+								setData={setData}
+								id={id}
+							/>,
+						]}
+					/>
+				</div>
 			),
 		});
 	}
@@ -368,13 +412,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				/>
 				<Flex gap={12}>
 					{addNewAlert && (
-						<Button
-							type="primary"
-							onClick={onClickNewAlertHandler}
-							icon={<PlusOutlined />}
-						>
-							New Alert
-						</Button>
+						<Dropdown menu={{ items: newAlertMenuItems }} trigger={['click']}>
+							<Button type="primary" icon={<PlusOutlined />}>
+								New Alert
+							</Button>
+						</Dropdown>
 					)}
 					<TextToolTip
 						{...{

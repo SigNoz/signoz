@@ -1,6 +1,4 @@
 import { Switch, Typography } from 'antd';
-import { WsDataEvent } from 'api/common/getQueryStats';
-import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import LogsDownloadOptionsMenu from 'components/LogsDownloadOptionsMenu/LogsDownloadOptionsMenu';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
@@ -14,7 +12,6 @@ import QueryStatus from './QueryStatus';
 
 function LogsActionsContainer({
 	listQuery,
-	queryStats,
 	selectedPanelType,
 	showFrequencyChart,
 	handleToggleFrequencyChart,
@@ -37,7 +34,6 @@ function LogsActionsContainer({
 	isLoading: boolean;
 	isError: boolean;
 	isSuccess: boolean;
-	queryStats: WsDataEvent | undefined;
 	minTime: number;
 	maxTime: number;
 }): JSX.Element {
@@ -126,22 +122,6 @@ function LogsActionsContainer({
 								error={isError}
 								success={isSuccess}
 							/>
-
-							{queryStats?.read_rows && (
-								<Typography.Text className="rows">
-									{getYAxisFormattedValue(queryStats.read_rows?.toString(), 'short')}{' '}
-									rows
-								</Typography.Text>
-							)}
-
-							{queryStats?.elapsed_ms && (
-								<>
-									<div className="divider" />
-									<Typography.Text className="time">
-										{getYAxisFormattedValue(queryStats?.elapsed_ms?.toString(), 'ms')}
-									</Typography.Text>
-								</>
-							)}
 						</div>
 					)}
 				</div>

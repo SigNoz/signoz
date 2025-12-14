@@ -1,15 +1,16 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, render, RenderResult, waitFor } from 'tests/test-utils';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 import LogsExplorerViews from '..';
 import {
@@ -50,10 +51,6 @@ jest.mock(
 			return <div>Histogram Chart</div>;
 		},
 );
-
-jest.mock('api/common/getQueryStats', () => ({
-	getQueryStats: jest.fn(),
-}));
 
 jest.mock('constants/panelTypes', () => ({
 	AVAILABLE_EXPORT_PANEL_TYPES: ['graph', 'table'],
@@ -155,12 +152,12 @@ const renderer = (): RenderResult =>
 		>
 			<PreferenceContextProvider>
 				<LogsExplorerViews
-					selectedView={ExplorerViews.LIST}
 					setIsLoadingQueries={(): void => {}}
 					listQueryKeyRef={{ current: {} }}
 					chartQueryKeyRef={{ current: {} }}
 					setWarning={(): void => {}}
 					showLiveLogs={false}
+					handleChangeSelectedView={(): void => {}}
 				/>
 			</PreferenceContextProvider>
 		</VirtuosoMockContext.Provider>,
@@ -221,12 +218,12 @@ describe('LogsExplorerViews -', () => {
 			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue}>
 				<PreferenceContextProvider>
 					<LogsExplorerViews
-						selectedView={ExplorerViews.LIST}
 						setIsLoadingQueries={(): void => {}}
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
 						setWarning={(): void => {}}
 						showLiveLogs={false}
+						handleChangeSelectedView={(): void => {}}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,
@@ -261,7 +258,185 @@ describe('LogsExplorerViews -', () => {
 
 				// Verify the total number of filters (original + 1 new activeLogId filter)
 				expect(firstQuery.filters?.items.length).toBe(expectedFiltersLength);
+
+				// Verify the filter expression
+				expect(firstQuery.filter?.expression).toBe(`id <= '${ACTIVE_LOG_ID}'`);
 			}
+		});
+	});
+
+	it('should update filter expression with activeLogId when present with existing filter expression', async () => {
+		// Mock useCopyLogLink to return an activeLogId
+		(useCopyLogLink as jest.Mock).mockReturnValue({
+			activeLogId: ACTIVE_LOG_ID,
+		});
+
+		// Create a custom QueryBuilderContext with an existing filter expression
+		const customContext = {
+			...mockQueryBuilderContextValue,
+			panelType: PANEL_TYPES.LIST,
+			stagedQuery: {
+				...mockQueryBuilderContextValue.stagedQuery,
+				builder: {
+					...mockQueryBuilderContextValue.stagedQuery.builder,
+					queryData: [
+						{
+							...mockQueryBuilderContextValue.stagedQuery.builder.queryData[0],
+							filter: { expression: "service = 'frontend'" },
+						},
+					],
+				},
+			},
+		};
+
+		lodsQueryServerRequest();
+
+		render(
+			<QueryBuilderContext.Provider value={customContext as any}>
+				<PreferenceContextProvider>
+					<LogsExplorerViews
+						setIsLoadingQueries={(): void => {}}
+						listQueryKeyRef={{ current: {} }}
+						chartQueryKeyRef={{ current: {} }}
+						setWarning={(): void => {}}
+						showLiveLogs={false}
+						handleChangeSelectedView={(): void => {}}
+					/>
+				</PreferenceContextProvider>
+			</QueryBuilderContext.Provider>,
+		);
+
+		await waitFor(() => {
+			// Find the call made for LIST panel type (main logs list request)
+			const listCall = (useGetExplorerQueryRange as jest.Mock).mock.calls.find(
+				(call) => call[1] === PANEL_TYPES.LIST && call[0],
+			);
+
+			expect(listCall).toBeDefined();
+			if (listCall) {
+				const queryArg = listCall[0];
+				const firstQuery = queryArg.builder.queryData[0];
+				// It should append the activeLogId condition to existing expression
+				expect(firstQuery.filter?.expression).toBe(
+					"service = 'frontend' id <= 'test-log-id'",
+				);
+			}
+		});
+	});
+
+	describe('Queries by View', () => {
+		it('builds Frequency Chart query with COUNT and severity_text grouping and activeLogId bound', async () => {
+			// Enable frequency chart via localstorage and provide activeLogId
+			(useCopyLogLink as jest.Mock).mockReturnValue({
+				activeLogId: ACTIVE_LOG_ID,
+			});
+			// Ensure default mock return exists
+			(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
+				data: { payload: logsQueryRangeSuccessNewFormatResponse },
+			});
+
+			// Render with LIST panel type so the frequency chart hook runs with TIME_SERIES
+			render(
+				<VirtuosoMockContext.Provider
+					value={{ viewportHeight: 300, itemHeight: 100 }}
+				>
+					<PreferenceContextProvider>
+						<QueryBuilderContext.Provider
+							value={
+								{ ...mockQueryBuilderContextValue, panelType: PANEL_TYPES.LIST } as any
+							}
+						>
+							<LogsExplorerViews
+								setIsLoadingQueries={(): void => {}}
+								listQueryKeyRef={{ current: {} }}
+								chartQueryKeyRef={{ current: {} }}
+								setWarning={(): void => {}}
+								showLiveLogs={false}
+								handleChangeSelectedView={(): void => {}}
+							/>
+						</QueryBuilderContext.Provider>
+					</PreferenceContextProvider>
+				</VirtuosoMockContext.Provider>,
+			);
+
+			await waitFor(() => {
+				const chartCall = (useGetExplorerQueryRange as jest.Mock).mock.calls.find(
+					(call) => call[1] === PANEL_TYPES.TIME_SERIES && call[0],
+				);
+				expect(chartCall).toBeDefined();
+				if (chartCall) {
+					const frequencyQuery = chartCall[0];
+					const first = frequencyQuery.builder.queryData[0];
+					// Panel type used for chart fetch
+					expect(chartCall[1]).toBe(PANEL_TYPES.TIME_SERIES);
+					// Transformations
+					expect(first.aggregateOperator).toBe(LogsAggregatorOperator.COUNT);
+					expect(first.groupBy?.[0]?.key).toBe('severity_text');
+					expect(first.legend).toBe('{{severity_text}}');
+					expect(Array.isArray(first.orderBy) && first.orderBy.length === 0).toBe(
+						true,
+					);
+					expect(first.having?.expression).toBe('');
+					// activeLogId constraints
+					expect(first.filter?.expression).toContain(`id <= '${ACTIVE_LOG_ID}'`);
+					expect(
+						first.filters?.items?.some(
+							(it: any) =>
+								it.key?.key === 'id' && it.op === '<=' && it.value === ACTIVE_LOG_ID,
+						),
+					).toBe(true);
+				}
+			});
+		});
+
+		it('builds List View query with orderBy and clears groupBy/having', async () => {
+			(useCopyLogLink as jest.Mock).mockReturnValue({ activeLogId: undefined });
+			(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
+				data: { payload: logsQueryRangeSuccessNewFormatResponse },
+			});
+
+			render(
+				<VirtuosoMockContext.Provider
+					value={{ viewportHeight: 300, itemHeight: 100 }}
+				>
+					<PreferenceContextProvider>
+						<QueryBuilderContext.Provider
+							value={
+								{ ...mockQueryBuilderContextValue, panelType: PANEL_TYPES.LIST } as any
+							}
+						>
+							<LogsExplorerViews
+								setIsLoadingQueries={(): void => {}}
+								listQueryKeyRef={{ current: {} }}
+								chartQueryKeyRef={{ current: {} }}
+								setWarning={(): void => {}}
+								showLiveLogs={false}
+								handleChangeSelectedView={(): void => {}}
+							/>
+						</QueryBuilderContext.Provider>
+					</PreferenceContextProvider>
+				</VirtuosoMockContext.Provider>,
+			);
+
+			await waitFor(() => {
+				const listCall = (useGetExplorerQueryRange as jest.Mock).mock.calls.find(
+					(call) => call[1] === PANEL_TYPES.LIST && call[0],
+				);
+				expect(listCall).toBeDefined();
+				if (listCall) {
+					const listQueryArg = listCall[0];
+					const first = listQueryArg.builder.queryData[0];
+					expect(first.groupBy?.length ?? 0).toBe(0);
+					expect(first.having?.expression).toBe('');
+					// Default orderBy should be timestamp desc, then id desc
+					expect(first.orderBy).toEqual([
+						{ columnName: 'timestamp', order: 'desc' },
+						{ columnName: 'id', order: 'desc' },
+					]);
+					// Ensure the query is enabled for fetch
+					expect(first.disabled).toBe(false);
+				}
+			});
 		});
 	});
 });

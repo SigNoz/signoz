@@ -12,6 +12,7 @@ import (
 
 var (
 	ErrCodeUnknownValuerScan = errors.MustNewCode("unknown_valuer_scan")
+	ErrCodeInvalidValuer     = errors.MustNewCode("invalid_valuer")
 )
 
 type Valuer interface {
@@ -38,4 +39,7 @@ type Valuer interface {
 
 	// Implement encoding.TextUnmarshaler to allow the value to be unmarshalled from a string
 	encoding.TextUnmarshaler
+
+	// Implement encoding.TextUnmarshaler to allow the value to be marshalled unto a string
+	encoding.TextMarshaler
 }

@@ -18,6 +18,10 @@ func NewFormatter(dialect schema.Dialect) Formatter {
 }
 
 func (formatter Formatter) SQLDataTypeOf(dataType DataType) string {
+	if dataType == DataTypeBytea {
+		return strings.ToUpper(DataTypeText.String())
+	}
+
 	return strings.ToUpper(dataType.String())
 }
 

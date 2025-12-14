@@ -13,16 +13,15 @@ import {
 } from 'antd';
 import logEvent from 'api/common/logEvent';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
-import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
 import {
 	Check,
@@ -31,6 +30,7 @@ import {
 	FileJson,
 	FolderKanban,
 	Fullscreen,
+	Globe,
 	LayoutGrid,
 	LockKeyhole,
 	PenLine,
@@ -116,8 +116,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const updateDashboardMutation = useUpdateDashboard();
 
-	const urlQuery = useUrlQuery();
-
 	const { user } = useAppContext();
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], user.role);
 	const [isDashboardSettingsOpen, setIsDashbordSettingsOpen] = useState<boolean>(
@@ -131,6 +129,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const [isPanelNameModalOpen, setIsPanelNameModalOpen] = useState<boolean>(
 		false,
 	);
+
+	const [isPublicDashboard, setIsPublicDashboard] = useState<boolean>(false);
 
 	let isAuthor = false;
 
@@ -291,15 +291,47 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	}
 
 	function goToListPage(): void {
-		urlQuery.set('columnKey', listSortOrder.columnKey as string);
-		urlQuery.set('order', listSortOrder.order as string);
-		urlQuery.set('page', listSortOrder.pagination as string);
-		urlQuery.set('search', listSortOrder.search as string);
-		urlQuery.delete(QueryParams.relativeTime);
+		const urlParams = new URLSearchParams();
+		urlParams.set('columnKey', listSortOrder.columnKey as string);
+		urlParams.set('order', listSortOrder.order as string);
+		urlParams.set('page', listSortOrder.pagination as string);
+		urlParams.set('search', listSortOrder.search as string);
 
-		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlQuery.toString()}`;
+		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlParams.toString()}`;
 		safeNavigate(generatedUrl);
 	}
+
+	const {
+		data: publicDashboardResponse,
+		// refetch: refetchPublicDashboardData,
+		isLoading: isLoadingPublicDashboardData,
+		isFetching: isFetchingPublicDashboardData,
+		error: errorPublicDashboardData,
+		isError: isErrorPublicDashboardData,
+	} = useGetPublicDashboardMeta(selectedDashboard?.id || '');
+
+	useEffect(() => {
+		if (!isLoadingPublicDashboardData && !isFetchingPublicDashboardData) {
+			if (isErrorPublicDashboardData) {
+				const errorDetails = errorPublicDashboardData?.getErrorDetails();
+
+				if (errorDetails?.error?.code === 'public_dashboard_not_found') {
+					setIsPublicDashboard(false);
+				}
+			} else {
+				const publicDashboardData = publicDashboardResponse?.data;
+				if (publicDashboardData?.publicPath) {
+					setIsPublicDashboard(true);
+				}
+			}
+		}
+	}, [
+		isLoadingPublicDashboardData,
+		isFetchingPublicDashboardData,
+		isErrorPublicDashboardData,
+		errorPublicDashboardData,
+		publicDashboardResponse?.data,
+	]);
 
 	return (
 		<Card className="dashboard-description-container">
@@ -337,11 +369,21 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							className="dashboard-title"
 							data-testid="dashboard-title"
 						>
-							{' '}
 							{title}
 						</Typography.Text>
 					</Tooltip>
-					{isDashboardLocked && <LockKeyhole size={14} />}
+
+					{isPublicDashboard && (
+						<Tooltip title="This dashboard is publicly accessible">
+							<Globe size={14} className="public-dashboard-icon" />
+						</Tooltip>
+					)}
+
+					{isDashboardLocked && (
+						<Tooltip title="This dashboard is locked">
+							<LockKeyhole size={14} className="lock-dashboard-icon" />
+						</Tooltip>
+					)}
 				</div>
 				<div className="right-section">
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />

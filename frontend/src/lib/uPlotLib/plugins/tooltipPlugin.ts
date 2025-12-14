@@ -1,3 +1,4 @@
+import { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { themeColors } from 'constants/theme';
@@ -38,12 +39,38 @@ function getTooltipBaseValue(
 	return data[index][idx];
 }
 
+function sortTooltipContentBasedOnValue(
+	tooltipDataObj: Record<string, UplotTooltipDataProps>,
+): Record<string, UplotTooltipDataProps> {
+	const entries = Object.entries(tooltipDataObj);
+
+	// Separate focused and non-focused entries in a single pass
+	const focusedEntries: [string, UplotTooltipDataProps][] = [];
+	const nonFocusedEntries: [string, UplotTooltipDataProps][] = [];
+
+	for (let i = 0; i < entries.length; i++) {
+		const entry = entries[i];
+		if (entry[1].focus) {
+			focusedEntries.push(entry);
+		} else {
+			nonFocusedEntries.push(entry);
+		}
+	}
+
+	// Sort non-focused entries by value (descending)
+	nonFocusedEntries.sort((a, b) => b[1].value - a[1].value);
+
+	// Combine with focused entries on top
+	return Object.fromEntries(focusedEntries.concat(nonFocusedEntries));
+}
+
 const generateTooltipContent = (
 	seriesList: any[],
 	data: any[],
 	idx: number,
 	isDarkMode: boolean,
 	yAxisUnit?: string,
+	decimalPrecision?: PrecisionOption,
 	series?: uPlot.Options['series'],
 	isBillingUsageGraphs?: boolean,
 	isHistogramGraphs?: boolean,
@@ -56,23 +83,31 @@ const generateTooltipContent = (
 ): HTMLElement => {
 	const container = document.createElement('div');
 	container.classList.add('tooltip-container');
-	const overlay = document.getElementById('overlay');
 	let tooltipCount = 0;
 
 	let tooltipTitle = '';
 	const formattedData: Record<string, UplotTooltipDataProps> = {};
 	const duplicatedLegendLabels: Record<string, true> = {};
 
-	function sortTooltipContentBasedOnValue(
-		tooltipDataObj: Record<string, UplotTooltipDataProps>,
-	): Record<string, UplotTooltipDataProps> {
-		const entries = Object.entries(tooltipDataObj);
-		entries.sort((a, b) => b[1].value - a[1].value);
-		return Object.fromEntries(entries);
+	// Pre-build a label-to-series map for O(1) lookup instead of O(n) search
+	let seriesColorMap: Map<string, string> | null = null;
+	if (isBillingUsageGraphs && series) {
+		seriesColorMap = new Map();
+		for (let i = 0; i < series.length; i++) {
+			const item = series[i];
+			if (item.label) {
+				const fillColor = get(item, '_fill');
+				if (fillColor) {
+					seriesColorMap.set(item.label, fillColor);
+				}
+			}
+		}
 	}
 
 	if (Array.isArray(series) && series.length > 0) {
-		series.forEach((item, index) => {
+		for (let index = 0; index < series.length; index++) {
+			const item = series[index];
+
 			if (index === 0) {
 				if (isBillingUsageGraphs) {
 					tooltipTitle = dayjs(data[0][idx] * 1000)
@@ -113,26 +148,20 @@ const generateTooltipContent = (
 						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
 					);
 
-				// in case of billing graph pick colors from the series options
-				if (isBillingUsageGraphs) {
-					let clr;
-					series.forEach((item) => {
-						if (item.label === label) {
-							clr = get(item, '_fill');
-						}
-					});
-					color = clr ?? color;
+				// O(1) lookup instead of O(n) search for billing graph colors
+				if (isBillingUsageGraphs && seriesColorMap) {
+					const billingColor = seriesColorMap.get(label);
+					if (billingColor) {
+						color = billingColor;
+					}
 				}
 
 				let tooltipItemLabel = label;
 
 				if (Number.isFinite(value)) {
-					const tooltipValue = getToolTipValue(value, yAxisUnit);
+					const tooltipValue = getToolTipValue(value, yAxisUnit, decimalPrecision);
 					const dataIngestedFormated = getToolTipValue(dataIngested);
-					if (
-						duplicatedLegendLabels[label] ||
-						Object.prototype.hasOwnProperty.call(formattedData, label)
-					) {
+					if (duplicatedLegendLabels[label] || label in formattedData) {
 						duplicatedLegendLabels[label] = true;
 						const tempDataObj = formattedData[label];
 
@@ -169,15 +198,11 @@ const generateTooltipContent = (
 					formattedData[tooltipItemLabel] = dataObj;
 				}
 			}
-		});
+		}
 	}
 
-	// Show tooltip only if atleast only series has a value at the hovered timestamp
+	// Early return if no valid data points - avoids unnecessary DOM manipulation
 	if (tooltipCount <= 0) {
-		if (overlay && overlay.style.display === 'block') {
-			overlay.style.display = 'none';
-		}
-
 		return container;
 	}
 
@@ -186,48 +211,42 @@ const generateTooltipContent = (
 		UplotTooltipDataProps
 	> = sortTooltipContentBasedOnValue(formattedData);
 
-	const div = document.createElement('div');
-	div.classList.add('tooltip-content-row');
-	div.textContent = isHistogramGraphs ? '' : tooltipTitle;
-	div.classList.add('tooltip-content-header');
-	container.appendChild(div);
+	const headerDiv = document.createElement('div');
+	headerDiv.classList.add('tooltip-content-row', 'tooltip-content-header');
+	headerDiv.textContent = isHistogramGraphs ? '' : tooltipTitle;
+	container.appendChild(headerDiv);
 
-	const sortedKeys = Object.keys(sortedData);
+	// Use DocumentFragment for better performance when adding multiple elements
+	const fragment = document.createDocumentFragment();
 
-	if (Array.isArray(sortedKeys) && sortedKeys.length > 0) {
-		sortedKeys.forEach((key) => {
-			if (sortedData[key]) {
-				const { textContent, color, focus } = sortedData[key];
-				const div = document.createElement('div');
-				div.classList.add('tooltip-content-row');
-				div.classList.add('tooltip-content');
-				const squareBox = document.createElement('div');
-				squareBox.classList.add('pointSquare');
+	const sortedValues = Object.values(sortedData);
 
-				squareBox.style.borderColor = color;
+	for (let i = 0; i < sortedValues.length; i++) {
+		const { textContent, color, focus } = sortedValues[i];
 
-				const text = document.createElement('div');
-				text.classList.add('tooltip-data-point');
+		const div = document.createElement('div');
+		div.classList.add('tooltip-content-row', 'tooltip-content');
 
-				text.textContent = textContent;
-				text.style.color = color;
+		const squareBox = document.createElement('div');
+		squareBox.classList.add('pointSquare');
+		squareBox.style.borderColor = color;
 
-				if (focus) {
-					text.classList.add('focus');
-				} else {
-					text.classList.remove('focus');
-				}
+		const text = document.createElement('div');
+		text.classList.add('tooltip-data-point');
+		text.textContent = textContent;
+		text.style.color = color;
 
-				div.appendChild(squareBox);
-				div.appendChild(text);
+		if (focus) {
+			text.classList.add('focus');
+		}
 
-				container.appendChild(div);
-			}
-		});
+		div.appendChild(squareBox);
+		div.appendChild(text);
+		fragment.appendChild(div);
 	}
 
-	if (overlay && overlay.style.display === 'none') {
-		overlay.style.display = 'block';
+	if (fragment.hasChildNodes()) {
+		container.appendChild(fragment);
 	}
 
 	return container;
@@ -239,6 +258,7 @@ type ToolTipPluginProps = {
 	isBillingUsageGraphs?: boolean;
 	isHistogramGraphs?: boolean;
 	isMergedSeries?: boolean;
+	decimalPrecision?: PrecisionOption;
 	stackBarChart?: boolean;
 	isDarkMode: boolean;
 	customTooltipElement?: HTMLDivElement;
@@ -259,83 +279,157 @@ const tooltipPlugin = ({
 	timezone,
 	colorMapping,
 	query,
+	decimalPrecision,
 }: // eslint-disable-next-line sonarjs/cognitive-complexity
 ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
-	let bLeft: any;
-	let bTop: any;
+	// Cache bounding box to avoid recalculating on every cursor move
+	let cachedBBox: DOMRect | null = null;
+	let isActive = false;
+	let overlay: HTMLElement | null = null;
 
+	// Pre-compute apiResult once
+	const apiResult = apiResponse?.data?.result || [];
+
+	// Sync bounds and cache the result
 	const syncBounds = (): void => {
-		const bbox = over.getBoundingClientRect();
-		bLeft = bbox.left;
-		bTop = bbox.top;
+		if (over) {
+			cachedBBox = over.getBoundingClientRect();
+		}
 	};
 
-	let overlay = document.getElementById('overlay');
+	// Create overlay once and reuse it
+	const initOverlay = (): void => {
+		if (!overlay) {
+			overlay = document.getElementById('overlay');
+			if (!overlay) {
+				overlay = document.createElement('div');
+				overlay.id = 'overlay';
+				overlay.style.cssText = 'display: none; position: absolute;';
+				document.body.appendChild(overlay);
+			}
+		}
+	};
 
-	if (!overlay) {
-		overlay = document.createElement('div');
-		overlay.id = 'overlay';
-		overlay.style.display = 'none';
-		overlay.style.position = 'absolute';
-		document.body.appendChild(overlay);
-	}
+	const showOverlay = (): void => {
+		if (overlay && overlay.style.display === 'none') {
+			overlay.style.display = 'block';
+		}
+	};
 
-	const apiResult = apiResponse?.data?.result || [];
+	const hideOverlay = (): void => {
+		if (overlay && overlay.style.display === 'block') {
+			overlay.style.display = 'none';
+		}
+	};
+
+	const plotEnter = (): void => {
+		isActive = true;
+		showOverlay();
+	};
+
+	const plotLeave = (): void => {
+		isActive = false;
+		hideOverlay();
+	};
+
+	// Cleanup function to remove event listeners
+	const cleanup = (): void => {
+		if (over) {
+			over.removeEventListener('mouseenter', plotEnter);
+			over.removeEventListener('mouseleave', plotLeave);
+		}
+	};
 
 	return {
 		hooks: {
 			init: (u: any): void => {
 				over = u?.over;
 				bound = over;
-				over.onmouseenter = (): void => {
-					if (overlay) {
-						overlay.style.display = 'block';
-					}
-				};
-				over.onmouseleave = (): void => {
-					if (overlay) {
-						overlay.style.display = 'none';
-					}
-				};
+
+				// Initialize overlay once during init
+				initOverlay();
+
+				// Initial bounds sync
+				syncBounds();
+
+				over.addEventListener('mouseenter', plotEnter);
+				over.addEventListener('mouseleave', plotLeave);
 			},
 			setSize: (): void => {
+				// Re-sync bounds when size changes
 				syncBounds();
+			},
+			// Cache bounding box on syncRect for better performance
+			syncRect: (u: any, rect: DOMRect): void => {
+				cachedBBox = rect;
 			},
 			setCursor: (u: {
 				cursor: { left: any; top: any; idx: any };
 				data: any[];
 				series: uPlot.Options['series'];
 			}): void => {
-				if (overlay) {
-					overlay.textContent = '';
-					const { left, top, idx } = u.cursor;
-
-					if (Number.isInteger(idx)) {
-						const anchor = { left: left + bLeft, top: top + bTop };
-						const content = generateTooltipContent(
-							apiResult,
-							u.data,
-							idx,
-							isDarkMode,
-							yAxisUnit,
-							u.series,
-							isBillingUsageGraphs,
-							isHistogramGraphs,
-							isMergedSeries,
-							stackBarChart,
-							timezone,
-							colorMapping,
-							query,
-						);
-						if (customTooltipElement) {
-							content.appendChild(customTooltipElement);
-						}
-						overlay.appendChild(content);
-						placement(overlay, anchor, 'right', 'start', { bound });
-					}
+				if (!overlay) {
+					return;
 				}
+
+				const { left, top, idx } = u.cursor;
+
+				// Early return if not active or no valid index
+				if (!isActive || !Number.isInteger(idx)) {
+					if (isActive) {
+						// Clear tooltip content efficiently using replaceChildren
+						overlay.replaceChildren();
+					}
+					return;
+				}
+
+				// Use cached bounding box if available
+				const bbox = cachedBBox || over.getBoundingClientRect();
+				const anchor = {
+					left: left + bbox.left,
+					top: top + bbox.top,
+				};
+
+				const content = generateTooltipContent(
+					apiResult,
+					u.data,
+					idx,
+					isDarkMode,
+					yAxisUnit,
+					decimalPrecision,
+					u.series,
+					isBillingUsageGraphs,
+					isHistogramGraphs,
+					isMergedSeries,
+					stackBarChart,
+					timezone,
+					colorMapping,
+					query,
+				);
+
+				// Only show tooltip if there's actual content
+				if (content.children.length > 1) {
+					if (customTooltipElement) {
+						content.appendChild(customTooltipElement);
+					}
+					// Clear and set new content in one operation
+					overlay.replaceChildren(content);
+					placement(overlay, anchor, 'right', 'start', {
+						bound,
+						followCursor: { x: anchor.left, y: anchor.top, offset: 4 },
+					});
+
+					showOverlay();
+				} else {
+					hideOverlay();
+				}
+			},
+			destroy: (): void => {
+				// Cleanup on destroy
+				cleanup();
+				hideOverlay();
 			},
 		},
 	};

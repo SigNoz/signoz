@@ -15,15 +15,19 @@ jobs:
       matrix:
         src:
           - bootstrap
-          - auth
+          - passwordauthn
+          - callbackauthn
+          - cloudintegrations
+          - dashboard
           - querier
+          - ttl
         sqlstore-provider:
           - postgres
           - sqlite
         clickhouse-version:
           - 25.5.6
         schema-migrator-version:
-          - v0.129.6
+          - v0.129.7
         postgres-version:
           - 15
     if: |
@@ -42,6 +46,20 @@ jobs:
           python -m pip install poetry==2.1.2
           python -m poetry config virtualenvs.in-project true
           cd tests/integration && poetry install --no-root
+      - name: webdriver
+        run: |
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update -qqy
+          sudo apt-get -qqy install google-chrome-stable
+          CHROME_VERSION=$(google-chrome-stable --version)
+          CHROME_FULL_VERSION=${CHROME_VERSION%%.*}
+          CHROME_MAJOR_VERSION=${CHROME_FULL_VERSION//[!0-9]}
+          sudo rm /etc/apt/sources.list.d/google-chrome.list
+          export CHROMEDRIVER_VERSION=`curl -s https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_${CHROME_MAJOR_VERSION%%.*}`
+          curl -L -O "https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip"
+          unzip chromedriver-linux64.zip && chmod +x chromedriver && sudo mv chromedriver /usr/local/bin
+          chromedriver -version
       - name: run
         run: |
           cd tests/integration && \

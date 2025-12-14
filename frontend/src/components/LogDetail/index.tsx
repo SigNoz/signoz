@@ -319,31 +319,35 @@ function LogDetailInner({
 					</Radio.Button>
 				</Radio.Group>
 
-				{selectedView === VIEW_TYPES.JSON && (
-					<div className="json-action-btn">
+				<div className="log-detail-drawer__actions">
+					{selectedView === VIEW_TYPES.CONTEXT && (
+						<Tooltip
+							title="Show Filters"
+							placement="topLeft"
+							aria-label="Show Filters"
+						>
+							<Button
+								className="action-btn"
+								icon={<Filter size={16} />}
+								onClick={handleFilterVisible}
+							/>
+						</Tooltip>
+					)}
+
+					<Tooltip
+						title={selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'}
+						placement="topLeft"
+						aria-label={
+							selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'
+						}
+					>
 						<Button
 							className="action-btn"
 							icon={<Copy size={16} />}
-							onClick={handleJSONCopy}
+							onClick={selectedView === VIEW_TYPES.JSON ? handleJSONCopy : onLogCopy}
 						/>
-					</div>
-				)}
-
-				{selectedView === VIEW_TYPES.CONTEXT && (
-					<Button
-						className="action-btn"
-						icon={<Filter size={16} />}
-						onClick={handleFilterVisible}
-					/>
-				)}
-
-				<Tooltip title="Copy Log Link" placement="left" aria-label="Copy Log Link">
-					<Button
-						className="action-btn"
-						icon={<Copy size={16} />}
-						onClick={onLogCopy}
-					/>
-				</Tooltip>
+					</Tooltip>
+				</div>
 			</div>
 			{isFilterVisible && contextQuery?.builder.queryData[0] && (
 				<div className="log-detail-drawer-query-container">
@@ -383,7 +387,8 @@ function LogDetailInner({
 					podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] || ''}
 					nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] || ''}
 					hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] || ''}
-					logLineTimestamp={log.timestamp.toString()}
+					timestamp={log.timestamp.toString()}
+					dataSource={DataSource.LOGS}
 				/>
 			)}
 		</Drawer>

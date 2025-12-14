@@ -24,6 +24,7 @@ function MultipleNotifications(): JSX.Element {
 		return uniqueGroupBys.map((key) => ({
 			label: key,
 			value: key,
+			'data-testid': 'multiple-notifications-select-option',
 		}));
 	}, [currentQuery.builder.queryData]);
 
@@ -49,6 +50,7 @@ function MultipleNotifications(): JSX.Element {
 					disabled={!isMultipleNotificationsEnabled}
 					aria-disabled={!isMultipleNotificationsEnabled}
 					maxTagCount={3}
+					data-testid="multiple-notifications-select"
 				/>
 				{isMultipleNotificationsEnabled && (
 					<Typography.Paragraph className="multiple-notifications-select-description">

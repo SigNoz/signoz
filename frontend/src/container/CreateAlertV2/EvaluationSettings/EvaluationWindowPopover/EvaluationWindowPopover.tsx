@@ -3,10 +3,10 @@ import classNames from 'classnames';
 import { Check } from 'lucide-react';
 
 import {
-	CUMULATIVE_WINDOW_DESCRIPTION,
 	EVALUATION_WINDOW_TIMEFRAME,
 	EVALUATION_WINDOW_TYPE,
-	ROLLING_WINDOW_DESCRIPTION,
+	getCumulativeWindowDescription,
+	getRollingWindowDescription,
 } from '../constants';
 import {
 	CumulativeWindowTimeframes,
@@ -96,7 +96,9 @@ function EvaluationWindowPopover({
 			}
 			return (
 				<div className="selection-content">
-					<Typography.Text>{ROLLING_WINDOW_DESCRIPTION}</Typography.Text>
+					<Typography.Text>
+						{getRollingWindowDescription(evaluationWindow.timeframe)}
+					</Typography.Text>
 					<Button type="link">Read the docs</Button>
 				</div>
 			);
@@ -108,7 +110,9 @@ function EvaluationWindowPopover({
 		) {
 			return (
 				<div className="selection-content">
-					<Typography.Text>{CUMULATIVE_WINDOW_DESCRIPTION}</Typography.Text>
+					<Typography.Text>
+						{getCumulativeWindowDescription(evaluationWindow.timeframe)}
+					</Typography.Text>
 					<Button type="link">Read the docs</Button>
 				</div>
 			);

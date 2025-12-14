@@ -14,6 +14,7 @@ import NoLogs from 'container/NoLogs/NoLogs';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
+import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
@@ -22,12 +23,12 @@ import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { cloneDeep } from 'lodash-es';
 import { ArrowUp10, Minus } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
 	memo,
+	MutableRefObject,
 	SetStateAction,
 	useCallback,
 	useEffect,
@@ -50,12 +51,14 @@ interface ListViewProps {
 	isFilterApplied: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
+	queryKeyRef?: MutableRefObject<any>;
 }
 
 function ListView({
 	isFilterApplied,
 	setWarning,
 	setIsLoadingQueries,
+	queryKeyRef,
 }: ListViewProps): JSX.Element {
 	const {
 		stagedQuery,
@@ -92,35 +95,10 @@ function ListView({
 	const paginationConfig =
 		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
 
-	const requestQuery = useMemo(() => {
-		const query = stagedQuery
-			? cloneDeep(stagedQuery)
-			: cloneDeep(initialQueriesMap.traces);
-
-		if (query.builder.queryData[0]) {
-			query.builder.queryData[0].orderBy = [
-				{
-					columnName: orderBy.split(':')[0],
-					order: orderBy.split(':')[1] as 'asc' | 'desc',
-				},
-			];
-		}
-
-		// add order by to trace operator
-		if (
-			query.builder.queryTraceOperator &&
-			query.builder.queryTraceOperator.length > 0
-		) {
-			query.builder.queryTraceOperator[0].orderBy = [
-				{
-					columnName: orderBy.split(':')[0],
-					order: orderBy.split(':')[1] as 'asc' | 'desc',
-				},
-			];
-		}
-
-		return query;
-	}, [stagedQuery, orderBy]);
+	const requestQuery = useMemo(
+		() => getListViewQuery(stagedQuery || initialQueriesMap.traces, orderBy),
+		[stagedQuery, orderBy],
+	);
 
 	const queryKey = useMemo(
 		() => [
@@ -145,6 +123,11 @@ function ListView({
 			orderBy,
 		],
 	);
+
+	if (queryKeyRef) {
+		// eslint-disable-next-line no-param-reassign
+		queryKeyRef.current = queryKey;
+	}
 
 	const { data, isFetching, isLoading, isError, error } = useGetQueryRange(
 		{
@@ -242,28 +225,26 @@ function ListView({
 	}, [isLoading, isFetching, isError, transformedQueryTableData, panelType]);
 	return (
 		<Container>
-			{transformedQueryTableData.length !== 0 && (
-				<div className="trace-explorer-controls">
-					<div className="order-by-container">
-						<div className="order-by-label">
-							Order by <Minus size={14} /> <ArrowUp10 size={14} />
-						</div>
-
-						<ListViewOrderBy
-							value={orderBy}
-							onChange={handleOrderChange}
-							dataSource={DataSource.TRACES}
-						/>
+			<div className="trace-explorer-controls">
+				<div className="order-by-container">
+					<div className="order-by-label">
+						Order by <Minus size={14} /> <ArrowUp10 size={14} />
 					</div>
 
-					<TraceExplorerControls
-						isLoading={isFetching}
-						totalCount={totalCount}
-						config={config}
-						perPageOptions={PER_PAGE_OPTIONS}
+					<ListViewOrderBy
+						value={orderBy}
+						onChange={handleOrderChange}
+						dataSource={DataSource.TRACES}
 					/>
 				</div>
-			)}
+
+				<TraceExplorerControls
+					isLoading={isFetching}
+					totalCount={totalCount}
+					config={config}
+					perPageOptions={PER_PAGE_OPTIONS}
+				/>
+			</div>
 
 			{isError && error && <ErrorInPlace error={error as APIError} />}
 
@@ -294,5 +275,9 @@ function ListView({
 		</Container>
 	);
 }
+
+ListView.defaultProps = {
+	queryKeyRef: undefined,
+};
 
 export default memo(ListView);

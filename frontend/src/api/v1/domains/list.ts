@@ -1,12 +1,16 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { AuthDomain, PayloadProps } from 'types/api/SAML/listDomain';
+import { ErrorV2Resp, RawSuccessResponse, SuccessResponseV2 } from 'types/api';
+import { GettableAuthDomain } from 'types/api/v1/domains/list';
 
-const listAllDomain = async (): Promise<SuccessResponseV2<AuthDomain[]>> => {
+const listAllDomain = async (): Promise<
+	SuccessResponseV2<GettableAuthDomain[]>
+> => {
 	try {
-		const response = await axios.get<PayloadProps>(`/domains`);
+		const response = await axios.get<RawSuccessResponse<GettableAuthDomain[]>>(
+			`/domains`,
+		);
 
 		return {
 			httpStatusCode: response.status,

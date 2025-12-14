@@ -1,8 +1,8 @@
 import './styles.scss';
 import '../AdvancedOptionItem/styles.scss';
 
-import { Button, Input, Select, Tooltip, Typography } from 'antd';
-import { Info, Plus } from 'lucide-react';
+import { Input, Select, Tooltip, Typography } from 'antd';
+import { Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { useCreateAlertState } from '../../context';
@@ -36,10 +36,10 @@ function EvaluationCadence(): JSX.Element {
 		);
 	}, [advancedOptions.evaluationCadence.mode]);
 
-	const showCustomSchedule = (): void => {
-		setIsEvaluationCadenceDetailsVisible(true);
-		setIsCustomScheduleButtonVisible(false);
-	};
+	// const showCustomSchedule = (): void => {
+	// 	setIsEvaluationCadenceDetailsVisible(true);
+	// 	setIsCustomScheduleButtonVisible(false);
+	// };
 
 	return (
 		<div className="evaluation-cadence-container">
@@ -78,6 +78,7 @@ function EvaluationCadence(): JSX.Element {
 										},
 									})
 								}
+								data-testid="evaluation-cadence-duration-input"
 							/>
 							<Select
 								options={ADVANCED_OPTIONS_TIME_UNIT_OPTIONS}
@@ -96,15 +97,17 @@ function EvaluationCadence(): JSX.Element {
 										},
 									})
 								}
+								data-testid="evaluation-cadence-unit-select"
 							/>
 						</Input.Group>
-						<Button
+						{/* TODO: Add custom schedule back once the functionality is implemented */}
+						{/* <Button
 							className="advanced-option-item-button"
 							onClick={showCustomSchedule}
 						>
 							<Plus size={12} />
 							<Typography.Text>Add custom schedule</Typography.Text>
-						</Button>
+						</Button> */}
 					</div>
 				)}
 			</div>

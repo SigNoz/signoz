@@ -21,13 +21,15 @@ import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
 import { SuccessResponse, SuccessResponseV2, Warning } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { prepareQueryRangePayload } from './prepareQueryRangePayload';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
+import getPublicDashboardWidgetData from 'api/dashboard/public/getPublicDashboardWidgetData';
 
 /**
  * Validates if metric name is available for METRICS data source
@@ -75,14 +77,13 @@ const getQueryDataSource = (
 
 const getLegendForSingleAggregation = (
 	queryData: QueryData,
-	payloadQuery: Query,
+	allQueries: IBuilderQuery[],
 	aggregationAlias: string,
 	aggregationExpression: string,
 	labelName: string,
 	singleAggregation: boolean,
 ) => {
-	// Find the corresponding query in payloadQuery
-	const queryItem = payloadQuery.builder?.queryData.find(
+	const queryItem = allQueries.find(
 		(query) => query.queryName === queryData.queryName,
 	);
 
@@ -107,14 +108,13 @@ const getLegendForSingleAggregation = (
 
 const getLegendForMultipleAggregations = (
 	queryData: QueryData,
-	payloadQuery: Query,
+	allQueries: IBuilderQuery[],
 	aggregationAlias: string,
 	aggregationExpression: string,
 	labelName: string,
 	singleAggregation: boolean,
 ) => {
-	// Find the corresponding query in payloadQuery
-	const queryItem = payloadQuery.builder?.queryData.find(
+	const queryItem = allQueries.find(
 		(query) => query.queryName === queryData.queryName,
 	);
 
@@ -142,15 +142,23 @@ export const getLegend = (
 	payloadQuery: Query,
 	labelName: string,
 ) => {
-	const aggregationPerQuery = payloadQuery?.builder?.queryData.reduce(
-		(acc, query) => {
-			if (query.queryName === queryData.queryName) {
-				acc[query.queryName] = createAggregation(query);
-			}
-			return acc;
-		},
-		{},
-	);
+	// For non-query builder queries, return the label name directly
+	if (payloadQuery.queryType !== EQueryType.QUERY_BUILDER) {
+		return labelName;
+	}
+
+	// Combine queryData and queryTraceOperator
+	const allQueries = [
+		...(payloadQuery?.builder?.queryData || []),
+		...(payloadQuery?.builder?.queryTraceOperator || []),
+	];
+
+	const aggregationPerQuery = allQueries.reduce((acc, query) => {
+		if (query.queryName === queryData.queryName) {
+			acc[query.queryName] = createAggregation(query);
+		}
+		return acc;
+	}, {});
 
 	const metaData = queryData?.metaData;
 	const aggregation =
@@ -159,8 +167,8 @@ export const getLegend = (
 	const aggregationAlias = aggregation?.alias || '';
 	const aggregationExpression = aggregation?.expression || '';
 
-	// Check if there's only one total query (queryData)
-	const singleQuery = payloadQuery?.builder?.queryData?.length === 1;
+	// Check if there's only one total query
+	const singleQuery = allQueries.length === 1;
 	const singleAggregation =
 		aggregationPerQuery?.[metaData?.queryName]?.length === 1;
 
@@ -168,7 +176,7 @@ export const getLegend = (
 		return singleQuery
 			? getLegendForSingleAggregation(
 					queryData,
-					payloadQuery,
+					allQueries,
 					aggregationAlias,
 					aggregationExpression,
 					labelName,
@@ -176,7 +184,7 @@ export const getLegend = (
 			  )
 			: getLegendForMultipleAggregations(
 					queryData,
-					payloadQuery,
+					allQueries,
 					aggregationAlias,
 					aggregationExpression,
 					labelName,
@@ -193,6 +201,11 @@ export async function GetMetricQueryRange(
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 	isInfraMonitoring?: boolean,
+	publicQueryMeta?: {
+		isPublic: boolean;
+		widgetIndex: number;
+		publicDashboardId: string;
+	},
 ): Promise<SuccessResponse<MetricRangePayloadProps> & { warning?: Warning }> {
 	let legendMap: Record<string, string>;
 	let response:
@@ -242,7 +255,10 @@ export async function GetMetricQueryRange(
 		legendMap = v5Result.legendMap;
 
 		// atleast one query should be there to make call to v5 api
-		if (v5Result.queryPayload.compositeQuery.queries.length === 0) {
+		if (
+			v5Result.queryPayload.compositeQuery.queries.length === 0 &&
+			!publicQueryMeta?.isPublic
+		) {
 			return {
 				statusCode: 200,
 				error: null,
@@ -265,24 +281,45 @@ export async function GetMetricQueryRange(
 			};
 		}
 
-		const v5Response = await getQueryRangeV5(
-			v5Result.queryPayload,
-			version,
-			signal,
-			headers,
-		);
+		if (publicQueryMeta?.isPublic) {
+			const publicResponse = await getPublicDashboardWidgetData({
+				id: publicQueryMeta?.publicDashboardId,
+				index: publicQueryMeta?.widgetIndex,
+				startTime: props.start * 1000,
+				endTime: props.end * 1000,
+			});
 
-		// Convert V5 response to legacy format for components
-		response = convertV5ResponseToLegacy(
-			{
-				payload: v5Response.data,
-				params: v5Result.queryPayload,
-			},
-			legendMap,
-			finalFormatForWeb,
-		);
+			// Convert V5 response to legacy format for components
+			response = convertV5ResponseToLegacy(
+				{
+					payload: publicResponse.data,
+					params: v5Result.queryPayload,
+				},
+				legendMap,
+				finalFormatForWeb,
+			);
 
-		warning = response.payload.warning || undefined;
+			warning = response.payload.warning || undefined;
+		} else {
+			const v5Response = await getQueryRangeV5(
+				v5Result.queryPayload,
+				version,
+				signal,
+				headers,
+			);
+
+			// Convert V5 response to legacy format for components
+			response = convertV5ResponseToLegacy(
+				{
+					payload: v5Response.data,
+					params: v5Result.queryPayload,
+				},
+				legendMap,
+				finalFormatForWeb,
+			);
+
+			warning = response.payload.warning || undefined;
+		}
 	} else {
 		const legacyResult = prepareQueryRangePayload(props);
 		legendMap = legacyResult.legendMap;

@@ -1,51 +1,65 @@
 import './styles.scss';
+import '../EvaluationSettings/styles.scss';
 
-import { Button, Select, Typography } from 'antd';
-import getAllChannels from 'api/channels/getAll';
+import { Button, Select, Tooltip, Typography } from 'antd';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import getRandomColor from 'lib/getRandomColor';
 import { Plus } from 'lucide-react';
-import { useQuery } from 'react-query';
-import { SuccessResponseV2 } from 'types/api';
-import { Channels } from 'types/api/channels/getAll';
-import APIError from 'types/api/error';
+import { useEffect } from 'react';
+import { v4 } from 'uuid';
 
 import { useCreateAlertState } from '../context';
 import {
+	INITIAL_EVALUATION_WINDOW_STATE,
 	INITIAL_INFO_THRESHOLD,
 	INITIAL_RANDOM_THRESHOLD,
 	INITIAL_WARNING_THRESHOLD,
 	THRESHOLD_MATCH_TYPE_OPTIONS,
 	THRESHOLD_OPERATOR_OPTIONS,
 } from '../context/constants';
+import { AlertThresholdMatchType } from '../context/types';
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
-import { showCondensedLayout } from '../utils';
 import ThresholdItem from './ThresholdItem';
-import { UpdateThreshold } from './types';
+import { AnomalyAndThresholdProps, UpdateThreshold } from './types';
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
+	getMatchTypeTooltip,
 	getQueryNames,
+	RoutingPolicyBanner,
 } from './utils';
 
-function AlertThreshold(): JSX.Element {
+function AlertThreshold({
+	channels,
+	isLoadingChannels,
+	isErrorChannels,
+	refreshChannels,
+}: AnomalyAndThresholdProps): JSX.Element {
 	const {
 		alertState,
 		thresholdState,
 		setThresholdState,
+		setEvaluationWindow,
+		notificationSettings,
+		setNotificationSettings,
 	} = useCreateAlertState();
-	const { data, isLoading: isLoadingChannels } = useQuery<
-		SuccessResponseV2<Channels[]>,
-		APIError
-	>(['getChannels'], {
-		queryFn: () => getAllChannels(),
-	});
-	const showCondensedLayoutFlag = showCondensedLayout();
-	const channels = data?.data || [];
 
 	const { currentQuery } = useQueryBuilder();
-
 	const queryNames = getQueryNames(currentQuery);
+
+	useEffect(() => {
+		if (
+			queryNames.length > 0 &&
+			!queryNames.some((query) => query.value === thresholdState.selectedQuery)
+		) {
+			setThresholdState({
+				type: 'SET_SELECTED_QUERY',
+				payload: queryNames[0].value,
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [queryNames, thresholdState.selectedQuery]);
 
 	const selectedCategory = getCategoryByOptionId(alertState.yAxisUnit || '');
 	const categorySelectOptions = getCategorySelectOptionByName(
@@ -55,11 +69,15 @@ function AlertThreshold(): JSX.Element {
 	const addThreshold = (): void => {
 		let newThreshold;
 		if (thresholdState.thresholds.length === 1) {
-			newThreshold = INITIAL_WARNING_THRESHOLD;
+			newThreshold = { ...INITIAL_WARNING_THRESHOLD, id: v4() };
 		} else if (thresholdState.thresholds.length === 2) {
-			newThreshold = INITIAL_INFO_THRESHOLD;
+			newThreshold = { ...INITIAL_INFO_THRESHOLD, id: v4() };
 		} else {
-			newThreshold = INITIAL_RANDOM_THRESHOLD;
+			newThreshold = {
+				...INITIAL_RANDOM_THRESHOLD,
+				id: v4(),
+				color: getRandomColor(),
+			};
 		}
 		setThresholdState({
 			type: 'SET_THRESHOLDS',
@@ -85,17 +103,119 @@ function AlertThreshold(): JSX.Element {
 		});
 	};
 
-	const evaluationWindowContext = showCondensedLayoutFlag ? (
-		<EvaluationSettings />
-	) : (
-		<strong>Evaluation Window.</strong>
+	const onTooltipOpenChange = (open: boolean): void => {
+		// Stop propagation of click events on tooltip text to dropdown
+		if (open) {
+			setTimeout(() => {
+				const tooltipElement = document.querySelector(
+					'.copyable-tooltip .ant-tooltip-inner',
+				);
+				if (tooltipElement) {
+					tooltipElement.addEventListener(
+						'click',
+						(e) => {
+							e.stopPropagation();
+							e.preventDefault();
+						},
+						true,
+					);
+					tooltipElement.addEventListener(
+						'mousedown',
+						(e) => {
+							e.stopPropagation();
+							e.preventDefault();
+						},
+						true,
+					);
+				}
+			}, 0);
+		}
+	};
+
+	const matchTypeOptionsWithTooltips = THRESHOLD_MATCH_TYPE_OPTIONS.map(
+		(option) => ({
+			...option,
+			label: (
+				<Tooltip
+					title={getMatchTypeTooltip(option.value, thresholdState.operator)}
+					placement="left"
+					overlayClassName="copyable-tooltip"
+					overlayStyle={{
+						maxWidth: '450px',
+						minWidth: '400px',
+					}}
+					overlayInnerStyle={{
+						padding: '12px 16px',
+						userSelect: 'text',
+						WebkitUserSelect: 'text',
+						MozUserSelect: 'text',
+						msUserSelect: 'text',
+					}}
+					mouseEnterDelay={0.2}
+					trigger={['hover', 'click']}
+					destroyTooltipOnHide={false}
+					onOpenChange={onTooltipOpenChange}
+				>
+					<span style={{ display: 'block', width: '100%' }}>{option.label}</span>
+				</Tooltip>
+			),
+		}),
 	);
+
+	const handleSetEvaluationDetailsForMeter = (): void => {
+		setEvaluationWindow({
+			type: 'SET_INITIAL_STATE_FOR_METER',
+		});
+
+		setThresholdState({
+			type: 'SET_MATCH_TYPE',
+			payload: AlertThresholdMatchType.IN_TOTAL,
+		});
+	};
+
+	const handleSelectedQueryChange = (value: string): void => {
+		// loop through currenttQuery and find the query that matches the selected query
+		const query = currentQuery?.builder?.queryData.find(
+			(query) => query.queryName === value,
+		);
+
+		const currentSelectedQuery = currentQuery?.builder?.queryData.find(
+			(query) => query.queryName === thresholdState.selectedQuery,
+		);
+
+		const newSelectedQuerySource = query?.source || '';
+		const currentSelectedQuerySource = currentSelectedQuery?.source || '';
+
+		if (newSelectedQuerySource === currentSelectedQuerySource) {
+			setThresholdState({
+				type: 'SET_SELECTED_QUERY',
+				payload: value,
+			});
+
+			return;
+		}
+
+		if (newSelectedQuerySource === 'meter') {
+			handleSetEvaluationDetailsForMeter();
+		} else {
+			setEvaluationWindow({
+				type: 'SET_INITIAL_STATE',
+				payload: INITIAL_EVALUATION_WINDOW_STATE,
+			});
+		}
+
+		setThresholdState({
+			type: 'SET_SELECTED_QUERY',
+			payload: value,
+		});
+	};
 
 	return (
 		<div
-			className={classNames('alert-threshold-container', {
-				'condensed-alert-threshold-container': showCondensedLayoutFlag,
-			})}
+			className={classNames(
+				'alert-threshold-container',
+				'condensed-alert-threshold-container',
+			)}
 		>
 			{/* Main condition sentence */}
 			<div className="alert-condition-sentences">
@@ -105,17 +225,12 @@ function AlertThreshold(): JSX.Element {
 					</Typography.Text>
 					<Select
 						value={thresholdState.selectedQuery}
-						onChange={(value): void => {
-							setThresholdState({
-								type: 'SET_SELECTED_QUERY',
-								payload: value,
-							});
-						}}
+						onChange={handleSelectedQueryChange}
 						style={{ width: 80 }}
 						options={queryNames}
+						data-testid="alert-threshold-query-select"
 					/>
-				</div>
-				<div className="alert-condition-sentence">
+					<Typography.Text className="sentence-text">is</Typography.Text>
 					<Select
 						value={thresholdState.operator}
 						onChange={(value): void => {
@@ -124,8 +239,9 @@ function AlertThreshold(): JSX.Element {
 								payload: value,
 							});
 						}}
-						style={{ width: 120 }}
+						style={{ width: 180 }}
 						options={THRESHOLD_OPERATOR_OPTIONS}
+						data-testid="alert-threshold-operator-select"
 					/>
 					<Typography.Text className="sentence-text">
 						the threshold(s)
@@ -138,11 +254,12 @@ function AlertThreshold(): JSX.Element {
 								payload: value,
 							});
 						}}
-						style={{ width: 140 }}
-						options={THRESHOLD_MATCH_TYPE_OPTIONS}
+						style={{ width: 180 }}
+						options={matchTypeOptionsWithTooltips}
+						data-testid="alert-threshold-match-type-select"
 					/>
 					<Typography.Text className="sentence-text">
-						during the {evaluationWindowContext}
+						during the <EvaluationSettings />
 					</Typography.Text>
 				</div>
 			</div>
@@ -158,6 +275,8 @@ function AlertThreshold(): JSX.Element {
 						channels={channels}
 						isLoadingChannels={isLoadingChannels}
 						units={categorySelectOptions}
+						isErrorChannels={isErrorChannels}
+						refreshChannels={refreshChannels}
 					/>
 				))}
 				<Button
@@ -165,10 +284,16 @@ function AlertThreshold(): JSX.Element {
 					icon={<Plus size={16} />}
 					onClick={addThreshold}
 					className="add-threshold-btn"
+					data-testid="add-threshold-button"
 				>
 					Add Threshold
 				</Button>
 			</div>
+
+			<RoutingPolicyBanner
+				notificationSettings={notificationSettings}
+				setNotificationSettings={setNotificationSettings}
+			/>
 		</div>
 	);
 }

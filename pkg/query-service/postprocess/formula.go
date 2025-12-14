@@ -197,10 +197,14 @@ func processResults(
 	}, nil
 }
 
-var SupportedFunctions = []string{"exp", "log", "ln", "exp2", "log2", "exp10", "log10", "sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma", "sin", "cos", "tan", "asin", "acos", "atan", "degrees", "radians", "now", "toUnixTimestamp"}
+var SupportedFunctions = []string{"abs", "exp", "log", "ln", "exp2", "log2", "exp10", "log10", "sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma", "sin", "cos", "tan", "asin", "acos", "atan", "degrees", "radians", "now", "toUnixTimestamp"}
 
 func EvalFuncs() map[string]govaluate.ExpressionFunction {
 	GoValuateFuncs := make(map[string]govaluate.ExpressionFunction)
+	// Returns the absolute value of the given argument.
+	GoValuateFuncs["abs"] = func(args ...interface{}) (interface{}, error) {
+		return math.Abs(args[0].(float64)), nil
+	}
 	// Returns e to the power of the given argument.
 	GoValuateFuncs["exp"] = func(args ...interface{}) (interface{}, error) {
 		return math.Exp(args[0].(float64)), nil

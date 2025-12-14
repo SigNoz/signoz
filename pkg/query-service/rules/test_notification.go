@@ -38,7 +38,6 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	if parsedRule.RuleType == ruletypes.RuleTypeThreshold {
 
 		// add special labels for test alerts
-		parsedRule.Annotations[labels.AlertSummaryLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
 		parsedRule.Labels[labels.RuleSourceLabel] = ""
 		parsedRule.Labels[labels.AlertRuleIdLabel] = ""
 

@@ -74,10 +74,13 @@ func (c *conditionBuilder) conditionFor(
 		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
-		return fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value)), nil
+		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
+		return fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
 	case qbtypes.FilterOperatorNotRegexp:
-		return fmt.Sprintf(`NOT match(%s, %s)`, tblFieldName, sb.Var(value)), nil
-
+		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
+		return fmt.Sprintf(`NOT match(%s, %s)`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
 	// between and not between
 	case qbtypes.FilterOperatorBetween:
 		values, ok := value.([]any)
@@ -136,6 +139,8 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	_ uint64,
+	_ uint64,
 ) (string, error) {
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
 	if err != nil {

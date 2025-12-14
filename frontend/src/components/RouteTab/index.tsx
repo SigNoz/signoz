@@ -61,8 +61,6 @@ function RouteTab({
 			defaultActiveKey={currentRoute?.key || activeKey}
 			animated
 			items={items}
-			// eslint-disable-next-line react/jsx-props-no-spreading
-			{...rest}
 			tabBarExtraContent={
 				showRightSection && (
 					<HeaderRightSection
@@ -72,6 +70,8 @@ function RouteTab({
 					/>
 				)
 			}
+			// eslint-disable-next-line react/jsx-props-no-spreading ---- TODO: remove this once follow the linting rules
+			{...rest}
 		/>
 	);
 }

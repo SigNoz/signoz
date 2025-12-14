@@ -10,6 +10,7 @@ const useActiveLicenseV3 = (isLoggedIn: boolean): UseLicense =>
 		queryFn: getActive,
 		queryKey: [REACT_QUERY_KEY.GET_ACTIVE_LICENSE_V3],
 		enabled: !!isLoggedIn,
+		retry: false,
 	});
 
 type UseLicense = UseQueryResult<SuccessResponseV2<LicenseResModel>, APIError>;

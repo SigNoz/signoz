@@ -2,6 +2,7 @@ import './HeaderRightSection.styles.scss';
 
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Globe, Inbox, SquarePen } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -20,12 +21,14 @@ function HeaderRightSection({
 	enableAnnouncements,
 	enableShare,
 	enableFeedback,
-}: HeaderRightSectionProps): JSX.Element {
+}: HeaderRightSectionProps): JSX.Element | null {
 	const location = useLocation();
 
 	const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
 	const [openShareURLModal, setOpenShareURLModal] = useState(false);
 	const [openAnnouncementsModal, setOpenAnnouncementsModal] = useState(false);
+
+	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const handleOpenFeedbackModal = useCallback((): void => {
 		logEvent('Feedback: Clicked', {
@@ -63,9 +66,11 @@ function HeaderRightSection({
 		setOpenShareURLModal(open);
 	};
 
+	const isLicenseEnabled = isEnterpriseSelfHostedUser || isCloudUser;
+
 	return (
 		<div className="header-right-section-container">
-			{enableFeedback && (
+			{enableFeedback && isLicenseEnabled && (
 				<Popover
 					rootClassName="header-section-popover-root"
 					className="shareable-link-popover"
@@ -81,7 +86,9 @@ function HeaderRightSection({
 						className="share-feedback-btn periscope-btn ghost"
 						icon={<SquarePen size={14} />}
 						onClick={handleOpenFeedbackModal}
-					/>
+					>
+						Feedback
+					</Button>
 				</Popover>
 			)}
 

@@ -1,3 +1,5 @@
+import { UTC_TIMEZONE } from 'components/CustomTimePicker/timezoneUtils';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { QueryParams } from 'constants/query';
 import {
 	alertDefaults,
@@ -11,6 +13,7 @@ import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { CumulativeWindowTimeframes } from '../EvaluationSettings/types';
 import {
 	INITIAL_ADVANCED_OPTIONS_STATE,
 	INITIAL_ALERT_STATE,
@@ -41,11 +44,6 @@ export const alertCreationReducer = (
 				...state,
 				name: action.payload,
 			};
-		case 'SET_ALERT_DESCRIPTION':
-			return {
-				...state,
-				description: action.payload,
-			};
 		case 'SET_ALERT_LABELS':
 			return {
 				...state,
@@ -58,6 +56,8 @@ export const alertCreationReducer = (
 			};
 		case 'RESET':
 			return INITIAL_ALERT_STATE;
+		case 'SET_INITIAL_STATE':
+			return action.payload;
 		default:
 			return state;
 	}
@@ -65,7 +65,7 @@ export const alertCreationReducer = (
 
 export function getInitialAlertType(currentQuery: Query): AlertTypes {
 	const dataSource =
-		currentQuery.builder.queryData[0].dataSource || DataSource.METRICS;
+		currentQuery.builder.queryData?.[0]?.dataSource || DataSource.METRICS;
 	switch (dataSource) {
 		case DataSource.METRICS:
 			return AlertTypes.METRICS_BASED_ALERT;
@@ -99,6 +99,10 @@ export function getInitialAlertTypeFromURL(
 	urlSearchParams: URLSearchParams,
 	currentQuery: Query,
 ): AlertTypes {
+	const ruleType = urlSearchParams.get(QueryParams.ruleType);
+	if (ruleType === 'anomaly_rule') {
+		return AlertTypes.ANOMALY_BASED_ALERT;
+	}
 	const alertTypeFromURL = urlSearchParams.get(QueryParams.alertType);
 	return alertTypeFromURL
 		? (alertTypeFromURL as AlertTypes)
@@ -120,6 +124,8 @@ export const alertThresholdReducer = (
 			return { ...state, thresholds: action.payload };
 		case 'RESET':
 			return INITIAL_ALERT_THRESHOLD_STATE;
+		case 'SET_INITIAL_STATE':
+			return action.payload;
 		default:
 			return state;
 	}
@@ -131,9 +137,38 @@ export const advancedOptionsReducer = (
 ): AdvancedOptionsState => {
 	switch (action.type) {
 		case 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING':
-			return { ...state, sendNotificationIfDataIsMissing: action.payload };
+			return {
+				...state,
+				sendNotificationIfDataIsMissing: {
+					...state.sendNotificationIfDataIsMissing,
+					toleranceLimit: action.payload.toleranceLimit,
+					timeUnit: action.payload.timeUnit,
+				},
+			};
+		case 'TOGGLE_SEND_NOTIFICATION_IF_DATA_IS_MISSING':
+			return {
+				...state,
+				sendNotificationIfDataIsMissing: {
+					...state.sendNotificationIfDataIsMissing,
+					enabled: action.payload,
+				},
+			};
 		case 'SET_ENFORCE_MINIMUM_DATAPOINTS':
-			return { ...state, enforceMinimumDatapoints: action.payload };
+			return {
+				...state,
+				enforceMinimumDatapoints: {
+					...state.enforceMinimumDatapoints,
+					minimumDatapoints: action.payload.minimumDatapoints,
+				},
+			};
+		case 'TOGGLE_ENFORCE_MINIMUM_DATAPOINTS':
+			return {
+				...state,
+				enforceMinimumDatapoints: {
+					...state.enforceMinimumDatapoints,
+					enabled: action.payload,
+				},
+			};
 		case 'SET_DELAY_EVALUATION':
 			return { ...state, delayEvaluation: action.payload };
 		case 'SET_EVALUATION_CADENCE':
@@ -146,6 +181,8 @@ export const advancedOptionsReducer = (
 				...state,
 				evaluationCadence: { ...state.evaluationCadence, mode: action.payload },
 			};
+		case 'SET_INITIAL_STATE':
+			return action.payload;
 		case 'RESET':
 			return INITIAL_ADVANCED_OPTIONS_STATE;
 		default:
@@ -174,6 +211,20 @@ export const evaluationWindowReducer = (
 			return { ...state, startingAt: action.payload };
 		case 'RESET':
 			return INITIAL_EVALUATION_WINDOW_STATE;
+		case 'SET_INITIAL_STATE':
+			return action.payload;
+		case 'SET_INITIAL_STATE_FOR_METER':
+			return {
+				...state,
+				windowType: 'cumulative',
+				timeframe: CumulativeWindowTimeframes.CURRENT_DAY,
+				startingAt: {
+					time: '00:00:00',
+					number: '0',
+					timezone: UTC_TIMEZONE.value,
+					unit: UniversalYAxisUnit.MINUTES,
+				},
+			};
 		default:
 			return state;
 	}
@@ -190,8 +241,12 @@ export const notificationSettingsReducer = (
 			return { ...state, reNotification: action.payload };
 		case 'SET_DESCRIPTION':
 			return { ...state, description: action.payload };
+		case 'SET_ROUTING_POLICIES':
+			return { ...state, routingPolicies: action.payload };
 		case 'RESET':
 			return INITIAL_NOTIFICATION_SETTINGS_STATE;
+		case 'SET_INITIAL_STATE':
+			return action.payload;
 		default:
 			return state;
 	}

@@ -1,5 +1,5 @@
 ##################### SigNoz Configuration Example #####################
-# 
+#
 # Do not modify this file
 #
 
@@ -47,10 +47,10 @@ cache:
   provider: memory
   # memory: Uses in-memory caching.
   memory:
-    # Time-to-live for cache entries in memory. Specify the duration in ns
-    ttl: 60000000000
-    # The interval at which the cache will be cleaned up
-    cleanup_interval: 1m
+    # Max items for the in-memory cache (10x the entries)
+    num_counters: 100000
+    # Total cost in bytes allocated bounded cache
+    max_cost: 67108864
   # redis: Uses Redis as the caching backend.
   redis:
     # The hostname or IP address of the Redis server.
@@ -58,7 +58,7 @@ cache:
     # The port on which the Redis server is running. Default is usually 6379.
     port: 6379
     # The password for authenticating with the Redis server, if required.
-    password: 
+    password:
     # The Redis database number to use
     db: 0
 
@@ -71,6 +71,10 @@ sqlstore:
   sqlite:
     # The path to the SQLite database file.
     path: /var/lib/signoz/signoz.db
+    # Mode is the mode to use for the sqlite database.
+    mode: delete
+    # BusyTimeout is the timeout for the sqlite database to wait for a lock.
+    busy_timeout: 10s
 
 ##################### APIServer #####################
 apiserver:
@@ -238,8 +242,32 @@ statsreporter:
     # Whether to collect identities and traits (emails).
     identities: true
 
-
 ##################### Gateway (License only) #####################
 gateway:
   # The URL of the gateway's api.
   url: http://localhost:8080
+
+##################### Tokenizer #####################
+tokenizer:
+  # Specifies the tokenizer provider to use.
+  provider: jwt
+  lifetime:
+    # The duration for which a user can be idle before being required to authenticate.
+    idle: 168h
+    # The duration for which a user can remain logged in before being asked to login.
+    max: 720h
+  rotation:
+    # The interval to rotate tokens in.
+    interval: 30m
+    # The duration for which the previous token pair remains valid after a token pair is rotated.
+    duration: 60s
+  jwt:
+    # The secret to sign the JWT tokens.
+    secret: secret
+  opaque:
+    gc:
+      # The interval to perform garbage collection.
+      interval: 1h
+    token:
+      # The maximum number of tokens a user can have. This limits the number of concurrent sessions a user can have.
+      max_per_user: 5

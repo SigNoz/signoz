@@ -190,7 +190,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	if aggFunc.FuncCombinator {
 		// Map the predicate (last argument)
 		origPred := args[len(args)-1].String()
-		whereClause, err := PrepareWhereClause(
+        whereClause, err := PrepareWhereClause(
 			origPred,
 			FilterExprVisitorOpts{
 				Logger:           v.logger,
@@ -198,9 +198,8 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 				FieldMapper:      v.fieldMapper,
 				ConditionBuilder: v.conditionBuilder,
 				FullTextColumn:   v.fullTextColumn,
-				JsonBodyPrefix:   v.jsonBodyPrefix,
 				JsonKeyToKey:     v.jsonKeyToKey,
-			},
+            }, 0, 0,
 		)
 		if err != nil {
 			return err

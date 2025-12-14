@@ -1,14 +1,14 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import { Logout } from 'api/utils';
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import listOrgPreferences from 'api/v1/org/preferences/list';
+import get from 'api/v1/user/me/get';
 import listUserPreferences from 'api/v1/user/preferences/list';
-import getUserVersion from 'api/v1/version/getVersion';
+import getUserVersion from 'api/v1/version/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
 import { useGetFeatureFlag } from 'hooks/useGetFeatureFlag';
 import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
-import useGetUser from 'hooks/user/useGetUser';
 import {
 	createContext,
 	PropsWithChildren,
@@ -40,7 +40,7 @@ import { getUserDefaults } from './utils';
 export const AppContext = createContext<IAppContext | undefined>(undefined);
 
 export function AppProvider({ children }: PropsWithChildren): JSX.Element {
-	// on load of the provider set the user defaults with access jwt , refresh jwt and user id from local storage
+	// on load of the provider set the user defaults with access token , refresh token from local storage
 	const [user, setUser] = useState<IUser>(() => getUserDefaults());
 	const [activeLicense, setActiveLicense] = useState<LicenseResModel | null>(
 		null,
@@ -63,13 +63,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 
 	const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
 
-	// if the user.id is not present, for migration older cases then we need to logout only for current logged in users!
-	useEffect(() => {
-		if (!user.id && isLoggedIn) {
-			Logout();
-		}
-	}, [isLoggedIn, user]);
-
 	// fetcher for user
 	// user will only be fetched if the user id and token is present
 	// if logged out and trying to hit any route none of these calls will trigger
@@ -77,9 +70,15 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		data: userData,
 		isFetching: isFetchingUser,
 		error: userFetchError,
-	} = useGetUser(user.id, isLoggedIn);
+	} = useQuery({
+		queryFn: get,
+		queryKey: ['/api/v1/user/me'],
+		enabled: isLoggedIn,
+	});
+
 	useEffect(() => {
 		if (!isFetchingUser && userData && userData.data) {
+			setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL, userData.data.email);
 			setUser((prev) => ({
 				...prev,
 				...userData.data,
@@ -320,7 +319,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			updateOrg,
 			updateChangelog,
 			toggleChangelogModal,
-			versionData: versionData?.payload || null,
+			versionData: versionData?.data || null,
 			hasEditPermission:
 				user?.role === USER_ROLES.ADMIN || user?.role === USER_ROLES.EDITOR,
 		}),

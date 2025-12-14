@@ -6,12 +6,16 @@ import (
 	"github.com/openfga/openfga/pkg/storage"
 	"github.com/openfga/openfga/pkg/storage/postgres"
 	"github.com/openfga/openfga/pkg/storage/sqlcommon"
+	"github.com/openfga/openfga/pkg/storage/sqlite"
 )
 
 func NewSQLStore(sqlstore sqlstore.SQLStore) (storage.OpenFGADatastore, error) {
 	switch sqlstore.BunDB().Dialect().Name().String() {
-	// use the NewWithDB for sqlite once https://github.com/openfga/openfga/pull/2679 is merged and released else will figure out something else.
 	case "sqlite":
+		return sqlite.NewWithDB(sqlstore.SQLDB(), &sqlcommon.Config{
+			MaxTuplesPerWriteField: 100,
+			MaxTypesPerModelField:  100,
+		})
 	case "pg":
 		return postgres.NewWithDB(sqlstore.SQLDB(), nil, &sqlcommon.Config{
 			MaxTuplesPerWriteField: 100,

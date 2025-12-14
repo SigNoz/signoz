@@ -2,11 +2,11 @@ package routerweb
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/web"
@@ -28,21 +28,21 @@ func NewFactory() factory.ProviderFactory[web.Web, web.Config] {
 func New(ctx context.Context, settings factory.ProviderSettings, config web.Config) (web.Web, error) {
 	fi, err := os.Stat(config.Directory)
 	if err != nil {
-		return nil, fmt.Errorf("cannot access web directory: %w", err)
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot access web directory")
 	}
 
 	ok := fi.IsDir()
 	if !ok {
-		return nil, fmt.Errorf("web directory is not a directory")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "web directory is not a directory")
 	}
 
 	fi, err = os.Stat(filepath.Join(config.Directory, indexFileName))
 	if err != nil {
-		return nil, fmt.Errorf("cannot access %q in web directory: %w", indexFileName, err)
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot access %q in web directory", indexFileName)
 	}
 
 	if os.IsNotExist(err) || fi.IsDir() {
-		return nil, fmt.Errorf("%q does not exist", indexFileName)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "%q does not exist", indexFileName)
 	}
 
 	return &provider{
@@ -60,7 +60,7 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 			),
 		).GetError()
 	if err != nil {
-		return fmt.Errorf("unable to add web to router: %w", err)
+		return errors.WrapInternalf(err, errors.CodeInternal, "unable to add web to router")
 	}
 
 	return nil

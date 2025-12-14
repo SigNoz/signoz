@@ -25,7 +25,10 @@ export function usePreferenceSync({
 	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
-	const { data: viewsData } = useGetAllViews(dataSource);
+	const { data: viewsData } = useGetAllViews(
+		dataSource,
+		mode === PreferenceMode.SAVED_VIEW,
+	);
 
 	const [
 		savedViewPreferences,

@@ -45,7 +45,7 @@ func CollisionHandledFinalExpr(
 
 	addCondition := func(key *telemetrytypes.TelemetryFieldKey) error {
 		sb := sqlbuilder.NewSelectBuilder()
-		condition, err := cb.ConditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb)
+        condition, err := cb.ConditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, 0, 0)
 		if err != nil {
 			return err
 		}
@@ -94,7 +94,7 @@ func CollisionHandledFinalExpr(
 					return "", nil, err
 				}
 				colName, _ = fm.FieldFor(ctx, key)
-				colName, _ = telemetrytypes.DataTypeCollisionHandledFieldName(key, dummyValue, colName)
+				colName, _ = DataTypeCollisionHandledFieldName(key, dummyValue, colName, qbtypes.FilterOperatorUnknown)
 				stmts = append(stmts, colName)
 			}
 		}
@@ -109,7 +109,7 @@ func CollisionHandledFinalExpr(
 			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
 			// colName, _ = jsonKeyToKey(context.Background(), field, qbtypes.FilterOperatorUnknown, dummyValue)
 		} else {
-			colName, _ = telemetrytypes.DataTypeCollisionHandledFieldName(field, dummyValue, colName)
+			colName, _ = DataTypeCollisionHandledFieldName(field, dummyValue, colName, qbtypes.FilterOperatorUnknown)
 		}
 
 		stmts = append(stmts, colName)
@@ -193,4 +193,110 @@ func FormatFullTextSearch(input string) string {
 		return regexp.QuoteMeta(input)
 	}
 	return input
+}
+
+func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, value any, tblFieldName string, operator qbtypes.FilterOperator) (string, any) {
+	// This block of code exists to handle the data type collisions
+	// We don't want to fail the requests when there is a key with more than one data type
+	// Let's take an example of `http.status_code`, and consider user sent a string value and number value
+	// When they search for `http.status_code=200`, we will search across both the number columns and string columns
+	// and return the results from both the columns
+	// While we expect user not to send the mixed data types, it inevitably happens
+	// So we handle the data type collisions here
+	switch key.FieldDataType {
+	case telemetrytypes.FieldDataTypeString:
+		switch v := value.(type) {
+		case float64:
+			// try to convert the string value to to number
+			tblFieldName = castFloat(tblFieldName)
+		case []any:
+			if allFloats(v) {
+				tblFieldName = castFloat(tblFieldName)
+			} else if hasString(v) {
+				_, value = castString(tblFieldName), toStrings(v)
+			}
+		case bool:
+			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
+			value = fmt.Sprintf("%t", v)
+		}
+
+	case telemetrytypes.FieldDataTypeFloat64, telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeNumber:
+		switch v := value.(type) {
+		// why? ; CH returns an error for a simple check
+		// attributes_number['http.status_code'] = 200 but not for attributes_number['http.status_code'] >= 200
+		// DB::Exception: Bad get: has UInt64, requested Float64.
+		// How is it working in v4? v4 prepares the full query with values in query string
+		// When we format the float it becomes attributes_number['http.status_code'] = 200.000
+		// Which CH gladly accepts and doesn't throw error
+		// However, when passed as query args, the default formatter
+		// https://github.com/ClickHouse/clickhouse-go/blob/757e102f6d8c6059d564ce98795b4ce2a101b1a5/bind.go#L393
+		// is used which prepares the
+		// final query as attributes_number['http.status_code'] = 200 giving this error
+		// This following is one way to workaround it
+
+		// if the key is a number, the value is a string, we will let clickHouse handle the conversion
+		case float32, float64:
+			tblFieldName = castFloatHack(tblFieldName)
+		case string:
+			// check if it's a number inside a string
+			isNumber := false
+			if _, err := strconv.ParseFloat(v, 64); err == nil {
+				isNumber = true
+			}
+
+			if !operator.IsComparisonOperator() || !isNumber {
+				// try to convert the number attribute to string
+				tblFieldName = castString(tblFieldName) // numeric col vs string literal
+			} else {
+				tblFieldName = castFloatHack(tblFieldName)
+			}
+		case []any:
+			if allFloats(v) {
+				tblFieldName = castFloatHack(tblFieldName)
+			} else if hasString(v) {
+				tblFieldName, value = castString(tblFieldName), toStrings(v)
+			}
+		}
+
+	case telemetrytypes.FieldDataTypeBool:
+		switch v := value.(type) {
+		case string:
+			tblFieldName = castString(tblFieldName)
+		case []any:
+			if hasString(v) {
+				tblFieldName, value = castString(tblFieldName), toStrings(v)
+			}
+		}
+	}
+	return tblFieldName, value
+}
+
+func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
+func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
+func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
+
+func allFloats(in []any) bool {
+	for _, x := range in {
+		if _, ok := x.(float64); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func hasString(in []any) bool {
+	for _, x := range in {
+		if _, ok := x.(string); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func toStrings(in []any) []any {
+	out := make([]any, len(in))
+	for i, x := range in {
+		out[i] = fmt.Sprintf("%v", x)
+	}
+	return out
 }

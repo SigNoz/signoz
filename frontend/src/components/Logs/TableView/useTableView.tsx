@@ -153,7 +153,9 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								children: (
 									<TableBodyContent
 										dangerouslySetInnerHTML={{
-											__html: getSanitizedLogBody(field as string),
+											__html: getSanitizedLogBody(field as string, {
+												shouldEscapeHtml: true,
+											}),
 										}}
 										fontSize={fontSize}
 										linesPerRow={linesPerRow}

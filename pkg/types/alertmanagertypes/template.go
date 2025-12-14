@@ -2,8 +2,8 @@ package alertmanagertypes
 
 import (
 	"bytes"
-	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	alertmanagertemplate "github.com/prometheus/alertmanager/template"
 )
 
@@ -23,7 +23,7 @@ func FromGlobs(paths []string) (*alertmanagertemplate.Template, error) {
 	{{ define "__alertmanagerURL" }}{{ .ExternalURL }}/alerts{{ template "__ruleIdPath" . }}{{ end }}
 	{{ define "msteamsv2.default.titleLink" }}{{ template "__alertmanagerURL" . }}{{ end }}
 	`))); err != nil {
-		return nil, fmt.Errorf("error parsing alertmanager templates: %w", err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error parsing alertmanager templates")
 	}
 
 	return t, nil

@@ -1,58 +1,97 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { formattedValueToString, getValueFormat } from '@grafana/data';
+import * as Sentry from '@sentry/react';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
+import { isUniversalUnit } from 'components/YAxisUnitSelector/utils';
+import { isNaN } from 'lodash-es';
 
+import { formatUniversalUnit } from '../YAxisUnitSelector/formatter';
+import {
+	DEFAULT_SIGNIFICANT_DIGITS,
+	PrecisionOption,
+	PrecisionOptionsEnum,
+} from './types';
+import { formatDecimalWithLeadingZeros } from './utils';
+
+/**
+ * Formats a Y-axis value based on a given format string.
+ *
+ * @param value The string value from the axis.
+ * @param format The format identifier (e.g. 'none', 'ms', 'bytes', 'short').
+ * @returns A formatted string ready for display.
+ */
 export const getYAxisFormattedValue = (
 	value: string,
 	format: string,
+	precision: PrecisionOption = 2, // default precision requested
 ): string => {
-	let decimalPrecision: number | undefined;
-	const parsedValue = getValueFormat(format)(
-		parseFloat(value),
-		undefined,
-		undefined,
-		undefined,
-	);
+	const numValue = parseFloat(value);
+
+	// Handle non-numeric or special values first.
+	if (isNaN(numValue)) return 'NaN';
+	if (numValue === Infinity) return '∞';
+	if (numValue === -Infinity) return '-∞';
+
+	// For all other standard formats, delegate to grafana/data's built-in formatter.
+	const computeDecimals = (): number | undefined => {
+		if (precision === PrecisionOptionsEnum.FULL) {
+			return DEFAULT_SIGNIFICANT_DIGITS;
+		}
+		return precision;
+	};
+
+	const fallbackFormat = (): string => {
+		if (precision === PrecisionOptionsEnum.FULL) return numValue.toString();
+		if (precision === 0) return Math.round(numValue).toString();
+		return precision !== undefined
+			? numValue
+					.toFixed(precision)
+					.replace(/(\.[0-9]*[1-9])0+$/, '$1') // trimming zeros
+					.replace(/\.$/, '')
+			: numValue.toString();
+	};
+
 	try {
-		const decimalSplitted = parsedValue.text.split('.');
-		if (decimalSplitted.length === 1) {
-			decimalPrecision = 0;
-		} else {
-			const decimalDigits = decimalSplitted[1].split('');
-			decimalPrecision = decimalDigits.length;
-			let nonZeroCtr = 0;
-			for (let idx = 0; idx < decimalDigits.length; idx += 1) {
-				if (decimalDigits[idx] !== '0') {
-					nonZeroCtr += 1;
-					if (nonZeroCtr >= 2) {
-						decimalPrecision = idx + 1;
-					}
-				} else if (nonZeroCtr) {
-					decimalPrecision = idx;
-					break;
-				}
-			}
+		// Use custom formatter for the 'none' format honoring precision
+		if (format === 'none') {
+			return formatDecimalWithLeadingZeros(numValue, precision);
 		}
 
-		return formattedValueToString(
-			getValueFormat(format)(
-				parseFloat(value),
-				decimalPrecision,
-				undefined,
-				undefined,
-			),
-		);
+		// Separate logic for universal units// Separate logic for universal units
+		if (format && isUniversalUnit(format)) {
+			const decimals = computeDecimals();
+			return formatUniversalUnit(
+				numValue,
+				format as UniversalYAxisUnit,
+				precision,
+				decimals,
+			);
+		}
+
+		const formatter = getValueFormat(format);
+		const formattedValue = formatter(numValue, computeDecimals(), undefined);
+		if (formattedValue.text && formattedValue.text.includes('.')) {
+			formattedValue.text = formatDecimalWithLeadingZeros(
+				parseFloat(formattedValue.text),
+				precision,
+			);
+		}
+
+		return formattedValueToString(formattedValue);
 	} catch (error) {
-		console.error(error);
+		Sentry.captureEvent({
+			message: `Error applying formatter: ${
+				error instanceof Error ? error.message : 'Unknown error'
+			}`,
+			level: 'error',
+		});
+		return fallbackFormat();
 	}
-	return `${parseFloat(value)}`;
 };
 
-export const getToolTipValue = (value: string, format?: string): string => {
-	try {
-		return formattedValueToString(
-			getValueFormat(format)(parseFloat(value), undefined, undefined, undefined),
-		);
-	} catch (error) {
-		console.error(error);
-	}
-	return `${value}`;
-};
+export const getToolTipValue = (
+	value: string | number,
+	format?: string,
+	precision?: PrecisionOption,
+): string =>
+	getYAxisFormattedValue(value?.toString(), format || 'none', precision);

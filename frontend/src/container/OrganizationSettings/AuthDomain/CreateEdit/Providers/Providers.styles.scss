@@ -1,0 +1,67 @@
+.google-auth {
+	display: flex;
+	flex-direction: column;
+
+	.ant-form-item {
+		margin-bottom: 12px !important;
+	}
+
+	.header {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin-bottom: 12px;
+
+		.title {
+			font-weight: bold;
+		}
+
+		.description {
+			margin-bottom: 0px !important;
+		}
+	}
+
+	.callout {
+		margin-top: 16px;
+	}
+}
+
+.saml {
+	display: flex;
+	flex-direction: column;
+
+	.ant-form-item {
+		margin-bottom: 12px !important;
+	}
+
+	.header {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin-bottom: 12px;
+
+		.title {
+			font-weight: bold;
+		}
+	}
+
+	.field {
+		.ant-row {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			flex-flow: nowrap;
+
+			.ant-col {
+				display: flex;
+				flex-grow: 1;
+				width: 100%;
+				padding: 0px;
+			}
+		}
+	}
+
+	.callout {
+		margin-top: 16px;
+	}
+}

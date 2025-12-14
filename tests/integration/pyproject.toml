@@ -2,20 +2,21 @@
 name = "integration"
 version = "0.1.0"
 description = ""
-authors = ["grandwizard28 <vibhupandey28@gmail.com>"]
+authors = ["therealpandey <vibhupandey28@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.13"
 pytest = "^8.3.5"
 psycopg2 = "^2.9.10"
-testcontainers = "^4.10.0"
+testcontainers = {extras = ["clickhouse", "keycloak", "postgres"], version = "^4.13.1"}
 wiremock = "^2.6.1"
 numpy = "^2.3.2"
 clickhouse-connect = "^0.8.18"
 svix-ksuid = "^0.6.2"
 requests = "^2.32.4"
 sqlalchemy = "^2.0.43"
+selenium = "^4.35.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -33,7 +34,7 @@ python_files = "src/**/**.py"
 log_cli = true
 log_format = "%(asctime)s [%(levelname)s] (%(filename)s:%(lineno)s) %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
-addopts = "-ra"
+addopts = "-ra -p no:warnings"
 
 [tool.pylint.main]
 ignore = [".venv"]
@@ -42,7 +43,7 @@ ignore = [".venv"]
 max-line-length = "400"
 
 [tool.pylint."messages control"]
-disable = ["missing-module-docstring", "missing-function-docstring", "missing-class-docstring", "duplicate-code", "dangerous-default-value", "too-many-positional-arguments", "too-many-arguments", "too-few-public-methods", "too-many-instance-attributes", "too-many-locals", "too-many-statements"]
+disable = ["missing-module-docstring", "missing-function-docstring", "missing-class-docstring", "duplicate-code", "dangerous-default-value", "too-many-positional-arguments", "too-many-arguments", "too-few-public-methods", "too-many-instance-attributes", "too-many-locals", "too-many-statements", "too-many-lines"]
 
 [tool.isort]
 profile = "black"

@@ -3,15 +3,17 @@ import './styles.scss';
 import { Select } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 
-import { UniversalYAxisUnitMappings, Y_AXIS_CATEGORIES } from './constants';
+import { UniversalYAxisUnitMappings } from './constants';
 import { UniversalYAxisUnit, YAxisUnitSelectorProps } from './types';
-import { mapMetricUnitToUniversalUnit } from './utils';
+import { getYAxisCategories, mapMetricUnitToUniversalUnit } from './utils';
 
 function YAxisUnitSelector({
 	value,
 	onChange,
 	placeholder = 'Please select a unit',
 	loading = false,
+	'data-testid': dataTestId,
+	source,
 }: YAxisUnitSelectorProps): JSX.Element {
 	const universalUnit = mapMetricUnitToUniversalUnit(value);
 
@@ -36,6 +38,8 @@ function YAxisUnitSelector({
 		return aliases.some((alias) => alias.toLowerCase().includes(search));
 	};
 
+	const categories = getYAxisCategories(source);
+
 	return (
 		<div className="y-axis-unit-selector-component">
 			<Select
@@ -45,8 +49,9 @@ function YAxisUnitSelector({
 				placeholder={placeholder}
 				filterOption={(input, option): boolean => handleSearch(input, option)}
 				loading={loading}
+				data-testid={dataTestId}
 			>
-				{Y_AXIS_CATEGORIES.map((category) => (
+				{categories.map((category) => (
 					<Select.OptGroup key={category.name} label={category.name}>
 						{category.units.map((unit) => (
 							<Select.Option key={unit.id} value={unit.id}>

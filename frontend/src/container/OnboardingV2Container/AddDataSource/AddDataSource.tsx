@@ -347,6 +347,7 @@ function OnboardingAddDataSource(): JSX.Element {
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SEARCHED}`,
 			{
 				searchedDataSource: query,
+				resultCount: filteredDataSources.length,
 			},
 		);
 	}, 300);

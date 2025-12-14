@@ -57,8 +57,8 @@ export const RawLogViewContainer = styled(Row)<{
 			  transition: background-color 2s ease-in;`
 			: ''}
 
-	${({ $isCustomHighlighted, $isDarkMode, $logType }): string =>
-		getCustomHighlightBackground($isCustomHighlighted, $isDarkMode, $logType)}
+	${({ $isCustomHighlighted }): string =>
+		getCustomHighlightBackground($isCustomHighlighted)}
 `;
 
 export const InfoIconWrapper = styled(Info)`

@@ -1,13 +1,14 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from '@testing-library/react';
-import {
-	INITIAL_ALERT_STATE,
-	INITIAL_ALERT_THRESHOLD_STATE,
-} from 'container/CreateAlertV2/context/constants';
+import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
+import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
+import * as appHooks from 'providers/App/App';
 
 import * as context from '../../context';
 import AnomalyThreshold from '../AnomalyThreshold';
+
+jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
 jest.mock('uplot', () => {
 	const paths = {
@@ -23,12 +24,12 @@ jest.mock('uplot', () => {
 
 const mockSetAlertState = jest.fn();
 const mockSetThresholdState = jest.fn();
-jest.spyOn(context, 'useCreateAlertState').mockReturnValue({
-	alertState: INITIAL_ALERT_STATE,
-	setAlertState: mockSetAlertState,
-	thresholdState: INITIAL_ALERT_THRESHOLD_STATE,
-	setThresholdState: mockSetThresholdState,
-} as any);
+jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
+	createMockAlertContextState({
+		setThresholdState: mockSetThresholdState,
+		setAlertState: mockSetAlertState,
+	}),
+);
 
 // Mock useQueryBuilder hook
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
@@ -54,7 +55,14 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 }));
 
 const renderAnomalyThreshold = (): ReturnType<typeof render> =>
-	render(<AnomalyThreshold />);
+	render(
+		<AnomalyThreshold
+			channels={[]}
+			isLoadingChannels={false}
+			isErrorChannels={false}
+			refreshChannels={jest.fn()}
+		/>,
+	);
 
 describe('AnomalyThreshold', () => {
 	beforeEach(() => {

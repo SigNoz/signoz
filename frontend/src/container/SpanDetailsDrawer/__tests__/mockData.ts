@@ -12,7 +12,7 @@ export const mockSpan: Span = {
 	traceId: TEST_TRACE_ID,
 	name: TEST_SERVICE,
 	serviceName: TEST_SERVICE,
-	timestamp: 1640995200000000, // 2022-01-01 00:00:00 in microseconds
+	timestamp: 1640995200000, // 2022-01-01 00:00:00 in milliseconds
 	durationNano: 1000000000, // 1 second in nanoseconds
 	spanKind: 'server',
 	statusCodeString: 'STATUS_CODE_OK',
@@ -207,3 +207,4 @@ export const mockEmptyLogsResponse = {
 export const expectedSpanFilterExpression = `trace_id = '${TEST_TRACE_ID}' AND span_id = '${TEST_SPAN_ID}'`;
 export const expectedBeforeFilterExpression = `trace_id = '${TEST_TRACE_ID}' AND id < 'span-log-1'`;
 export const expectedAfterFilterExpression = `trace_id = '${TEST_TRACE_ID}' AND id > 'span-log-2'`;
+export const expectedTraceOnlyFilterExpression = `trace_id = '${TEST_TRACE_ID}'`;

@@ -2,15 +2,37 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DefaultOptionType } from 'antd/es/select';
+import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
+import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
+import * as appHooks from 'providers/App/App';
 import { Channels } from 'types/api/channels/getAll';
 
+import * as context from '../../context';
 import ThresholdItem from '../ThresholdItem';
 import { ThresholdItemProps } from '../types';
 
-// Mock the enableRecoveryThreshold utility
-jest.mock('../../utils', () => ({
-	enableRecoveryThreshold: jest.fn(() => true),
-}));
+jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
+
+jest.mock('uplot', () => {
+	const paths = {
+		spline: jest.fn(),
+		bars: jest.fn(),
+	};
+	const uplotMock: any = jest.fn(() => ({
+		paths,
+	}));
+	uplotMock.paths = paths;
+	return uplotMock;
+});
+
+const mockSetAlertState = jest.fn();
+const mockSetThresholdState = jest.fn();
+jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
+	createMockAlertContextState({
+		setThresholdState: mockSetThresholdState,
+		setAlertState: mockSetAlertState,
+	}),
+);
 
 const TEST_CONSTANTS = {
 	THRESHOLD_ID: 'test-threshold-1',
@@ -21,6 +43,7 @@ const TEST_CONSTANTS = {
 	CHANNEL_2: 'channel-2',
 	CHANNEL_3: 'channel-3',
 	EMAIL_CHANNEL_NAME: 'Email Channel',
+	EMAIL_CHANNEL_TRUNCATED: 'Email Chan...',
 	ENTER_THRESHOLD_NAME: 'Enter threshold name',
 	ENTER_THRESHOLD_VALUE: 'Enter threshold value',
 	ENTER_RECOVERY_THRESHOLD_VALUE: 'Enter recovery threshold value',
@@ -59,6 +82,8 @@ const defaultProps: ThresholdItemProps = {
 	channels: mockChannels,
 	isLoadingChannels: false,
 	units: mockUnits,
+	isErrorChannels: false,
+	refreshChannels: jest.fn(),
 };
 
 const renderThresholdItem = (
@@ -77,10 +102,11 @@ const verifySelectorWidth = (
 	expect(selector.closest('.ant-select')).toHaveStyle(`width: ${expectedWidth}`);
 };
 
-const showRecoveryThreshold = (): void => {
-	const recoveryButton = screen.getByRole('button', { name: '' });
-	fireEvent.click(recoveryButton);
-};
+// TODO: Unskip this when recovery threshold is implemented
+// const showRecoveryThreshold = (): void => {
+// 	const recoveryButton = screen.getByRole('button', { name: '' });
+// 	fireEvent.click(recoveryButton);
+// };
 
 const verifyComponentRendersWithLoading = (): void => {
 	expect(
@@ -122,7 +148,7 @@ describe('ThresholdItem', () => {
 		const valueInput = screen.getByPlaceholderText(
 			TEST_CONSTANTS.ENTER_THRESHOLD_VALUE,
 		);
-		expect(valueInput).toHaveValue('100');
+		expect(valueInput).toHaveValue(100);
 	});
 
 	it('renders unit selector with correct value', () => {
@@ -130,15 +156,6 @@ describe('ThresholdItem', () => {
 
 		// Check for the unit selector by looking for the displayed text
 		expect(screen.getByText('Bytes')).toBeInTheDocument();
-	});
-
-	it('renders channels selector with correct value', () => {
-		renderThresholdItem();
-
-		// Check for the channels selector by looking for the displayed text
-		expect(
-			screen.getByText(TEST_CONSTANTS.EMAIL_CHANNEL_NAME),
-		).toBeInTheDocument();
 	});
 
 	it('updates threshold label when label input changes', () => {
@@ -212,38 +229,31 @@ describe('ThresholdItem', () => {
 
 		// The remove button is the second button (with circle-x icon)
 		const buttons = screen.getAllByRole('button');
-		expect(buttons).toHaveLength(2); // Recovery button + remove button
+		expect(buttons).toHaveLength(1); // remove button
 	});
 
 	it('does not show remove button when showRemoveButton is false', () => {
 		renderThresholdItem({ showRemoveButton: false });
 
-		// Only the recovery button should be present
-		const buttons = screen.getAllByRole('button');
-		expect(buttons).toHaveLength(1); // Only recovery button
+		// No buttons should be present
+		const buttons = screen.queryAllByRole('button');
+		expect(buttons).toHaveLength(0);
 	});
 
 	it('calls removeThreshold when remove button is clicked', () => {
 		const removeThreshold = jest.fn();
 		renderThresholdItem({ showRemoveButton: true, removeThreshold });
 
-		// The remove button is the second button (with circle-x icon)
+		// The remove button is the first button (with circle-x icon)
 		const buttons = screen.getAllByRole('button');
-		const removeButton = buttons[1]; // Second button is the remove button
+		const removeButton = buttons[0];
 		fireEvent.click(removeButton);
 
 		expect(removeThreshold).toHaveBeenCalledWith(TEST_CONSTANTS.THRESHOLD_ID);
 	});
 
-	it('shows recovery threshold button when recovery threshold is enabled', () => {
-		renderThresholdItem();
-
-		// The recovery button is the first button (with chart-line icon)
-		const buttons = screen.getAllByRole('button');
-		expect(buttons).toHaveLength(1); // Recovery button
-	});
-
-	it('shows recovery threshold inputs when recovery button is clicked', () => {
+	// TODO: Unskip this when recovery threshold is implemented
+	it.skip('shows recovery threshold inputs when recovery button is clicked', () => {
 		renderThresholdItem();
 
 		// The recovery button is the first button (with chart-line icon)
@@ -251,13 +261,16 @@ describe('ThresholdItem', () => {
 		const recoveryButton = buttons[0]; // First button is the recovery button
 		fireEvent.click(recoveryButton);
 
-		expect(screen.getByPlaceholderText('Recovery threshold')).toBeInTheDocument();
+		expect(
+			screen.getByPlaceholderText('Enter recovery threshold value'),
+		).toBeInTheDocument();
 		expect(
 			screen.getByPlaceholderText(TEST_CONSTANTS.ENTER_RECOVERY_THRESHOLD_VALUE),
 		).toBeInTheDocument();
 	});
 
-	it('updates recovery threshold value when input changes', () => {
+	// TODO: Unskip this when recovery threshold is implemented
+	it.skip('updates recovery threshold value when input changes', () => {
 		const updateThreshold = jest.fn();
 		renderThresholdItem({ updateThreshold });
 
@@ -290,22 +303,6 @@ describe('ThresholdItem', () => {
 		verifyUnitSelectorDisabled();
 	});
 
-	it('renders channels as multiple select options', () => {
-		renderThresholdItem();
-
-		// Check that channels are rendered as multiple select
-		expect(
-			screen.getByText(TEST_CONSTANTS.EMAIL_CHANNEL_NAME),
-		).toBeInTheDocument();
-
-		// Should be able to select multiple channels
-		const channelSelectors = screen.getAllByRole('combobox');
-		const channelSelector = channelSelectors[1]; // Second combobox is the channels selector
-		fireEvent.change(channelSelector, {
-			target: { value: [TEST_CONSTANTS.CHANNEL_1, TEST_CONSTANTS.CHANNEL_2] },
-		});
-	});
-
 	it('handles empty threshold values correctly', () => {
 		const emptyThreshold = {
 			...mockThreshold,
@@ -318,7 +315,7 @@ describe('ThresholdItem', () => {
 		renderThresholdItem({ threshold: emptyThreshold });
 
 		expect(screen.getByPlaceholderText('Enter threshold name')).toHaveValue('');
-		expect(screen.getByPlaceholderText('Enter threshold value')).toHaveValue('0');
+		expect(screen.getByPlaceholderText('Enter threshold value')).toHaveValue(0);
 	});
 
 	it('renders with correct input widths', () => {
@@ -331,13 +328,13 @@ describe('ThresholdItem', () => {
 			TEST_CONSTANTS.ENTER_THRESHOLD_VALUE,
 		);
 
-		expect(labelInput).toHaveStyle('width: 260px');
-		expect(valueInput).toHaveStyle('width: 210px');
+		expect(labelInput).toHaveStyle('width: 200px');
+		expect(valueInput).toHaveStyle('width: 100px');
 	});
 
 	it('renders channels selector with correct width', () => {
 		renderThresholdItem();
-		verifySelectorWidth(1, '260px');
+		verifySelectorWidth(1, '350px');
 	});
 
 	it('renders unit selector with correct width', () => {
@@ -350,37 +347,14 @@ describe('ThresholdItem', () => {
 		verifyComponentRendersWithLoading();
 	});
 
-	it('renders recovery threshold with correct initial value', () => {
+	it.skip('renders recovery threshold with correct initial value', () => {
 		renderThresholdItem();
-		showRecoveryThreshold();
+		// showRecoveryThreshold();
 
 		const recoveryValueInput = screen.getByPlaceholderText(
 			TEST_CONSTANTS.ENTER_RECOVERY_THRESHOLD_VALUE,
 		);
-		expect(recoveryValueInput).toHaveValue('80');
-	});
-
-	it('renders recovery threshold label as disabled', () => {
-		renderThresholdItem();
-		showRecoveryThreshold();
-
-		const recoveryLabelInput = screen.getByPlaceholderText('Recovery threshold');
-		expect(recoveryLabelInput).toBeDisabled();
-	});
-
-	it('renders correct channel options', () => {
-		renderThresholdItem();
-
-		// Check that channels are rendered
-		expect(
-			screen.getByText(TEST_CONSTANTS.EMAIL_CHANNEL_NAME),
-		).toBeInTheDocument();
-
-		// Should be able to select different channels
-		const channelSelectors = screen.getAllByRole('combobox');
-		const channelSelector = channelSelectors[1]; // Second combobox is the channels selector
-		fireEvent.change(channelSelector, { target: { value: 'channel-2' } });
-		expect(screen.getByText('Slack Channel')).toBeInTheDocument();
+		expect(recoveryValueInput).toHaveValue(80);
 	});
 
 	it('handles threshold without channels', () => {

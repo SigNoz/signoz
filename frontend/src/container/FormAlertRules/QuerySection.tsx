@@ -1,7 +1,7 @@
 import './QuerySection.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tabs, Tooltip } from 'antd';
+import { Button, Tabs, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
@@ -36,6 +36,7 @@ function QuerySection({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 	const [currentTab, setCurrentTab] = useState(queryCategory);
+	const [signalSource, setSignalSource] = useState<string>('metrics');
 
 	const handleQueryCategoryChange = (queryType: string): void => {
 		setQueryCategory(queryType as EQueryType);
@@ -48,12 +49,17 @@ function QuerySection({
 
 	const isDarkMode = useIsDarkMode();
 
+	const handleSignalSourceChange = (value: string): void => {
+		setSignalSource(value);
+	};
+
 	const renderMetricUI = (): JSX.Element => (
 		<QueryBuilderV2
 			panelType={panelType}
 			config={{
 				queryVariant: 'static',
 				initialDataSource: ALERTS_DATA_SOURCE_MAP[alertType],
+				signalSource: signalSource === 'meter' ? 'meter' : '',
 			}}
 			showTraceOperator={alertType === AlertTypes.TRACES_BASED_ALERT}
 			showFunctions={
@@ -62,6 +68,8 @@ function QuerySection({
 				alertType === AlertTypes.LOGS_BASED_ALERT
 			}
 			version={alertDef.version || 'v3'}
+			onSignalSourceChange={handleSignalSourceChange}
+			signalSourceChangeEnabled
 		/>
 	);
 
@@ -71,6 +79,7 @@ function QuerySection({
 				<Tooltip title="Query Builder">
 					<Button className="nav-btns">
 						<Atom size={14} />
+						<Typography.Text>Query Builder</Typography.Text>
 					</Button>
 				</Tooltip>
 			),
@@ -81,6 +90,7 @@ function QuerySection({
 				<Tooltip title="ClickHouse">
 					<Button className="nav-btns">
 						<Terminal size={14} />
+						<Typography.Text>ClickHouse Query</Typography.Text>
 					</Button>
 				</Tooltip>
 			),
@@ -95,6 +105,7 @@ function QuerySection({
 					<Tooltip title="Query Builder">
 						<Button className="nav-btns" data-testid="query-builder-tab">
 							<Atom size={14} />
+							<Typography.Text>Query Builder</Typography.Text>
 						</Button>
 					</Tooltip>
 				),
@@ -105,6 +116,7 @@ function QuerySection({
 					<Tooltip title="ClickHouse">
 						<Button className="nav-btns">
 							<Terminal size={14} />
+							<Typography.Text>ClickHouse Query</Typography.Text>
 						</Button>
 					</Tooltip>
 				),
@@ -117,6 +129,7 @@ function QuerySection({
 							<PromQLIcon
 								fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 							/>
+							<Typography.Text>PromQL</Typography.Text>
 						</Button>
 					</Tooltip>
 				),

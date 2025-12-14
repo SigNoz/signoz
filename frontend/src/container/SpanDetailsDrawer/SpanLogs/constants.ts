@@ -85,7 +85,7 @@ export const getTraceOnlyFilters = (traceId: string): TagFilter => ({
 				type: '',
 				key: 'trace_id',
 			},
-			op: 'in',
+			op: '=',
 			value: traceId,
 		},
 	],

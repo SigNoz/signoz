@@ -2,7 +2,6 @@ import { User } from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
 import { Organization } from './getOrganization';
-import { Signup as LoginPrecheckPayloadProps } from './loginPrecheck';
 
 export interface Props {
 	inviteId: string;
@@ -20,5 +19,4 @@ export interface InviteDetails {
 	role: ROLES;
 	token: string;
 	organization: Organization['displayName'];
-	precheck?: LoginPrecheckPayloadProps;
 }

@@ -1,5 +1,6 @@
 import './styles.scss';
 
+import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useCallback, useMemo } from 'react';
 import { Labels } from 'types/api/alerts/def';
@@ -8,7 +9,7 @@ import { useCreateAlertState } from '../context';
 import LabelsInput from './LabelsInput';
 
 function CreateAlertHeader(): JSX.Element {
-	const { alertState, setAlertState } = useCreateAlertState();
+	const { alertState, setAlertState, isEditMode } = useCreateAlertState();
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -34,11 +35,14 @@ function CreateAlertHeader(): JSX.Element {
 	);
 
 	return (
-		<div className="alert-header">
-			<div className="alert-header__tab-bar">
-				<div className="alert-header__tab">New Alert Rule</div>
-			</div>
-
+		<div
+			className={classNames('alert-header', { 'edit-alert-header': isEditMode })}
+		>
+			{!isEditMode && (
+				<div className="alert-header__tab-bar">
+					<div className="alert-header__tab">New Alert Rule</div>
+				</div>
+			)}
 			<div className="alert-header__content">
 				<input
 					type="text"
@@ -48,15 +52,7 @@ function CreateAlertHeader(): JSX.Element {
 					}
 					className="alert-header__input title"
 					placeholder="Enter alert rule name"
-				/>
-				<input
-					type="text"
-					value={alertState.description}
-					onChange={(e): void =>
-						setAlertState({ type: 'SET_ALERT_DESCRIPTION', payload: e.target.value })
-					}
-					className="alert-header__input description"
-					placeholder="Click to add description..."
+					data-testid="alert-name-input"
 				/>
 				<LabelsInput
 					labels={alertState.labels}

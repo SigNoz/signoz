@@ -82,6 +82,14 @@ function TimeSeriesView({
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>([]);
 
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
+
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -203,6 +211,13 @@ function TimeSeriesView({
 		setGraphsVisibilityStates: setGraphVisibility,
 		enhancedLegend: true,
 		legendPosition: LegendPosition.BOTTOM,
+		legendScrollPosition: legendScrollPositionRef.current,
+		setLegendScrollPosition: (position: {
+			scrollTop: number;
+			scrollLeft: number;
+		}) => {
+			legendScrollPositionRef.current = position;
+		},
 	});
 
 	return (

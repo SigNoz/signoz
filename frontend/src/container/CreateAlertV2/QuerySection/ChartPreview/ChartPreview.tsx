@@ -1,3 +1,5 @@
+import YAxisUnitSelector from 'components/YAxisUnitSelector';
+import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
@@ -16,7 +18,7 @@ export interface ChartPreviewProps {
 
 function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 	const { currentQuery, panelType, stagedQuery } = useQueryBuilder();
-	const { thresholdState, alertState } = useCreateAlertState();
+	const { thresholdState, alertState, setAlertState } = useCreateAlertState();
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -25,14 +27,25 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 
 	const yAxisUnit = alertState.yAxisUnit || '';
 
+	const headline = (
+		<div className="chart-preview-headline">
+			<PlotTag
+				queryType={currentQuery.queryType}
+				panelType={panelType || PANEL_TYPES.TIME_SERIES}
+			/>
+			<YAxisUnitSelector
+				value={alertState.yAxisUnit}
+				onChange={(value): void => {
+					setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: value });
+				}}
+				source={YAxisSource.ALERTS}
+			/>
+		</div>
+	);
+
 	const renderQBChartPreview = (): JSX.Element => (
 		<ChartPreviewComponent
-			headline={
-				<PlotTag
-					queryType={currentQuery.queryType}
-					panelType={panelType || PANEL_TYPES.TIME_SERIES}
-				/>
-			}
+			headline={headline}
 			name=""
 			query={stagedQuery}
 			selectedInterval={globalSelectedInterval}
@@ -40,19 +53,13 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
-			showSideLegend
 			additionalThresholds={thresholdState.thresholds}
 		/>
 	);
 
 	const renderPromAndChQueryChartPreview = (): JSX.Element => (
 		<ChartPreviewComponent
-			headline={
-				<PlotTag
-					queryType={currentQuery.queryType}
-					panelType={panelType || PANEL_TYPES.TIME_SERIES}
-				/>
-			}
+			headline={headline}
 			name="Chart Preview"
 			query={stagedQuery}
 			alertDef={alertDef}
@@ -60,7 +67,6 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
-			showSideLegend
 			additionalThresholds={thresholdState.thresholds}
 		/>
 	);

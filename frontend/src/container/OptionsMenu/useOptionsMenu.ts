@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { AxiosResponse } from 'axios';
@@ -26,6 +27,7 @@ import {
 	defaultLogsSelectedColumns,
 	defaultOptionsQuery,
 	defaultTraceSelectedColumns,
+	EXCLUDED_COLUMNS,
 	URL_OPTIONS,
 } from './constants';
 import {
@@ -55,11 +57,10 @@ const useOptionsMenu = ({
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
 	const { notifications } = useNotifications();
-	const {
-		preferences,
-		updateColumns,
-		updateFormatting,
-	} = usePreferenceContext();
+	const prefCtx = usePreferenceContext();
+	// TODO: send null to updateColumns and updateFormatting if dataSource is not logs or traces
+	const slice = dataSource === DataSource.TRACES ? prefCtx.traces : prefCtx.logs;
+	const { preferences, updateColumns, updateFormatting } = slice;
 
 	const [searchText, setSearchText] = useState<string>('');
 	const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -267,8 +268,9 @@ const useOptionsMenu = ({
 
 	const optionsFromAttributeKeys = useMemo(() => {
 		const filteredAttributeKeys = searchedAttributeKeys.filter((item) => {
-			if (dataSource !== DataSource.LOGS) {
-				return item.name !== 'body';
+			const exclusions = EXCLUDED_COLUMNS[dataSource];
+			if (exclusions) {
+				return !exclusions.includes(item.name);
 			}
 			return true;
 		});

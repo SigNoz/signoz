@@ -33,6 +33,7 @@ describe('AdvancedOptionItem', () => {
 				title={defaultProps.title}
 				description={defaultProps.description}
 				input={defaultProps.input}
+				defaultShowInput={false}
 			/>,
 		);
 
@@ -50,6 +51,7 @@ describe('AdvancedOptionItem', () => {
 				title={defaultProps.title}
 				description={defaultProps.description}
 				input={defaultProps.input}
+				defaultShowInput={false}
 			/>,
 		);
 
@@ -65,6 +67,7 @@ describe('AdvancedOptionItem', () => {
 				title={defaultProps.title}
 				description={defaultProps.description}
 				input={defaultProps.input}
+				defaultShowInput={false}
 			/>,
 		);
 
@@ -88,6 +91,7 @@ describe('AdvancedOptionItem', () => {
 				title={defaultProps.title}
 				description={defaultProps.description}
 				input={defaultProps.input}
+				defaultShowInput={false}
 			/>,
 		);
 
@@ -117,6 +121,7 @@ describe('AdvancedOptionItem', () => {
 				title={defaultProps.title}
 				description={defaultProps.description}
 				input={defaultProps.input}
+				defaultShowInput={false}
 			/>,
 		);
 
@@ -146,6 +151,7 @@ describe('AdvancedOptionItem', () => {
 				title={defaultProps.title}
 				description={defaultProps.description}
 				input={defaultProps.input}
+				defaultShowInput={false}
 			/>,
 		);
 
@@ -160,9 +166,24 @@ describe('AdvancedOptionItem', () => {
 				description={defaultProps.description}
 				input={defaultProps.input}
 				tooltipText="mock tooltip text"
+				defaultShowInput={false}
 			/>,
 		);
 		const tooltipIcon = screen.getByTestId('tooltip-icon');
 		expect(tooltipIcon).toBeInTheDocument();
+	});
+
+	it('should show input when defaultShowInput is true', () => {
+		render(
+			<AdvancedOptionItem
+				title={defaultProps.title}
+				description={defaultProps.description}
+				input={defaultProps.input}
+				defaultShowInput
+			/>,
+		);
+		const inputElement = screen.getByTestId(TEST_INPUT_TEST_ID);
+		expect(inputElement).toBeInTheDocument();
+		expect(inputElement).toBeVisible();
 	});
 });

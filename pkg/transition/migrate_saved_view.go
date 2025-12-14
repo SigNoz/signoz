@@ -46,7 +46,7 @@ func (m *savedViewMigrateV5) Migrate(ctx context.Context, data map[string]any) b
 				m.logger.InfoContext(ctx, "migrated querymap")
 
 				// wrap it in the v5 envelope
-				envelope := m.wrapInV5Envelope(name, queryMap, "builder_query")
+				envelope := m.WrapInV5Envelope(name, queryMap, "builder_query")
 				m.logger.InfoContext(ctx, "envelope after wrap", "envelope", envelope)
 				data["queries"] = append(data["queries"].([]any), envelope)
 			}

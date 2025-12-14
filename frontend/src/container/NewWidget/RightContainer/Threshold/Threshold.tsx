@@ -43,6 +43,7 @@ function Threshold({
 	tableOptions,
 	thresholdTableOptions = '',
 	columnUnits,
+	yAxisUnit,
 }: ThresholdProps): JSX.Element {
 	const [isEditMode, setIsEditMode] = useState<boolean>(isEditEnabled);
 	const [operator, setOperator] = useState<string | number>(
@@ -195,16 +196,13 @@ function Threshold({
 
 	const allowDragAndDrop = panelTypeVsDragAndDrop[selectedGraph];
 
-	const isInvalidUnitComparison = useMemo(
-		() =>
-			unit !== 'none' &&
-			convertUnit(
-				value,
-				unit,
-				getColumnUnit(tableSelectedOption, columnUnits || {}),
-			) === null,
-		[unit, value, columnUnits, tableSelectedOption],
-	);
+	const isInvalidUnitComparison = useMemo(() => {
+		const toUnitId =
+			selectedGraph === PANEL_TYPES.TABLE
+				? getColumnUnit(tableSelectedOption, columnUnits || {})
+				: yAxisUnit;
+		return unit !== 'none' && convertUnit(value, unit, toUnitId) === null;
+	}, [selectedGraph, yAxisUnit, tableSelectedOption, columnUnits, unit, value]);
 
 	return (
 		<div
@@ -318,7 +316,9 @@ function Threshold({
 						<Select
 							defaultValue={unit}
 							options={unitOptions(
-								getColumnUnit(tableSelectedOption, columnUnits || {}) || '',
+								selectedGraph === PANEL_TYPES.TABLE
+									? getColumnUnit(tableSelectedOption, columnUnits || {}) || ''
+									: yAxisUnit || '',
 							)}
 							onChange={handleUnitChange}
 							showSearch
@@ -357,8 +357,12 @@ function Threshold({
 				</div>
 				{isInvalidUnitComparison && (
 					<Typography.Text className="invalid-unit">
-						Threshold unit ({unit}) is not valid in comparison with the column unit (
-						{getColumnUnit(tableSelectedOption, columnUnits || {}) || 'none'})
+						Threshold unit ({unit}) is not valid in comparison with the{' '}
+						{selectedGraph === PANEL_TYPES.TABLE ? 'column' : 'y-axis'} unit (
+						{selectedGraph === PANEL_TYPES.TABLE
+							? getColumnUnit(tableSelectedOption, columnUnits || {}) || 'none'
+							: yAxisUnit || 'none'}
+						)
 					</Typography.Text>
 				)}
 				{isEditMode && (

@@ -1,4 +1,5 @@
 import { TableProps } from 'antd';
+import { PrecisionOption } from 'components/Graph/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { LogsExplorerTableProps } from 'container/LogsExplorerTable/LogsExplorerTable.interfaces';
 import {
@@ -15,6 +16,7 @@ export type GridTableComponentProps = {
 	query: Query;
 	thresholds?: ThresholdProps[];
 	columnUnits?: ColumnUnit;
+	decimalPrecision?: PrecisionOption;
 	tableProcessedDataRef?: React.MutableRefObject<RowData[]>;
 	sticky?: TableProps<RowData>['sticky'];
 	searchTerm?: string;
@@ -28,6 +30,7 @@ export type GridTableComponentProps = {
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;
 	queryRangeRequest?: QueryRangeRequestV5;
+	hiddenColumns?: string[];
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 

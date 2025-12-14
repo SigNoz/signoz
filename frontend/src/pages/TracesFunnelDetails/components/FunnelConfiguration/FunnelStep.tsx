@@ -15,7 +15,7 @@ import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOpti
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
-import { ChevronDown, HardHat, PencilLine } from 'lucide-react';
+import { ChevronDown, PencilLine } from 'lucide-react';
 import { LatencyPointers } from 'pages/TracesFunnelDetails/constants';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
@@ -194,7 +194,6 @@ function FunnelStep({
 									}
 									hasPopupContainer={false}
 									placeholder="Search for filters..."
-									suffixIcon={<HardHat size={12} color="var(--bg-vanilla-400)" />}
 									rootClassName="traces-funnel-where-filter"
 								/>
 							</Form.Item>

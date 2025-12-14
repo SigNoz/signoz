@@ -41,7 +41,7 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 				</div>
 			)}
 			<div className="events-container">
-				{isSearchVisible && (
+				{isSearchVisible && events.length > 0 && (
 					<Input
 						autoFocus
 						placeholder="Search for events..."

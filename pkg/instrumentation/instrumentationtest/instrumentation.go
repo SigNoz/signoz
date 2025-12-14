@@ -1,7 +1,6 @@
 package instrumentationtest
 
 import (
-	"io"
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -14,16 +13,18 @@ import (
 )
 
 type noopInstrumentation struct {
-	logger         *slog.Logger
-	meterProvider  sdkmetric.MeterProvider
-	tracerProvider sdktrace.TracerProvider
+	logger             *slog.Logger
+	meterProvider      sdkmetric.MeterProvider
+	tracerProvider     sdktrace.TracerProvider
+	prometheusRegistry *prometheus.Registry
 }
 
 func New() instrumentation.Instrumentation {
 	return &noopInstrumentation{
-		logger:         slog.New(slog.NewTextHandler(io.Discard, nil)),
-		meterProvider:  noopmetric.NewMeterProvider(),
-		tracerProvider: nooptrace.NewTracerProvider(),
+		logger:             slog.New(slog.DiscardHandler),
+		meterProvider:      noopmetric.NewMeterProvider(),
+		tracerProvider:     nooptrace.NewTracerProvider(),
+		prometheusRegistry: prometheus.NewRegistry(),
 	}
 }
 
@@ -40,7 +41,7 @@ func (i *noopInstrumentation) TracerProvider() sdktrace.TracerProvider {
 }
 
 func (i *noopInstrumentation) PrometheusRegisterer() prometheus.Registerer {
-	return prometheus.NewRegistry()
+	return i.prometheusRegistry
 }
 
 func (i *noopInstrumentation) ToProviderSettings() factory.ProviderSettings {

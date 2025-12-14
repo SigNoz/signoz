@@ -26,7 +26,7 @@ interface LogsFormatOptionsMenuProps {
 	config: OptionsMenuConfig;
 }
 
-export default function LogsFormatOptionsMenu({
+function OptionsMenu({
 	items,
 	selectedOptionFormat,
 	config,
@@ -49,7 +49,6 @@ export default function LogsFormatOptionsMenu({
 	const [selectedValue, setSelectedValue] = useState<string | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);
 	const initialMouseEnterRef = useRef<boolean>(false);
-	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
 	const onChange = useCallback(
 		(key: LogViewMode) => {
@@ -209,7 +208,7 @@ export default function LogsFormatOptionsMenu({
 		};
 	}, [selectedValue]);
 
-	const popoverContent = (
+	return (
 		<div
 			className={cx(
 				'nested-menu-container',
@@ -447,21 +446,40 @@ export default function LogsFormatOptionsMenu({
 			)}
 		</div>
 	);
+}
+
+function LogsFormatOptionsMenu({
+	items,
+	selectedOptionFormat,
+	config,
+}: LogsFormatOptionsMenuProps): JSX.Element {
+	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 	return (
 		<Popover
-			content={popoverContent}
+			content={
+				<OptionsMenu
+					items={items}
+					selectedOptionFormat={selectedOptionFormat}
+					config={config}
+				/>
+			}
 			trigger="click"
 			placement="bottomRight"
 			arrow={false}
 			open={isPopoverOpen}
 			onOpenChange={setIsPopoverOpen}
 			rootClassName="format-options-popover"
+			destroyTooltipOnHide
 		>
-			<Button
-				className="periscope-btn ghost"
-				icon={<Sliders size={14} />}
-				data-testid="periscope-btn-format-options"
-			/>
+			<Tooltip title="Options">
+				<Button
+					className="periscope-btn ghost"
+					icon={<Sliders size={14} />}
+					data-testid="periscope-btn-format-options"
+				/>
+			</Tooltip>
 		</Popover>
 	);
 }
+
+export default LogsFormatOptionsMenu;

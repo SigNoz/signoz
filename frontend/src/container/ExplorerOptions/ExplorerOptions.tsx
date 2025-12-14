@@ -72,10 +72,11 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
+import { panelTypeToExplorerView } from 'utils/explorerUtils';
 
 import { PreservedViewsTypes } from './constants';
 import ExplorerOptionsHideArea from './ExplorerOptionsHideArea';
-import { PreservedViewsInLocalStorage } from './types';
+import { ChangeViewFunctionType, PreservedViewsInLocalStorage } from './types';
 import {
 	DATASOURCE_VS_ROUTES,
 	generateRGBAFromHex,
@@ -98,6 +99,7 @@ function ExplorerOptions({
 	setIsExplorerOptionHidden,
 	isOneChartPerQuery = false,
 	splitedQueries = [],
+	handleChangeSelectedView,
 }: ExplorerOptionsProps): JSX.Element {
 	const [isExport, setIsExport] = useState<boolean>(false);
 	const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -412,13 +414,22 @@ function ExplorerOptions({
 			if (!currentViewDetails) return;
 			const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
-			handleExplorerTabChange(currentPanelType, {
-				query,
-				name,
-				id,
-			});
+			if (handleChangeSelectedView) {
+				handleChangeSelectedView(panelTypeToExplorerView[currentPanelType], {
+					query,
+					name,
+					id,
+				});
+			} else {
+				// to remove this after traces cleanup
+				handleExplorerTabChange(currentPanelType, {
+					query,
+					name,
+					id,
+				});
+			}
 		},
-		[viewsData, handleExplorerTabChange],
+		[viewsData, handleExplorerTabChange, handleChangeSelectedView],
 	);
 
 	const updatePreservedViewInLocalStorage = (option: {
@@ -522,6 +533,10 @@ function ExplorerOptions({
 		if (signalSource === 'meter') {
 			history.replace(ROUTES.METER_EXPLORER);
 			return;
+		}
+
+		if (handleChangeSelectedView) {
+			handleChangeSelectedView(panelTypeToExplorerView[PANEL_TYPES.LIST]);
 		}
 
 		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
@@ -1020,6 +1035,7 @@ export interface ExplorerOptionsProps {
 	setIsExplorerOptionHidden?: Dispatch<SetStateAction<boolean>>;
 	isOneChartPerQuery?: boolean;
 	splitedQueries?: Query[];
+	handleChangeSelectedView?: ChangeViewFunctionType;
 }
 
 ExplorerOptions.defaultProps = {
@@ -1029,6 +1045,7 @@ ExplorerOptions.defaultProps = {
 	isOneChartPerQuery: false,
 	splitedQueries: [],
 	signalSource: '',
+	handleChangeSelectedView: undefined,
 };
 
 export default ExplorerOptions;

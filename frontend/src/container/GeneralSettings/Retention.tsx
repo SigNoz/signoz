@@ -6,6 +6,7 @@ import {
 	Dispatch,
 	SetStateAction,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from 'react';
@@ -32,11 +33,31 @@ function Retention({
 	setRetentionValue,
 	text,
 	hide,
+	isS3Field = false,
 }: RetentionProps): JSX.Element | null {
+	// Filter available units based on type and field
+	const availableUnits = useMemo(
+		() =>
+			TimeUnits.filter((option) => {
+				if (type === 'logs') {
+					// For S3 cold storage fields: only allow Days
+					if (isS3Field) {
+						return option.value === TimeUnitsValues.day;
+					}
+					// For total retention: allow Days and Months (not Hours)
+					return option.value !== TimeUnitsValues.hr;
+				}
+				return true;
+			}),
+		[type, isS3Field],
+	);
+
+	// Convert the hours value using only the available units
 	const {
 		value: initialValue,
 		timeUnitValue: initialTimeUnitValue,
-	} = convertHoursValueToRelevantUnit(Number(retentionValue));
+	} = convertHoursValueToRelevantUnit(Number(retentionValue), availableUnits);
+
 	const [selectedTimeUnit, setSelectTimeUnit] = useState(initialTimeUnitValue);
 	const [selectedValue, setSelectedValue] = useState<number | null>(
 		initialValue,
@@ -53,29 +74,27 @@ function Retention({
 		if (!interacted.current) setSelectTimeUnit(initialTimeUnitValue);
 	}, [initialTimeUnitValue]);
 
-	const menuItems = TimeUnits.filter((option) =>
-		type === 'logs' ? option.value !== TimeUnitsValues.hr : true,
-	).map((option) => (
+	const menuItems = availableUnits.map((option) => (
 		<Option key={option.value} value={option.value}>
 			{option.key}
 		</Option>
 	));
 
 	const currentSelectedOption = (option: SettingPeriod): void => {
-		const selectedValue = find(TimeUnits, (e) => e.value === option)?.value;
+		const selectedValue = find(availableUnits, (e) => e.value === option)?.value;
 		if (selectedValue) setSelectTimeUnit(selectedValue);
 	};
 
 	useEffect(() => {
 		const inverseMultiplier = find(
-			TimeUnits,
+			availableUnits,
 			(timeUnit) => timeUnit.value === selectedTimeUnit,
 		)?.multiplier;
 		if (!selectedValue) setRetentionValue(null);
 		if (selectedValue && inverseMultiplier) {
 			setRetentionValue(selectedValue * (1 / inverseMultiplier));
 		}
-	}, [selectedTimeUnit, selectedValue, setRetentionValue]);
+	}, [selectedTimeUnit, selectedValue, setRetentionValue, availableUnits]);
 
 	const onChangeHandler = (
 		e: ChangeEvent<HTMLInputElement>,
@@ -134,6 +153,10 @@ interface RetentionProps {
 	text: string;
 	setRetentionValue: Dispatch<SetStateAction<number | null>>;
 	hide: boolean;
+	isS3Field?: boolean;
 }
 
+Retention.defaultProps = {
+	isS3Field: false,
+};
 export default Retention;

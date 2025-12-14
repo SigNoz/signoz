@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/prometheus/common/model"
 	"log/slog"
 	"time"
 
@@ -49,9 +50,9 @@ func NewReceiver(input string) (Receiver, error) {
 	return receiverWithDefaults, nil
 }
 
-func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, alert *Alert) error {
-	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, alert.Labels.Fingerprint(), time.Now().Unix()))
-	ctx = notify.WithGroupLabels(ctx, alert.Labels)
+func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, lSet model.LabelSet, alert ...*Alert) error {
+	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, lSet.Fingerprint(), time.Now().Unix()))
+	ctx = notify.WithGroupLabels(ctx, lSet)
 	ctx = notify.WithReceiverName(ctx, receiver.Name)
 
 	// We need to create a new config with the same global and route config but empty receivers and routes
@@ -80,7 +81,7 @@ func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFu
 		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "no integrations found for receiver %s", receiver.Name)
 	}
 
-	if _, err = integrations[0].Notify(ctx, alert); err != nil {
+	if _, err = integrations[0].Notify(ctx, alert...); err != nil {
 		return err
 	}
 

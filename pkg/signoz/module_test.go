@@ -4,10 +4,10 @@ import (
 	"context"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
@@ -16,7 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/tokenizer/tokenizertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,11 +29,14 @@ func TestNewModules(t *testing.T) {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.NoError(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
-	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter)
+	notificationManager := nfmanagertest.NewMock()
 	require.NoError(t, err)
-	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationManager)
+	require.NoError(t, err)
+	tokenizer := tokenizertest.New()
 	emailing := emailingtest.New()
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, nil, nil)
+	require.NoError(t, err)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil)
 
 	reflectVal := reflect.ValueOf(modules)
 	for i := 0; i < reflectVal.NumField(); i++ {

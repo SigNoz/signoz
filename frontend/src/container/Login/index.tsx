@@ -1,212 +1,254 @@
 import './Login.styles.scss';
 
-import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
-import getLocalStorageApi from 'api/browser/localstorage/get';
-import setLocalStorageApi from 'api/browser/localstorage/set';
-import loginApi from 'api/v1/login/login';
-import loginPrecheckApi from 'api/v1/login/loginPrecheck';
-import getUserVersion from 'api/v1/version/getVersion';
+import { Button, Form, Input, Select, Space, Tooltip, Typography } from 'antd';
+import getVersion from 'api/v1/version/get';
+import get from 'api/v2/sessions/context/get';
+import post from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
-import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+import { ErrorV2 } from 'types/api';
 import APIError from 'types/api/error';
-import { Signup as PrecheckResultType } from 'types/api/user/loginPrecheck';
+import { SessionsContext } from 'types/api/v2/sessions/context/get';
 
 import { FormContainer, Label, ParentContainer } from './styles';
 
-interface LoginProps {
-	jwt: string;
-	refreshjwt: string;
-	userId: string;
-	ssoerror: string;
-	withPassword: string;
+function parseErrors(errors: string): { message: string }[] {
+	try {
+		const parsedErrors = JSON.parse(errors);
+		return parsedErrors.map((error: { message: string }) => ({
+			message: error.message,
+		}));
+	} catch (e) {
+		console.error('Failed to parse errors:', e);
+		return [];
+	}
 }
 
-type FormValues = { email: string; password: string };
+type FormValues = {
+	email: string;
+	password: string;
+	orgId: string;
+	url: string;
+};
 
-function Login({
-	jwt,
-	refreshjwt,
-	userId,
-	ssoerror = '',
-	withPassword = '0',
-}: LoginProps): JSX.Element {
-	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const { user } = useAppContext();
+function Login(): JSX.Element {
+	const urlQueryParams = useUrlQuery();
+	// override for callbackAuthN in case of some misconfiguration
+	const isPasswordAuthNEnabled = (urlQueryParams.get('password') || 'N') === 'Y';
 
-	const [precheckResult, setPrecheckResult] = useState<PrecheckResultType>({
-		sso: false,
-		ssoUrl: '',
-		canSelfRegister: false,
-		isUser: true,
-	});
+	// callbackAuthN handling
+	const accessToken = urlQueryParams.get('accessToken') || '';
+	const refreshToken = urlQueryParams.get('refreshToken') || '';
 
-	const [precheckInProcess, setPrecheckInProcess] = useState(false);
-	const [precheckComplete, setPrecheckComplete] = useState(false);
+	// callbackAuthN error handling
+	const callbackAuthError = urlQueryParams.get('callbackauthnerr') || '';
+	const callbackAuthErrorCode = urlQueryParams.get('code') || '';
+	const callbackAuthErrorMessage = urlQueryParams.get('message') || '';
+	const callbackAuthErrorURL = urlQueryParams.get('url') || '';
+	const callbackAuthErrorAdditional = urlQueryParams.get('errors') || '';
 
-	const { notifications } = useNotifications();
+	const [sessionsContext, setSessionsContext] = useState<SessionsContext>();
+	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+	const [sessionsOrgId, setSessionsOrgId] = useState<string>('');
+	const [
+		sessionsContextLoading,
+		setIsLoadingSessionsContext,
+	] = useState<boolean>(false);
+	const [form] = Form.useForm<FormValues>();
+	const { showErrorModal } = useErrorModal();
 
-	const getUserVersionResponse = useQuery({
-		queryFn: getUserVersion,
-		queryKey: ['getUserVersion', user?.accessJwt],
+	// setupCompleted information to route to signup page in case setup is incomplete
+	const {
+		data: versionData,
+		isLoading: versionLoading,
+		error: versionError,
+	} = useQuery({
+		queryFn: getVersion,
+		queryKey: ['api/v1/version/get'],
 		enabled: true,
 	});
 
+	// in case of error do not route to signup page as it may lead to double registration
 	useEffect(() => {
 		if (
-			getUserVersionResponse.isFetched &&
-			getUserVersionResponse.data &&
-			getUserVersionResponse.data.payload
+			versionData &&
+			!versionLoading &&
+			!versionError &&
+			!versionData.data.setupCompleted
 		) {
-			const { setupCompleted } = getUserVersionResponse.data.payload;
-			if (!setupCompleted) {
-				// no org account registered yet, re-route user to sign up first
-				history.push(ROUTES.SIGN_UP);
-			}
+			history.push(ROUTES.SIGN_UP);
 		}
-	}, [getUserVersionResponse]);
+	}, [versionData, versionLoading, versionError]);
 
-	const [form] = Form.useForm<FormValues>();
-
-	useEffect(() => {
-		if (withPassword === 'Y') {
-			setPrecheckComplete(true);
-		}
-	}, [withPassword]);
-
-	useEffect(() => {
-		async function processJwt(): Promise<void> {
-			if (jwt && jwt !== '') {
-				setIsLoading(true);
-				await afterLogin(userId, jwt, refreshjwt);
-				setIsLoading(false);
-				const fromPathname = getLocalStorageApi(
-					LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
-				);
-				if (fromPathname) {
-					history.push(fromPathname);
-					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
-				} else {
-					history.push(ROUTES.APPLICATION);
-				}
-			}
-		}
-		processJwt();
-	}, [jwt, refreshjwt, userId]);
-
-	useEffect(() => {
-		if (ssoerror !== '') {
-			notifications.error({
-				message: 'sorry, failed to login',
-			});
-		}
-	}, [ssoerror, notifications]);
-
+	// fetch the sessions context post user entering the email
 	const onNextHandler = async (): Promise<void> => {
 		const email = form.getFieldValue('email');
-		if (!email) {
-			notifications.error({
-				message: 'Please enter a valid email address',
-			});
-			return;
-		}
-		setPrecheckInProcess(true);
+		setIsLoadingSessionsContext(true);
+
 		try {
-			const response = await loginPrecheckApi({
+			const sessionsContextResponse = await get({
 				email,
+				ref: window.location.href,
 			});
 
-			if (response.statusCode === 200) {
-				setPrecheckResult({ ...precheckResult, ...response.payload });
-
-				const { isUser } = response.payload;
-				if (isUser) {
-					setPrecheckComplete(true);
-				} else {
-					notifications.error({
-						message:
-							'This account does not exist. To create a new account, contact your admin to get an invite link',
-					});
-				}
-			} else {
-				notifications.error({
-					message:
-						'Invalid configuration detected, please contact your administrator',
-				});
+			setSessionsContext(sessionsContextResponse.data);
+			if (sessionsContextResponse.data.orgs.length === 1) {
+				setSessionsOrgId(sessionsContextResponse.data.orgs[0].id);
 			}
-		} catch (e) {
-			console.log('failed to call precheck Api', e);
-			notifications.error({ message: 'Sorry, something went wrong' });
-		}
-		setPrecheckInProcess(false);
-	};
-
-	const { sso, canSelfRegister } = precheckResult;
-
-	const onSubmitHandler: () => Promise<void> = async () => {
-		try {
-			const { email, password } = form.getFieldsValue();
-			if (!precheckComplete) {
-				onNextHandler();
-				return;
-			}
-
-			if (precheckComplete && sso) {
-				window.location.href = precheckResult.ssoUrl || '';
-				return;
-			}
-
-			setIsLoading(true);
-
-			const response = await loginApi({
-				email,
-				password,
-			});
-
-			afterLogin(
-				response.data.userId,
-				response.data.accessJwt,
-				response.data.refreshJwt,
-			);
-			setIsLoading(false);
 		} catch (error) {
-			setIsLoading(false);
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
+			showErrorModal(error as APIError);
 		}
+		setIsLoadingSessionsContext(false);
 	};
 
-	const renderSAMLAction = (): JSX.Element => (
-		<Button
-			type="primary"
-			loading={isLoading}
-			disabled={isLoading}
-			href={precheckResult.ssoUrl}
-		>
-			Login with SSO
-		</Button>
-	);
+	// post selection of email and session org decide on the authN mechanism to use
+	const isPasswordAuthN = useMemo((): boolean => {
+		if (!sessionsContext) {
+			return false;
+		}
 
-	const renderOnSsoError = (): JSX.Element | null => {
-		if (!ssoerror) {
+		if (!sessionsOrgId) {
+			return false;
+		}
+
+		let isPasswordAuthN = false;
+		sessionsContext.orgs.forEach((orgSession) => {
+			if (
+				orgSession.id === sessionsOrgId &&
+				orgSession.authNSupport?.password?.length > 0
+			) {
+				isPasswordAuthN = true;
+			}
+		});
+
+		return isPasswordAuthN || isPasswordAuthNEnabled;
+	}, [sessionsContext, sessionsOrgId, isPasswordAuthNEnabled]);
+
+	const isCallbackAuthN = useMemo((): boolean => {
+		if (!sessionsContext) {
+			return false;
+		}
+
+		if (!sessionsOrgId) {
+			return false;
+		}
+
+		let isCallbackAuthN = false;
+		sessionsContext.orgs.forEach((orgSession) => {
+			if (
+				orgSession.id === sessionsOrgId &&
+				orgSession.authNSupport?.callback?.length > 0
+			) {
+				isCallbackAuthN = true;
+				form.setFieldValue('url', orgSession.authNSupport.callback[0].url);
+			}
+		});
+
+		return isCallbackAuthN && !isPasswordAuthNEnabled;
+	}, [sessionsContext, sessionsOrgId, isPasswordAuthNEnabled, form]);
+
+	const sessionsOrgWarning = useMemo((): ErrorV2 | null => {
+		if (!sessionsContext) {
 			return null;
 		}
 
-		return (
-			<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-				Are you trying to resolve SSO configuration issue?{' '}
-				<a href="/login?password=Y">Login with password</a>.
-			</Typography.Paragraph>
-		);
+		if (!sessionsOrgId) {
+			return null;
+		}
+
+		let sessionsOrgWarning;
+		sessionsContext.orgs.forEach((orgSession) => {
+			if (orgSession.id === sessionsOrgId && orgSession.warning) {
+				sessionsOrgWarning = orgSession.warning;
+			}
+		});
+
+		return sessionsOrgWarning || null;
+	}, [sessionsContext, sessionsOrgId]);
+
+	// once the callback authN redirects to the login screen with access_token and refresh_token navigate them to homepage
+	useEffect(() => {
+		if (accessToken && refreshToken) {
+			afterLogin(accessToken, refreshToken);
+		}
+	}, [accessToken, refreshToken]);
+
+	const onSubmitHandler: () => Promise<void> = async () => {
+		setIsSubmitting(true);
+
+		try {
+			if (isPasswordAuthN) {
+				const email = form.getFieldValue('email');
+
+				const password = form.getFieldValue('password');
+
+				const createSessionEmailPasswordResponse = await post({
+					email,
+					password,
+					orgId: sessionsOrgId,
+				});
+
+				afterLogin(
+					createSessionEmailPasswordResponse.data.accessToken,
+					createSessionEmailPasswordResponse.data.refreshToken,
+				);
+			}
+			if (isCallbackAuthN) {
+				const url = form.getFieldValue('url');
+
+				window.location.href = url;
+			}
+		} catch (error) {
+			showErrorModal(error as APIError);
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
+
+	useEffect(() => {
+		if (callbackAuthError) {
+			showErrorModal(
+				new APIError({
+					httpStatusCode: 500,
+					error: {
+						code: callbackAuthErrorCode,
+						message: callbackAuthErrorMessage,
+						url: callbackAuthErrorURL,
+						errors: parseErrors(callbackAuthErrorAdditional),
+					},
+				}),
+			);
+		}
+	}, [
+		callbackAuthError,
+		callbackAuthErrorAdditional,
+		callbackAuthErrorCode,
+		callbackAuthErrorMessage,
+		callbackAuthErrorURL,
+		showErrorModal,
+	]);
+
+	useEffect(() => {
+		if (sessionsOrgWarning) {
+			showErrorModal(
+				new APIError({
+					error: {
+						code: sessionsOrgWarning.code,
+						message: sessionsOrgWarning.message,
+						url: sessionsOrgWarning.url,
+						errors: sessionsOrgWarning.errors,
+					},
+					httpStatusCode: 400,
+				}),
+			);
+		}
+	}, [sessionsOrgWarning, showErrorModal]);
 
 	return (
 		<div className="login-form-container">
@@ -225,17 +267,40 @@ function Login({
 					<FormContainer.Item name="email">
 						<Input
 							type="email"
-							id="loginEmail"
+							id="email"
 							data-testid="email"
 							required
 							placeholder="name@yourcompany.com"
 							autoFocus
-							disabled={isLoading}
+							disabled={versionLoading}
 							className="login-form-input"
+							onPressEnter={onNextHandler}
 						/>
 					</FormContainer.Item>
 				</ParentContainer>
-				{precheckComplete && !sso && (
+
+				{sessionsContext && sessionsContext.orgs.length > 1 && (
+					<ParentContainer>
+						<Label htmlFor="orgId">Organization Name</Label>
+						<FormContainer.Item name="orgId">
+							<Select
+								id="orgId"
+								data-testid="orgId"
+								className="login-form-input"
+								placeholder="Select your organization"
+								options={sessionsContext.orgs.map((org) => ({
+									value: org.id,
+									label: org.name || 'default',
+								}))}
+								onChange={(value: string): void => {
+									setSessionsOrgId(value);
+								}}
+							/>
+						</FormContainer.Item>
+					</ParentContainer>
+				)}
+
+				{sessionsContext && isPasswordAuthN && (
 					<ParentContainer>
 						<Label htmlFor="Password">Password</Label>
 						<FormContainer.Item name="password">
@@ -243,7 +308,7 @@ function Login({
 								required
 								id="currentPassword"
 								data-testid="password"
-								disabled={isLoading}
+								disabled={isSubmitting}
 								className="login-form-input"
 							/>
 						</FormContainer.Item>
@@ -255,16 +320,16 @@ function Login({
 						</div>
 					</ParentContainer>
 				)}
+
 				<Space
 					style={{ marginTop: 16 }}
 					align="start"
 					direction="vertical"
 					size={20}
 				>
-					{!precheckComplete && (
+					{!sessionsContext && (
 						<Button
-							disabled={precheckInProcess}
-							loading={precheckInProcess}
+							disabled={versionLoading || sessionsContextLoading}
 							type="primary"
 							onClick={onNextHandler}
 							data-testid="initiate_login"
@@ -274,11 +339,26 @@ function Login({
 							Next
 						</Button>
 					)}
-					{precheckComplete && !sso && (
+
+					{sessionsContext && isCallbackAuthN && (
 						<Button
-							disabled={isLoading}
-							loading={isLoading}
+							disabled={isSubmitting}
 							type="primary"
+							htmlType="submit"
+							data-testid="callback_authn_submit"
+							data-attr="signup"
+							className="periscope-btn primary next-btn"
+							icon={<ArrowRight size={12} />}
+						>
+							Login With Callback
+						</Button>
+					)}
+
+					{sessionsContext && isPasswordAuthN && (
+						<Button
+							disabled={isSubmitting}
+							type="primary"
+							data-testid="password_authn_submit"
 							htmlType="submit"
 							data-attr="signup"
 							className="periscope-btn primary next-btn"
@@ -286,30 +366,6 @@ function Login({
 						>
 							Login
 						</Button>
-					)}
-
-					{precheckComplete && sso && renderSAMLAction()}
-					{!precheckComplete && ssoerror && renderOnSsoError()}
-
-					{!canSelfRegister && (
-						<Typography.Paragraph className="no-acccount">
-							Don&apos;t have an account? Contact your admin to send you an invite
-							link.
-						</Typography.Paragraph>
-					)}
-
-					{canSelfRegister && (
-						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-							If you are admin,{' '}
-							<Typography.Link
-								onClick={(): void => {
-									history.push(ROUTES.SIGN_UP);
-								}}
-								style={{ fontWeight: 700 }}
-							>
-								Create an account
-							</Typography.Link>
-						</Typography.Paragraph>
 					)}
 				</Space>
 			</FormContainer>

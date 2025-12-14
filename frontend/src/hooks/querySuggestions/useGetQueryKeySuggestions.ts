@@ -55,7 +55,6 @@ export const useGetQueryKeySuggestions: UseGetQueryKeySuggestions = (
 		signalSource,
 	]);
 	return useQuery<AxiosResponse<QueryKeySuggestionsResponseProps>, AxiosError>({
-		queryKey,
 		queryFn: () =>
 			getKeySuggestions({
 				signal,
@@ -66,5 +65,6 @@ export const useGetQueryKeySuggestions: UseGetQueryKeySuggestions = (
 				signalSource,
 			}),
 		...options,
+		queryKey,
 	});
 };

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	grammar "github.com/SigNoz/signoz/pkg/parser/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/antlr4-go/antlr/v4"
@@ -54,7 +55,7 @@ func DetectContradictions(query string) ([]string, error) {
 
 	// Check for syntax errors
 	if len(parserErrorListener.SyntaxErrors) > 0 {
-		return nil, fmt.Errorf("syntax errors: %v", parserErrorListener.SyntaxErrors)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "syntax errors: %v", parserErrorListener.SyntaxErrors)
 	}
 
 	// Create detector and visit tree
@@ -856,7 +857,7 @@ func parseNumericValue(value interface{}) (float64, error) {
 	case string:
 		return strconv.ParseFloat(v, 64)
 	default:
-		return 0, fmt.Errorf("not a numeric value")
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "not a numeric value")
 	}
 }
 

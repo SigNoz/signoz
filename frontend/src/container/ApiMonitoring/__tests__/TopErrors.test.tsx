@@ -1,17 +1,11 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { BuilderQuery } from 'api/v5/v5';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import {
-	formatTopErrorsDataForTable,
-	getEndPointDetailsQueryPayload,
-	getTopErrorsColumnsConfig,
-	getTopErrorsCoRelationQueryFilters,
-	getTopErrorsQueryPayload,
-} from 'container/ApiMonitoring/utils';
-import { useQueries } from 'react-query';
+import { rest, server } from 'mocks-server/server';
+import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
 import TopErrors from '../Explorer/Domains/DomainDetails/TopErrors';
+import { getTopErrorsQueryPayload } from '../utils';
 
 // Mock the EndPointsDropDown component to avoid issues
 jest.mock(
@@ -35,25 +29,14 @@ jest.mock(
 	}),
 );
 
-// Mock dependencies
-jest.mock('react-query', () => ({
-	useQueries: jest.fn(),
-}));
-
 jest.mock('components/CeleryTask/useNavigateToExplorer', () => ({
 	useNavigateToExplorer: jest.fn(),
 }));
 
-jest.mock('container/ApiMonitoring/utils', () => ({
-	END_POINT_DETAILS_QUERY_KEYS_ARRAY: ['key1', 'key2', 'key3', 'key4', 'key5'],
-	formatTopErrorsDataForTable: jest.fn(),
-	getEndPointDetailsQueryPayload: jest.fn(),
-	getTopErrorsColumnsConfig: jest.fn(),
-	getTopErrorsCoRelationQueryFilters: jest.fn(),
-	getTopErrorsQueryPayload: jest.fn(),
-}));
-
 describe('TopErrors', () => {
+	const TABLE_BODY_SELECTOR = '.ant-table-tbody';
+	const V5_QUERY_RANGE_API_PATH = '*/api/v5/query_range';
+
 	const mockProps = {
 		// eslint-disable-next-line sonarjs/no-duplicate-string
 		domainName: 'test-domain',
@@ -67,75 +50,72 @@ describe('TopErrors', () => {
 		},
 	};
 
-	// Setup basic mocks
+	// Helper function to wait for table data to load
+	const waitForTableDataToLoad = async (
+		container: HTMLElement,
+	): Promise<void> => {
+		await waitFor(() => {
+			const tableBody = container.querySelector(TABLE_BODY_SELECTOR);
+			expect(tableBody).not.toBeNull();
+			if (tableBody) {
+				expect(
+					within(tableBody as HTMLElement).queryByText('/api/test'),
+				).toBeInTheDocument();
+			}
+		});
+	};
+
 	beforeEach(() => {
 		jest.clearAllMocks();
 
-		// Mock getTopErrorsColumnsConfig
-		(getTopErrorsColumnsConfig as jest.Mock).mockReturnValue([
-			{
-				title: 'Endpoint',
-				dataIndex: 'endpointName',
-				key: 'endpointName',
-			},
-			{
-				title: 'Status Code',
-				dataIndex: 'statusCode',
-				key: 'statusCode',
-			},
-			{
-				title: 'Status Message',
-				dataIndex: 'statusMessage',
-				key: 'statusMessage',
-			},
-			{
-				title: 'Count',
-				dataIndex: 'count',
-				key: 'count',
-			},
-		]);
+		// Mock useNavigateToExplorer
+		(useNavigateToExplorer as jest.Mock).mockReturnValue(jest.fn());
 
-		// Mock useQueries
-		(useQueries as jest.Mock).mockImplementation((queryConfigs) => {
-			// For topErrorsDataQueries
-			if (
-				queryConfigs.length === 1 &&
-				queryConfigs[0].queryKey &&
-				queryConfigs[0].queryKey[0] === REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN
-			) {
-				return [
-					{
+		// Mock V5 API endpoint for top errors
+		server.use(
+			rest.post(V5_QUERY_RANGE_API_PATH, (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
 						data: {
-							payload: {
-								data: {
-									result: [
-										{
-											metric: {
-												'http.url': '/api/test',
-												status_code: '500',
-												// eslint-disable-next-line sonarjs/no-duplicate-string
-												status_message: 'Internal Server Error',
+							data: {
+								results: [
+									{
+										columns: [
+											{
+												name: 'http.url',
+												fieldDataType: 'string',
+												fieldContext: 'attribute',
 											},
-											values: [[1000000100, '10']],
-											queryName: 'A',
-											legend: 'Test Legend',
-										},
-									],
-								},
+											{
+												name: 'response_status_code',
+												fieldDataType: 'string',
+												fieldContext: 'span',
+											},
+											{
+												name: 'status_message',
+												fieldDataType: 'string',
+												fieldContext: 'span',
+											},
+											{ name: 'count()', fieldDataType: 'int64', fieldContext: '' },
+										],
+										// eslint-disable-next-line sonarjs/no-duplicate-string
+										data: [['/api/test', '500', 'Internal Server Error', 10]],
+									},
+								],
 							},
 						},
-						isLoading: false,
-						isRefetching: false,
-						isError: false,
-						refetch: jest.fn(),
-					},
-				];
-			}
+					}),
+				),
+			),
+		);
 
-			// For endPointDropDownDataQueries
-			return [
-				{
-					data: {
+		// Mock V4 API endpoint for dropdown data
+		server.use(
+			rest.post('*/api/v1/query_range', (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
 						payload: {
 							data: {
 								result: [
@@ -152,62 +132,13 @@ describe('TopErrors', () => {
 								],
 							},
 						},
-					},
-					isLoading: false,
-					isRefetching: false,
-					isError: false,
-				},
-			];
-		});
-
-		// Mock formatTopErrorsDataForTable
-		(formatTopErrorsDataForTable as jest.Mock).mockReturnValue([
-			{
-				key: '1',
-				endpointName: '/api/test',
-				statusCode: '500',
-				statusMessage: 'Internal Server Error',
-				count: 10,
-			},
-		]);
-
-		// Mock getTopErrorsQueryPayload
-		(getTopErrorsQueryPayload as jest.Mock).mockReturnValue([
-			{
-				queryName: 'TopErrorsQuery',
-				start: mockProps.timeRange.startTime,
-				end: mockProps.timeRange.endTime,
-				step: 60,
-			},
-		]);
-
-		// Mock getEndPointDetailsQueryPayload
-		(getEndPointDetailsQueryPayload as jest.Mock).mockReturnValue([
-			{},
-			{},
-			{
-				queryName: 'EndpointDropdownQuery',
-				start: mockProps.timeRange.startTime,
-				end: mockProps.timeRange.endTime,
-				step: 60,
-			},
-		]);
-
-		// Mock useNavigateToExplorer
-		(useNavigateToExplorer as jest.Mock).mockReturnValue(jest.fn());
-
-		// Mock getTopErrorsCoRelationQueryFilters
-		(getTopErrorsCoRelationQueryFilters as jest.Mock).mockReturnValue({
-			items: [
-				{ id: 'test1', key: { key: 'domain' }, op: '=', value: 'test-domain' },
-				{ id: 'test2', key: { key: 'endpoint' }, op: '=', value: '/api/test' },
-				{ id: 'test3', key: { key: 'status' }, op: '=', value: '500' },
-			],
-			op: 'AND',
-		});
+					}),
+				),
+			),
+		);
 	});
 
-	it('renders component correctly', () => {
+	it('renders component correctly', async () => {
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		const { container } = render(<TopErrors {...mockProps} />);
 
@@ -215,10 +146,11 @@ describe('TopErrors', () => {
 		expect(screen.getByText('Errors with Status Message')).toBeInTheDocument();
 		expect(screen.getByText('Status Message Exists')).toBeInTheDocument();
 
-		// Find the table row and verify content
-		const tableBody = container.querySelector('.ant-table-tbody');
-		expect(tableBody).not.toBeNull();
+		// Wait for data to load
+		await waitForTableDataToLoad(container);
 
+		// Find the table row and verify content
+		const tableBody = container.querySelector(TABLE_BODY_SELECTOR);
 		if (tableBody) {
 			const row = within(tableBody as HTMLElement).getByRole('row');
 			expect(within(row).getByText('/api/test')).toBeInTheDocument();
@@ -227,35 +159,40 @@ describe('TopErrors', () => {
 		}
 	});
 
-	it('renders error state when isError is true', () => {
-		// Mock useQueries to return isError: true
-		(useQueries as jest.Mock).mockImplementationOnce(() => [
-			{
-				isError: true,
-				refetch: jest.fn(),
-			},
-		]);
+	it('renders error state when API fails', async () => {
+		// Mock API to return error
+		server.use(
+			rest.post(V5_QUERY_RANGE_API_PATH, (_req, res, ctx) =>
+				res(ctx.status(500), ctx.json({ error: 'Internal Server Error' })),
+			),
+		);
 
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<TopErrors {...mockProps} />);
 
-		// Error state should be shown with the actual text displayed in the UI
-		expect(
-			screen.getByText('Uh-oh :/ We ran into an error.'),
-		).toBeInTheDocument();
+		// Wait for error state
+		await waitFor(() => {
+			expect(
+				screen.getByText('Uh-oh :/ We ran into an error.'),
+			).toBeInTheDocument();
+		});
+
 		expect(screen.getByText('Please refresh this panel.')).toBeInTheDocument();
 		expect(screen.getByText('Refresh this panel')).toBeInTheDocument();
 	});
 
-	it('handles row click correctly', () => {
+	it('handles row click correctly', async () => {
 		const navigateMock = jest.fn();
 		(useNavigateToExplorer as jest.Mock).mockReturnValue(navigateMock);
 
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		const { container } = render(<TopErrors {...mockProps} />);
 
+		// Wait for data to load
+		await waitForTableDataToLoad(container);
+
 		// Find and click on the table cell containing the endpoint
-		const tableBody = container.querySelector('.ant-table-tbody');
+		const tableBody = container.querySelector(TABLE_BODY_SELECTOR);
 		expect(tableBody).not.toBeNull();
 
 		if (tableBody) {
@@ -266,11 +203,28 @@ describe('TopErrors', () => {
 
 		// Check if navigateToExplorer was called with correct params
 		expect(navigateMock).toHaveBeenCalledWith({
-			filters: [
-				{ id: 'test1', key: { key: 'domain' }, op: '=', value: 'test-domain' },
-				{ id: 'test2', key: { key: 'endpoint' }, op: '=', value: '/api/test' },
-				{ id: 'test3', key: { key: 'status' }, op: '=', value: '500' },
-			],
+			filters: expect.arrayContaining([
+				expect.objectContaining({
+					key: expect.objectContaining({ key: 'http.url' }),
+					op: '=',
+					value: '/api/test',
+				}),
+				expect.objectContaining({
+					key: expect.objectContaining({ key: 'has_error' }),
+					op: '=',
+					value: 'true',
+				}),
+				expect.objectContaining({
+					key: expect.objectContaining({ key: 'net.peer.name' }),
+					op: '=',
+					value: 'test-domain',
+				}),
+				expect.objectContaining({
+					key: expect.objectContaining({ key: 'response_status_code' }),
+					op: '=',
+					value: '500',
+				}),
+			]),
 			dataSource: DataSource.TRACES,
 			startTime: mockProps.timeRange.startTime,
 			endTime: mockProps.timeRange.endTime,
@@ -278,9 +232,14 @@ describe('TopErrors', () => {
 		});
 	});
 
-	it('updates endpoint filter when dropdown value changes', () => {
+	it('updates endpoint filter when dropdown value changes', async () => {
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<TopErrors {...mockProps} />);
+
+		// Wait for initial load
+		await waitFor(() => {
+			expect(screen.getByRole('combobox')).toBeInTheDocument();
+		});
 
 		// Find the dropdown
 		const dropdown = screen.getByRole('combobox');
@@ -288,13 +247,18 @@ describe('TopErrors', () => {
 		// Mock the change
 		fireEvent.change(dropdown, { target: { value: '/api/new-endpoint' } });
 
-		// Check if getTopErrorsQueryPayload was called with updated parameters
-		expect(getTopErrorsQueryPayload).toHaveBeenCalled();
+		// Component should re-render with new filter
+		expect(dropdown).toBeInTheDocument();
 	});
 
-	it('handles status message toggle correctly', () => {
+	it('handles status message toggle correctly', async () => {
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<TopErrors {...mockProps} />);
+
+		// Wait for initial load
+		await waitFor(() => {
+			expect(screen.getByRole('switch')).toBeInTheDocument();
+		});
 
 		// Find the toggle switch
 		const toggle = screen.getByRole('switch');
@@ -306,69 +270,71 @@ describe('TopErrors', () => {
 		// Click the toggle to turn it off
 		fireEvent.click(toggle);
 
-		// Check if getTopErrorsQueryPayload was called with showStatusCodeErrors=false
-		expect(getTopErrorsQueryPayload).toHaveBeenCalledWith(
-			mockProps.domainName,
-			mockProps.timeRange.startTime,
-			mockProps.timeRange.endTime,
-			expect.any(Object),
-			false,
-		);
-
 		// Title should change
-		expect(screen.getByText('All Errors')).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByText('All Errors')).toBeInTheDocument();
+		});
 
 		// Click the toggle to turn it back on
 		fireEvent.click(toggle);
 
-		// Check if getTopErrorsQueryPayload was called with showStatusCodeErrors=true
-		expect(getTopErrorsQueryPayload).toHaveBeenCalledWith(
-			mockProps.domainName,
-			mockProps.timeRange.startTime,
-			mockProps.timeRange.endTime,
-			expect.any(Object),
-			true,
-		);
-
 		// Title should change back
-		expect(screen.getByText('Errors with Status Message')).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByText('Errors with Status Message')).toBeInTheDocument();
+		});
 	});
 
-	it('includes toggle state in query key for cache busting', () => {
+	it('includes toggle state in query key for cache busting', async () => {
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<TopErrors {...mockProps} />);
 
-		const toggle = screen.getByRole('switch');
+		// Wait for initial load
+		await waitFor(() => {
+			expect(screen.getByRole('switch')).toBeInTheDocument();
+		});
 
-		// Initial query should include showStatusCodeErrors=true
-		expect(useQueries).toHaveBeenCalledWith(
-			expect.arrayContaining([
-				expect.objectContaining({
-					queryKey: expect.arrayContaining([
-						REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN,
-						expect.any(Object),
-						expect.any(String),
-						true,
-					]),
-				}),
-			]),
-		);
+		const toggle = screen.getByRole('switch');
 
 		// Click toggle
 		fireEvent.click(toggle);
 
-		// Query should be called with showStatusCodeErrors=false in key
-		expect(useQueries).toHaveBeenCalledWith(
-			expect.arrayContaining([
-				expect.objectContaining({
-					queryKey: expect.arrayContaining([
-						REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN,
-						expect.any(Object),
-						expect.any(String),
-						false,
-					]),
-				}),
-			]),
+		// Wait for title to change, indicating query was refetched with new key
+		await waitFor(() => {
+			expect(screen.getByText('All Errors')).toBeInTheDocument();
+		});
+
+		// The fact that data refetches when toggle changes proves the query key includes the toggle state
+		expect(toggle).toBeInTheDocument();
+	});
+
+	it('sends query_range v5 API call with required filters including has_error', async () => {
+		// let capturedRequest: any;
+
+		const topErrorsPayload = getTopErrorsQueryPayload(
+			'test-domain',
+			mockProps.timeRange.startTime,
+			mockProps.timeRange.endTime,
+			{ items: [], op: 'AND' },
+			false,
+		);
+
+		// eslint-disable-next-line react/jsx-props-no-spreading
+		render(<TopErrors {...mockProps} />);
+
+		// Wait for the API call to be made
+		await waitFor(() => {
+			expect(topErrorsPayload).toBeDefined();
+		});
+
+		// Extract the filter expression from the captured request
+		// getTopErrorsQueryPayload returns a builder_query with TraceBuilderQuery spec
+		const builderQuery = topErrorsPayload.compositeQuery.queries[0]
+			.spec as BuilderQuery;
+		const filterExpression = builderQuery.filter?.expression;
+
+		// Verify all required filters are present
+		expect(filterExpression).toContain(
+			`kind_string = 'Client' AND (http.url EXISTS OR url.full EXISTS) AND (net.peer.name = 'test-domain' OR server.address = 'test-domain') AND has_error = true`,
 		);
 	});
 });

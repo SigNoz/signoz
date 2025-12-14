@@ -3,7 +3,7 @@
 	.query-section-tabs {
 		display: flex;
 		align-items: center;
-		margin-left: 12px;
+		margin-left: 8px;
 		margin-top: 24px;
 
 		.query-section-query-actions {
@@ -77,6 +77,14 @@
 			.ant-select-selector {
 				border: 1px solid var(--bg-slate-400);
 				background: var(--bg-ink-300);
+
+				&:hover {
+					border-color: var(--bg-vanilla-300);
+				}
+
+				&:focus {
+					border-color: var(--bg-vanilla-300);
+				}
 			}
 		}
 	}
@@ -88,6 +96,18 @@
 				border: 1px solid var(--bg-slate-500);
 				.ant-card-body {
 					background-color: var(--bg-ink-500);
+
+					.chart-preview-headline {
+						display: flex;
+						align-items: flex-start;
+						justify-content: space-between;
+						gap: 8px;
+						width: 100%;
+
+						.y-axis-unit-selector-component {
+							margin-top: 0;
+						}
+					}
 				}
 			}
 		}
@@ -97,5 +117,80 @@
 		margin: 0;
 		background-color: var(--bg-ink-500);
 		border: 1px solid var(--bg-slate-400);
+	}
+}
+
+.lightMode {
+	.query-section {
+		.query-section-tabs {
+			.query-section-query-actions {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-300);
+
+				.explorer-view-option {
+					border-left: 0.5px solid var(--bg-vanilla-300);
+					border-bottom: 0.5px solid var(--bg-vanilla-300);
+
+					&.active-tab {
+						background-color: var(--bg-vanilla-300);
+
+						&:hover {
+							background-color: var(--bg-vanilla-100) !important;
+						}
+					}
+
+					&:disabled {
+						background-color: var(--bg-vanilla-300);
+					}
+
+					&:hover {
+						color: var(--bg-ink-400);
+					}
+				}
+			}
+		}
+
+		.y-axis-unit-selector-component {
+			.ant-select {
+				.ant-select-selector {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-300);
+
+					&:hover {
+						border-color: var(--bg-ink-300);
+					}
+
+					&:focus {
+						border-color: var(--bg-ink-300);
+						box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+					}
+				}
+			}
+		}
+
+		.chart-preview-container {
+			.alert-chart-container {
+				.ant-card {
+					border: 1px solid var(--bg-vanilla-300);
+					.ant-card-body {
+						background-color: var(--bg-vanilla-100);
+					}
+
+					.ant-card-body {
+						.chart-preview-header {
+							.plot-tag {
+								background-color: var(--bg-vanilla-300);
+								color: var(--bg-slate-100);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		.alert-query-section-container {
+			background-color: var(--bg-vanilla-100);
+			border: 1px solid var(--bg-vanilla-300);
+		}
 	}
 }

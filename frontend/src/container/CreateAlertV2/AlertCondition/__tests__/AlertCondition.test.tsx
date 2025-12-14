@@ -3,6 +3,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter } from 'react-router-dom';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { CreateAlertProvider } from '../../context';
 import AlertCondition from '../AlertCondition';
@@ -105,7 +106,7 @@ const renderAlertCondition = (
 	return render(
 		<MemoryRouter initialEntries={initialEntries}>
 			<QueryClientProvider client={queryClient}>
-				<CreateAlertProvider>
+				<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
 					<AlertCondition />
 				</CreateAlertProvider>
 			</QueryClientProvider>
@@ -126,9 +127,10 @@ describe('AlertCondition', () => {
 
 		// Verify default alertType is METRICS_BASED_ALERT (shows AlertThreshold component)
 		expect(screen.getByTestId(ALERT_THRESHOLD_TEST_ID)).toBeInTheDocument();
-		expect(
-			screen.queryByTestId(ANOMALY_THRESHOLD_TEST_ID),
-		).not.toBeInTheDocument();
+		// TODO: uncomment this when anomaly tab is implemented
+		// expect(
+		// 	screen.queryByTestId(ANOMALY_THRESHOLD_TEST_ID),
+		// ).not.toBeInTheDocument();
 
 		// Verify threshold tab is active by default
 		const thresholdTab = screen.getByText(THRESHOLD_TAB_TEXT);
@@ -136,7 +138,8 @@ describe('AlertCondition', () => {
 
 		// Verify both tabs are visible (METRICS_BASED_ALERT supports multiple tabs)
 		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
-		expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
+		// TODO: uncomment this when anomaly tab is implemented
+		// expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
 	});
 
 	it('renders threshold tab by default', () => {
@@ -151,7 +154,8 @@ describe('AlertCondition', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('renders anomaly tab when alert type supports multiple tabs', () => {
+	// TODO: Unskip this when anomaly tab is implemented
+	it.skip('renders anomaly tab when alert type supports multiple tabs', () => {
 		renderAlertCondition();
 		expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
 		expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
@@ -165,7 +169,8 @@ describe('AlertCondition', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('shows AnomalyThreshold component when alert type is anomaly based', () => {
+	// TODO: Unskip this when anomaly tab is implemented
+	it.skip('shows AnomalyThreshold component when alert type is anomaly based', () => {
 		renderAlertCondition();
 
 		// Click on anomaly tab to switch to anomaly-based alert
@@ -176,7 +181,8 @@ describe('AlertCondition', () => {
 		expect(screen.queryByTestId(ALERT_THRESHOLD_TEST_ID)).not.toBeInTheDocument();
 	});
 
-	it('switches between threshold and anomaly tabs', () => {
+	// TODO: Unskip this when anomaly tab is implemented
+	it.skip('switches between threshold and anomaly tabs', () => {
 		renderAlertCondition();
 
 		// Initially shows threshold component
@@ -201,7 +207,8 @@ describe('AlertCondition', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('applies active tab styling correctly', () => {
+	// TODO: Unskip this when anomaly tab is implemented
+	it.skip('applies active tab styling correctly', () => {
 		renderAlertCondition();
 
 		const thresholdTab = screen.getByText(THRESHOLD_TAB_TEXT);
@@ -222,21 +229,21 @@ describe('AlertCondition', () => {
 	it('shows multiple tabs for METRICS_BASED_ALERT', () => {
 		renderAlertCondition('METRIC_BASED_ALERT');
 
-		// Both tabs should be visible
+		// TODO: uncomment this when anomaly tab is implemented
 		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
-		expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
+		// expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
 		expect(screen.getByTestId(THRESHOLD_VIEW_TEST_ID)).toBeInTheDocument();
-		expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
+		// expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
 	});
 
 	it('shows multiple tabs for ANOMALY_BASED_ALERT', () => {
 		renderAlertCondition('ANOMALY_BASED_ALERT');
 
-		// Both tabs should be visible
 		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
-		expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
 		expect(screen.getByTestId(THRESHOLD_VIEW_TEST_ID)).toBeInTheDocument();
-		expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
+		// TODO: uncomment this when anomaly tab is implemented
+		// expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
+		// expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
 	});
 
 	it('shows only threshold tab for LOGS_BASED_ALERT', () => {

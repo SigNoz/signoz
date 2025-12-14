@@ -1,6 +1,6 @@
 {
-    "id": "mongo-overview",
     "description": "This dashboard provides a high-level overview of your MongoDB. It includes read/write performance, most-used replicas, collection metrics etc...",
+    "id": "mongo-overview",
     "layout": [
         {
             "h": 3,
@@ -92,6 +92,7 @@
             "type": "QUERY"
         }
     },
+    "version": "v5",
     "widgets": [
         {
             "description": "Total number of operations",
@@ -105,37 +106,20 @@
                 "builder": {
                     "queryData": [
                         {
-                            "aggregateAttribute": {
-                                "dataType": "float64",
-                                "id": "mongodb.operation.count--float64--Sum--true",
-                                "isColumn": true,
-                                "isJSON": false,
-                                "key": "mongodb.operation.count",
-                                "type": "Sum"
-                            },
-                            "aggregateOperator": "sum_rate",
+                            "aggregations": [
+                                {
+                                    "metricName": "mongodb.operation.count",
+                                    "reduceTo": "sum",
+                                    "spaceAggregation": "sum",
+                                    "temporality": null,
+                                    "timeAggregation": "rate"
+                                }
+                            ],
                             "dataSource": "metrics",
                             "disabled": false,
                             "expression": "A",
-                            "filters": {
-                                "items": [
-                                    {
-                                        "id": "a468a30b",
-                                        "key": {
-                                            "dataType": "string",
-                                            "id": "host.name--string--tag--false",
-                                            "isColumn": false,
-                                            "isJSON": false,
-                                            "key": "host.name",
-                                            "type": "tag"
-                                        },
-                                        "op": "in",
-                                        "value": [
-                                            "{{.host.name}}"
-                                        ]
-                                    }
-                                ],
-                                "op": "AND"
+                            "filter": {
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
@@ -147,12 +131,13 @@
                                     "type": "tag"
                                 }
                             ],
-                            "having": [],
+                            "having": {
+                                "expression": ""
+                            },
                             "legend": "{{operation}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
-                            "reduceTo": "sum",
                             "stepInterval": 60
                         }
                     ],
@@ -196,37 +181,20 @@
                 "builder": {
                     "queryData": [
                         {
-                            "aggregateAttribute": {
-                                "dataType": "float64",
-                                "id": "mongodb.operation.time--float64--Sum--true",
-                                "isColumn": true,
-                                "isJSON": false,
-                                "key": "mongodb.operation.time",
-                                "type": "Sum"
-                            },
-                            "aggregateOperator": "sum_rate",
+                            "aggregations": [
+                                {
+                                    "metricName": "mongodb.operation.time",
+                                    "reduceTo": "sum",
+                                    "spaceAggregation": "sum",
+                                    "temporality": null,
+                                    "timeAggregation": "rate"
+                                }
+                            ],
                             "dataSource": "metrics",
                             "disabled": false,
                             "expression": "A",
-                            "filters": {
-                                "items": [
-                                    {
-                                        "id": "31be3166",
-                                        "key": {
-                                            "dataType": "string",
-                                            "id": "host.name--string--tag--false",
-                                            "isColumn": false,
-                                            "isJSON": false,
-                                            "key": "host.name",
-                                            "type": "tag"
-                                        },
-                                        "op": "in",
-                                        "value": [
-                                            "{{.host.name}}"
-                                        ]
-                                    }
-                                ],
-                                "op": "AND"
+                            "filter": {
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
@@ -238,12 +206,13 @@
                                     "type": "tag"
                                 }
                             ],
-                            "having": [],
+                            "having": {
+                                "expression": ""
+                            },
                             "legend": "{{operation}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
-                            "reduceTo": "sum",
                             "stepInterval": 60
                         }
                     ],
@@ -287,37 +256,20 @@
                 "builder": {
                     "queryData": [
                         {
-                            "aggregateAttribute": {
-                                "dataType": "float64",
-                                "id": "mongodb.cache.operations--float64--Sum--true",
-                                "isColumn": true,
-                                "isJSON": false,
-                                "key": "mongodb.cache.operations",
-                                "type": "Sum"
-                            },
-                            "aggregateOperator": "sum_rate",
+                            "aggregations": [
+                                {
+                                    "metricName": "mongodb.cache.operations",
+                                    "reduceTo": "sum",
+                                    "spaceAggregation": "sum",
+                                    "temporality": null,
+                                    "timeAggregation": "rate"
+                                }
+                            ],
                             "dataSource": "metrics",
                             "disabled": false,
                             "expression": "A",
-                            "filters": {
-                                "items": [
-                                    {
-                                        "id": "01b45814",
-                                        "key": {
-                                            "dataType": "string",
-                                            "id": "host.name--string--tag--false",
-                                            "isColumn": false,
-                                            "isJSON": false,
-                                            "key": "host.name",
-                                            "type": "tag"
-                                        },
-                                        "op": "in",
-                                        "value": [
-                                            "{{.host.name}}"
-                                        ]
-                                    }
-                                ],
-                                "op": "AND"
+                            "filter": {
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
@@ -329,12 +281,13 @@
                                     "type": "tag"
                                 }
                             ],
-                            "having": [],
+                            "having": {
+                                "expression": ""
+                            },
                             "legend": "{{type}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
-                            "reduceTo": "sum",
                             "stepInterval": 60
                         }
                     ],
@@ -378,58 +331,29 @@
                 "builder": {
                     "queryData": [
                         {
-                            "aggregateAttribute": {
-                                "dataType": "float64",
-                                "id": "mongodb.operation.latency.time--float64--Gauge--true",
-                                "isColumn": true,
-                                "isJSON": false,
-                                "key": "mongodb.operation.latency.time",
-                                "type": "Gauge"
-                            },
-                            "aggregateOperator": "max",
+                            "aggregations": [
+                                {
+                                    "metricName": "mongodb.operation.latency.time",
+                                    "reduceTo": "sum",
+                                    "spaceAggregation": "max",
+                                    "temporality": null,
+                                    "timeAggregation": "max"
+                                }
+                            ],
                             "dataSource": "metrics",
                             "disabled": false,
                             "expression": "A",
-                            "filters": {
-                                "items": [
-                                    {
-                                        "id": "2e165319",
-                                        "key": {
-                                            "dataType": "string",
-                                            "id": "operation--string--tag--false",
-                                            "isColumn": false,
-                                            "isJSON": false,
-                                            "key": "operation",
-                                            "type": "tag"
-                                        },
-                                        "op": "=",
-                                        "value": "read"
-                                    },
-                                    {
-                                        "id": "888e920b",
-                                        "key": {
-                                            "dataType": "string",
-                                            "id": "host.name--string--tag--false",
-                                            "isColumn": false,
-                                            "isJSON": false,
-                                            "key": "host.name",
-                                            "type": "tag"
-                                        },
-                                        "op": "in",
-                                        "value": [
-                                            "{{.host.name}}"
-                                        ]
-                                    }
-                                ],
-                                "op": "AND"
+                            "filter": {
+                                "expression": "(operation = 'read' AND host.name IN $host.name)"
                             },
                             "groupBy": [],
-                            "having": [],
+                            "having": {
+                                "expression": ""
+                            },
                             "legend": "Latency",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
-                            "reduceTo": "sum",
                             "stepInterval": 60
                         }
                     ],
@@ -473,58 +397,29 @@
                 "builder": {
                     "queryData": [
                         {
-                            "aggregateAttribute": {
-                                "dataType": "float64",
-                                "id": "mongodb.operation.latency.time--float64--Gauge--true",
-                                "isColumn": true,
-                                "isJSON": false,
-                                "key": "mongodb.operation.latency.time",
-                                "type": "Gauge"
-                            },
-                            "aggregateOperator": "max",
+                            "aggregations": [
+                                {
+                                    "metricName": "mongodb.operation.latency.time",
+                                    "reduceTo": "sum",
+                                    "spaceAggregation": "max",
+                                    "temporality": null,
+                                    "timeAggregation": "max"
+                                }
+                            ],
                             "dataSource": "metrics",
                             "disabled": false,
                             "expression": "A",
-                            "filters": {
-                                "items": [
-                                    {
-                                        "id": "53b37ca7",
-                                        "key": {
-                                            "dataType": "string",
-                                            "id": "host.name--string--tag--false",
-                                            "isColumn": false,
-                                            "isJSON": false,
-                                            "key": "host.name",
-                                            "type": "tag"
-                                        },
-                                        "op": "in",
-                                        "value": [
-                                            "{{.host.name}}"
-                                        ]
-                                    },
-                                    {
-                                        "id": "9862c46c",
-                                        "key": {
-                                            "dataType": "string",
-                                            "id": "operation--string--tag--false",
-                                            "isColumn": false,
-                                            "isJSON": false,
-                                            "key": "operation",
-                                            "type": "tag"
-                                        },
-                                        "op": "=",
-                                        "value": "write"
-                                    }
-                                ],
-                                "op": "AND"
+                            "filter": {
+                                "expression": "(host.name IN $host.name AND operation = 'write')"
                             },
                             "groupBy": [],
-                            "having": [],
+                            "having": {
+                                "expression": ""
+                            },
                             "legend": "Latency",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
-                            "reduceTo": "sum",
                             "stepInterval": 60
                         }
                     ],
@@ -568,58 +463,29 @@
                 "builder": {
                     "queryData": [
                         {
-                            "aggregateAttribute": {
-                                "dataType": "float64",
-                                "id": "mongodb.operation.latency.time--float64--Gauge--true",
-                                "isColumn": true,
-                                "isJSON": false,
-                                "key": "mongodb.operation.latency.time",
-                                "type": "Gauge"
-                            },
-                            "aggregateOperator": "max",
+                            "aggregations": [
+                                {
+                                    "metricName": "mongodb.operation.latency.time",
+                                    "reduceTo": "sum",
+                                    "spaceAggregation": "max",
+                                    "temporality": null,
+                                    "timeAggregation": "max"
+                                }
+                            ],
                             "dataSource": "metrics",
                             "disabled": false,
                             "expression": "A",
-                            "filters": {
-                                "items": [
-                                    {
-                                        "id": "c33ad4b6",
-                                        "key": {
-                                            "dataType": "string",
-                                            "id": "host.name--string--tag--false",
-                                            "isColumn": false,
-                                            "isJSON": false,
-                                            "key": "host.name",
-                                            "type": "tag"
-                                        },
-                                        "op": "in",
-                                        "value": [
-                                            "{{.host.name}}"
-                                        ]
-                                    },
-                                    {
-                                        "id": "c70ecfd0",
-                                        "key": {
-                                            "dataType": "string",
-                                            "id": "operation--string--tag--false",
-                                            "isColumn": false,
-                                            "isJSON": false,
-                                            "key": "operation",
-                                            "type": "tag"
-                                        },
-                                        "op": "=",
-                                        "value": "command"
-                                    }
-                                ],
-                                "op": "AND"
+                            "filter": {
+                                "expression": "(host.name IN $host.name AND operation = 'command')"
                             },
                             "groupBy": [],
-                            "having": [],
+                            "having": {
+                                "expression": ""
+                            },
                             "legend": "Latency",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
-                            "reduceTo": "sum",
                             "stepInterval": 60
                         }
                     ],
@@ -663,37 +529,20 @@
                 "builder": {
                     "queryData": [
                         {
-                            "aggregateAttribute": {
-                                "dataType": "float64",
-                                "id": "mongodb.network.io.receive--float64--Sum--true",
-                                "isColumn": true,
-                                "isJSON": false,
-                                "key": "mongodb.network.io.receive",
-                                "type": "Sum"
-                            },
-                            "aggregateOperator": "avg",
+                            "aggregations": [
+                                {
+                                    "metricName": "mongodb.network.io.receive",
+                                    "reduceTo": "sum",
+                                    "spaceAggregation": "avg",
+                                    "temporality": null,
+                                    "timeAggregation": "avg"
+                                }
+                            ],
                             "dataSource": "metrics",
                             "disabled": false,
                             "expression": "A",
-                            "filters": {
-                                "items": [
-                                    {
-                                        "id": "5c9d7fe3",
-                                        "key": {
-                                            "dataType": "string",
-                                            "id": "host.name--string--tag--false",
-                                            "isColumn": false,
-                                            "isJSON": false,
-                                            "key": "host.name",
-                                            "type": "tag"
-                                        },
-                                        "op": "in",
-                                        "value": [
-                                            "{{.host.name}}"
-                                        ]
-                                    }
-                                ],
-                                "op": "AND"
+                            "filter": {
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
@@ -705,46 +554,30 @@
                                     "type": "tag"
                                 }
                             ],
-                            "having": [],
+                            "having": {
+                                "expression": ""
+                            },
                             "legend": "Bytes received :: {{host.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
-                            "reduceTo": "sum",
                             "stepInterval": 60
                         },
                         {
-                            "aggregateAttribute": {
-                                "dataType": "float64",
-                                "id": "mongodb.network.io.transmit--float64--Sum--true",
-                                "isColumn": true,
-                                "isJSON": false,
-                                "key": "mongodb.network.io.transmit",
-                                "type": "Sum"
-                            },
-                            "aggregateOperator": "avg",
+                            "aggregations": [
+                                {
+                                    "metricName": "mongodb.network.io.transmit",
+                                    "reduceTo": "sum",
+                                    "spaceAggregation": "avg",
+                                    "temporality": null,
+                                    "timeAggregation": "avg"
+                                }
+                            ],
                             "dataSource": "metrics",
                             "disabled": false,
                             "expression": "B",
-                            "filters": {
-                                "items": [
-                                    {
-                                        "id": "96520885",
-                                        "key": {
-                                            "dataType": "string",
-                                            "id": "host.name--string--tag--false",
-                                            "isColumn": false,
-                                            "isJSON": false,
-                                            "key": "host.name",
-                                            "type": "tag"
-                                        },
-                                        "op": "in",
-                                        "value": [
-                                            "{{.host.name}}"
-                                        ]
-                                    }
-                                ],
-                                "op": "AND"
+                            "filter": {
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
@@ -756,12 +589,13 @@
                                     "type": "tag"
                                 }
                             ],
-                            "having": [],
+                            "having": {
+                                "expression": ""
+                            },
                             "legend": "Bytes transmitted :: {{host.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "B",
-                            "reduceTo": "sum",
                             "stepInterval": 60
                         }
                     ],

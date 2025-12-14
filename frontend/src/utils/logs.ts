@@ -49,12 +49,8 @@ export const getHightLightedLogBackground = (
 	return `background-color: ${orange[3]};`;
 };
 
-export const getCustomHighlightBackground = (
-	isHighlighted = false,
-	isDarkMode = true,
-	$logType: string,
-): string => {
+export const getCustomHighlightBackground = (isHighlighted = false): string => {
 	if (!isHighlighted) return '';
 
-	return getActiveLogBackground(true, isDarkMode, $logType);
+	return `background-color: ${Color.BG_ROBIN_500}20;`;
 };

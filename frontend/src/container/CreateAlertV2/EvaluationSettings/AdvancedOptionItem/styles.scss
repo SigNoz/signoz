@@ -114,6 +114,14 @@
 					height: 32px;
 					border: 1px solid var(--bg-slate-400);
 
+					&:hover {
+						border-color: var(--bg-vanilla-300);
+					}
+
+					&:focus {
+						border-color: var(--bg-vanilla-300);
+					}
+
 					.ant-select-selection-placeholder {
 						font-family: 'Space Mono';
 					}

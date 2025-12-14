@@ -42,4 +42,4 @@ type URLShareableOptions struct {
 	SelectColumns []v3.AttributeKey `json:"selectColumns"`
 }
 
-var PredefinedAlertLabels = []string{ruletypes.LabelThresholdName}
+var PredefinedAlertLabels = []string{ruletypes.LabelThresholdName, ruletypes.LabelSeverityName, ruletypes.LabelLastSeen}

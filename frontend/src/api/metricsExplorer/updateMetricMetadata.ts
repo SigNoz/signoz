@@ -9,6 +9,7 @@ export interface UpdateMetricMetadataProps {
 	metricType: MetricType;
 	temporality?: Temporality;
 	isMonotonic?: boolean;
+	unit?: string;
 }
 
 export interface UpdateMetricMetadataResponse {

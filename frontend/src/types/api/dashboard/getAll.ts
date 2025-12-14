@@ -1,3 +1,4 @@
+import { PrecisionOption } from 'components/Graph/types';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
@@ -113,6 +114,7 @@ export interface IBaseWidget {
 	timePreferance: timePreferenceType;
 	stepSize?: number;
 	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption; // number of decimals or 'full precision'
 	stackedBarChart?: boolean;
 	bucketCount?: number;
 	bucketWidth?: number;
@@ -134,6 +136,7 @@ export interface Widgets extends IBaseWidget {
 	query: Query;
 	renderColumnCell?: QueryTableProps['renderColumnCell'];
 	customColTitles?: Record<string, string>;
+	hiddenColumns?: string[];
 }
 
 export interface PromQLWidgets extends IBaseWidget {

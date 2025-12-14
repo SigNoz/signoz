@@ -145,7 +145,7 @@ function TimeInput({
 	};
 
 	return (
-		<div className={`time-input-container ${className}`}>
+		<div data-testid="time-input" className={`time-input-container ${className}`}>
 			<Input
 				data-field="hours"
 				value={hours}
@@ -156,6 +156,7 @@ function TimeInput({
 				maxLength={2}
 				className="time-input-field"
 				placeholder="00"
+				data-testid="time-input-hours"
 			/>
 			<span className="time-input-separator">:</span>
 			<Input
@@ -168,6 +169,7 @@ function TimeInput({
 				maxLength={2}
 				className="time-input-field"
 				placeholder="00"
+				data-testid="time-input-minutes"
 			/>
 			<span className="time-input-separator">:</span>
 			<Input
@@ -180,6 +182,7 @@ function TimeInput({
 				maxLength={2}
 				className="time-input-field"
 				placeholder="00"
+				data-testid="time-input-seconds"
 			/>
 		</div>
 	);

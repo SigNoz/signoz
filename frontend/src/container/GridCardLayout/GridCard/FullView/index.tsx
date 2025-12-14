@@ -38,9 +38,7 @@ import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
-import { UpdateTimeInterval } from 'store/actions';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -67,13 +65,11 @@ function FullView({
 	enableDrillDown = false,
 }: FullViewProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
-	const { selectedTime: globalSelectedTime } = useSelector<
+	const { selectedTime: globalSelectedTime, minTime, maxTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
 
 	const fullViewRef = useRef<HTMLDivElement>(null);
 	const { handleRunQuery } = useQueryBuilder();
@@ -154,11 +150,16 @@ function FullView({
 	});
 
 	useEffect(() => {
+		const timeRange =
+			selectedTime.enum !== 'GLOBAL_TIME'
+				? { start: undefined, end: undefined }
+				: { start: Math.floor(minTime / 1e9), end: Math.floor(maxTime / 1e9) };
 		setRequestData((prev) => ({
 			...prev,
 			selectedTime: selectedTime.enum,
+			...timeRange,
 		}));
-	}, [selectedTime]);
+	}, [selectedTime, minTime, maxTime]);
 
 	// Update requestData when panel type changes
 	useEffect(() => {
@@ -181,38 +182,34 @@ function FullView({
 		});
 	}, [selectedPanelType]);
 
-	const response = useGetQueryRange(
-		requestData,
-		// selectedDashboard?.data?.version || version || DEFAULT_ENTITY_VERSION,
-		ENTITY_VERSION_V5,
-		{
-			queryKey: [widget?.query, selectedPanelType, requestData, version],
-			enabled: !isDependedDataLoaded,
-			keepPreviousData: true,
-		},
-	);
+	const response = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
+		queryKey: [
+			widget?.query,
+			selectedPanelType,
+			requestData,
+			version,
+			minTime,
+			maxTime,
+		],
+		enabled: !isDependedDataLoaded,
+		keepPreviousData: true,
+	});
 
-	const onDragSelect = useCallback(
-		(start: number, end: number): void => {
-			const startTimestamp = Math.trunc(start);
-			const endTimestamp = Math.trunc(end);
+	const onDragSelect = useCallback((start: number, end: number): void => {
+		const startTimestamp = Math.trunc(start);
+		const endTimestamp = Math.trunc(end);
 
-			if (startTimestamp !== endTimestamp) {
-				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
-			}
+		const { maxTime, minTime } = GetMinMax('custom', [
+			startTimestamp,
+			endTimestamp,
+		]);
 
-			const { maxTime, minTime } = GetMinMax('custom', [
-				startTimestamp,
-				endTimestamp,
-			]);
-
-			urlQuery.set(QueryParams.startTime, minTime.toString());
-			urlQuery.set(QueryParams.endTime, maxTime.toString());
-			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			safeNavigate(generatedUrl);
-		},
-		[dispatch, location.pathname, safeNavigate, urlQuery],
-	);
+		setRequestData((prev) => ({
+			...prev,
+			start: Math.floor(minTime / 1e9),
+			end: Math.floor(maxTime / 1e9),
+		}));
+	}, []);
 
 	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
 		boolean[]
@@ -327,6 +324,7 @@ function FullView({
 									panelType={selectedPanelType}
 									version={selectedDashboard?.data?.version || 'v3'}
 									isListViewPanel={selectedPanelType === PANEL_TYPES.LIST}
+									signalSourceChangeEnabled
 									// filterConfigs={filterConfigs}
 									// queryComponents={queryComponents}
 								/>

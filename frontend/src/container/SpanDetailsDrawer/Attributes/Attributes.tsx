@@ -1,6 +1,6 @@
 import './Attributes.styles.scss';
 
-import { Input, Tooltip, Typography } from 'antd';
+import { Input, Typography } from 'antd';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { flattenObject } from 'container/LogDetailedView/utils';
@@ -20,10 +20,11 @@ interface AttributeRecord {
 interface IAttributesProps {
 	span: Span;
 	isSearchVisible: boolean;
+	shouldFocusOnToggle?: boolean;
 }
 
 function Attributes(props: IAttributesProps): JSX.Element {
-	const { span, isSearchVisible } = props;
+	const { span, isSearchVisible, shouldFocusOnToggle } = props;
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
 	const flattenSpanData: Record<string, string> = useMemo(
@@ -69,7 +70,7 @@ function Attributes(props: IAttributesProps): JSX.Element {
 			{isSearchVisible &&
 				(datasource.length > 0 || fieldSearchInput.length > 0) && (
 					<Input
-						autoFocus
+						autoFocus={shouldFocusOnToggle}
 						placeholder="Search for attribute..."
 						className="search-input"
 						value={fieldSearchInput}
@@ -82,40 +83,48 @@ function Attributes(props: IAttributesProps): JSX.Element {
 			<section
 				className={cx('attributes-container', isSearchVisible ? 'border-top' : '')}
 			>
-				{datasource.map((item) => (
-					<div
-						className={cx('item', { pinned: pinnedAttributes[item.field] })}
-						key={`${item.field} + ${item.value}`}
-					>
-						<div className="item-key-wrapper">
-							<Typography.Text className="item-key" ellipsis>
-								{item.field}
-							</Typography.Text>
-							{pinnedAttributes[item.field] && (
-								<Pin size={14} className="pin-icon" fill="currentColor" />
-							)}
-						</div>
-						<div className="value-wrapper">
-							<Tooltip title={item.value}>
+				{datasource
+					.filter((item) => !!item.value && item.value !== '-')
+					.map((item) => (
+						<div
+							className={cx('item', { pinned: pinnedAttributes[item.field] })}
+							key={`${item.field} + ${item.value}`}
+						>
+							<div className="item-key-wrapper">
+								<Typography.Text className="item-key" ellipsis>
+									{item.field}
+								</Typography.Text>
+								{pinnedAttributes[item.field] && (
+									<Pin size={14} className="pin-icon" fill="currentColor" />
+								)}
+							</div>
+							<div className="value-wrapper">
 								<div className="copy-wrapper">
-									<CopyClipboardHOC entityKey={item.value} textToCopy={item.value}>
+									<CopyClipboardHOC
+										entityKey={item.value}
+										textToCopy={item.value}
+										tooltipText={item.value}
+									>
 										<Typography.Text className="item-value" ellipsis>
 											{item.value}
 										</Typography.Text>
 									</CopyClipboardHOC>
 								</div>
-							</Tooltip>
-							<AttributeActions
-								record={item}
-								isPinned={pinnedAttributes[item.field]}
-								onTogglePin={togglePin}
-							/>
+								<AttributeActions
+									record={item}
+									isPinned={pinnedAttributes[item.field]}
+									onTogglePin={togglePin}
+								/>
+							</div>
 						</div>
-					</div>
-				))}
+					))}
 			</section>
 		</div>
 	);
 }
+
+Attributes.defaultProps = {
+	shouldFocusOnToggle: false,
+};
 
 export default Attributes;

@@ -21,7 +21,6 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
-		JsonBodyPrefix:   BodyJSONStringSearchPrefix,
 		JsonKeyToKey:     GetBodyJSONKey,
 	}
 
@@ -34,7 +33,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 	for _, expr := range tests {
 		t.Run(expr, func(t *testing.T) {
-			clause, err := querybuilder.PrepareWhereClause(expr, opts)
+            clause, err := querybuilder.PrepareWhereClause(expr, opts, 0, 0)
 			require.NoError(t, err)
 			require.NotNil(t, clause)
 
@@ -58,7 +57,6 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
-		JsonBodyPrefix:   BodyJSONStringSearchPrefix,
 		JsonKeyToKey:     GetBodyJSONKey,
 	}
 
@@ -71,7 +69,7 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 
 	for _, expr := range tests {
 		t.Run(expr, func(t *testing.T) {
-			clause, err := querybuilder.PrepareWhereClause(expr, opts)
+            clause, err := querybuilder.PrepareWhereClause(expr, opts, 0, 0)
 			require.NoError(t, err)
 			require.NotNil(t, clause)
 

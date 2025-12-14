@@ -121,6 +121,7 @@ export const tablePanelWidgetQuery = {
 	stackedBarChart: false,
 	bucketWidth: 0,
 	mergeAllActiveQueries: false,
+	decimalPrecision: 2,
 };
 
 export const tablePanelQueryResponse = {

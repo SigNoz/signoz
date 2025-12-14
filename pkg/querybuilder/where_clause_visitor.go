@@ -33,7 +33,6 @@ type filterExpressionVisitor struct {
 	mainErrorURL       string
 	builder            *sqlbuilder.SelectBuilder
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
-	jsonBodyPrefix     string
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	skipResourceFilter bool
 	skipFullTextFilter bool
@@ -42,6 +41,8 @@ type filterExpressionVisitor struct {
 	variables          map[string]qbtypes.VariableItem
 
 	keysWithWarnings map[string]bool
+	startNs          uint64
+	endNs            uint64
 }
 
 type FilterExprVisitorOpts struct {
@@ -51,13 +52,14 @@ type FilterExprVisitorOpts struct {
 	FieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
 	Builder            *sqlbuilder.SelectBuilder
 	FullTextColumn     *telemetrytypes.TelemetryFieldKey
-	JsonBodyPrefix     string
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
 	SkipFunctionCalls  bool
 	IgnoreNotFoundKeys bool
 	Variables          map[string]qbtypes.VariableItem
+	StartNs            uint64
+	EndNs              uint64
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor
@@ -69,7 +71,6 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		fieldKeys:          opts.FieldKeys,
 		builder:            opts.Builder,
 		fullTextColumn:     opts.FullTextColumn,
-		jsonBodyPrefix:     opts.JsonBodyPrefix,
 		jsonKeyToKey:       opts.JsonKeyToKey,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
@@ -77,6 +78,8 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		ignoreNotFoundKeys: opts.IgnoreNotFoundKeys,
 		variables:          opts.Variables,
 		keysWithWarnings:   make(map[string]bool),
+		startNs:            opts.StartNs,
+		endNs:              opts.EndNs,
 	}
 }
 
@@ -87,7 +90,8 @@ type PreparedWhereClause struct {
 }
 
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
-func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWhereClause, error) {
+func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64, endNs uint64) (*PreparedWhereClause, error) {
+
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
 	lexer := grammar.NewFilterQueryLexer(input)
@@ -120,6 +124,8 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 	}
 	tokens.Reset()
 
+	opts.StartNs = startNs
+	opts.EndNs = endNs
 	visitor := newFilterExpressionVisitor(opts)
 
 	// Handle syntax errors
@@ -164,7 +170,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return &PreparedWhereClause{whereClause, visitor.warnings, visitor.mainWarnURL}, nil
+	return &PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type
@@ -311,7 +317,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			// create a full text search condition on the body field
 
 			keyText := keyCtx.GetText()
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(keyText), v.builder)
+			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(keyText), v.builder, v.startNs, v.endNs)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 				return ""
@@ -331,7 +337,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 				v.errors = append(v.errors, fmt.Sprintf("unsupported value type: %s", valCtx.GetText()))
 				return ""
 			}
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
+			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, v.startNs, v.endNs)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 				return ""
@@ -375,7 +381,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, nil, v.builder)
+			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, nil, v.builder, v.startNs, v.endNs)
 			if err != nil {
 				return ""
 			}
@@ -429,6 +435,10 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 					}
 					switch varValues := varItem.Value.(type) {
 					case []any:
+						if len(varValues) == 0 {
+							v.errors = append(v.errors, fmt.Sprintf("malformed request payload: variable `%s` used in expression has an empty list value", strings.TrimPrefix(var_, "$")))
+							return ""
+						}
 						values = varValues
 					case any:
 						values = []any{varValues}
@@ -443,7 +453,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, values, v.builder)
+			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, values, v.builder, v.startNs, v.endNs)
 			if err != nil {
 				return ""
 			}
@@ -475,7 +485,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, []any{value1, value2}, v.builder)
+			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, []any{value1, value2}, v.builder, v.startNs, v.endNs)
 			if err != nil {
 				return ""
 			}
@@ -508,6 +518,10 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			if ok {
 				switch varValues := varItem.Value.(type) {
 				case []any:
+					if len(varValues) == 0 {
+						v.errors = append(v.errors, fmt.Sprintf("malformed request payload: variable `%s` used in expression has an empty list value", strings.TrimPrefix(var_, "$")))
+						return ""
+					}
 					value = varValues[0]
 				case any:
 					value = varValues
@@ -556,7 +570,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, value, v.builder)
+			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, value, v.builder, v.startNs, v.endNs)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
 				return ""
@@ -635,7 +649,7 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		v.errors = append(v.errors, "full text search is not supported")
 		return ""
 	}
-	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
+	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, v.startNs, v.endNs)
 	if err != nil {
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ""
@@ -701,7 +715,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 			conds = append(conds, fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", key.Name, v.builder.Var(value[0])))
 		} else {
 			// this is that all other functions only support array fields
-			if strings.HasPrefix(key.Name, v.jsonBodyPrefix) {
+			if key.FieldContext == telemetrytypes.FieldContextBody {
 				fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
 			} else {
 				// TODO(add docs for json body search)
@@ -792,10 +806,8 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 
 // VisitKey handles field/column references
 func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
-
 	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(ctx.GetText())
-
-	keyName := strings.TrimPrefix(fieldKey.Name, v.jsonBodyPrefix)
+	keyName := fieldKey.Name
 
 	fieldKeysForName := v.fieldKeys[keyName]
 
@@ -829,10 +841,11 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	// if there is a field with the same name as attribute/resource attribute
 	// Since it will ORed with the fieldKeysForName, it will not result empty
 	// when either of them have values
-	if strings.HasPrefix(fieldKey.Name, v.jsonBodyPrefix) && v.jsonBodyPrefix != "" {
-		if keyName != "" {
-			fieldKeysForName = append(fieldKeysForName, &fieldKey)
-		}
+	// Note: Skip this logic if body json query is enabled so we can look up the key inside fields
+	//
+	// TODO(Piyush): After entire migration this is supposed to be removed.
+	if !BodyJSONQueryEnabled && fieldKey.FieldContext == telemetrytypes.FieldContextBody {
+		fieldKeysForName = append(fieldKeysForName, &fieldKey)
 	}
 
 	if len(fieldKeysForName) == 0 {
@@ -843,7 +856,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 			return v.fieldKeys[keyWithContext]
 		}
 
-		if strings.HasPrefix(fieldKey.Name, v.jsonBodyPrefix) && v.jsonBodyPrefix != "" && keyName == "" {
+		if fieldKey.FieldContext == telemetrytypes.FieldContextBody && keyName == "" {
 			v.errors = append(v.errors, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
 		} else if !v.ignoreNotFoundKeys {
 			// TODO(srikanthccv): do we want to return an error here?
@@ -853,7 +866,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 		}
 	}
 
-	if len(fieldKeysForName) > 1 && !v.keysWithWarnings[keyName] {
+	if len(fieldKeysForName) > 1 {
 		warnMsg := fmt.Sprintf(
 			"Key `%s` is ambiguous, found %d different combinations of field context / data type: %v.",
 			fieldKey.Name,
@@ -865,6 +878,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 			mixedFieldContext[item.FieldContext.StringValue()] = true
 		}
 
+		// when there is both resource and attribute context, default to resource only
 		if mixedFieldContext[telemetrytypes.FieldContextResource.StringValue()] &&
 			mixedFieldContext[telemetrytypes.FieldContextAttribute.StringValue()] {
 			filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
@@ -878,9 +892,12 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 			warnMsg += " " + "Using `resource` context by default. To query attributes explicitly, " +
 				fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s')", fieldKey.Name)
 		}
-		v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
-		// this is warning state, we must have a unambiguous key
-		v.warnings = append(v.warnings, warnMsg)
+
+		if !v.keysWithWarnings[keyName] {
+			v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
+			// this is warning state, we must have a unambiguous key
+			v.warnings = append(v.warnings, warnMsg)
+		}
 		v.keysWithWarnings[keyName] = true
 		v.logger.Warn("ambiguous key", "field_key_name", fieldKey.Name) //nolint:sloglint
 	}

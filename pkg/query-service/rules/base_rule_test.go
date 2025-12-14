@@ -3,6 +3,8 @@ package rules
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
@@ -21,6 +23,15 @@ func TestBaseRule_RequireMinPoints(t *testing.T) {
 				ruleCondition: &ruletypes.RuleCondition{
 					RequireMinPoints:  true,
 					RequiredNumPoints: 4,
+				},
+
+				Threshold: ruletypes.BasicRuleThresholds{
+					{
+						Name:        "test-threshold",
+						TargetValue: &threshold,
+						CompareOp:   ruletypes.ValueIsAbove,
+						MatchType:   ruletypes.AtleastOnce,
+					},
 				},
 			},
 			series: &v3.Series{
@@ -41,6 +52,14 @@ func TestBaseRule_RequireMinPoints(t *testing.T) {
 					MatchType:         ruletypes.AtleastOnce,
 					Target:            &threshold,
 				},
+				Threshold: ruletypes.BasicRuleThresholds{
+					{
+						Name:        "test-threshold",
+						TargetValue: &threshold,
+						CompareOp:   ruletypes.ValueIsAbove,
+						MatchType:   ruletypes.AtleastOnce,
+					},
+				},
 			},
 			series: &v3.Series{
 				Points: []v3.Point{
@@ -56,10 +75,9 @@ func TestBaseRule_RequireMinPoints(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, shouldAlert := test.rule.ShouldAlert(*test.series)
-			if shouldAlert != test.shouldAlert {
-				t.Errorf("expected shouldAlert to be %v, got %v", test.shouldAlert, shouldAlert)
-			}
+			_, err := test.rule.Threshold.Eval(*test.series, "", ruletypes.EvalData{})
+			require.NoError(t, err)
+			require.Equal(t, len(test.series.Points) >= test.rule.ruleCondition.RequiredNumPoints, test.shouldAlert)
 		})
 	}
 }

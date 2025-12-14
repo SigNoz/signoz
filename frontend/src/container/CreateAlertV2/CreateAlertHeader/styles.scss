@@ -3,21 +3,6 @@
 	font-family: inherit;
 	color: var(--text-vanilla-100);
 
-	/* Top bar with diagonal stripes */
-	&__tab-bar {
-		height: 32px;
-		display: flex;
-		align-items: center;
-		background: repeating-linear-gradient(
-			-45deg,
-			#0f0f0f,
-			#0f0f0f 10px,
-			#101010 10px,
-			#101010 20px
-		);
-		padding-left: 0;
-	}
-
 	/* Tab block visuals */
 	&__tab {
 		display: flex;
@@ -44,6 +29,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
+		min-width: 300px;
+		flex: 1;
 	}
 
 	&__input.title {
@@ -51,6 +38,8 @@
 		font-weight: 500;
 		background-color: transparent;
 		color: var(--text-vanilla-100);
+		width: 100%;
+		min-width: 300px;
 	}
 
 	&__input:focus,
@@ -63,6 +52,15 @@
 		font-size: 14px;
 		background-color: transparent;
 		color: var(--text-vanilla-300);
+	}
+
+	.ant-btn {
+		display: flex;
+		gap: 4px;
+		align-items: center;
+		color: var(--text-vanilla-100);
+		border: 1px solid var(--bg-slate-300);
+		margin-right: 16px;
 	}
 }
 
@@ -139,13 +137,84 @@
 		font-size: 13px;
 
 		&::placeholder {
-			color: #888;
+			color: var(--bg-vanilla-400);
 		}
 
 		&:focus,
 		&:active {
 			border: none;
 			outline: none;
+		}
+	}
+}
+
+.lightMode {
+	.alert-header {
+		background-color: var(--bg-vanilla-100);
+		color: var(--text-ink-100);
+
+		&__tab {
+			background-color: var(--bg-vanilla-100);
+			color: var(--text-ink-100);
+		}
+
+		&__tab::before {
+			color: var(--bg-ink-100);
+		}
+
+		&__content {
+			background: var(--bg-vanilla-100);
+		}
+
+		&__input.title {
+			color: var(--text-ink-100);
+		}
+
+		&__input.description {
+			color: var(--text-ink-300);
+		}
+	}
+
+	.edit-alert-header {
+		width: 100%;
+	}
+
+	.edit-alert-header .alert-header__content {
+		background: var(--bg-vanilla-200);
+	}
+
+	.labels-input {
+		&__add-button {
+			color: var(--bg-ink-400);
+			border: 1px solid var(--bg-vanilla-300);
+			background-color: var(--bg-vanilla-100);
+
+			&:hover {
+				border-color: var(--bg-ink-300);
+				color: var(--bg-ink-500);
+			}
+		}
+
+		&__label-pill {
+			background-color: #ad7f581a;
+			color: var(--bg-sienna-400);
+			border: 1px solid var(--bg-sienna-500);
+		}
+
+		&__remove-button {
+			color: var(--bg-sienna-400);
+
+			&:hover {
+				color: var(--text-ink-100);
+			}
+		}
+
+		&__input {
+			color: var(--bg-ink-500);
+
+			&::placeholder {
+				color: var(--bg-ink-300);
+			}
 		}
 	}
 }

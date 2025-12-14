@@ -73,7 +73,7 @@ func (c *conditionBuilder) conditionFor(
 			}
 		}
 	} else {
-		tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+		tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
 	}
 
 	// regular operators
@@ -108,10 +108,13 @@ func (c *conditionBuilder) conditionFor(
 		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
-		return fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value)), nil
+		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
+		return fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
 	case qbtypes.FilterOperatorNotRegexp:
-		return fmt.Sprintf(`NOT match(%s, %s)`, tblFieldName, sb.Var(value)), nil
-
+		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
+		return fmt.Sprintf(`NOT match(%s, %s)`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
 	// between and not between
 	case qbtypes.FilterOperatorBetween:
 		values, ok := value.([]any)
@@ -162,57 +165,68 @@ func (c *conditionBuilder) conditionFor(
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 
 		var value any
-		switch column.Type {
-		case schema.JSONColumnType{}:
-			value = "NULL"
+		switch column.Type.GetType() {
+		case schema.ColumnTypeEnumJSON:
 			if operator == qbtypes.FilterOperatorExists {
-				return sb.NE(tblFieldName, value), nil
+				return sb.IsNotNull(tblFieldName), nil
 			} else {
-				return sb.E(tblFieldName, value), nil
+				return sb.IsNull(tblFieldName), nil
 			}
-		case schema.ColumnTypeString,
-			schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			schema.FixedStringColumnType{Length: 32},
-			schema.DateTime64ColumnType{Precision: 9, Timezone: "UTC"}:
+		case schema.ColumnTypeEnumString,
+			schema.ColumnTypeEnumFixedString,
+			schema.ColumnTypeEnumDateTime64:
 			value = ""
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.NE(tblFieldName, value), nil
 			} else {
 				return sb.E(tblFieldName, value), nil
 			}
-		case schema.ColumnTypeUInt64,
-			schema.ColumnTypeUInt32,
-			schema.ColumnTypeUInt8,
-			schema.ColumnTypeInt8,
-			schema.ColumnTypeInt16,
-			schema.ColumnTypeBool:
+		case schema.ColumnTypeEnumLowCardinality:
+			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+			case schema.ColumnTypeEnumString:
+				value = ""
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.NE(tblFieldName, value), nil
+				}
+				return sb.E(tblFieldName, value), nil
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+			}
+
+		case schema.ColumnTypeEnumUInt64,
+			schema.ColumnTypeEnumUInt32,
+			schema.ColumnTypeEnumUInt8,
+			schema.ColumnTypeEnumInt8,
+			schema.ColumnTypeEnumInt16,
+			schema.ColumnTypeEnumBool:
 			value = 0
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.NE(tblFieldName, value), nil
 			} else {
 				return sb.E(tblFieldName, value), nil
 			}
-		case schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
-		}, schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeBool,
-		}, schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeFloat64,
-		}:
-			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
-			if key.Materialized {
-				leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+		case schema.ColumnTypeEnumMap:
+			keyType := column.Type.(schema.MapColumnType).KeyType
+			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 			}
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.E(leftOperand, true), nil
-			} else {
-				return sb.NE(leftOperand, true), nil
+
+			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
+				leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
+				if key.Materialized {
+					leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+				}
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.E(leftOperand, true), nil
+				} else {
+					return sb.NE(leftOperand, true), nil
+				}
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
 			}
 		default:
-			return "", fmt.Errorf("exists operator is not supported for column type %s", column.Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
 		}
 	}
 	return "", nil
@@ -224,9 +238,11 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	startNs uint64,
+	_ uint64,
 ) (string, error) {
 	if c.isSpanScopeField(key.Name) {
-		return c.buildSpanScopeCondition(key, operator, value)
+		return c.buildSpanScopeCondition(key, operator, value, startNs)
 	}
 
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
@@ -258,7 +274,7 @@ func (c *conditionBuilder) isSpanScopeField(name string) bool {
 	return keyName == SpanSearchScopeRoot || keyName == SpanSearchScopeEntryPoint
 }
 
-func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, error) {
+func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, startNs uint64) (string, error) {
 	if operator != qbtypes.FilterOperatorEqual {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s only supports '=' operator", key.Name)
 	}
@@ -282,8 +298,15 @@ func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.Telemetry
 	case SpanSearchScopeRoot:
 		return "parent_span_id = ''", nil
 	case SpanSearchScopeEntryPoint:
-		return fmt.Sprintf("((name, resource_string_service$$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
-			DBName, TopLevelOperationsTableName), nil
+		if startNs > 0 { // only add time filter if it is a valid time, else do not add
+			startS := int64(startNs / 1_000_000_000)
+			// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+			return sqlbuilder.Escape(fmt.Sprintf("((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s WHERE time >= toDateTime(%d))) AND parent_span_id != ''",
+				DBName, TopLevelOperationsTableName, startS)), nil
+		}
+		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+		return sqlbuilder.Escape(fmt.Sprintf("((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
+			DBName, TopLevelOperationsTableName)), nil
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid span search scope: %s", key.Name)
 	}

@@ -30,6 +30,11 @@
 		display: flex;
 		flex-direction: column;
 	}
+	.view-title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
 
 	.views-tabs-container {
 		padding: 16px 15px;
@@ -37,7 +42,8 @@
 		align-items: center;
 		justify-content: space-between;
 		.open-in-explorer {
-			width: 30px;
+			display: flex;
+			align-items: center;
 			height: 30px;
 			border-radius: 2px;
 			border: 1px solid var(--bg-slate-400);
@@ -87,28 +93,10 @@
 		}
 	}
 
-	.infra-placeholder {
-		height: 50vh;
-		width: 100%;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		padding: 2rem;
-		box-sizing: border-box;
-
-		.infra-placeholder-content {
-			text-align: center;
-			color: var(--bg-slate-400);
-
-			svg {
-				margin-bottom: 1rem;
-				color: var(--bg-slate-400);
-			}
-
-			.ant-typography {
-				font-size: 16px;
-				color: var(--bg-slate-400);
-			}
+	.infra-metrics-container {
+		padding-inline: 16px;
+		.infra-metrics-card {
+			border: 1px solid var(--bg-slate-400);
 		}
 	}
 }

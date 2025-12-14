@@ -68,12 +68,14 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
-			name: "Map column type - resource attribute - legacy",
+			name: "Map column type - resource attribute - materialized",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "service.name",
-				FieldContext: telemetrytypes.FieldContextResource,
+				Name:          "deployment.environment",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
 			},
-			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedResult: "multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, `resource_string_deployment$$environment_exists`==true, `resource_string_deployment$$environment`, NULL)",
 			expectedError:  nil,
 		},
 		{

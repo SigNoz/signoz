@@ -42,3 +42,22 @@
 	background-position: center;
 	margin-left: 8px;
 }
+
+.lightMode {
+	.step-number {
+		background-color: var(--bg-robin-400);
+		color: var(--text-slate-400);
+	}
+
+	.step-label {
+		color: var(--bg-ink-300);
+	}
+
+	.dotted-line {
+		background-image: radial-gradient(
+			circle,
+			var(--bg-ink-200) 1px,
+			transparent 1px
+		);
+	}
+}

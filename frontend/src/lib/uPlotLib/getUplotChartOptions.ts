@@ -36,6 +36,7 @@ import { getYAxisScale } from './utils/getYAxisScale';
 interface ExtendedUPlot extends uPlot {
 	_legendScrollCleanup?: () => void;
 	_tooltipCleanup?: () => void;
+	_legendElementCleanup?: Array<() => void>;
 }
 
 export interface GetUPlotChartOptions {
@@ -46,6 +47,7 @@ export interface GetUPlotChartOptions {
 	panelType?: PANEL_TYPES;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	graphsVisibilityStates?: boolean[];
 	setGraphsVisibilityStates?: FullViewProps['setGraphsVisibilityStates'];
@@ -191,6 +193,7 @@ export const getUPlotChartOptions = ({
 	apiResponse,
 	onDragSelect,
 	yAxisUnit,
+	decimalPrecision,
 	minTimeScale,
 	maxTimeScale,
 	onClickHandler = _noop,
@@ -282,10 +285,11 @@ export const getUPlotChartOptions = ({
 		cursor: {
 			lock: false,
 			focus: {
-				prox: 1e6,
+				prox: 25,
 				bias: 1,
 			},
 			points: {
+				one: true,
 				size: (u, seriesIdx): number => u.series[seriesIdx].points.size * 3,
 				width: (u, seriesIdx, size): number => size / 4,
 				stroke: (u, seriesIdx): string =>
@@ -358,6 +362,7 @@ export const getUPlotChartOptions = ({
 				colorMapping,
 				customTooltipElement,
 				query: query || currentQuery,
+				decimalPrecision,
 			}),
 			onClickPlugin({
 				onClick: onClickHandler,
@@ -390,14 +395,25 @@ export const getUPlotChartOptions = ({
 		hooks: {
 			draw: [
 				(u): void => {
-					if (isAnomalyRule) {
+					if (isAnomalyRule || !thresholds?.length) {
 						return;
 					}
 
-					thresholds?.forEach((threshold) => {
+					const { ctx } = u;
+					const { left: plotLeft, width: plotWidth } = u.bbox;
+					const plotRight = plotLeft + plotWidth;
+					const canvasHeight = ctx.canvas.height;
+					const threshold90Percent = canvasHeight * 0.9;
+
+					// Single save/restore for all thresholds
+					ctx.save();
+					ctx.lineWidth = 2;
+					ctx.setLineDash([10, 5]);
+
+					for (let i = 0; i < thresholds.length; i++) {
+						const threshold = thresholds[i];
 						if (threshold.thresholdValue !== undefined) {
-							const { ctx } = u;
-							ctx.save();
+							const color = threshold.thresholdColor || 'red';
 							const yPos = u.valToPos(
 								convertValue(
 									threshold.thresholdValue,
@@ -407,41 +423,40 @@ export const getUPlotChartOptions = ({
 								'y',
 								true,
 							);
-							ctx.strokeStyle = threshold.thresholdColor || 'red';
-							ctx.lineWidth = 2;
-							ctx.setLineDash([10, 5]);
+
+							// Draw threshold line
+							ctx.strokeStyle = color;
 							ctx.beginPath();
-							const plotLeft = u.bbox.left; // left edge of the plot area
-							const plotRight = plotLeft + u.bbox.width; // right edge of the plot area
 							ctx.moveTo(plotLeft, yPos);
 							ctx.lineTo(plotRight, yPos);
 							ctx.stroke();
-							// Text configuration
+
+							// Draw threshold label if present
 							if (threshold.thresholdLabel) {
-								const text = threshold.thresholdLabel;
-								const textX = plotRight - ctx.measureText(text).width - 20;
-								const canvasHeight = ctx.canvas.height;
+								const textWidth = ctx.measureText(threshold.thresholdLabel).width;
+								const textX = plotRight - textWidth - 20;
 								const yposHeight = canvasHeight - yPos;
-								const isHeightGreaterThan90Percent = canvasHeight * 0.9 < yposHeight;
-								// Adjust textY based on the condition
-								let textY;
-								if (isHeightGreaterThan90Percent) {
-									textY = yPos + 15; // Below the threshold line
-								} else {
-									textY = yPos - 15; // Above the threshold line
-								}
-								ctx.fillStyle = threshold.thresholdColor || 'red';
-								ctx.fillText(text, textX, textY);
+								const textY = yposHeight > threshold90Percent ? yPos + 15 : yPos - 15;
+
+								ctx.fillStyle = color;
+								ctx.fillText(threshold.thresholdLabel, textX, textY);
 							}
-							ctx.restore();
 						}
-					});
+					}
+
+					ctx.restore();
 				},
 			],
 			setSelect: [
 				(self): void => {
 					const selection = self.select;
 					if (selection) {
+						// Cleanup any visible "View Traces" buttons when drag selection occurs
+						const activeButtons = document.querySelectorAll(
+							'.view-onclick-show-button',
+						);
+						activeButtons.forEach((btn) => btn.remove());
+
 						const startTime = self.posToVal(selection.left, 'x');
 						const endTime = self.posToVal(selection.left + selection.width, 'x');
 
@@ -472,6 +487,9 @@ export const getUPlotChartOptions = ({
 					const legend = self.root.querySelector('.u-legend');
 					if (legend) {
 						const legendElement = legend as HTMLElement;
+
+						// Initialize cleanup array for legend element listeners
+						(self as ExtendedUPlot)._legendElementCleanup = [];
 
 						// Apply enhanced legend styling
 						if (enhancedLegend) {
@@ -548,19 +566,22 @@ export const getUPlotChartOptions = ({
 								// Get the current text content
 								const legendText = seriesLabels[index];
 
-								// Clear the th content and rebuild it
-								thElement.innerHTML = '';
+								// Use DocumentFragment to batch DOM operations
+								const fragment = document.createDocumentFragment();
 
 								// Add back the marker
 								if (markerClone) {
-									thElement.appendChild(markerClone);
+									fragment.appendChild(markerClone);
 								}
 
 								// Create text wrapper
 								const textSpan = document.createElement('span');
 								textSpan.className = 'legend-text';
 								textSpan.textContent = legendText;
-								thElement.appendChild(textSpan);
+								fragment.appendChild(textSpan);
+
+								// Replace the children in a single operation
+								thElement.replaceChildren(fragment);
 
 								// Setup tooltip functionality - check truncation on hover
 								let tooltipElement: HTMLElement | null = null;
@@ -639,6 +660,17 @@ export const getUPlotChartOptions = ({
 								thElement.addEventListener('mouseenter', showTooltip);
 								thElement.addEventListener('mouseleave', hideTooltip);
 
+								// Store cleanup function for tooltip listeners
+								(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
+									thElement.removeEventListener('mouseenter', showTooltip);
+									thElement.removeEventListener('mouseleave', hideTooltip);
+									// Cleanup any lingering tooltip
+									if (tooltipElement) {
+										tooltipElement.remove();
+										tooltipElement = null;
+									}
+								});
+
 								// Add click handlers for marker and text separately
 								const currentMarker = thElement.querySelector('.u-marker');
 								const textElement = thElement.querySelector('.legend-text');
@@ -658,7 +690,7 @@ export const getUPlotChartOptions = ({
 
 								// Marker click handler - checkbox behavior (toggle individual series)
 								if (currentMarker) {
-									currentMarker.addEventListener('click', (e) => {
+									const markerClickHandler = (e: Event): void => {
 										e.stopPropagation?.(); // Prevent event bubbling to text handler
 
 										if (stackChart) {
@@ -680,12 +712,19 @@ export const getUPlotChartOptions = ({
 												return newGraphVisibilityStates;
 											});
 										}
+									};
+
+									currentMarker.addEventListener('click', markerClickHandler);
+
+									// Store cleanup function for marker click listener
+									(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
+										currentMarker.removeEventListener('click', markerClickHandler);
 									});
 								}
 
 								// Text click handler - show only/show all behavior (existing behavior)
 								if (textElement) {
-									textElement.addEventListener('click', (e) => {
+									const textClickHandler = (e: Event): void => {
 										e.stopPropagation?.(); // Prevent event bubbling
 
 										if (stackChart) {
@@ -716,11 +755,45 @@ export const getUPlotChartOptions = ({
 												return newGraphVisibilityStates;
 											});
 										}
+									};
+
+									textElement.addEventListener('click', textClickHandler);
+
+									// Store cleanup function for text click listener
+									(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
+										textElement.removeEventListener('click', textClickHandler);
 									});
 								}
 							}
 						});
 					}
+				},
+			],
+			destroy: [
+				(self): void => {
+					// Clean up legend scroll listener
+					if ((self as ExtendedUPlot)._legendScrollCleanup) {
+						(self as ExtendedUPlot)._legendScrollCleanup?.();
+						(self as ExtendedUPlot)._legendScrollCleanup = undefined;
+					}
+
+					// Clean up tooltip global listener
+					if ((self as ExtendedUPlot)._tooltipCleanup) {
+						(self as ExtendedUPlot)._tooltipCleanup?.();
+						(self as ExtendedUPlot)._tooltipCleanup = undefined;
+					}
+
+					// Clean up all legend element listeners
+					if ((self as ExtendedUPlot)._legendElementCleanup) {
+						(self as ExtendedUPlot)._legendElementCleanup?.forEach((cleanup) => {
+							cleanup();
+						});
+						(self as ExtendedUPlot)._legendElementCleanup = [];
+					}
+
+					// Clean up any remaining tooltips in DOM
+					const existingTooltips = document.querySelectorAll('.legend-tooltip');
+					existingTooltips.forEach((tooltip) => tooltip.remove());
 				},
 			],
 		},

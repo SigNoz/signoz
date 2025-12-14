@@ -12,6 +12,7 @@ import {
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
+import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import { githubLight } from '@uiw/codemirror-theme-github';
@@ -79,6 +80,16 @@ const stopEventsExtension = EditorView.domEventHandlers({
 	},
 });
 
+interface QuerySearchProps {
+	placeholder?: string;
+	onChange: (value: string) => void;
+	queryData: IBuilderQuery;
+	dataSource: DataSource;
+	signalSource?: string;
+	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
+	onRun?: (query: string) => void;
+}
+
 function QuerySearch({
 	placeholder,
 	onChange,
@@ -87,17 +98,8 @@ function QuerySearch({
 	onRun,
 	signalSource,
 	hardcodedAttributeKeys,
-}: {
-	placeholder?: string;
-	onChange: (value: string) => void;
-	queryData: IBuilderQuery;
-	dataSource: DataSource;
-	signalSource?: string;
-	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
-	onRun?: (query: string) => void;
-}): JSX.Element {
+}: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const [query, setQuery] = useState<string>('');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
 	const [activeKey, setActiveKey] = useState<string>('');
 	const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -107,12 +109,12 @@ function QuerySearch({
 		message: '',
 		errors: [],
 	});
-
-	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
+	const isProgrammaticChangeRef = useRef(false);
+	const [isEditorReady, setIsEditorReady] = useState(false);
 	const [isFocused, setIsFocused] = useState(false);
-	const [hasInteractedWithQB, setHasInteractedWithQB] = useState(false);
+	const editorRef = useRef<EditorView | null>(null);
 
-	const handleQueryValidation = (newQuery: string): void => {
+	const handleQueryValidation = useCallback((newQuery: string): void => {
 		try {
 			const validationResponse = validateQuery(newQuery);
 			setValidation(validationResponse);
@@ -123,50 +125,75 @@ function QuerySearch({
 				errors: [error as IDetailedError],
 			});
 		}
-	};
+	}, []);
 
-	// Track if the query was changed externally (from queryData) vs internally (user input)
-	const [isExternalQueryChange, setIsExternalQueryChange] = useState(false);
-	const [lastExternalQuery, setLastExternalQuery] = useState<string>('');
+	const getCurrentQuery = useCallback(
+		(): string => editorRef.current?.state.doc.toString() || '',
+		[],
+	);
 
-	useEffect(() => {
-		const newQuery = queryData.filter?.expression || '';
-		// Only update query from external source when editor is not focused
-		// When focused, just update the lastExternalQuery to track changes
-		if (newQuery !== lastExternalQuery) {
-			setQuery(newQuery);
-			setIsExternalQueryChange(true);
-			setLastExternalQuery(newQuery);
-		}
+	const updateEditorValue = useCallback(
+		(value: string, options: { skipOnChange?: boolean } = {}): void => {
+			const view = editorRef.current;
+			if (!view) return;
+
+			const currentValue = view.state.doc.toString();
+			if (currentValue === value) return;
+
+			if (options.skipOnChange) {
+				isProgrammaticChangeRef.current = true;
+			}
+
+			view.dispatch({
+				changes: {
+					from: 0,
+					to: currentValue.length,
+					insert: value,
+				},
+				selection: {
+					anchor: value.length,
+				},
+			});
+		},
+		[],
+	);
+
+	const handleEditorCreate = useCallback((view: EditorView): void => {
+		editorRef.current = view;
+		setIsEditorReady(true);
+	}, []);
+
+	useEffect(
+		() => {
+			if (!isEditorReady) return;
+
+			const newQuery = queryData.filter?.expression || '';
+			const currentQuery = getCurrentQuery();
+
+			/* eslint-disable-next-line sonarjs/no-collapsible-if */
+			if (newQuery !== currentQuery && !isFocused) {
+				// Prevent clearing a non-empty editor when queryData becomes empty temporarily
+				// Only update if newQuery has a value, or if both are empty (initial state)
+				if (newQuery || !currentQuery) {
+					updateEditorValue(newQuery, { skipOnChange: true });
+
+					if (newQuery) {
+						handleQueryValidation(newQuery);
+					}
+				}
+			}
+		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [queryData.filter?.expression]);
-
-	useEffect(() => {
-		// Update the query when the editor is blurred and the query has changed
-		// Only call onChange if the editor has been focused before (not on initial mount)
-		if (
-			!isFocused &&
-			hasInteractedWithQB &&
-			query !== queryData.filter?.expression
-		) {
-			onChange(query);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isFocused]);
-
-	// Validate query when it changes externally (from queryData)
-	useEffect(() => {
-		if (isExternalQueryChange && query) {
-			handleQueryValidation(query);
-			setIsExternalQueryChange(false);
-		}
-	}, [isExternalQueryChange, query]);
+		[isEditorReady, queryData.filter?.expression, isFocused],
+	);
 
 	const [keySuggestions, setKeySuggestions] = useState<
 		QueryKeyDataSuggestionsProps[] | null
 	>(null);
 
 	const [showExamples] = useState(false);
+
+	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
 
 	const [
 		isFetchingCompleteValuesList,
@@ -175,15 +202,10 @@ function QuerySearch({
 
 	const lastPosRef = useRef<{ line: number; ch: number }>({ line: 0, ch: 0 });
 
-	// Reference to the editor view for programmatic autocompletion
-	const editorRef = useRef<EditorView | null>(null);
 	const lastKeyRef = useRef<string>('');
 	const lastFetchedKeyRef = useRef<string>('');
 	const lastValueRef = useRef<string>('');
 	const isMountedRef = useRef<boolean>(true);
-	const [shouldRunQueryPostUpdate, setShouldRunQueryPostUpdate] = useState(
-		false,
-	);
 
 	const { handleRunQuery } = useQueryBuilder();
 
@@ -229,7 +251,6 @@ function QuerySearch({
 
 			return (): void => clearTimeout(timeoutId);
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[isFocused],
 	);
 
@@ -526,6 +547,7 @@ function QuerySearch({
 
 		if (!editorRef.current) {
 			editorRef.current = viewUpdate.view;
+			setIsEditorReady(true);
 		}
 
 		const selection = viewUpdate.view.state.selection.main;
@@ -541,7 +563,15 @@ function QuerySearch({
 		const lastPos = lastPosRef.current;
 
 		if (newPos.line !== lastPos.line || newPos.ch !== lastPos.ch) {
-			setCursorPos(newPos);
+			setCursorPos((lastPos) => {
+				if (newPos.ch !== lastPos.ch && newPos.ch === 0) {
+					Sentry.captureEvent({
+						message: `Cursor jumped to start of line from ${lastPos.ch} to ${newPos.ch}`,
+						level: 'warning',
+					});
+				}
+				return newPos;
+			});
 			lastPosRef.current = newPos;
 
 			if (doc) {
@@ -574,15 +604,17 @@ function QuerySearch({
 	}, []);
 
 	const handleChange = (value: string): void => {
-		setQuery(value);
-		// Mark as internal change to avoid triggering external validation
-		setIsExternalQueryChange(false);
-		// Update lastExternalQuery to prevent external validation trigger
-		setLastExternalQuery(value);
+		if (isProgrammaticChangeRef.current) {
+			isProgrammaticChangeRef.current = false;
+			return;
+		}
+
+		onChange(value);
 	};
 
 	const handleBlur = (): void => {
-		handleQueryValidation(query);
+		const currentQuery = getCurrentQuery();
+		handleQueryValidation(currentQuery);
 		setIsFocused(false);
 	};
 
@@ -601,12 +633,11 @@ function QuerySearch({
 
 	const handleExampleClick = (exampleQuery: string): void => {
 		// If there's an existing query, append the example with AND
-		const newQuery = query ? `${query} AND ${exampleQuery}` : exampleQuery;
-		setQuery(newQuery);
-		// Mark as internal change to avoid triggering external validation
-		setIsExternalQueryChange(false);
-		// Update lastExternalQuery to prevent external validation trigger
-		setLastExternalQuery(newQuery);
+		const currentQuery = getCurrentQuery();
+		const newQuery = currentQuery
+			? `${currentQuery} AND ${exampleQuery}`
+			: exampleQuery;
+		updateEditorValue(newQuery);
 	};
 
 	// Helper function to render a badge for the current context mode
@@ -641,8 +672,10 @@ function QuerySearch({
 		const word = context.matchBefore(/[a-zA-Z0-9_.:/?&=#%\-\[\]]*/);
 		if (word?.from === word?.to && !context.explicit) return null;
 
+		// Get current query from editor
+		const currentQuery = editorRef.current?.state.doc.toString() || '';
 		// Get the query context at the cursor position
-		const queryContext = getQueryContextAtCursor(query, cursorPos.ch);
+		const queryContext = getQueryContextAtCursor(currentQuery, cursorPos.ch);
 
 		// Define autocomplete options based on the context
 		let options: {
@@ -1138,7 +1171,8 @@ function QuerySearch({
 
 		if (queryContext.isInParenthesis) {
 			// Different suggestions based on the context within parenthesis or bracket
-			const curChar = query.charAt(cursorPos.ch - 1) || '';
+			const currentQuery = editorRef.current?.state.doc.toString() || '';
+			const curChar = currentQuery.charAt(cursorPos.ch - 1) || '';
 
 			if (curChar === '(' || curChar === '[') {
 				// Right after opening parenthesis/bracket
@@ -1238,25 +1272,6 @@ function QuerySearch({
 		</div>
 	);
 
-	// Effect to handle query run after update
-	useEffect(
-		() => {
-			// Only run the query post updating the filter expression.
-			// This runs the query in the next update cycle of react, when it's guaranteed that the query is updated.
-			// Because both the things are sequential and react batches the updates so it was still taking the old query.
-			if (shouldRunQueryPostUpdate) {
-				if (onRun && typeof onRun === 'function') {
-					onRun(query);
-				} else {
-					handleRunQuery();
-				}
-				setShouldRunQueryPostUpdate(false);
-			}
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[shouldRunQueryPostUpdate, handleRunQuery, onRun],
-	);
-
 	return (
 		<div className="code-mirror-where-clause">
 			{editingMode && (
@@ -1306,7 +1321,7 @@ function QuerySearch({
 						style={{
 							position: 'absolute',
 							top: 8,
-							right: validation.isValid === false && query ? 40 : 8, // Move left when error shown
+							right: validation.isValid === false && getCurrentQuery() ? 40 : 8, // Move left when error shown
 							cursor: 'help',
 							zIndex: 10,
 							transition: 'right 0.2s ease',
@@ -1327,11 +1342,10 @@ function QuerySearch({
 				</Tooltip>
 
 				<CodeMirror
-					value={query}
 					theme={isDarkMode ? copilot : githubLight}
 					onChange={handleChange}
 					onUpdate={handleUpdate}
-					data-testid="query-where-clause-editor"
+					onCreateEditor={handleEditorCreate}
 					className={cx('query-where-clause-editor', {
 						isValid: validation.isValid === true,
 						hasErrors: validation.errors.length > 0,
@@ -1368,14 +1382,11 @@ function QuerySearch({
 									// and instead run a custom action
 									// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
 									run: (): boolean => {
-										if (
-											onChange &&
-											typeof onChange === 'function' &&
-											query !== queryData.filter?.expression
-										) {
-											onChange(query);
+										if (onRun && typeof onRun === 'function') {
+											onRun(getCurrentQuery());
+										} else {
+											handleRunQuery();
 										}
-										setShouldRunQueryPostUpdate(true);
 										return true;
 									},
 								},
@@ -1394,16 +1405,11 @@ function QuerySearch({
 					}}
 					onFocus={(): void => {
 						setIsFocused(true);
-						setHasInteractedWithQB(true);
 					}}
 					onBlur={handleBlur}
-					onCreateEditor={(view: EditorView): EditorView => {
-						editorRef.current = view;
-						return view;
-					}}
 				/>
 
-				{query && validation.isValid === false && !isFocused && (
+				{getCurrentQuery() && validation.isValid === false && !isFocused && (
 					<div
 						className={cx('query-status-container', {
 							hasErrors: validation.errors.length > 0,

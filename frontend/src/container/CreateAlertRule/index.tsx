@@ -2,6 +2,7 @@ import { Form, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
+import CreateAlertV2 from 'container/CreateAlertV2';
 import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
@@ -123,6 +124,16 @@ function CreateRules(): JSX.Element {
 				<SelectAlertType onSelect={onSelectType} />
 			</Row>
 		);
+	}
+
+	const showNewCreateAlertsPageFlag =
+		queryParams.get('showNewCreateAlertsPage') === 'true';
+
+	if (
+		showNewCreateAlertsPageFlag &&
+		alertType !== AlertTypes.ANOMALY_BASED_ALERT
+	) {
+		return <CreateAlertV2 alertType={alertType} />;
 	}
 
 	return (

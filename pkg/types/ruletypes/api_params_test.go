@@ -2,9 +2,10 @@ package ruletypes
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
@@ -303,10 +304,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 					t.Errorf("Expected threshold name 'warning' from severity label, got '%s'", spec.Name)
 				}
 
-				// Verify all fields are copied from RuleCondition
-				if spec.RuleUnit != "percent" {
-					t.Errorf("Expected RuleUnit 'percent', got '%s'", spec.RuleUnit)
-				}
 				if spec.TargetUnit != "%" {
 					t.Errorf("Expected TargetUnit '%%', got '%s'", spec.TargetUnit)
 				}
@@ -454,9 +451,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 				}
 				if spec.TargetUnit != "%" {
 					t.Errorf("Expected TargetUnit '%%' (overwritten), got '%s'", spec.TargetUnit)
-				}
-				if spec.RuleUnit != "percent" {
-					t.Errorf("Expected RuleUnit 'percent' (overwritten), got '%s'", spec.RuleUnit)
 				}
 
 				if rule.Evaluation == nil {
@@ -627,12 +621,12 @@ func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 	}
 
 	// Test that threshold can evaluate properly
-	vector, err := threshold.ShouldAlert(v3.Series{
+	vector, err := threshold.Eval(v3.Series{
 		Points: []v3.Point{{Value: 0.15, Timestamp: 1000}}, // 150ms in seconds
 		Labels: map[string]string{"test": "label"},
-	})
+	}, "", EvalData{})
 	if err != nil {
-		t.Fatalf("Unexpected error in ShouldAlert: %v", err)
+		t.Fatalf("Unexpected error in shouldAlert: %v", err)
 	}
 
 	if len(vector) == 0 {
@@ -704,23 +698,373 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 	}
 
 	// Test with a value that should trigger both WARNING and CRITICAL thresholds
-	vector, err := threshold.ShouldAlert(v3.Series{
+	vector, err := threshold.Eval(v3.Series{
 		Points: []v3.Point{{Value: 95.0, Timestamp: 1000}}, // 95% CPU usage
 		Labels: map[string]string{"service": "test"},
-	})
+	}, "", EvalData{})
 	if err != nil {
-		t.Fatalf("Unexpected error in ShouldAlert: %v", err)
+		t.Fatalf("Unexpected error in shouldAlert: %v", err)
 	}
 
 	assert.Equal(t, 2, len(vector))
 
-	vector, err = threshold.ShouldAlert(v3.Series{
+	vector, err = threshold.Eval(v3.Series{
 		Points: []v3.Point{{Value: 75.0, Timestamp: 1000}}, // 75% CPU usage
 		Labels: map[string]string{"service": "test"},
-	})
+	}, "", EvalData{})
 	if err != nil {
-		t.Fatalf("Unexpected error in ShouldAlert: %v", err)
+		t.Fatalf("Unexpected error in shouldAlert: %v", err)
 	}
 
 	assert.Equal(t, 1, len(vector))
+}
+
+func TestAnomalyNegationEval(t *testing.T) {
+	tests := []struct {
+		name          string
+		ruleJSON      []byte
+		series        v3.Series
+		shouldAlert   bool
+		expectedValue float64
+	}{
+		{
+			name: "anomaly rule with ValueIsBelow - should alert",
+			ruleJSON: []byte(`{
+				"alert": "AnomalyBelowTest",
+				"ruleType": "anomaly_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 2.0,
+					"matchType": "1",
+					"op": "2",
+					"selectedQuery": "A"
+				}
+			}`),
+			series: v3.Series{
+				Labels: map[string]string{"host": "server1"},
+				Points: []v3.Point{
+					{Timestamp: 1000, Value: -2.1}, // below & at least once, should alert
+					{Timestamp: 2000, Value: -2.3},
+				},
+			},
+			shouldAlert:   true,
+			expectedValue: -2.1,
+		},
+		{
+			name: "anomaly rule with ValueIsBelow; should not alert",
+			ruleJSON: []byte(`{
+				"alert": "AnomalyBelowTest",
+				"ruleType": "anomaly_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 2.0,
+					"matchType": "1",
+					"op": "2",
+					"selectedQuery": "A"
+				}
+			}`), // below & at least once, no value below -2.0
+			series: v3.Series{
+				Labels: map[string]string{"host": "server1"},
+				Points: []v3.Point{
+					{Timestamp: 1000, Value: -1.9},
+					{Timestamp: 2000, Value: -1.8},
+				},
+			},
+			shouldAlert: false,
+		},
+		{
+			name: "anomaly rule with ValueIsAbove; should alert",
+			ruleJSON: []byte(`{
+				"alert": "AnomalyAboveTest",
+				"ruleType": "anomaly_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 2.0,
+					"matchType": "1",
+					"op": "1",
+					"selectedQuery": "A"
+				}
+			}`), // above & at least once, should alert
+			series: v3.Series{
+				Labels: map[string]string{"host": "server1"},
+				Points: []v3.Point{
+					{Timestamp: 1000, Value: 2.1}, // above 2.0, should alert
+					{Timestamp: 2000, Value: 2.2},
+				},
+			},
+			shouldAlert:   true,
+			expectedValue: 2.1,
+		},
+		{
+			name: "anomaly rule with ValueIsAbove; should not alert",
+			ruleJSON: []byte(`{
+				"alert": "AnomalyAboveTest",
+				"ruleType": "anomaly_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 2.0,
+					"matchType": "1",
+					"op": "1",
+					"selectedQuery": "A"
+				}
+			}`),
+			series: v3.Series{
+				Labels: map[string]string{"host": "server1"},
+				Points: []v3.Point{
+					{Timestamp: 1000, Value: 1.1},
+					{Timestamp: 2000, Value: 1.2},
+				},
+			},
+			shouldAlert: false,
+		},
+		{
+			name: "anomaly rule with ValueIsBelow and AllTheTimes; should alert",
+			ruleJSON: []byte(`{
+				"alert": "AnomalyBelowAllTest",
+				"ruleType": "anomaly_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 2.0,
+					"matchType": "2",
+					"op": "2",
+					"selectedQuery": "A"
+				}
+			}`), // below and all the times
+			series: v3.Series{
+				Labels: map[string]string{"host": "server1"},
+				Points: []v3.Point{
+					{Timestamp: 1000, Value: -2.1}, // all below -2
+					{Timestamp: 2000, Value: -2.2},
+					{Timestamp: 3000, Value: -2.5},
+				},
+			},
+			shouldAlert:   true,
+			expectedValue: -2.1, // max value when all are below threshold
+		},
+		{
+			name: "anomaly rule with ValueIsBelow and AllTheTimes; should not alert",
+			ruleJSON: []byte(`{
+				"alert": "AnomalyBelowAllTest",
+				"ruleType": "anomaly_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 2.0,
+					"matchType": "2",
+					"op": "2",
+					"selectedQuery": "A"
+				}
+			}`),
+			series: v3.Series{
+				Labels: map[string]string{"host": "server1"},
+				Points: []v3.Point{
+					{Timestamp: 1000, Value: -3.0},
+					{Timestamp: 2000, Value: -1.0}, // above -2, breaks condition
+					{Timestamp: 3000, Value: -2.5},
+				},
+			},
+			shouldAlert: false,
+		},
+		{
+			name: "anomaly rule with ValueOutsideBounds; should alert",
+			ruleJSON: []byte(`{
+				"alert": "AnomalyOutOfBoundsTest",
+				"ruleType": "anomaly_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 7.0,
+					"matchType": "1",
+					"op": "7",
+					"selectedQuery": "A"
+				}
+			}`),
+			series: v3.Series{
+				Labels: map[string]string{"host": "server1"},
+				Points: []v3.Point{
+					{Timestamp: 1000, Value: -8.0}, // abs(−8) >= 7, alert
+					{Timestamp: 2000, Value: 5.0},
+				},
+			},
+			shouldAlert:   true,
+			expectedValue: -8.0,
+		},
+		{
+			name: "non-anomaly threshold rule with ValueIsBelow; should alert",
+			ruleJSON: []byte(`{
+				"alert": "ThresholdTest",
+				"ruleType": "threshold_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 90.0,
+					"matchType": "1",
+					"op": "2",
+					"selectedQuery": "A"
+				}
+			}`),
+			series: v3.Series{
+				Labels: map[string]string{"host": "server1"},
+				Points: []v3.Point{
+					{Timestamp: 1000, Value: 80.0}, // below 90, should alert
+					{Timestamp: 2000, Value: 85.0},
+				},
+			},
+			shouldAlert:   true,
+			expectedValue: 80.0,
+		},
+		{
+			name: "non-anomaly rule with ValueIsBelow - should not alert",
+			ruleJSON: []byte(`{
+				"alert": "ThresholdTest",
+				"ruleType": "threshold_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 50.0,
+					"matchType": "1",
+					"op": "2",
+					"selectedQuery": "A"
+				}
+			}`),
+			series: v3.Series{
+				Labels: map[string]string{"host": "server1"},
+				Points: []v3.Point{
+					{Timestamp: 1000, Value: 60.0}, // below, should alert
+					{Timestamp: 2000, Value: 90.0},
+				},
+			},
+			shouldAlert: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rule := PostableRule{}
+			err := json.Unmarshal(tt.ruleJSON, &rule)
+			if err != nil {
+				t.Fatalf("Failed to unmarshal rule: %v", err)
+			}
+
+			ruleThreshold, err := rule.RuleCondition.Thresholds.GetRuleThreshold()
+			if err != nil {
+				t.Fatalf("unexpected error from GetRuleThreshold: %v", err)
+			}
+
+			resultVector, err := ruleThreshold.Eval(tt.series, "", EvalData{})
+			if err != nil {
+				t.Fatalf("unexpected error from Eval: %v", err)
+			}
+
+			shouldAlert := len(resultVector) > 0
+
+			if shouldAlert != tt.shouldAlert {
+				t.Errorf("Expected shouldAlert=%v, got %v. %s",
+					tt.shouldAlert, shouldAlert, tt.name)
+			}
+
+			if tt.shouldAlert && len(resultVector) > 0 {
+				sample := resultVector[0]
+				if sample.V != tt.expectedValue {
+					t.Errorf("Expected alert value=%.2f, got %.2f. %s",
+						tt.expectedValue, sample.V, tt.name)
+				}
+			}
+		})
+	}
 }

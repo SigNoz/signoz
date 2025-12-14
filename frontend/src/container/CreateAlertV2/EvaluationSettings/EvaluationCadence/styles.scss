@@ -164,6 +164,14 @@
 							background-color: var(--bg-ink-300);
 							border: 1px solid var(--bg-slate-400);
 							color: var(--bg-vanilla-100);
+
+							&:hover {
+								border-color: var(--bg-vanilla-300);
+							}
+
+							&:focus {
+								border-color: var(--bg-vanilla-300);
+							}
 						}
 					}
 
@@ -529,6 +537,15 @@
 								background-color: var(--bg-vanilla-300);
 								border: 1px solid var(--bg-vanilla-300);
 								color: var(--bg-ink-400);
+
+								&:hover {
+									border-color: var(--bg-ink-300);
+								}
+
+								&:focus {
+									border-color: var(--bg-ink-300);
+									box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+								}
 							}
 						}
 

@@ -1,4 +1,4 @@
-import { Button, Popover, Tooltip, Typography } from 'antd';
+import { Tooltip, Typography } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 import { Info } from 'lucide-react';
 
@@ -10,46 +10,46 @@ function NotificationMessage(): JSX.Element {
 		setNotificationSettings,
 	} = useCreateAlertState();
 
-	const templateVariables = [
-		{ variable: '{{alertname}}', description: 'Name of the alert rule' },
-		{
-			variable: '{{value}}',
-			description: 'Current value that triggered the alert',
-		},
-		{
-			variable: '{{threshold}}',
-			description: 'Threshold value from alert condition',
-		},
-		{ variable: '{{unit}}', description: 'Unit of measurement for the metric' },
-		{
-			variable: '{{severity}}',
-			description: 'Alert severity level (Critical, Warning, Info)',
-		},
-		{
-			variable: '{{queryname}}',
-			description: 'Name of the query that triggered the alert',
-		},
-		{
-			variable: '{{labels}}',
-			description: 'All labels associated with the alert',
-		},
-		{
-			variable: '{{timestamp}}',
-			description: 'Timestamp when alert was triggered',
-		},
-	];
+	// const templateVariables = [
+	// 	{ variable: '{{alertname}}', description: 'Name of the alert rule' },
+	// 	{
+	// 		variable: '{{value}}',
+	// 		description: 'Current value that triggered the alert',
+	// 	},
+	// 	{
+	// 		variable: '{{threshold}}',
+	// 		description: 'Threshold value from alert condition',
+	// 	},
+	// 	{ variable: '{{unit}}', description: 'Unit of measurement for the metric' },
+	// 	{
+	// 		variable: '{{severity}}',
+	// 		description: 'Alert severity level (Critical, Warning, Info)',
+	// 	},
+	// 	{
+	// 		variable: '{{queryname}}',
+	// 		description: 'Name of the query that triggered the alert',
+	// 	},
+	// 	{
+	// 		variable: '{{labels}}',
+	// 		description: 'All labels associated with the alert',
+	// 	},
+	// 	{
+	// 		variable: '{{timestamp}}',
+	// 		description: 'Timestamp when alert was triggered',
+	// 	},
+	// ];
 
-	const templateVariableContent = (
-		<div className="template-variable-content">
-			<Typography.Text strong>Available Template Variables:</Typography.Text>
-			{templateVariables.map((item) => (
-				<div className="template-variable-content-item" key={item.variable}>
-					<code>{item.variable}</code>
-					<Typography.Text>{item.description}</Typography.Text>
-				</div>
-			))}
-		</div>
-	);
+	// const templateVariableContent = (
+	// 	<div className="template-variable-content">
+	// 		<Typography.Text strong>Available Template Variables:</Typography.Text>
+	// 		{templateVariables.map((item) => (
+	// 			<div className="template-variable-content-item" key={item.variable}>
+	// 				<code>{item.variable}</code>
+	// 				<Typography.Text>{item.description}</Typography.Text>
+	// 			</div>
+	// 		))}
+	// 	</div>
+	// );
 
 	return (
 		<div className="notification-message-container">
@@ -67,12 +67,13 @@ function NotificationMessage(): JSX.Element {
 					</Typography.Text>
 				</div>
 				<div className="notification-message-header-actions">
-					<Popover content={templateVariableContent}>
+					{/* TODO: Add back when the functionality is implemented */}
+					{/* <Popover content={templateVariableContent}>
 						<Button type="text">
 							<Info size={12} />
 							Variables
 						</Button>
-					</Popover>
+					</Popover> */}
 				</div>
 			</div>
 			<TextArea

@@ -18,7 +18,7 @@ type UUID struct {
 func NewUUID(value string) (UUID, error) {
 	val, err := uuid.Parse(value)
 	if err != nil {
-		return UUID{}, err
+		return UUID{}, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidValuer, "invalid uuid %s", value).WithAdditional(err.Error())
 	}
 
 	return UUID{
@@ -29,7 +29,7 @@ func NewUUID(value string) (UUID, error) {
 func NewUUIDFromBytes(value []byte) (UUID, error) {
 	val, err := uuid.FromBytes(value)
 	if err != nil {
-		return UUID{}, err
+		return UUID{}, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidValuer, "invalid uuid %s", value).WithAdditional(err.Error())
 	}
 
 	return UUID{
@@ -135,4 +135,8 @@ func (enum *UUID) UnmarshalText(text []byte) error {
 
 	*enum = uuid
 	return nil
+}
+
+func (enum UUID) MarshalText() (text []byte, err error) {
+	return []byte(enum.StringValue()), nil
 }

@@ -80,8 +80,8 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 		jwt := authtypes.Claims{
 			UserID: user.ID.String(),
 			Role:   apiKey.Role,
-			Email:  user.Email,
-			OrgID:  user.OrgID,
+			Email:  user.Email.String(),
+			OrgID:  user.OrgID.String(),
 		}
 
 		ctx = authtypes.NewContextWithClaims(ctx, jwt)

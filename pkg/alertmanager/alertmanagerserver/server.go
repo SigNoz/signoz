@@ -7,7 +7,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/alertmanager/types"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/dispatch"
@@ -50,29 +54,31 @@ type Server struct {
 	stateStore alertmanagertypes.StateStore
 
 	// alertmanager primitives from upstream alertmanager
-	alerts            *mem.Alerts
-	nflog             *nflog.Log
-	dispatcher        *dispatch.Dispatcher
-	dispatcherMetrics *dispatch.DispatcherMetrics
-	inhibitor         *inhibit.Inhibitor
-	silencer          *silence.Silencer
-	silences          *silence.Silences
-	timeIntervals     map[string][]timeinterval.TimeInterval
-	pipelineBuilder   *notify.PipelineBuilder
-	marker            *alertmanagertypes.MemMarker
-	tmpl              *template.Template
-	wg                sync.WaitGroup
-	stopc             chan struct{}
+	alerts              *mem.Alerts
+	nflog               *nflog.Log
+	dispatcher          *Dispatcher
+	dispatcherMetrics   *DispatcherMetrics
+	inhibitor           *inhibit.Inhibitor
+	silencer            *silence.Silencer
+	silences            *silence.Silences
+	timeIntervals       map[string][]timeinterval.TimeInterval
+	pipelineBuilder     *notify.PipelineBuilder
+	marker              *alertmanagertypes.MemMarker
+	tmpl                *template.Template
+	wg                  sync.WaitGroup
+	stopc               chan struct{}
+	notificationManager nfmanager.NotificationManager
 }
 
-func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore) (*Server, error) {
+func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, nfManager nfmanager.NotificationManager) (*Server, error) {
 	server := &Server{
-		logger:     logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
-		registry:   registry,
-		srvConfig:  srvConfig,
-		orgID:      orgID,
-		stateStore: stateStore,
-		stopc:      make(chan struct{}),
+		logger:              logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
+		registry:            registry,
+		srvConfig:           srvConfig,
+		orgID:               orgID,
+		stateStore:          stateStore,
+		stopc:               make(chan struct{}),
+		notificationManager: nfManager,
 	}
 	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
 	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
@@ -190,7 +196,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 	}
 
 	server.pipelineBuilder = notify.NewPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
-	server.dispatcherMetrics = dispatch.NewDispatcherMetrics(false, signozRegisterer)
+	server.dispatcherMetrics = NewDispatcherMetrics(false, signozRegisterer)
 
 	return server, nil
 }
@@ -204,7 +210,6 @@ func (server *Server) GetAlerts(ctx context.Context, params alertmanagertypes.Ge
 
 func (server *Server) PutAlerts(ctx context.Context, postableAlerts alertmanagertypes.PostableAlerts) error {
 	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(postableAlerts, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now())
-
 	// Notification sending alert takes precedence over validation errors.
 	if err := server.alerts.Put(alerts...); err != nil {
 		return err
@@ -295,7 +300,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		return d
 	}
 
-	server.dispatcher = dispatch.NewDispatcher(
+	server.dispatcher = NewDispatcher(
 		server.alerts,
 		routes,
 		pipeline,
@@ -304,6 +309,8 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		nil,
 		server.logger,
 		server.dispatcherMetrics,
+		server.notificationManager,
+		server.orgID,
 	)
 
 	// Do not try to add these to server.wg as there seems to be a race condition if
@@ -317,39 +324,104 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 }
 
 func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
-	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now()))
+	testAlert := alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now())
+	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, testAlert.Labels, testAlert)
 }
 
-func (server *Server) TestAlert(ctx context.Context, postableAlert *alertmanagertypes.PostableAlert, receivers []string) error {
-	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(alertmanagertypes.PostableAlerts{postableAlert}, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now())
+func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmanagertypes.PostableAlert][]string, config *alertmanagertypes.NotificationConfig) error {
+	if len(receiversMap) == 0 {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
+			"expected at least 1 alert, got 0")
+	}
+
+	postableAlerts := make(alertmanagertypes.PostableAlerts, 0, len(receiversMap))
+	for alert := range receiversMap {
+		postableAlerts = append(postableAlerts, alert)
+	}
+
+	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(
+		postableAlerts,
+		time.Duration(server.srvConfig.Global.ResolveTimeout),
+		time.Now(),
+	)
 	if err != nil {
-		return errors.Join(err...)
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
+			"failed to construct alerts from postable alerts: %v", err)
 	}
 
-	if len(alerts) != 1 {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "expected 1 alert, got %d", len(alerts))
+	type alertGroup struct {
+		groupLabels model.LabelSet
+		alerts      []*types.Alert
+		receivers   map[string]struct{}
 	}
 
-	ch := make(chan error, len(receivers))
-	for _, receiverName := range receivers {
-		go func(receiverName string) {
-			receiver, err := server.alertmanagerConfig.GetReceiver(receiverName)
-			if err != nil {
-				ch <- err
-				return
+	groupMap := make(map[model.Fingerprint]*alertGroup)
+
+	for i, alert := range alerts {
+		labels := getGroupLabels(alert, config.NotificationGroup, config.GroupByAll)
+		fp := labels.Fingerprint()
+
+		postableAlert := postableAlerts[i]
+		alertReceivers := receiversMap[postableAlert]
+
+		if group, exists := groupMap[fp]; exists {
+			group.alerts = append(group.alerts, alert)
+			for _, r := range alertReceivers {
+				group.receivers[r] = struct{}{}
 			}
-			ch <- alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, alerts[0])
-		}(receiverName)
-	}
-
-	var errs []error
-	for i := 0; i < len(receivers); i++ {
-		if err := <-ch; err != nil {
-			errs = append(errs, err)
+		} else {
+			receiverSet := make(map[string]struct{})
+			for _, r := range alertReceivers {
+				receiverSet[r] = struct{}{}
+			}
+			groupMap[fp] = &alertGroup{
+				groupLabels: labels,
+				alerts:      []*types.Alert{alert},
+				receivers:   receiverSet,
+			}
 		}
 	}
 
-	if errs != nil {
+	var mu sync.Mutex
+	var errs []error
+
+	g, gCtx := errgroup.WithContext(ctx)
+	for _, group := range groupMap {
+		for receiverName := range group.receivers {
+			group := group
+			receiverName := receiverName
+
+			g.Go(func() error {
+				receiver, err := server.alertmanagerConfig.GetReceiver(receiverName)
+				if err != nil {
+					mu.Lock()
+					errs = append(errs, errors.WrapInternalf(err, errors.CodeInternal, "failed to get receiver %q", receiverName))
+					mu.Unlock()
+					return nil // Return nil to continue processing other goroutines
+				}
+
+				err = alertmanagertypes.TestReceiver(
+					gCtx,
+					receiver,
+					alertmanagernotify.NewReceiverIntegrations,
+					server.alertmanagerConfig,
+					server.tmpl,
+					server.logger,
+					group.groupLabels,
+					group.alerts...,
+				)
+				if err != nil {
+					mu.Lock()
+					errs = append(errs, errors.WrapInternalf(err, errors.CodeInternal, "receiver %q test failed", receiverName))
+					mu.Unlock()
+				}
+				return nil // Return nil to continue processing other goroutines
+			})
+		}
+	}
+	_ = g.Wait()
+
+	if len(errs) > 0 {
 		return errors.Join(errs...)
 	}
 

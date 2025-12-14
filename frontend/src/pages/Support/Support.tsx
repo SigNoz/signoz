@@ -6,9 +6,11 @@ import updateCreditCardApi from 'api/v1/checkout/create';
 import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
 import {
+	ArrowUpRight,
 	Book,
 	CreditCard,
 	Github,
+	LifeBuoy,
 	MessageSquare,
 	Slack,
 	X,
@@ -45,34 +47,38 @@ const supportChannels = [
 	{
 		key: 'documentation',
 		name: 'Documentation',
-		icon: <Book />,
+		icon: <Book size={16} />,
 		title: 'Find answers in the documentation.',
 		url: 'https://signoz.io/docs/',
 		btnText: 'Visit docs',
+		isExternal: true,
 	},
 	{
 		key: 'github',
 		name: 'Github',
-		icon: <Github />,
+		icon: <Github size={16} />,
 		title: 'Create an issue on GitHub to report bugs or request new features.',
 		url: 'https://github.com/SigNoz/signoz/issues',
 		btnText: 'Create issue',
+		isExternal: true,
 	},
 	{
 		key: 'slack_community',
 		name: 'Slack Community',
-		icon: <Slack />,
+		icon: <Slack size={16} />,
 		title: 'Get support from the SigNoz community on Slack.',
 		url: 'https://signoz.io/slack',
 		btnText: 'Join Slack',
+		isExternal: true,
 	},
 	{
 		key: 'chat',
 		name: 'Chat',
-		icon: <MessageSquare />,
+		icon: <MessageSquare size={16} />,
 		title: 'Get quick support directly from the team.',
 		url: '',
 		btnText: 'Launch chat',
+		isExternal: false,
 	},
 ];
 
@@ -182,38 +188,45 @@ export default function Support(): JSX.Element {
 
 	return (
 		<div className="support-page-container">
-			<div className="support-page-header">
-				<Title level={3}> Help & Support </Title>
-				<Text style={{ fontSize: 14 }}>
+			<header className="support-page-header">
+				<div className="support-page-header-title" data-testid="support-page-title">
+					<LifeBuoy size={16} />
+					Support
+				</div>
+			</header>
+
+			<div className="support-page-content">
+				<div className="support-page-content-description">
 					We are here to help in case of questions or issues. Pick the channel that
 					is most convenient for you.
-				</Text>
-			</div>
+				</div>
 
-			<div className="support-channels">
-				{supportChannels.map(
-					(channel): JSX.Element => (
-						<Card className="support-channel" key={channel.key}>
-							<div className="support-channel-content">
-								<Title ellipsis level={5} className="support-channel-title">
-									{channel.icon}
-									{channel.name}{' '}
-								</Title>
-								<Text> {channel.title} </Text>
-							</div>
+				<div className="support-channels">
+					{supportChannels.map(
+						(channel): JSX.Element => (
+							<Card className="support-channel" key={channel.key}>
+								<div className="support-channel-content">
+									<Title ellipsis level={5} className="support-channel-title">
+										{channel.icon}
+										{channel.name}{' '}
+									</Title>
+									<Text> {channel.title} </Text>
+								</div>
 
-							<div className="support-channel-action">
-								<Button
-									type="default"
-									className="periscope-btn secondary"
-									onClick={(): void => handleChannelClick(channel)}
-								>
-									<Text ellipsis>{channel.btnText} </Text>
-								</Button>
-							</div>
-						</Card>
-					),
-				)}
+								<div className="support-channel-action">
+									<Button
+										className="periscope-btn secondary support-channel-btn"
+										type="default"
+										onClick={(): void => handleChannelClick(channel)}
+									>
+										<Text ellipsis>{channel.btnText} </Text>
+										{channel.isExternal && <ArrowUpRight size={14} />}
+									</Button>
+								</div>
+							</Card>
+						),
+					)}
+				</div>
 			</div>
 
 			{/* Add Credit Card Modal */}
