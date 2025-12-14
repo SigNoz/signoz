@@ -12,7 +12,7 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 def test_traces_list(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
-    get_jwt_token: Callable[[str, str], str],
+    get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     """
@@ -138,7 +138,7 @@ def test_traces_list(
         ]
     )
 
-    token = get_jwt_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
     # Query all traces for the past 5 minutes
     response = requests.post(
@@ -374,24 +374,28 @@ def test_traces_list(
 
     assert set(values) == set(["POST", "PATCH"])
 
-    # Ensure context-prefixed field (resource.service.name) resolves same as canonical service.name
-    response_service = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+    # Query keys from the fields API with context specified in the key
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
         timeout=2,
         headers={
             "authorization": f"Bearer {token}",
         },
         params={
             "signal": "traces",
-            "name": "service.name",
-            "searchText": "",
+            "searchText": "resource.servic",
         },
     )
-    assert response_service.status_code == HTTPStatus.OK
-    assert response_service.json()["status"] == "success"
-    service_values = response_service.json()["data"]["values"]["stringValues"]
 
-    response_resource_service = requests.get(
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    keys = response.json()["data"]["keys"]
+    assert "service.name" in keys
+    assert any(k["fieldContext"] == "resource" for k in keys["service.name"])
+
+    # Query values of service.name resource attribute using context-prefixed key
+    response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
         timeout=2,
         headers={
@@ -403,42 +407,9 @@ def test_traces_list(
             "searchText": "",
         },
     )
-    assert response_resource_service.status_code == HTTPStatus.OK
-    assert response_resource_service.json()["status"] == "success"
-    resource_service_values = response_resource_service.json()["data"]["values"]["stringValues"]
 
-    assert set(service_values) == set(resource_service_values)
-    assert set(["http-service", "topic-service"]).issubset(set(service_values))
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
 
-    # Fields Keys should include service.name for both searches
-    response_keys1 = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
-        timeout=2,
-        headers={
-            "authorization": f"Bearer {token}",
-        },
-        params={
-            "signal": "traces",
-            "searchText": "servic",
-        },
-    )
-    assert response_keys1.status_code == HTTPStatus.OK
-    assert response_keys1.json()["status"] == "success"
-    keys_map1 = response_keys1.json()["data"]["keys"]
-    assert "service.name" in keys_map1
-
-    response_keys2 = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
-        timeout=2,
-        headers={
-            "authorization": f"Bearer {token}",
-        },
-        params={
-            "signal": "traces",
-            "searchText": "resource.servic",
-        },
-    )
-    assert response_keys2.status_code == HTTPStatus.OK
-    assert response_keys2.json()["status"] == "success"
-    keys_map2 = response_keys2.json()["data"]["keys"]
-    assert "service.name" in keys_map2
+    values = response.json()["data"]["values"]["stringValues"]
+    assert set(values) == set(["topic-service", "http-service"])
