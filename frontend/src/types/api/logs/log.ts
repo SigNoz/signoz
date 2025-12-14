@@ -4,6 +4,7 @@ export interface ILog {
 	id: string;
 	traceId: string;
 	spanID: string;
+	span_id?: string;
 	traceFlags: number;
 	severityText: string;
 	severityNumber: number;

@@ -157,9 +157,12 @@ function DomainDetails({
 				<div className="domain-details-drawer-header">
 					<div className="domain-details-drawer-header-title">
 						<Divider type="vertical" />
-						<Typography.Text className="title">
-							{domainData.domainName}
-						</Typography.Text>
+
+						{domainData?.domainName && (
+							<Typography.Text className="title">
+								{domainData.domainName}
+							</Typography.Text>
+						)}
 					</div>
 					<div className="domain-details-drawer-header-right-container">
 						<DateTimeSelectionV2

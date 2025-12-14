@@ -84,7 +84,7 @@ export const defaultAddedColumns: IEntityColumn[] = [
 		canRemove: false,
 	},
 	{
-		label: 'Mem Usage',
+		label: 'Mem Usage (WSS)',
 		value: 'memory',
 		id: 'memory',
 		canRemove: false,
@@ -238,10 +238,10 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header small-col">Mem Usage</div>,
+		title: <div className="column-header small-col">Mem Usage (WSS)</div>,
 		dataIndex: 'memory',
 		key: 'memory',
-		width: 80,
+		width: 120,
 		ellipsis: true,
 		sorter: true,
 		align: 'left',

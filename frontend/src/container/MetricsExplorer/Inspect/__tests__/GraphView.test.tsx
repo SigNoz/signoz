@@ -15,12 +15,6 @@ import {
 	TimeAggregationOptions,
 } from '../types';
 
-jest.mock('uplot', () =>
-	jest.fn().mockImplementation(() => ({
-		destroy: jest.fn(),
-	})),
-);
-
 const mockResizeObserver = jest.fn();
 mockResizeObserver.mockImplementation(() => ({
 	observe: (): void => undefined,

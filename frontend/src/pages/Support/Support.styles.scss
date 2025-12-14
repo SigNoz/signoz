@@ -4,7 +4,7 @@
 	padding-right: 48px;
 
 	max-width: 1400px;
-	margin: 0 auto;
+	margin: 64px auto;
 }
 
 .support-channels {
@@ -19,6 +19,7 @@
 	flex: 0 0 calc(33.333% - 32px);
 	min-height: 200px;
 	position: relative;
+	border: none !important;
 
 	.support-channel-title {
 		width: 100%;

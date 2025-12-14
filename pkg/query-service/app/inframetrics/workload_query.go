@@ -7,7 +7,7 @@ var (
 		"cpu":            GetDotMetrics("k8s_pod_cpu_usage"),
 		"cpu_request":    GetDotMetrics("k8s_pod_cpu_request_utilization"),
 		"cpu_limit":      GetDotMetrics("k8s_pod_cpu_limit_utilization"),
-		"memory":         GetDotMetrics("k8s_pod_memory_usage"),
+		"memory":         GetDotMetrics("k8s_pod_memory_working_set"),
 		"memory_request": GetDotMetrics("k8s_pod_memory_request_utilization"),
 		"memory_limit":   GetDotMetrics("k8s_pod_memory_limit_utilization"),
 		"restarts":       GetDotMetrics("k8s_container_restarts"),

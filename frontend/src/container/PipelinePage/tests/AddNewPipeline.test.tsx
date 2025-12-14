@@ -5,20 +5,6 @@ import { PipelineData } from 'types/api/pipeline/def';
 import { pipelineMockData } from '../mocks/pipeline';
 import AddNewPipeline from '../PipelineListsView/AddNewPipeline';
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 export function matchMedia(): void {
 	Object.defineProperty(window, 'matchMedia', {
 		writable: true,

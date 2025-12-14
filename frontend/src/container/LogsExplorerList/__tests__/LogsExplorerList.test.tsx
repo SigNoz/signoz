@@ -73,20 +73,6 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 jest.mock('hooks/queryBuilder/useGetExplorerQueryRange', () => ({
 	__esModule: true,
 	useGetExplorerQueryRange: jest.fn(),

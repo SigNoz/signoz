@@ -29,7 +29,7 @@ class LogsResource(ABC):
         self.seen_at_ts_bucket_start = seen_at_ts_bucket_start
 
     def np_arr(self) -> np.array:
-        return np.array([self.labels, self.fingerprint, self.seen_at_ts_bucket_start])
+        return np.array([self.labels, self.fingerprint, self.seen_at_ts_bucket_start, np.uint64(10),np.uint64(15)])
 
 
 class LogsResourceOrAttributeKeys(ABC):
@@ -317,6 +317,9 @@ class Logs(ABC):
                 self.scope_name,
                 self.scope_version,
                 self.scope_string,
+                np.uint64(10),
+                np.uint64(15),
+                self.resources_string,
             ]
         )
 
@@ -378,7 +381,7 @@ def insert_logs(
                 table="distributed_logs_resource_keys",
                 data=[resource_key.np_arr() for resource_key in resource_keys],
             )
-
+        
         clickhouse.conn.insert(
             database="signoz_logs",
             table="distributed_logs_v2",

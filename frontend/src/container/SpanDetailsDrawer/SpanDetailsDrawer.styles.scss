@@ -1,9 +1,12 @@
 .span-details-drawer {
 	display: flex;
 	flex-direction: column;
-	width: 450px;
+	height: calc(100vh - 44px); //44px -> trace details top bar
 	border-left: 1px solid var(--bg-slate-400);
-	overflow-y: auto;
+	overflow-y: auto !important;
+	&:not(&-docked) {
+		min-width: 450px;
+	}
 
 	&::-webkit-scrollbar {
 		width: 0.1rem;
@@ -124,24 +127,6 @@
 		}
 	}
 
-	.related-logs {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: fit-content;
-		padding: 5px 12px;
-		margin: 10px 12px;
-		box-shadow: none;
-
-		color: var(--bg-vanilla-400);
-		font-family: Inter;
-		font-size: 14px;
-		font-style: normal;
-		font-weight: 400;
-		line-height: 20px; /* 142.857% */
-		letter-spacing: -0.07px;
-	}
-
 	.attributes-events {
 		.details-drawer-tabs {
 			.ant-tabs-extra-content {
@@ -217,9 +202,19 @@
 
 .span-details-drawer-docked {
 	width: 48px;
+	flex: 0 48px !important;
 
 	.header {
 		justify-content: center;
+	}
+}
+.resizable-handle {
+	box-sizing: border-box;
+	border: 2px solid transparent;
+	&:hover,
+	&[data-resize-handle-state='drag'],
+	&[data-resize-handle-state='hover'] {
+		border-color: rgba(35, 196, 248, 0.2);
 	}
 }
 
@@ -266,10 +261,6 @@
 					}
 				}
 			}
-		}
-
-		.related-logs {
-			color: var(--bg-ink-400);
 		}
 
 		.attributes-events {

@@ -240,7 +240,6 @@ function LiveLogsContainer(): JSX.Element {
 
 						{showFormatMenuItems && (
 							<LogsFormatOptionsMenu
-								title="FORMAT"
 								items={formatItems}
 								selectedOptionFormat={options.format}
 								config={config}

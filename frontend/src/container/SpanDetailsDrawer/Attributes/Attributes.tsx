@@ -97,11 +97,13 @@ function Attributes(props: IAttributesProps): JSX.Element {
 						</div>
 						<div className="value-wrapper">
 							<Tooltip title={item.value}>
-								<CopyClipboardHOC entityKey={item.value} textToCopy={item.value}>
-									<Typography.Text className="item-value" ellipsis>
-										{item.value}
-									</Typography.Text>{' '}
-								</CopyClipboardHOC>
+								<div className="copy-wrapper">
+									<CopyClipboardHOC entityKey={item.value} textToCopy={item.value}>
+										<Typography.Text className="item-value" ellipsis>
+											{item.value}
+										</Typography.Text>
+									</CopyClipboardHOC>
+								</div>
 							</Tooltip>
 							<AttributeActions
 								record={item}

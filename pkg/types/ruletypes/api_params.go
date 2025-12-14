@@ -23,6 +23,10 @@ const (
 	AlertTypeExceptions AlertType = "EXCEPTIONS_BASED_ALERT"
 )
 
+const (
+	DefaultSchemaVersion = "v1"
+)
+
 type RuleDataKind string
 
 const (
@@ -51,10 +55,15 @@ type PostableRule struct {
 
 	Version string `json:"version,omitempty"`
 
-	Evaluation *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+	Evaluation    *EvaluationEnvelope `yaml:"evaluation,omitempty" json:"evaluation,omitempty"`
+	SchemaVersion string              `json:"schemaVersion,omitempty"`
 }
 
 func (r *PostableRule) processRuleDefaults() error {
+
+	if r.SchemaVersion == "" {
+		r.SchemaVersion = DefaultSchemaVersion
+	}
 
 	if r.EvalWindow == 0 {
 		r.EvalWindow = Duration(5 * time.Minute)
@@ -79,7 +88,7 @@ func (r *PostableRule) processRuleDefaults() error {
 			}
 		}
 		//added alerts v2 fields
-		if r.RuleCondition.Thresholds == nil {
+		if r.SchemaVersion == DefaultSchemaVersion {
 			thresholdName := CriticalThresholdName
 			if r.Labels != nil {
 				if severity, ok := r.Labels["severity"]; ok {
@@ -98,13 +107,31 @@ func (r *PostableRule) processRuleDefaults() error {
 				}},
 			}
 			r.RuleCondition.Thresholds = &thresholdData
+			r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 		}
-	}
-	if r.Evaluation == nil {
-		r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 	}
 
 	return r.Validate()
+}
+
+func (r *PostableRule) MarshalJSON() ([]byte, error) {
+	type Alias PostableRule
+
+	switch r.SchemaVersion {
+	case DefaultSchemaVersion:
+		copyStruct := *r
+		aux := Alias(copyStruct)
+		if aux.RuleCondition != nil {
+			aux.RuleCondition.Thresholds = nil
+		}
+		aux.Evaluation = nil
+		aux.SchemaVersion = ""
+		return json.Marshal(aux)
+	default:
+		copyStruct := *r
+		aux := Alias(copyStruct)
+		return json.Marshal(aux)
+	}
 }
 
 func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
@@ -262,4 +289,24 @@ type GettableRule struct {
 	CreatedBy *string    `json:"createBy"`
 	UpdatedAt *time.Time `json:"updateAt"`
 	UpdatedBy *string    `json:"updateBy"`
+}
+
+func (g *GettableRule) MarshalJSON() ([]byte, error) {
+	type Alias GettableRule
+
+	switch g.SchemaVersion {
+	case DefaultSchemaVersion:
+		copyStruct := *g
+		aux := Alias(copyStruct)
+		if aux.RuleCondition != nil {
+			aux.RuleCondition.Thresholds = nil
+		}
+		aux.Evaluation = nil
+		aux.SchemaVersion = ""
+		return json.Marshal(aux)
+	default:
+		copyStruct := *g
+		aux := Alias(copyStruct)
+		return json.Marshal(aux)
+	}
 }

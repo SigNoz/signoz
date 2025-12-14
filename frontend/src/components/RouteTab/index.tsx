@@ -1,4 +1,5 @@
 import { Tabs, TabsProps } from 'antd';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import {
 	generatePath,
 	matchPath,
@@ -17,6 +18,7 @@ function RouteTab({
 	activeKey,
 	onChangeHandler,
 	history,
+	showRightSection,
 	...rest
 }: RouteTabProps & TabsProps): JSX.Element {
 	const params = useParams<Params>();
@@ -61,12 +63,22 @@ function RouteTab({
 			items={items}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...rest}
+			tabBarExtraContent={
+				showRightSection && (
+					<HeaderRightSection
+						enableAnnouncements={false}
+						enableShare
+						enableFeedback
+					/>
+				)
+			}
 		/>
 	);
 }
 
 RouteTab.defaultProps = {
 	onChangeHandler: undefined,
+	showRightSection: true,
 };
 
 export default RouteTab;

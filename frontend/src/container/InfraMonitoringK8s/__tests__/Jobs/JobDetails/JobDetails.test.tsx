@@ -4,14 +4,8 @@ import setupCommonMocks from '../../commonMocks';
 
 setupCommonMocks();
 
-import { fireEvent, render, screen } from '@testing-library/react';
 import JobDetails from 'container/InfraMonitoringK8s/Jobs/JobDetails/JobDetails';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import store from 'store';
-
-const queryClient = new QueryClient();
+import { fireEvent, render, screen } from 'tests/test-utils';
 
 describe('JobDetails', () => {
 	const mockJob = {
@@ -24,13 +18,7 @@ describe('JobDetails', () => {
 
 	it('should render modal with relevant metadata', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<JobDetails job={mockJob} isModalTimeSelection onClose={mockOnClose} />
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<JobDetails job={mockJob} isModalTimeSelection onClose={mockOnClose} />,
 		);
 
 		const jobNameElements = screen.getAllByText('test-job');
@@ -44,13 +32,7 @@ describe('JobDetails', () => {
 
 	it('should render modal with 4 tabs', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<JobDetails job={mockJob} isModalTimeSelection onClose={mockOnClose} />
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<JobDetails job={mockJob} isModalTimeSelection onClose={mockOnClose} />,
 		);
 
 		const metricsTab = screen.getByText('Metrics');
@@ -68,13 +50,7 @@ describe('JobDetails', () => {
 
 	it('default tab should be metrics', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<JobDetails job={mockJob} isModalTimeSelection onClose={mockOnClose} />
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<JobDetails job={mockJob} isModalTimeSelection onClose={mockOnClose} />,
 		);
 
 		const metricsTab = screen.getByRole('radio', { name: 'Metrics' });
@@ -83,13 +59,7 @@ describe('JobDetails', () => {
 
 	it('should switch to events tab when events tab is clicked', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<JobDetails job={mockJob} isModalTimeSelection onClose={mockOnClose} />
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<JobDetails job={mockJob} isModalTimeSelection onClose={mockOnClose} />,
 		);
 
 		const eventsTab = screen.getByRole('radio', { name: 'Events' });
@@ -100,13 +70,7 @@ describe('JobDetails', () => {
 
 	it('should close modal when close button is clicked', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<JobDetails job={mockJob} isModalTimeSelection onClose={mockOnClose} />
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<JobDetails job={mockJob} isModalTimeSelection onClose={mockOnClose} />,
 		);
 
 		const closeButton = screen.getByRole('button', { name: 'Close' });

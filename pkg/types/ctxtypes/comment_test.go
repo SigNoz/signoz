@@ -47,6 +47,11 @@ func TestCommentFromHTTPRequest(t *testing.T) {
 			expected: map[string]string{"http_path": "/dashboard/123/new", "module_name": "dashboard", "dashboard_id": "123"},
 		},
 		{
+			name:     "DashboardLandingPage",
+			req:      &http.Request{Header: http.Header{"Referer": {"https://signoz.io/dashboard/01982be0-d67e-7326-8955-2e99720a9f72?relativeTime=30m"}}},
+			expected: map[string]string{"http_path": "/dashboard/01982be0-d67e-7326-8955-2e99720a9f72", "module_name": "dashboard", "dashboard_id": "01982be0-d67e-7326-8955-2e99720a9f72"},
+		},
+		{
 			name:     "Rule",
 			req:      &http.Request{Header: http.Header{"Referer": {"https://signoz.io/alerts/new"}}},
 			expected: map[string]string{"http_path": "/alerts/new", "module_name": "rule"},

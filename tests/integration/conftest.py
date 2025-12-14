@@ -45,7 +45,7 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--clickhouse-version",
         action="store",
-        default="24.1.2-alpine",
+        default="25.5.6",
         help="clickhouse version",
     )
     parser.addoption(
@@ -57,6 +57,6 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--schema-migrator-version",
         action="store",
-        default="v0.128.2",
+        default="v0.129.6",
         help="schema migrator version",
     )

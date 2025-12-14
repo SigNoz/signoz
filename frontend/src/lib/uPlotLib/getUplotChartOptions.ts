@@ -32,6 +32,12 @@ import getSeries from './utils/getSeriesData';
 import { getXAxisScale } from './utils/getXAxisScale';
 import { getYAxisScale } from './utils/getYAxisScale';
 
+// Extended uPlot interface with custom properties
+interface ExtendedUPlot extends uPlot {
+	_legendScrollCleanup?: () => void;
+	_tooltipCleanup?: () => void;
+}
+
 export interface GetUPlotChartOptions {
 	id?: string;
 	apiResponse?: MetricRangePayloadProps;
@@ -72,6 +78,14 @@ export interface GetUPlotChartOptions {
 	legendPosition?: LegendPosition;
 	enableZoom?: boolean;
 	query?: Query;
+	legendScrollPosition?: {
+		scrollTop: number;
+		scrollLeft: number;
+	};
+	setLegendScrollPosition?: (position: {
+		scrollTop: number;
+		scrollLeft: number;
+	}) => void;
 }
 
 /** the function converts series A , series B , series C to
@@ -201,6 +215,8 @@ export const getUPlotChartOptions = ({
 	legendPosition = LegendPosition.BOTTOM,
 	enableZoom,
 	query,
+	legendScrollPosition,
+	setLegendScrollPosition,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -455,14 +471,41 @@ export const getUPlotChartOptions = ({
 
 					const legend = self.root.querySelector('.u-legend');
 					if (legend) {
+						const legendElement = legend as HTMLElement;
+
 						// Apply enhanced legend styling
 						if (enhancedLegend) {
 							applyEnhancedLegendStyling(
-								legend as HTMLElement,
+								legendElement,
 								legendConfig,
 								legendConfig.requiredRows,
 								legendPosition,
 							);
+						}
+
+						// Restore scroll position if available
+						if (legendScrollPosition && setLegendScrollPosition) {
+							requestAnimationFrame(() => {
+								legendElement.scrollTop = legendScrollPosition.scrollTop;
+								legendElement.scrollLeft = legendScrollPosition.scrollLeft;
+							});
+						}
+
+						// Set up scroll position tracking
+						if (setLegendScrollPosition) {
+							const handleScroll = (): void => {
+								setLegendScrollPosition({
+									scrollTop: legendElement.scrollTop,
+									scrollLeft: legendElement.scrollLeft,
+								});
+							};
+
+							legendElement.addEventListener('scroll', handleScroll);
+
+							// Store cleanup function
+							(self as ExtendedUPlot)._legendScrollCleanup = (): void => {
+								legendElement.removeEventListener('scroll', handleScroll);
+							};
 						}
 
 						// Global cleanup function for all legend tooltips
@@ -485,7 +528,7 @@ export const getUPlotChartOptions = ({
 						document?.addEventListener('mousemove', globalCleanupHandler);
 
 						// Store cleanup function for potential removal later
-						(self as any)._tooltipCleanup = (): void => {
+						(self as ExtendedUPlot)._tooltipCleanup = (): void => {
 							cleanupAllTooltips();
 							document?.removeEventListener('mousemove', globalCleanupHandler);
 						};

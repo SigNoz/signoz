@@ -46,7 +46,7 @@ const INITIAL_ORG_DETAILS: OrgDetails = {
 };
 
 const INITIAL_SIGNOZ_DETAILS: SignozDetails = {
-	interestInSignoz: '',
+	interestInSignoz: [],
 	otherInterestInSignoz: '',
 	discoverSignoz: '',
 };
@@ -145,6 +145,9 @@ function OnboardingQuestionaire(): JSX.Element {
 			},
 			onError: (error) => {
 				showErrorNotification(notifications, error as AxiosError);
+
+				// Allow user to proceed even if API fails
+				setCurrentStep(4);
 			},
 		},
 	);
@@ -174,10 +177,16 @@ function OnboardingQuestionaire(): JSX.Element {
 					? (orgDetails?.otherTool as string)
 					: (orgDetails?.observabilityTool as string),
 			where_did_you_discover_signoz: signozDetails?.discoverSignoz as string,
-			reasons_for_interest_in_signoz:
-				signozDetails?.interestInSignoz === 'Others'
-					? (signozDetails?.otherInterestInSignoz as string)
-					: (signozDetails?.interestInSignoz as string),
+			reasons_for_interest_in_signoz: signozDetails?.interestInSignoz?.includes(
+				'Others',
+			)
+				? ([
+						...(signozDetails?.interestInSignoz?.filter(
+							(item) => item !== 'Others',
+						) || []),
+						signozDetails?.otherInterestInSignoz,
+				  ] as string[])
+				: (signozDetails?.interestInSignoz as string[]),
 			logs_scale_per_day_in_gb: optimiseSignozDetails?.logsPerDay as number,
 			number_of_hosts: optimiseSignozDetails?.hostsPerDay as number,
 			number_of_services: optimiseSignozDetails?.services as number,

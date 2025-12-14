@@ -3,6 +3,7 @@ import './AlertList.styles.scss';
 import { Tabs } from 'antd';
 import { TabsProps } from 'antd/lib';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ROUTES from 'constants/routes';
 import AllAlertRules from 'container/ListAlertRules';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
@@ -28,7 +29,7 @@ function AllAlertList(): JSX.Element {
 		{
 			label: (
 				<div className="periscope-tab top-level-tab">
-					<GalleryVerticalEnd size={16} />
+					<GalleryVerticalEnd size={14} />
 					Triggered Alerts
 				</div>
 			),
@@ -38,7 +39,7 @@ function AllAlertList(): JSX.Element {
 		{
 			label: (
 				<div className="periscope-tab top-level-tab">
-					<Pyramid size={16} />
+					<Pyramid size={14} />
 					Alert Rules
 				</div>
 			),
@@ -52,7 +53,7 @@ function AllAlertList(): JSX.Element {
 		{
 			label: (
 				<div className="periscope-tab top-level-tab">
-					<ConfigureIcon />
+					<ConfigureIcon width={14} height={14} />
 					Configuration
 				</div>
 			),
@@ -82,6 +83,13 @@ function AllAlertList(): JSX.Element {
 			className={`alerts-container ${
 				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''
 			}`}
+			tabBarExtraContent={
+				<HeaderRightSection
+					enableAnnouncements={false}
+					enableShare
+					enableFeedback
+				/>
+			}
 		/>
 	);
 }

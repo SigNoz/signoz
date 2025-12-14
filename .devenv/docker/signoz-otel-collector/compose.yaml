@@ -1,6 +1,6 @@
 services:
   signoz-otel-collector:
-    image: signoz/signoz-otel-collector:v0.128.2
+    image: signoz/signoz-otel-collector:v0.129.6
     container_name: signoz-otel-collector-dev
     command:
       - --config=/etc/otel-collector-config.yaml

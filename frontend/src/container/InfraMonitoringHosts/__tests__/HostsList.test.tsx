@@ -33,19 +33,6 @@ jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 
 const queryClient = new QueryClient();
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
 jest.mock('react-redux', () => ({
 	...jest.requireActual('react-redux'),
 	useSelector: (): any => ({

@@ -50,7 +50,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		filterConfig,
 		isDynamicFilters,
 		customFilters,
-		setIsStale,
+		refetchCustomFilters,
 		isCustomFiltersLoading,
 	} = useFilterConfig({ signal, config });
 
@@ -263,7 +263,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 							signal={signal}
 							setIsSettingsOpen={setIsSettingsOpen}
 							customFilters={customFilters}
-							setIsStale={setIsStale}
+							refetchCustomFilters={refetchCustomFilters}
 						/>
 					)}
 				</div>

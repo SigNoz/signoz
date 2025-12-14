@@ -16,7 +16,6 @@ import {
 } from 'mocks-server/__mockdata__/query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import {
 	act,
@@ -97,22 +96,6 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 jest.mock(
 	'components/Uplot/Uplot',
 	() =>
@@ -181,32 +164,31 @@ const checkFilterValues = (
 };
 
 const renderWithTracesExplorerRouter = (
-	component: React.ReactNode,
+	component: React.ReactElement,
 	initialEntries: string[] = [
 		'/traces-explorer/?panelType=list&selectedExplorerView=list',
 	],
 ): ReturnType<typeof render> =>
 	render(
-		<MemoryRouter initialEntries={initialEntries}>
-			<QueryBuilderContext.Provider value={{ ...qbProviderValue }}>
-				{component}
-			</QueryBuilderContext.Provider>
-		</MemoryRouter>,
+		component,
+		{},
+		{
+			initialRoute: initialEntries[0],
+			queryBuilderOverrides: qbProviderValue,
+		},
 	);
 
 describe('TracesExplorer - Filters', () => {
 	// Initial filter panel rendering
 	// Test the initial state like which filters section are opened, default state of duration slider, etc.
 	it('should render the Trace filter', async () => {
-		const { getByText, getAllByText, getByTestId } = render(
-			<MemoryRouter
-				initialEntries={[
-					`${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/?panelType=list&selectedExplorerView=list`,
-				]}
-			>
-				<Filter setOpen={jest.fn()} />
-			</MemoryRouter>,
-		);
+		const {
+			getByText,
+			getAllByText,
+			getByTestId,
+		} = renderWithTracesExplorerRouter(<Filter setOpen={jest.fn()} />, [
+			`${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/?panelType=list&selectedExplorerView=list`,
+		]);
 
 		checkFilterValues(getByText, getAllByText);
 
@@ -249,8 +231,12 @@ describe('TracesExplorer - Filters', () => {
 	it('filter panel actions', async () => {
 		const { getByTestId } = render(
 			<MemoryRouter>
-				<Filter setOpen={jest.fn()} />
+				<Filter setOpen={jest.fn()} />,
 			</MemoryRouter>,
+			{},
+			{
+				initialRoute: '/traces-explorer/?panelType=list&selectedExplorerView=list',
+			},
 		);
 
 		// Check if the section is closed
@@ -275,23 +261,21 @@ describe('TracesExplorer - Filters', () => {
 	});
 
 	it('checking filters should update the query', async () => {
-		const { getByText } = renderWithTracesExplorerRouter(
-			<QueryBuilderContext.Provider
-				value={
-					{
-						currentQuery: {
-							...initialQueriesMap.traces,
-							builder: {
-								...initialQueriesMap.traces.builder,
-								queryData: [initialQueryBuilderFormValues],
-							},
+		const { getByText } = render(
+			<Filter setOpen={jest.fn()} />,
+			{},
+			{
+				queryBuilderOverrides: {
+					...qbProviderValue,
+					currentQuery: {
+						...initialQueriesMap.traces,
+						builder: {
+							...initialQueriesMap.traces.builder,
+							queryData: [initialQueryBuilderFormValues],
 						},
-						redirectWithQueryBuilderData,
-					} as any
-				}
-			>
-				<Filter setOpen={jest.fn()} />
-			</QueryBuilderContext.Provider>,
+					},
+				},
+			},
 		);
 
 		const okCheckbox = getByText('Ok');
@@ -343,9 +327,7 @@ describe('TracesExplorer - Filters', () => {
 			.spyOn(compositeQueryHook, 'useGetCompositeQueryParam')
 			.mockReturnValue(compositeQuery);
 
-		const { findByText, getByTestId } = renderWithTracesExplorerRouter(
-			<Filter setOpen={jest.fn()} />,
-		);
+		const { findByText, getByTestId } = render(<Filter setOpen={jest.fn()} />);
 
 		// check if the default query is applied - composite query has filters - serviceName : demo-app and name : HTTP GET /customer
 		expect(await findByText('demo-app')).toBeInTheDocument();
@@ -369,8 +351,12 @@ describe('TracesExplorer - Filters', () => {
 			},
 		});
 
-		const { getByText, getAllByText } = renderWithTracesExplorerRouter(
+		const { getByText, getAllByText } = render(
 			<Filter setOpen={jest.fn()} />,
+			{},
+			{
+				initialRoute: '/traces-explorer/?panelType=list&selectedExplorerView=list',
+			},
 		);
 
 		checkFilterValues(getByText, getAllByText);
@@ -394,31 +380,28 @@ describe('TracesExplorer - Filters', () => {
 			},
 		});
 
-		const { getByText, getAllByText } = renderWithTracesExplorerRouter(
-			<Filter setOpen={jest.fn()} />,
-		);
+		const { getByText, getAllByText } = render(<Filter setOpen={jest.fn()} />);
 
 		checkFilterValues(getByText, getAllByText);
 	});
 
 	it('should clear filter on clear & reset button click', async () => {
-		const { getByText, getByTestId } = renderWithTracesExplorerRouter(
-			<QueryBuilderContext.Provider
-				value={
-					{
-						currentQuery: {
-							...initialQueriesMap.traces,
-							builder: {
-								...initialQueriesMap.traces.builder,
-								queryData: [initialQueryBuilderFormValues],
-							},
+		const { getByText, getByTestId } = render(
+			<Filter setOpen={jest.fn()} />,
+			{},
+			{
+				initialRoute: '/traces-explorer/?panelType=list&selectedExplorerView=list',
+				queryBuilderOverrides: {
+					currentQuery: {
+						...initialQueriesMap.traces,
+						builder: {
+							...initialQueriesMap.traces.builder,
+							queryData: [initialQueryBuilderFormValues],
 						},
-						redirectWithQueryBuilderData,
-					} as any
-				}
-			>
-				<Filter setOpen={jest.fn()} />
-			</QueryBuilderContext.Provider>,
+					},
+					redirectWithQueryBuilderData,
+				},
+			},
 		);
 
 		// check for the status section content

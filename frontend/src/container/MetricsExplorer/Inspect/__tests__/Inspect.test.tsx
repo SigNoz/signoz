@@ -76,12 +76,6 @@ jest
 		isLoading: false,
 	} as any);
 
-jest.mock('uplot', () =>
-	jest.fn().mockImplementation(() => ({
-		destroy: jest.fn(),
-	})),
-);
-
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string } => ({

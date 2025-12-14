@@ -1,3 +1,7 @@
+import { Color } from '@signozhq/design-tokens';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { Threshold } from 'container/CreateAlertV2/context/types';
+import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import {
 	BooleanFormats,
 	DataFormats,
@@ -6,6 +10,7 @@ import {
 	ThroughputFormats,
 	TimeFormats,
 } from 'container/NewWidget/RightContainer/types';
+import { TFunction } from 'i18next';
 
 import {
 	dataFormatConfig,
@@ -83,3 +88,57 @@ interface IUnit {
 	sourceUnit?: string;
 	targetUnit?: string;
 }
+
+export const getThresholds = (
+	thresholds: Threshold[],
+	t: TFunction,
+	optionName: string,
+	yAxisUnit: string,
+): ThresholdProps[] => {
+	const thresholdsToReturn = new Array<ThresholdProps>();
+
+	thresholds.forEach((threshold, index) => {
+		// Push main threshold
+		const mainThreshold = {
+			index: index.toString(),
+			keyIndex: index,
+			moveThreshold: (): void => {},
+			selectedGraph: PANEL_TYPES.TIME_SERIES,
+			thresholdValue: threshold.thresholdValue,
+			thresholdLabel:
+				threshold.label ||
+				`${t('preview_chart_threshold_label')} (y=${getThresholdLabel(
+					optionName,
+					threshold.thresholdValue,
+					threshold.unit,
+					yAxisUnit,
+				)})`,
+			thresholdUnit: threshold.unit,
+			thresholdColor: threshold.color || Color.TEXT_SAKURA_500,
+		};
+		thresholdsToReturn.push(mainThreshold);
+
+		// Push recovery threshold
+		if (threshold.recoveryThresholdValue) {
+			const recoveryThreshold = {
+				index: (thresholds.length + index).toString(),
+				keyIndex: thresholds.length + index,
+				moveThreshold: (): void => {},
+				selectedGraph: PANEL_TYPES.TIME_SERIES, // no impact
+				thresholdValue: threshold.recoveryThresholdValue,
+				thresholdLabel: threshold.label
+					? `${threshold.label} (Recovery)`
+					: `${t('preview_chart_threshold_label')} (y=${getThresholdLabel(
+							optionName,
+							threshold.thresholdValue,
+							threshold.unit,
+							yAxisUnit,
+					  )})`,
+				thresholdUnit: threshold.unit,
+				thresholdColor: threshold.color || Color.TEXT_SAKURA_500,
+			};
+			thresholdsToReturn.push(recoveryThreshold);
+		}
+	});
+	return thresholdsToReturn;
+};

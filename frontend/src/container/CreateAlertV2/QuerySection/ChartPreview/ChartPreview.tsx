@@ -6,19 +6,24 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-function ChartPreview(): JSX.Element {
+export interface ChartPreviewProps {
+	alertDef: AlertDef;
+}
+
+function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 	const { currentQuery, panelType, stagedQuery } = useQueryBuilder();
+	const { thresholdState, alertState } = useCreateAlertState();
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
 	const [, setQueryStatus] = useState<string>('');
-	const { alertDef } = useCreateAlertState();
 
-	const yAxisUnit = currentQuery.unit || '';
+	const yAxisUnit = alertState.yAxisUnit || '';
 
 	const renderQBChartPreview = (): JSX.Element => (
 		<ChartPreviewComponent
@@ -36,6 +41,7 @@ function ChartPreview(): JSX.Element {
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
 			showSideLegend
+			additionalThresholds={thresholdState.thresholds}
 		/>
 	);
 
@@ -55,6 +61,7 @@ function ChartPreview(): JSX.Element {
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
 			showSideLegend
+			additionalThresholds={thresholdState.thresholds}
 		/>
 	);
 

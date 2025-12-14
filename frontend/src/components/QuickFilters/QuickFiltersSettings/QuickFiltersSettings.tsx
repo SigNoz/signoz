@@ -14,12 +14,12 @@ function QuickFiltersSettings({
 	signal,
 	setIsSettingsOpen,
 	customFilters,
-	setIsStale,
+	refetchCustomFilters,
 }: {
 	signal: SignalType | undefined;
 	setIsSettingsOpen: (isSettingsOpen: boolean) => void;
 	customFilters: FilterType[];
-	setIsStale: (isStale: boolean) => void;
+	refetchCustomFilters: () => void;
 }): JSX.Element {
 	const {
 		handleSettingsClose,
@@ -34,7 +34,7 @@ function QuickFiltersSettings({
 	} = useQuickFilterSettings({
 		setIsSettingsOpen,
 		customFilters,
-		setIsStale,
+		refetchCustomFilters,
 		signal,
 	});
 

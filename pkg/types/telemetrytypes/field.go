@@ -24,7 +24,7 @@ type TelemetryFieldKey struct {
 	Signal        Signal        `json:"signal,omitempty"`
 	FieldContext  FieldContext  `json:"fieldContext,omitempty"`
 	FieldDataType FieldDataType `json:"fieldDataType,omitempty"`
-	Materialized  bool          `json:"materialized,omitempty"`
+	Materialized  bool          `json:"-"`
 }
 
 func (f TelemetryFieldKey) String() string {

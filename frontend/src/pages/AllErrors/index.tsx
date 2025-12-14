@@ -5,6 +5,7 @@ import { Button, Tooltip } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import RouteTab from 'components/RouteTab';
@@ -74,10 +75,24 @@ function AllErrors(): JSX.Element {
 									</Tooltip>
 								) : undefined
 							}
-							rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
+							rightActions={
+								<div className="right-toolbar-actions-container">
+									<RightToolbarActions onStageRunQuery={handleRunQuery} />
+									<HeaderRightSection
+										enableAnnouncements={false}
+										enableShare
+										enableFeedback
+									/>
+								</div>
+							}
 						/>
 						<ResourceAttributesFilterV2 />
-						<RouteTab routes={routes} activeKey={pathname} history={history} />
+						<RouteTab
+							routes={routes}
+							activeKey={pathname}
+							history={history}
+							showRightSection={false}
+						/>
 					</>
 				</TypicalOverlayScrollbar>
 			</section>

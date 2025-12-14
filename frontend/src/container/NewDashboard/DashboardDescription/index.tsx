@@ -12,6 +12,7 @@ import {
 	Typography,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -321,6 +322,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						{title}
 					</Button>
 				</section>
+
+				<HeaderRightSection
+					enableAnnouncements={false}
+					enableShare
+					enableFeedback
+				/>
 			</div>
 			<section className="dashboard-details">
 				<div className="left-section">

@@ -124,7 +124,7 @@ export const FUNCTION_NAMES: Record<string, FunctionName> = {
 	RUNNING_DIFF: 'runningDiff',
 	LOG2: 'log2',
 	LOG10: 'log10',
-	CUM_SUM: 'cumSum',
+	CUM_SUM: 'cumulativeSum',
 	EWMA3: 'ewma3',
 	EWMA5: 'ewma5',
 	EWMA7: 'ewma7',

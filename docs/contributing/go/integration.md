@@ -192,7 +192,7 @@ Tests can be configured using pytest options:
 
 - `--sqlstore-provider` - Choose database provider (default: postgres)
 - `--postgres-version` - PostgreSQL version (default: 15)
-- `--clickhouse-version` - ClickHouse version (default: 24.1.2-alpine)
+- `--clickhouse-version` - ClickHouse version (default: 25.5.6)
 - `--zookeeper-version` - Zookeeper version (default: 3.7.1)
 
 Example:
