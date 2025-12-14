@@ -3,13 +3,14 @@ package fields
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func parseFieldKeyRequest(r *http.Request) (*telemetrytypes.FieldKeySelector, error) {
+func parseFieldKeyRequest(r *http.Request, normalizeSearchText bool) (*telemetrytypes.FieldKeySelector, error) {
 	var req telemetrytypes.FieldKeySelector
 	var signal telemetrytypes.Signal
 	var source telemetrytypes.Source
@@ -78,22 +79,36 @@ func parseFieldKeyRequest(r *http.Request) (*telemetrytypes.FieldKeySelector, er
 		}
 	}
 
-	name := r.URL.Query().Get("searchText")
-	// Normalize context-prefixed/dtyped key text.
-	if name != "" {
-		parsed := telemetrytypes.GetFieldKeyFromKeyText(name)
-		if parsed.FieldContext != telemetrytypes.FieldContextUnspecified && !telemetrytypes.IsContextPrefixAllowedForSignal(signal, parsed.FieldContext) {
-			// Re-parse as an attribute key so the first segment is preserved.
-			parsed = telemetrytypes.GetFieldKeyFromKeyText("attribute." + name)
-			parsed.FieldContext = telemetrytypes.FieldContextUnspecified
-		}
+	name := ""
+	if normalizeSearchText {
+		searchText := r.URL.Query().Get("searchText")
+		if searchText != "" {
+			// When signal is omitted, treat `searchText` as a literal prefix.
+			if signal == telemetrytypes.SignalUnspecified {
+				name = searchText
+			} else {
+				parsed := telemetrytypes.GetFieldKeyFromKeyText(searchText)
 
-		name = parsed.Name
-		if fieldContext == telemetrytypes.FieldContextUnspecified && parsed.FieldContext != telemetrytypes.FieldContextUnspecified {
-			fieldContext = parsed.FieldContext
-		}
-		if fieldDataType == telemetrytypes.FieldDataTypeUnspecified && parsed.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-			fieldDataType = parsed.FieldDataType
+				// Preserve the original text so keys remain searchable as literals.
+				if parsed.FieldContext != telemetrytypes.FieldContextUnspecified && !strings.Contains(parsed.Name, ".") {
+					name = searchText
+				} else {
+					// Preserve the first segment by treating it as an attribute key.
+					if parsed.FieldContext != telemetrytypes.FieldContextUnspecified &&
+						!telemetrytypes.IsContextPrefixAllowedForSignal(signal, parsed.FieldContext) {
+						parsed = telemetrytypes.GetFieldKeyFromKeyText("attribute." + searchText)
+						parsed.FieldContext = telemetrytypes.FieldContextUnspecified
+					}
+
+					name = parsed.Name
+					if fieldContext == telemetrytypes.FieldContextUnspecified && parsed.FieldContext != telemetrytypes.FieldContextUnspecified {
+						fieldContext = parsed.FieldContext
+					}
+					if fieldDataType == telemetrytypes.FieldDataTypeUnspecified && parsed.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+						fieldDataType = parsed.FieldDataType
+					}
+				}
+			}
 		}
 	}
 
@@ -113,7 +128,7 @@ func parseFieldKeyRequest(r *http.Request) (*telemetrytypes.FieldKeySelector, er
 }
 
 func parseFieldValueRequest(r *http.Request) (*telemetrytypes.FieldValueSelector, error) {
-	keySelector, err := parseFieldKeyRequest(r)
+	keySelector, err := parseFieldKeyRequest(r, false)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse field key request")
 	}

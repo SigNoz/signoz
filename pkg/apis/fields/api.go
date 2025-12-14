@@ -63,7 +63,7 @@ func (api *API) GetFieldsKeys(w http.ResponseWriter, r *http.Request) {
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	ctx := r.Context()
 
-	fieldKeySelector, err := parseFieldKeyRequest(r)
+	fieldKeySelector, err := parseFieldKeyRequest(r, true)
 	if err != nil {
 		render.Error(w, err)
 		return
