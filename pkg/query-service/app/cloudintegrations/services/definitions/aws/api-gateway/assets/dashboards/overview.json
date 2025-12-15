@@ -1,61 +1,386 @@
 {
-  "description": "Overview of API Gateway resources in a region",
+  "description": "Overview of API Gateway resources in a region, supporting REST, HTTP, and WebSocket APIs.",
   "image": "data:image/svg+xml,%3Csvg%20width%3D%2224px%22%20height%3D%2224px%22%20viewBox%3D%220%200%2024%2024%22%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%3E%3Cdefs%3E%3ClinearGradient%20x1%3D%220%25%22%20y1%3D%22100%25%22%20x2%3D%22100%25%22%20y2%3D%220%25%22%20id%3D%22linearGradient-1%22%3E%3Cstop%20stop-color%3D%22%234D27A8%22%20offset%3D%220%25%22%3E%3C%2Fstop%3E%3Cstop%20stop-color%3D%22%23A166FF%22%20offset%3D%22100%25%22%3E%3C%2Fstop%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cg%20stroke%3D%22none%22%20stroke-width%3D%221%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22url(%23linearGradient-1)%22%3E%3Crect%20id%3D%22Rectangle%22%20x%3D%220%22%20y%3D%220%22%20width%3D%2224%22%20height%3D%2224%22%3E%3C%2Frect%3E%3C%2Fg%3E%3Cpath%20d%3D%22M6%2C6.76751613%20L8%2C5.43446738%20L8%2C18.5659476%20L6%2C17.2328988%20L6%2C6.76751613%20Z%20M5%2C6.49950633%20L5%2C17.4999086%20C5%2C17.6669147%205.084%2C17.8239204%205.223%2C17.9159238%20L8.223%2C19.9159969%20C8.307%2C19.971999%208.403%2C20%208.5%2C20%20C8.581%2C20%208.662%2C19.9809993%208.736%2C19.9409978%20C8.898%2C19.8539947%209%2C19.6849885%209%2C19.4999817%20L9%2C16.9998903%20L10%2C16.9998903%20L10%2C15.9998537%20L9%2C15.9998537%20L9%2C7.99956118%20L10%2C7.99956118%20L10%2C6.99952461%20L9%2C6.99952461%20L9%2C4.49943319%20C9%2C4.31542646%208.898%2C4.14542025%208.736%2C4.0594171%20C8.574%2C3.97241392%208.377%2C3.98141425%208.223%2C4.08341798%20L5.223%2C6.08349112%20C5.084%2C6.17649452%205%2C6.33250022%205%2C6.49950633%20L5%2C6.49950633%20Z%20M19%2C17.2328988%20L17%2C18.5659476%20L17%2C5.43446738%20L19%2C6.76751613%20L19%2C17.2328988%20Z%20M19.777%2C6.08349112%20L16.777%2C4.08341798%20C16.623%2C3.98141425%2016.426%2C3.97241392%2016.264%2C4.0594171%20C16.102%2C4.14542025%2016%2C4.31542646%2016%2C4.49943319%20L16%2C6.99952461%20L15%2C6.99952461%20L15%2C7.99956118%20L16%2C7.99956118%20L16%2C15.9998537%20L15%2C15.9998537%20L15%2C16.9998903%20L16%2C16.9998903%20L16%2C19.4999817%20C16%2C19.6849885%2016.102%2C19.8539947%2016.264%2C19.9409978%20C16.338%2C19.9809993%2016.419%2C20%2016.5%2C20%20C16.597%2C20%2016.693%2C19.971999%2016.777%2C19.9159969%20L19.777%2C17.9159238%20C19.916%2C17.8239204%2020%2C17.6669147%2020%2C17.4999086%20L20%2C6.49950633%20C20%2C6.33250022%2019.916%2C6.17649452%2019.777%2C6.08349112%20L19.777%2C6.08349112%20Z%20M13%2C7.99956118%20L14%2C7.99956118%20L14%2C6.99952461%20L13%2C6.99952461%20L13%2C7.99956118%20Z%20M11%2C7.99956118%20L12%2C7.99956118%20L12%2C6.99952461%20L11%2C6.99952461%20L11%2C7.99956118%20Z%20M13%2C16.9998903%20L14%2C16.9998903%20L14%2C15.9998537%20L13%2C15.9998537%20L13%2C16.9998903%20Z%20M11%2C16.9998903%20L12%2C16.9998903%20L12%2C15.9998537%20L11%2C15.9998537%20L11%2C16.9998903%20Z%20M13.18%2C14.884813%20L10.18%2C12.3847215%20C10.065%2C12.288718%2010%2C12.1487129%2010%2C11.9997075%20C10%2C11.851702%2010.065%2C11.7106969%2010.18%2C11.6156934%20L13.18%2C9.11560199%20L13.82%2C9.88463011%20L11.281%2C11.9997075%20L13.82%2C14.1157848%20L13.18%2C14.884813%20Z%22%20id%3D%22Amazon-API-Gateway_Icon_16_Squid%22%20fill%3D%22%23FFFFFF%22%3E%3C%2Fpath%3E%3C%2Fg%3E%3C%2Fsvg%3E",
   "layout": [
     {
-      "h": 6,
-      "i": "b27e332f-8e3f-487a-845d-e332dc1464c3",
+      "h": 1,
+      "i": "row_rest",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
       "moved": false,
       "static": false,
-      "w": 6,
+      "w": 12,
       "x": 0,
       "y": 0
     },
     {
       "h": 6,
-      "i": "d0a54459-0841-467f-88f7-e135b8c86fc7",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 6,
-      "y": 0
-    },
-    {
-      "h": 6,
-      "i": "210dc175-fbb7-44ef-88e0-b8530da4eaca",
+      "i": "rest_requests",
       "moved": false,
       "static": false,
       "w": 6,
       "x": 0,
-      "y": 6
+      "y": 1
     },
     {
       "h": 6,
-      "i": "8efb6639-6168-4d8b-9b4f-5b5c82dea333",
+      "i": "rest_latency",
       "moved": false,
       "static": false,
       "w": 6,
       "x": 6,
-      "y": 6
+      "y": 1
     },
     {
       "h": 6,
-      "i": "88f56881-7744-41e9-9c19-9f5446e291dc",
+      "i": "rest_5xx",
+      "moved": false,
+      "static": false,
       "w": 6,
       "x": 0,
-      "y": 12
+      "y": 7
     },
     {
       "h": 6,
-      "i": "d3b4ad8b-7b52-4bea-9bc7-47e18da7f38c",
+      "i": "rest_integration_latency",
+      "moved": false,
+      "static": false,
       "w": 6,
       "x": 6,
-      "y": 12
+      "y": 7
+    },
+    {
+      "h": 6,
+      "i": "rest_cache_hit",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 13
+    },
+    {
+      "h": 6,
+      "i": "rest_cache_miss",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 13
+    },
+    {
+      "h": 1,
+      "i": "row_http",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 19
+    },
+    {
+      "h": 6,
+      "i": "http_count",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 20
+    },
+    {
+      "h": 6,
+      "i": "http_4xx",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 20
+    },
+    {
+      "h": 6,
+      "i": "http_5xx",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 26
+    },
+    {
+      "h": 6,
+      "i": "http_latency",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 26
+    },
+    {
+      "h": 6,
+      "i": "http_data_processed",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 32
+    },
+    {
+      "h": 1,
+      "i": "row_websocket",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 38
+    },
+    {
+      "h": 6,
+      "i": "ws_connect_count",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 39
+    },
+    {
+      "h": 6,
+      "i": "ws_message_count",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 39
+    },
+    {
+      "h": 6,
+      "i": "ws_client_error",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 45
+    },
+    {
+      "h": 6,
+      "i": "ws_execution_error",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 45
+    },
+    {
+      "h": 6,
+      "i": "ws_integration_error",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 51
+    },
+    {
+      "h": 1,
+      "i": "row_common",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 57
+    },
+    {
+      "h": 6,
+      "i": "common_integration_latency",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 58
     }
   ],
-  "panelMap": {},
+  "panelMap": {
+    "row_rest": {
+      "collapsed": false,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "rest_requests",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 1
+        },
+        {
+          "h": 6,
+          "i": "rest_latency",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 1
+        },
+        {
+          "h": 6,
+          "i": "rest_5xx",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 7
+        },
+        {
+          "h": 6,
+          "i": "rest_integration_latency",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 7
+        },
+        {
+          "h": 6,
+          "i": "rest_cache_hit",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 13
+        },
+        {
+          "h": 6,
+          "i": "rest_cache_miss",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 13
+        }
+      ]
+    },
+    "row_http": {
+      "collapsed": false,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "http_count",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 20
+        },
+        {
+          "h": 6,
+          "i": "http_4xx",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 20
+        },
+        {
+          "h": 6,
+          "i": "http_5xx",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 26
+        },
+        {
+          "h": 6,
+          "i": "http_latency",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 26
+        },
+        {
+          "h": 6,
+          "i": "http_data_processed",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 32
+        }
+      ]
+    },
+    "row_websocket": {
+      "collapsed": false,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "ws_connect_count",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 39
+        },
+        {
+          "h": 6,
+          "i": "ws_message_count",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 39
+        },
+        {
+          "h": 6,
+          "i": "ws_client_error",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 45
+        },
+        {
+          "h": 6,
+          "i": "ws_execution_error",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 45
+        },
+        {
+          "h": 6,
+          "i": "ws_integration_error",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 51
+        }
+      ]
+    },
+    "row_common": {
+      "collapsed": false,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "common_integration_latency",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 58
+        }
+      ]
+    }
+  },
   "tags": [],
-  "title": "API Gateway Overview",
+  "title": "API Gateway Overview (Multi-API)",
   "uploadedGrafana": false,
   "variables": {
     "Account": {
@@ -68,7 +393,7 @@
       "multiSelect": false,
       "name": "Account",
       "order": 0,
-      "queryValue": "SELECT JSONExtractString(labels, 'cloud_account_id') as cloud_account_id\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_ApiGateway_Count_sum'\nGROUP BY cloud_account_id\n\n",
+      "queryValue": "SELECT JSONExtractString(labels, 'cloud_account_id') as `cloud_account_id`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n metric_name like '%aws_ApiGateway%'\nGROUP BY `cloud_account_id`",
       "showALLOption": false,
       "sort": "DISABLED",
       "textboxValue": "",
@@ -84,7 +409,7 @@
       "multiSelect": false,
       "name": "Region",
       "order": 1,
-      "queryValue": "SELECT JSONExtractString(labels, 'cloud_region') as cloud_region\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_ApiGateway_Count_sum'\n    and JSONExtractString(labels, 'cloud_account_id') IN {{.Account}}\nGROUP BY cloud_region\n",
+      "queryValue": "SELECT JSONExtractString(labels, 'cloud_region') as `cloud_region`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n metric_name like '%aws_ApiGateway%'\n and JSONExtractString(labels, 'cloud_account_id') IN {{.Account}}\nGROUP BY `cloud_region`",
       "showALLOption": false,
       "sort": "DISABLED",
       "textboxValue": "",
@@ -94,12 +419,18 @@
   "version": "v4",
   "widgets": [
     {
+      "description": "",
+      "id": "row_rest",
+      "panelTypes": "row",
+      "title": "REST API Metrics"
+    },
+    {
       "bucketCount": 30,
       "bucketWidth": 0,
       "columnUnits": {},
-      "description": "The total number API requests in a given period.\n\nSee Count at https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-metrics-and-dimensions.html for more details",
+      "description": "The total number API requests in a given period.",
       "fillSpans": false,
-      "id": "b27e332f-8e3f-487a-845d-e332dc1464c3",
+      "id": "rest_requests",
       "isStacked": false,
       "mergeAllActiveQueries": false,
       "nullZeroValues": "zero",
@@ -134,45 +465,6 @@
                       "type": "tag"
                     },
                     "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "64c4ab5b",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Stage--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Stage",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "2f4571a4",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Resource--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Resource",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  },
-                  {
-                    "id": "be3cf524",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Method--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Method",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
                     "value": ""
                   },
                   {
@@ -213,117 +505,38 @@
                   "isJSON": false,
                   "key": "ApiName",
                   "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "Stage--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "Stage",
-                  "type": "tag"
                 }
               ],
               "having": [],
-              "legend": "{{ApiName}} - {{Stage}}",
+              "legend": "{{ApiName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "9fea4bca-7c22-49b6-8d24-43c985d89ac3",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
+        "id": "rest-requests-query",
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
       "title": "Requests",
-      "yAxisUnit": "none"
+      "yAxisUnit": "cpm"
     },
     {
       "bucketCount": 30,
       "bucketWidth": 0,
       "columnUnits": {},
-      "description": "The time between when API Gateway receives a request from a client and when it returns a response to the client. The latency includes the integration latency and other API Gateway overhead.\n\nSee Latency at https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-metrics-and-dimensions.html for more details",
+      "description": "The time between when API Gateway receives a request from a client and when it returns a response to the client.",
       "fillSpans": false,
-      "id": "d0a54459-0841-467f-88f7-e135b8c86fc7",
+      "id": "rest_latency",
       "isStacked": false,
       "mergeAllActiveQueries": false,
       "nullZeroValues": "zero",
@@ -358,45 +571,6 @@
                       "type": "tag"
                     },
                     "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "01c610d9",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Stage--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Stage",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "f102e7f0",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Resource--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Resource",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  },
-                  {
-                    "id": "0053bd12",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Method--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Method",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
                     "value": ""
                   },
                   {
@@ -437,102 +611,23 @@
                   "isJSON": false,
                   "key": "ApiName",
                   "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "Stage--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "Stage",
-                  "type": "tag"
                 }
               ],
               "having": [],
-              "legend": "{{ApiName}} - {{Stage}}",
+              "legend": "{{ApiName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "max",
-              "stepInterval": 60,
               "timeAggregation": "max"
             }
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "7b85940b-ac14-40da-9764-0fbb9c3cad31",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
+        "id": "rest-latency-query",
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -545,9 +640,9 @@
       "bucketCount": 30,
       "bucketWidth": 0,
       "columnUnits": {},
-      "description": "The number of server-side errors captured in a given period.\n\nSee 5XXError at https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-metrics-and-dimensions.html for more details",
+      "description": "The number of server-side errors captured in a given period.",
       "fillSpans": false,
-      "id": "210dc175-fbb7-44ef-88e0-b8530da4eaca",
+      "id": "rest_5xx",
       "isStacked": false,
       "mergeAllActiveQueries": false,
       "nullZeroValues": "zero",
@@ -582,45 +677,6 @@
                       "type": "tag"
                     },
                     "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "5702170a",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Stage--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Stage",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "9835e4d9",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Resource--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Resource",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  },
-                  {
-                    "id": "c986fbbe",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Method--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Method",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
                     "value": ""
                   },
                   {
@@ -661,102 +717,23 @@
                   "isJSON": false,
                   "key": "ApiName",
                   "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "Stage--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "Stage",
-                  "type": "tag"
                 }
               ],
               "having": [],
-              "legend": "{{ApiName}} - {{Stage}}",
+              "legend": "{{ApiName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "ec0786eb-fb13-46eb-813b-c516bac57395",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
+        "id": "rest-5xx-query",
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -769,9 +746,9 @@
       "bucketCount": 30,
       "bucketWidth": 0,
       "columnUnits": {},
-      "description": "The time between when API Gateway relays a request to the backend and when it receives a response from the backend.\n\nSee IntegrationLatency at https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-metrics-and-dimensions.html for more details",
+      "description": "The time between when API Gateway relays a request to the backend and when it receives a response from the backend.",
       "fillSpans": false,
-      "id": "8efb6639-6168-4d8b-9b4f-5b5c82dea333",
+      "id": "rest_integration_latency",
       "isStacked": false,
       "mergeAllActiveQueries": false,
       "nullZeroValues": "zero",
@@ -806,45 +783,6 @@
                       "type": "tag"
                     },
                     "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "33d0afbd",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Stage--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Stage",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "f818f0fc",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Resource--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Resource",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  },
-                  {
-                    "id": "a090cf40",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Method--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Method",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
                     "value": ""
                   },
                   {
@@ -885,102 +823,23 @@
                   "isJSON": false,
                   "key": "ApiName",
                   "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "Stage--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "Stage",
-                  "type": "tag"
                 }
               ],
               "having": [],
-              "legend": "{{ApiName}} - {{Stage}}",
+              "legend": "{{ApiName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "max",
-              "stepInterval": 60,
               "timeAggregation": "max"
             }
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "c1c0f0e6-712d-430e-9e76-af752b1dc09f",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
+        "id": "rest-integ-latency-query",
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -995,7 +854,7 @@
       "columnUnits": {},
       "description": "The number of requests served from the API cache in a given period.\n\nSee CacheHitCount at https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-metrics-and-dimensions.html for more details",
       "fillSpans": false,
-      "id": "88f56881-7744-41e9-9c19-9f5446e291dc",
+      "id": "rest_cache_hit",
       "isStacked": false,
       "mergeAllActiveQueries": false,
       "nullZeroValues": "zero",
@@ -1030,45 +889,6 @@
                       "type": "tag"
                     },
                     "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "6abb9f32",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Stage--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Stage",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "86a54806",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Resource--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Resource",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  },
-                  {
-                    "id": "1e5b50b4",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Method--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Method",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
                     "value": ""
                   },
                   {
@@ -1109,102 +929,23 @@
                   "isJSON": false,
                   "key": "ApiName",
                   "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "Stage--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "Stage",
-                  "type": "tag"
                 }
               ],
               "having": [],
-              "legend": "{{ApiName}} - {{Stage}}",
+              "legend": "{{ApiName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
               "spaceAggregation": "sum",
-              "stepInterval": 60,
               "timeAggregation": "sum"
             }
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "39a206dd-298c-4560-b3da-83a029cf3423",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
+        "id": "rest-cache-hit-query",
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
@@ -1219,7 +960,7 @@
       "columnUnits": {},
       "description": "The number of requests served from the backend in a given period, when API caching is enabled.\n\nSee CacheMissCount at https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-metrics-and-dimensions.html for more details",
       "fillSpans": false,
-      "id": "d3b4ad8b-7b52-4bea-9bc7-47e18da7f38c",
+      "id": "rest_cache_miss",
       "isStacked": false,
       "mergeAllActiveQueries": false,
       "nullZeroValues": "zero",
@@ -1254,45 +995,6 @@
                       "type": "tag"
                     },
                     "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "4dfbfe25",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Stage--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Stage",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "24f91927",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Resource--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Resource",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  },
-                  {
-                    "id": "f03b27a8",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Method--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Method",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
                     "value": ""
                   },
                   {
@@ -1333,6 +1035,1203 @@
                   "isJSON": false,
                   "key": "ApiName",
                   "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{ApiName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "timeAggregation": "sum"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "id": "rest-cache-miss-query",
+        "queryType": "builder"
+      },
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Cache Misses",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "",
+      "id": "row_http",
+      "panelTypes": "row",
+      "title": "HTTP API Metrics"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The total number of HTTP API requests in a given period.",
+      "fillSpans": false,
+      "id": "http_count",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApiGateway_Count_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApiGateway_Count_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "sum",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "http1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "ApiId--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "ApiId",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "http2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "http3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "ApiId--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "ApiId",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{ApiId}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "timeAggregation": "sum"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "id": "http-count-query",
+        "queryType": "builder"
+      },
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Requests",
+      "yAxisUnit": "cpm"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of client-side errors (4XX errors) in a given period.",
+      "fillSpans": false,
+      "id": "http_4xx",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApiGateway_4xx_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApiGateway_4xx_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "sum",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "http4xx1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "ApiId--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "ApiId",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "http4xx2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "http4xx3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "ApiId--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "ApiId",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{ApiId}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "timeAggregation": "sum"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "id": "http-4xx-query",
+        "queryType": "builder"
+      },
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "4XX Errors",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of server-side errors (5XX errors) in a given period.",
+      "fillSpans": false,
+      "id": "http_5xx",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApiGateway_5xx_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApiGateway_5xx_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "sum",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "http5xx1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "ApiId--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "ApiId",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "http5xx2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "http5xx3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "ApiId--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "ApiId",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{ApiId}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "timeAggregation": "sum"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "id": "http-5xx-query",
+        "queryType": "builder"
+      },
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "5XX Errors",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The total time between when API Gateway receives a request from a client and when it returns a response to the client.",
+      "fillSpans": false,
+      "id": "http_latency",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApiGateway_Latency_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApiGateway_Latency_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "httplat1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "ApiId--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "ApiId",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "httplat2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "httplat3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "ApiId--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "ApiId",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{ApiId}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "id": "http-latency-query",
+        "queryType": "builder"
+      },
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Latency",
+      "yAxisUnit": "ms"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The amount of data processed in bytes for HTTP API requests.",
+      "fillSpans": false,
+      "id": "http_data_processed",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApiGateway_DataProcessed_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApiGateway_DataProcessed_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "sum",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "httpdata1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "ApiId--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "ApiId",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "httpdata2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "httpdata3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "ApiId--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "ApiId",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{ApiId}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "timeAggregation": "sum"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "id": "http-data-query",
+        "queryType": "builder"
+      },
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Data Processed",
+      "yAxisUnit": "bytes"
+    },
+    {
+      "description": "",
+      "id": "row_websocket",
+      "panelTypes": "row",
+      "title": "WebSocket API Metrics"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of messages sent to the $connect route integration.",
+      "fillSpans": false,
+      "id": "ws_connect_count",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApiGateway_ConnectCount_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApiGateway_ConnectCount_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "sum",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "wscon1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "ApiId--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "ApiId",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "wscon2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "wscon3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "ApiId--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "ApiId",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{ApiId}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "timeAggregation": "sum"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "id": "ws-connect-query",
+        "queryType": "builder"
+      },
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Connect Count",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of messages sent to your WebSocket API.",
+      "fillSpans": false,
+      "id": "ws_message_count",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApiGateway_MessageCount_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApiGateway_MessageCount_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "sum",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "wsmsg1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "ApiId--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "ApiId",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "wsmsg2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "wsmsg3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "ApiId--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "ApiId",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{ApiId}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "timeAggregation": "sum"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "id": "ws-message-query",
+        "queryType": "builder"
+      },
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Message Count",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of requests that return a 4XX response from API Gateway before the integration is invoked.",
+      "fillSpans": false,
+      "id": "ws_client_error",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApiGateway_ClientError_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApiGateway_ClientError_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "sum",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "wscli1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "ApiId--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "ApiId",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "wscli2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "wscli3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "ApiId--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "ApiId",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{ApiId}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "timeAggregation": "sum"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "id": "ws-client-error-query",
+        "queryType": "builder"
+      },
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Client Errors (4XX)",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "Errors that occurred when calling the integration (5XX responses).",
+      "fillSpans": false,
+      "id": "ws_execution_error",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApiGateway_ExecutionError_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApiGateway_ExecutionError_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "sum",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "wsexec1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "ApiId--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "ApiId",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "wsexec2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "wsexec3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "ApiId--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "ApiId",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{ApiId}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "timeAggregation": "sum"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "id": "ws-exec-error-query",
+        "queryType": "builder"
+      },
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Execution Errors (5XX)",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of requests that return a 4XX/5XX response from the integration.",
+      "fillSpans": false,
+      "id": "ws_integration_error",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApiGateway_IntegrationError_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApiGateway_IntegrationError_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "sum",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "wsint1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "ApiId--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "ApiId",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "wsint2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "wsint3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "ApiId--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "ApiId",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{ApiId}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "timeAggregation": "sum"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "id": "ws-integ-error-query",
+        "queryType": "builder"
+      },
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Integration Errors",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "",
+      "id": "row_common",
+      "panelTypes": "row",
+      "title": "Common Metrics (HTTP & WebSocket APIs)"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The time between when API Gateway relays a request to the backend and when it receives a response from the backend. This metric applies to both HTTP and WebSocket APIs.",
+      "fillSpans": false,
+      "id": "common_integration_latency",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApiGateway_IntegrationLatency_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApiGateway_IntegrationLatency_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "commonintlat1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "ApiId--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "ApiId",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "commonintlat2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "commonintlat3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  },
+                  {
+                    "id": "commonintlat4",
+                    "key": {
+                      "dataType": "string",
+                      "id": "Stage--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "Stage",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "ApiId--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "ApiId",
+                  "type": "tag"
                 },
                 {
                   "dataType": "string",
@@ -1344,98 +2243,27 @@
                 }
               ],
               "having": [],
-              "legend": "{{ApiName}} - {{Stage}}",
+              "legend": "{{Stage}} - {{ApiId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "spaceAggregation": "max",
+              "timeAggregation": "max"
             }
           ],
           "queryFormulas": []
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "a5ef38e5-16a0-41c1-82b3-b6480ec4e524",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
+        "id": "common-integ-latency-query",
         "queryType": "builder"
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
       "softMax": 0,
       "softMin": 0,
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Cache Misses",
-      "yAxisUnit": "none"
+      "title": "Integration Latency",
+      "yAxisUnit": "ms"
     }
   ]
 }
