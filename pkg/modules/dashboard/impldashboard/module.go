@@ -359,6 +359,11 @@ func (module *module) checkBuilderQueriesForMetricNames(query map[string]interfa
 			continue
 		}
 
+		// Skip disabled queries
+		if disabled, _ := data["disabled"].(bool); disabled {
+			continue
+		}
+
 		// Check dataSource is metrics
 		if dataSource, ok := data["dataSource"].(string); !ok || dataSource != "metrics" {
 			continue
