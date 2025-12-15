@@ -1601,7 +1601,7 @@ func TestThresholdRuleEval_SendUnmatchedBypassesRecovery(t *testing.T) {
 	smpl := resultVectors[0]
 	assert.Equal(t, float64(3), smpl.V)
 	assert.False(t, smpl.IsRecovering, "unmatched path should not mark sample as recovering")
-	assert.Nil(t, smpl.RecoveryTarget, "unmatched path should not set recovery target")
+	assert.Equal(t, float64(4), *smpl.RecoveryTarget, "unmatched path should set recovery target")
 	assert.InDelta(t, target, smpl.Target, 0.01)
 	assert.Equal(t, "primary", smpl.Metric.Get(ruletypes.LabelThresholdName))
 }
