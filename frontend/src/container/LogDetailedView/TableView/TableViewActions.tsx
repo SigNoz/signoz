@@ -62,7 +62,7 @@ const BodyContent: React.FC<{
 	bodyHtml: { __html: string };
 	textToCopy: string;
 }> = React.memo(({ fieldData, record, bodyHtml, textToCopy }) => {
-	const { isLoading, treeData } = useAsyncJSONProcessing(
+	const { isLoading, treeData, error } = useAsyncJSONProcessing(
 		fieldData.value,
 		record.field === 'body',
 	);
@@ -78,6 +78,16 @@ const BodyContent: React.FC<{
 				<Spin size="small" />
 				<span style={{ color: Color.BG_SIENNA_400 }}>Processing JSON...</span>
 			</div>
+		);
+	}
+
+	if (record.field === 'body' && error) {
+		return (
+			<span
+				style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
+			>
+				Error parsing Body JSON
+			</span>
 		);
 	}
 
