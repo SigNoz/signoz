@@ -422,7 +422,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			? ROUTES.GET_STARTED_WITH_CLOUD
 			: ROUTES.GET_STARTED;
 
-		if (event.ctrlKey || event.metaKey) {
+		if (isCtrlOrMMetaKey(event)) {
 			openInNewTab(onboaringRoute);
 		} else {
 			history.push(onboaringRoute);
