@@ -70,6 +70,7 @@ import { showErrorNotification } from 'utils/error';
 import { genericNavigate } from 'utils/genericNavigate';
 import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
 
+import { useCmdK } from '../../providers/cmdKProvider';
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
 import {
@@ -122,6 +123,7 @@ function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
+	const { openCmdK } = useCmdK();
 	const { pathname, search } = useLocation();
 	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
 		AppState,
@@ -633,6 +635,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const handleMenuItemClick = (event: MouseEvent, item: SidebarItem): void => {
 		if (item.key === ROUTES.SETTINGS) {
 			genericNavigate(settingsRoute, event);
+		} else if (item.key === 'quick-search') {
+			openCmdK();
 		} else if (item) {
 			onClickHandler(item?.key as string, event);
 		}

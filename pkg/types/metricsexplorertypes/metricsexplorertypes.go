@@ -140,11 +140,11 @@ type UpdateMetricMetadataRequest struct {
 
 // TreemapRequest represents the payload for the metrics treemap endpoint.
 type TreemapRequest struct {
-	Filter  *qbtypes.Filter `json:"filter,omitempty"`
-	Start   int64           `json:"start"`
-	End     int64           `json:"end"`
-	Limit   int             `json:"limit"`
-	Treemap TreemapMode     `json:"treemap"`
+	Filter *qbtypes.Filter `json:"filter,omitempty"`
+	Start  int64           `json:"start"`
+	End    int64           `json:"end"`
+	Limit  int             `json:"limit"`
+	Mode   TreemapMode     `json:"mode"`
 }
 
 // Validate enforces basic constraints on TreemapRequest.
@@ -182,11 +182,11 @@ func (req *TreemapRequest) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
 	}
 
-	if req.Treemap != TreemapModeSamples && req.Treemap != TreemapModeTimeSeries {
+	if req.Mode != TreemapModeSamples && req.Mode != TreemapModeTimeSeries {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"invalid treemap mode %q: supported values are %q or %q",
-			req.Treemap,
+			req.Mode,
 			TreemapModeSamples,
 			TreemapModeTimeSeries,
 		)
@@ -219,4 +219,62 @@ type TreemapEntry struct {
 type TreemapResponse struct {
 	TimeSeries []TreemapEntry `json:"timeseries"`
 	Samples    []TreemapEntry `json:"samples"`
+}
+
+// MetricHighlightsResponse is the output structure for the metric highlights endpoint.
+type MetricHighlightsResponse struct {
+	DataPoints       uint64 `json:"dataPoints"`
+	LastReceived     uint64 `json:"lastReceived"`
+	TotalTimeSeries  uint64 `json:"totalTimeSeries"`
+	ActiveTimeSeries uint64 `json:"activeTimeSeries"`
+}
+
+// MetricAttributesRequest represents the payload for the metric attributes endpoint.
+type MetricAttributesRequest struct {
+	MetricName string `json:"metricName"`
+	Start      *int64 `json:"start,omitempty"`
+	End        *int64 `json:"end,omitempty"`
+}
+
+// Validate ensures MetricAttributesRequest contains acceptable values.
+func (req *MetricAttributesRequest) Validate() error {
+	if req == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required")
+	}
+
+	if req.Start != nil && req.End != nil {
+		if *req.Start >= *req.End {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "start (%d) must be less than end (%d)", *req.Start, *req.End)
+		}
+	}
+
+	return nil
+}
+
+// UnmarshalJSON validates input immediately after decoding.
+func (req *MetricAttributesRequest) UnmarshalJSON(data []byte) error {
+	type raw MetricAttributesRequest
+	var decoded raw
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	*req = MetricAttributesRequest(decoded)
+	return req.Validate()
+}
+
+// MetricAttribute represents a single attribute with its values and count.
+type MetricAttribute struct {
+	Key        string   `json:"key"`
+	Values     []string `json:"values"`
+	ValueCount uint64   `json:"valueCount"`
+}
+
+// MetricAttributesResponse is the output structure for the metric attributes endpoint.
+type MetricAttributesResponse struct {
+	Attributes []MetricAttribute `json:"attributes"`
+	TotalKeys  int64             `json:"totalKeys"`
 }
