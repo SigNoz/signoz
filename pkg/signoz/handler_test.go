@@ -36,7 +36,7 @@ func TestNewHandlers(t *testing.T) {
 	tokenizer := tokenizertest.New()
 	emailing := emailingtest.New()
 	require.NoError(t, err)
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, Config{})
 
 	handlers := NewHandlers(modules, providerSettings, nil, nil)
 

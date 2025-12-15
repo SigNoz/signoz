@@ -79,6 +79,7 @@ func NewModules(
 	authNs map[authtypes.AuthNProvider]authn.AuthN,
 	authz authz.AuthZ,
 	cache cache.Cache,
+	config Config,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -101,6 +102,6 @@ func NewModules(
 		Session:         implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
 		SpanPercentile:  implspanpercentile.NewModule(querier, providerSettings),
 		Services:        implservices.NewModule(querier, telemetryStore),
-		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, providerSettings),
+		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, providerSettings, config.MetricsExplorer),
 	}
 }
