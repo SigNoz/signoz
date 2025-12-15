@@ -36,7 +36,7 @@ func TestNewModules(t *testing.T) {
 	tokenizer := tokenizertest.New()
 	emailing := emailingtest.New()
 	require.NoError(t, err)
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, Config{})
 
 	reflectVal := reflect.ValueOf(modules)
 	for i := 0; i < reflectVal.NumField(); i++ {
