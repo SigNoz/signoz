@@ -200,7 +200,10 @@ func (m *defaultFieldMapper) getColumn(
 			return indexV3Columns[oldToNew[key.Name]], nil
 		}
 		if _, ok := IntrinsicFieldsDeprecated[key.Name]; ok {
-			return indexV3Columns[oldToNew[key.Name]], nil
+			// Check if we have a mapping for the deprecated intrinsic field
+			if _, ok := indexV3Columns[oldToNew[key.Name]]; ok {
+				return indexV3Columns[oldToNew[key.Name]], nil
+			}
 		}
 
 		if col, ok := indexV3Columns[key.Name]; ok {
@@ -236,8 +239,8 @@ func (m *defaultFieldMapper) FieldFor(
 		return "", err
 	}
 
-	switch column.Type {
-	case schema.JSONColumnType{}:
+	switch column.Type.GetType() {
+	case schema.ColumnTypeEnumJSON:
 		// json is only supported for resource context as of now
 		if key.FieldContext != telemetrytypes.FieldContextResource {
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
@@ -253,44 +256,38 @@ func (m *defaultFieldMapper) FieldFor(
 		} else {
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		}
-
-	case schema.ColumnTypeString,
-		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		schema.ColumnTypeUInt64,
-		schema.ColumnTypeUInt32,
-		schema.ColumnTypeInt8,
-		schema.ColumnTypeInt16,
-		schema.ColumnTypeBool,
-		schema.DateTime64ColumnType{Precision: 9, Timezone: "UTC"},
-		schema.FixedStringColumnType{Length: 32}:
+	case schema.ColumnTypeEnumString,
+		schema.ColumnTypeEnumUInt64,
+		schema.ColumnTypeEnumUInt32,
+		schema.ColumnTypeEnumInt8,
+		schema.ColumnTypeEnumInt16,
+		schema.ColumnTypeEnumBool,
+		schema.ColumnTypeEnumDateTime64,
+		schema.ColumnTypeEnumFixedString:
 		return column.Name, nil
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeString,
-	}:
-		// a key could have been materialized, if so return the materialized column name
-		if key.Materialized {
-			return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+	case schema.ColumnTypeEnumLowCardinality:
+		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+		case schema.ColumnTypeEnumString:
+			return column.Name, nil
+		default:
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for low cardinality column type %s", elementType, column.Type)
 		}
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeFloat64,
-	}:
-		// a key could have been materialized, if so return the materialized column name
-		if key.Materialized {
-			return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+	case schema.ColumnTypeEnumMap:
+		keyType := column.Type.(schema.MapColumnType).KeyType
+		if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 		}
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeBool,
-	}:
-		// a key could have been materialized, if so return the materialized column name
-		if key.Materialized {
-			return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+
+		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumFloat64, schema.ColumnTypeEnumBool:
+			// a key could have been materialized, if so return the materialized column name
+			if key.Materialized {
+				return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+			}
+			return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
+		default:
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for map column type %s", valueType, column.Type)
 		}
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
 	}
 	// should not reach here
 	return column.Name, nil

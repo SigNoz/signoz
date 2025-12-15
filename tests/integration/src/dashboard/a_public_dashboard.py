@@ -26,7 +26,6 @@ def test_create_and_get_public_dashboard(
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Get domains which should be an empty list
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
         json={
@@ -54,6 +53,7 @@ def test_create_and_get_public_dashboard(
     )
 
     assert response.status_code == HTTPStatus.CREATED
+    assert "id" in response.json()["data"]
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{id}/public"),

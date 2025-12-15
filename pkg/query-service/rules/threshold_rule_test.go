@@ -488,7 +488,7 @@ func TestThresholdRuleEvalDelay(t *testing.T) {
 		AlertName: "Test Eval Delay",
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: ruletypes.Duration(5 * time.Minute),
 			Frequency:  ruletypes.Duration(1 * time.Minute),
 		}},
@@ -551,7 +551,7 @@ func TestThresholdRuleClickHouseTmpl(t *testing.T) {
 		AlertName: "Tricky Condition Tests",
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: ruletypes.Duration(5 * time.Minute),
 			Frequency:  ruletypes.Duration(1 * time.Minute),
 		}},
@@ -620,7 +620,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		AlertName: "Units test",
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: ruletypes.Duration(5 * time.Minute),
 			Frequency:  ruletypes.Duration(1 * time.Minute),
 		}},
@@ -784,7 +784,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil, readerCache, options)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Duration(time.Second), nil, readerCache, options)
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
@@ -821,7 +821,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		AlertName: "No data test",
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: ruletypes.Duration(5 * time.Minute),
 			Frequency:  ruletypes.Duration(1 * time.Minute),
 		}},
@@ -899,7 +899,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		)
 		assert.NoError(t, err)
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil, readerCache, options)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Duration(time.Second), nil, readerCache, options)
 
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -932,7 +932,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		AlertName: "Traces link test",
 		AlertType: ruletypes.AlertTypeTraces,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: ruletypes.Duration(5 * time.Minute),
 			Frequency:  ruletypes.Duration(1 * time.Minute),
 		}},
@@ -1019,7 +1019,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil, nil, options)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Duration(time.Second), nil, nil, options)
 
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1057,7 +1057,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		AlertName: "Logs link test",
 		AlertType: ruletypes.AlertTypeLogs,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: ruletypes.Duration(5 * time.Minute),
 			Frequency:  ruletypes.Duration(1 * time.Minute),
 		}},
@@ -1156,7 +1156,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil, nil, options)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Duration(time.Second), nil, nil, options)
 
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1195,7 +1195,7 @@ func TestThresholdRuleShiftBy(t *testing.T) {
 		AlertName: "Logs link test",
 		AlertType: ruletypes.AlertTypeLogs,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: ruletypes.Duration(5 * time.Minute),
 			Frequency:  ruletypes.Duration(1 * time.Minute),
 		}},
@@ -1269,7 +1269,7 @@ func TestMultipleThresholdRule(t *testing.T) {
 		AlertName: "Mulitple threshold test",
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: ruletypes.Duration(5 * time.Minute),
 			Frequency:  ruletypes.Duration(1 * time.Minute),
 		}},
@@ -1423,7 +1423,7 @@ func TestMultipleThresholdRule(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil, readerCache, options)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Duration(time.Second), nil, readerCache, options)
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
