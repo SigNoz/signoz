@@ -192,7 +192,7 @@ func (r *BaseRule) currentAlerts() []*ruletypes.Alert {
 }
 
 // ShouldSendUnmatched returns true if the rule should send unmatched samples
-// even if they don't match the rule condition.
+// during alert evaluation, even if they don't match the rule condition.
 // This is useful in testing the rule.
 func (r *BaseRule) ShouldSendUnmatched() bool {
 	return r.sendUnmatched

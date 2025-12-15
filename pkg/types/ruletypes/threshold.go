@@ -150,6 +150,7 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 				TargetUnit: threshold.TargetUnit,
 			}
 			resultVector = append(resultVector, smpl)
+			continue
 		}
 
 		// Prepare alert hash from series labels and threshold name if recovery target option was provided
