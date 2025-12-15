@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
@@ -21,7 +22,9 @@ type MockSQLRuleStore struct {
 // NewMockSQLRuleStore creates a new MockSQLRuleStore with sqlmock
 func NewMockSQLRuleStore() *MockSQLRuleStore {
 	sqlStore := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherRegexp)
-	ruleStore := sqlrulestore.NewRuleStore(sqlStore)
+	// For tests, we can pass nil for queryParser and use test provider settings
+	providerSettings := factorytest.NewSettings()
+	ruleStore := sqlrulestore.NewRuleStore(sqlStore, nil, providerSettings)
 
 	return &MockSQLRuleStore{
 		ruleStore: ruleStore,
@@ -57,6 +60,11 @@ func (m *MockSQLRuleStore) GetStoredRule(ctx context.Context, id valuer.UUID) (*
 // GetStoredRules implements ruletypes.RuleStore - delegates to underlying ruleStore to trigger SQL
 func (m *MockSQLRuleStore) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.Rule, error) {
 	return m.ruleStore.GetStoredRules(ctx, orgID)
+}
+
+// GetStoredRulesByMetricName implements ruletypes.RuleStore - delegates to underlying ruleStore
+func (m *MockSQLRuleStore) GetStoredRulesByMetricName(ctx context.Context, orgID string, metricName string) ([]ruletypes.RuleAlert, error) {
+	return m.ruleStore.GetStoredRulesByMetricName(ctx, orgID, metricName)
 }
 
 // ExpectCreateRule sets up SQL expectations for CreateRule operation
