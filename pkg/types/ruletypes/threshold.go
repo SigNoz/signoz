@@ -149,6 +149,9 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 				Target:     *threshold.TargetValue,
 				TargetUnit: threshold.TargetUnit,
 			}
+			if threshold.RecoveryTarget != nil {
+				smpl.RecoveryTarget = threshold.RecoveryTarget
+			}
 			resultVector = append(resultVector, smpl)
 			continue
 		}
