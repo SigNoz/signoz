@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -52,7 +51,8 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+	// Check if this is a body JSON search - either by FieldContext
+	if key.FieldContext == telemetrytypes.FieldContextBody {
 		tblFieldName, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
@@ -164,7 +164,8 @@ func (c *conditionBuilder) conditionFor(
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 
-		if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+		// Check if this is a body JSON search - by FieldContext
+		if key.FieldContext == telemetrytypes.FieldContextBody {
 			if operator == qbtypes.FilterOperatorExists {
 				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			} else {
@@ -173,45 +174,57 @@ func (c *conditionBuilder) conditionFor(
 		}
 
 		var value any
-		switch column.Type {
-		case schema.JSONColumnType{}:
+		switch column.Type.GetType() {
+		case schema.ColumnTypeEnumJSON:
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.IsNotNull(tblFieldName), nil
 			} else {
 				return sb.IsNull(tblFieldName), nil
 			}
-		case schema.ColumnTypeString, schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}:
+		case schema.ColumnTypeEnumLowCardinality:
+			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+			case schema.ColumnTypeEnumString:
+				value = ""
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.NE(tblFieldName, value), nil
+				}
+				return sb.E(tblFieldName, value), nil
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+			}
+		case schema.ColumnTypeEnumString:
 			value = ""
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.NE(tblFieldName, value), nil
 			} else {
 				return sb.E(tblFieldName, value), nil
 			}
-		case schema.ColumnTypeUInt64, schema.ColumnTypeUInt32, schema.ColumnTypeUInt8:
+		case schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
 			value = 0
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.NE(tblFieldName, value), nil
 			} else {
 				return sb.E(tblFieldName, value), nil
 			}
-		case schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
-		}, schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeBool,
-		}, schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeFloat64,
-		}:
-			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
-			if key.Materialized {
-				leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+		case schema.ColumnTypeEnumMap:
+			keyType := column.Type.(schema.MapColumnType).KeyType
+			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 			}
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.E(leftOperand, true), nil
-			} else {
-				return sb.NE(leftOperand, true), nil
+
+			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
+				leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
+				if key.Materialized {
+					leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+				}
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.E(leftOperand, true), nil
+				} else {
+					return sb.NE(leftOperand, true), nil
+				}
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
 			}
 		default:
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
@@ -238,7 +251,7 @@ func (c *conditionBuilder) ConditionFor(
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
 		field, _ := c.fm.FieldFor(ctx, key)
-		if slices.Contains(maps.Keys(IntrinsicFields), field) && !strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+		if slices.Contains(maps.Keys(IntrinsicFields), field) && key.FieldContext != telemetrytypes.FieldContextBody {
 			return condition, nil
 		}
 

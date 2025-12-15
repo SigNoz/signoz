@@ -2,6 +2,7 @@ package implmetricsexplorer
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
+	"golang.org/x/sync/errgroup"
 )
 
 type module struct {
@@ -188,6 +190,63 @@ func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, re
 	}
 
 	return nil
+}
+
+// GetMetricHighlights returns highlights for a metric including data points, last received, total time series, and active time series.
+func (m *module) GetMetricHighlights(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricHighlightsResponse, error) {
+	if metricName == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric name is required")
+	}
+
+	var response metricsexplorertypes.MetricHighlightsResponse
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// Fetch data points
+	g.Go(func() error {
+		dataPoints, err := m.getMetricDataPoints(gCtx, metricName)
+		if err != nil {
+			return err
+		}
+		response.DataPoints = dataPoints
+		return nil
+	})
+
+	// Fetch last received
+	g.Go(func() error {
+		lastReceived, err := m.getMetricLastReceived(gCtx, metricName)
+		if err != nil {
+			return err
+		}
+		response.LastReceived = lastReceived
+		return nil
+	})
+
+	// Fetch total time series
+	g.Go(func() error {
+		totalTimeSeries, err := m.getTotalTimeSeriesForMetricName(gCtx, metricName)
+		if err != nil {
+			return err
+		}
+		response.TotalTimeSeries = totalTimeSeries
+		return nil
+	})
+
+	// Fetch active time series (using 120 minutes as default duration)
+	g.Go(func() error {
+		activeTimeSeries, err := m.getActiveTimeSeriesForMetricName(gCtx, metricName, 120*time.Minute)
+		if err != nil {
+			return err
+		}
+		response.ActiveTimeSeries = activeTimeSeries
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
 
 func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.MetricAttributesRequest) (*metricsexplorertypes.MetricAttributesResponse, error) {
@@ -788,6 +847,87 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 	return entries, nil
 }
 
+// getMetricDataPoints returns the total number of data points (samples) for a metric.
+func (m *module) getMetricDataPoints(ctx context.Context, metricName string) (uint64, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("sum(count) AS data_points")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4Agg30mTableName))
+	sb.Where(sb.E("metric_name", metricName))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	var dataPoints uint64
+	err := db.QueryRow(ctx, query, args...).Scan(&dataPoints)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get metrics data points")
+	}
+
+	return dataPoints, nil
+}
+
+// getMetricLastReceived returns the last received timestamp for a metric.
+func (m *module) getMetricLastReceived(ctx context.Context, metricName string) (uint64, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("MAX(last_reported_unix_milli) AS last_received_time")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(sb.E("metric_name", metricName))
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	var lastReceived sql.NullInt64
+	err := db.QueryRow(ctx, query, args...).Scan(&lastReceived)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get last received timestamp")
+	}
+
+	if !lastReceived.Valid {
+		return 0, nil
+	}
+
+	return uint64(lastReceived.Int64), nil
+}
+
+// getTotalTimeSeriesForMetricName returns the total number of unique time series for a metric.
+func (m *module) getTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("uniq(fingerprint) AS time_series_count")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41weekTableName))
+	sb.Where(sb.E("metric_name", metricName))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	var timeSeriesCount uint64
+	err := db.QueryRow(ctx, query, args...).Scan(&timeSeriesCount)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get total time series count")
+	}
+
+	return timeSeriesCount, nil
+}
+
+// getActiveTimeSeriesForMetricName returns the number of active time series for a metric within the given duration.
+func (m *module) getActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, error) {
+	milli := time.Now().Add(-duration).UnixMilli()
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("uniq(fingerprint) AS active_time_series")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4TableName))
+	sb.Where(sb.E("metric_name", metricName))
+	sb.Where(sb.GTE("unix_milli", milli))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	db := m.telemetryStore.ClickhouseDB()
+	var activeTimeSeries uint64
+	err := db.QueryRow(ctx, query, args...).Scan(&activeTimeSeries)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get active time series count")
+	}
+
+	return activeTimeSeries, nil
+}
+
 func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, start, end *int64) ([]metricsexplorertypes.MetricAttribute, error) {
 	// Build query using sqlbuilder
 	sb := sqlbuilder.NewSelectBuilder()
@@ -812,9 +952,7 @@ func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, s
 
 	sb.GroupBy("attr_name")
 	sb.OrderBy("valueCount DESC")
-
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-
 	db := m.telemetryStore.ClickhouseDB()
 	rows, err := db.Query(ctx, query, args...)
 	if err != nil {
