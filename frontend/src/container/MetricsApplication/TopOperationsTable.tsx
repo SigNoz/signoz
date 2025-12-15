@@ -17,7 +17,7 @@ import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from './Tabs/types';

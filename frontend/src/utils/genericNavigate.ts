@@ -1,6 +1,6 @@
 import history from 'lib/history';
 import { KeyboardEvent, MouseEvent } from 'react';
-import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 
 export const genericNavigate = (
 	link: string,

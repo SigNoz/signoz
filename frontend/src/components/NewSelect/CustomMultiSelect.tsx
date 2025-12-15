@@ -28,7 +28,7 @@ import React, {
 	useState,
 } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';

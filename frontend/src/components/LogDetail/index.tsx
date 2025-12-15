@@ -47,7 +47,7 @@ import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';

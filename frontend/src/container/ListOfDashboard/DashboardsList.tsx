@@ -86,7 +86,7 @@ import {
 	Widgets,
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
-import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';

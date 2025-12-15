@@ -68,7 +68,7 @@ import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
 import { showErrorNotification } from 'utils/error';
 import { genericNavigate } from 'utils/genericNavigate';
-import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 
 import { useCmdK } from '../../providers/cmdKProvider';
 import { routeConfig } from './config';

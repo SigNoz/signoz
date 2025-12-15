@@ -22,7 +22,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { Tags } from 'types/reducer/trace';
-import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 

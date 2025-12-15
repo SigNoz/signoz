@@ -3,7 +3,7 @@ import { navigateToTrace } from 'container/MetricsApplication/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 import { v4 as uuid } from 'uuid';
 
 import { useGetAPMToTracesQueries } from '../../util';

@@ -39,7 +39,7 @@ import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { GettableAlert } from 'types/api/alerts/get';
-import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 
 import DeleteAlert from './DeleteAlert';
 import { ColumnButton, SearchContainer } from './styles';

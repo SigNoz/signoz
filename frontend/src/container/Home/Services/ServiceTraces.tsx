@@ -15,7 +15,7 @@ import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { USER_ROLES } from 'types/roles';
 import { genericNavigate } from 'utils/genericNavigate';
-import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
