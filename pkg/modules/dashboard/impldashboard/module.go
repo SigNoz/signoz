@@ -4,7 +4,6 @@ import (
 	"context"
 	"maps"
 	"slices"
-	"strings"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -382,10 +381,8 @@ func (module *module) checkBuilderQueriesForMetricNames(query map[string]interfa
 				continue
 			}
 
-			for _, searchMetric := range metricNames {
-				if strings.TrimSpace(metricName) == searchMetric {
-					foundMetrics[searchMetric] = true
-				}
+			if slices.Contains(metricNames, metricName) {
+				foundMetrics[metricName] = true
 			}
 		}
 	}
@@ -417,8 +414,8 @@ func (module *module) checkClickHouseQueriesForMetricNames(ctx context.Context, 
 		// Parse query to extract metric names
 		result, err := module.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, queryStr)
 		if err != nil {
-			// Log debug and continue - parsing errors shouldn't break the search
-			module.settings.Logger().DebugContext(ctx, "failed to parse ClickHouse query", "query", queryStr, "error", err)
+			// Log warning and continue - parsing errors shouldn't break the search
+			module.settings.Logger().WarnContext(ctx, "failed to parse ClickHouse query", "query", queryStr, "error", err)
 			continue
 		}
 
@@ -457,8 +454,8 @@ func (module *module) checkPromQLQueriesForMetricNames(ctx context.Context, quer
 		// Parse query to extract metric names
 		result, err := module.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, queryStr)
 		if err != nil {
-			// Log debug and continue - parsing errors shouldn't break the search
-			module.settings.Logger().DebugContext(ctx, "failed to parse PromQL query", "query", queryStr, "error", err)
+			// Log warning and continue - parsing errors shouldn't break the search
+			module.settings.Logger().WarnContext(ctx, "failed to parse PromQL query", "query", queryStr, "error", err)
 			continue
 		}
 
