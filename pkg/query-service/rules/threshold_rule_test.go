@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -1519,6 +1520,283 @@ func TestThresholdRuleEval_MatchPlusCompareOps(t *testing.T) {
 
 }
 
+// TestThresholdRuleEval_SendUnmatchedBypassesRecovery tests the case where the sendUnmatched is true and the recovery target is met.
+// In this case, the rule should return the first sample as sendUnmatched is supposed to be used in tests and in case of tests
+// recovery target is expected to be present. This test make sure this behavior is working as expected.
+func TestThresholdRuleEval_SendUnmatchedBypassesRecovery(t *testing.T) {
+	target := 10.0
+	recovery := 4.0
+
+	postableRule := ruletypes.PostableRule{
+		AlertName: "Send unmatched bypass recovery",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeThreshold,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "probe_success",
+						},
+						AggregateOperator: v3.AggregateOperatorNoOp,
+						DataSource:        v3.DataSourceMetrics,
+						Expression:        "A",
+					},
+				},
+			},
+		},
+	}
+
+	postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+		Kind: ruletypes.BasicThresholdKind,
+		Spec: ruletypes.BasicRuleThresholds{
+			{
+				Name:           "primary",
+				TargetValue:    &target,
+				RecoveryTarget: &recovery,
+				MatchType:      ruletypes.AtleastOnce,
+				CompareOp:      ruletypes.ValueIsAbove,
+			},
+		},
+	}
+
+	logger := instrumentationtest.New().Logger()
+	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+	require.NoError(t, err)
+
+	now := time.Now()
+	series := v3.Series{
+		Points: []v3.Point{
+			{Timestamp: now.UnixMilli(), Value: 3},
+			{Timestamp: now.Add(time.Minute).UnixMilli(), Value: 4},
+			{Timestamp: now.Add(2 * time.Minute).UnixMilli(), Value: 5},
+		},
+		Labels: map[string]string{
+			"service.name": "frontend",
+		},
+		LabelsArray: []map[string]string{
+			{
+				"service.name": "frontend",
+			},
+		},
+	}
+
+	alertLabels := ruletypes.PrepareSampleLabelsForRule(series.Labels, "primary")
+	activeAlerts := map[uint64]struct{}{alertLabels.Hash(): {}}
+
+	resultVectors, err := rule.Threshold.Eval(series, rule.Unit(), ruletypes.EvalData{
+		ActiveAlerts:  activeAlerts,
+		SendUnmatched: true,
+	})
+	require.NoError(t, err)
+	require.Len(t, resultVectors, 1, "expected unmatched sample to be returned")
+
+	smpl := resultVectors[0]
+	assert.Equal(t, float64(3), smpl.V)
+	assert.False(t, smpl.IsRecovering, "unmatched path should not mark sample as recovering")
+	assert.Nil(t, smpl.RecoveryTarget, "unmatched path should not set recovery target")
+	assert.InDelta(t, target, smpl.Target, 0.01)
+	assert.Equal(t, "primary", smpl.Metric.Get(ruletypes.LabelThresholdName))
+}
+
+func intPtr(v int) *int {
+	return &v
+}
+
+// TestThresholdRuleEval_SendUnmatchedVariants tests the different variants of sendUnmatched behavior.
+// It tests the case where sendUnmatched is true, false.
+func TestThresholdRuleEval_SendUnmatchedVariants(t *testing.T) {
+	target := 10.0
+	recovery := 5.0
+	postableRule := ruletypes.PostableRule{
+		AlertName: "Send unmatched variants",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeThreshold,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "probe_success",
+						},
+						AggregateOperator: v3.AggregateOperatorNoOp,
+						DataSource:        v3.DataSourceMetrics,
+						Expression:        "A",
+					},
+				},
+			},
+		},
+	}
+
+	now := time.Now()
+
+	tests := []recoveryTestCase{
+		{
+			description: "sendUnmatched returns first valid point",
+			values: v3.Series{
+				Points: []v3.Point{
+					{Timestamp: now.UnixMilli(), Value: 3},
+					{Timestamp: now.Add(time.Minute).UnixMilli(), Value: 4},
+				},
+				Labels: map[string]string{
+					"service.name": "frontend",
+				},
+				LabelsArray: []map[string]string{
+					{
+						"service.name": "frontend",
+					},
+				},
+			},
+			compareOp:      string(ruletypes.ValueIsAbove),
+			matchType:      string(ruletypes.AtleastOnce),
+			target:         target,
+			recoveryTarget: &recovery,
+			thresholdName:  "primary",
+			// Since sendUnmatched is true, the rule should return the first valid point
+			// even if it doesn't match the rule condition with current target value of 10.0
+			sendUnmatched:       true,
+			expectSamples:       intPtr(1),
+			expectedSampleValue: 3,
+		},
+		{
+			description: "sendUnmatched false suppresses unmatched",
+			values: v3.Series{
+				Points: []v3.Point{
+					{Timestamp: now.UnixMilli(), Value: 3},
+					{Timestamp: now.Add(time.Minute).UnixMilli(), Value: 4},
+				},
+				Labels: map[string]string{
+					"service.name": "frontend",
+				},
+				LabelsArray: []map[string]string{
+					{
+						"service.name": "frontend",
+					},
+				},
+			},
+			compareOp:      string(ruletypes.ValueIsAbove),
+			matchType:      string(ruletypes.AtleastOnce),
+			target:         target,
+			recoveryTarget: &recovery,
+			thresholdName:  "primary",
+			// Since sendUnmatched is false, the rule should not return any samples
+			sendUnmatched: false,
+			expectSamples: intPtr(0),
+		},
+		{
+			description: "sendUnmatched skips NaN and uses next point",
+			values: v3.Series{
+				Points: []v3.Point{
+					{Timestamp: now.UnixMilli(), Value: math.NaN()},
+					{Timestamp: now.Add(time.Minute).UnixMilli(), Value: math.Inf(1)},
+					{Timestamp: now.Add(2 * time.Minute).UnixMilli(), Value: 7},
+				},
+				Labels: map[string]string{
+					"service.name": "frontend",
+				},
+				LabelsArray: []map[string]string{
+					{
+						"service.name": "frontend",
+					},
+				},
+			},
+			compareOp:      string(ruletypes.ValueIsAbove),
+			matchType:      string(ruletypes.AtleastOnce),
+			target:         target,
+			recoveryTarget: &recovery,
+			thresholdName:  "primary",
+			// Since sendUnmatched is true, the rule should return the first valid point
+			// even if it doesn't match the rule condition with current target value of 10.0
+			sendUnmatched:       true,
+			expectSamples:       intPtr(1),
+			expectedSampleValue: 7,
+		},
+	}
+
+	for _, tc := range tests {
+		runEvalTests(t, postableRule, []recoveryTestCase{tc})
+	}
+}
+
+// TestThresholdRuleEval_RecoveryNotMetSendUnmatchedFalse tests the case where the recovery target is not met and sendUnmatched is false.
+// In this case, the rule should not return any samples as no alert is active plus the recovery target is not met.
+func TestThresholdRuleEval_RecoveryNotMetSendUnmatchedFalse(t *testing.T) {
+	target := 10.0
+	recovery := 5.0
+
+	now := time.Now()
+	postableRule := ruletypes.PostableRule{
+		AlertName: "Recovery not met sendUnmatched false",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeThreshold,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "probe_success",
+						},
+						AggregateOperator: v3.AggregateOperatorNoOp,
+						DataSource:        v3.DataSourceMetrics,
+						Expression:        "A",
+					},
+				},
+			},
+		},
+	}
+
+	tc := recoveryTestCase{
+		description: "recovery target present but not met, sendUnmatched false",
+		values: v3.Series{
+			Points: []v3.Point{
+				{Timestamp: now.UnixMilli(), Value: 3},
+				{Timestamp: now.Add(time.Minute).UnixMilli(), Value: 4},
+			},
+			Labels: map[string]string{
+				"service.name": "frontend",
+			},
+			LabelsArray: []map[string]string{
+				{
+					"service.name": "frontend",
+				},
+			},
+		},
+		compareOp:              string(ruletypes.ValueIsAbove),
+		matchType:              string(ruletypes.AtleastOnce),
+		target:                 target,
+		recoveryTarget:         &recovery,
+		thresholdName:          "primary",
+		sendUnmatched:          false,
+		expectSamples:          intPtr(0),
+		activeAlerts:           nil, // will auto-calc
+		expectedTarget:         target,
+		expectedRecoveryTarget: recovery,
+	}
+
+	runEvalTests(t, postableRule, []recoveryTestCase{tc})
+}
+
 func runEvalTests(t *testing.T, postableRule ruletypes.PostableRule, testCases []recoveryTestCase) {
 	logger := instrumentationtest.New().Logger()
 	for _, c := range testCases {
@@ -1577,11 +1855,20 @@ func runEvalTests(t *testing.T, postableRule ruletypes.PostableRule, testCases [
 			}
 
 			evalData := ruletypes.EvalData{
-				ActiveAlerts: activeAlerts,
+				ActiveAlerts:  activeAlerts,
+				SendUnmatched: c.sendUnmatched,
 			}
 
 			resultVectors, err := rule.Threshold.Eval(values, rule.Unit(), evalData)
 			assert.NoError(t, err)
+
+			if c.expectSamples != nil {
+				assert.Equal(t, *c.expectSamples, len(resultVectors), "sample count mismatch")
+				if *c.expectSamples > 0 {
+					assert.InDelta(t, c.expectedSampleValue, resultVectors[0].V, 0.01, "sample value mismatch")
+				}
+				return
+			}
 
 			// Verify results
 			if c.expectAlert || c.expectRecovery {
