@@ -186,7 +186,7 @@ const useOptionsMenu = ({
 
 	const searchedAttributeKeys: TelemetryFieldKey[] = useMemo(() => {
 		const searchedAttributesDataList = Object.values(
-			searchedAttributesDataV5?.data.data.keys || {},
+			searchedAttributesDataV5?.data.data?.keys || {},
 		).flat();
 		if (searchedAttributesDataList.length) {
 			if (dataSource === DataSource.LOGS) {
@@ -230,7 +230,7 @@ const useOptionsMenu = ({
 		}
 
 		return [];
-	}, [dataSource, searchedAttributesDataV5?.data.data.keys]);
+	}, [dataSource, searchedAttributesDataV5?.data.data?.keys]);
 
 	const initialOptionsQuery: OptionsQuery = useMemo(() => {
 		let defaultColumns: TelemetryFieldKey[] = defaultOptionsQuery.selectColumns;
