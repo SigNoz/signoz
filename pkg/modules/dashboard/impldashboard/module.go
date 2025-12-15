@@ -359,11 +359,6 @@ func (module *module) checkBuilderQueriesForMetricNames(query map[string]interfa
 			continue
 		}
 
-		// Skip disabled queries
-		if disabled, _ := data["disabled"].(bool); disabled {
-			continue
-		}
-
 		// Check dataSource is metrics
 		if dataSource, ok := data["dataSource"].(string); !ok || dataSource != "metrics" {
 			continue
@@ -406,11 +401,6 @@ func (module *module) checkClickHouseQueriesForMetricNames(ctx context.Context, 
 			continue
 		}
 
-		// Skip disabled queries
-		if disabled, _ := chQueryMap["disabled"].(bool); disabled {
-			continue
-		}
-
 		queryStr, ok := chQueryMap["query"].(string)
 		if !ok || queryStr == "" {
 			continue
@@ -443,11 +433,6 @@ func (module *module) checkPromQLQueriesForMetricNames(ctx context.Context, quer
 	for _, promQuery := range promQL {
 		promQueryMap, ok := promQuery.(map[string]interface{})
 		if !ok {
-			continue
-		}
-
-		// Skip disabled queries
-		if disabled, _ := promQueryMap["disabled"].(bool); disabled {
 			continue
 		}
 
