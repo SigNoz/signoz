@@ -29,7 +29,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
 import { genericNavigate } from 'utils/genericNavigate';
-import { isShortcutKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
 
 import { FeatureKeys } from '../../../constants/features';
 import { DOCS_LINKS } from '../constants';
@@ -289,7 +289,7 @@ function ServiceMetrics({
 			logEvent('Homepage: Service clicked', {
 				serviceName: record.serviceName,
 			});
-			if (event && isShortcutKey(event)) {
+			if (event && isCtrlOrMMetaKey(event)) {
 				window.open(
 					`${ROUTES.APPLICATION}/${record.serviceName}`,
 					'_blank',

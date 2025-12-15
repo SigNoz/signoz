@@ -1,6 +1,6 @@
 import history from 'lib/history';
 import { KeyboardEvent, MouseEvent } from 'react';
-import { isShortcutKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
 
 export const genericNavigate = (
 	link: string,
@@ -10,7 +10,7 @@ export const genericNavigate = (
 		| globalThis.MouseEvent
 		| globalThis.KeyboardEvent,
 ): void => {
-	if (event && isShortcutKey(event)) {
+	if (event && isCtrlOrMMetaKey(event)) {
 		window.open(link, '_blank', 'noopener,noreferrer');
 	} else {
 		history.push(link);

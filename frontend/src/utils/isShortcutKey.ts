@@ -1,6 +1,6 @@
 import { KeyboardEvent, MouseEvent } from 'react';
 
-export const isShortcutKey = (
+export const isCtrlOrMMetaKey = (
 	event:
 		| MouseEvent
 		| KeyboardEvent

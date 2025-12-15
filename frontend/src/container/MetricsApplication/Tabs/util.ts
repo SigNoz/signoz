@@ -22,7 +22,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { Tags } from 'types/reducer/trace';
-import { isShortcutKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
 import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -119,7 +119,7 @@ export function onViewTracePopupClick({
 		queryString,
 	);
 
-	if (event && isShortcutKey(event)) {
+	if (event && isCtrlOrMMetaKey(event)) {
 		window.open(newPath, '_blank', 'noopener,noreferrer');
 	} else {
 		safeNavigate(newPath);
@@ -194,7 +194,7 @@ export function onViewAPIMonitoringPopupClick({
 		filters,
 	);
 
-	if (event && isShortcutKey(event)) {
+	if (event && isCtrlOrMMetaKey(event)) {
 		window.open(newPath, '_blank', 'noopener,noreferrer');
 	} else {
 		safeNavigate(newPath);

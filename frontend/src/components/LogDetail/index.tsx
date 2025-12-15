@@ -47,7 +47,7 @@ import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { isShortcutKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
@@ -148,7 +148,7 @@ function LogDetailInner({
 			),
 		};
 
-		if (isShortcutKey(event)) {
+		if (isCtrlOrMMetaKey(event)) {
 			window.open(
 				`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`,
 				'_blank',

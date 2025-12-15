@@ -3,7 +3,7 @@ import { navigateToTrace } from 'container/MetricsApplication/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { isShortcutKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
 import { v4 as uuid } from 'uuid';
 
 import { useGetAPMToTracesQueries } from '../../util';
@@ -51,7 +51,7 @@ function ColumnWithLink({
 	return (
 		<Tooltip placement="topLeft" title={text}>
 			<Typography.Link
-				onClick={(e): void => handleOnClick(text, isShortcutKey(e))}
+				onClick={(e): void => handleOnClick(text, isCtrlOrMMetaKey(e))}
 			>
 				{text}
 			</Typography.Link>

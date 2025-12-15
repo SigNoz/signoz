@@ -15,7 +15,7 @@ import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { USER_ROLES } from 'types/roles';
 import { genericNavigate } from 'utils/genericNavigate';
-import { isShortcutKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
 
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
@@ -179,7 +179,7 @@ export default function ServiceTraces({
 									serviceName: record.serviceName,
 								});
 
-								if (event && isShortcutKey(event)) {
+								if (event && isCtrlOrMMetaKey(event)) {
 									window.open(
 										`${ROUTES.APPLICATION}/${record.serviceName}`,
 										'_blank',

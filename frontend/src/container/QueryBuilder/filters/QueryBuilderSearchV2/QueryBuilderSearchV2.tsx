@@ -52,7 +52,7 @@ import {
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { isShortcutKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
@@ -457,12 +457,12 @@ function QueryBuilderSearchV2(
 				setTags((prev) => prev.slice(0, -1));
 			}
 
-			if (isShortcutKey(event) && event.key === '/') {
+			if (isCtrlOrMMetaKey(event) && event.key === '/') {
 				event.preventDefault();
 				event.stopPropagation();
 				setShowAllFilters((prev) => !prev);
 			}
-			if (isShortcutKey(event) && event.key === 'Enter') {
+			if (isCtrlOrMMetaKey(event) && event.key === 'Enter') {
 				event.preventDefault();
 				event.stopPropagation();
 				handleRunQuery();

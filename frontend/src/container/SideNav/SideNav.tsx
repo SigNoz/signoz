@@ -68,7 +68,7 @@ import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
 import { showErrorNotification } from 'utils/error';
 import { genericNavigate } from 'utils/genericNavigate';
-import { isShortcutKey } from 'utils/isShortcutKey';
+import { isCtrlOrMMetaKey } from 'utils/isShortcutKey';
 
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
@@ -437,7 +437,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			const queryString = getQueryString(availableParams || [], params);
 
 			if (pathname !== key) {
-				if (event && isShortcutKey(event)) {
+				if (event && isCtrlOrMMetaKey(event)) {
 					openInNewTab(`${key}?${queryString.join('&')}`);
 				} else {
 					history.push(`${key}?${queryString.join('&')}`, {
