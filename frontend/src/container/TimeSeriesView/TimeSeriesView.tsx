@@ -11,7 +11,6 @@ import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
 import { MetricsLoading } from 'container/MetricsExplorer/MetricsLoading/MetricsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
-import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -82,13 +81,6 @@ function TimeSeriesView({
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>([]);
-	const [yAxisUnitInternal, setYAxisUnitInternal] = useState<string>(
-		yAxisUnit || '',
-	);
-
-	const onUnitChangeHandler = (value: string): void => {
-		setYAxisUnitInternal(value);
-	};
 
 	const legendScrollPositionRef = useRef<{
 		scrollTop: number;
@@ -198,7 +190,7 @@ function TimeSeriesView({
 	const chartOptions = getUPlotChartOptions({
 		id: 'time-series-explorer',
 		onDragSelect,
-		yAxisUnit: yAxisUnitInternal || '',
+		yAxisUnit: yAxisUnit || '',
 		apiResponse: data?.payload,
 		dimensions: {
 			width: containerDimensions.width,
@@ -270,17 +262,7 @@ function TimeSeriesView({
 					!isError &&
 					chartData &&
 					!isEmpty(chartData?.[0]) &&
-					chartOptions && (
-						<div className="time-series-view-container">
-							<div className="time-series-view-container-header">
-								<BuilderUnitsFilter
-									onChange={onUnitChangeHandler}
-									yAxisUnit={yAxisUnitInternal}
-								/>
-							</div>
-							<Uplot data={chartData} options={chartOptions} />
-						</div>
-					)}
+					chartOptions && <Uplot data={chartData} options={chartOptions} />}
 			</div>
 		</div>
 	);

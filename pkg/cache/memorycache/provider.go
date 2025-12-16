@@ -105,6 +105,12 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 		return err
 	}
 
+	// To make sure ristretto does not go into no-op
+	if ttl < 0 {
+		provider.settings.Logger().WarnContext(ctx, "ttl is less than 0, setting it to 0")
+		ttl = 0
+	}
+
 	if cloneable, ok := data.(cachetypes.Cloneable); ok {
 		span.SetAttributes(attribute.Bool("memory.cloneable", true))
 		span.SetAttributes(attribute.Int64("memory.cost", 1))

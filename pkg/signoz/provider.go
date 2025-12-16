@@ -8,6 +8,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/analytics/noopanalytics"
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
+	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/cache/rediscache"
@@ -15,8 +18,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
 	"github.com/SigNoz/signoz/pkg/emailing/smtpemailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
+	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -210,6 +218,20 @@ func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetrySt
 func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
 	return factory.MustNewNamedMap(
 		signozquerier.NewFactory(telemetryStore, prometheus, cache),
+	)
+}
+
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+	return factory.MustNewNamedMap(
+		signozapiserver.NewFactory(
+			orgGetter,
+			authz,
+			implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
+			impluser.NewHandler(modules.User, modules.UserGetter),
+			implsession.NewHandler(modules.Session),
+			implauthdomain.NewHandler(modules.AuthDomain),
+			implpreference.NewHandler(modules.Preference),
+		),
 	)
 }
 

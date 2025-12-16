@@ -10,6 +10,7 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 
 	"github.com/gorilla/handlers"
@@ -132,6 +133,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
+		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
 	})
 	if err != nil {
 		return nil, err
@@ -221,6 +223,11 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	api.MetricExplorerRoutes(r, am)
 	api.RegisterTraceFunnelsRoutes(r, am)
 
+	err := s.signoz.APIServer.AddToRouter(r)
+	if err != nil {
+		return nil, err
+	}
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
@@ -231,7 +238,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 
 	handler = handlers.CompressHandler(handler)
 
-	err := web.AddToRouter(r)
+	err = web.AddToRouter(r)
 	if err != nil {
 		return nil, err
 	}

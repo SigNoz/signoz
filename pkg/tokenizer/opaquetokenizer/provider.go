@@ -410,7 +410,7 @@ func (provider *provider) setToken(ctx context.Context, token *authtypes.Token, 
 }
 
 func (provider *provider) setIdentity(ctx context.Context, identity *authtypes.Identity) error {
-	err := provider.cache.Set(ctx, emptyOrgID, identityCacheKey(identity.UserID), identity, -1)
+	err := provider.cache.Set(ctx, emptyOrgID, identityCacheKey(identity.UserID), identity, 0)
 	if err != nil {
 		return err
 	}
@@ -434,7 +434,7 @@ func (provider *provider) getOrGetSetIdentity(ctx context.Context, userID valuer
 		return nil, err
 	}
 
-	err = provider.cache.Set(ctx, emptyOrgID, identityCacheKey(userID), identity, -1)
+	err = provider.cache.Set(ctx, emptyOrgID, identityCacheKey(userID), identity, 0)
 	if err != nil {
 		return nil, err
 	}
