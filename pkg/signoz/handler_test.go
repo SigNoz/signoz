@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -35,8 +36,9 @@ func TestNewHandlers(t *testing.T) {
 	require.NoError(t, err)
 	tokenizer := tokenizertest.New()
 	emailing := emailingtest.New()
+	queryParser := queryparser.New(providerSettings)
 	require.NoError(t, err)
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{})
 
 	handlers := NewHandlers(modules, providerSettings, nil, nil)
 
