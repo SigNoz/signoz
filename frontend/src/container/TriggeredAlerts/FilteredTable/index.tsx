@@ -50,7 +50,8 @@ function FilteredTable({
 					return null;
 				}
 
-				const objects = tagsAlert[0].labels || {};
+				const objects = tagsAlert[0].labels;
+				if (!objects) return null;
 				const keysArray = Object.keys(objects);
 				const valueArray: string[] = [];
 
