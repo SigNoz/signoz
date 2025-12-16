@@ -112,6 +112,17 @@ func (m *MockSQLRuleStore) ExpectGetStoredRules(orgID string, rules []*ruletypes
 		WillReturnRows(rows)
 }
 
+// ExpectGetStoredRulesByMetricName sets up SQL expectations for GetStoredRulesByMetricName operation
+func (m *MockSQLRuleStore) ExpectGetStoredRulesByMetricName(orgID string, metricName string, rules []*ruletypes.Rule) {
+	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "created_by", "updated_by", "deleted", "data", "org_id"})
+	for _, rule := range rules {
+		rows.AddRow(rule.ID, rule.CreatedAt, rule.UpdatedAt, rule.CreatedBy, rule.UpdatedBy, rule.Deleted, rule.Data, rule.OrgID)
+	}
+	expectedPattern := `SELECT (.+) FROM "rule".+WHERE \(.+org_id.+'` + orgID + `'\)`
+	m.mock.ExpectQuery(expectedPattern).
+		WillReturnRows(rows)
+}
+
 // AssertExpectations asserts that all SQL expectations were met
 func (m *MockSQLRuleStore) AssertExpectations() error {
 	return m.mock.ExpectationsWereMet()

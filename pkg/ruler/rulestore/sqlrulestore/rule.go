@@ -132,9 +132,7 @@ func (r *rule) GetStoredRulesByMetricName(ctx context.Context, orgID string, met
 	for _, storedRule := range storedRules {
 		var ruleData ruletypes.PostableRule
 		if err := json.Unmarshal([]byte(storedRule.Data), &ruleData); err != nil {
-			if r.logger != nil {
-				r.logger.WarnContext(ctx, "failed to unmarshal rule data", "rule_id", storedRule.ID.StringValue(), "error", err)
-			}
+			r.logger.WarnContext(ctx, "failed to unmarshal rule data", "rule_id", storedRule.ID.StringValue(), "error", err)
 			continue
 		}
 
@@ -166,14 +164,9 @@ func (r *rule) GetStoredRulesByMetricName(ctx context.Context, orgID string, met
 				}
 			case qbtypes.QueryTypePromQL:
 				if spec, ok := queryEnvelope.Spec.(qbtypes.PromQuery); ok {
-					if r.queryParser == nil {
-						continue
-					}
 					result, err := r.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, spec.Query)
 					if err != nil {
-						if r.logger != nil {
-							r.logger.DebugContext(ctx, "failed to parse PromQL query", "query", spec.Query, "error", err)
-						}
+						r.logger.WarnContext(ctx, "failed to parse PromQL query", "query", spec.Query, "error", err)
 						continue
 					}
 					if slices.Contains(result.MetricNames, metricName) {
@@ -183,14 +176,9 @@ func (r *rule) GetStoredRulesByMetricName(ctx context.Context, orgID string, met
 				}
 			case qbtypes.QueryTypeClickHouseSQL:
 				if spec, ok := queryEnvelope.Spec.(qbtypes.ClickHouseQuery); ok {
-					if r.queryParser == nil {
-						continue
-					}
 					result, err := r.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, spec.Query)
 					if err != nil {
-						if r.logger != nil {
-							r.logger.DebugContext(ctx, "failed to parse ClickHouse query", "query", spec.Query, "error", err)
-						}
+						r.logger.WarnContext(ctx, "failed to parse ClickHouse query", "query", spec.Query, "error", err)
 						continue
 					}
 					if slices.Contains(result.MetricNames, metricName) {
