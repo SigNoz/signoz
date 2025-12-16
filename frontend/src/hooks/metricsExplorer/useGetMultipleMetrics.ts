@@ -22,7 +22,7 @@ export const useGetMultipleMetrics: UseGetMultipleMetrics = (
 		metricNames.map(
 			(metricName) =>
 				({
-					queryKey: [REACT_QUERY_KEY.GET_METRIC_DETAILS, metricName],
+					queryKey: [REACT_QUERY_KEY.GET_METRIC_METADATA, metricName],
 					queryFn: ({ signal }) => getMetricMetadata(metricName, signal, headers),
 					...options,
 				} as UseQueryOptions<MetricMetadataResponse, Error>),
