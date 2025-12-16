@@ -1,4 +1,4 @@
-import { MetricDetails } from 'api/metricsExplorer/getMetricDetails';
+import { MetricMetadata } from 'api/metricsExplorer/getMetricMetadata';
 import { useGetMultipleMetrics } from 'hooks/metricsExplorer/useGetMultipleMetrics';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
@@ -45,7 +45,7 @@ export function useGetMetricUnits(
 	isLoading: boolean;
 	units: (string | undefined)[];
 	isError: boolean;
-	metrics: (MetricDetails['metadata'] | undefined)[];
+	metrics: (MetricMetadata | undefined)[];
 } {
 	const metricsData = useGetMultipleMetrics(metricNames, {
 		enabled: metricNames.length > 0 && isEnabled,

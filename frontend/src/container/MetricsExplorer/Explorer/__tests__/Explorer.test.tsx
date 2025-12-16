@@ -1,8 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import {
-	MetricDetails,
-	Temporality,
-} from 'api/metricsExplorer/getMetricDetails';
+import { Temporality } from 'api/metricsExplorer/getMetricDetails';
+import { MetricMetadata } from 'api/metricsExplorer/getMetricMetadata';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import * as useOptionsMenuHooks from 'container/OptionsMenu';
@@ -135,11 +133,12 @@ jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 const Y_AXIS_UNIT_SELECTOR_TEST_ID = 'y-axis-unit-selector';
 const SECONDS_UNIT_LABEL = 'Seconds (s)';
 
-const mockMetric: MetricDetails['metadata'] = {
-	metric_type: MetricType.SUM,
+const mockMetric: MetricMetadata = {
+	type: MetricType.SUM,
 	description: 'metric1 description',
 	unit: 'metric1 unit',
 	temporality: Temporality.CUMULATIVE,
+	isMonotonic: true,
 };
 
 function renderExplorer(): void {

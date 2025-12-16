@@ -3,11 +3,20 @@ import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorResponseV2, ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 
-import { MetricDetails } from './getMetricDetails';
+import { Temporality } from './getMetricDetails';
+import { MetricType } from './getMetricsList';
+
+export interface MetricMetadata {
+	description: string;
+	type: MetricType;
+	unit: string;
+	temporality: Temporality;
+	isMonotonic: boolean;
+}
 
 export interface MetricMetadataResponse {
 	status: string;
-	data: MetricDetails['metadata'];
+	data: MetricMetadata;
 }
 
 export const getMetricMetadata = async (

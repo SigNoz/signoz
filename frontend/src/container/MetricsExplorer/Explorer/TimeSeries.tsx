@@ -1,6 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tooltip, Typography } from 'antd';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { Tooltip, Typography } from 'antd';
 import { isAxiosError } from 'axios';
 import classNames from 'classnames';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
@@ -10,13 +9,11 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
-import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useNotifications } from 'hooks/useNotifications';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { AlertTriangle } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
-import { useQueries, useQueryClient } from 'react-query';
+import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
@@ -35,14 +32,11 @@ function TimeSeries({
 	isMetricUnitsLoading,
 	metricUnits,
 	metricNames,
-	metrics,
 	handleOpenMetricDetails,
 	yAxisUnit,
 	setYAxisUnit,
 }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
-	const { notifications } = useNotifications();
-	const queryClient = useQueryClient();
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
 		AppState,
@@ -155,49 +149,49 @@ function TimeSeries({
 	// 1. There is only one metric
 	// 2. The metric has no saved unit
 	// 3. The user has selected a unit
-	const showSaveUnitButton = useMemo(
-		() =>
-			metricUnits.length === 1 &&
-			Boolean(metrics?.[0]) &&
-			!metricUnits[0] &&
-			yAxisUnit,
-		[metricUnits, metrics, yAxisUnit],
-	);
+	// const showSaveUnitButton = useMemo(
+	// 	() =>
+	// 		metricUnits.length === 1 &&
+	// 		Boolean(metrics?.[0]) &&
+	// 		!metricUnits[0] &&
+	// 		yAxisUnit,
+	// 	[metricUnits, metrics, yAxisUnit],
+	// );
 
-	const {
-		mutate: updateMetricMetadata,
-		isLoading: isUpdatingMetricMetadata,
-	} = useUpdateMetricMetadata();
+	// const {
+	// 	mutate: updateMetricMetadata,
+	// 	isLoading: isUpdatingMetricMetadata,
+	// } = useUpdateMetricMetadata();
 
-	const handleSaveUnit = (): void => {
-		updateMetricMetadata(
-			{
-				metricName: metricNames[0],
-				payload: {
-					unit: yAxisUnit,
-					description: metrics[0]?.description ?? '',
-					metricType: metrics[0]?.metric_type as MetricType,
-					temporality: metrics[0]?.temporality,
-				},
-			},
-			{
-				onSuccess: () => {
-					notifications.success({
-						message: 'Unit saved successfully',
-					});
-					queryClient.invalidateQueries([
-						REACT_QUERY_KEY.GET_METRIC_DETAILS,
-						metricNames[0],
-					]);
-				},
-				onError: () => {
-					notifications.error({
-						message: 'Failed to save unit',
-					});
-				},
-			},
-		);
-	};
+	// const handleSaveUnit = (): void => {
+	// 	updateMetricMetadata(
+	// 		{
+	// 			metricName: metricNames[0],
+	// 			payload: {
+	// 				unit: yAxisUnit,
+	// 				description: metrics[0]?.description ?? '',
+	// 				metricType: metrics[0]?.type as MetricType,
+	// 				temporality: metrics[0]?.temporality,
+	// 			},
+	// 		},
+	// 		{
+	// 			onSuccess: () => {
+	// 				notifications.success({
+	// 					message: 'Unit saved successfully',
+	// 				});
+	// 				queryClient.invalidateQueries([
+	// 					REACT_QUERY_KEY.GET_METRIC_DETAILS,
+	// 					metricNames[0],
+	// 				]);
+	// 			},
+	// 			onError: () => {
+	// 				notifications.error({
+	// 					message: 'Failed to save unit',
+	// 				});
+	// 			},
+	// 		},
+	// 	);
+	// };
 
 	const noUnitWarning = useCallback(
 		(metricName: string): JSX.Element => (
@@ -232,7 +226,8 @@ function TimeSeries({
 							source={YAxisSource.EXPLORER}
 							data-testid="y-axis-unit-selector"
 						/>
-						{showSaveUnitButton && (
+						{/* TODO: Enable once we have resolved all related metrics v2 api issues */}
+						{/* {showSaveUnitButton && (
 							<div className="save-unit-container">
 								<Typography.Text>
 									Save the selected unit for this metric?
@@ -246,7 +241,7 @@ function TimeSeries({
 									<Typography.Paragraph>Yes</Typography.Paragraph>
 								</Button>
 							</div>
-						)}
+						)} */}
 					</>
 				)}
 			</div>
@@ -256,16 +251,23 @@ function TimeSeries({
 				})}
 			>
 				{responseData.map((datapoint, index) => {
+					const isQueryDataItem = index < metricNames.length;
+					const metricName = isQueryDataItem ? metricNames[index] : undefined;
+					const metricUnit = isQueryDataItem ? metricUnits[index] : undefined;
+
 					// Show the no unit warning if -
 					// 1. The metric query is not loading
 					// 2. The metric units are not loading
 					// 3. There are more than one metric
 					// 4. The current metric unit is empty
+					// 5. Is a queryData item
 					const isMetricUnitEmpty =
+						isQueryDataItem &&
 						!queries[index].isLoading &&
 						!isMetricUnitsLoading &&
 						metricUnits.length > 1 &&
-						!metricUnits[index];
+						!metricUnit &&
+						metricName;
 
 					return (
 						<div
@@ -273,7 +275,7 @@ function TimeSeries({
 							// eslint-disable-next-line react/no-array-index-key
 							key={index}
 						>
-							{isMetricUnitEmpty && noUnitWarning(metricNames[index])}
+							{isMetricUnitEmpty && metricName && noUnitWarning(metricName)}
 							<TimeSeriesView
 								isFilterApplied={false}
 								isError={queries[index].isError}

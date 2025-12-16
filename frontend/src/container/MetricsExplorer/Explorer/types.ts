@@ -1,4 +1,4 @@
-import { MetricDetails } from 'api/metricsExplorer/getMetricDetails';
+import { MetricMetadata } from 'api/metricsExplorer/getMetricMetadata';
 import { RelatedMetric } from 'api/metricsExplorer/getRelatedMetrics';
 import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
@@ -18,7 +18,7 @@ export interface TimeSeriesProps {
 	isMetricUnitsError: boolean;
 	metricUnits: (string | undefined)[];
 	metricNames: string[];
-	metrics: (MetricDetails['metadata'] | undefined)[];
+	metrics: (MetricMetadata | undefined)[];
 	handleOpenMetricDetails: (metricName: string) => void;
 	yAxisUnit: string | undefined;
 	setYAxisUnit: (unit: string) => void;
