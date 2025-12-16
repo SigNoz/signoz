@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/go-sql-driver/mysql"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/mysqldialect"
 
@@ -44,7 +45,12 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	if err != nil {
 		return nil, err
 	}
-	settings.Logger().InfoContext(ctx, "connected to mysql", "dsn", config.MySQL.DSN)
+	// Avoid logging the full DSN because it may contain credentials.
+	if parsed, perr := mysql.ParseDSN(config.MySQL.DSN); perr == nil {
+		settings.Logger().InfoContext(ctx, "connected to mysql", "addr", parsed.Addr, "db", parsed.DBName)
+	} else {
+		settings.Logger().InfoContext(ctx, "connected to mysql", "dsn", "redacted")
+	}
 	sqldb.SetMaxOpenConns(config.Connection.MaxOpenConns)
 
 	mysqlDialect := mysqldialect.New()
@@ -91,8 +97,14 @@ func (provider *provider) WrapNotFoundErrf(err error, code errors.Code, format s
 }
 
 func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error {
-	// Mapping MySQL duplicate key errors to TypeAlreadyExists can be added here when
-	// MySQL error code handling is introduced.
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) {
+		// 1062: ER_DUP_ENTRY (duplicate entry for key)
+		if mysqlErr.Number == 1062 {
+			return errors.Wrapf(err, errors.TypeAlreadyExists, code, format, args...)
+		}
+	}
+
 	return err
 }
 

@@ -26,11 +26,10 @@ func (f *formatter) JSONExtractString(column, path string) []byte {
 }
 
 func (f *formatter) JSONType(column, path string) []byte {
+	// MySQL JSON_TYPE takes a single JSON expression, so we must wrap JSON_EXTRACT.
 	var sql []byte
 	sql = append(sql, "JSON_TYPE("...)
-	sql = f.bunf.AppendIdent(sql, column)
-	sql = append(sql, ", "...)
-	sql = schema.Append(f.bunf, sql, path)
+	sql = append(sql, f.JSONExtractString(column, path)...)
 	sql = append(sql, ")"...)
 	return sql
 }
@@ -39,6 +38,7 @@ func (f *formatter) JSONIsArray(column, path string) []byte {
 	var sql []byte
 	sql = append(sql, f.JSONType(column, path)...)
 	sql = append(sql, " = "...)
+	// MySQL JSON_TYPE returns the string 'ARRAY' for arrays.
 	sql = schema.Append(f.bunf, sql, "ARRAY")
 	return sql
 }

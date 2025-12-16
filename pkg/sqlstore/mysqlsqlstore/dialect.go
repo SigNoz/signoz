@@ -2,6 +2,7 @@ package mysqlsqlstore
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/uptrace/bun"
@@ -17,6 +18,7 @@ func (d *dialect) GetColumnType(ctx context.Context, db bun.IDB, table string, c
 		ColumnExpr("DATA_TYPE").
 		TableExpr("INFORMATION_SCHEMA.COLUMNS").
 		Where("TABLE_NAME = ?", table).
+		Where("TABLE_SCHEMA = DATABASE()").
 		Where("COLUMN_NAME = ?", column).
 		Scan(ctx, &columnType)
 	if err != nil {
@@ -133,6 +135,7 @@ func (d *dialect) ColumnExists(ctx context.Context, db bun.IDB, table string, co
 		ColumnExpr("COUNT(*)").
 		TableExpr("INFORMATION_SCHEMA.COLUMNS").
 		Where("TABLE_NAME = ?", table).
+		Where("TABLE_SCHEMA = DATABASE()").
 		Where("COLUMN_NAME = ?", column).
 		Scan(ctx, &count)
 	if err != nil {
@@ -239,6 +242,7 @@ func (d *dialect) TableExists(ctx context.Context, db bun.IDB, table interface{}
 		ColumnExpr("COUNT(*)").
 		TableExpr("INFORMATION_SCHEMA.TABLES").
 		Where("TABLE_NAME = ?", tableName).
+		Where("TABLE_SCHEMA = DATABASE()").
 		Scan(ctx, &count)
 	if err != nil {
 		return false, err
