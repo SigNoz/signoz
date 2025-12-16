@@ -47,18 +47,27 @@ func (f *formatter) JSONArrayElements(column, path, alias string) ([]byte, []byt
 	var sql []byte
 	sql = append(sql, "JSON_TABLE("...)
 	sql = f.bunf.AppendIdent(sql, column)
-	if path != "$" && path != "" {
-		sql = append(sql, ", "...)
-		sql = schema.Append(f.bunf, sql, path)
-	} else {
-		sql = append(sql, ", "...)
-		sql = schema.Append(f.bunf, sql, "$")
+
+	// Ensure the JSON path iterates over array elements by appending [*].
+	basePath := strings.TrimSpace(path)
+	if basePath == "" || basePath == "$" {
+		basePath = "$"
 	}
-	sql = append(sql, " COLUMNS("...)
-	sql = f.bunf.AppendIdent(sql, alias)
-	sql = append(sql, " JSON PATH \"$\")) AS "...)
+	if !strings.HasPrefix(basePath, "$") {
+		basePath = "$." + basePath
+	}
+	if !strings.HasSuffix(basePath, "[*]") {
+		basePath = basePath + "[*]"
+	}
+
+	sql = append(sql, ", "...)
+	sql = schema.Append(f.bunf, sql, basePath)
+
+	// Expose each element as a column named `value`.
+	sql = append(sql, " COLUMNS(value JSON PATH \"$\")) AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
 
+	// Callers can refer to the entire row via the table alias.
 	return sql, []byte(alias)
 }
 
@@ -90,16 +99,20 @@ func (f *formatter) JSONArrayLiteral(values ...string) []byte {
 
 func (f *formatter) JSONKeys(column, path, alias string) ([]byte, []byte) {
 	var sql []byte
+	// Use JSON_TABLE over JSON_KEYS(...) to produce one row per key, similar to sqlite/json_each.
+	sql = append(sql, "JSON_TABLE("...)
+	// JSON_KEYS(column[, path]) returns a JSON array of keys.
 	sql = append(sql, "JSON_KEYS("...)
 	sql = f.bunf.AppendIdent(sql, column)
 	if path != "$" && path != "" {
 		sql = append(sql, ", "...)
 		sql = schema.Append(f.bunf, sql, path)
 	}
-	sql = append(sql, ") AS "...)
+	sql = append(sql, "), '$[*]' COLUMNS(key VARCHAR(255) PATH '$')) AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
 
-	return sql, []byte(alias)
+	// Expose the key column as alias.key to match other dialects.
+	return sql, append([]byte(alias), ".key"...)
 }
 
 func (f *formatter) TextToJsonColumn(column string) []byte {
