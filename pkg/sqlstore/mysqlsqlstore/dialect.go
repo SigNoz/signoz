@@ -205,22 +205,164 @@ func (d *dialect) RenameColumn(ctx context.Context, db bun.IDB, table string, ol
 }
 
 func (d *dialect) RenameTableAndModifyModel(ctx context.Context, db bun.IDB, oldModel interface{}, newModel interface{}, references []string, cb func(context.Context) error) error {
-	// For MySQL initial support, reuse the generic migration callback and rely on cb to perform model-specific operations.
 	if len(references) == 0 {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot run migration without reference")
 	}
 
-	return cb(ctx)
+	exists, err := d.TableExists(ctx, db, newModel)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	// Collect foreign key references similar to sqlite/postgres implementation.
+	var fkReferences []string
+	for _, reference := range references {
+		if reference == Org && !slices.Contains(fkReferences, OrgReference) {
+			fkReferences = append(fkReferences, OrgReference)
+		} else if reference == User && !slices.Contains(fkReferences, UserReference) {
+			fkReferences = append(fkReferences, UserReference)
+		} else if reference == UserNoCascade && !slices.Contains(fkReferences, UserNoCascadeReference) {
+			fkReferences = append(fkReferences, UserNoCascadeReference)
+		} else if reference == FactorPassword && !slices.Contains(fkReferences, FactorPasswordReference) {
+			fkReferences = append(fkReferences, FactorPasswordReference)
+		} else if reference == CloudIntegration && !slices.Contains(fkReferences, CloudIntegrationReference) {
+			fkReferences = append(fkReferences, CloudIntegrationReference)
+		} else if reference == AgentConfigVersion && !slices.Contains(fkReferences, AgentConfigVersionReference) {
+			fkReferences = append(fkReferences, AgentConfigVersionReference)
+		}
+	}
+
+	createTable := db.
+		NewCreateTable().
+		IfNotExists().
+		Model(newModel)
+
+	for _, fk := range fkReferences {
+		createTable = createTable.ForeignKey(fk)
+	}
+
+	if _, err = createTable.Exec(ctx); err != nil {
+		return err
+	}
+
+	if err := cb(ctx); err != nil {
+		return err
+	}
+
+	if _, err = db.
+		NewDropTable().
+		IfExists().
+		Model(oldModel).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *dialect) UpdatePrimaryKey(ctx context.Context, db bun.IDB, oldModel interface{}, newModel interface{}, reference string, cb func(context.Context) error) error {
-	// For initial MySQL support, delegate details to callback to keep implementation minimal.
-	return cb(ctx)
+	if reference == "" {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot run migration without reference")
+	}
+	oldTableName := db.Dialect().Tables().Get(reflect.TypeOf(oldModel)).Name
+	newTableName := db.Dialect().Tables().Get(reflect.TypeOf(newModel)).Name
+
+	columnType, err := d.GetColumnType(ctx, db, oldTableName, Identity)
+	if err != nil {
+		return err
+	}
+	if columnType == Text {
+		return nil
+	}
+
+	fkReference := ""
+	if reference == Org {
+		fkReference = OrgReference
+	} else if reference == User {
+		fkReference = UserReference
+	}
+
+	if _, err = db.
+		NewCreateTable().
+		IfNotExists().
+		Model(newModel).
+		ForeignKey(fkReference).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	if err := cb(ctx); err != nil {
+		return err
+	}
+
+	if _, err = db.
+		NewDropTable().
+		IfExists().
+		Model(oldModel).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err = db.
+		ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME TO %s", newTableName, oldTableName)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *dialect) AddPrimaryKey(ctx context.Context, db bun.IDB, oldModel interface{}, newModel interface{}, reference string, cb func(context.Context) error) error {
-	// For initial MySQL support, delegate details to callback to keep implementation minimal.
-	return cb(ctx)
+	if reference == "" {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot run migration without reference")
+	}
+	oldTableName := db.Dialect().Tables().Get(reflect.TypeOf(oldModel)).Name
+	newTableName := db.Dialect().Tables().Get(reflect.TypeOf(newModel)).Name
+
+	identityExists, err := d.ColumnExists(ctx, db, oldTableName, Identity)
+	if err != nil {
+		return err
+	}
+	if identityExists {
+		return nil
+	}
+
+	fkReference := ""
+	if reference == Org {
+		fkReference = OrgReference
+	} else if reference == User {
+		fkReference = UserReference
+	}
+
+	if _, err = db.
+		NewCreateTable().
+		IfNotExists().
+		Model(newModel).
+		ForeignKey(fkReference).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	if err := cb(ctx); err != nil {
+		return err
+	}
+
+	if _, err = db.
+		NewDropTable().
+		IfExists().
+		Model(oldModel).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err = db.
+		ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME TO %s", newTableName, oldTableName)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, db bun.IDB, model interface{}, column string) error {
