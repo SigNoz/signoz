@@ -476,8 +476,8 @@ paths:
   /api/v1/ingestion:
     get:
       deprecated: false
-      description: This endpoints returns the configured ingestion config
-      operationId: GetIngestionConfig
+      description: This endpoints returns ingestion details
+      operationId: GetIngestion
       responses:
         "200":
           content:
@@ -485,7 +485,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/IngestiontypesGettableIngestionConfig'
+                    $ref: '#/components/schemas/IngestiontypesGettableIngestion'
                   status:
                     type: string
                 type: object
@@ -513,7 +513,7 @@ paths:
         - EDITOR
       - tokenizer:
         - EDITOR
-      summary: Get ingestion config
+      summary: Get ingestion details
       tags:
       - ingestion
   /api/v1/invite:
@@ -2108,7 +2108,7 @@ components:
         message:
           type: string
       type: object
-    IngestiontypesGettableIngestionConfig:
+    IngestiontypesGettableIngestion:
       properties:
         url:
           type: string
