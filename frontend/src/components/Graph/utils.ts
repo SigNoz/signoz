@@ -16,8 +16,12 @@ import {
 } from './Plugin/IntersectionCursor';
 import {
 	CustomChartOptions,
+	DEFAULT_SIGNIFICANT_DIGITS,
 	GraphOnClickHandler,
 	IAxisTimeConfig,
+	MAX_DECIMALS,
+	PrecisionOption,
+	PrecisionOptionsEnum,
 	StaticLineProps,
 } from './types';
 import { getToolTipValue, getYAxisFormattedValue } from './yAxisConfig';
@@ -149,6 +153,7 @@ export const getGraphOptions = (
 	scales: {
 		x: {
 			stacked: isStacked,
+			offset: false,
 			grid: {
 				display: true,
 				color: getGridColor(),
@@ -241,3 +246,68 @@ declare module 'chart.js' {
 		custom: TooltipPositionerFunction<ChartType>;
 	}
 }
+
+/**
+ * Formats a number for display, preserving leading zeros after the decimal point
+ * and showing up to DEFAULT_SIGNIFICANT_DIGITS digits after the first non-zero decimal digit.
+ * It avoids scientific notation and removes unnecessary trailing zeros.
+ *
+ * @example
+ * formatDecimalWithLeadingZeros(1.2345); // "1.2345"
+ * formatDecimalWithLeadingZeros(0.0012345); // "0.0012345"
+ * formatDecimalWithLeadingZeros(5.0); // "5"
+ *
+ * @param value The number to format.
+ * @returns The formatted string.
+ */
+export const formatDecimalWithLeadingZeros = (
+	value: number,
+	precision: PrecisionOption,
+): string => {
+	if (value === 0) {
+		return '0';
+	}
+
+	// Use toLocaleString to get a full decimal representation without scientific notation.
+	const numStr = value.toLocaleString('en-US', {
+		useGrouping: false,
+		maximumFractionDigits: 20,
+	});
+
+	const [integerPart, decimalPart = ''] = numStr.split('.');
+
+	// If there's no decimal part, the integer part is the result.
+	if (!decimalPart) {
+		return integerPart;
+	}
+
+	// Find the index of the first non-zero digit in the decimal part.
+	const firstNonZeroIndex = decimalPart.search(/[^0]/);
+
+	// If the decimal part consists only of zeros, return just the integer part.
+	if (firstNonZeroIndex === -1) {
+		return integerPart;
+	}
+
+	// Determine the number of decimals to keep: leading zeros + up to N significant digits.
+	const significantDigits =
+		precision === PrecisionOptionsEnum.FULL
+			? DEFAULT_SIGNIFICANT_DIGITS
+			: precision;
+	const decimalsToKeep = firstNonZeroIndex + (significantDigits || 0);
+
+	// max decimals to keep should not exceed 15 decimal places to avoid floating point precision issues
+	const finalDecimalsToKeep = Math.min(decimalsToKeep, MAX_DECIMALS);
+	const trimmedDecimalPart = decimalPart.substring(0, finalDecimalsToKeep);
+
+	// If precision is 0, we drop the decimal part entirely.
+	if (precision === 0) {
+		return integerPart;
+	}
+
+	// Remove any trailing zeros from the result to keep it clean.
+	const finalDecimalPart = trimmedDecimalPart.replace(/0+$/, '');
+
+	// Return the integer part, or the integer and decimal parts combined.
+	return finalDecimalPart ? `${integerPart}.${finalDecimalPart}` : integerPart;
+};

@@ -9,7 +9,13 @@ import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearch
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Copy, Ellipsis, Trash } from 'lucide-react';
-import { memo, useCallback, useMemo, useState } from 'react';
+import {
+	ForwardedRef,
+	forwardRef,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -20,26 +26,29 @@ import QueryAddOns from './QueryAddOns/QueryAddOns';
 import QueryAggregation from './QueryAggregation/QueryAggregation';
 import QuerySearch from './QuerySearch/QuerySearch';
 
-export const QueryV2 = memo(function QueryV2({
-	ref,
-	index,
-	queryVariant,
-	query,
-	filterConfigs,
-	isListViewPanel = false,
-	showTraceOperator = false,
-	hasTraceOperator = false,
-	version,
-	showOnlyWhereClause = false,
-	signalSource = '',
-	isMultiQueryAllowed = false,
-	onSignalSourceChange,
-	signalSourceChangeEnabled = false,
-}: QueryProps & {
-	ref: React.RefObject<HTMLDivElement>;
-	onSignalSourceChange: (value: string) => void;
-	signalSourceChangeEnabled: boolean;
-}): JSX.Element {
+export const QueryV2 = forwardRef(function QueryV2(
+	{
+		index,
+		queryVariant,
+		query,
+		filterConfigs,
+		isListViewPanel = false,
+		showTraceOperator = false,
+		hasTraceOperator = false,
+		version,
+		showOnlyWhereClause = false,
+		signalSource = '',
+		isMultiQueryAllowed = false,
+		onSignalSourceChange,
+		signalSourceChangeEnabled = false,
+		queriesCount = 1,
+	}: QueryProps & {
+		onSignalSourceChange: (value: string) => void;
+		signalSourceChangeEnabled: boolean;
+		queriesCount: number;
+	},
+	ref: ForwardedRef<HTMLDivElement>,
+): JSX.Element {
 	const { cloneQuery, panelType } = useQueryBuilder();
 
 	const showFunctions = query?.functions?.length > 0;
@@ -192,12 +201,16 @@ export const QueryV2 = memo(function QueryV2({
 												icon: <Copy size={14} />,
 												onClick: handleCloneEntity,
 											},
-											{
-												label: 'Delete',
-												key: 'delete-query',
-												icon: <Trash size={14} />,
-												onClick: handleDeleteQuery,
-											},
+											...(queriesCount && queriesCount > 1
+												? [
+														{
+															label: 'Delete',
+															key: 'delete-query',
+															icon: <Trash size={14} />,
+															onClick: handleDeleteQuery,
+														},
+												  ]
+												: []),
 										],
 									}}
 									placement="bottomRight"
@@ -289,3 +302,5 @@ export const QueryV2 = memo(function QueryV2({
 		</div>
 	);
 });
+
+QueryV2.displayName = 'QueryV2';

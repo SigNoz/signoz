@@ -69,7 +69,7 @@ func inferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 }
 
 func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
-	parts := strings.Split(key.Name, ".")[1:]
+	parts := strings.Split(key.Name, ".")
 	newParts := []string{}
 	for _, part := range parts {
 		if strings.HasSuffix(part, "[*]") {

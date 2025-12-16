@@ -9,6 +9,7 @@ import (
 	_ "net/http/pprof" // http profiler
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	"go.opentelemetry.io/otel/propagation"
@@ -74,13 +75,26 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		return nil, err
 	}
 
+	cacheForTraceDetail, err := memorycache.New(context.TODO(), signoz.Instrumentation.ToProviderSettings(), cache.Config{
+		Provider: "memory",
+		Memory: cache.Memory{
+			NumCounters: 10 * 10000,
+			MaxCost:     1 << 27, // 128 MB
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	reader := clickhouseReader.NewReader(
 		signoz.SQLStore,
 		signoz.TelemetryStore,
 		signoz.Prometheus,
 		signoz.TelemetryStore.Cluster(),
 		config.Querier.FluxInterval,
+		cacheForTraceDetail,
 		signoz.Cache,
+		nil,
 	)
 
 	rm, err := makeRulesManager(
@@ -229,6 +243,11 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	apiHandler.MetricExplorerRoutes(r, am)
 	apiHandler.RegisterTraceFunnelsRoutes(r, am)
 
+	err := s.signoz.APIServer.AddToRouter(r)
+	if err != nil {
+		return nil, err
+	}
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
@@ -239,7 +258,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 
 	handler = handlers.CompressHandler(handler)
 
-	err := web.AddToRouter(r)
+	err = web.AddToRouter(r)
 	if err != nil {
 		return nil, err
 	}

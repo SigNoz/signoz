@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Collapse, Flex, Tag, Typography } from 'antd';
+import { Button, Collapse, Flex, Tag, Typography } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { PenLine, Trash2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
@@ -22,29 +22,44 @@ function PolicyListItemHeader({
 	const isEditEnabled = user?.role !== USER_ROLES.VIEWER;
 
 	return (
-		<Flex className="policy-list-item-header" justify="space-between">
-			<Typography>{name}</Typography>
-
+		<Flex
+			className="policy-list-item-header"
+			justify="space-between"
+			align="center"
+		>
+			<Typography.Text
+				className="policy-list-item-header-title"
+				ellipsis={{ tooltip: name }}
+			>
+				{name}
+			</Typography.Text>
 			{isEditEnabled && (
 				<div className="action-btn">
-					<PenLine
-						size={14}
+					<Button
 						onClick={(e): void => {
 							e.preventDefault();
 							e.stopPropagation();
 							handleEdit();
 						}}
-						data-testid="edit-routing-policy"
+						type="text"
+						shape="circle"
+						icon={<PenLine size={14} data-testid="edit-routing-policy" />}
 					/>
-					<Trash2
-						size={14}
-						color={Color.BG_CHERRY_500}
+					<Button
 						onClick={(e): void => {
 							e.preventDefault();
 							e.stopPropagation();
 							handleDelete();
 						}}
-						data-testid="delete-routing-policy"
+						type="text"
+						shape="circle"
+						icon={
+							<Trash2
+								size={14}
+								color={Color.BG_CHERRY_500}
+								data-testid="delete-routing-policy"
+							/>
+						}
 					/>
 				</div>
 			)}
@@ -91,11 +106,15 @@ function PolicyListItemContent({
 			</div>
 			<div className="policy-list-item-content-row">
 				<Typography>Expression</Typography>
-				<Typography>{routingPolicy.expression}</Typography>
+				<Typography.Text ellipsis={{ tooltip: routingPolicy.expression || '-' }}>
+					{routingPolicy.expression || '-'}
+				</Typography.Text>
 			</div>
 			<div className="policy-list-item-content-row">
 				<Typography>Description</Typography>
-				<Typography>{routingPolicy.description || '-'}</Typography>
+				<Typography.Text ellipsis={{ tooltip: routingPolicy.description || '-' }}>
+					{routingPolicy.description || '-'}
+				</Typography.Text>
 			</div>
 			<div className="policy-list-item-content-row">
 				<Typography>Channels</Typography>

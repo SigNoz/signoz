@@ -33,7 +33,9 @@ export type PolicyDetailsModalMode = 'create' | 'edit' | null;
 
 export interface RoutingPolicyListProps {
 	routingPolicies: RoutingPolicy[];
+	refetchRoutingPolicies: () => void;
 	isRoutingPoliciesLoading: boolean;
+	isRoutingPoliciesFetching: boolean;
 	isRoutingPoliciesError: boolean;
 	handlePolicyDetailsModalOpen: HandlePolicyDetailsModalOpen;
 	handleDeleteModalOpen: HandleDeleteModalOpen;
@@ -80,7 +82,9 @@ export interface UseRoutingPoliciesReturn {
 	selectedRoutingPolicy: RoutingPolicy | null;
 	routingPoliciesData: RoutingPolicy[];
 	isLoadingRoutingPolicies: boolean;
+	isFetchingRoutingPolicies: boolean;
 	isErrorRoutingPolicies: boolean;
+	refetchRoutingPolicies: () => void;
 	// Channels
 	channels: Channels[];
 	isLoadingChannels: boolean;

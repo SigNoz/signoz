@@ -1,4 +1,5 @@
-import { getToolTipValue, PrecisionOption } from 'components/Graph/yAxisConfig';
+import { PrecisionOption } from 'components/Graph/types';
+import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { themeColors } from 'constants/theme';
 import dayjs from 'dayjs';

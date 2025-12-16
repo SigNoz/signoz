@@ -94,9 +94,21 @@
         "unit": "Count",
         "type": "Gauge"
       },
-      { "name": "aws_ApiGateway_Count_max", "unit": "Count", "type": "Gauge" },
-      { "name": "aws_ApiGateway_Count_min", "unit": "Count", "type": "Gauge" },
-      { "name": "aws_ApiGateway_Count_sum", "unit": "Count", "type": "Gauge" },
+      {
+        "name": "aws_ApiGateway_Count_max",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_Count_min",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_Count_sum",
+        "unit": "Count",
+        "type": "Gauge"
+      },
       {
         "name": "aws_ApiGateway_IntegrationLatency_count",
         "unit": "Milliseconds",

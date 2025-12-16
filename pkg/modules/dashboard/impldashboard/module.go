@@ -3,7 +3,7 @@ package impldashboard
 import (
 	"context"
 	"maps"
-	"strings"
+	"slices"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -11,30 +11,34 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	store     dashboardtypes.Store
-	settings  factory.ScopedProviderSettings
-	analytics analytics.Analytics
-	orgGetter organization.Getter
-	role      role.Module
+	store       dashboardtypes.Store
+	settings    factory.ScopedProviderSettings
+	analytics   analytics.Analytics
+	orgGetter   organization.Getter
+	role        role.Module
+	queryParser queryparser.QueryParser
 }
 
-func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module) dashboard.Module {
+func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module, queryParser queryparser.QueryParser) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/impldashboard")
 	return &module{
-		store:     NewStore(sqlstore),
-		settings:  scopedProviderSettings,
-		analytics: analytics,
-		orgGetter: orgGetter,
-		role:      role,
+		store:       NewStore(sqlstore),
+		settings:    scopedProviderSettings,
+		analytics:   analytics,
+		orgGetter:   orgGetter,
+		role:        role,
+		queryParser: queryParser,
 	}
 }
 
@@ -269,13 +273,10 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 		return nil, err
 	}
 
-	// Initialize result map for each metric
 	result := make(map[string][]map[string]string)
 
-	// Process the JSON data in Go
 	for _, dashboard := range dashboards {
-		var dashData = dashboard.Data
-
+		dashData := dashboard.Data
 		dashTitle, _ := dashData["title"].(string)
 		widgets, ok := dashData["widgets"].([]interface{})
 		if !ok {
@@ -296,44 +297,22 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 				continue
 			}
 
-			builder, ok := query["builder"].(map[string]interface{})
-			if !ok {
-				continue
-			}
+			// Track which metrics were found in this widget
+			foundMetrics := make(map[string]bool)
 
-			queryData, ok := builder["queryData"].([]interface{})
-			if !ok {
-				continue
-			}
+			// Check all three query types
+			module.checkBuilderQueriesForMetricNames(query, metricNames, foundMetrics)
+			module.checkClickHouseQueriesForMetricNames(ctx, query, metricNames, foundMetrics)
+			module.checkPromQLQueriesForMetricNames(ctx, query, metricNames, foundMetrics)
 
-			for _, qd := range queryData {
-				data, ok := qd.(map[string]interface{})
-				if !ok {
-					continue
-				}
-
-				if dataSource, ok := data["dataSource"].(string); !ok || dataSource != "metrics" {
-					continue
-				}
-
-				aggregateAttr, ok := data["aggregateAttribute"].(map[string]interface{})
-				if !ok {
-					continue
-				}
-
-				if key, ok := aggregateAttr["key"].(string); ok {
-					// Check if this metric is in our list of interest
-					for _, metricName := range metricNames {
-						if strings.TrimSpace(key) == metricName {
-							result[metricName] = append(result[metricName], map[string]string{
-								"dashboard_id":   dashboard.ID,
-								"widget_name":    widgetTitle,
-								"widget_id":      widgetID,
-								"dashboard_name": dashTitle,
-							})
-						}
-					}
-				}
+			// Add widget to results for all found metrics
+			for metricName := range foundMetrics {
+				result[metricName] = append(result[metricName], map[string]string{
+					"dashboard_id":   dashboard.ID,
+					"widget_name":    widgetTitle,
+					"widget_id":      widgetID,
+					"dashboard_name": dashTitle,
+				})
 			}
 		}
 	}
@@ -360,4 +339,121 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 
 func (module *module) MustGetTypeables() []authtypes.Typeable {
 	return []authtypes.Typeable{dashboardtypes.TypeableMetaResourceDashboard, dashboardtypes.TypeableMetaResourcesDashboards}
+}
+
+// checkBuilderQueriesForMetricNames checks builder.queryData[] for aggregations[].metricName
+func (module *module) checkBuilderQueriesForMetricNames(query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
+	builder, ok := query["builder"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	queryData, ok := builder["queryData"].([]interface{})
+	if !ok {
+		return
+	}
+
+	for _, qd := range queryData {
+		data, ok := qd.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Check dataSource is metrics
+		if dataSource, ok := data["dataSource"].(string); !ok || dataSource != "metrics" {
+			continue
+		}
+
+		// Check aggregations[].metricName
+		aggregations, ok := data["aggregations"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		for _, agg := range aggregations {
+			aggMap, ok := agg.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			metricName, ok := aggMap["metricName"].(string)
+			if !ok || metricName == "" {
+				continue
+			}
+
+			if slices.Contains(metricNames, metricName) {
+				foundMetrics[metricName] = true
+			}
+		}
+	}
+}
+
+// checkClickHouseQueriesForMetricNames checks clickhouse_sql[] array for metric names in query strings
+func (module *module) checkClickHouseQueriesForMetricNames(ctx context.Context, query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
+	clickhouseSQL, ok := query["clickhouse_sql"].([]interface{})
+	if !ok {
+		return
+	}
+
+	for _, chQuery := range clickhouseSQL {
+		chQueryMap, ok := chQuery.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		queryStr, ok := chQueryMap["query"].(string)
+		if !ok || queryStr == "" {
+			continue
+		}
+
+		// Parse query to extract metric names
+		result, err := module.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, queryStr)
+		if err != nil {
+			// Log warning and continue - parsing errors shouldn't break the search
+			module.settings.Logger().WarnContext(ctx, "failed to parse ClickHouse query", "query", queryStr, "error", err)
+			continue
+		}
+
+		// Check if any of the search metric names are in the extracted metric names
+		for _, metricName := range metricNames {
+			if slices.Contains(result.MetricNames, metricName) {
+				foundMetrics[metricName] = true
+			}
+		}
+	}
+}
+
+// checkPromQLQueriesForMetricNames checks promql[] array for metric names in query strings
+func (module *module) checkPromQLQueriesForMetricNames(ctx context.Context, query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
+	promQL, ok := query["promql"].([]interface{})
+	if !ok {
+		return
+	}
+
+	for _, promQuery := range promQL {
+		promQueryMap, ok := promQuery.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		queryStr, ok := promQueryMap["query"].(string)
+		if !ok || queryStr == "" {
+			continue
+		}
+
+		// Parse query to extract metric names
+		result, err := module.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, queryStr)
+		if err != nil {
+			// Log warning and continue - parsing errors shouldn't break the search
+			module.settings.Logger().WarnContext(ctx, "failed to parse PromQL query", "query", queryStr, "error", err)
+			continue
+		}
+
+		// Check if any of the search metric names are in the extracted metric names
+		for _, metricName := range metricNames {
+			if slices.Contains(result.MetricNames, metricName) {
+				foundMetrics[metricName] = true
+			}
+		}
+	}
 }

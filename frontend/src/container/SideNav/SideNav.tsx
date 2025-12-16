@@ -68,6 +68,7 @@ import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
 import { showErrorNotification } from 'utils/error';
 
+import { useCmdK } from '../../providers/cmdKProvider';
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
 import {
@@ -120,6 +121,7 @@ function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
+	const { openCmdK } = useCmdK();
 	const { pathname, search } = useLocation();
 	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
 		AppState,
@@ -637,6 +639,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			} else {
 				history.push(settingsRoute);
 			}
+		} else if (item.key === 'quick-search') {
+			openCmdK();
 		} else if (item) {
 			onClickHandler(item?.key as string, event);
 		}

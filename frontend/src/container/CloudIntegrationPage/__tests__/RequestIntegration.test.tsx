@@ -57,7 +57,8 @@ describe('Request AWS integration', () => {
 		expect(capturedPayload.attributes).toEqual({
 			screen: 'AWS integration details',
 			integration: 's3 sync',
-			tenant_url: 'localhost',
+			deployment_url: 'localhost',
+			user_email: null,
 		});
 	});
 });

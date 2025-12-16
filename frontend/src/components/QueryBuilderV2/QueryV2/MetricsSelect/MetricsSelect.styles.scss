@@ -6,6 +6,15 @@
 	gap: 8px;
 	width: 100%;
 
+	.ant-select-selection-search-input {
+		font-size: 12px !important;
+		line-height: 27px;
+		&::placeholder {
+			color: var(--bg-vanilla-400) !important;
+			font-size: 12px !important;
+		}
+	}
+
 	.source-selector {
 		width: 120px;
 	}
@@ -22,6 +31,11 @@
 		font-weight: 400;
 		line-height: 20px; /* 142.857% */
 		min-height: 36px;
+
+		.ant-select-selection-placeholder {
+			color: var(--bg-vanilla-400) !important;
+			font-size: 12px !important;
+		}
 	}
 
 	.ant-select-dropdown {

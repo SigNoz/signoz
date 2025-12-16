@@ -5,10 +5,11 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"io"
 	"math"
@@ -146,6 +147,8 @@ type APIHandler struct {
 
 	QuerierAPI *querierAPI.API
 
+	QueryParserAPI *queryparser.API
+
 	Signoz *signoz.SigNoz
 }
 
@@ -175,6 +178,8 @@ type APIHandlerOpts struct {
 	FieldsAPI *fields.API
 
 	QuerierAPI *querierAPI.API
+
+	QueryParserAPI *queryparser.API
 
 	Signoz *signoz.SigNoz
 }
@@ -238,6 +243,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Signoz:                        opts.Signoz,
 		FieldsAPI:                     opts.FieldsAPI,
 		QuerierAPI:                    opts.QuerierAPI,
+		QueryParserAPI:                opts.QueryParserAPI,
 	}
 
 	logsQueryBuilder := logsv4.PrepareLogsQuery
@@ -569,56 +575,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/user/preferences", am.ViewAccess(aH.Signoz.Handlers.Preference.ListByUser)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/preferences/{name}", am.ViewAccess(aH.Signoz.Handlers.Preference.GetByUser)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/preferences/{name}", am.ViewAccess(aH.Signoz.Handlers.Preference.UpdateByUser)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.Signoz.Handlers.Preference.ListByOrg)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/preferences/{name}", am.AdminAccess(aH.Signoz.Handlers.Preference.GetByOrg)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/preferences/{name}", am.AdminAccess(aH.Signoz.Handlers.Preference.UpdateByOrg)).Methods(http.MethodPut)
-
 	// Quick Filters
 	router.HandleFunc("/api/v1/orgs/me/filters", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetQuickFilters)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetSignalFilters)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.Signoz.Handlers.QuickFilter.UpdateQuickFilters)).Methods(http.MethodPut)
 
-	// === Authentication APIs ===
-	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.Signoz.Handlers.User.CreateInvite)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/invite/bulk", am.AdminAccess(aH.Signoz.Handlers.User.CreateBulkInvite)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.Signoz.Handlers.User.GetInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteInvite)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.Signoz.Handlers.User.ListInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(aH.Signoz.Handlers.User.AcceptInvite)).Methods(http.MethodPost)
-
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.Signoz.Handlers.Session.DeprecatedCreateSessionByEmailPassword)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/sessions/email_password", am.OpenAccess(aH.Signoz.Handlers.Session.CreateSessionByEmailPassword)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/sessions/context", am.OpenAccess(aH.Signoz.Handlers.Session.GetSessionContext)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/sessions/rotate", am.OpenAccess(aH.Signoz.Handlers.Session.RotateSession)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/sessions", am.OpenAccess(aH.Signoz.Handlers.Session.DeleteSession)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/complete/google", am.OpenAccess(aH.Signoz.Handlers.Session.CreateSessionByGoogleCallback)).Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.List)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.Create)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.Update)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.Delete)).Methods(http.MethodDelete)
-
-	router.HandleFunc("/api/v1/pats", am.AdminAccess(aH.Signoz.Handlers.User.CreateAPIKey)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/pats", am.AdminAccess(aH.Signoz.Handlers.User.ListAPIKeys)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(aH.Signoz.Handlers.User.UpdateAPIKey)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(aH.Signoz.Handlers.User.RevokeAPIKey)).Methods(http.MethodDelete)
-
-	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.Signoz.Handlers.User.ListUsers)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/me", am.OpenAccess(aH.Signoz.Handlers.User.GetMyUser)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.GetUser)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.UpdateUser)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/user/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteUser)).Methods(http.MethodDelete)
-
-	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Get)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Update)).Methods(http.MethodPut)
-
-	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.Signoz.Handlers.User.GetResetPasswordToken)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.Signoz.Handlers.User.ResetPassword)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.Signoz.Handlers.User.ChangePassword)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v3/licenses", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
 		render.Success(rw, http.StatusOK, []any{})
@@ -632,6 +594,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/span_percentile", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetSpanPercentileDetails)).Methods(http.MethodPost)
 
+	// Query Filter Analyzer api used to extract metric names and grouping columns from a query
+	router.HandleFunc("/api/v1/query_filter/analyze", am.ViewAccess(aH.QueryParserAPI.AnalyzeQueryFilter)).Methods(http.MethodPost)
 }
 
 func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.AuthZ) {
@@ -659,6 +623,14 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.Au
 	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
 		am.ViewAccess(ah.UpdateMetricsMetadata)).
 		Methods(http.MethodPost)
+	// v2 endpoints
+	router.HandleFunc("/api/v2/metrics/stats", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetStats)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/metrics/treemap", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetTreemap)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/metrics/attributes", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricAttributes)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/metrics/metadata", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricMetadata)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/metrics/{metric_name}/metadata", am.EditAccess(ah.Signoz.Handlers.MetricsExplorer.UpdateMetricMetadata)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/metric/highlights", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricHighlights)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/metric/dashboards", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricDashboards)).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -980,14 +952,14 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 	keys := make(map[string]v3.AttributeKey)
 
 	if rule.AlertType == ruletypes.AlertTypeLogs {
-		logFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
-		if err == nil {
+		logFields, apiErr := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
+		if apiErr == nil {
 			params := &v3.QueryRangeParamsV3{
 				CompositeQuery: rule.RuleCondition.CompositeQuery,
 			}
 			keys = model.GetLogFieldsV3(ctx, params, logFields)
 		} else {
-			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
+			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(apiErr))
 		}
 	} else if rule.AlertType == ruletypes.AlertTypeTraces {
 		traceFields, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
@@ -1791,7 +1763,7 @@ func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWrite
 	}
 	traceID := mux.Vars(r)["traceId"]
 	if traceID == "" {
-		RespondError(w, model.BadRequest(errors.New("traceID is required")), nil)
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "traceID is required"))
 		return
 	}
 
@@ -1825,7 +1797,7 @@ func (aH *APIHandler) GetFlamegraphSpansForTrace(w http.ResponseWriter, r *http.
 
 	traceID := mux.Vars(r)["traceId"]
 	if traceID == "" {
-		RespondError(w, model.BadRequest(errors.New("traceID is required")), nil)
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "traceID is required"))
 		return
 	}
 
@@ -1926,9 +1898,9 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	claims, errv2 := authtypes.ClaimsFromContext(ctx)
-	if errv2 != nil {
-		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, errors.NewInternalf(errors.CodeInternal, "failed to get org id from context"))
 		return
 	}
 
@@ -1995,17 +1967,15 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	claims, errv2 := authtypes.ClaimsFromContext(ctx)
-	if errv2 != nil {
-		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
-
 	result, apiErr := aH.reader.GetTTL(r.Context(), claims.OrgID, ttlParams)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
-
 	aH.WriteJSON(w, r, result)
 }
 
@@ -2070,7 +2040,7 @@ func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	if aH.SetupCompleted {
-		RespondError(w, &model.ApiError{Err: errors.New("self-registration is disabled"), Typ: model.ErrorBadData}, nil)
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "self-registration is disabled"))
 		return
 	}
 
@@ -3453,7 +3423,7 @@ func (aH *APIHandler) InstallIntegration(w http.ResponseWriter, r *http.Request)
 	}
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
-		RespondError(w, model.UnauthorizedError(errors.New("unauthorized")), nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -4064,7 +4034,7 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, model.GetLogsAggregatesResponse{})
 }
 
-func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
+func parseAgentConfigVersion(r *http.Request) (int, error) {
 	versionString := mux.Vars(r)["version"]
 
 	if versionString == "latest" {
@@ -4074,11 +4044,11 @@ func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	version64, err := strconv.ParseInt(versionString, 0, 8)
 
 	if err != nil {
-		return 0, model.BadRequestStr("invalid version number")
+		return 0, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid version number")
 	}
 
 	if version64 <= 0 {
-		return 0, model.BadRequestStr("invalid version number")
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid version number")
 	}
 
 	return int(version64), nil
@@ -4088,16 +4058,13 @@ func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 	req := logparsingpipeline.PipelinesPreviewRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to decode request body"))
 		return
 	}
 
-	resultLogs, apiErr := aH.LogsParsingPipelineController.PreviewLogsPipelines(
-		r.Context(), &req,
-	)
-
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	resultLogs, err := aH.LogsParsingPipelineController.PreviewLogsPipelines(r.Context(), &req)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -4105,9 +4072,9 @@ func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 }
 
 func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -4119,35 +4086,33 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
-		RespondError(w, model.WrapApiError(err, "Failed to parse agent config version"), nil)
+		render.Error(w, err)
 		return
 	}
 
 	var payload *logparsingpipeline.PipelinesResponse
-	var apierr *model.ApiError
-
 	if version != -1 {
-		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), orgID, version)
+		payload, err = aH.listLogsPipelinesByVersion(r.Context(), orgID, version)
 	} else {
-		payload, apierr = aH.listLogsPipelines(context.Background(), orgID)
+		payload, err = aH.listLogsPipelines(r.Context(), orgID)
 	}
-
-	if apierr != nil {
-		RespondError(w, apierr, payload)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
+
 	aH.Respond(w, payload)
 }
 
 // listLogsPipelines lists logs piplines for latest version
 func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID valuer.UUID) (
-	*logparsingpipeline.PipelinesResponse, *model.ApiError,
+	*logparsingpipeline.PipelinesResponse, error,
 ) {
 	// get lateset agent config
 	latestVersion := -1
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, orgID, opamptypes.ElementTypeLogPipelines)
-	if err != nil && err.Type() != model.ErrorNotFound {
-		return nil, model.WrapApiError(err, "failed to get latest agent config version")
+	if err != nil && !errorsV2.Ast(err, errorsV2.TypeNotFound) {
+		return nil, err
 	}
 
 	if lastestConfig != nil {
@@ -4156,14 +4121,14 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID valuer.UUID) 
 
 	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, orgID, latestVersion)
 	if err != nil {
-		return nil, model.WrapApiError(err, "failed to get pipelines")
+		return nil, err
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
 	history, err := agentConf.GetConfigHistory(ctx, orgID, opamptypes.ElementTypeLogPipelines, limit)
 	if err != nil {
-		return nil, model.WrapApiError(err, "failed to get config history")
+		return nil, err
 	}
 	payload.History = history
 	return payload, nil
@@ -4171,18 +4136,18 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID valuer.UUID) 
 
 // listLogsPipelinesByVersion lists pipelines along with config version history
 func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, orgID valuer.UUID, version int) (
-	*logparsingpipeline.PipelinesResponse, *model.ApiError,
+	*logparsingpipeline.PipelinesResponse, error,
 ) {
 	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, orgID, version)
 	if err != nil {
-		return nil, model.WrapApiError(err, "failed to get pipelines by version")
+		return nil, err
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
 	history, err := agentConf.GetConfigHistory(ctx, orgID, opamptypes.ElementTypeLogPipelines, limit)
 	if err != nil {
-		return nil, model.WrapApiError(err, "failed to retrieve agent config history")
+		return nil, err
 	}
 
 	payload.History = history
@@ -4218,14 +4183,14 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 	createPipeline := func(
 		ctx context.Context,
 		postable []pipelinetypes.PostablePipeline,
-	) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
+	) (*logparsingpipeline.PipelinesResponse, error) {
 		if len(postable) == 0 {
 			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")
 		}
 
-		validationErr := aH.LogsParsingPipelineController.ValidatePipelines(ctx, postable)
-		if validationErr != nil {
-			return nil, validationErr
+		err := aH.LogsParsingPipelineController.ValidatePipelines(ctx, postable)
+		if err != nil {
+			return nil, err
 		}
 
 		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, orgID, userID, postable)
@@ -4233,7 +4198,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	res, err := createPipeline(r.Context(), req.Pipelines)
 	if err != nil {
-		RespondError(w, err, nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -4297,9 +4262,9 @@ func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.
 		return
 	}
 
-	response, err := aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
-	if err != nil {
-		RespondError(w, err, nil)
+	response, apiErr := aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
 		return
 	}
 
@@ -4455,10 +4420,9 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
-			logsFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, errQuriesByName)
+			logsFields, apiErr := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
+			if apiErr != nil {
+				RespondError(w, apiErr, errQuriesByName)
 				return
 			}
 			// get the fields if any logs query is present
@@ -4495,12 +4459,12 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	// Hook up query progress tracking if requested
 	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
 	if len(queryIdHeader) > 0 {
-		onQueryFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
+		onQueryFinished, apiErr := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
 
-		if err != nil {
+		if apiErr != nil {
 			zap.L().Error(
 				"couldn't report query start for progress tracking",
-				zap.String("queryId", queryIdHeader), zap.Error(err),
+				zap.String("queryId", queryIdHeader), zap.Error(apiErr),
 			)
 
 		} else {
@@ -4811,10 +4775,9 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
 			// get the fields if any logs query is present
-			logsFields, err := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, nil)
+			logsFields, apiErr := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
+			if apiErr != nil {
+				RespondError(w, apiErr, nil)
 				return
 			}
 			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
