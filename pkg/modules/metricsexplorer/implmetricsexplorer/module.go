@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
@@ -34,11 +35,12 @@ type module struct {
 	logger                 *slog.Logger
 	cache                  cache.Cache
 	ruleStore              ruletypes.RuleStore
+	dashboardModule        dashboard.Module
 	config                 metricsexplorer.Config
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config) metricsexplorer.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, dashboardModule dashboard.Module, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config) metricsexplorer.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -49,6 +51,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		telemetryMetadataStore: telemetryMetadataStore,
 		cache:                  cache,
 		ruleStore:              ruleStore,
+		dashboardModule:        dashboardModule,
 		config:                 cfg,
 	}
 }
@@ -201,7 +204,6 @@ func (m *module) GetMetricAlerts(ctx context.Context, orgID valuer.UUID, metricN
 	if metricName == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
 	}
-
 	ruleAlerts, err := m.ruleStore.GetStoredRulesByMetricName(ctx, orgID.String(), metricName)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get stored rules by metric name")
@@ -217,6 +219,33 @@ func (m *module) GetMetricAlerts(ctx context.Context, orgID valuer.UUID, metricN
 
 	return &metricsexplorertypes.MetricAlertsResponse{
 		Alerts: alerts,
+	}, nil
+}
+
+func (m *module) GetMetricDashboards(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardsResponse, error) {
+	if metricName == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+	data, err := m.dashboardModule.GetByMetricNames(ctx, orgID, []string{metricName})
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get dashboards for metric")
+	}
+
+	dashboards := make([]metricsexplorertypes.MetricDashboard, 0)
+	if dashboardList, ok := data[metricName]; ok {
+		dashboards = make([]metricsexplorertypes.MetricDashboard, 0, len(dashboardList))
+		for _, item := range dashboardList {
+			dashboards = append(dashboards, metricsexplorertypes.MetricDashboard{
+				DashboardName: item["dashboard_name"],
+				DashboardID:   item["dashboard_id"],
+				WidgetID:      item["widget_id"],
+				WidgetName:    item["widget_name"],
+			})
+		}
+	}
+
+	return &metricsexplorertypes.MetricDashboardsResponse{
+		Dashboards: dashboards,
 	}, nil
 }
 
