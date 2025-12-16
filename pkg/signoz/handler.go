@@ -50,6 +50,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, que
 		Services:        implservices.NewHandler(modules.Services),
 		MetricsExplorer: implmetricsexplorer.NewHandler(modules.MetricsExplorer),
 		SpanPercentile:  implspanpercentile.NewHandler(modules.SpanPercentile),
-		Ingestion:       signozingestion.NewAPI(ingestion),
+		Ingestion:       signozingestion.NewHandler(ingestion),
 	}
 }

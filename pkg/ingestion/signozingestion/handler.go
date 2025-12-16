@@ -12,7 +12,7 @@ type signozapi struct {
 	ingestion ingestion.Ingestion
 }
 
-func NewAPI(ingestion ingestion.Ingestion) ingestion.Handler {
+func NewHandler(ingestion ingestion.Ingestion) ingestion.Handler {
 	return &signozapi{ingestion: ingestion}
 }
 

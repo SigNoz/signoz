@@ -233,7 +233,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			implsession.NewHandler(modules.Session),
 			implauthdomain.NewHandler(modules.AuthDomain),
 			implpreference.NewHandler(modules.Preference),
-			signozingestion.NewAPI(ingestion),
+			signozingestion.NewHandler(ingestion),
 		),
 	)
 }
