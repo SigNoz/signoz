@@ -366,8 +366,18 @@ func (d *dialect) AddPrimaryKey(ctx context.Context, db bun.IDB, oldModel interf
 }
 
 func (d *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, db bun.IDB, model interface{}, column string) error {
-	// Minimal implementation: attempt to drop the column; MySQL will enforce FK constraints.
-	_, err := db.
+	existingTable := db.Dialect().Tables().Get(reflect.TypeOf(model))
+
+	// Align with sqlite/postgres behavior: check for column existence first to keep migrations idempotent.
+	columnExists, err := d.ColumnExists(ctx, db, existingTable.Name, column)
+	if err != nil {
+		return err
+	}
+	if !columnExists {
+		return nil
+	}
+
+	_, err = db.
 		NewDropColumn().
 		Model(model).
 		Column(column).
