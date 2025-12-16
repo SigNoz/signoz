@@ -98,7 +98,20 @@ function ClientSideQBSearch(
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
 	// create the tags from the initial query here, this should only be computed on the first load as post that tags and query will be always in sync.
-	const [tags, setTags] = useState<ITag[]>(filters.items as ITag[]);
+	const [tags, setTags] = useState<ITag[]>(() => {
+		const currentTags: ITag[] = [];
+		filters.items.forEach((item) => {
+			if (item.key) {
+				currentTags.push({
+					id: item.id,
+					key: item.key,
+					op: item.op,
+					value: item.value,
+				});
+			}
+		});
+		return currentTags;
+	});
 
 	// this will maintain the current state of in process filter item
 	const [currentFilterItem, setCurrentFilterItem] = useState<ITag | undefined>();
@@ -143,14 +156,17 @@ function ClientSideQBSearch(
 				setSearchValue((parsedValue as BaseAutocompleteData)?.key);
 			} else if (currentState === DropdownState.OPERATOR) {
 				if (value === OPERATORS.EXISTS || value === OPERATORS.NOT_EXISTS) {
-					setTags((prev) => [
-						...prev,
-						{
-							key: currentFilterItem?.key,
-							op: value,
-							value: '',
-						} as ITag,
-					]);
+					setTags((prev) => {
+						const newTags = [...prev];
+						if (currentFilterItem?.key) {
+							newTags.push({
+								key: currentFilterItem.key,
+								op: value,
+								value: '',
+							});
+						}
+						return newTags;
+					});
 					setCurrentFilterItem(undefined);
 					setSearchValue('');
 					setCurrentState(DropdownState.ATTRIBUTE_KEY);
@@ -176,14 +192,17 @@ function ClientSideQBSearch(
 						setSearchValue('');
 						setCurrentState(DropdownState.ATTRIBUTE_KEY);
 						setCurrentFilterItem(undefined);
-						setTags((prev) => [
-							...prev,
-							{
-								key: currentFilterItem?.key,
-								op: currentFilterItem?.op,
-								value: tagValue,
-							} as ITag,
-						]);
+						setTags((prev) => {
+							const newTags = [...prev];
+							if (currentFilterItem?.key) {
+								newTags.push({
+									key: currentFilterItem.key,
+									op: currentFilterItem?.op,
+									value: tagValue,
+								});
+							}
+							return newTags;
+						});
 						return;
 					}
 					// this is for adding subsequent comma seperated values
@@ -195,14 +214,17 @@ function ClientSideQBSearch(
 					setSearchValue('');
 					setCurrentState(DropdownState.ATTRIBUTE_KEY);
 					setCurrentFilterItem(undefined);
-					setTags((prev) => [
-						...prev,
-						{
-							key: currentFilterItem?.key,
-							op: currentFilterItem?.op,
-							value,
-						} as ITag,
-					]);
+					setTags((prev) => {
+						const newTags = [...prev];
+						if (currentFilterItem?.key) {
+							newTags.push({
+								key: currentFilterItem?.key,
+								op: currentFilterItem?.op,
+								value,
+							});
+						}
+						return newTags;
+					});
 				}
 			}
 		},
@@ -255,14 +277,17 @@ function ClientSideQBSearch(
 				currentFilterItem?.op === OPERATORS.NOT_EXISTS
 			) {
 				// is exists and not exists operator is present then convert directly to tag! no need of value here
-				setTags((prev) => [
-					...prev,
-					{
-						key: currentFilterItem?.key,
-						op: currentFilterItem?.op,
-						value: '',
-					},
-				]);
+				setTags((prev) => {
+					const newTags = [...prev];
+					if (currentFilterItem?.key) {
+						newTags.push({
+							key: currentFilterItem.key,
+							op: currentFilterItem.op,
+							value: '',
+						});
+					}
+					return newTags;
+				});
 				setCurrentFilterItem(undefined);
 				setSearchValue('');
 				setCurrentState(DropdownState.ATTRIBUTE_KEY);
@@ -274,23 +299,25 @@ function ClientSideQBSearch(
 						: 1,
 				)
 			) {
-				setTags((prev) => [
-					...prev,
-					{
-						key: currentFilterItem?.key as BaseAutocompleteData,
-						op: currentFilterItem?.op as string,
-						value: currentFilterItem?.value || '',
-					},
-				]);
+				setTags((prev) => {
+					const newTags = [...prev];
+					if (currentFilterItem) {
+						const newTag = {
+							key: currentFilterItem?.key,
+							op: currentFilterItem?.op,
+							value: currentFilterItem?.value,
+						};
+						newTags.push(newTag);
+					}
+					return newTags;
+				});
 				setCurrentFilterItem(undefined);
 				setSearchValue('');
 				setCurrentState(DropdownState.ATTRIBUTE_KEY);
 			}
 		}
 	}, [
-		currentFilterItem?.key,
-		currentFilterItem?.op,
-		currentFilterItem?.value,
+		currentFilterItem,
 		searchValue,
 		whereClauseConfig?.customKey,
 		whereClauseConfig?.customOp,
@@ -321,14 +348,17 @@ function ClientSideQBSearch(
 				tagOperator === OPERATORS.EXISTS ||
 				tagOperator === OPERATORS.NOT_EXISTS
 			) {
-				setTags((prev) => [
-					...prev,
-					{
-						key: currentFilterItem?.key,
-						op: tagOperator,
-						value: '',
-					} as ITag,
-				]);
+				setTags((prev) => {
+					const newTags = [...prev];
+					if (currentFilterItem?.key) {
+						newTags.push({
+							key: currentFilterItem.key,
+							op: tagOperator,
+							value: '',
+						});
+					}
+					return newTags;
+				});
 				setCurrentFilterItem(undefined);
 				setSearchValue('');
 				setCurrentState(DropdownState.ATTRIBUTE_KEY);
@@ -498,12 +528,18 @@ function ClientSideQBSearch(
 
 		if (!isEqual(filters, filterTags)) {
 			onChange(filterTags);
-			setTags(
-				filterTags.items.map((tag) => ({
-					...tag,
-					op: getOperatorFromValue(tag.op),
-				})) as ITag[],
-			);
+			const newTags: ITag[] = [];
+			filterTags.items.forEach((tag) => {
+				if (tag.key) {
+					newTags.push({
+						id: tag.id,
+						key: tag.key,
+						op: getOperatorFromValue(tag.op),
+						value: tag.value,
+					});
+				}
+			});
+			setTags(newTags);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [tags]);
