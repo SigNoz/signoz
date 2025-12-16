@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	"net/url"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_MAX", "700s")
 	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_EXCLUDED__ROUTES", "/excluded1,/excluded2")
 	t.Setenv("SIGNOZ_APISERVER_LOGGING_EXCLUDED__ROUTES", "/api/v1/health1")
+	t.Setenv("SIGNOZ_APISERVER_WEB_EXTERNAL__URL", "https://test.com")
 
 	conf, err := config.New(
 		context.Background(),
@@ -49,6 +51,12 @@ func TestNewWithEnvProvider(t *testing.T) {
 		Logging: Logging{
 			ExcludedRoutes: []string{
 				"/api/v1/health1",
+			},
+		},
+		Web: Web{
+			ExternalURL: &url.URL{
+				Scheme: "https",
+				Host:   "test.com",
 			},
 		},
 	}
