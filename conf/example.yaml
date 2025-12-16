@@ -75,6 +75,11 @@ sqlstore:
     mode: delete
     # BusyTimeout is the timeout for the sqlite database to wait for a lock.
     busy_timeout: 10s
+  # mysql: Uncomment and configure to use MySQL as the SQLStore provider.
+  # mysql:
+  #   # DSN is the MySQL data source name.
+  #   # Example: user:pass@tcp(mysql:3306)/signoz?parseTime=true&charset=utf8mb4,utf8
+  #   dsn: ""
 
 ##################### APIServer #####################
 apiserver:

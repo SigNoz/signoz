@@ -15,9 +15,16 @@ type Config struct {
 	Sqlite SqliteConfig `mapstructure:"sqlite"`
 	// Postgres is the postgres configuration.
 	Postgres PostgresConfig `mapstructure:"postgres"`
+	// MySQL is the mysql configuration.
+	MySQL MySQLConfig `mapstructure:"mysql"`
 }
 
 type PostgresConfig struct {
+	// DSN is the database source name.
+	DSN string `mapstructure:"dsn"`
+}
+
+type MySQLConfig struct {
 	// DSN is the database source name.
 	DSN string `mapstructure:"dsn"`
 }
@@ -53,8 +60,10 @@ func newConfig() factory.Config {
 			Mode:        "delete",
 			BusyTimeout: 10000 * time.Millisecond, // increasing the defaults from https://github.com/mattn/go-sqlite3/blob/master/sqlite3.go#L1098 because of transpilation from C to GO
 		},
+		MySQL: MySQLConfig{
+			DSN: "",
+		},
 	}
-
 }
 
 func (c Config) Validate() error {
