@@ -123,7 +123,6 @@ describe('TimeSeries', () => {
 			metrics: [undefined, undefined],
 		});
 
-		// assert via tooltip text (appears on hover)
 		const alertIcon = container.querySelector('.no-unit-warning') as HTMLElement;
 		fireEvent.mouseOver(alertIcon);
 		return waitFor(() =>
@@ -152,7 +151,7 @@ describe('TimeSeries', () => {
 
 	it('shows Save unit button when metric had no unit but one is selected', () => {
 		const { getByText, getByRole } = renderTimeSeries({
-			metricUnits: [''],
+			metricUnits: [undefined],
 			metricNames: ['metric1'],
 			metrics: [mockMetric],
 			yAxisUnit: 'seconds',

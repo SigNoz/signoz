@@ -146,7 +146,7 @@ function TimeSeries({
 			return true;
 		}
 		if (areAllMetricUnitsSame) {
-			return metricUnits[0] !== '';
+			return Boolean(metricUnits[0]);
 		}
 		return false;
 	}, [metricUnits, areAllMetricUnitsSame]);
@@ -159,8 +159,8 @@ function TimeSeries({
 		() =>
 			metricUnits.length === 1 &&
 			Boolean(metrics?.[0]) &&
-			metricUnits[0] === '' &&
-			yAxisUnit !== '',
+			!metricUnits[0] &&
+			yAxisUnit,
 		[metricUnits, metrics, yAxisUnit],
 	);
 

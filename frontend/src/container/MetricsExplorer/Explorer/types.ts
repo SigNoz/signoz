@@ -16,11 +16,11 @@ export interface TimeSeriesProps {
 	areAllMetricUnitsSame: boolean;
 	isMetricUnitsLoading: boolean;
 	isMetricUnitsError: boolean;
-	metricUnits: string[];
+	metricUnits: (string | undefined)[];
 	metricNames: string[];
 	metrics: (MetricDetails['metadata'] | undefined)[];
 	handleOpenMetricDetails: (metricName: string) => void;
-	yAxisUnit: string;
+	yAxisUnit: string | undefined;
 	setYAxisUnit: (unit: string) => void;
 }
 

@@ -77,7 +77,7 @@ function Explorer(): JSX.Element {
 		false,
 	);
 	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
-	const [yAxisUnit, setYAxisUnit] = useState<string>('');
+	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
 	useEffect(() => {
 		// Set the y axis unit to the first metric unit if
@@ -87,17 +87,17 @@ function Explorer(): JSX.Element {
 		// 1. There are more than one metric units and they are not the same
 		// 2. There are no metric units
 		if (units.length === 0) {
-			setYAxisUnit('');
-		} else if (units.length === 1 && units[0] !== '') {
+			setYAxisUnit(undefined);
+		} else if (units.length === 1 && units[0]) {
 			setYAxisUnit(units[0]);
 		} else if (areAllMetricUnitsSame) {
-			if (units[0] !== '') {
+			if (units[0]) {
 				setYAxisUnit(units[0]);
 			} else {
-				setYAxisUnit('');
+				setYAxisUnit(undefined);
 			}
 		} else if (units.length > 1 && !areAllMetricUnitsSame) {
-			setYAxisUnit('');
+			setYAxisUnit(undefined);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [JSON.stringify(units), areAllMetricUnitsSame]);

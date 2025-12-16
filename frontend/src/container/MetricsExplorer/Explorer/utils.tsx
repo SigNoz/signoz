@@ -43,7 +43,7 @@ export function useGetMetricUnits(
 	isEnabled = true,
 ): {
 	isLoading: boolean;
-	units: string[];
+	units: (string | undefined)[];
 	isError: boolean;
 	metrics: (MetricDetails['metadata'] | undefined)[];
 } {
@@ -52,7 +52,7 @@ export function useGetMetricUnits(
 	});
 	return {
 		isLoading: metricsData.some((metric) => metric.isLoading),
-		units: metricsData.map((metric) => metric.data?.data?.unit ?? ''),
+		units: metricsData.map((metric) => metric.data?.data?.unit),
 		metrics: metricsData.map((metric) => metric.data?.data),
 		isError: metricsData.some((metric) => metric.isError),
 	};
