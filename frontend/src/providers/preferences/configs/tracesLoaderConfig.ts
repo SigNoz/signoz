@@ -13,16 +13,9 @@ const isValidTraceColumn = (col: {
 	name?: string;
 	signal?: string;
 	[key: string]: unknown;
-}): boolean => {
+}): boolean =>
 	// If column has signal field, it must be 'traces'
-	if (col?.signal && col.signal !== 'traces') {
-		return false;
-	}
-	// Filter out known Logs-only columns
-	return (
-		col?.name !== 'body' && !(col?.name === 'timestamp' && col?.signal === 'logs')
-	);
-};
+	!(col?.signal && col.signal !== 'traces');
 
 // --- TRACES preferences loader config ---
 const tracesLoaders = {
