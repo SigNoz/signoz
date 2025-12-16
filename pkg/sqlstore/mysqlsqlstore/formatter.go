@@ -67,8 +67,8 @@ func (f *formatter) JSONArrayElements(column, path, alias string) ([]byte, []byt
 	sql = append(sql, " COLUMNS(value JSON PATH \"$\")) AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
 
-	// Callers can refer to the entire row via the table alias.
-	return sql, []byte(alias)
+	// Return the qualified value column to match other dialects (e.g., alias.value).
+	return sql, append([]byte(alias), ".value"...)
 }
 
 func (f *formatter) JSONArrayOfStrings(column, path, alias string) ([]byte, []byte) {
