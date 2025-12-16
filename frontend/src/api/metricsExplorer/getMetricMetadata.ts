@@ -25,8 +25,9 @@ export const getMetricMetadata = async (
 	headers?: Record<string, string>,
 ): Promise<SuccessResponseV2<MetricMetadataResponse> | ErrorResponseV2> => {
 	try {
+		const encodedMetricName = encodeURIComponent(metricName);
 		const response = await axios.get(
-			`/metrics/metadata?metricName=${metricName}`,
+			`/metrics/metadata?metricName=${encodedMetricName}`,
 			{
 				signal,
 				headers,
