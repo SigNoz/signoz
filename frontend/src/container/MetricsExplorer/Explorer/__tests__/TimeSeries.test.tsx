@@ -5,7 +5,11 @@ import {
 	screen,
 	waitFor,
 } from '@testing-library/react';
-import { MetricDetails } from 'api/metricsExplorer/getMetricDetails';
+import {
+	MetricDetails,
+	Temporality,
+} from 'api/metricsExplorer/getMetricDetails';
+import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useUpdateMetricMetadataHooks from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -74,19 +78,11 @@ jest.mock('react-redux', () => ({
 	}),
 }));
 
-const mockMetric: MetricDetails = {
-	name: 'metric1',
+const mockMetric: MetricDetails['metadata'] = {
+	metric_type: MetricType.SUM,
 	description: 'metric1 description',
-	type: 'metric1 type',
 	unit: 'metric1 unit',
-	timeseries: 1,
-	samples: 1,
-	timeSeriesTotal: 1,
-	timeSeriesActive: 1,
-	lastReceived: '2021-01-01',
-	attributes: [],
-	alerts: null,
-	dashboards: null,
+	temporality: Temporality.CUMULATIVE,
 };
 
 const queryClient = new QueryClient();

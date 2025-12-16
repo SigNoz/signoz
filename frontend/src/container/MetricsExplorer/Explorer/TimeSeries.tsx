@@ -175,9 +175,9 @@ function TimeSeries({
 				metricName: metricNames[0],
 				payload: {
 					unit: yAxisUnit,
-					description: metrics[0]?.metadata?.description ?? '',
-					metricType: metrics[0]?.metadata?.metric_type as MetricType,
-					temporality: metrics[0]?.metadata?.temporality,
+					description: metrics[0]?.description ?? '',
+					metricType: metrics[0]?.metric_type as MetricType,
+					temporality: metrics[0]?.temporality,
 				},
 			},
 			{

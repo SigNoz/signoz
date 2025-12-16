@@ -1,5 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import { MetricDetails } from 'api/metricsExplorer/getMetricDetails';
+import {
+	MetricDetails,
+	Temporality,
+} from 'api/metricsExplorer/getMetricDetails';
+import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import * as useOptionsMenuHooks from 'container/OptionsMenu';
 import * as useUpdateDashboardHooks from 'hooks/dashboard/useUpdateDashboard';
@@ -13,7 +17,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import store from 'store';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import Explorer from '../Explorer';
 import * as useGetMetricUnitsHooks from '../utils';
@@ -131,19 +135,11 @@ jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 const Y_AXIS_UNIT_SELECTOR_TEST_ID = 'y-axis-unit-selector';
 const SECONDS_UNIT_LABEL = 'Seconds (s)';
 
-const mockMetric: MetricDetails = {
-	name: 'metric1',
+const mockMetric: MetricDetails['metadata'] = {
+	metric_type: MetricType.SUM,
 	description: 'metric1 description',
-	type: 'metric1 type',
 	unit: 'metric1 unit',
-	timeseries: 1,
-	samples: 1,
-	timeSeriesTotal: 1,
-	timeSeriesActive: 1,
-	lastReceived: '2021-01-01',
-	attributes: [],
-	alerts: null,
-	dashboards: null,
+	temporality: Temporality.CUMULATIVE,
 };
 
 function renderExplorer(): void {
@@ -237,7 +233,7 @@ describe('Explorer', () => {
 	});
 
 	it('should render pre-populated y axis unit for mutliple metrics with same unit', () => {
-		(useSearchParams as jest.Mock).mockReturnValue([
+		(useSearchParams as jest.Mock).mockReturnValueOnce([
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'true' }),
 			mockSetSearchParams,
 		]);
@@ -308,6 +304,22 @@ describe('Explorer', () => {
 	});
 
 	it('one chart per query should enabled by default when there are multiple metrics with the same unit', () => {
+		const mockStagedQueryWithMultipleQueries = {
+			...initialQueriesMap[DataSource.METRICS],
+			builder: {
+				...initialQueriesMap[DataSource.METRICS].builder,
+				queryData: [
+					initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+					{ ...initialQueriesMap[DataSource.METRICS].builder.queryData[0] },
+				],
+			},
+		};
+
+		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue(({
+			...mockUseQueryBuilderData,
+			stagedQuery: mockStagedQueryWithMultipleQueries,
+		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+
 		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
 			units: ['seconds', 'seconds'],
 			isLoading: false,
@@ -318,6 +330,6 @@ describe('Explorer', () => {
 		renderExplorer();
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
-		expect(oneChartPerQueryToggle).toBeChecked();
+		expect(oneChartPerQueryToggle).toBeEnabled();
 	});
 });

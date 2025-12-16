@@ -45,17 +45,15 @@ export function useGetMetricUnits(
 	isLoading: boolean;
 	units: string[];
 	isError: boolean;
-	metrics: (MetricDetails | undefined)[];
+	metrics: (MetricDetails['metadata'] | undefined)[];
 } {
 	const metricsData = useGetMultipleMetrics(metricNames, {
 		enabled: metricNames.length > 0 && isEnabled,
 	});
 	return {
 		isLoading: metricsData.some((metric) => metric.isLoading),
-		units: metricsData.map(
-			(metric) => metric.data?.payload?.data?.metadata?.unit ?? '',
-		),
-		metrics: metricsData.map((metric) => metric.data?.payload?.data),
+		units: metricsData.map((metric) => metric.data?.data?.unit ?? ''),
+		metrics: metricsData.map((metric) => metric.data?.data),
 		isError: metricsData.some((metric) => metric.isError),
 	};
 }

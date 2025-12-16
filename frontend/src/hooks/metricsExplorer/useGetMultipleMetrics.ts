@@ -1,17 +1,15 @@
 import {
-	getMetricDetails,
-	MetricDetailsResponse,
-} from 'api/metricsExplorer/getMetricDetails';
+	getMetricMetadata,
+	MetricMetadataResponse,
+} from 'api/metricsExplorer/getMetricMetadata';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQueries, UseQueryOptions, UseQueryResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 
-type QueryData = SuccessResponse<MetricDetailsResponse> | ErrorResponse;
-type QueryResult = UseQueryResult<QueryData, Error>;
+type QueryResult = UseQueryResult<MetricMetadataResponse, Error>;
 
 type UseGetMultipleMetrics = (
 	metricNames: string[],
-	options?: UseQueryOptions<QueryData, Error>,
+	options?: UseQueryOptions<MetricMetadataResponse, Error>,
 	headers?: Record<string, string>,
 ) => QueryResult[];
 
@@ -25,9 +23,9 @@ export const useGetMultipleMetrics: UseGetMultipleMetrics = (
 			(metricName) =>
 				({
 					queryKey: [REACT_QUERY_KEY.GET_METRIC_DETAILS, metricName],
-					queryFn: ({ signal }) => getMetricDetails(metricName, signal, headers),
+					queryFn: ({ signal }) => getMetricMetadata(metricName, signal, headers),
 					...options,
-				} as UseQueryOptions<QueryData, Error>),
+				} as UseQueryOptions<MetricMetadataResponse, Error>),
 		),
 	);
 

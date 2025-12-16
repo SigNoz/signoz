@@ -18,7 +18,7 @@ export interface TimeSeriesProps {
 	isMetricUnitsError: boolean;
 	metricUnits: string[];
 	metricNames: string[];
-	metrics: (MetricDetails | undefined)[];
+	metrics: (MetricDetails['metadata'] | undefined)[];
 	handleOpenMetricDetails: (metricName: string) => void;
 	yAxisUnit: string;
 	setYAxisUnit: (unit: string) => void;
