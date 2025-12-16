@@ -221,11 +221,14 @@ function Explorer(): JSX.Element {
 		if (splitedQueries.length <= 1) {
 			return 'One chart per query cannot be toggled for a single query.';
 		}
+		if (units.length <= 1) {
+			return 'One chart per query cannot be toggled when there is only one metric.';
+		}
 		if (disableOneChartPerQuery) {
 			return 'One chart per query cannot be disabled for multiple queries with different units.';
 		}
 		return undefined;
-	}, [disableOneChartPerQuery, splitedQueries.length]);
+	}, [disableOneChartPerQuery, splitedQueries.length, units.length]);
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>

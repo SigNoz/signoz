@@ -265,7 +265,7 @@ function TimeSeries({
 						!queries[index].isLoading &&
 						!isMetricUnitsLoading &&
 						metricUnits.length > 1 &&
-						metricUnits[index] === '';
+						!metricUnits[index];
 
 					return (
 						<div
