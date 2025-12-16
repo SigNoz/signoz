@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/ingestion"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -101,6 +102,9 @@ type Config struct {
 
 	// MetricsExplorer config
 	MetricsExplorer metricsexplorer.Config `mapstructure:"metricsexplorer"`
+
+	// Ingestion config
+	Ingestion ingestion.Config `mapstructure:"ingestion"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
@@ -161,6 +165,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		gateway.NewConfigFactory(),
 		tokenizer.NewConfigFactory(),
 		metricsexplorer.NewConfigFactory(),
+		ingestion.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

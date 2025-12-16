@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/ingestion"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -28,6 +29,7 @@ type provider struct {
 	sessionHandler    session.Handler
 	authDomainHandler authdomain.Handler
 	preferenceHandler preference.Handler
+	ingestionHandler  ingestion.Handler
 }
 
 func NewFactory(
@@ -38,9 +40,10 @@ func NewFactory(
 	sessionHandler session.Handler,
 	authDomainHandler authdomain.Handler,
 	preferenceHandler preference.Handler,
+	ingestionHandler ingestion.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, ingestionHandler)
 	})
 }
 
@@ -55,6 +58,7 @@ func newProvider(
 	sessionHandler session.Handler,
 	authDomainHandler authdomain.Handler,
 	preferenceHandler preference.Handler,
+	ingestionHandler ingestion.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -68,6 +72,7 @@ func newProvider(
 		sessionHandler:    sessionHandler,
 		authDomainHandler: authDomainHandler,
 		preferenceHandler: preferenceHandler,
+		ingestionHandler:  ingestionHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -101,6 +106,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addPreferenceRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addIngestionRoutes(router); err != nil {
 		return err
 	}
 

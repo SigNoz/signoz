@@ -345,18 +345,29 @@ func New(
 		telemetrymetadata.AttributesMetadataLocalTableName,
 	)
 
+	ingestion, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Ingestion,
+		NewIngestionProviderFactories(),
+		"signoz",
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize all modules
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, config)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings, querier, licensing)
+	handlers := NewHandlers(modules, providerSettings, querier, licensing, ingestion)
 
 	// Initialize the API server
 	apiserver, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.APIServer,
-		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers),
+		NewAPIServerProviderFactories(orgGetter, authz, ingestion, modules, handlers),
 		"signoz",
 	)
 	if err != nil {

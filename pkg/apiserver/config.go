@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"net/url"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -10,6 +11,7 @@ import (
 type Config struct {
 	Timeout Timeout `mapstructure:"timeout"`
 	Logging Logging `mapstructure:"logging"`
+	Web     Web     `mapstructure:"web"`
 }
 
 type Timeout struct {
@@ -24,6 +26,11 @@ type Timeout struct {
 type Logging struct {
 	// The list of routes that are excluded from the logging
 	ExcludedRoutes []string `mapstructure:"excluded_routes"`
+}
+
+type Web struct {
+	// the url under which apiserver is externally reachable (for example, if apiserver is served via a reverse proxy).
+	ExternalURL *url.URL `mapstructure:"external_url"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -46,6 +53,12 @@ func newConfig() factory.Config {
 				"/api/v1/health",
 				"/api/v1/version",
 				"/",
+			},
+		},
+		Web: Web{
+			ExternalURL: &url.URL{
+				Scheme: "http",
+				Host:   "localhost:8080",
 			},
 		},
 	}

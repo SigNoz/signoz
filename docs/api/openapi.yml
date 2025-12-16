@@ -473,6 +473,49 @@ paths:
       summary: Get reset password token
       tags:
       - users
+  /api/v1/ingestion:
+    get:
+      deprecated: false
+      description: This endpoints returns the configured ingestion config
+      operationId: GetIngestionConfig
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/IngestiontypesGettableIngestionConfig'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Get ingestion config
+      tags:
+      - ingestion
   /api/v1/invite:
     get:
       deprecated: false
@@ -2063,6 +2106,11 @@ components:
     ErrorsResponseerroradditional:
       properties:
         message:
+          type: string
+      type: object
+    IngestiontypesGettableIngestionConfig:
+      properties:
+        url:
           type: string
       type: object
     PreferencetypesPreference:
