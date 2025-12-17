@@ -679,7 +679,33 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		registerShortcut(GlobalShortcuts.NavigateToExceptions, () =>
 			onClickHandler(ROUTES.ALL_ERROR, null),
 		);
-
+		registerShortcut(GlobalShortcuts.NavigateToTracesFunnel, () =>
+			onClickHandler(ROUTES.TRACES_FUNNELS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToMetricsSummary, () =>
+			onClickHandler(ROUTES.METRICS_EXPLORER, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToMetricsExplorer, () =>
+			onClickHandler(ROUTES.METRICS_EXPLORER_EXPLORER, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToMetricsViews, () =>
+			onClickHandler(ROUTES.METRICS_EXPLORER_VIEWS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettings, () =>
+			onClickHandler(ROUTES.SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsIngestion, () =>
+			onClickHandler(ROUTES.INGESTION_SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsBilling, () =>
+			onClickHandler(ROUTES.BILLING, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsAPIKeys, () =>
+			onClickHandler(ROUTES.API_KEYS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels, () =>
+			onClickHandler(ROUTES.ALL_CHANNELS, null),
+		);
 		return (): void => {
 			deregisterShortcut(GlobalShortcuts.NavigateToHome);
 			deregisterShortcut(GlobalShortcuts.NavigateToServices);
@@ -689,6 +715,15 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			deregisterShortcut(GlobalShortcuts.NavigateToAlerts);
 			deregisterShortcut(GlobalShortcuts.NavigateToExceptions);
 			deregisterShortcut(GlobalShortcuts.NavigateToMessagingQueues);
+			deregisterShortcut(GlobalShortcuts.NavigateToTracesFunnel);
+			deregisterShortcut(GlobalShortcuts.NavigateToMetricsSummary);
+			deregisterShortcut(GlobalShortcuts.NavigateToMetricsExplorer);
+			deregisterShortcut(GlobalShortcuts.NavigateToMetricsViews);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettings);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsIngestion);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsBilling);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsAPIKeys);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels);
 		};
 	}, [deregisterShortcut, onClickHandler, registerShortcut]);
 
