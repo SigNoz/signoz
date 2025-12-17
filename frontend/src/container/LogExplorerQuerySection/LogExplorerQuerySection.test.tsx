@@ -2,15 +2,18 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
-import { render, waitFor } from 'tests/test-utils';
+import { cleanup, render, screen, waitFor } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, QueryState } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
+import { explorerViewToPanelType } from 'utils/explorerUtils';
 
 import LogExplorerQuerySection from './index';
 
 const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
+const QUERY_AGGREGATION_TEST_ID = 'query-aggregation-container';
+const QUERY_ADDON_TEST_ID = 'query-add-ons';
 
 // Mock DOM APIs that CodeMirror needs
 beforeAll(() => {
@@ -151,7 +154,12 @@ const createMockQuery = (filterExpression?: string): Query => ({
 					  }
 					: undefined,
 				functions: [],
-				groupBy: [],
+				groupBy: [
+					{
+						key: 'cloud.account.id',
+						type: 'tag',
+					},
+				],
 				having: [],
 				legend: '',
 				limit: null,
@@ -271,5 +279,88 @@ describe('LogExplorerQuerySection', () => {
 			rerender(<LogExplorerQuerySection selectedView={view} />);
 			await verifyCodeMirrorContent(complexFilter);
 		});
+	});
+
+	it('should render QueryAggregation and QueryAddOns when switching from LIST to TIMESERIES or TABLE view', async () => {
+		// Helper function to verify components are rendered
+		const verifyComponentsRendered = async (): Promise<void> => {
+			await waitFor(
+				() => {
+					expect(screen.getByTestId(QUERY_AGGREGATION_TEST_ID)).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+			await waitFor(
+				() => {
+					expect(screen.getByTestId(QUERY_ADDON_TEST_ID)).toBeInTheDocument();
+				},
+				{ timeout: 3000 },
+			);
+		};
+
+		// Start with LIST view - QueryAggregation and QueryAddOns should NOT be rendered
+		mockUseGetPanelTypesQueryParam.mockReturnValue(PANEL_TYPES.LIST);
+		const contextWithList: Partial<QueryBuilderContextType> = {
+			...mockQueryBuilderContext,
+			panelType: PANEL_TYPES.LIST,
+		};
+
+		render(
+			<LogExplorerQuerySection selectedView={ExplorerViews.LIST} />,
+			undefined,
+			{
+				queryBuilderOverrides: contextWithList as QueryBuilderContextType,
+			},
+		);
+
+		// Verify QueryAggregation is NOT rendered in LIST view
+		expect(
+			screen.queryByTestId(QUERY_AGGREGATION_TEST_ID),
+		).not.toBeInTheDocument();
+
+		// Verify QueryAddOns is NOT rendered in LIST view (check for one of the add-on tabs)
+		expect(screen.queryByTestId(QUERY_ADDON_TEST_ID)).not.toBeInTheDocument();
+
+		cleanup();
+
+		// Switch to TIMESERIES view
+		const timeseriesPanelType = explorerViewToPanelType[ExplorerViews.TIMESERIES];
+		mockUseGetPanelTypesQueryParam.mockReturnValue(timeseriesPanelType);
+		const contextWithTimeseries: Partial<QueryBuilderContextType> = {
+			...mockQueryBuilderContext,
+			panelType: timeseriesPanelType,
+		};
+
+		render(
+			<LogExplorerQuerySection selectedView={ExplorerViews.TIMESERIES} />,
+			undefined,
+			{
+				queryBuilderOverrides: contextWithTimeseries as QueryBuilderContextType,
+			},
+		);
+
+		// Verify QueryAggregation and QueryAddOns are rendered
+		await verifyComponentsRendered();
+
+		cleanup();
+
+		// Switch to TABLE view
+		const tablePanelType = explorerViewToPanelType[ExplorerViews.TABLE];
+		mockUseGetPanelTypesQueryParam.mockReturnValue(tablePanelType);
+		const contextWithTable: Partial<QueryBuilderContextType> = {
+			...mockQueryBuilderContext,
+			panelType: tablePanelType,
+		};
+
+		render(
+			<LogExplorerQuerySection selectedView={ExplorerViews.TABLE} />,
+			undefined,
+			{
+				queryBuilderOverrides: contextWithTable as QueryBuilderContextType,
+			},
+		);
+
+		// Verify QueryAggregation and QueryAddOns are still rendered in TABLE view
+		await verifyComponentsRendered();
 	});
 });
