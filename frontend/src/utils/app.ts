@@ -59,7 +59,12 @@ export function buildAbsolutePath({
 	// ensure base path always ends with a forward slash
 	const basePath = pathname.endsWith('/') ? pathname : `${pathname}/`;
 
-	const absolutePath = basePath + relativePath;
+	// handle relative path starting with a forward slash
+	const normalizedRelativePath = relativePath.startsWith('/')
+		? relativePath.slice(1)
+		: relativePath;
+
+	const absolutePath = basePath + normalizedRelativePath;
 
 	return urlQueryString ? `${absolutePath}?${urlQueryString}` : absolutePath;
 }
