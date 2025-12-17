@@ -6,6 +6,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
@@ -24,7 +25,8 @@ func NewMockSQLRuleStore() *MockSQLRuleStore {
 	sqlStore := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherRegexp)
 	// For tests, we can pass nil for queryParser and use test provider settings
 	providerSettings := factorytest.NewSettings()
-	ruleStore := sqlrulestore.NewRuleStore(sqlStore, nil, providerSettings)
+
+	ruleStore := sqlrulestore.NewRuleStore(sqlStore, queryparser.New(providerSettings), providerSettings)
 
 	return &MockSQLRuleStore{
 		ruleStore: ruleStore,
