@@ -2,7 +2,6 @@ package telemetrymetrics
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"slices"
 
@@ -20,11 +19,6 @@ type conditionBuilder struct {
 
 func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 	return &conditionBuilder{fm: fm}
-}
-
-func marshalInterface(inter interface{}) string {
-	interBytes, _ := json.Marshal(inter)
-	return string(interBytes)
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -50,16 +44,8 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	fmt.Println("====> key: ", marshalInterface(key))
-	fmt.Println("====> operator: ", operator)
-	fmt.Println("====> tblFieldName: ", tblFieldName)
-	fmt.Println("====> value: ", marshalInterface(value))
-
 	// process tblFieldName and value for explicit type handling to be able to run and not error out
 	tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
-
-	fmt.Println("====> transformed tblFieldName: ", tblFieldName)
-	fmt.Println("====> transformed value: ", marshalInterface(value))
 
 	switch operator {
 	case qbtypes.FilterOperatorEqual:
