@@ -35,6 +35,7 @@ import { SuccessResponse, Warning } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { getAbsolutePathFromLocation } from 'utils/app';
 
 import { errorTooltipPosition } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
@@ -87,7 +88,7 @@ function WidgetHeader({
 			QueryParams.compositeQuery,
 			encodeURIComponent(JSON.stringify(widget.query)),
 		);
-		const generatedUrl = `${window.location.pathname}/new?${urlQuery}`;
+		const generatedUrl = getAbsolutePathFromLocation('new', urlQuery.toString());
 		safeNavigate(generatedUrl);
 	}, [safeNavigate, urlQuery, widget.id, widget.panelTypes, widget.query]);
 
