@@ -209,7 +209,7 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			keywords: 'account settings',
 			section: 'Settings',
 			icon: <Settings size={14} />,
-			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
+			roles: ['ADMIN', 'EDITOR', 'AUTHOR'],
 			perform: (): void => navigate(ROUTES.INGESTION_SETTINGS),
 		},
 
@@ -220,7 +220,7 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			keywords: 'account settings billing',
 			section: 'Settings',
 			icon: <Settings size={14} />,
-			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
+			roles: ['ADMIN', 'EDITOR', 'AUTHOR'],
 			perform: (): void => navigate(ROUTES.BILLING),
 		},
 		{
@@ -230,7 +230,7 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			keywords: 'account settings api keys',
 			section: 'Settings',
 			icon: <Settings size={14} />,
-			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
+			roles: ['ADMIN', 'EDITOR', 'AUTHOR'],
 			perform: (): void => navigate(ROUTES.API_KEYS),
 		},
 	];
