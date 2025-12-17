@@ -9,21 +9,12 @@ import {
 	CommandList,
 	CommandShortcut,
 } from '@signozhq/command';
-import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
-import updateUserPreference from 'api/v1/user/preferences/name/update';
-import { AxiosError } from 'axios';
-import { USER_PREFERENCES } from 'constants/userPreferences';
 import { useThemeMode } from 'hooks/useDarkMode';
-import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useEffect } from 'react';
-import { useMutation } from 'react-query';
-import { UserPreference } from 'types/api/preferences/preference';
-import { showErrorNotification } from 'utils/error';
 
 import { createShortcutActions } from '../../constants/shortcutActions';
-import { useAppContext } from '../../providers/App/App';
 import { useCmdK } from '../../providers/cmdKProvider';
 
 type CmdAction = {
@@ -43,20 +34,10 @@ export function CmdKPalette({
 }: {
 	userRole: UserRole;
 }): JSX.Element | null {
+	console.log('Rendering CmdKPalette userRole:', userRole);
 	const { open, setOpen } = useCmdK();
 
-	const { updateUserPreferenceInContext } = useAppContext();
-	const { notifications } = useNotifications();
 	const { setAutoSwitch, setTheme, theme } = useThemeMode();
-
-	const { mutate: updateUserPreferenceMutation } = useMutation(
-		updateUserPreference,
-		{
-			onError: (error) => {
-				showErrorNotification(notifications, error as AxiosError);
-			},
-		},
-	);
 
 	// toggle palette with ⌘/Ctrl+K
 	function handleGlobalCmdK(
@@ -98,31 +79,9 @@ export function CmdKPalette({
 		history.push(key);
 	}
 
-	function handleOpenSidebar(): void {
-		setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, 'true');
-		const save = { name: USER_PREFERENCES.SIDENAV_PINNED, value: true };
-		updateUserPreferenceInContext(save as UserPreference);
-		updateUserPreferenceMutation({
-			name: USER_PREFERENCES.SIDENAV_PINNED,
-			value: true,
-		});
-	}
-
-	function handleCloseSidebar(): void {
-		setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, 'false');
-		const save = { name: USER_PREFERENCES.SIDENAV_PINNED, value: false };
-		updateUserPreferenceInContext(save as UserPreference);
-		updateUserPreferenceMutation({
-			name: USER_PREFERENCES.SIDENAV_PINNED,
-			value: false,
-		});
-	}
-
 	const actions = createShortcutActions({
 		navigate: onClickHandler,
 		handleThemeChange,
-		openSidebar: handleOpenSidebar,
-		closeSidebar: handleCloseSidebar,
 	});
 
 	// RBAC filter: show action if no roles set OR current user role is included

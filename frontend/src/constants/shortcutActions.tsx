@@ -1,6 +1,7 @@
 import ROUTES from 'constants/routes';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
 import {
+	BarChart2,
 	BellDot,
 	BugIcon,
 	DraftingCompass,
@@ -30,12 +31,10 @@ export type CmdAction = {
 type ActionDeps = {
 	navigate: (path: string) => void;
 	handleThemeChange: (mode: string) => void;
-	openSidebar: () => void;
-	closeSidebar: () => void;
 };
 
 export function createShortcutActions(deps: ActionDeps): CmdAction[] {
-	const { navigate, handleThemeChange, openSidebar, closeSidebar } = deps;
+	const { navigate, handleThemeChange } = deps;
 
 	return [
 		{
@@ -67,16 +66,6 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			icon: <HardDrive size={14} />,
 			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 			perform: (): void => navigate(ROUTES.APPLICATION),
-		},
-		{
-			id: 'traces',
-			name: 'Go to Traces',
-			shortcut: ['shift + t'],
-			keywords: 'traces',
-			section: 'Navigation',
-			icon: <DraftingCompass size={14} />,
-			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
-			perform: (): void => navigate(ROUTES.TRACES_EXPLORER),
 		},
 		{
 			id: 'logs',
@@ -118,36 +107,62 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
 			perform: (): void => navigate(ROUTES.MESSAGING_QUEUES_OVERVIEW),
 		},
+
+		// metrics
 		{
-			id: 'my-settings',
-			name: 'Go to Account Settings',
-			shortcut: ['shift + g'],
-			keywords: 'account settings',
-			section: 'Navigation',
-			icon: <Settings size={14} />,
+			id: 'metrics-summary',
+			name: 'Go to Metrics Summary',
+			shortcut: ['shift + m'],
+			keywords: 'metrics summary',
+			section: 'Metrics',
+			icon: <BarChart2 size={14} />,
 			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
-			perform: (): void => navigate(ROUTES.MY_SETTINGS),
+			perform: (): void => navigate(ROUTES.METRICS_EXPLORER),
+		},
+		{
+			id: 'metrics-explorer',
+			name: 'Go to Metrics Explorer',
+			shortcut: ['shift + m + e'],
+			keywords: 'metrics explorer',
+			section: 'Metrics',
+			icon: <BarChart2 size={14} />,
+			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
+			perform: (): void => navigate(ROUTES.METRICS_EXPLORER_EXPLORER),
+		},
+		{
+			id: 'metrics-views',
+			name: 'Go to Metrics Views',
+			shortcut: ['shift + m + v'],
+			keywords: 'metrics views',
+			section: 'Metrics',
+			icon: <BarChart2 size={14} />,
+			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
+			perform: (): void => navigate(ROUTES.METRICS_EXPLORER_VIEWS),
+		},
+
+		// Traces
+		{
+			id: 'traces',
+			name: 'Go to Traces',
+			shortcut: ['shift + t'],
+			keywords: 'traces',
+			section: 'Traces',
+			icon: <DraftingCompass size={14} />,
+			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
+			perform: (): void => navigate(ROUTES.TRACES_EXPLORER),
+		},
+		{
+			id: 'traces-funnel',
+			name: 'Go to Traces Funnels',
+			shortcut: ['shift + t + f'],
+			keywords: 'traces funnel',
+			section: 'Traces',
+			icon: <DraftingCompass size={14} />,
+			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
+			perform: (): void => navigate(ROUTES.TRACES_FUNNELS),
 		},
 
 		// Common actions
-		{
-			id: 'open-sidebar',
-			name: 'Open Sidebar',
-			keywords: 'sidebar navigation menu expand',
-			section: 'Common',
-			icon: <Expand size={14} />,
-			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
-			perform: (): void => openSidebar(),
-		},
-		{
-			id: 'collapse-sidebar',
-			name: 'Collapse Sidebar',
-			keywords: 'sidebar navigation menu collapse',
-			section: 'Common',
-			icon: <Expand size={14} />,
-			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
-			perform: (): void => closeSidebar(),
-		},
 		{
 			id: 'dark-mode',
 			name: 'Switch to Dark Mode',
@@ -177,6 +192,16 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 		},
 
 		// settings sub-pages
+		{
+			id: 'my-settings',
+			name: 'Go to Account Settings',
+			shortcut: ['shift + g'],
+			keywords: 'account settings',
+			section: 'Settings',
+			icon: <Settings size={14} />,
+			roles: ['ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER'],
+			perform: (): void => navigate(ROUTES.MY_SETTINGS),
+		},
 		{
 			id: 'my-settings-ingestion',
 			name: 'Go to Account Settings Ingestion',
