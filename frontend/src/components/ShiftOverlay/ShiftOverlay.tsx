@@ -5,8 +5,8 @@ import ReactDOM from 'react-dom';
 
 import { formatShortcut } from './formatShortcut';
 
-type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
-type CmdAction = {
+export type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
+export type CmdAction = {
 	id: string;
 	name: string;
 	shortcut?: string[];
