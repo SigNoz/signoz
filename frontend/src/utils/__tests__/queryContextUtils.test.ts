@@ -61,7 +61,7 @@ describe('extractQueryPairs', () => {
 		]);
 	});
 
-	test('should test for filer expression with freeText', () => {
+	test('should test for filter expression with freeText', () => {
 		const input = "disconnected deployment.env not in ['mq-kafka']";
 		const result = extractQueryPairs(input);
 		expect(result).toEqual([
