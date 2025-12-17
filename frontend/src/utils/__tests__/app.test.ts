@@ -3,12 +3,12 @@ import { buildAbsolutePath } from '../app';
 const BASE_PATH = '/some-base-path';
 
 describe('buildAbsolutePath', () => {
-	const orginalLocation = window.location;
+	const originalLocation = window.location;
 
 	afterEach(() => {
 		Object.defineProperty(window, 'location', {
 			writable: true,
-			value: orginalLocation,
+			value: originalLocation,
 		});
 	});
 
