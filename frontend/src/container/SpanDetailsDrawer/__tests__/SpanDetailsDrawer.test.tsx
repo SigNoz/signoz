@@ -130,25 +130,38 @@ jest.mock('lib/uPlotLib/utils/generateColor', () => ({
 	generateColor: jest.fn().mockReturnValue('#1f77b4'),
 }));
 
-// Mock Antd Popover to render content immediately (avoids async portal issues)
-jest.mock('antd', () => {
-	const originalModule = jest.requireActual('antd');
-	return {
-		...originalModule,
-		Popover: ({
-			content,
-			children,
+jest.mock(
+	'container/SpanDetailsDrawer/Events/components/AttributeWithExpandablePopover',
+	() =>
+		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
+		function ({
+			attributeKey,
+			attributeValue,
+			onExpand,
 		}: {
-			content: React.ReactNode;
-			children: React.ReactNode;
-		}): JSX.Element => (
-			<div>
-				{children}
-				<div data-testid="popover-content">{content}</div>
-			</div>
-		),
-	};
-});
+			attributeKey: string;
+			attributeValue: string;
+			onExpand: (title: string, content: string) => void;
+		}) {
+			return (
+				<div className="attribute-container" key={attributeKey}>
+					<div className="attribute-key">{attributeKey}</div>
+					<div className="wrapper">
+						<div className="attribute-value">{attributeValue}</div>
+						<div data-testid="popover-content">
+							<pre>{attributeValue}</pre>
+							<button
+								type="button"
+								onClick={(): void => onExpand(attributeKey, attributeValue)}
+							>
+								Expand
+							</button>
+						</div>
+					</div>
+				</div>
+			);
+		},
+);
 
 // Mock getSpanPercentiles API
 jest.mock('api/trace/getSpanPercentiles', () => ({
