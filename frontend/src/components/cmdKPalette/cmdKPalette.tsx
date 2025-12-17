@@ -34,7 +34,6 @@ export function CmdKPalette({
 }: {
 	userRole: UserRole;
 }): JSX.Element | null {
-	console.log('Rendering CmdKPalette userRole:', userRole);
 	const { open, setOpen } = useCmdK();
 
 	const { setAutoSwitch, setTheme, theme } = useThemeMode();

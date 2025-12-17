@@ -87,7 +87,8 @@ export function KeyboardHotkeysProvider({
 			return;
 		}
 
-		const key = event.key.toLowerCase();
+		const key = event.key?.toLowerCase();
+		if (!key) return; // Skip if key is undefined
 
 		// If a pending combo exists and a new key is pressed → extension
 		if (pendingCombo.current && !pressedKeys.current.has(key)) {
@@ -107,7 +108,9 @@ export function KeyboardHotkeysProvider({
 	};
 
 	const handleKeyUp = (event: KeyboardEvent): void => {
-		const key = event.key.toLowerCase();
+		const key = event.key?.toLowerCase();
+		if (!key) return; // Skip if key is undefined
+
 		pressedKeys.current.delete(key);
 
 		if (!event.shiftKey) pressedKeys.current.delete('shift');
