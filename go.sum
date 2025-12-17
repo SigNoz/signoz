@@ -110,6 +110,8 @@ github.com/SigNoz/signoz-otel-collector v0.129.10-rc.9 h1:WmYDSSwzyW2yiJ3tPq5AFd
 github.com/SigNoz/signoz-otel-collector v0.129.10-rc.9/go.mod h1:4eJCRUd/P4OiCHXvGYZK8q6oyBVGJFVj/G6qKSoN/TQ=
 github.com/Yiling-J/theine-go v0.6.2 h1:1GeoXeQ0O0AUkiwj2S9Jc0Mzx+hpqzmqsJ4kIC4M9AY=
 github.com/Yiling-J/theine-go v0.6.2/go.mod h1:08QpMa5JZ2pKN+UJCRrCasWYO1IKCdl54Xa836rpmDU=
+github.com/abhishekhugetech/ClickHouse-go-mock v0.0.0-20251216145418-548576db2211 h1:KJMkyHcMWwHp9GcKuZrefa0CVlRUmxJd1gCriQIZ5ko=
+github.com/abhishekhugetech/ClickHouse-go-mock v0.0.0-20251216145418-548576db2211/go.mod h1:LiiyBUdXNwB/1DE9rgK/8q9qjVYsTzg6WXQ/3mU3TeY=
 github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5/go.mod h1:SkGFH1ia65gfNATL8TAiHDNxPzPdmEL5uirI2Uyuz6c=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
@@ -954,8 +956,6 @@ github.com/spf13/pflag v1.0.10/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3A
 github.com/spf13/viper v1.13.0/go.mod h1:Icm2xNL3/8uyh/wFuB1jI7TiTNKp8632Nwegu+zgdYw=
 github.com/spf13/viper v1.20.1 h1:ZMi+z/lvLyPSCoNtFCpqjy0S4kPbirhpTMwl8BkW9X4=
 github.com/spf13/viper v1.20.1/go.mod h1:P9Mdzt1zoHIG8m2eZQinpiBjo6kCmZSKBClNNqjJvu4=
-github.com/srikanthccv/ClickHouse-go-mock v0.12.0 h1:KUzaWTwuqMc2uf5FylM/oAcTFdE2DdZjvISm9V0/NAA=
-github.com/srikanthccv/ClickHouse-go-mock v0.12.0/go.mod h1:1oUmLtXEXOyS0EEWVKlKEfLfv9y02agCMAvD3tVnhlo=
 github.com/stoewer/go-strcase v1.3.0 h1:g0eASXYtp+yvN9fK8sH94oCIk0fau9uV1/ZdJ0AVEzs=
 github.com/stoewer/go-strcase v1.3.0/go.mod h1:fAH5hQ5pehh+j3nZfvwdk2RgEgQjAoM8wodgtPmh1xo=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
