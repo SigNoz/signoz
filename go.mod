@@ -53,7 +53,7 @@ require (
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.10.1
-	github.com/srikanthccv/ClickHouse-go-mock v0.12.0
+	github.com/srikanthccv/ClickHouse-go-mock v0.13.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.18.0
 	github.com/uptrace/bun v1.2.9
@@ -348,5 +348,3 @@ require (
 )
 
 replace github.com/expr-lang/expr => github.com/SigNoz/expr v1.17.7-beta
-
-replace github.com/srikanthccv/ClickHouse-go-mock => github.com/abhishekhugetech/ClickHouse-go-mock v0.0.0-20251216145418-548576db2211
