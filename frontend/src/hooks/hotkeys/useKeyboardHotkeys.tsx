@@ -117,7 +117,11 @@ export function KeyboardHotkeysProvider({
 		// Fire only if user did NOT extend the combo
 		if (!wasExtended.current) {
 			event.preventDefault();
-			shortcuts.current[pendingCombo.current]?.();
+			try {
+				shortcuts.current[pendingCombo.current]?.();
+			} catch (error) {
+				console.error('Error executing hotkey callback:', error);
+			}
 		}
 
 		pendingCombo.current = null;
