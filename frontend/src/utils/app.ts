@@ -40,13 +40,21 @@ export function isIngestionActive(data: any): boolean {
 }
 
 /**
- * @param relativePath new path that would append the current path. Exclude leading slash
- * @param urlQueryString (optional) stringified query params if they exist
+ * Builds an absolute path by combining the current page's pathname with a relative path.
+ *
+ * @param {Object} params - The parameters for building the absolute path
+ * @param {string} params.relativePath - The relative path to append to the current pathname
+ * @param {string} [params.urlQueryString] - Optional query string to append to the final path (without leading '?')
+ *
+ * @returns {string} The constructed absolute path, optionally with query string
  */
-export function getAbsolutePathFromLocation(
-	relativePath: string,
-	urlQueryString?: string,
-): string {
+export function buildAbsolutePath({
+	relativePath,
+	urlQueryString,
+}: {
+	relativePath: string;
+	urlQueryString?: string;
+}): string {
 	const { pathname } = window.location;
 	// ensure base path always ends with a forward slash
 	const basePath = pathname.endsWith('/') ? pathname : `${pathname}/`;
