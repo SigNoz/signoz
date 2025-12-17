@@ -34,14 +34,21 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         # Run the migrations for clickhouse
         request.getfixturevalue("migrator")
 
+        # Get the no-web flag
+        with_web = pytestconfig.getoption("--with-web")
+
         arch = platform.machine()
         if arch == "x86_64":
             arch = "amd64"
 
         # Build the image
+        dockerfile_path = "cmd/enterprise/Dockerfile.integration"
+        if with_web:
+            dockerfile_path = "cmd/enterprise/Dockerfile.with-web.integration"
+
         self = DockerImage(
             path="../../",
-            dockerfile_path="cmd/enterprise/Dockerfile.integration",
+            dockerfile_path=dockerfile_path,
             tag="signoz:integration",
             buildargs={
                 "TARGETARCH": arch,
@@ -53,7 +60,7 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
 
         env = (
             {
-                "SIGNOZ_WEB_ENABLED": True,
+                "SIGNOZ_WEB_ENABLED": False,
                 "SIGNOZ_WEB_DIRECTORY": "/root/web",
                 "SIGNOZ_INSTRUMENTATION_LOGS_LEVEL": "debug",
                 "SIGNOZ_PROMETHEUS_ACTIVE__QUERY__TRACKER_ENABLED": False,
@@ -62,6 +69,9 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
             | sqlstore.env
             | clickhouse.env
         )
+
+        if with_web:
+            env["SIGNOZ_WEB_ENABLED"] = True
 
         container = DockerContainer("signoz:integration")
         for k, v in env.items():
