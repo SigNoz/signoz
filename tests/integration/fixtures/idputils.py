@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Any
+from typing import Any, Callable, Dict
 from urllib.parse import urljoin
 from xml.etree import ElementTree
 
@@ -71,7 +71,9 @@ def create_saml_client(
                     "saml_signature_canonicalization_method": "http://www.w3.org/2001/10/xml-exc-c14n#",
                     "saml.onetimeuse.condition": "false",
                     "saml.server.signature.keyinfo.xmlSigKeyInfoKeyNameTransformer": "NONE",
-                    "saml_assertion_consumer_url_post": urljoin(f"{signoz.self.host_configs['8080'].base()}", callback_path)
+                    "saml_assertion_consumer_url_post": urljoin(
+                        f"{signoz.self.host_configs['8080'].base()}", callback_path
+                    ),
                 },
                 "authenticationFlowBindingOverrides": {},
                 "fullScopeAllowed": True,
@@ -124,9 +126,11 @@ def create_saml_client(
 
 @pytest.fixture(name="update_saml_client_attributes", scope="function")
 def update_saml_client_attributes(
-    idp: types.TestContainerIDP
+    idp: types.TestContainerIDP,
 ) -> Callable[[str, Dict[str, Any]], None]:
-    def _update_saml_client_attributes(client_id: str, attributes: Dict[str, Any]) -> None:
+    def _update_saml_client_attributes(
+        client_id: str, attributes: Dict[str, Any]
+    ) -> None:
         client = KeycloakAdmin(
             server_url=idp.container.host_configs["6060"].base(),
             username=IDP_ROOT_USERNAME,
