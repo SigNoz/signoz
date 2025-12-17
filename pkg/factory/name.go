@@ -2,17 +2,14 @@ package factory
 
 import (
 	"log/slog"
-	"regexp"
-
-	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 var _ slog.LogValuer = (Name{})
 
 var (
-	// nameRegex is a regex that matches a valid name.
-	// It must start with a alphabet, and can only contain alphabets, numbers, underscores or hyphens.
-	nameRegex = regexp.MustCompile(`^[a-z][a-z0-9_-]{0,30}$`)
+// nameRegex is a regex that matches a valid name.
+// It must start with a alphabet, and can only contain alphabets, numbers, underscores or hyphens.
+// nameRegex = regexp.MustCompile(`^[a-z][a-z0-9_-]{0,30}$`)
 )
 
 type Name struct {
@@ -29,9 +26,9 @@ func (n Name) String() string {
 
 // NewName creates a new name.
 func NewName(name string) (Name, error) {
-	if !nameRegex.MatchString(name) {
-		return Name{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid factory name %q", name)
-	}
+	// if !nameRegex.MatchString(name) {
+	// 	return Name{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid factory name %q", name)
+	// }
 	return Name{name: name}, nil
 }
 
