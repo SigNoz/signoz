@@ -96,11 +96,11 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
-	if err := provider.addUserRoutes(router); err != nil {
+	if err := provider.addPreferenceRoutes(router); err != nil {
 		return err
 	}
 
-	if err := provider.addPreferenceRoutes(router); err != nil {
+	if err := provider.addUserRoutes(router); err != nil {
 		return err
 	}
 
