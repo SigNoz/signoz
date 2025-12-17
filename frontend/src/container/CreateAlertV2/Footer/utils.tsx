@@ -278,7 +278,7 @@ export function buildCreateThresholdAlertRulePayload(
 		labels: basicAlertState.labels,
 		annotations: {
 			description: notificationSettings.description,
-			summary: notificationSettings.description,
+			summary: notificationSettings.summary,
 		},
 		notificationSettings: notificationSettingsProps,
 		version: 'v5',

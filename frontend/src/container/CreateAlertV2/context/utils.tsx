@@ -241,6 +241,8 @@ export const notificationSettingsReducer = (
 			return { ...state, reNotification: action.payload };
 		case 'SET_DESCRIPTION':
 			return { ...state, description: action.payload };
+		case 'SET_SUMMARY':
+			return { ...state, summary: action.payload };
 		case 'SET_ROUTING_POLICIES':
 			return { ...state, routingPolicies: action.payload };
 		case 'RESET':

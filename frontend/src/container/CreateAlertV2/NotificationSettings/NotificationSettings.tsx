@@ -11,6 +11,7 @@ import AdvancedOptionItem from '../EvaluationSettings/AdvancedOptionItem';
 import Stepper from '../Stepper';
 import MultipleNotifications from './MultipleNotifications';
 import NotificationMessage from './NotificationMessage';
+import NotificationSummary from './NotificationSummary';
 
 function NotificationSettings(): JSX.Element {
 	const {
@@ -84,6 +85,7 @@ function NotificationSettings(): JSX.Element {
 		<div className="notification-settings-container">
 			<Stepper stepNumber={3} label="Notification settings" />
 			<NotificationMessage />
+			<NotificationSummary />
 			<div className="notification-settings-content">
 				<MultipleNotifications />
 				<AdvancedOptionItem

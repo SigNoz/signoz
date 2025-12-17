@@ -626,6 +626,21 @@ describe('CreateAlertV2 Context Utils', () => {
 			});
 		});
 
+		it('should set summary', () => {
+			const summary = 'Custom alert summary with {{$value}}';
+			const result = notificationSettingsReducer(
+				INITIAL_NOTIFICATION_SETTINGS_STATE,
+				{
+					type: 'SET_SUMMARY',
+					payload: summary,
+				},
+			);
+			expect(result).toEqual({
+				...INITIAL_NOTIFICATION_SETTINGS_STATE,
+				summary,
+			});
+		});
+
 		it(TEST_RESET_TO_INITIAL_STATE, () => {
 			const modifiedState: NotificationSettingsState = {
 				multipleNotifications: ['channel1'],
@@ -636,6 +651,7 @@ describe('CreateAlertV2 Context Utils', () => {
 					conditions: ['firing'],
 				},
 				description: 'Modified description',
+				summary: 'Modified summary',
 				routingPolicies: true,
 			};
 			const result = notificationSettingsReducer(modifiedState, {
@@ -654,6 +670,7 @@ describe('CreateAlertV2 Context Utils', () => {
 					conditions: ['nodata'],
 				},
 				description: 'New description',
+				summary: 'New summary',
 				routingPolicies: true,
 			};
 			const result = notificationSettingsReducer(

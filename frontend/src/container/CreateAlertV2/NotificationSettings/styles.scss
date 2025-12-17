@@ -63,6 +63,66 @@
 		}
 	}
 
+	.notification-summary-container {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		margin-top: -8px;
+		background-color: var(--bg-ink-400);
+		border: 1px solid var(--bg-slate-400);
+		padding: 16px;
+
+		.notification-summary-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 16px;
+
+			.notification-summary-header-content {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+
+				.notification-summary-header-title {
+					display: flex;
+					gap: 8px;
+					align-items: center;
+					color: var(--bg-vanilla-300);
+					font-family: Inter;
+					font-size: 14px;
+					font-weight: 500;
+				}
+
+				.notification-summary-header-description {
+					color: var(--bg-vanilla-400);
+					font-family: Inter;
+					font-size: 14px;
+					font-weight: 400;
+				}
+			}
+
+			.notification-summary-header-actions {
+				.ant-btn {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					gap: 2px;
+					color: var(--bg-robin-400);
+				}
+			}
+		}
+
+		textarea {
+			height: 150px;
+			background: var(--bg-ink-400);
+			border: 1px solid var(--bg-slate-200);
+			border-radius: 4px;
+			color: var(--bg-vanilla-400) !important;
+			font-family: Inter;
+			font-size: 14px;
+		}
+	}
+
 	.notification-settings-content {
 		display: flex;
 		flex-direction: column;
@@ -277,6 +337,35 @@
 				}
 
 				.notification-message-header-actions {
+					.ant-btn {
+						color: var(--bg-robin-500);
+					}
+				}
+			}
+
+			textarea {
+				background: var(--bg-vanilla-200);
+				border: 1px solid var(--bg-vanilla-300);
+				color: var(--bg-ink-400) !important;
+			}
+		}
+
+		.notification-summary-container {
+			background-color: var(--bg-vanilla-200);
+			border: 1px solid var(--bg-vanilla-300);
+
+			.notification-summary-header {
+				.notification-summary-header-content {
+					.notification-summary-header-title {
+						color: var(--bg-ink-300);
+					}
+
+					.notification-summary-header-description {
+						color: var(--bg-ink-400);
+					}
+				}
+
+				.notification-summary-header-actions {
 					.ant-btn {
 						color: var(--bg-robin-500);
 					}

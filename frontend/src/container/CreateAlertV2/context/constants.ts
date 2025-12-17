@@ -179,6 +179,8 @@ export const RE_NOTIFICATION_TIME_UNIT_OPTIONS = [
 
 export const NOTIFICATION_MESSAGE_PLACEHOLDER =
 	'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})';
+export const NOTIFICATION_SUMMARY_PLACEHOLDER =
+	'The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}';
 
 export const RE_NOTIFICATION_CONDITION_OPTIONS = [
 	{ value: 'firing', label: 'Firing' },
@@ -194,5 +196,6 @@ export const INITIAL_NOTIFICATION_SETTINGS_STATE: NotificationSettingsState = {
 		conditions: [],
 	},
 	description: NOTIFICATION_MESSAGE_PLACEHOLDER,
+	summary: NOTIFICATION_SUMMARY_PLACEHOLDER,
 	routingPolicies: false,
 };

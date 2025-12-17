@@ -423,7 +423,7 @@ describe('Footer utils', () => {
 					description:
 						'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})',
 					summary:
-						'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})',
+						'The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}',
 				},
 				condition: {
 					alertOnAbsent: false,

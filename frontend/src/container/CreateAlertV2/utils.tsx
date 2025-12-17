@@ -178,6 +178,7 @@ export function getNotificationSettingsStateFromAlertDef(
 	alertDef: PostableAlertRuleV2,
 ): NotificationSettingsState {
 	const description = alertDef.annotations?.description || '';
+	const summary = alertDef.annotations?.summary || '';
 	const multipleNotifications = alertDef.notificationSettings?.groupBy || [];
 	const routingPolicies = alertDef.notificationSettings?.usePolicy || false;
 
@@ -197,6 +198,7 @@ export function getNotificationSettingsStateFromAlertDef(
 	return {
 		...INITIAL_NOTIFICATION_SETTINGS_STATE,
 		description,
+		summary,
 		multipleNotifications,
 		routingPolicies,
 		reNotification: {
