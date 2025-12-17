@@ -16,7 +16,9 @@ func NewNoOpOrgGetter() *NoOpOrgGetter {
 	return &NoOpOrgGetter{}
 }
 
-func (*NoOpOrgGetter) Get(context.Context, valuer.UUID) (*types.Organization, error) { return nil, nil }
+func (*NoOpOrgGetter) Get(context.Context, valuer.UUID) (*types.Organization, error) {
+	return &types.Organization{}, nil
+}
 func (*NoOpOrgGetter) ListByOwnedKeyRange(context.Context) ([]*types.Organization, error) {
-	return nil, nil
+	return []*types.Organization{}, nil
 }

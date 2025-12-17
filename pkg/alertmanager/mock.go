@@ -48,13 +48,13 @@ func (f *MockAlertManager) TestAlert(ctx context.Context, orgID string, ruleID s
 	return nil
 }
 func (f *MockAlertManager) ListChannels(context.Context, string) ([]*alertmanagertypes.Channel, error) {
-	return nil, nil
+	return []*alertmanagertypes.Channel{}, nil
 }
 func (f *MockAlertManager) ListAllChannels(context.Context) ([]*alertmanagertypes.Channel, error) {
-	return nil, nil
+	return []*alertmanagertypes.Channel{}, nil
 }
 func (f *MockAlertManager) GetChannelByID(context.Context, string, valuer.UUID) (*alertmanagertypes.Channel, error) {
-	return nil, nil
+	return &alertmanagertypes.Channel{}, nil
 }
 func (f *MockAlertManager) UpdateChannelByReceiverAndID(context.Context, string, alertmanagertypes.Receiver, valuer.UUID) error {
 	return nil
@@ -65,7 +65,7 @@ func (f *MockAlertManager) CreateChannel(context.Context, string, alertmanagerty
 func (f *MockAlertManager) DeleteChannelByID(context.Context, string, valuer.UUID) error { return nil }
 func (f *MockAlertManager) SetConfig(context.Context, *alertmanagertypes.Config) error   { return nil }
 func (f *MockAlertManager) GetConfig(context.Context, string) (*alertmanagertypes.Config, error) {
-	return nil, nil
+	return &alertmanagertypes.Config{}, nil
 }
 func (f *MockAlertManager) SetDefaultConfig(context.Context, string) error { return nil }
 func (f *MockAlertManager) SetNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string, cfg *alertmanagertypes.NotificationConfig) error {
@@ -76,19 +76,19 @@ func (f *MockAlertManager) DeleteNotificationConfig(context.Context, valuer.UUID
 	return nil
 }
 func (f *MockAlertManager) CreateRoutePolicy(context.Context, *alertmanagertypes.PostableRoutePolicy) (*alertmanagertypes.GettableRoutePolicy, error) {
-	return nil, nil
+	return &alertmanagertypes.GettableRoutePolicy{}, nil
 }
 func (f *MockAlertManager) CreateRoutePolicies(context.Context, []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error) {
-	return nil, nil
+	return []*alertmanagertypes.GettableRoutePolicy{}, nil
 }
 func (f *MockAlertManager) GetRoutePolicyByID(context.Context, string) (*alertmanagertypes.GettableRoutePolicy, error) {
-	return nil, nil
+	return &alertmanagertypes.GettableRoutePolicy{}, nil
 }
 func (f *MockAlertManager) GetAllRoutePolicies(context.Context) ([]*alertmanagertypes.GettableRoutePolicy, error) {
-	return nil, nil
+	return []*alertmanagertypes.GettableRoutePolicy{}, nil
 }
 func (f *MockAlertManager) UpdateRoutePolicyByID(context.Context, string, *alertmanagertypes.PostableRoutePolicy) (*alertmanagertypes.GettableRoutePolicy, error) {
-	return nil, nil
+	return &alertmanagertypes.GettableRoutePolicy{}, nil
 }
 func (f *MockAlertManager) DeleteRoutePolicyByID(context.Context, string) error { return nil }
 func (f *MockAlertManager) DeleteAllRoutePoliciesByRuleId(context.Context, string) error {
@@ -111,7 +111,7 @@ func (f *MockAlertManager) CreateRoute(context.Context, valuer.UUID, *alertmanag
 func (f *MockAlertManager) DeleteRoute(context.Context, valuer.UUID, string) error { return nil }
 
 func (f *MockAlertManager) Collect(context.Context, valuer.UUID) (map[string]any, error) {
-	return nil, nil
+	return map[string]any{}, nil
 }
 
 func (f *MockAlertManager) Start(context.Context) error {

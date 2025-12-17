@@ -23,10 +23,10 @@ func (NoOpRuleStore) DeleteRule(context.Context, valuer.UUID, func(context.Conte
 	return nil
 }
 func (NoOpRuleStore) GetStoredRules(context.Context, string) ([]*Rule, error) {
-	return nil, nil
+	return []*Rule{}, nil
 }
 func (NoOpRuleStore) GetStoredRule(context.Context, valuer.UUID) (*Rule, error) {
-	return nil, nil
+	return &Rule{}, nil
 }
 
 // NoOpMaintenanceStore is a mock implementation of MaintenanceStore that does nothing
@@ -41,11 +41,11 @@ func (NoOpMaintenanceStore) CreatePlannedMaintenance(context.Context, GettablePl
 }
 func (NoOpMaintenanceStore) DeletePlannedMaintenance(context.Context, valuer.UUID) error { return nil }
 func (NoOpMaintenanceStore) GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*GettablePlannedMaintenance, error) {
-	return nil, nil
+	return &GettablePlannedMaintenance{}, nil
 }
 func (NoOpMaintenanceStore) EditPlannedMaintenance(context.Context, GettablePlannedMaintenance, valuer.UUID) error {
 	return nil
 }
 func (NoOpMaintenanceStore) GetAllPlannedMaintenance(context.Context, string) ([]*GettablePlannedMaintenance, error) {
-	return nil, nil
+	return []*GettablePlannedMaintenance{}, nil
 }
