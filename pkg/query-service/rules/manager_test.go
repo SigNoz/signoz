@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
@@ -20,11 +22,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -32,148 +32,7 @@ import (
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 )
 
-type mockAlertManager struct {
-	setConfigs []struct {
-		orgID  valuer.UUID
-		ruleID string
-		cfg    *alertmanagertypes.NotificationConfig
-	}
-	testAlerts []map[*alertmanagertypes.PostableAlert][]string
-}
-
-func (f *mockAlertManager) GetAlerts(context.Context, string, alertmanagertypes.GettableAlertsParams) (alertmanagertypes.DeprecatedGettableAlerts, error) {
-	return alertmanagertypes.DeprecatedGettableAlerts{}, nil
-}
-func (f *mockAlertManager) PutAlerts(context.Context, string, alertmanagertypes.PostableAlerts) error {
-	return nil
-}
-func (f *mockAlertManager) TestReceiver(context.Context, string, alertmanagertypes.Receiver) error {
-	return nil
-}
-func (f *mockAlertManager) TestAlert(ctx context.Context, orgID string, ruleID string, receiverMap map[*alertmanagertypes.PostableAlert][]string) error {
-	f.testAlerts = append(f.testAlerts, receiverMap)
-	return nil
-}
-func (f *mockAlertManager) ListChannels(context.Context, string) ([]*alertmanagertypes.Channel, error) {
-	return nil, nil
-}
-func (f *mockAlertManager) ListAllChannels(context.Context) ([]*alertmanagertypes.Channel, error) {
-	return nil, nil
-}
-func (f *mockAlertManager) GetChannelByID(context.Context, string, valuer.UUID) (*alertmanagertypes.Channel, error) {
-	return nil, nil
-}
-func (f *mockAlertManager) UpdateChannelByReceiverAndID(context.Context, string, alertmanagertypes.Receiver, valuer.UUID) error {
-	return nil
-}
-func (f *mockAlertManager) CreateChannel(context.Context, string, alertmanagertypes.Receiver) error {
-	return nil
-}
-func (f *mockAlertManager) DeleteChannelByID(context.Context, string, valuer.UUID) error { return nil }
-func (f *mockAlertManager) SetConfig(context.Context, *alertmanagertypes.Config) error   { return nil }
-func (f *mockAlertManager) GetConfig(context.Context, string) (*alertmanagertypes.Config, error) {
-	return nil, nil
-}
-func (f *mockAlertManager) SetDefaultConfig(context.Context, string) error { return nil }
-func (f *mockAlertManager) SetNotificationConfig(ctx context.Context, orgID valuer.UUID, ruleId string, cfg *alertmanagertypes.NotificationConfig) error {
-	f.setConfigs = append(f.setConfigs, struct {
-		orgID  valuer.UUID
-		ruleID string
-		cfg    *alertmanagertypes.NotificationConfig
-	}{orgID: orgID, ruleID: ruleId, cfg: cfg})
-	return nil
-}
-func (f *mockAlertManager) DeleteNotificationConfig(context.Context, valuer.UUID, string) error {
-	return nil
-}
-func (f *mockAlertManager) CreateRoutePolicy(context.Context, *alertmanagertypes.PostableRoutePolicy) (*alertmanagertypes.GettableRoutePolicy, error) {
-	return nil, nil
-}
-func (f *mockAlertManager) CreateRoutePolicies(context.Context, []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error) {
-	return nil, nil
-}
-func (f *mockAlertManager) GetRoutePolicyByID(context.Context, string) (*alertmanagertypes.GettableRoutePolicy, error) {
-	return nil, nil
-}
-func (f *mockAlertManager) GetAllRoutePolicies(context.Context) ([]*alertmanagertypes.GettableRoutePolicy, error) {
-	return nil, nil
-}
-func (f *mockAlertManager) UpdateRoutePolicyByID(context.Context, string, *alertmanagertypes.PostableRoutePolicy) (*alertmanagertypes.GettableRoutePolicy, error) {
-	return nil, nil
-}
-func (f *mockAlertManager) DeleteRoutePolicyByID(context.Context, string) error { return nil }
-func (f *mockAlertManager) DeleteAllRoutePoliciesByRuleId(context.Context, string) error {
-	return nil
-}
-func (f *mockAlertManager) UpdateAllRoutePoliciesByRuleId(context.Context, string, []*alertmanagertypes.PostableRoutePolicy) error {
-	return nil
-}
-func (f *mockAlertManager) CreateInhibitRules(context.Context, valuer.UUID, []amConfig.InhibitRule) error {
-	return nil
-}
-func (f *mockAlertManager) DeleteAllInhibitRulesByRuleId(context.Context, valuer.UUID, string) error {
-	return nil
-}
-func (f *mockAlertManager) Shutdown(context.Context) error { return nil }
-func (f *mockAlertManager) Stats() map[string]interface{}  { return map[string]interface{}{} }
-func (f *mockAlertManager) CreateRoute(context.Context, valuer.UUID, *alertmanagertypes.PostableRoutePolicy) error {
-	return nil
-}
-func (f *mockAlertManager) DeleteRoute(context.Context, valuer.UUID, string) error { return nil }
-
-type noopRuleStore struct{}
-
-func (noopRuleStore) CreateRule(context.Context, *ruletypes.Rule, func(context.Context, valuer.UUID) error) (valuer.UUID, error) {
-	return valuer.GenerateUUID(), nil
-}
-func (noopRuleStore) EditRule(context.Context, *ruletypes.Rule, func(context.Context) error) error {
-	return nil
-}
-func (noopRuleStore) DeleteRule(context.Context, valuer.UUID, func(context.Context) error) error {
-	return nil
-}
-func (noopRuleStore) GetStoredRules(context.Context, string) ([]*ruletypes.Rule, error) {
-	return nil, nil
-}
-func (noopRuleStore) GetStoredRule(context.Context, valuer.UUID) (*ruletypes.Rule, error) {
-	return nil, nil
-}
-
-func (f *mockAlertManager) Collect(context.Context, valuer.UUID) (map[string]any, error) {
-	return nil, nil
-}
-
-func (f *mockAlertManager) Start(context.Context) error {
-	return nil
-}
-func (f *mockAlertManager) Stop(context.Context) error {
-	return nil
-}
-
-type noopMaintenanceStore struct{}
-
-func (noopMaintenanceStore) CreatePlannedMaintenance(context.Context, ruletypes.GettablePlannedMaintenance) (valuer.UUID, error) {
-	return valuer.GenerateUUID(), nil
-}
-func (noopMaintenanceStore) DeletePlannedMaintenance(context.Context, valuer.UUID) error { return nil }
-func (noopMaintenanceStore) GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*ruletypes.GettablePlannedMaintenance, error) {
-	return nil, nil
-}
-func (noopMaintenanceStore) EditPlannedMaintenance(context.Context, ruletypes.GettablePlannedMaintenance, valuer.UUID) error {
-	return nil
-}
-func (noopMaintenanceStore) GetAllPlannedMaintenance(context.Context, string) ([]*ruletypes.GettablePlannedMaintenance, error) {
-	return nil, nil
-}
-
-type noopOrgGetter struct{}
-
-func (noopOrgGetter) Get(context.Context, valuer.UUID) (*types.Organization, error) { return nil, nil }
-func (noopOrgGetter) ListByOwnedKeyRange(context.Context) ([]*types.Organization, error) {
-	return nil, nil
-}
-
-func TestManager_TestNotification_SendUnmatchedAndRecovery(t *testing.T) {
+func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 	target := 10.0
 	recovery := 5.0
 
@@ -261,7 +120,7 @@ func TestManager_TestNotification_SendUnmatchedAndRecovery(t *testing.T) {
 			expectValue:  7,
 		},
 		{
-			name: "If found matching alert with given target value, return the alert",
+			name: "If found matching alert with given target value, return the alerting value rather than first valid point",
 			values: [][]interface{}{
 				{float64(1), "attr", time.Now()},
 				{float64(2), "attr", time.Now().Add(1 * time.Minute)},
@@ -281,7 +140,7 @@ func TestManager_TestNotification_SendUnmatchedAndRecovery(t *testing.T) {
 			ruleBytes, err := json.Marshal(rule)
 			require.NoError(t, err)
 
-			fAlert := &mockAlertManager{}
+			fAlert := alertmanager.NewMockAlertManager()
 			cacheObj, err := cachetest.New(cache.Config{
 				Provider: "memory",
 				Memory: cache.Memory{
@@ -309,7 +168,7 @@ func TestManager_TestNotification_SendUnmatchedAndRecovery(t *testing.T) {
 			cols = append(cols, cmock.ColumnType{Name: "attr", Type: "String"})
 			cols = append(cols, cmock.ColumnType{Name: "ts", Type: "DateTime"})
 
-			rows := cmock.NewRows(cols, tc.values)
+			alertDataRows := cmock.NewRows(cols, tc.values)
 
 			// Mock the metadata query for FetchTemporality
 			metadataCols := make([]cmock.ColumnType, 0)
@@ -338,7 +197,7 @@ func TestManager_TestNotification_SendUnmatchedAndRecovery(t *testing.T) {
 
 			// Data queries - the querier/reader may make multiple queries
 			// Set up enough expectations to handle all possible queries
-			mock.ExpectQuery("*FROM signoz_metrics.time_series_v4*").WillReturnRows(rows)
+			mock.ExpectQuery("*FROM signoz_metrics.time_series_v4*").WillReturnRows(alertDataRows)
 
 			// Create reader with mocked telemetry store
 			readerCache, err := cachetest.New(cache.Config{
@@ -367,9 +226,9 @@ func TestManager_TestNotification_SendUnmatchedAndRecovery(t *testing.T) {
 				SLogger:          instrumentationtest.New().Logger(),
 				Cache:            cacheObj,
 				Alertmanager:     fAlert,
-				OrgGetter:        noopOrgGetter{},
-				RuleStore:        noopRuleStore{},
-				MaintenanceStore: noopMaintenanceStore{},
+				OrgGetter:        organization.NewNoOpOrgGetter(),
+				RuleStore:        ruletypes.NewNoOpRuleStore(),
+				MaintenanceStore: ruletypes.NewNoOpMaintenanceStore(),
 				TelemetryStore:   telemetryStore,
 				Reader:           reader,
 				SqlStore:         sqlStore, // SQLStore needed for SendAlerts to query organizations
@@ -386,17 +245,20 @@ func TestManager_TestNotification_SendUnmatchedAndRecovery(t *testing.T) {
 			assert.Equal(t, tc.expectAlerts, count)
 
 			if tc.expectAlerts > 0 {
-				require.Len(t, fAlert.testAlerts, 1)
+				// check if the alert has been triggered
+				require.Len(t, fAlert.TriggeredTestAlerts, 1)
 				var gotAlerts []*alertmanagertypes.PostableAlert
-				for a := range fAlert.testAlerts[0] {
+				for a := range fAlert.TriggeredTestAlerts[0] {
 					gotAlerts = append(gotAlerts, a)
 				}
 				require.Len(t, gotAlerts, tc.expectAlerts)
+				// check if the alert has triggered with correct threshold value
 				if tc.expectValue != 0 {
 					assert.Equal(t, strconv.FormatFloat(tc.expectValue, 'f', -1, 64), gotAlerts[0].Annotations["value"])
 				}
 			} else {
-				assert.Empty(t, fAlert.testAlerts)
+				// check if no alerts have been triggered
+				assert.Empty(t, fAlert.TriggeredTestAlerts)
 			}
 		})
 	}
