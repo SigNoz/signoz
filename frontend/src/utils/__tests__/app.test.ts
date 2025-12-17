@@ -1,6 +1,6 @@
 import { buildAbsolutePath } from '../app';
 
-const BASE_URL = 'http://localhost';
+const BASE_URL = '/some-base-path';
 
 describe('buildAbsolutePath', () => {
 	const orginalLocation = window.location;
@@ -55,7 +55,7 @@ describe('buildAbsolutePath', () => {
 
 	describe('when base path does not end with a forward slash', () => {
 		beforeEach(() => {
-			mockLocation('http://localhost');
+			mockLocation(`${BASE_URL}`);
 		});
 
 		it('should append forward slash and build absolute path', () => {
