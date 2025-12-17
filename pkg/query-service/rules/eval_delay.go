@@ -31,22 +31,25 @@ func CalculateEvalDelay(rule *ruletypes.PostableRule, defaultDelay time.Duration
 		return defaultDelay
 	}
 
-	matchType := rule.RuleCondition.MatchType
-	compareOp := rule.RuleCondition.CompareOp
+	// Phase 2: Get match type and compare operator from thresholds
+	matchType, compareOp, ok := getThresholdMatchTypeAndCompareOp(rule)
+	if !ok {
+		return defaultDelay
+	}
 
-	// Phase 2: Check if all queries are safe
+	// Phase 3: Check if all queries are safe
 	for _, query := range rule.RuleCondition.CompositeQuery.Queries {
 		if !isQuerySafe(query, matchType, compareOp) {
 			return defaultDelay
 		}
 	}
 
-	// Phase 3: All queries are safe, delay can be removed
+	// Phase 4: All queries are safe, delay can be removed
 	return 0
 }
 
 // isRuleConditionValid checks if the rule condition is valid for delay calculation.
-// Returns false if the rule condition is nil, has no queries, or has invalid match/compare operators.
+// Returns false if the rule condition is nil, has no queries, or has invalid thresholds.
 func isRuleConditionValid(rule *ruletypes.PostableRule) bool {
 	if rule.RuleCondition == nil || rule.RuleCondition.CompositeQuery == nil {
 		return false
@@ -58,14 +61,44 @@ func isRuleConditionValid(rule *ruletypes.PostableRule) bool {
 		return false
 	}
 
-	matchType := rule.RuleCondition.MatchType
-	compareOp := rule.RuleCondition.CompareOp
+	// Validate that thresholds exist and contain valid match type and compare operator
+	matchType, compareOp, ok := getThresholdMatchTypeAndCompareOp(rule)
+	if !ok {
+		return false
+	}
 
 	if matchType == ruletypes.MatchTypeNone || compareOp == ruletypes.CompareOpNone {
 		return false
 	}
 
 	return true
+}
+
+// getThresholdMatchTypeAndCompareOp extracts match type and compare operator from the rule's thresholds.
+// Returns the match type, compare operator, and a boolean indicating success.
+// All thresholds share the same match type and compare operator, so we use the first threshold's values.
+func getThresholdMatchTypeAndCompareOp(rule *ruletypes.PostableRule) (ruletypes.MatchType, ruletypes.CompareOp, bool) {
+	if rule.RuleCondition == nil || rule.RuleCondition.Thresholds == nil {
+		return ruletypes.MatchTypeNone, ruletypes.CompareOpNone, false
+	}
+
+	// Get the threshold interface
+	threshold, err := rule.RuleCondition.Thresholds.GetRuleThreshold()
+	if err != nil {
+		return ruletypes.MatchTypeNone, ruletypes.CompareOpNone, false
+	}
+
+	// Cast to BasicRuleThresholds (only supported kind)
+	basicThresholds, ok := threshold.(ruletypes.BasicRuleThresholds)
+	if !ok || len(basicThresholds) == 0 {
+		return ruletypes.MatchTypeNone, ruletypes.CompareOpNone, false
+	}
+
+	// Use first threshold's MatchType and CompareOp (all thresholds share the same values)
+	matchType := basicThresholds[0].MatchType
+	compareOp := basicThresholds[0].CompareOp
+
+	return matchType, compareOp, true
 }
 
 // isQuerySafe determines if a single query is safe to remove the eval delay.

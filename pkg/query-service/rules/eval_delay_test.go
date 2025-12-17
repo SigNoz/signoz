@@ -15,6 +15,7 @@ import (
 
 func TestCalculateEvalDelay(t *testing.T) {
 	defaultDelay := 2 * time.Minute
+	targetValue := 1.0
 
 	tests := []struct {
 		name          string
@@ -36,6 +37,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 										{TimeAggregation: metrictypes.TimeAggregationMin},
 									},
 								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsBelow,
 							},
 						},
 					},
@@ -61,6 +73,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 							},
 						},
 					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AllTheTimes,
+								CompareOp:   ruletypes.ValueAboveOrEq,
+							},
+						},
+					},
 				},
 			},
 			expectedDelay: 0,
@@ -80,6 +103,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 										{TimeAggregation: metrictypes.TimeAggregationCount},
 									},
 								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
 							},
 						},
 					},
@@ -105,6 +139,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 							},
 						},
 					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
 				},
 			},
 			expectedDelay: defaultDelay,
@@ -127,6 +172,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 							},
 						},
 					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
 				},
 			},
 			expectedDelay: defaultDelay,
@@ -146,6 +202,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 										{TimeAggregation: metrictypes.TimeAggregationAvg},
 									},
 								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
 							},
 						},
 					},
@@ -179,6 +246,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 							},
 						},
 					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
 				},
 			},
 			expectedDelay: defaultDelay,
@@ -201,6 +279,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 							},
 						},
 					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
 				},
 			},
 			expectedDelay: defaultDelay,
@@ -213,6 +302,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 					CompareOp: ruletypes.ValueIsAbove,
 					CompositeQuery: &v3.CompositeQuery{
 						Queries: []qbtypes.QueryEnvelope{},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
 					},
 				},
 			},
@@ -241,6 +341,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 							},
 						},
 					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
 				},
 			},
 			expectedDelay: defaultDelay,
@@ -260,6 +371,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 										{TimeAggregation: metrictypes.TimeAggregationRate},
 									},
 								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
 							},
 						},
 					},
@@ -285,6 +407,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 							},
 						},
 					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueBelowOrEq,
+							},
+						},
+					},
 				},
 			},
 			expectedDelay: 0,
@@ -304,6 +437,17 @@ func TestCalculateEvalDelay(t *testing.T) {
 										{TimeAggregation: metrictypes.TimeAggregationMin},
 									},
 								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueOutsideBounds,
 							},
 						},
 					},
@@ -329,9 +473,134 @@ func TestCalculateEvalDelay(t *testing.T) {
 							},
 						},
 					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsBelow,
+							},
+						},
+					},
 				},
 			},
 			expectedDelay: 0,
+		},
+		{
+			name: "Unsafe: PromQL query only",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypePromQL,
+								Spec: qbtypes.PromQuery{
+									Name:     "prom_query",
+									Query:    "rate(cpu_usage_total[5m])",
+									Disabled: false,
+									Step:     qbtypes.Step{Duration: 60 * time.Second},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Unsafe: Legacy ClickHouseQueries field (not supported)",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						QueryType: v3.QueryTypeClickHouseSQL,
+						ClickHouseQueries: map[string]*v3.ClickHouseQuery{
+							"A": {
+								Query:    "SELECT count(*) FROM metrics WHERE timestamp >= ? AND timestamp <= ?",
+								Disabled: false,
+							},
+						},
+						Queries: []qbtypes.QueryEnvelope{}, // Empty Queries array
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Unsafe: Missing Thresholds",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+									Aggregations: []qbtypes.MetricAggregation{
+										{TimeAggregation: metrictypes.TimeAggregationMax},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: nil,
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Unsafe: Empty Thresholds",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+									Aggregations: []qbtypes.MetricAggregation{
+										{TimeAggregation: metrictypes.TimeAggregationMax},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
 		},
 	}
 
