@@ -172,14 +172,9 @@ function QuerySearch({
 
 			/* eslint-disable-next-line sonarjs/no-collapsible-if */
 			if (newQuery !== currentQuery && !isFocused) {
-				// Prevent clearing a non-empty editor when queryData becomes empty temporarily
-				// Only update if newQuery has a value, or if both are empty (initial state)
-				if (newQuery || !currentQuery) {
-					updateEditorValue(newQuery, { skipOnChange: true });
-
-					if (newQuery) {
-						handleQueryValidation(newQuery);
-					}
+				updateEditorValue(newQuery, { skipOnChange: true });
+				if (newQuery) {
+					handleQueryValidation(newQuery);
 				}
 			}
 		},
