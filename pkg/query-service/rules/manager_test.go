@@ -16,6 +16,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
+	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -23,7 +25,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,6 +36,78 @@ import (
 
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 )
+
+// GenerateMetricQueryArgs generates query arguments for metric queries used in tests.
+// It calculates the time range, builds time series CTE args, temporal aggregation args,
+// and spatial aggregation args to match the actual query builder behavior.
+func GenerateMetricQueryArgs(
+	evalTime time.Time,
+	evalWindow time.Duration,
+	evalDelay time.Duration,
+	metricName string,
+	temporality metrictypes.Temporality,
+) []interface{} {
+	// Calculate time range
+	startTime := evalTime.Add(-evalWindow)
+	endTime := evalTime
+
+	startMs := startTime.UnixMilli()
+	endMs := endTime.UnixMilli()
+
+	// Apply eval delay if present
+	if evalDelay > 0 {
+		startMs = startMs - int64(evalDelay.Milliseconds())
+		endMs = endMs - int64(evalDelay.Milliseconds())
+	}
+
+	// Round to nearest minute
+	startMs = startMs - (startMs % (60 * 1000))
+	endMs = endMs - (endMs % (60 * 1000))
+
+	start := uint64(startMs)
+	end := uint64(endMs)
+
+	// Step1: Build time series CTE args
+
+	// Adjust start time to nearest hour
+	oneHourInMilliseconds := uint64(time.Hour.Milliseconds())
+	// start time for filtering signoz_metrics.time_series_v4 with start time
+	timeSeriesCTEStartTime := start - (start % oneHourInMilliseconds)
+
+	queryArgs := []interface{}{
+		metricName,
+		timeSeriesCTEStartTime,
+		end,
+	}
+
+	// Add temporality if specified
+	if temporality == metrictypes.Unknown {
+		temporality = metrictypes.Unspecified
+	}
+	if temporality != metrictypes.Unknown {
+		queryArgs = append(queryArgs, temporality.StringValue())
+	}
+
+	// Add normalized flag
+	queryArgs = append(queryArgs, false)
+
+	// Step2: Add temporal aggregation args
+	// build args for filtering signoz_metrics.distributed_samples_v4 table
+	temporalAggArgs := []interface{}{
+		metricName,
+		start,
+		end,
+	}
+	queryArgs = append(queryArgs, temporalAggArgs...)
+
+	// Add spatial aggregation args
+	spatialAggArgs := []interface{}{
+		0, // isNaN check
+	}
+	queryArgs = append(queryArgs, spatialAggArgs...)
+
+	return queryArgs
+}
 
 func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 	target := 10.0
@@ -51,22 +128,29 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 			Annotations: map[string]string{
 				"value": "{{$value}}",
 			},
+			Version: "v5",
 			RuleCondition: &ruletypes.RuleCondition{
 				MatchType: ruletypes.AtleastOnce,
 				CompareOp: ruletypes.ValueIsAbove,
 				Target:    &target,
 				CompositeQuery: &v3.CompositeQuery{
 					QueryType: v3.QueryTypeBuilder,
-					BuilderQueries: map[string]*v3.BuilderQuery{
-						"A": {
-							QueryName:    "A",
-							StepInterval: 60,
-							AggregateAttribute: v3.AttributeKey{
-								Key: "probe_success",
+					Queries: []qbtypes.QueryEnvelope{
+						{
+							Type: qbtypes.QueryTypeBuilder,
+							Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+								Name:         "A",
+								StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+								Signal:       telemetrytypes.SignalMetrics,
+
+								Aggregations: []qbtypes.MetricAggregation{
+									{
+										MetricName:       "probe_success",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationAvg,
+									},
+								},
 							},
-							AggregateOperator: v3.AggregateOperatorNoOp,
-							DataSource:        v3.DataSourceMetrics,
-							Expression:        "A",
 						},
 					},
 				},
@@ -170,34 +254,23 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 
 			alertDataRows := cmock.NewRows(cols, tc.values)
 
-			// Mock the metadata query for FetchTemporality
-			metadataCols := make([]cmock.ColumnType, 0)
-			metadataCols = append(metadataCols, cmock.ColumnType{Name: "metric_name", Type: "String"})
-			metadataCols = append(metadataCols, cmock.ColumnType{Name: "type", Type: "String"})
-			metadataCols = append(metadataCols, cmock.ColumnType{Name: "description", Type: "String"})
-			metadataCols = append(metadataCols, cmock.ColumnType{Name: "temporality", Type: "String"})
-			metadataCols = append(metadataCols, cmock.ColumnType{Name: "is_monotonic", Type: "Bool"})
-			metadataCols = append(metadataCols, cmock.ColumnType{Name: "unit", Type: "String"})
-
-			metadataRows := cmock.NewRows(metadataCols, [][]interface{}{
-				{"probe_success", "Gauge", "Probe success metric", "Delta", false, ""},
-			})
-
 			mock := telemetryStore.Mock()
 
-			// Mock the metadata query for FetchTemporality
-			// This query is made by GetUpdatedMetricsMetadata which FetchTemporality calls
-			// The query pattern includes "WHERE metric_name IN ('probe_success')"
-			queryString := "*FROM signoz_metrics.distributed_updated_metadata*"
+			// Generate query arguments for the metric query
+			evalTime := time.Now().UTC()
+			evalWindow := 5 * time.Minute
+			evalDelay := time.Duration(0)
+			queryArgs := GenerateMetricQueryArgs(
+				evalTime,
+				evalWindow,
+				evalDelay,
+				"probe_success",
+				metrictypes.Unspecified,
+			)
 
-			// Set up expectations - allow flexible ordering by setting up many expectations
-			// Metadata queries (GetUpdatedMetricsMetadata may query updated_metrics_metadata and fallback to time_series_v4)
-			mock.ExpectQuery(queryString).WillReturnRows(metadataRows) // First metadata query (updated_metrics_metadata)
-			// mock.ExpectQuery(queryString).WillReturnRows(metadataRows) // Fallback metadata query (time_series_v4, if first returns empty)
-
-			// Data queries - the querier/reader may make multiple queries
-			// Set up enough expectations to handle all possible queries
-			mock.ExpectQuery("*FROM signoz_metrics.time_series_v4*").WillReturnRows(alertDataRows)
+			mock.ExpectQuery("*WITH __temporal_aggregation_cte*").
+				WithArgs(queryArgs...).
+				WillReturnRows(alertDataRows)
 
 			// Create reader with mocked telemetry store
 			readerCache, err := cachetest.New(cache.Config{
@@ -210,16 +283,23 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 			require.NoError(t, err)
 
 			options := clickhouseReader.NewOptions("", "", "archiveNamespace")
+			providerSettings := instrumentationtest.New().ToProviderSettings()
+			prometheus := prometheustest.New(context.Background(), providerSettings, prometheus.Config{}, telemetryStore)
 			reader := clickhouseReader.NewReader(
 				nil,
 				telemetryStore,
-				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),
+				prometheus,
 				"",
 				time.Duration(time.Second),
 				nil,
 				readerCache,
 				options,
 			)
+
+			// Create mock querierV5 with test values
+			providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, readerCache)
+			mockQuerier, err := providerFactory.New(context.Background(), providerSettings, querier.Config{})
+			require.NoError(t, err)
 
 			mgrOpts := &ManagerOptions{
 				Logger:           zap.NewNop(),
@@ -228,6 +308,7 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 				Alertmanager:     fAlert,
 				OrgGetter:        organization.NewNoOpOrgGetter(),
 				RuleStore:        ruletypes.NewNoOpRuleStore(),
+				Querier:          mockQuerier,
 				MaintenanceStore: ruletypes.NewNoOpMaintenanceStore(),
 				TelemetryStore:   telemetryStore,
 				Reader:           reader,
@@ -260,6 +341,293 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 				// check if no alerts have been triggered
 				assert.Empty(t, fAlert.TriggeredTestAlerts)
 			}
+		})
+	}
+}
+
+func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
+	target := 10.0
+
+	buildRule := func() ruletypes.PostableRule {
+		return ruletypes.PostableRule{
+			AlertName: "test-prom-alert",
+			AlertType: ruletypes.AlertTypeMetric,
+			RuleType:  ruletypes.RuleTypeProm,
+			Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+				EvalWindow: ruletypes.Duration(5 * time.Minute),
+				Frequency:  ruletypes.Duration(1 * time.Minute),
+			}},
+			Labels: map[string]string{
+				"service.name": "frontend",
+			},
+			Annotations: map[string]string{
+				"value": "{{$value}}",
+			},
+			Version: "v5",
+			RuleCondition: &ruletypes.RuleCondition{
+				MatchType:     ruletypes.AtleastOnce,
+				SelectedQuery: "A",
+				CompareOp:     ruletypes.ValueIsAbove,
+				Target:        &target,
+				CompositeQuery: &v3.CompositeQuery{
+					QueryType: v3.QueryTypePromQL,
+					PanelType: v3.PanelTypeGraph,
+					Queries: []qbtypes.QueryEnvelope{
+						{
+							Type: qbtypes.QueryTypePromQL,
+							Spec: qbtypes.PromQuery{
+								Name:     "A",
+								Query:    "{\"test_metric\"}",
+								Disabled: false,
+								Stats:    false,
+							},
+						},
+					},
+				},
+				Thresholds: &ruletypes.RuleThresholdData{
+					Kind: ruletypes.BasicThresholdKind,
+					Spec: ruletypes.BasicRuleThresholds{
+						{
+							Name:        "primary",
+							TargetValue: &target,
+							MatchType:   ruletypes.AtleastOnce,
+							CompareOp:   ruletypes.ValueIsAbove,
+							Channels:    []string{"slack"},
+						},
+					},
+				},
+			},
+			NotificationSettings: &ruletypes.NotificationSettings{},
+		}
+	}
+
+	type testCase struct {
+		name   string
+		values []struct {
+			offset time.Duration // offset from baseTime (negative = in the past)
+			value  float64
+		}
+		expectAlerts int
+		expectValue  float64
+	}
+
+	cases := []testCase{
+		{
+			name: "return first valid point in case of test notification",
+			values: []struct {
+				offset time.Duration
+				value  float64
+			}{
+				{-4 * time.Minute, 3},
+				{-3 * time.Minute, 4},
+			},
+			expectAlerts: 1,
+			expectValue:  3,
+		},
+		{
+			name: "No data in DB so no alerts fired",
+			values: []struct {
+				offset time.Duration
+				value  float64
+			}{},
+			expectAlerts: 0,
+		},
+		{
+			name: "return first valid point in case of test notification skips NaN and Inf",
+			values: []struct {
+				offset time.Duration
+				value  float64
+			}{
+				{-4 * time.Minute, math.NaN()},
+				{-3 * time.Minute, math.Inf(1)},
+				{-2 * time.Minute, 7},
+			},
+			expectAlerts: 1,
+			expectValue:  7,
+		},
+		{
+			name: "If found matching alert with given target value, return the alerting value rather than first valid point",
+			values: []struct {
+				offset time.Duration
+				value  float64
+			}{
+				{-4 * time.Minute, 1},
+				{-3 * time.Minute, 2},
+				{-2 * time.Minute, 3},
+				{-1 * time.Minute, 12},
+			},
+			expectAlerts: 1,
+			expectValue:  12,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Capture base time once per test case to ensure consistent timestamps
+			baseTime := time.Now().UTC()
+
+			rule := buildRule()
+
+			// Marshal rule to JSON as TestNotification expects
+			ruleBytes, err := json.Marshal(rule)
+			require.NoError(t, err)
+
+			fAlert := alertmanager.NewMockAlertManager()
+			cacheObj, err := cachetest.New(cache.Config{
+				Provider: "memory",
+				Memory: cache.Memory{
+					NumCounters: 1000,
+					MaxCost:     1 << 20,
+				},
+			})
+			require.NoError(t, err)
+
+			orgID := valuer.GenerateUUID()
+
+			// Create SQLStore mock for SendAlerts function which queries organizations table
+			sqlStore := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherRegexp)
+			// Mock the organizations query that SendAlerts makes
+			orgRows := sqlStore.Mock().NewRows([]string{"id"}).AddRow(orgID.StringValue())
+			sqlStore.Mock().ExpectQuery("SELECT (.+) FROM (.+)organizations(.+) LIMIT (.+)").WillReturnRows(orgRows)
+
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+
+			// Set up Prometheus-specific mock data
+			// Fingerprint columns for Prometheus queries
+			fingerprintCols := []cmock.ColumnType{
+				{Name: "fingerprint", Type: "UInt64"},
+				{Name: "any(labels)", Type: "String"},
+			}
+
+			// Samples columns for Prometheus queries
+			samplesCols := []cmock.ColumnType{
+				{Name: "metric_name", Type: "String"},
+				{Name: "fingerprint", Type: "UInt64"},
+				{Name: "unix_milli", Type: "Int64"},
+				{Name: "value", Type: "Float64"},
+				{Name: "flags", Type: "UInt32"},
+			}
+
+			// Calculate query time range similar to Prometheus rule tests
+			// TestNotification uses time.Now().UTC() for evaluation
+			// We calculate the query window based on current time to match what the actual evaluation will use
+			evalTime := baseTime
+			evalWindowMs := int64(5 * 60 * 1000) // 5 minutes in ms
+			evalTimeMs := evalTime.UnixMilli()
+			queryStart := ((evalTimeMs-2*evalWindowMs)/60000)*60000 + 1 // truncate to minute + 1ms
+			queryEnd := (evalTimeMs / 60000) * 60000                    // truncate to minute
+
+			// Create fingerprint data
+			fingerprint := uint64(12345)
+			labelsJSON := `{"__name__":"test_metric"}`
+			fingerprintData := [][]interface{}{
+				{fingerprint, labelsJSON},
+			}
+			fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
+
+			// Create samples data from test case values, calculating timestamps relative to baseTime
+			validSamplesData := make([][]interface{}, 0)
+			for _, v := range tc.values {
+				// Skip NaN and Inf values in the samples data
+				if math.IsNaN(v.value) || math.IsInf(v.value, 0) {
+					continue
+				}
+				// Calculate timestamp relative to baseTime
+				sampleTimestamp := baseTime.Add(v.offset).UnixMilli()
+				validSamplesData = append(validSamplesData, []interface{}{
+					"test_metric",
+					fingerprint,
+					sampleTimestamp,
+					v.value,
+					uint32(0), // flags - 0 means normal value
+				})
+			}
+			samplesRows := cmock.NewRows(samplesCols, validSamplesData)
+
+			mock := telemetryStore.Mock()
+
+			// Mock the fingerprint query (for Prometheus label matching)
+			mock.ExpectQuery("SELECT fingerprint, any").
+				WithArgs("test_metric", "__name__", "test_metric").
+				WillReturnRows(fingerprintRows)
+
+			// Mock the samples query (for Prometheus metric data)
+			mock.ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
+				WithArgs(
+					"test_metric",
+					"test_metric",
+					"__name__",
+					"test_metric",
+					queryStart,
+					queryEnd,
+				).
+				WillReturnRows(samplesRows)
+
+			// Create reader with mocked telemetry store
+			readerCache, err := cachetest.New(cache.Config{
+				Provider: "memory",
+				Memory: cache.Memory{
+					NumCounters: 10 * 1000,
+					MaxCost:     1 << 26,
+				},
+			})
+			require.NoError(t, err)
+
+			options := clickhouseReader.NewOptions("", "", "archiveNamespace")
+			promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore)
+			reader := clickhouseReader.NewReader(
+				nil,
+				telemetryStore,
+				promProvider,
+				"",
+				time.Duration(time.Second),
+				nil,
+				readerCache,
+				options,
+			)
+
+			mgrOpts := &ManagerOptions{
+				Logger:           zap.NewNop(),
+				SLogger:          instrumentationtest.New().Logger(),
+				Cache:            cacheObj,
+				Alertmanager:     fAlert,
+				OrgGetter:        organization.NewNoOpOrgGetter(),
+				RuleStore:        ruletypes.NewNoOpRuleStore(),
+				MaintenanceStore: ruletypes.NewNoOpMaintenanceStore(),
+				TelemetryStore:   telemetryStore,
+				Reader:           reader,
+				SqlStore:         sqlStore, // SQLStore needed for SendAlerts to query organizations
+				Prometheus:       promProvider,
+			}
+
+			mgr, err := NewManager(mgrOpts)
+			require.NoError(t, err)
+
+			count, apiErr := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
+			if apiErr != nil {
+				t.Logf("TestNotification error: %v, type: %s", apiErr.Err, apiErr.Typ)
+			}
+			require.Nil(t, apiErr)
+			assert.Equal(t, tc.expectAlerts, count)
+
+			if tc.expectAlerts > 0 {
+				// check if the alert has been triggered
+				require.Len(t, fAlert.TriggeredTestAlerts, 1)
+				var gotAlerts []*alertmanagertypes.PostableAlert
+				for a := range fAlert.TriggeredTestAlerts[0] {
+					gotAlerts = append(gotAlerts, a)
+				}
+				require.Len(t, gotAlerts, tc.expectAlerts)
+				// check if the alert has triggered with correct threshold value
+				if tc.expectValue != 0 && !math.IsNaN(tc.expectValue) && !math.IsInf(tc.expectValue, 0) {
+					assert.Equal(t, strconv.FormatFloat(tc.expectValue, 'f', -1, 64), gotAlerts[0].Annotations["value"])
+				}
+			} else {
+				// check if no alerts have been triggered
+				assert.Empty(t, fAlert.TriggeredTestAlerts)
+			}
+
+			promProvider.Close()
 		})
 	}
 }
