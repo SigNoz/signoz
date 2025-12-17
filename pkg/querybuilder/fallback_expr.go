@@ -278,8 +278,8 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 // toString below.
 func castFloat(col string) string { return fmt.Sprintf("toFloat64OrNull(toString(%s))", col) }
 
-func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
-func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
+// func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
+func castString(col string) string { return fmt.Sprintf("toString(%s)", col) }
 
 func allFloats(in []any) bool {
 	for _, x := range in {
