@@ -1,7 +1,7 @@
-from os import path
 import platform
 import time
 from http import HTTPStatus
+from os import path
 
 import docker
 import docker.errors
@@ -71,7 +71,7 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
 
         provider = request.config.getoption("--sqlstore-provider")
         if provider == "sqlite":
-            dir_path = path.dirname(sqlstore.env["SIGNOZ_SQLSTORE_SQLITE_PATH"])            
+            dir_path = path.dirname(sqlstore.env["SIGNOZ_SQLSTORE_SQLITE_PATH"])
             container.with_volume_mapping(
                 dir_path,
                 dir_path,
