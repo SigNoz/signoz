@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	qsRules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -36,6 +37,13 @@ import (
 
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 )
+
+type queryMatcherAny struct {
+}
+
+func (m *queryMatcherAny) Match(x string, y string) error {
+	return nil
+}
 
 func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 	target := 10.0
@@ -188,7 +196,7 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 			evalTime := time.Now().UTC()
 			evalWindow := 5 * time.Minute
 			evalDelay := time.Duration(0)
-			queryArgs := GenerateMetricQueryArgs(
+			queryArgs := qsRules.GenerateMetricQueryArgs(
 				evalTime,
 				evalWindow,
 				evalDelay,
@@ -229,7 +237,7 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 			mockQuerier, err := providerFactory.New(context.Background(), providerSettings, querier.Config{})
 			require.NoError(t, err)
 
-			mgrOpts := &ManagerOptions{
+			mgrOpts := &qsRules.ManagerOptions{
 				Logger:           zap.NewNop(),
 				SLogger:          instrumentationtest.New().Logger(),
 				Cache:            cacheObj,
@@ -241,9 +249,11 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 				TelemetryStore:   telemetryStore,
 				Reader:           reader,
 				SqlStore:         sqlStore, // SQLStore needed for SendAlerts to query organizations
+				// Custom Test Notification function
+				PrepareTestRuleFunc: TestNotification,
 			}
 
-			mgr, err := NewManager(mgrOpts)
+			mgr, err := qsRules.NewManager(mgrOpts)
 			require.NoError(t, err)
 
 			count, apiErr := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
@@ -514,7 +524,7 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 				options,
 			)
 
-			mgrOpts := &ManagerOptions{
+			mgrOpts := &qsRules.ManagerOptions{
 				Logger:           zap.NewNop(),
 				SLogger:          instrumentationtest.New().Logger(),
 				Cache:            cacheObj,
@@ -526,9 +536,11 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 				Reader:           reader,
 				SqlStore:         sqlStore, // SQLStore needed for SendAlerts to query organizations
 				Prometheus:       promProvider,
+				// Custom Test Notification function
+				PrepareTestRuleFunc: TestNotification,
 			}
 
-			mgr, err := NewManager(mgrOpts)
+			mgr, err := qsRules.NewManager(mgrOpts)
 			require.NoError(t, err)
 
 			count, apiErr := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
