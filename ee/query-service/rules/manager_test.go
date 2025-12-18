@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanagertest"
+	alertmanagermock "github.com/SigNoz/signoz/mocks/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -33,6 +33,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -161,7 +162,18 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 			ruleBytes, err := json.Marshal(rule)
 			require.NoError(t, err)
 
-			fAlert := signozalertmanagertest.NewMock()
+			// mocking the alertmanager + capturing the triggered test alerts
+			fAlert := alertmanagermock.NewMockAlertmanager(t)
+			// mock set notification config
+			fAlert.On("SetNotificationConfig", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			// for saving temp alerts that are triggered via TestNotification
+			triggeredTestAlerts := []map[*alertmanagertypes.PostableAlert][]string{}
+			if tc.expectAlerts > 0 {
+				fAlert.On("TestAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					triggeredTestAlerts = append(triggeredTestAlerts, args.Get(3).(map[*alertmanagertypes.PostableAlert][]string))
+				}).Return(nil).Times(tc.expectAlerts)
+			}
+
 			cacheObj, err := cachetest.New(cache.Config{
 				Provider: "memory",
 				Memory: cache.Memory{
@@ -266,9 +278,9 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 
 			if tc.expectAlerts > 0 {
 				// check if the alert has been triggered
-				require.Len(t, fAlert.TriggeredTestAlerts, 1)
+				require.Len(t, triggeredTestAlerts, 1)
 				var gotAlerts []*alertmanagertypes.PostableAlert
-				for a := range fAlert.TriggeredTestAlerts[0] {
+				for a := range triggeredTestAlerts[0] {
 					gotAlerts = append(gotAlerts, a)
 				}
 				require.Len(t, gotAlerts, tc.expectAlerts)
@@ -278,7 +290,7 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 				}
 			} else {
 				// check if no alerts have been triggered
-				assert.Empty(t, fAlert.TriggeredTestAlerts)
+				assert.Empty(t, triggeredTestAlerts)
 			}
 		})
 	}
@@ -411,7 +423,18 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 			ruleBytes, err := json.Marshal(rule)
 			require.NoError(t, err)
 
-			fAlert := signozalertmanagertest.NewMock()
+			// mocking the alertmanager + capturing the triggered test alerts
+			fAlert := alertmanagermock.NewMockAlertmanager(t)
+			// mock set notification config
+			fAlert.On("SetNotificationConfig", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			// for saving temp alerts that are triggered via TestNotification
+			triggeredTestAlerts := []map[*alertmanagertypes.PostableAlert][]string{}
+			if tc.expectAlerts > 0 {
+				fAlert.On("TestAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					triggeredTestAlerts = append(triggeredTestAlerts, args.Get(3).(map[*alertmanagertypes.PostableAlert][]string))
+				}).Return(nil).Times(tc.expectAlerts)
+			}
+
 			cacheObj, err := cachetest.New(cache.Config{
 				Provider: "memory",
 				Memory: cache.Memory{
@@ -553,9 +576,9 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 
 			if tc.expectAlerts > 0 {
 				// check if the alert has been triggered
-				require.Len(t, fAlert.TriggeredTestAlerts, 1)
+				require.Len(t, triggeredTestAlerts, 1)
 				var gotAlerts []*alertmanagertypes.PostableAlert
-				for a := range fAlert.TriggeredTestAlerts[0] {
+				for a := range triggeredTestAlerts[0] {
 					gotAlerts = append(gotAlerts, a)
 				}
 				require.Len(t, gotAlerts, tc.expectAlerts)
@@ -565,7 +588,7 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 				}
 			} else {
 				// check if no alerts have been triggered
-				assert.Empty(t, fAlert.TriggeredTestAlerts)
+				assert.Empty(t, triggeredTestAlerts)
 			}
 
 			promProvider.Close()
