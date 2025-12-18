@@ -102,6 +102,10 @@ jest.mock('lucide-react', () => ({
 	TriangleAlert: (): JSX.Element => <svg data-testid="lucide-triangle-alert" />,
 	X: (): JSX.Element => <svg data-testid="lucide-x" />,
 }));
+jest.mock('antd', () => ({
+	...jest.requireActual('antd'),
+	Spin: (): JSX.Element => <div data-testid="antd-spin" />,
+}));
 
 const mockWidget: Widgets = {
 	id: 'test-widget-id',
@@ -375,7 +379,7 @@ describe('WidgetHeader', () => {
 			/>,
 		);
 
-		const antSpin = document.querySelector('.ant-spin');
+		const antSpin = screen.getByTestId('antd-spin');
 		expect(antSpin).toBeInTheDocument();
 	});
 
