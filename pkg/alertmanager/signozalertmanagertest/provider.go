@@ -1,12 +1,15 @@
-package alertmanager
+package signozalertmanagertest
 
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	amConfig "github.com/prometheus/alertmanager/config"
 )
+
+var _ alertmanager.Alertmanager = (*MockAlertManager)(nil)
 
 type storedConfigItem struct {
 	orgID  valuer.UUID
@@ -26,8 +29,8 @@ type MockAlertManager struct {
 	TriggeredTestAlerts []map[*alertmanagertypes.PostableAlert][]string
 }
 
-// NewMockAlertManager creates a new mock alertmanager
-func NewMockAlertManager() *MockAlertManager {
+// NewMock creates a new mock alertmanager
+func NewMock() *MockAlertManager {
 	return &MockAlertManager{
 		Configs:             make([]storedConfigItem, 0),
 		TriggeredTestAlerts: make([]map[*alertmanagertypes.PostableAlert][]string, 0),

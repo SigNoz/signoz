@@ -1,11 +1,14 @@
-package organization
+package organizationtest
 
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
+
+var _ organization.Getter = (*NoOpOrgGetter)(nil)
 
 // NoOpOrgGetter is a mock implementation of OrgGetter that does nothing
 type NoOpOrgGetter struct{}

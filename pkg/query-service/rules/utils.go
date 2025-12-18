@@ -6,10 +6,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 )
 
-// GenerateMetricQueryArgs generates query arguments for metric queries used in tests.
+// GenerateMetricQueryCHArgs generates query arguments for metric queries used in tests.
 // It calculates the time range, builds time series CTE args, temporal aggregation args,
 // and spatial aggregation args to match the actual query builder behavior.
-func GenerateMetricQueryArgs(
+func GenerateMetricQueryCHArgs(
 	evalTime time.Time,
 	evalWindow time.Duration,
 	evalDelay time.Duration,

@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanagertest"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/organization/organizationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -29,6 +29,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes/ruletypestest"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
@@ -160,7 +161,7 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 			ruleBytes, err := json.Marshal(rule)
 			require.NoError(t, err)
 
-			fAlert := alertmanager.NewMockAlertManager()
+			fAlert := signozalertmanagertest.NewMock()
 			cacheObj, err := cachetest.New(cache.Config{
 				Provider: "memory",
 				Memory: cache.Memory{
@@ -196,7 +197,7 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 			evalTime := time.Now().UTC()
 			evalWindow := 5 * time.Minute
 			evalDelay := time.Duration(0)
-			queryArgs := qsRules.GenerateMetricQueryArgs(
+			queryArgs := qsRules.GenerateMetricQueryCHArgs(
 				evalTime,
 				evalWindow,
 				evalDelay,
@@ -242,10 +243,10 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 				SLogger:          instrumentationtest.New().Logger(),
 				Cache:            cacheObj,
 				Alertmanager:     fAlert,
-				OrgGetter:        organization.NewNoOpOrgGetter(),
-				RuleStore:        ruletypes.NewNoOpRuleStore(),
+				OrgGetter:        organizationtest.NewNoOpOrgGetter(),
+				RuleStore:        ruletypestest.NewNoOpRuleStore(),
 				Querier:          mockQuerier,
-				MaintenanceStore: ruletypes.NewNoOpMaintenanceStore(),
+				MaintenanceStore: ruletypestest.NewNoOpMaintenanceStore(),
 				TelemetryStore:   telemetryStore,
 				Reader:           reader,
 				SqlStore:         sqlStore, // SQLStore needed for SendAlerts to query organizations
@@ -410,7 +411,7 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 			ruleBytes, err := json.Marshal(rule)
 			require.NoError(t, err)
 
-			fAlert := alertmanager.NewMockAlertManager()
+			fAlert := signozalertmanagertest.NewMock()
 			cacheObj, err := cachetest.New(cache.Config{
 				Provider: "memory",
 				Memory: cache.Memory{
@@ -529,9 +530,9 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 				SLogger:          instrumentationtest.New().Logger(),
 				Cache:            cacheObj,
 				Alertmanager:     fAlert,
-				OrgGetter:        organization.NewNoOpOrgGetter(),
-				RuleStore:        ruletypes.NewNoOpRuleStore(),
-				MaintenanceStore: ruletypes.NewNoOpMaintenanceStore(),
+				OrgGetter:        organizationtest.NewNoOpOrgGetter(),
+				RuleStore:        ruletypestest.NewNoOpRuleStore(),
+				MaintenanceStore: ruletypestest.NewNoOpMaintenanceStore(),
 				TelemetryStore:   telemetryStore,
 				Reader:           reader,
 				SqlStore:         sqlStore, // SQLStore needed for SendAlerts to query organizations
