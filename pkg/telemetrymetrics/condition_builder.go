@@ -44,17 +44,9 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	fmt.Printf("====> key: %+v\n", key)
-	fmt.Printf("====> operator: %+v\n", operator)
-	fmt.Printf("====> value: %+v\n", value)
-	fmt.Printf("====> tblFieldName: %+v\n", tblFieldName)
-
 	// process tblFieldName and value for explicit type handling to be able to run and not error out
 	key.Signal = telemetrytypes.SignalMetrics // TODO(nikhilmantri0902): can we do this to handle null checks for metrics typecasting?
 	tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
-
-	fmt.Printf("====> transformed tblFieldName: %+v\n", tblFieldName)
-	fmt.Printf("====> transformed value: %+v\n", value)
 
 	switch operator {
 	case qbtypes.FilterOperatorEqual:

@@ -237,6 +237,7 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		// if the key is a number, the value is a string, we will let clickHouse handle the conversion
 		case float32, float64:
 			if key.Signal == telemetrytypes.SignalMetrics {
+				// need null safety for metrics labels columns
 				tblFieldName = castFloat(tblFieldName)
 			} else {
 				tblFieldName = castFloatHack(tblFieldName)
