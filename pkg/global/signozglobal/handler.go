@@ -16,8 +16,8 @@ func NewHandler(global global.Global) global.Handler {
 	return &handler{global: global}
 }
 
-func (api *handler) GetConfig(rw http.ResponseWriter, r *http.Request) {
-	cfg := api.global.GetConfig()
+func (handker *handler) GetConfig(rw http.ResponseWriter, r *http.Request) {
+	cfg := handker.global.GetConfig()
 
 	render.Success(rw, http.StatusOK, types.NewGettableGlobalConfig(cfg.ExternalURL, cfg.IngestionURL))
 }

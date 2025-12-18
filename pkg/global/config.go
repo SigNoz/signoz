@@ -24,26 +24,18 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return &Config{
 		ExternalURL: &url.URL{
-			Scheme: "http",
-			Host:   "localhost:8080",
-			Path:   "/",
+			Scheme: "",
+			Host:   "<unset>",
+			Path:   "",
 		},
 		IngestionURL: &url.URL{
-			Scheme: "http",
-			Host:   "localhost:8000",
-			Path:   "/",
+			Scheme: "",
+			Host:   "<unset>",
+			Path:   "",
 		},
 	}
 }
 
 func (c Config) Validate() error {
-	if c.ExternalURL == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidGlobalConfig, "external_url is required")
-	}
-
-	if c.IngestionURL == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidGlobalConfig, "ingestion_url is required")
-	}
-
 	return nil
 }

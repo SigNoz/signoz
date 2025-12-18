@@ -6,9 +6,9 @@
 ##################### Global #####################
 global:
   # the url under which the signoz apiserver is externally reachable.
-  external_url: http://localhost:8080
+  external_url: <unset>
   # the url where the SigNoz backend receives telemetry data (traces, metrics, logs) from instrumented applications.
-  ingestion_url: http://localhost:8000
+  ingestion_url: <unset>
 
 ##################### Version #####################
 version:
