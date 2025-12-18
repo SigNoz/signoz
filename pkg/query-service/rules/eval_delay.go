@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -101,8 +102,63 @@ func getThresholdMatchTypeAndCompareOp(rule *ruletypes.PostableRule) (ruletypes.
 	return matchType, compareOp, true
 }
 
+// aggregationExpressionToTimeAggregation converts the aggregation expression to the corresponding time aggregation
+// based on the expression
+// if the expression is not a valid aggregation expression, it returns the unspecified time aggregation
+// Note: Longer/more specific prefixes (e.g., "count_distinct") must be checked before shorter ones (e.g., "count")
+func aggregationExpressionToTimeAggregation(expression string) metrictypes.TimeAggregation {
+	expression = strings.TrimSpace(strings.ToLower(expression))
+	switch {
+	case strings.HasPrefix(expression, "count_distinct"):
+		return metrictypes.TimeAggregationCountDistinct
+	case strings.HasPrefix(expression, "count"):
+		return metrictypes.TimeAggregationCount
+	case strings.HasPrefix(expression, "min"):
+		return metrictypes.TimeAggregationMin
+	case strings.HasPrefix(expression, "max"):
+		return metrictypes.TimeAggregationMax
+	case strings.HasPrefix(expression, "avg"):
+		return metrictypes.TimeAggregationAvg
+	case strings.HasPrefix(expression, "sum"):
+		return metrictypes.TimeAggregationSum
+	case strings.HasPrefix(expression, "rate"):
+		return metrictypes.TimeAggregationRate
+	case strings.HasPrefix(expression, "increase"):
+		return metrictypes.TimeAggregationIncrease
+	case strings.HasPrefix(expression, "latest"):
+		return metrictypes.TimeAggregationLatest
+	default:
+		return metrictypes.TimeAggregationUnspecified
+	}
+}
+
+// extractTimeAggFromQuerySpec extracts the time aggregation from the query spec of the QueryEnvelope
+func extractTimeAggFromQuerySpec(spec any) []metrictypes.TimeAggregation {
+	timeAggs := []metrictypes.TimeAggregation{}
+
+	// Extract the time aggregation from the query spec
+	// based on different types of query spec
+	switch spec := spec.(type) {
+	case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+		for _, agg := range spec.Aggregations {
+			timeAggs = append(timeAggs, agg.TimeAggregation)
+		}
+	// the log and trace aggregations don't store the time aggregation directly but expression for the aggregation
+	// so we need to convert the expression to the corresponding time aggregation
+	case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+		for _, agg := range spec.Aggregations {
+			timeAggs = append(timeAggs, aggregationExpressionToTimeAggregation(agg.Expression))
+		}
+	case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+		for _, agg := range spec.Aggregations {
+			timeAggs = append(timeAggs, aggregationExpressionToTimeAggregation(agg.Expression))
+		}
+	}
+	return timeAggs
+}
+
 // isQuerySafe determines if a single query is safe to remove the eval delay.
-// A query is safe only if it's a Builder query with MetricAggregation type
+// A query is safe only if it's a Builder query (with MetricAggregation, LogAggregation, or TraceAggregation type)
 // and all its aggregations are safe.
 func isQuerySafe(query qbtypes.QueryEnvelope, matchType ruletypes.MatchType, compareOp ruletypes.CompareOp) bool {
 	// We only handle Builder Queries for now
@@ -110,20 +166,17 @@ func isQuerySafe(query qbtypes.QueryEnvelope, matchType ruletypes.MatchType, com
 		return false
 	}
 
-	// Check the Spec type - only MetricAggregation queries are supported
-	spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation])
-	if !ok {
-		return false
-	}
+	// extract time aggregations from the query spec
+	timeAggs := extractTimeAggFromQuerySpec(query.Spec)
 
 	// A query must have at least one aggregation
-	if len(spec.Aggregations) == 0 {
+	if len(timeAggs) == 0 {
 		return false
 	}
 
 	// All aggregations in the query must be safe
-	for _, agg := range spec.Aggregations {
-		if !isAggregationSafe(agg.TimeAggregation, matchType, compareOp) {
+	for _, timeAgg := range timeAggs {
+		if !isAggregationSafe(timeAgg, matchType, compareOp) {
 			return false
 		}
 	}

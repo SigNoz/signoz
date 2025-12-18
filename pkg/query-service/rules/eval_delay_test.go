@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func TestCalculateEvalDelay(t *testing.T) {
@@ -262,7 +261,7 @@ func TestCalculateEvalDelay(t *testing.T) {
 			expectedDelay: defaultDelay,
 		},
 		{
-			name: "Unsafe: Non-Metric Query (Logs)",
+			name: "Safe: Log Query - count() + AtleastOnce + Above",
 			rule: &ruletypes.PostableRule{
 				RuleCondition: &ruletypes.RuleCondition{
 					MatchType: ruletypes.AtleastOnce,
@@ -273,7 +272,304 @@ func TestCalculateEvalDelay(t *testing.T) {
 								Type: qbtypes.QueryTypeBuilder,
 								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "count()"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Safe: Log Query - count + AtleastOnce + AboveOrEq",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AllTheTimes,
+					CompareOp: ruletypes.ValueAboveOrEq,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
 										{Expression: "count"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AllTheTimes,
+								CompareOp:   ruletypes.ValueAboveOrEq,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Safe: Log Query - count_distinct(traceID) + AtleastOnce + Above",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "count_distinct(traceID)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Safe: Log Query - max(duration_nano) + AllTheTimes + Above",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AllTheTimes,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "max(duration_nano)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AllTheTimes,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Safe: Log Query - min(duration_nano) + AtleastOnce + Below",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsBelow,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "min(duration_nano)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsBelow,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Safe: Trace Query - count() + AtleastOnce + Above",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+									Aggregations: []qbtypes.TraceAggregation{
+										{Expression: "count()"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Safe: Trace Query - count_distinct(traceID) + AllTheTimes + AboveOrEq",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AllTheTimes,
+					CompareOp: ruletypes.ValueAboveOrEq,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+									Aggregations: []qbtypes.TraceAggregation{
+										{Expression: "count_distinct(traceID)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AllTheTimes,
+								CompareOp:   ruletypes.ValueAboveOrEq,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Safe: Trace Query - max(duration_nano) + AtleastOnce + Above",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+									Aggregations: []qbtypes.TraceAggregation{
+										{Expression: "max(duration_nano)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Safe: Trace Query - min(duration_nano) + AllTheTimes + BelowOrEq",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AllTheTimes,
+					CompareOp: ruletypes.ValueBelowOrEq,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+									Aggregations: []qbtypes.TraceAggregation{
+										{Expression: "min(duration_nano)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AllTheTimes,
+								CompareOp:   ruletypes.ValueBelowOrEq,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Unsafe: Log Query - avg(duration_nano) + AtleastOnce + Above",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "avg(duration_nano)"},
 									},
 								},
 							},
@@ -293,6 +589,467 @@ func TestCalculateEvalDelay(t *testing.T) {
 				},
 			},
 			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Unsafe: Log Query - sum(item_price) + AtleastOnce + Above",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "sum(item_price)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Unsafe: Log Query - rate() + AtleastOnce + Above",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "rate()"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Unsafe: Log Query - min() + AtleastOnce + Above (wrong operator)",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "min(duration_nano)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Unsafe: Trace Query - avg(duration_nano) + AtleastOnce + Above",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+									Aggregations: []qbtypes.TraceAggregation{
+										{Expression: "avg(duration_nano)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Unsafe: Trace Query - sum(item_price) + AllTheTimes + Above",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AllTheTimes,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+									Aggregations: []qbtypes.TraceAggregation{
+										{Expression: "sum(item_price)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AllTheTimes,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Unsafe: Trace Query - max() + AtleastOnce + Below (wrong operator)",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsBelow,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+									Aggregations: []qbtypes.TraceAggregation{
+										{Expression: "max(duration_nano)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsBelow,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Safe: Mixed Log and Trace Queries - both safe",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "count()"},
+									},
+								},
+							},
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+									Aggregations: []qbtypes.TraceAggregation{
+										{Expression: "max(duration_nano)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Unsafe: Mixed Log and Trace Queries - one unsafe",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "count()"},
+									},
+								},
+							},
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+									Aggregations: []qbtypes.TraceAggregation{
+										{Expression: "avg(duration_nano)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Safe: Log Query - multiple safe aggregations",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "count()"},
+										{Expression: "max(duration_nano)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Unsafe: Log Query - mixed safe and unsafe aggregations",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "count()"},
+										{Expression: "avg(duration_nano)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Unsafe: Log Query - unknown expression",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "p95(duration_nano)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Unsafe: Trace Query - empty aggregations",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+									Aggregations: []qbtypes.TraceAggregation{},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Safe: Mixed Metric, Log, and Trace Queries - all safe",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+									Aggregations: []qbtypes.MetricAggregation{
+										{TimeAggregation: metrictypes.TimeAggregationCount},
+									},
+								},
+							},
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+									Aggregations: []qbtypes.LogAggregation{
+										{Expression: "max(duration_nano)"},
+									},
+								},
+							},
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+									Aggregations: []qbtypes.TraceAggregation{
+										{Expression: "count_distinct(traceID)"},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
 		},
 		{
 			name: "Unsafe: Empty Queries",
@@ -467,7 +1224,7 @@ func TestCalculateEvalDelay(t *testing.T) {
 								Type: qbtypes.QueryTypeBuilder,
 								Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 									Aggregations: []qbtypes.MetricAggregation{
-										{TimeAggregation: metrictypes.TimeAggregation{valuer.NewString("min")}},
+										{TimeAggregation: metrictypes.TimeAggregationMin},
 									},
 								},
 							},
