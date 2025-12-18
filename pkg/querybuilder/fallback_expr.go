@@ -236,7 +236,11 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 
 		// if the key is a number, the value is a string, we will let clickHouse handle the conversion
 		case float32, float64:
-			tblFieldName = castFloat(tblFieldName)
+			if key.Signal == telemetrytypes.SignalMetrics {
+				tblFieldName = castFloat(tblFieldName)
+			} else {
+				tblFieldName = castFloatHack(tblFieldName)
+			}
 		case string:
 			// check if it's a number inside a string
 			isNumber := false
@@ -248,11 +252,19 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 				// try to convert the number attribute to string
 				tblFieldName = castString(tblFieldName) // numeric col vs string literal
 			} else {
-				tblFieldName = castFloat(tblFieldName)
+				if key.Signal == telemetrytypes.SignalMetrics {
+					tblFieldName = castFloat(tblFieldName)
+				} else {
+					tblFieldName = castFloatHack(tblFieldName)
+				}
 			}
 		case []any:
 			if allFloats(v) {
-				tblFieldName = castFloat(tblFieldName)
+				if key.Signal == telemetrytypes.SignalMetrics {
+					tblFieldName = castFloat(tblFieldName)
+				} else {
+					tblFieldName = castFloatHack(tblFieldName)
+				}
 			} else if hasString(v) {
 				tblFieldName, value = castString(tblFieldName), toStrings(v)
 			}
@@ -276,10 +288,9 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 // string for example http.status_code. Hence 'OrNull' is needed.
 // but with this change, OrNull functions in clickhouse only accept string type, hence adding
 // toString below.
-func castFloat(col string) string { return fmt.Sprintf("toFloat64OrNull(toString(%s))", col) }
-
-// func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
-func castString(col string) string { return fmt.Sprintf("toString(%s)", col) }
+func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
+func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
+func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
 
 func allFloats(in []any) bool {
 	for _, x := range in {
