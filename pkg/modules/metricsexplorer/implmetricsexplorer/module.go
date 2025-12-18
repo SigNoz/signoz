@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
@@ -33,12 +34,13 @@ type module struct {
 	condBuilder            qbtypes.ConditionBuilder
 	logger                 *slog.Logger
 	cache                  cache.Cache
+	ruleStore              ruletypes.RuleStore
 	dashboardModule        dashboard.Module
 	config                 metricsexplorer.Config
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, dashboardModule dashboard.Module, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config) metricsexplorer.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, dashboardModule dashboard.Module, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config) metricsexplorer.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -48,6 +50,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		logger:                 providerSettings.Logger,
 		telemetryMetadataStore: telemetryMetadataStore,
 		cache:                  cache,
+		ruleStore:              ruleStore,
 		dashboardModule:        dashboardModule,
 		config:                 cfg,
 	}
@@ -197,11 +200,32 @@ func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, re
 	return nil
 }
 
+func (m *module) GetMetricAlerts(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricAlertsResponse, error) {
+	if metricName == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+	ruleAlerts, err := m.ruleStore.GetStoredRulesByMetricName(ctx, orgID.String(), metricName)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get stored rules by metric name")
+	}
+
+	alerts := make([]metricsexplorertypes.MetricAlert, len(ruleAlerts))
+	for i, ruleAlert := range ruleAlerts {
+		alerts[i] = metricsexplorertypes.MetricAlert{
+			AlertName: ruleAlert.AlertName,
+			AlertID:   ruleAlert.AlertID,
+		}
+	}
+
+	return &metricsexplorertypes.MetricAlertsResponse{
+		Alerts: alerts,
+	}, nil
+}
+
 func (m *module) GetMetricDashboards(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardsResponse, error) {
 	if metricName == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
 	}
-
 	data, err := m.dashboardModule.GetByMetricNames(ctx, orgID, []string{metricName})
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get dashboards for metric")

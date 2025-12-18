@@ -221,6 +221,17 @@ type TreemapResponse struct {
 	Samples    []TreemapEntry `json:"samples"`
 }
 
+// MetricAlert represents an alert associated with a metric.
+type MetricAlert struct {
+	AlertName string `json:"alertName"`
+	AlertID   string `json:"alertId"`
+}
+
+// MetricAlertsResponse represents the response for metric alerts endpoint.
+type MetricAlertsResponse struct {
+	Alerts []MetricAlert `json:"alerts"`
+}
+
 // MetricDashboard represents a dashboard/widget referencing a metric.
 type MetricDashboard struct {
 	DashboardName string `json:"dashboardName"`
