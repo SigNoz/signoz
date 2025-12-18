@@ -146,16 +146,16 @@ def test_generate_connection_params(
     data = response_data["data"]
 
     # ingestion_key is created by the mocked gateway and should match
-    assert data["ingestion_key"] == "test-ingestion-key-123456", (
-        "ingestion_key should match the mocked ingestion key"
-    )
+    assert (
+        data["ingestion_key"] == "test-ingestion-key-123456"
+    ), "ingestion_key should match the mocked ingestion key"
 
     # ingestion_url should be https://ingest.test.signoz.cloud based on the mocked deployment DNS
-    assert data["ingestion_url"] == "https://ingest.test.signoz.cloud", (
-        "ingestion_url should be https://ingest.test.signoz.cloud"
-    )
+    assert (
+        data["ingestion_url"] == "https://ingest.test.signoz.cloud"
+    ), "ingestion_url should be https://ingest.test.signoz.cloud"
 
     # signoz_api_url should be https://test-deployment.test.signoz.cloud based on the mocked deployment name and DNS
-    assert data["signoz_api_url"] == "https://test-deployment.test.signoz.cloud", (
-        "signoz_api_url should be https://test-deployment.test.signoz.cloud"
-    )
+    assert (
+        data["signoz_api_url"] == "https://test-deployment.test.signoz.cloud"
+    ), "signoz_api_url should be https://test-deployment.test.signoz.cloud"
