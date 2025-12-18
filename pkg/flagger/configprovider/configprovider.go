@@ -4,25 +4,25 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagr"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type provider struct {
-	config   flagr.Config
+	config   flagger.Config
 	settings factory.ScopedProviderSettings
 	registry featuretypes.Registry
 }
 
-func NewFactory(registry featuretypes.Registry) factory.ProviderFactory[flagr.Provider, flagr.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("config"), func(ctx context.Context, ps factory.ProviderSettings, c flagr.Config) (flagr.Provider, error) {
+func NewFactory(registry featuretypes.Registry) factory.ProviderFactory[flagger.Provider, flagger.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("config"), func(ctx context.Context, ps factory.ProviderSettings, c flagger.Config) (flagger.Provider, error) {
 		return New(ctx, ps, c, registry)
 	})
 }
 
-func New(ctx context.Context, ps factory.ProviderSettings, c flagr.Config, registry featuretypes.Registry) (flagr.Provider, error) {
-	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/pkg/flagr/configprovider")
+func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, registry featuretypes.Registry) (flagger.Provider, error) {
+	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/pkg/flagger/configprovider")
 	return &provider{
 		config:   c,
 		settings: settings,

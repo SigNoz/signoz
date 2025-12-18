@@ -1,4 +1,4 @@
-package flagr
+package flagger
 
 import "github.com/SigNoz/signoz/pkg/factory"
 
@@ -7,7 +7,7 @@ type Config struct {
 
 func NewConfigFactory() factory.ConfigFactory {
 	return factory.NewConfigFactory(
-		factory.MustNewName("flagr"), newConfig,
+		factory.MustNewName("flagger"), newConfig,
 	)
 }
 

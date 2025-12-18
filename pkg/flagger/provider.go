@@ -1,4 +1,4 @@
-package flagr
+package flagger
 
 import (
 	"context"

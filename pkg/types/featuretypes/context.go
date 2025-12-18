@@ -6,14 +6,14 @@ import (
 )
 
 // A concrete wrapper around the openfeature.EvaluationContext
-type FlagrEvaluationContext struct {
+type FlaggerEvaluationContext struct {
 	ctx openfeature.EvaluationContext
 }
 
-// Creates a new FlagrEvaluationContext with given details
-func NewFlagrEvaluationContext(orgID valuer.UUID) FlagrEvaluationContext {
+// Creates a new FlaggerEvaluationContext with given details
+func NewFlaggerEvaluationContext(orgID valuer.UUID) FlaggerEvaluationContext {
 	ctx := openfeature.NewTargetlessEvaluationContext(map[string]any{
 		"orgId": orgID.String(),
 	})
-	return FlagrEvaluationContext{ctx: ctx}
+	return FlaggerEvaluationContext{ctx: ctx}
 }
