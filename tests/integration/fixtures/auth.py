@@ -1,6 +1,5 @@
-from typing import Tuple
 from http import HTTPStatus
-from typing import Callable, List
+from typing import Callable, List, Tuple
 
 import pytest
 import requests
@@ -134,9 +133,9 @@ def get_tokens(signoz: types.SigNoz) -> Callable[[str, str], Tuple[str, str]]:
         )
 
         assert response.status_code == HTTPStatus.OK
-        accessToken = response.json()["data"]["accessToken"]
-        refreshToken = response.json()["data"]["refreshToken"]
-        return accessToken, refreshToken
+        access_token = response.json()["data"]["accessToken"]
+        refresh_token = response.json()["data"]["refreshToken"]
+        return access_token, refresh_token
 
     return _get_tokens
 
