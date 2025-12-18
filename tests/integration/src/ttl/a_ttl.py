@@ -83,7 +83,9 @@ def test_set_ttl_traces_success(
     assert all("toIntervalSecond(12960000)" in ttl_part for ttl_part in ttl_parts)
 
 
-def test_set_ttl_traces_with_cold_storage(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
+def test_set_ttl_traces_with_cold_storage(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+):
     """Test setting TTL for traces with cold storage configuration."""
     payload = {
         "type": "traces",
@@ -292,10 +294,7 @@ def test_set_custom_retention_ttl_basic(
             retention_col[3] == "100"
         ), f"Expected default value of _retention_days to be 100 in table {table}, but got {retention_col[3]}"
 
-    tables_to_check = [
-        "logs_attribute_keys",
-        "logs_resource_keys"
-    ]
+    tables_to_check = ["logs_attribute_keys", "logs_resource_keys"]
 
     # Query to get table engine info which includes TTL
     table_list = "', '".join(tables_to_check)
@@ -316,8 +315,8 @@ def test_set_custom_retention_ttl_basic(
 def test_set_custom_retention_ttl_basic_fallback(
     signoz: types.SigNoz,
     get_token,
-    ttl_legacy_logs_v2_table_setup, # pylint: disable=unused-argument
-    ttl_legacy_logs_v2_resource_table_setup, # pylint: disable=unused-argument
+    ttl_legacy_logs_v2_table_setup,  # pylint: disable=unused-argument
+    ttl_legacy_logs_v2_resource_table_setup,  # pylint: disable=unused-argument
 ):
     """Test setting TTL for logs using the new setTTLLogs method."""
 
@@ -354,7 +353,7 @@ def test_set_custom_retention_ttl_basic_fallback(
         "logs_v2",
         "logs_v2_resource",
         "logs_attribute_keys",
-        "logs_resource_keys"
+        "logs_resource_keys",
     ]
 
     # Query to get table engine info which includes TTL
@@ -678,8 +677,8 @@ def test_get_custom_retention_ttl(
 def test_set_ttl_logs_success(
     signoz: types.SigNoz,
     get_token,
-    ttl_legacy_logs_v2_table_setup,# pylint: disable=unused-argument
-    ttl_legacy_logs_v2_resource_table_setup,# pylint: disable=unused-argument
+    ttl_legacy_logs_v2_table_setup,  # pylint: disable=unused-argument
+    ttl_legacy_logs_v2_resource_table_setup,  # pylint: disable=unused-argument
 ):
     """Test setting TTL for logs using the new setTTLLogs method."""
 
