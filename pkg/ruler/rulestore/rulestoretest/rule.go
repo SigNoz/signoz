@@ -5,6 +5,8 @@ import (
 	"regexp"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
@@ -21,7 +23,10 @@ type MockSQLRuleStore struct {
 // NewMockSQLRuleStore creates a new MockSQLRuleStore with sqlmock
 func NewMockSQLRuleStore() *MockSQLRuleStore {
 	sqlStore := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherRegexp)
-	ruleStore := sqlrulestore.NewRuleStore(sqlStore)
+	// For tests, we can pass nil for queryParser and use test provider settings
+	providerSettings := factorytest.NewSettings()
+
+	ruleStore := sqlrulestore.NewRuleStore(sqlStore, queryparser.New(providerSettings), providerSettings)
 
 	return &MockSQLRuleStore{
 		ruleStore: ruleStore,
@@ -57,6 +62,11 @@ func (m *MockSQLRuleStore) GetStoredRule(ctx context.Context, id valuer.UUID) (*
 // GetStoredRules implements ruletypes.RuleStore - delegates to underlying ruleStore to trigger SQL
 func (m *MockSQLRuleStore) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.Rule, error) {
 	return m.ruleStore.GetStoredRules(ctx, orgID)
+}
+
+// GetStoredRulesByMetricName implements ruletypes.RuleStore - delegates to underlying ruleStore
+func (m *MockSQLRuleStore) GetStoredRulesByMetricName(ctx context.Context, orgID string, metricName string) ([]ruletypes.RuleAlert, error) {
+	return m.ruleStore.GetStoredRulesByMetricName(ctx, orgID, metricName)
 }
 
 // ExpectCreateRule sets up SQL expectations for CreateRule operation
@@ -95,6 +105,17 @@ func (m *MockSQLRuleStore) ExpectGetStoredRule(ruleID valuer.UUID, rule *ruletyp
 
 // ExpectGetStoredRules sets up SQL expectations for GetStoredRules operation
 func (m *MockSQLRuleStore) ExpectGetStoredRules(orgID string, rules []*ruletypes.Rule) {
+	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "created_by", "updated_by", "deleted", "data", "org_id"})
+	for _, rule := range rules {
+		rows.AddRow(rule.ID, rule.CreatedAt, rule.UpdatedAt, rule.CreatedBy, rule.UpdatedBy, rule.Deleted, rule.Data, rule.OrgID)
+	}
+	expectedPattern := `SELECT (.+) FROM "rule".+WHERE \(.+org_id.+'` + orgID + `'\)`
+	m.mock.ExpectQuery(expectedPattern).
+		WillReturnRows(rows)
+}
+
+// ExpectGetStoredRulesByMetricName sets up SQL expectations for GetStoredRulesByMetricName operation
+func (m *MockSQLRuleStore) ExpectGetStoredRulesByMetricName(orgID string, metricName string, rules []*ruletypes.Rule) {
 	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "created_by", "updated_by", "deleted", "data", "org_id"})
 	for _, rule := range rules {
 		rows.AddRow(rule.ID, rule.CreatedAt, rule.UpdatedAt, rule.CreatedBy, rule.UpdatedBy, rule.Deleted, rule.Data, rule.OrgID)
