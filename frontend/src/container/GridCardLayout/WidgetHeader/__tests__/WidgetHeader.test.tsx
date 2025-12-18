@@ -1,4 +1,5 @@
-import { fireEvent, render as rtlRender, screen } from '@testing-library/react';
+import { render as rtlRender, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { AppContext } from 'providers/App/App';
@@ -95,6 +96,12 @@ jest.mock('hooks/dashboard/useGetResolvedText', () => {
 		})),
 	};
 });
+
+jest.mock('lucide-react', () => ({
+	CircleX: (): JSX.Element => <svg data-testid="lucide-circle-x" />,
+	TriangleAlert: (): JSX.Element => <svg data-testid="lucide-triangle-alert" />,
+	X: (): JSX.Element => <svg data-testid="lucide-x" />,
+}));
 
 const mockWidget: Widgets = {
 	id: 'test-widget-id',
@@ -202,10 +209,10 @@ describe('WidgetHeader', () => {
 			/>,
 		);
 
-		expect(container.firstChild).toBeNull();
+		expect(container.innerHTML).toBe('');
 	});
 
-	it('shows search input for table panels', () => {
+	it('shows search input for table panels', async () => {
 		const tableWidget = {
 			...mockWidget,
 			panelTypes: PANEL_TYPES.TABLE,
@@ -228,12 +235,12 @@ describe('WidgetHeader', () => {
 		const searchIcon = screen.getByTestId(WIDGET_HEADER_SEARCH);
 		expect(searchIcon).toBeInTheDocument();
 
-		fireEvent.click(searchIcon);
+		await userEvent.click(searchIcon);
 
 		expect(screen.getByTestId(WIDGET_HEADER_SEARCH_INPUT)).toBeInTheDocument();
 	});
 
-	it('handles search input changes and closing', () => {
+	it('handles search input changes and closing', async () => {
 		const tableWidget = {
 			...mockWidget,
 			panelTypes: PANEL_TYPES.TABLE,
@@ -254,17 +261,17 @@ describe('WidgetHeader', () => {
 		);
 
 		const searchIcon = screen.getByTestId(`${WIDGET_HEADER_SEARCH}`);
-		fireEvent.click(searchIcon);
+		await userEvent.click(searchIcon);
 
 		const searchInput = screen.getByTestId(WIDGET_HEADER_SEARCH_INPUT);
-		fireEvent.change(searchInput, { target: { value: 'test search' } });
+		await userEvent.type(searchInput, 'test search');
 		expect(mockSetSearchTerm).toHaveBeenCalledWith('test search');
 
 		const closeButton = screen
 			.getByTestId(WIDGET_HEADER_SEARCH_INPUT)
 			.parentElement?.querySelector('.search-header-icons');
 		if (closeButton) {
-			fireEvent.click(closeButton);
+			await userEvent.click(closeButton);
 			expect(mockSetSearchTerm).toHaveBeenCalledWith('');
 		}
 	});
@@ -297,7 +304,7 @@ describe('WidgetHeader', () => {
 		);
 
 		// check if CircleX icon is rendered
-		const circleXIcon = document.querySelector('.lucide-circle-x');
+		const circleXIcon = screen.getByTestId('lucide-circle-x');
 		expect(circleXIcon).toBeInTheDocument();
 	});
 
@@ -338,7 +345,7 @@ describe('WidgetHeader', () => {
 			/>,
 		);
 
-		const triangleAlertIcon = document.querySelector('.lucide-triangle-alert');
+		const triangleAlertIcon = screen.getByTestId('lucide-triangle-alert');
 		expect(triangleAlertIcon).toBeInTheDocument();
 	});
 
