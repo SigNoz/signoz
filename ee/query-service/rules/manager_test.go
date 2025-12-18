@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/modules/organization/organizationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -29,7 +28,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes/ruletypestest"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
@@ -251,17 +249,14 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 			require.NoError(t, err)
 
 			mgrOpts := &qsRules.ManagerOptions{
-				Logger:           zap.NewNop(),
-				SLogger:          instrumentationtest.New().Logger(),
-				Cache:            cacheObj,
-				Alertmanager:     fAlert,
-				OrgGetter:        organizationtest.NewNoOpOrgGetter(),
-				RuleStore:        ruletypestest.NewNoOpRuleStore(),
-				Querier:          mockQuerier,
-				MaintenanceStore: ruletypestest.NewNoOpMaintenanceStore(),
-				TelemetryStore:   telemetryStore,
-				Reader:           reader,
-				SqlStore:         sqlStore, // SQLStore needed for SendAlerts to query organizations
+				Logger:         zap.NewNop(),
+				SLogger:        instrumentationtest.New().Logger(),
+				Cache:          cacheObj,
+				Alertmanager:   fAlert,
+				Querier:        mockQuerier,
+				TelemetryStore: telemetryStore,
+				Reader:         reader,
+				SqlStore:       sqlStore, // SQLStore needed for SendAlerts to query organizations
 				// Custom Test Notification function
 				PrepareTestRuleFunc: TestNotification,
 			}
@@ -549,17 +544,14 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 			)
 
 			mgrOpts := &qsRules.ManagerOptions{
-				Logger:           zap.NewNop(),
-				SLogger:          instrumentationtest.New().Logger(),
-				Cache:            cacheObj,
-				Alertmanager:     fAlert,
-				OrgGetter:        organizationtest.NewNoOpOrgGetter(),
-				RuleStore:        ruletypestest.NewNoOpRuleStore(),
-				MaintenanceStore: ruletypestest.NewNoOpMaintenanceStore(),
-				TelemetryStore:   telemetryStore,
-				Reader:           reader,
-				SqlStore:         sqlStore, // SQLStore needed for SendAlerts to query organizations
-				Prometheus:       promProvider,
+				Logger:         zap.NewNop(),
+				SLogger:        instrumentationtest.New().Logger(),
+				Cache:          cacheObj,
+				Alertmanager:   fAlert,
+				TelemetryStore: telemetryStore,
+				Reader:         reader,
+				SqlStore:       sqlStore, // SQLStore needed for SendAlerts to query organizations
+				Prometheus:     promProvider,
 				// Custom Test Notification function
 				PrepareTestRuleFunc: TestNotification,
 			}
