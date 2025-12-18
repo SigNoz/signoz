@@ -114,9 +114,9 @@ function QuerySearch({
 	const [isFocused, setIsFocused] = useState(false);
 	const editorRef = useRef<EditorView | null>(null);
 
-	const handleQueryValidation = useCallback((newQuery: string): void => {
+	const handleQueryValidation = useCallback((newExpression: string): void => {
 		try {
-			const validationResponse = validateQuery(newQuery);
+			const validationResponse = validateQuery(newExpression);
 			setValidation(validationResponse);
 		} catch (error) {
 			setValidation({
@@ -127,7 +127,7 @@ function QuerySearch({
 		}
 	}, []);
 
-	const getCurrentQuery = useCallback(
+	const getCurrentExpression = useCallback(
 		(): string => editorRef.current?.state.doc.toString() || '',
 		[],
 	);
@@ -167,14 +167,14 @@ function QuerySearch({
 		() => {
 			if (!isEditorReady) return;
 
-			const newQuery = queryData.filter?.expression || '';
-			const currentQuery = getCurrentQuery();
+			const newExpression = queryData.filter?.expression || '';
+			const currentExpression = getCurrentExpression();
 
-			/* eslint-disable-next-line sonarjs/no-collapsible-if */
-			if (newQuery !== currentQuery && !isFocused) {
-				updateEditorValue(newQuery, { skipOnChange: true });
-				if (newQuery) {
-					handleQueryValidation(newQuery);
+			// Do not update codemirror editor if the expression is the same
+			if (newExpression !== currentExpression && !isFocused) {
+				updateEditorValue(newExpression, { skipOnChange: true });
+				if (newExpression) {
+					handleQueryValidation(newExpression);
 				}
 			}
 		},
@@ -608,8 +608,8 @@ function QuerySearch({
 	};
 
 	const handleBlur = (): void => {
-		const currentQuery = getCurrentQuery();
-		handleQueryValidation(currentQuery);
+		const currentExpression = getCurrentExpression();
+		handleQueryValidation(currentExpression);
 		setIsFocused(false);
 	};
 
@@ -628,11 +628,11 @@ function QuerySearch({
 
 	const handleExampleClick = (exampleQuery: string): void => {
 		// If there's an existing query, append the example with AND
-		const currentQuery = getCurrentQuery();
-		const newQuery = currentQuery
-			? `${currentQuery} AND ${exampleQuery}`
+		const currentExpression = getCurrentExpression();
+		const newExpression = currentExpression
+			? `${currentExpression} AND ${exampleQuery}`
 			: exampleQuery;
-		updateEditorValue(newQuery);
+		updateEditorValue(newExpression);
 	};
 
 	// Helper function to render a badge for the current context mode
@@ -668,9 +668,9 @@ function QuerySearch({
 		if (word?.from === word?.to && !context.explicit) return null;
 
 		// Get current query from editor
-		const currentQuery = editorRef.current?.state.doc.toString() || '';
+		const currentExpression = getCurrentExpression();
 		// Get the query context at the cursor position
-		const queryContext = getQueryContextAtCursor(currentQuery, cursorPos.ch);
+		const queryContext = getQueryContextAtCursor(currentExpression, cursorPos.ch);
 
 		// Define autocomplete options based on the context
 		let options: {
@@ -1166,8 +1166,8 @@ function QuerySearch({
 
 		if (queryContext.isInParenthesis) {
 			// Different suggestions based on the context within parenthesis or bracket
-			const currentQuery = editorRef.current?.state.doc.toString() || '';
-			const curChar = currentQuery.charAt(cursorPos.ch - 1) || '';
+			const currentExpression = getCurrentExpression();
+			const curChar = currentExpression.charAt(cursorPos.ch - 1) || '';
 
 			if (curChar === '(' || curChar === '[') {
 				// Right after opening parenthesis/bracket
@@ -1316,7 +1316,7 @@ function QuerySearch({
 						style={{
 							position: 'absolute',
 							top: 8,
-							right: validation.isValid === false && getCurrentQuery() ? 40 : 8, // Move left when error shown
+							right: validation.isValid === false && getCurrentExpression() ? 40 : 8, // Move left when error shown
 							cursor: 'help',
 							zIndex: 10,
 							transition: 'right 0.2s ease',
@@ -1378,7 +1378,7 @@ function QuerySearch({
 									// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
 									run: (): boolean => {
 										if (onRun && typeof onRun === 'function') {
-											onRun(getCurrentQuery());
+											onRun(getCurrentExpression());
 										} else {
 											handleRunQuery();
 										}
@@ -1404,7 +1404,7 @@ function QuerySearch({
 					onBlur={handleBlur}
 				/>
 
-				{getCurrentQuery() && validation.isValid === false && !isFocused && (
+				{getCurrentExpression() && validation.isValid === false && !isFocused && (
 					<div
 						className={cx('query-status-container', {
 							hasErrors: validation.errors.length > 0,
