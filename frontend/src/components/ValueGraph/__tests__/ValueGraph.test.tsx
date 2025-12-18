@@ -1,21 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { render } from 'tests/test-utils';
 
 import ValueGraph from '../index';
 import { getBackgroundColorAndThresholdCheck } from '../utils';
-
-// Mock ResizeObserver
-class ResizeObserverMock {
-	// eslint-disable-next-line class-methods-use-this
-	observe(): void {}
-
-	// eslint-disable-next-line class-methods-use-this
-	unobserve(): void {}
-
-	// eslint-disable-next-line class-methods-use-this
-	disconnect(): void {}
-}
-
-global.ResizeObserver = (ResizeObserverMock as unknown) as typeof ResizeObserver;
 
 // Mock the utils module
 jest.mock('../utils', () => ({

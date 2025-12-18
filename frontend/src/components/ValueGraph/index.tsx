@@ -8,6 +8,34 @@ import { useTranslation } from 'react-i18next';
 
 import { getBackgroundColorAndThresholdCheck } from './utils';
 
+function Unit({
+	type,
+	unit,
+	threshold,
+	fontSize,
+}: {
+	type: 'prefix' | 'suffix';
+	unit: string;
+	threshold: ThresholdProps;
+	fontSize: string;
+}): JSX.Element {
+	return (
+		<Typography.Text
+			className="value-graph-unit"
+			data-testid={`value-graph-${type}-unit`}
+			style={{
+				color:
+					threshold.thresholdFormat === 'Text'
+						? threshold.thresholdColor
+						: undefined,
+				fontSize: `calc(${fontSize} * 0.7)`,
+			}}
+		>
+			{unit}
+		</Typography.Text>
+	);
+}
+
 function ValueGraph({
 	value,
 	rawValue,
@@ -72,19 +100,12 @@ function ValueGraph({
 		>
 			<div className="value-text-container">
 				{prefixUnit && (
-					<Typography.Text
-						className="value-graph-unit"
-						data-testid="value-graph-prefix-unit"
-						style={{
-							color:
-								threshold.thresholdFormat === 'Text'
-									? threshold.thresholdColor
-									: undefined,
-							fontSize: `calc(${fontSize} * 0.7)`,
-						}}
-					>
-						{prefixUnit}
-					</Typography.Text>
+					<Unit
+						type="prefix"
+						unit={prefixUnit}
+						threshold={threshold}
+						fontSize={fontSize}
+					/>
 				)}
 				<Typography.Text
 					className="value-graph-text"
@@ -100,19 +121,12 @@ function ValueGraph({
 					{numericValue}
 				</Typography.Text>
 				{suffixUnit && (
-					<Typography.Text
-						className="value-graph-unit"
-						data-testid="value-graph-suffix-unit"
-						style={{
-							color:
-								threshold.thresholdFormat === 'Text'
-									? threshold.thresholdColor
-									: undefined,
-							fontSize: `calc(${fontSize} * 0.7)`,
-						}}
-					>
-						{suffixUnit}
-					</Typography.Text>
+					<Unit
+						type="suffix"
+						unit={suffixUnit}
+						threshold={threshold}
+						fontSize={fontSize}
+					/>
 				)}
 			</div>
 			{isConflictingThresholds && (
