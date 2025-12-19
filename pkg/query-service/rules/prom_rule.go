@@ -137,16 +137,33 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 
 	// Filter out new series if newGroupEvalDelay is configured
 	if r.ShouldSkipNewGroups() {
-		collection := ruletypes.NewPromMatrixLabelledCollection(res)
-		filteredCollection, _, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, collection)
+		// Convert promql.Matrix to []v3.Series
+		v3Series := make([]v3.Series, 0, len(res))
+		for _, series := range res {
+			v3Series = append(v3Series, toCommonSeries(series))
+		}
+
+		// Get indexes to skip
+		skipIndexes, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, v3Series)
 		if filterErr != nil {
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
 			return nil, filterErr
 		}
-		matrixCollection, ok := filteredCollection.(*ruletypes.PromMatrixLabelledCollection)
-		if ok {
-			res = matrixCollection.Matrix()
+
+		// Create a map of skip indexes for efficient lookup
+		skippedIdxMap := make(map[int]struct{}, len(skipIndexes))
+		for _, idx := range skipIndexes {
+			skippedIdxMap[idx] = struct{}{}
 		}
+
+		// Filter out skipped series from promql.Matrix
+		filteredMatrix := make(promql.Matrix, 0, len(res)-len(skipIndexes))
+		for i, series := range res {
+			if _, shouldSkip := skippedIdxMap[i]; !shouldSkip {
+				filteredMatrix = append(filteredMatrix, series)
+			}
+		}
+		res = filteredMatrix
 	}
 
 	var resultVector ruletypes.Vector
