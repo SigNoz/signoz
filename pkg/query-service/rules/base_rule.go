@@ -585,7 +585,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 		return series, 0, nil
 	}
 
-	// Build lookup keys from series
+	// Build lookup keys from series which will be used to query metadata from CH
 	lookupKeys := make([]model.MetricMetadataLookupKey, 0)
 	seriesIdxToLookupKeys := make(map[int][]model.MetricMetadataLookupKey) // series index -> lookup keys
 
@@ -620,6 +620,9 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 
 	if len(lookupKeys) == 0 {
 		// No lookup keys to query, return original series
+		// this can happen when the series has no labels which were added
+		// to the groupBy keys in Alert query or it has no labels at all
+		// in this case, we include all series
 		return series, 0, nil
 	}
 
@@ -639,6 +642,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 		seriesKeys, ok := seriesIdxToLookupKeys[i]
 		if !ok {
 			// No matching lables used in groupBy from this series, include it
+			// as we can't decide if it is new or old series
 			preservedIndices = append(preservedIndices, i)
 			continue
 		}
@@ -646,18 +650,21 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series rul
 		// Find the maximum first_seen across all groupBy attributes for this series
 		// if the lastest is old enought we're good, if latest is new we need to skip it
 		maxFirstSeen := int64(0)
-		foundAny := false
+		// foundAnyMetricMetadata tracks if we found any metric metadata for this series
+		// if we didn't find any, we skip this series considering it as new series
+		// whose metadata is not available yet
+		foundAnyMetricMetadata := false
 		for _, lookupKey := range seriesKeys {
 			if firstSeen, exists := firstSeenMap[lookupKey]; exists {
-				foundAny = true
+				foundAnyMetricMetadata = true
 				if firstSeen > maxFirstSeen {
 					maxFirstSeen = firstSeen
 				}
 			}
 		}
 
-		if !foundAny {
-			// No metadata found - treat as new, skip it
+		// No metadata found - treat as new series, skip it
+		if !foundAnyMetricMetadata {
 			skippedCount++
 			continue
 		}
