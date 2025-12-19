@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -123,7 +122,6 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 		lastUsedCtx := context.WithoutCancel(r.Context())
 		_, _, _ = a.sfGroup.Do(apiKey.ID.StringValue(), func() (any, error) {
 			apiKey.LastUsed = time.Now()
-			fmt.Println("executing api key update")
 			_, err = a.
 				store.
 				BunDB().
