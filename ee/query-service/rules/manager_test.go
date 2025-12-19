@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	alertmanagermock "github.com/SigNoz/signoz/mocks/pkg/alertmanager"
+	alertmanagermock "github.com/SigNoz/signoz/pkg/alertmanager/mocks"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"

@@ -4,7 +4,7 @@ packages:
   github.com/SigNoz/signoz/pkg/alertmanager:
     config:
       all: true
-      dir: 'mocks/{{.InterfaceDirRelative}}'
+      dir: '{{.InterfaceDir}}/mocks'
       filename: "mocks.go"
-      structname: '{{.Mock}}{{.InterfaceName}}'
+      structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}mock'
