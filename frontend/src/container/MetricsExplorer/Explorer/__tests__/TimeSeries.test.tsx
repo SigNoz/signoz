@@ -6,11 +6,11 @@ import {
 	waitFor,
 } from '@testing-library/react';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { MetricMetadata } from 'api/metricsExplorer/getMetricMetadata';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useUpdateMetricMetadataHooks from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import TimeSeries from '../TimeSeries';

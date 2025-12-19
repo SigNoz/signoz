@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { MetricMetadata } from 'api/metricsExplorer/getMetricMetadata';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import * as useOptionsMenuHooks from 'container/OptionsMenu';
@@ -15,10 +14,11 @@ import { MemoryRouter } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import store from 'store';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
+import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import Explorer from '../Explorer';
-import * as useGetMetricUnitsHooks from '../utils';
+import * as useGetMetricsHooks from '../utils';
 
 const mockSetSearchParams = jest.fn();
 const queryClient = new QueryClient();
@@ -185,8 +185,7 @@ describe('Explorer', () => {
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'true' }),
 			mockSetSearchParams,
 		]);
-		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
-			units: ['seconds', 'seconds'],
+		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [mockMetric, mockMetric],
@@ -203,8 +202,7 @@ describe('Explorer', () => {
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'false' }),
 			mockSetSearchParams,
 		]);
-		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
-			units: ['seconds', 'seconds'],
+		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [mockMetric, mockMetric],
@@ -217,8 +215,7 @@ describe('Explorer', () => {
 	});
 
 	it('should render pre-populated y axis unit for single metric', () => {
-		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
-			units: ['seconds'],
+		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [mockMetric],
@@ -236,8 +233,7 @@ describe('Explorer', () => {
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'true' }),
 			mockSetSearchParams,
 		]);
-		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
-			units: ['seconds', 'seconds'],
+		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [mockMetric, mockMetric],
@@ -255,8 +251,7 @@ describe('Explorer', () => {
 	});
 
 	it('should hide y axis unit selector for multiple metrics with different units', () => {
-		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
-			units: ['seconds', 'milliseconds'],
+		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [mockMetric, mockMetric],
@@ -273,8 +268,7 @@ describe('Explorer', () => {
 	});
 
 	it('should render empty y axis unit selector for a single metric with no unit', () => {
-		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
-			units: [],
+		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [mockMetric],
@@ -288,8 +282,7 @@ describe('Explorer', () => {
 	});
 
 	it('one chart per query should be off and disabled when there is only one query', () => {
-		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
-			units: ['seconds'],
+		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [mockMetric],
@@ -319,8 +312,7 @@ describe('Explorer', () => {
 			stagedQuery: mockStagedQueryWithMultipleQueries,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 
-		jest.spyOn(useGetMetricUnitsHooks, 'useGetMetricUnits').mockReturnValue({
-			units: ['seconds', 'seconds'],
+		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [mockMetric, mockMetric],

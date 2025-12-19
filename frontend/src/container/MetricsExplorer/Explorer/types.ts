@@ -1,9 +1,9 @@
-import { MetricMetadata } from 'api/metricsExplorer/getMetricMetadata';
 import { RelatedMetric } from 'api/metricsExplorer/getRelatedMetrics';
 import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 
 export enum ExplorerTabs {
 	TIME_SERIES = 'time-series',

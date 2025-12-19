@@ -28,7 +28,6 @@ import { splitQueryIntoOneChartPerQuery } from './utils';
 function TimeSeries({
 	showOneChartPerQuery,
 	setWarning,
-	areAllMetricUnitsSame,
 	isMetricUnitsLoading,
 	metricUnits,
 	metricNames,
@@ -67,9 +66,10 @@ function TimeSeries({
 			showOneChartPerQuery
 				? splitQueryIntoOneChartPerQuery(
 						stagedQuery || initialQueriesMap[DataSource.METRICS],
+						metricUnits,
 				  )
 				: [stagedQuery || initialQueriesMap[DataSource.METRICS]],
-		[showOneChartPerQuery, stagedQuery],
+		[showOneChartPerQuery, stagedQuery, metricUnits],
 	);
 
 	const queries = useQueries(
@@ -135,16 +135,15 @@ function TimeSeries({
 		setYAxisUnit(value);
 	};
 
-	const showYAxisUnitSelector = useMemo(() => {
-		if (metricUnits.length <= 1) {
-			return true;
-		}
-		if (areAllMetricUnitsSame) {
-			return Boolean(metricUnits[0]);
-		}
-		return false;
-	}, [metricUnits, areAllMetricUnitsSame]);
+	// Show the y axis unit selector if -
+	// 1. There is only one metric
+	// 2. The metric has no saved unit
+	const showYAxisUnitSelector = useMemo(
+		() => !isMetricUnitsLoading && metricUnits.length === 1 && !metricUnits[0],
+		[metricUnits, isMetricUnitsLoading],
+	);
 
+	// TODO: Enable once we have resolved all related metrics v2 api issues
 	// Show the save unit button if
 	// 1. There is only one metric
 	// 2. The metric has no saved unit
@@ -269,6 +268,8 @@ function TimeSeries({
 						!metricUnit &&
 						metricName;
 
+					const currentYAxisUnit = yAxisUnit || metricUnit;
+
 					return (
 						<div
 							className="time-series-view"
@@ -279,9 +280,9 @@ function TimeSeries({
 							<TimeSeriesView
 								isFilterApplied={false}
 								isError={queries[index].isError}
-								isLoading={queries[index].isLoading}
+								isLoading={queries[index].isLoading || isMetricUnitsLoading}
 								data={datapoint}
-								yAxisUnit={yAxisUnit}
+								yAxisUnit={currentYAxisUnit}
 								dataSource={DataSource.METRICS}
 								error={queries[index].error as APIError}
 								setWarning={setWarning}

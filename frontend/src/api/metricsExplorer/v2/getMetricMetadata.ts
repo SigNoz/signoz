@@ -2,22 +2,7 @@ import { ApiV2Instance as axios } from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorResponseV2, ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-
-import { Temporality } from './getMetricDetails';
-import { MetricType } from './getMetricsList';
-
-export interface MetricMetadata {
-	description: string;
-	type: MetricType;
-	unit: string;
-	temporality: Temporality;
-	isMonotonic: boolean;
-}
-
-export interface MetricMetadataResponse {
-	status: string;
-	data: MetricMetadata;
-}
+import { MetricMetadataResponse } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 
 export const getMetricMetadata = async (
 	metricName: string,
@@ -36,7 +21,7 @@ export const getMetricMetadata = async (
 
 		return {
 			httpStatusCode: response.status,
-			data: response.data.data,
+			data: response.data,
 		};
 	} catch (error) {
 		return ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);

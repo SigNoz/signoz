@@ -1,12 +1,21 @@
-import { MetricMetadata } from 'api/metricsExplorer/getMetricMetadata';
 import { useGetMultipleMetrics } from 'hooks/metricsExplorer/useGetMultipleMetrics';
+import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
-export const splitQueryIntoOneChartPerQuery = (query: Query): Query[] => {
+/**
+ * Split a query with multiple queryData to multiple distinct queries, each with a single queryData.
+ * @param query - The query to split
+ * @param units - The units of the metrics, can be undefined if the metric has no unit
+ * @returns The split queries
+ */
+export const splitQueryIntoOneChartPerQuery = (
+	query: Query,
+	units: (string | undefined)[],
+): Query[] => {
 	const queries: Query[] = [];
 
-	query.builder.queryData.forEach((currentQuery) => {
+	query.builder.queryData.forEach((currentQuery, index) => {
 		const newQuery = {
 			...query,
 			id: uuid(),
@@ -15,6 +24,7 @@ export const splitQueryIntoOneChartPerQuery = (query: Query): Query[] => {
 				queryData: [currentQuery],
 				queryFormulas: [],
 			},
+			unit: units[index],
 		};
 		queries.push(newQuery);
 	});
@@ -38,12 +48,17 @@ export const splitQueryIntoOneChartPerQuery = (query: Query): Query[] => {
 	return queries;
 };
 
-export function useGetMetricUnits(
+/**
+ * Hook to get data for multiple metrics with a synchronous loading and error state
+ * @param metricNames - The names of the metrics to get
+ * @param isEnabled - Whether the hook is enabled
+ * @returns The loading state, the metrics data, and the error state
+ */
+export function useGetMetrics(
 	metricNames: string[],
 	isEnabled = true,
 ): {
 	isLoading: boolean;
-	units: (string | undefined)[];
 	isError: boolean;
 	metrics: (MetricMetadata | undefined)[];
 } {
@@ -52,8 +67,9 @@ export function useGetMetricUnits(
 	});
 	return {
 		isLoading: metricsData.some((metric) => metric.isLoading),
-		units: metricsData.map((metric) => metric.data?.data?.unit),
-		metrics: metricsData.map((metric) => metric.data?.data),
+		metrics: metricsData
+			.map((metric) => metric.data?.data)
+			.map((data) => data?.data),
 		isError: metricsData.some((metric) => metric.isError),
 	};
 }

@@ -28,7 +28,7 @@ import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import MetricDetails from '../MetricDetails/MetricDetails';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
-import { splitQueryIntoOneChartPerQuery, useGetMetricUnits } from './utils';
+import { splitQueryIntoOneChartPerQuery, useGetMetrics } from './utils';
 
 const ONE_CHART_PER_QUERY_ENABLED_KEY = 'isOneChartPerQueryEnabled';
 
@@ -51,11 +51,12 @@ function Explorer(): JSX.Element {
 	);
 
 	const {
-		units,
 		metrics,
 		isLoading: isMetricUnitsLoading,
 		isError: isMetricUnitsError,
-	} = useGetMetricUnits(metricNames);
+	} = useGetMetrics(metricNames);
+
+	const units = useMemo(() => metrics.map((metric) => metric?.unit), [metrics]);
 
 	const areAllMetricUnitsSame = useMemo(
 		() =>
@@ -103,6 +104,11 @@ function Explorer(): JSX.Element {
 	}, [JSON.stringify(units), areAllMetricUnitsSame]);
 
 	useEffect(() => {
+		// Don't apply logic during loading to avoid overwriting user preferences
+		if (isMetricUnitsLoading) {
+			return;
+		}
+
 		// Disable one chart per query if -
 		// 1. There are more than one metric
 		// 2. The metric units are not the same
@@ -113,9 +119,16 @@ function Explorer(): JSX.Element {
 			toggleShowOneChartPerQuery(false);
 			toggleDisableOneChartPerQuery(true);
 		} else {
+			// When units are the same and loading is complete, restore URL-based preference
+			toggleShowOneChartPerQuery(isOneChartPerQueryEnabled);
 			toggleDisableOneChartPerQuery(false);
 		}
-	}, [units, areAllMetricUnitsSame]);
+	}, [
+		units,
+		areAllMetricUnitsSame,
+		isMetricUnitsLoading,
+		isOneChartPerQueryEnabled,
+	]);
 
 	const handleToggleShowOneChartPerQuery = (): void => {
 		toggleShowOneChartPerQuery(!showOneChartPerQuery);
@@ -141,7 +154,7 @@ function Explorer(): JSX.Element {
 			PANEL_TYPES.TIME_SERIES,
 			DataSource.METRICS,
 		);
-		if (yAxisUnit) {
+		if (yAxisUnit && !query.unit) {
 			return {
 				...query,
 				unit: yAxisUnit,
@@ -163,7 +176,7 @@ function Explorer(): JSX.Element {
 			const widgetId = uuid();
 
 			let query = queryToExport || exportDefaultQuery;
-			if (yAxisUnit) {
+			if (yAxisUnit && !query.unit) {
 				query = {
 					...query,
 					unit: yAxisUnit,
@@ -186,8 +199,9 @@ function Explorer(): JSX.Element {
 		() =>
 			splitQueryIntoOneChartPerQuery(
 				stagedQuery || initialQueriesMap[DataSource.METRICS],
+				units,
 			),
-		[stagedQuery],
+		[stagedQuery, units],
 	);
 
 	const [selectedMetricName, setSelectedMetricName] = useState<string | null>(
@@ -309,7 +323,7 @@ function Explorer(): JSX.Element {
 				query={exportDefaultQuery}
 				sourcepage={DataSource.METRICS}
 				onExport={handleExport}
-				isOneChartPerQuery={false}
+				isOneChartPerQuery={showOneChartPerQuery}
 				splitedQueries={splitedQueries}
 			/>
 			{isMetricDetailsOpen && (
