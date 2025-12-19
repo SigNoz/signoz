@@ -95,6 +95,7 @@ const (
 	signozLocalTableAttributesMetadata = "attributes_metadata"
 
 	signozUpdatedMetricsMetadataLocalTable = "updated_metadata"
+	signozMetricsMetadataLocalTable        = "metadata"
 	signozUpdatedMetricsMetadataTable      = "distributed_updated_metadata"
 	minTimespanForProgressiveSearch        = time.Hour
 	minTimespanForProgressiveSearchMargin  = time.Minute
@@ -6473,7 +6474,7 @@ func (r *ClickHouseReader) GetFirstSeenFromMetricMetadata(ctx context.Context, l
 			WHERE (m.metric_name, m.attr_name, m.attr_string_value) IN (%s)
 			GROUP BY m.metric_name, m.attr_name, m.attr_string_value
 			ORDER BY first_seen`,
-			signozMetricDBName, r.metadataTable, strings.Join(valueStrings, ", "))
+			signozMetricDBName, signozMetricsMetadataLocalTable, strings.Join(valueStrings, ", "))
 
 		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 		rows, err := r.db.Query(valueCtx, query, args...)
@@ -6484,7 +6485,7 @@ func (r *ClickHouseReader) GetFirstSeenFromMetricMetadata(ctx context.Context, l
 
 		for rows.Next() {
 			var metricName, attrName, attrValue string
-			var firstSeen int64
+			var firstSeen uint64
 			if err := rows.Scan(&metricName, &attrName, &attrValue, &firstSeen); err != nil {
 				rows.Close()
 				return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error scanning metadata first_seen result: %v", err)}
@@ -6493,7 +6494,7 @@ func (r *ClickHouseReader) GetFirstSeenFromMetricMetadata(ctx context.Context, l
 				MetricName:     metricName,
 				AttributeName:  attrName,
 				AttributeValue: attrValue,
-			}] = firstSeen
+			}] = int64(firstSeen)
 		}
 
 		if err := rows.Err(); err != nil {

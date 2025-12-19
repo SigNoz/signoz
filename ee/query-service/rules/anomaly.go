@@ -212,9 +212,7 @@ func (r *AnomalyRule) filterNewSeries(ctx context.Context, ts time.Time, series 
 	// Convert []*v3.Series to []v3.Series for filtering
 	v3Series := make([]v3.Series, 0, len(series))
 	for _, s := range series {
-		if s != nil {
-			v3Series = append(v3Series, *s)
-		}
+		v3Series = append(v3Series, *s)
 	}
 
 	// Get indexes to skip
