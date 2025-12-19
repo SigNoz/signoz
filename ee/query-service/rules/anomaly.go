@@ -337,7 +337,10 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
 			return nil, filterErr
 		}
-		res = filteredCollection.(*ruletypes.VectorLabelledCollection).Vector()
+		vectorCollection, ok := filteredCollection.(*ruletypes.VectorLabelledCollection)
+		if ok {
+			res = vectorCollection.Vector()
+		}
 	}
 
 	r.mtx.Lock()

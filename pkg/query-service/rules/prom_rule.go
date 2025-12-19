@@ -143,7 +143,10 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
 			return nil, filterErr
 		}
-		res = filteredCollection.(*ruletypes.PromMatrixLabelledCollection).Matrix()
+		matrixCollection, ok := filteredCollection.(*ruletypes.PromMatrixLabelledCollection)
+		if ok {
+			res = matrixCollection.Matrix()
+		}
 	}
 
 	var resultVector ruletypes.Vector
