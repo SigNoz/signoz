@@ -3,6 +3,7 @@ import { Tooltip, Typography } from 'antd';
 import AttributeWithExpandablePopover from './AttributeWithExpandablePopover';
 
 const EXPANDABLE_ATTRIBUTE_KEYS = ['exception.stacktrace', 'exception.message'];
+const ATTRIBUTE_LENGTH_THRESHOLD = 100;
 
 interface EventAttributeProps {
 	attributeKey: string;
@@ -15,7 +16,11 @@ function EventAttribute({
 	attributeValue,
 	onExpand,
 }: EventAttributeProps): JSX.Element {
-	if (EXPANDABLE_ATTRIBUTE_KEYS.includes(attributeKey)) {
+	const shouldExpand =
+		EXPANDABLE_ATTRIBUTE_KEYS.includes(attributeKey) ||
+		attributeValue.length > ATTRIBUTE_LENGTH_THRESHOLD;
+
+	if (shouldExpand) {
 		return (
 			<AttributeWithExpandablePopover
 				attributeKey={attributeKey}

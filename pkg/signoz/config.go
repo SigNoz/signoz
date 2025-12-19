@@ -18,7 +18,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -38,6 +40,9 @@ import (
 
 // Config defines the entire input configuration of signoz.
 type Config struct {
+	// Global config
+	Global global.Config `mapstructure:"global"`
+
 	// Version config
 	Version version.Config `mapstructure:"version"`
 
@@ -97,6 +102,9 @@ type Config struct {
 
 	// Tokenizer config
 	Tokenizer tokenizer.Config `mapstructure:"tokenizer"`
+
+	// MetricsExplorer config
+	MetricsExplorer metricsexplorer.Config `mapstructure:"metricsexplorer"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
@@ -137,6 +145,7 @@ func (df *DeprecatedFlags) RegisterFlags(cmd *cobra.Command) {
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {
 	configFactories := []factory.ConfigFactory{
+		global.NewConfigFactory(),
 		version.NewConfigFactory(),
 		instrumentation.NewConfigFactory(),
 		analytics.NewConfigFactory(),
@@ -156,6 +165,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		statsreporter.NewConfigFactory(),
 		gateway.NewConfigFactory(),
 		tokenizer.NewConfigFactory(),
+		metricsexplorer.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
@@ -336,12 +346,12 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 	}
 }
 
-func (config Config)Collect(_ context.Context, _ valuer.UUID) (map[string]any, error){
+func (config Config) Collect(_ context.Context, _ valuer.UUID) (map[string]any, error) {
 	stats := make(map[string]any)
 
 	// SQL Store Config Stats
 	stats["config.sqlstore.provider"] = config.SQLStore.Provider
-	
+
 	// Tokenizer Config Stats
 	stats["config.tokenizer.provider"] = config.Tokenizer.Provider
 
