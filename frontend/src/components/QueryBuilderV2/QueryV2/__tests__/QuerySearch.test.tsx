@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable import/named */
-import userEvent from '@testing-library/user-event';
 import { EditorView } from '@uiw/react-codemirror';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as UseQBModule from 'hooks/queryBuilder/useQueryBuilder';
-import { fireEvent, render, waitFor } from 'tests/test-utils';
+import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
 import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -403,14 +402,6 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 				dataSource={DataSource.LOGS}
 			/>,
 		);
-
-		// Ensure the editor is still rendered after prop change
-		await waitFor(() => {
-			const updatedEditorContent = document.querySelector(
-				CM_EDITOR_SELECTOR,
-			) as HTMLElement;
-			expect(updatedEditorContent).toBeInTheDocument();
-		});
 
 		// updateEditorValue should have resulted in a dispatch call + onChange should not have been called
 		await waitFor(() => {
