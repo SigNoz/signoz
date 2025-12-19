@@ -7,11 +7,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -114,6 +116,8 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 		{MetricName: "request_total", AttributeName: "service_name", AttributeValue: "svc-new"}: evalTime.Add(-5 * time.Minute).UnixMilli(),
 	}
 
+	qp := queryparser.New(factory.ProviderSettings{})
+
 	reader := &mockReader{response: firstSeen}
 	baseRule := &BaseRule{
 		ruleCondition: &ruletypes.RuleCondition{
@@ -125,6 +129,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				}},
 			},
 		},
+		queryParser:       qp,
 		newGroupEvalDelay: &delay,
 		reader:            reader,
 		logger:            logger,
