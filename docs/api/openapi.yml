@@ -473,6 +473,49 @@ paths:
       summary: Get reset password token
       tags:
       - users
+  /api/v1/global/config:
+    get:
+      deprecated: false
+      description: This endpoints returns global config
+      operationId: GetGlobalConfig
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesGettableGlobalConfig'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Get global config
+      tags:
+      - global
   /api/v1/invite:
     get:
       deprecated: false
@@ -2143,6 +2186,13 @@ components:
         updatedByUser:
           $ref: '#/components/schemas/TypesUser'
         userId:
+          type: string
+      type: object
+    TypesGettableGlobalConfig:
+      properties:
+        external_url:
+          type: string
+        ingestion_url:
           type: string
       type: object
     TypesInvite:
