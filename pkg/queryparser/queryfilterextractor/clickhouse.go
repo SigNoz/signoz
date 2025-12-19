@@ -2,6 +2,7 @@ package queryfilterextractor
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	clickhouse "github.com/AfterShip/clickhouse-sql-parser/parser"
@@ -86,6 +87,12 @@ func (e *ClickHouseFilterExtractor) Extract(query string) (*FilterResult, error)
 	for _, colInfo := range groupByColumnsMap {
 		result.GroupByColumns = append(result.GroupByColumns, colInfo)
 	}
+
+	// Sort the metric names and group by columns to return deterministic results
+	sort.Strings(result.MetricNames)
+	sort.Slice(result.GroupByColumns, func(i, j int) bool {
+		return result.GroupByColumns[i].Name < result.GroupByColumns[j].Name
+	})
 
 	return result, nil
 }

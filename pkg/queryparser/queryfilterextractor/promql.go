@@ -1,6 +1,8 @@
 package queryfilterextractor
 
 import (
+	"sort"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
@@ -44,6 +46,12 @@ func (e *PromQLFilterExtractor) Extract(query string) (*FilterResult, error) {
 	for groupKey := range visitor.groupBy {
 		result.GroupByColumns = append(result.GroupByColumns, ColumnInfo{Name: groupKey, OriginExpr: groupKey, OriginField: groupKey})
 	}
+
+	// Sort the metric names and group by columns to return deterministic results
+	sort.Strings(result.MetricNames)
+	sort.Slice(result.GroupByColumns, func(i, j int) bool {
+		return result.GroupByColumns[i].Name < result.GroupByColumns[j].Name
+	})
 
 	return result, nil
 }
