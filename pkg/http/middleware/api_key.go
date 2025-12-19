@@ -132,7 +132,7 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 				Where("revoked = false").
 				Exec(lastUsedCtx)
 			if err != nil {
-				a.logger.ErrorContext(r.Context(), "failed to update last used of api key", "error", err)
+				a.logger.ErrorContext(lastUsedCtx, "failed to update last used of api key", "error", err)
 			}
 
 			return true, nil
