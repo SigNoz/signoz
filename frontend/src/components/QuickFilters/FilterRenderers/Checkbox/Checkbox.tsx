@@ -369,13 +369,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										query.filters.items = query.filters.items.filter(
 											(item) => !isEqual(item.key?.key, filter.attributeKey.key),
 										);
-
-										if (query.filter?.expression) {
-											query.filter.expression = removeKeysFromExpression(
-												query.filter.expression,
-												[filter.attributeKey.key],
-											);
-										}
 									} else {
 										query.filters.items = query.filters.items.map((item) => {
 											if (isEqual(item.key?.key, filter.attributeKey.key)) {
@@ -389,12 +382,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 									query.filters.items = query.filters.items.filter(
 										(item) => !isEqual(item.key?.key, filter.attributeKey.key),
 									);
-									if (query.filter?.expression) {
-										query.filter.expression = removeKeysFromExpression(
-											query.filter.expression,
-											[filter.attributeKey.key],
-										);
-									}
 								}
 							}
 							break;
