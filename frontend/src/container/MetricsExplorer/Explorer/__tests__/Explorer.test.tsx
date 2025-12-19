@@ -22,7 +22,9 @@ import * as useGetMetricsHooks from '../utils';
 
 const mockSetSearchParams = jest.fn();
 const queryClient = new QueryClient();
-const mockUpdateAllQueriesOperators = jest.fn();
+const mockUpdateAllQueriesOperators = jest
+	.fn()
+	.mockReturnValue(initialQueriesMap[DataSource.METRICS]);
 const mockUseQueryBuilderData = {
 	handleRunQuery: jest.fn(),
 	stagedQuery: initialQueriesMap[DataSource.METRICS],
@@ -131,7 +133,6 @@ jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 } as any);
 
 const Y_AXIS_UNIT_SELECTOR_TEST_ID = 'y-axis-unit-selector';
-const SECONDS_UNIT_LABEL = 'Seconds (s)';
 
 const mockMetric: MetricMetadata = {
 	type: MetricType.SUM,
@@ -214,7 +215,7 @@ describe('Explorer', () => {
 		expect(toggle).not.toBeChecked();
 	});
 
-	it('should render pre-populated y axis unit for single metric', () => {
+	it('should not render y axis unit selector for single metric which has a unit', () => {
 		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
@@ -223,12 +224,11 @@ describe('Explorer', () => {
 
 		renderExplorer();
 
-		const yAxisUnitSelector = screen.getByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
-		expect(yAxisUnitSelector).toBeInTheDocument();
-		expect(yAxisUnitSelector).toHaveTextContent(SECONDS_UNIT_LABEL);
+		const yAxisUnitSelector = screen.queryByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
+		expect(yAxisUnitSelector).not.toBeInTheDocument();
 	});
 
-	it('should render pre-populated y axis unit for mutliple metrics with same unit', () => {
+	it('should not render y axis unit selector for mutliple metrics with same unit', () => {
 		(useSearchParams as jest.Mock).mockReturnValueOnce([
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'true' }),
 			mockSetSearchParams,
@@ -241,13 +241,8 @@ describe('Explorer', () => {
 
 		renderExplorer();
 
-		const yAxisUnitSelector = screen.getByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
-		expect(yAxisUnitSelector).toBeInTheDocument();
-		expect(yAxisUnitSelector).toHaveTextContent(SECONDS_UNIT_LABEL);
-
-		// One chart per query switch should be enabled
-		const oneChartPerQueryToggle = screen.getByRole('switch');
-		expect(oneChartPerQueryToggle).toBeChecked();
+		const yAxisUnitSelector = screen.queryByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
+		expect(yAxisUnitSelector).not.toBeInTheDocument();
 	});
 
 	it('should hide y axis unit selector for multiple metrics with different units', () => {
@@ -271,7 +266,15 @@ describe('Explorer', () => {
 		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
-			metrics: [mockMetric],
+			metrics: [
+				{
+					type: MetricType.SUM,
+					description: 'metric1 description',
+					unit: '',
+					temporality: Temporality.CUMULATIVE,
+					isMonotonic: true,
+				},
+			],
 		});
 
 		renderExplorer();
