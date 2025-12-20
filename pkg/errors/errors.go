@@ -112,7 +112,7 @@ func (b *base) WithUrl(u string) *base {
 	}
 }
 
-// WithUrl adds additional messages to the base error and returns a new base error.
+// WithAdditional adds additional messages to the base error and returns a new base error.
 func (b *base) WithAdditional(a ...string) *base {
 	return &base{
 		t: b.t,
