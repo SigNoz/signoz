@@ -14,7 +14,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 // interfaces
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
@@ -125,10 +125,11 @@ function ListLogView({
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
-	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		logData.id,
 	);
+	const isReadOnlyLog = !isLogsExplorerPage;
+
 	const {
 		activeLog: activeContextLog,
 		onAddToQuery: handleAddToQuery,
@@ -184,14 +185,6 @@ function ListLogView({
 
 	const logType = getLogIndicatorType(logData);
 
-	const handleMouseEnter = (): void => {
-		setHasActionButtons(true);
-	};
-
-	const handleMouseLeave = (): void => {
-		setHasActionButtons(false);
-	};
-
 	return (
 		<>
 			<Container
@@ -202,8 +195,6 @@ function ListLogView({
 				}
 				$isDarkMode={isDarkMode}
 				$logType={logType}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
 				onClick={handleDetailedView}
 				fontSize={fontSize}
 			>
@@ -255,7 +246,7 @@ function ListLogView({
 					</div>
 				</div>
 
-				{hasActionButtons && isLogsExplorerPage && (
+				{!isReadOnlyLog && (
 					<LogLinesActionButtons
 						handleShowContext={handleShowContext}
 						onLogCopy={onLogCopy}
@@ -283,4 +274,4 @@ LogGeneralField.defaultProps = {
 	linesPerRow: 1,
 };
 
-export default ListLogView;
+export default memo(ListLogView);

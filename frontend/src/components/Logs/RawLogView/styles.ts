@@ -30,6 +30,10 @@ export const RawLogViewContainer = styled(Row)<{
 
 	transition: background-color 0.2s ease-in;
 
+	&:not(:hover) .log-line-action-buttons {
+		display: none;
+	}
+
 	.log-state-indicator {
 		margin: 4px 0;
 
