@@ -1,0 +1,19 @@
+{
+  "name": "otel-demo-app",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "api-gateway",
+    "service-a",
+    "service-b"
+  ],
+  "scripts": {
+    "start": "concurrently \"node service-b/index.js\" \"node service-a/index.js\" \"node api-gateway/index.js\" --names \"service-b,service-a,api-gateway\" --prefix-colors \"blue,green,yellow\"",
+    "start:debug": "concurrently \"OTEL_DEBUG=true node service-b/index.js\" \"OTEL_DEBUG=true node service-a/index.js\" \"OTEL_DEBUG=true node api-gateway/index.js\" --names \"service-b,service-a,api-gateway\" --prefix-colors \"blue,green,yellow\"",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "concurrently": "9.2.1"
+  }
+}
+

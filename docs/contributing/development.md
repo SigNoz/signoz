@@ -133,3 +133,33 @@ curl -X POST http://localhost:4318/v1/traces \
   -H "Content-Type: application/json" \
   -d '{"resourceSpans":[{"resource":{"attributes":[{"key":"service.name","value":{"stringValue":"test-service"}}]},"scopeSpans":[{"spans":[{"traceId":"12345678901234567890123456789012","spanId":"1234567890123456","name":"test-span","startTimeUnixNano":"1609459200000000000","endTimeUnixNano":"1609459201000000000"}]}]}]}'
 ```
+
+## How to stop the development environment?
+
+```bash
+make devenv-stop
+```
+
+This command will stop the development environment, this will not remove or delete any container, data or images.
+
+## How to uninstall the development environment?
+
+```bash
+make devenv-down
+```
+
+This command will stop and remove the development environment, including the data stored in Clickhouse, Postgres and volumes mounted to the containers. This command also removes the images used in the containers.
+
+> 💡 **Warning**: Do not use this command if you are not sure about the consequences.
+
+## Demo App with JavaScript
+
+We have a demo app with JavaScript that you can use to send telemetry data to your local SigNoz instance.
+
+```bash
+cd docs/demo-app
+yarn install
+yarn start
+```
+
+This will start the demo app, you can then send an HTTP request to the demo app to send telemetry data to your local SigNoz instance. You can find more information about the demo app in the [Demo App with JavaScript](../../docs/demo-app/README.md) documentation.

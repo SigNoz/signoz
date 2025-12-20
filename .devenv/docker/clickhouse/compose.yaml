@@ -8,8 +8,8 @@ services:
       - ${PWD}/fs/tmp/var/lib/clickhouse/:/var/lib/clickhouse/
       - ${PWD}/fs/tmp/var/lib/clickhouse/user_scripts/:/var/lib/clickhouse/user_scripts/
     ports:
-      - '127.0.0.1:8123:8123'
-      - '127.0.0.1:9000:9000'
+      - '8123:8123'
+      - '9000:9000'
     tty: true
     healthcheck:
       test:
@@ -25,6 +25,8 @@ services:
       - zookeeper
     environment:
       - CLICKHOUSE_SKIP_USER_SETUP=1
+    networks:
+      - signoz-devenv
   zookeeper:
     image: signoz/zookeeper:3.7.1
     container_name: zookeeper
@@ -41,6 +43,8 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    networks:
+      - signoz-devenv
   schema-migrator-sync:
     image: signoz/signoz-schema-migrator:v0.129.12
     container_name: schema-migrator-sync
@@ -54,6 +58,8 @@ services:
       clickhouse:
         condition: service_healthy
     restart: on-failure
+    networks:
+      - signoz-devenv
   schema-migrator-async:
     image: signoz/signoz-schema-migrator:v0.129.12
     container_name: schema-migrator-async
@@ -69,3 +75,10 @@ services:
       schema-migrator-sync:
         condition: service_completed_successfully
     restart: on-failure
+    networks:
+      - signoz-devenv
+
+networks:
+  signoz-devenv:
+    external: true
+    name: signoz-devenv
