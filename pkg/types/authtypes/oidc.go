@@ -34,6 +34,12 @@ type OIDCConfig struct {
 type ClaimMapping struct {
 	// Configurable key which contains the email claims. Defaults to "email"
 	Email string `json:"email"`
+	// Configuration key which contains the name. Defaults to "name"
+	Name string `json:"name"`
+	// Configuration key which contains the name. Defaults to "groups" (Optional)
+	Groups string `json:"groups"`
+	// Configuration key which contains the name. Defaults to "role" (Optional)
+	Role string `json:"role"`
 }
 
 func (config *OIDCConfig) UnmarshalJSON(data []byte) error {

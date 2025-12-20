@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, List
 from urllib.parse import urljoin
 from xml.etree import ElementTree
 
@@ -25,6 +25,15 @@ def create_saml_client(
             password=IDP_ROOT_PASSWORD,
             realm_name="master",
         )
+
+        # DELETE existing client if it exists (to ensure mappers are updated)
+        saml_client_id = f"{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
+        try:
+            existing_client_id = client.get_client_id(client_id=saml_client_id)
+            if existing_client_id:
+                client.delete_client(existing_client_id)
+        except Exception:
+            pass  # Client doesn't exist, that's fine
 
         client.create_client(
             skip_exists=True,
@@ -114,6 +123,31 @@ def create_saml_client(
                             "attribute.name": "Role",
                         },
                     },
+                    {
+                        "name": "groups",
+                        "protocol": "saml",
+                        "protocolMapper": "saml-group-membership-mapper",
+                        "consentRequired": False,
+                        "config": {
+                            "full.path": "false",
+                            "attribute.nameformat": "Basic",
+                            "single": "true", # ! this was changed to true as we need the groups in the single attribute section
+                            "friendly.name": "groups",
+                            "attribute.name": "groups",
+                        },
+                    },
+                    {
+                        "name": "role attribute",
+                        "protocol": "saml",
+                        "protocolMapper": "saml-user-attribute-mapper",
+                        "consentRequired": False,
+                        "config": {
+                            "attribute.nameformat": "Basic",
+                            "user.attribute": "signoz_role",
+                            "friendly.name": "signoz_role",
+                            "attribute.name": "signoz_role",
+                        },
+                    },
                 ],
                 "defaultClientScopes": ["saml_organization", "role_list"],
                 "optionalClientScopes": [],
@@ -163,6 +197,16 @@ def create_oidc_client(
             realm_name="master",
         )
 
+        _ensure_groups_client_scope(client)
+
+        # DELETE existing client if it exists (to ensure redirect URIs are updated)
+        try:
+            existing_client_id = client.get_client_id(client_id=client_id)
+            if existing_client_id:
+                client.delete_client(existing_client_id)
+        except Exception:
+            pass  # Client doesn't exist, that's fine
+
         client.create_client(
             skip_exists=True,
             payload={
@@ -208,6 +252,7 @@ def create_oidc_client(
                     "profile",
                     "basic",
                     "email",
+                    "groups",
                 ],
                 "optionalClientScopes": [
                     "address",
@@ -333,3 +378,248 @@ def idp_login(driver: webdriver.Chrome) -> Callable[[str, str], None]:
         wait.until(EC.invisibility_of_element((By.ID, "kc-login")))
 
     return _idp_login
+
+
+@pytest.fixture(name="create_group_idp", scope="function")
+def create_group_idp(idp: types.TestContainerIDP) -> Callable[[str], str]:
+    """Creates a group in Keycloak IDP."""
+    client = KeycloakAdmin(
+        server_url=idp.container.host_configs["6060"].base(),
+        username=IDP_ROOT_USERNAME,
+        password=IDP_ROOT_PASSWORD,
+        realm_name="master",
+    )
+
+    created_groups = []
+
+    def _create_group_idp(group_name: str) -> str:
+        group_id = client.create_group({"name": group_name}, skip_exists=True)
+        created_groups.append(group_id)
+        return group_id
+
+    yield _create_group_idp
+
+    for group_id in created_groups:
+        try:
+            client.delete_group(group_id)
+        except Exception:
+            pass
+
+
+@pytest.fixture(name="create_user_idp_with_groups", scope="function")
+def create_user_idp_with_groups(
+    idp: types.TestContainerIDP,
+    create_group_idp: Callable[[str], str],
+) -> Callable[[str, str, bool, List[str]], None]:
+    """Creates a user in Keycloak IDP with specified groups."""
+    client = KeycloakAdmin(
+        server_url=idp.container.host_configs["6060"].base(),
+        username=IDP_ROOT_USERNAME,
+        password=IDP_ROOT_PASSWORD,
+        realm_name="master",
+    )
+
+    created_users = []
+
+    def _create_user_idp_with_groups(
+        email: str, password: str, verified: bool, groups: List[str]
+    ) -> None:
+        # Create groups first
+        group_ids = []
+        for group_name in groups:
+            group_id = create_group_idp(group_name)
+            group_ids.append(group_id)
+
+        # Create user
+        user_id = client.create_user(
+            exist_ok=False,
+            payload={
+                "username": email,
+                "email": email,
+                "enabled": True,
+                "emailVerified": verified,
+            },
+        )
+        client.set_user_password(user_id, password, temporary=False)
+        created_users.append(user_id)
+
+        # Add user to groups
+        for group_id in group_ids:
+            client.group_user_add(user_id, group_id)
+
+    yield _create_user_idp_with_groups
+
+    for user_id in created_users:
+        try:
+            break
+            client.delete_user(user_id)
+        except Exception:
+            pass
+
+
+@pytest.fixture(name="add_user_to_group", scope="function")
+def add_user_to_group(
+    idp: types.TestContainerIDP,
+    create_group_idp: Callable[[str], str],
+) -> Callable[[str, str], None]:
+    """Adds an existing user to a group."""
+    client = KeycloakAdmin(
+        server_url=idp.container.host_configs["6060"].base(),
+        username=IDP_ROOT_USERNAME,
+        password=IDP_ROOT_PASSWORD,
+        realm_name="master",
+    )
+
+    def _add_user_to_group(email: str, group_name: str) -> None:
+        user_id = client.get_user_id(email)
+        group_id = create_group_idp(group_name)
+        client.group_user_add(user_id, group_id)
+
+    return _add_user_to_group
+
+
+@pytest.fixture(name="create_user_idp_with_role", scope="function")
+def create_user_idp_with_role(
+    idp: types.TestContainerIDP,
+    create_group_idp: Callable[[str], str],
+) -> Callable[[str, str, bool, str, List[str]], None]:
+    """Creates a user in Keycloak IDP with a custom role attribute and optional groups."""
+    client = KeycloakAdmin(
+        server_url=idp.container.host_configs["6060"].base(),
+        username=IDP_ROOT_USERNAME,
+        password=IDP_ROOT_PASSWORD,
+        realm_name="master",
+    )
+
+    created_users = []
+
+    def _create_user_idp_with_role(
+        email: str, password: str, verified: bool, role: str, groups: List[str]
+    ) -> None:
+        # Create groups first
+        group_ids = []
+        for group_name in groups:
+            group_id = create_group_idp(group_name)
+            group_ids.append(group_id)
+
+        # Create user with role attribute
+        user_id = client.create_user(
+            exist_ok=False,
+            payload={
+                "username": email,
+                "email": email,
+                "enabled": True,
+                "emailVerified": verified,
+                "attributes": {
+                    "signoz_role": role,
+                },
+            },
+        )
+        client.set_user_password(user_id, password, temporary=False)
+        created_users.append(user_id)
+
+        # Add user to groups
+        for group_id in group_ids:
+            client.group_user_add(user_id, group_id)
+
+    yield _create_user_idp_with_role
+
+    for user_id in created_users:
+        try:
+            break
+            client.delete_user(user_id)
+        except Exception:
+            pass
+
+
+@pytest.fixture(name="setup_user_profile", scope="package")
+def setup_user_profile(idp: types.TestContainerIDP) -> Callable[[], None]:
+    """Setup Keycloak User Profile with signoz_role attribute."""
+    def _setup_user_profile() -> None:
+        client = KeycloakAdmin(
+            server_url=idp.container.host_configs["6060"].base(),
+            username=IDP_ROOT_USERNAME,
+            password=IDP_ROOT_PASSWORD,
+            realm_name="master",
+        )
+        
+        # Get current user profile config
+        profile = client.get_realm_users_profile()
+        
+        # Check if signoz_role attribute already exists
+        attributes = profile.get("attributes", [])
+        signoz_role_exists = any(attr.get("name") == "signoz_role" for attr in attributes)
+        
+        if not signoz_role_exists:
+            # Add signoz_role attribute to user profile
+            attributes.append({
+                "name": "signoz_role",
+                "displayName": "SigNoz Role",
+                "validations": {},
+                "annotations": {},
+                # "required": {
+                #     "roles": []  # Not required
+                # },
+                "permissions": {
+                    "view": ["admin", "user"],
+                    "edit": ["admin"]
+                },
+                "multivalued": False
+            })
+            profile["attributes"] = attributes
+            
+            # Update the realm user profile
+            client.update_realm_users_profile(payload=profile)
+    
+    return _setup_user_profile
+
+
+def _ensure_groups_client_scope(client: KeycloakAdmin) -> None:
+    """Create 'groups' client scope if it doesn't exist."""
+    # Check if groups scope exists
+    scopes = client.get_client_scopes()
+    groups_scope_exists = any(s.get("name") == "groups" for s in scopes)
+    
+    if not groups_scope_exists:
+        # Create the groups client scope
+        client.create_client_scope(
+            payload={
+                "name": "groups",
+                "description": "Group membership",
+                "protocol": "openid-connect",
+                "attributes": {
+                    "include.in.token.scope": "true",
+                    "display.on.consent.screen": "true",
+                },
+                "protocolMappers": [
+                    {
+                        "name": "groups",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-group-membership-mapper",
+                        "consentRequired": False,
+                        "config": {
+                            "full.path": "false",
+                            "id.token.claim": "true",
+                            "access.token.claim": "true",
+                            "claim.name": "groups",
+                            "userinfo.token.claim": "true",
+                        },
+                    },
+                    {
+                        "name": "signoz_role",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-usermodel-attribute-mapper",
+                        "consentRequired": False,
+                        "config": {
+                            "user.attribute": "signoz_role",
+                            "id.token.claim": "true",
+                            "access.token.claim": "true",
+                            "claim.name": "signoz_role",
+                            "userinfo.token.claim": "true",
+                            "jsonType.label": "String",
+                        },
+                    },
+                ],
+            },
+            skip_exists=True,
+        )

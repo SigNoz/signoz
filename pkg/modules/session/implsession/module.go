@@ -2,6 +2,7 @@ package implsession
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"slices"
 	"strings"
@@ -123,7 +124,7 @@ func (module *module) DeprecatedCreateSessionByEmailPassword(ctx context.Context
 	}
 
 	if !factorPassword.Equals(password) {
-		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email orpassword")
+		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email or password")
 	}
 
 	identity := authtypes.NewIdentity(users[0].ID, users[0].OrgID, users[0].Email, users[0].Role)
@@ -151,13 +152,33 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", err
 	}
 
+	module.settings.Logger().InfoContext(ctx, "$$$$$$$$$$$$$$ callback values %%%%%%%%%%%%%%", "values", values)
+
 	callbackIdentity, err := callbackAuthN.HandleCallback(ctx, values)
 	if err != nil {
 		module.settings.Logger().ErrorContext(ctx, "failed to handle callback", "error", err, "authn_provider", authNProvider)
 		return "", err
 	}
 
-	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, types.RoleViewer, callbackIdentity.OrgID)
+	authDomain, err := module.authDomain.GetByOrgIDAndID(ctx, callbackIdentity.OrgID, callbackIdentity.State.DomainID)
+	if err != nil {
+		return "", err
+	}
+
+	roleMapping := authDomain.AuthDomainConfig().RoleMapping
+
+	// DEBUG: Add this line to print the callback identity
+	module.settings.Logger().InfoContext(ctx, "$$$$$$$$$$$$$$$$ DEBUG callback identity ###############",
+		"email", callbackIdentity.Email,
+		"name", callbackIdentity.Name,
+		"groups", callbackIdentity.Groups,
+		"role", callbackIdentity.Role,
+		"orgID", callbackIdentity.OrgID,
+	)
+
+	role := resolveRole(callbackIdentity, roleMapping)
+
+	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, role, callbackIdentity.OrgID)
 	if err != nil {
 		return "", err
 	}
@@ -230,4 +251,60 @@ func getProvider[T authn.AuthN](authNProvider authtypes.AuthNProvider, authNs ma
 	}
 
 	return provider, nil
+}
+
+func resolveRole(callbackIdentity *authtypes.CallbackIdentity, roleMapping *authtypes.RoleMapping) types.Role {
+
+	// DEBUG: Print all assertion values to see what's being received
+	fmt.Printf("\n=== DEBUG: callback identity values ===\n")
+	fmt.Printf("callbackIdentity.Name - %s", callbackIdentity.Name)
+	fmt.Printf("callbackIdentity.Role - %s", callbackIdentity.Role)
+	fmt.Printf("=================================\n\n")
+
+	if roleMapping == nil {
+		return types.RoleViewer
+	}
+
+	if roleMapping.UseRoleAttribute && callbackIdentity.Role != "" {
+		if role, err := types.NewRole(strings.ToUpper(callbackIdentity.Role)); err == nil {
+			return role
+		}
+	}
+
+	if len(roleMapping.GroupMappings) > 0 && len(callbackIdentity.Groups) > 0 {
+		highestRole := types.RoleViewer
+		found := false
+
+		for _, group := range callbackIdentity.Groups {
+			if mappedRole, exists := roleMapping.GroupMappings[group]; exists {
+				found = true
+				if role, err := types.NewRole(strings.ToUpper(mappedRole)); err == nil {
+					if compareRoles(role, highestRole) > 0 {
+						highestRole = role
+					}
+				}
+			}
+		}
+
+		if found {
+			return highestRole
+		}
+	}
+
+	if roleMapping.DefaultRole != "" {
+		if role, err := types.NewRole(strings.ToUpper(roleMapping.DefaultRole)); err == nil {
+			return role
+		}
+	}
+
+	return types.RoleViewer
+}
+
+func compareRoles(a, b types.Role) int {
+	order := map[types.Role]int{
+		types.RoleViewer: 0,
+		types.RoleEditor: 1,
+		types.RoleAdmin:  2,
+	}
+	return order[a] - order[b]
 }

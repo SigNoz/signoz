@@ -20,6 +20,18 @@ type SamlConfig struct {
 	// For providers like jumpcloud, this should be set to true.
 	// Note: This is the reverse of WantAuthnRequestsSigned. If WantAuthnRequestsSigned is false, then InsecureSkipAuthNRequestsSigned should be true.
 	InsecureSkipAuthNRequestsSigned bool `json:"insecureSkipAuthNRequestsSigned"`
+
+	// Mapping of SAML assertion attributes
+	AttributeMapping *SamlAttributeMapping `json:"samlAttributeMapping"`
+}
+
+type SamlAttributeMapping struct {
+	// SAML attribute name for display name
+	Name string `json:"name"`
+	// SAML attribute name for groups
+	Groups string `json:"groups"`
+	// SAML attribute name for direct role
+	Role string `json:"role"`
 }
 
 func (config *SamlConfig) UnmarshalJSON(data []byte) error {

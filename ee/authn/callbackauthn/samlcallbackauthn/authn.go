@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -87,6 +88,14 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 		return nil, err
 	}
 
+	// DEBUG: Print all assertion values to see what's being received
+	fmt.Printf("\n=== DEBUG: All assertion values ===\n")
+	for key, attr := range assertionInfo.Values {
+		fmt.Printf("  Key: %q, Name: %q, FriendlyName: %q, Values: %v\n",
+			key, attr.Name, attr.FriendlyName, attr.Values)
+	}
+	fmt.Printf("=================================\n\n")
+
 	if assertionInfo.WarningInfo.InvalidTime {
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "saml: expired saml response")
 	}
@@ -96,7 +105,30 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: invalid email").WithAdditional("The nameID assertion is used to retrieve the email address, please check your IDP configuration and try again.")
 	}
 
-	return authtypes.NewCallbackIdentity("", email, authDomain.StorableAuthDomain().OrgID, state), nil
+	name := ""
+	var groups []string
+	role := ""
+
+	attributeMapping := authDomain.AuthDomainConfig().SAML.AttributeMapping
+	if attributeMapping != nil {
+		if attributeMapping.Name != "" {
+			if val := assertionInfo.Values.Get(attributeMapping.Name); val != "" {
+				name = val
+			}
+		}
+
+		if attributeMapping.Groups != "" {
+			groups = assertionInfo.Values.GetAll(attributeMapping.Groups)
+		}
+
+		if attributeMapping.Role != "" {
+			if val := assertionInfo.Values.Get(attributeMapping.Role); val != "" {
+				role = val
+			}
+		}
+	}
+
+	return authtypes.NewCallbackIdentity(name, email, authDomain.StorableAuthDomain().OrgID, state, groups, role), nil
 }
 
 func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDomain) *authtypes.AuthNProviderInfo {
