@@ -971,7 +971,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 
 			// collect the intervals for service for execution time calculation
 			serviceNameIntervalMap[jsonItem.ServiceName] =
-				append(serviceNameIntervalMap[jsonItem.ServiceName], tracedetail.Interval{StartTime: jsonItem.TimeUnixNano, Duration: jsonItem.DurationNano / 1000000, Service: jsonItem.ServiceName})
+				append(serviceNameIntervalMap[jsonItem.ServiceName], tracedetail.Interval{StartTime: jsonItem.TimeUnixNano, Duration: jsonItem.DurationNano, Service: jsonItem.ServiceName})
 
 			// append to the span node map
 			spanIdToSpanNodeMap[jsonItem.SpanID] = &jsonItem
@@ -1049,11 +1049,21 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	selectedSpans, uncollapsedSpans, rootServiceName, rootServiceEntryPoint := tracedetail.GetSelectedSpans(req.UncollapsedSpans, req.SelectedSpanID, traceRoots, spanIdToSpanNodeMap, req.IsSelectedSpanIDUnCollapsed)
 	zap.L().Info("getWaterfallSpansForTraceWithMetadata: processing post cache", zap.Duration("duration", time.Since(processingPostCache)), zap.String("traceID", traceID))
 
-	// convert start timestamp to millis because right now frontend is expecting it in millis
+	// Make sure cached data is not converted again
+	needsConversionToMillis := false
+	// only convert if the timestamp is in nanoseconds (because old cache might have millis timestamps)
 	for _, span := range selectedSpans {
 		// only convert if the timestamp is in nanoseconds (because old cache might have millis timestamps)
 		if span.TimeUnixNano > 1e15 {
 			span.TimeUnixNano = span.TimeUnixNano / 1000000
+			needsConversionToMillis = true
+		}
+	}
+
+	if needsConversionToMillis {
+		for serviceName, totalDuration := range serviceNameToTotalDurationMap {
+			// convert nanoseconds to milliseconds
+			serviceNameToTotalDurationMap[serviceName] = totalDuration / 1000000
 		}
 	}
 
