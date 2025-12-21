@@ -61,6 +61,58 @@ describe('extractQueryPairs', () => {
 		]);
 	});
 
+	test('should test for filter expression with freeText', () => {
+		const input = "disconnected deployment.env not in ['mq-kafka']";
+		const result = extractQueryPairs(input);
+		expect(result).toEqual([
+			{
+				key: 'disconnected',
+				operator: '',
+				valueList: [],
+				valuesPosition: [],
+				hasNegation: false,
+				isMultiValue: false,
+				value: undefined,
+				position: {
+					keyStart: 0,
+					keyEnd: 11,
+					operatorStart: 0,
+					operatorEnd: 0,
+					negationStart: 0,
+					negationEnd: 0,
+					valueStart: undefined,
+					valueEnd: undefined,
+				},
+				isComplete: false,
+			},
+			{
+				key: 'deployment.env',
+				operator: 'in',
+				value: "['mq-kafka']",
+				valueList: ["'mq-kafka'"],
+				valuesPosition: [
+					{
+						start: 36,
+						end: 45,
+					},
+				],
+				hasNegation: true,
+				isMultiValue: true,
+				position: {
+					keyStart: 13,
+					keyEnd: 26,
+					operatorStart: 32,
+					operatorEnd: 33,
+					valueStart: 35,
+					valueEnd: 46,
+					negationStart: 28,
+					negationEnd: 30,
+				},
+				isComplete: true,
+			},
+		]);
+	});
+
 	test('should extract IN with numeric list inside parentheses', () => {
 		const input = 'id IN (1, 2, 3)';
 		const result = extractQueryPairs(input);
