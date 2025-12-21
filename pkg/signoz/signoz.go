@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/sqlroutingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authn/authnstore/sqlauthnstore"
 	"github.com/SigNoz/signoz/pkg/authz"
@@ -54,6 +55,7 @@ type SigNoz struct {
 	Prometheus             prometheus.Prometheus
 	Alertmanager           alertmanager.Alertmanager
 	Querier                querier.Querier
+	APIServer              apiserver.APIServer
 	Zeus                   zeus.Zeus
 	Licensing              licensing.Licensing
 	Emailing               emailing.Emailing
@@ -343,11 +345,34 @@ func New(
 		telemetrymetadata.AttributesMetadataLocalTableName,
 	)
 
+	global, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Global,
+		NewGlobalProviderFactories(),
+		"signoz",
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings, querier, licensing)
+	handlers := NewHandlers(modules, providerSettings, querier, licensing, global)
+
+	// Initialize the API server
+	apiserver, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.APIServer,
+		NewAPIServerProviderFactories(orgGetter, authz, global, modules, handlers),
+		"signoz",
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// Create a list of all stats collectors
 	statsCollectors := []statsreporter.StatsCollector{
@@ -399,6 +424,7 @@ func New(
 		Prometheus:             prometheus,
 		Alertmanager:           alertmanager,
 		Querier:                querier,
+		APIServer:              apiserver,
 		Zeus:                   zeus,
 		Licensing:              licensing,
 		Emailing:               emailing,

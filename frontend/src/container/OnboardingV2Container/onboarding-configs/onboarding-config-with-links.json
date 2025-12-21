@@ -516,6 +516,8 @@
 			"falcon",
 			"fastapi",
 			"flask",
+			"celery",
+			"gunicorn",
 			"monitor python application",
 			"monitor python backend",
 			"opentelemetry python",
@@ -540,134 +542,33 @@
 		],
 		"id": "python",
 		"question": {
-			"desc": "Which Python framework do you use?",
+			"desc": "What is your Environment?",
 			"type": "select",
-			"entityID": "framework",
+			"entityID": "environment",
 			"options": [
 				{
-					"key": "flask",
-					"label": "Flask",
-					"imgUrl": "/Logos/flask.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-flask/",
-					"question": {
-						"desc": "What is your Environment?",
-						"type": "select",
-						"entityID": "environment",
-						"options": [
-							{
-								"key": "vm",
-								"label": "VM",
-								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-flask/"
-							},
-							{
-								"key": "k8s",
-								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-flask/"
-							}
-						]
-					}
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/"
 				},
 				{
-					"key": "django",
-					"label": "Django",
-					"imgUrl": "/Logos/django.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-django/",
-					"question": {
-						"desc": "What is your Environment?",
-						"type": "select",
-						"entityID": "environment",
-						"options": [
-							{
-								"key": "vm",
-								"label": "VM",
-								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-django/"
-							},
-							{
-								"key": "k8s",
-								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-django/"
-							}
-						]
-					}
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/"
 				},
 				{
-					"key": "fastapi",
-					"label": "FastAPI",
-					"imgUrl": "/Logos/fastapi.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-fastapi/",
-					"question": {
-						"desc": "What is your Environment?",
-						"type": "select",
-						"entityID": "environment",
-						"options": [
-							{
-								"key": "vm",
-								"label": "VM",
-								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-fastapi/"
-							},
-							{
-								"key": "k8s",
-								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-fastapi/"
-							}
-						]
-					}
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/"
 				},
 				{
-					"key": "falcon",
-					"label": "Falcon",
-					"imgUrl": "/Logos/falcon.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-falcon/",
-					"question": {
-						"desc": "What is your Environment?",
-						"type": "select",
-						"entityID": "environment",
-						"options": [
-							{
-								"key": "vm",
-								"label": "VM",
-								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-falcon/"
-							},
-							{
-								"key": "k8s",
-								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-falcon/"
-							}
-						]
-					}
-				},
-				{
-					"key": "others",
-					"label": "Others",
-					"imgUrl": "/Logos/python-others.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/",
-					"question": {
-						"desc": "What is your Environment?",
-						"type": "select",
-						"entityID": "environment",
-						"options": [
-							{
-								"key": "vm",
-								"label": "VM",
-								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/"
-							},
-							{
-								"key": "k8s",
-								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/"
-							}
-						]
-					}
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/"
 				}
 			]
 		}
@@ -5422,7 +5323,7 @@
 		"imgUrl": "/Logos/logs.svg",
 		"tags": [
 			"Frontend Monitoring",
-			"logs"	
+			"logs"
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
