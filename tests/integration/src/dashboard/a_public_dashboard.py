@@ -235,3 +235,11 @@ def test_public_dashboard_widget_query_range(
         timeout=2,
     )
     assert resp.status_code == HTTPStatus.BAD_REQUEST
+
+    resp = requests.get(
+        signoz.self.host_configs["8080"].get(
+        f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/1/query_range"
+        ),
+        timeout=2,
+    )
+    assert resp.status_code == HTTPStatus.BAD_REQUEST
