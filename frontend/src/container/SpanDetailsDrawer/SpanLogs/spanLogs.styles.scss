@@ -6,11 +6,10 @@
 		background: rgba(171, 189, 255, 0.04);
 	}
 	&-list-container {
-		&,
+		height: 100%;
+
 		.logs-loading-skeleton {
 			height: 100%;
-		}
-		.logs-loading-skeleton {
 			border: 1px solid var(--bg-slate-500);
 			border-top: none;
 			color: var(--bg-vanilla-400);
