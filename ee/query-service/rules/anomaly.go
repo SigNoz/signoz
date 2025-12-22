@@ -222,6 +222,11 @@ func (r *AnomalyRule) filterNewSeries(ctx context.Context, ts time.Time, series 
 		return nil, filterErr
 	}
 
+	// if no series are skipped, return the original series
+	if len(skipIndexes) == 0 {
+		return series, nil
+	}
+
 	// Create a map of skip indexes for efficient lookup
 	skippedIdxMap := make(map[int]struct{}, len(skipIndexes))
 	for _, idx := range skipIndexes {
