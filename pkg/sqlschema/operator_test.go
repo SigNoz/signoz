@@ -1,7 +1,6 @@
 package sqlschema
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -1141,9 +1140,6 @@ func TestOperatorAlterTable(t *testing.T) {
 				clonedTable := testCase.table.Clone()
 
 				actuals := operator.AlterTable(clonedTable, testCase.uniqueConstraints, testCase.newTable)
-				for _, sql := range actuals {
-					fmt.Println(string(sql))
-				}
 				assert.Equal(t, sqls, actuals)
 				assert.EqualValues(t, testCase.newTable, clonedTable)
 			}
