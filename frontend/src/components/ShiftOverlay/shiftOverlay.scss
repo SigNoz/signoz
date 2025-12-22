@@ -44,23 +44,22 @@
 	}
 
 	&__key {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 
-	min-width: 15px;
-	height: 20px;
+		min-width: 15px;
+		height: 20px;
 
-	border-radius: 4px;
+		border-radius: 4px;
 
-	background-color: var(--bg-slate-100);
+		background-color: var(--bg-slate-100);
 
-	font-size: 12px;
-	font-weight: 500;
-	line-height: 1;
-	color: var(--bg-vanilla-300);
-	flex-shrink: 0;
-
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 1;
+		color: var(--bg-vanilla-300);
+		flex-shrink: 0;
 	}
 }
 

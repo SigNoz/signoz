@@ -77,7 +77,7 @@ describe('Sidebar Toggle Shortcut', () => {
 
 	describe('Global Shortcuts Constants', () => {
 		it('should have the correct shortcut key combination', () => {
-			expect(GlobalShortcuts.ToggleSidebar).toBe('b+shift');
+			expect(GlobalShortcuts.ToggleSidebar).toBe('shift+b');
 		});
 	});
 
