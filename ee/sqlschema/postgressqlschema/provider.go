@@ -2,7 +2,6 @@ package postgressqlschema
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -71,10 +70,11 @@ WHERE
     c.table_name = ?`, string(tableName)).
 		Scan(ctx, &columns)
 	if err != nil {
-		return nil, nil, provider.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "table (%s) not found", tableName)
+		return nil, nil, err
 	}
+
 	if len(columns) == 0 {
-		return nil, nil, sql.ErrNoRows
+		return nil, nil, provider.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "table (%s) not found", tableName)
 	}
 
 	sqlschemaColumns := make([]*sqlschema.Column, 0)
