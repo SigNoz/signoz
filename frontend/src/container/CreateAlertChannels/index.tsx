@@ -80,9 +80,13 @@ function CreateAlertChannels({
      {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
        {{" "}}(
        {{- with .CommonLabels.Remove .GroupLabels.Names }}
+         {{- $first := true -}}
          {{- range $index, $label := .SortedPairs -}}
-           {{ if $index }}, {{ end }}
-           {{- $label.Name }}="{{ $label.Value -}}"
+           {{- if and (ne $label.Name "ruleSource") (ne $label.Name "ruleId") -}}
+             {{- if not $first }}, {{ end -}}
+             {{- $label.Name }}="{{ $label.Value -}}"
+             {{- $first = false -}}
+           {{- end -}}
          {{- end }}
        {{- end -}}
        )
