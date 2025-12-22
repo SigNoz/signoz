@@ -80,9 +80,11 @@ export function KeyboardHotkeysProvider({
 		if (event.repeat) return;
 
 		const target = event.target as HTMLElement;
+		const isCodeMirrorEditor =
+			(target as HTMLElement).closest('.cm-editor') !== null;
 		if (
-			IGNORE_INPUTS.includes(target.tagName.toLowerCase()) ||
-			target.closest('.cm-editor')
+			IGNORE_INPUTS.includes((target as HTMLElement).tagName.toLowerCase()) ||
+			isCodeMirrorEditor
 		) {
 			return;
 		}

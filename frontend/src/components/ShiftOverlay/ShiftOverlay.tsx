@@ -18,7 +18,7 @@ export type CmdAction = {
 
 interface ShortcutProps {
 	label: string;
-	keyHint: string;
+	keyHint: React.ReactNode;
 }
 
 function Shortcut({ label, keyHint }: ShortcutProps): JSX.Element {

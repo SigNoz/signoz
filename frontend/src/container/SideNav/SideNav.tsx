@@ -682,6 +682,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		registerShortcut(GlobalShortcuts.NavigateToTracesFunnel, () =>
 			onClickHandler(ROUTES.TRACES_FUNNELS, null),
 		);
+		registerShortcut(GlobalShortcuts.NavigateToTracesViews, () =>
+			onClickHandler(ROUTES.TRACES_SAVE_VIEWS, null),
+		);
 		registerShortcut(GlobalShortcuts.NavigateToMetricsSummary, () =>
 			onClickHandler(ROUTES.METRICS_EXPLORER, null),
 		);
@@ -706,6 +709,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		registerShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels, () =>
 			onClickHandler(ROUTES.ALL_CHANNELS, null),
 		);
+		registerShortcut(GlobalShortcuts.NavigateToLogsPipelines, () =>
+			onClickHandler(ROUTES.LOGS_PIPELINES, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToLogsViews, () =>
+			onClickHandler(ROUTES.LOGS_SAVE_VIEWS, null),
+		);
 		return (): void => {
 			deregisterShortcut(GlobalShortcuts.NavigateToHome);
 			deregisterShortcut(GlobalShortcuts.NavigateToServices);
@@ -724,6 +733,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsBilling);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsAPIKeys);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels);
+			deregisterShortcut(GlobalShortcuts.NavigateToLogsPipelines);
+			deregisterShortcut(GlobalShortcuts.NavigateToLogsViews);
+			deregisterShortcut(GlobalShortcuts.NavigateToTracesViews);
 		};
 	}, [deregisterShortcut, onClickHandler, registerShortcut]);
 

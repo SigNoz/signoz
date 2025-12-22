@@ -1,34 +1,38 @@
 export const GlobalShortcuts = {
-	NavigateToServices: 's+shift',
-	NavigateToLogs: 'l+shift',
-	NavigateToDashboards: 'd+shift',
-	NavigateToAlerts: 'a+shift',
-	NavigateToExceptions: 'e+shift',
-	NavigateToMessagingQueues: 'q+shift',
-	ToggleSidebar: 'b+shift',
-	NavigateToHome: 'h+shift',
+	NavigateToServices: 'shift+s',
+	NavigateToDashboards: 'shift+d',
+	NavigateToAlerts: 'shift+a',
+	NavigateToExceptions: 'shift+e',
+	NavigateToMessagingQueues: 'shift+q',
+	ToggleSidebar: 'shift+b',
+	NavigateToHome: 'shift+h',
+
+	// logs
+	NavigateToLogs: 'shift+l',
+	NavigateToLogsPipelines: 'shift+l+p',
+	NavigateToLogsViews: 'shift+l+v',
 
 	// traces
-	NavigateToTraces: 't+shift',
-	NavigateToTracesFunnel: 't+f+shift',
+	NavigateToTraces: 'shift+t',
+	NavigateToTracesFunnel: 'shift+t+f',
+	NavigateToTracesViews: 'shift+t+v',
 
 	// metrics
-	NavigateToMetricsSummary: 'm+shift',
-	NavigateToMetricsExplorer: 'm+shift+e',
-	NavigateToMetricsViews: 'm+shift+v',
+	NavigateToMetricsSummary: 'shift+m',
+	NavigateToMetricsExplorer: 'shift+m+e',
+	NavigateToMetricsViews: 'shift+m+v',
 
 	// settings
-	NavigateToSettings: 'g+shift',
-	NavigateToSettingsIngestion: 'g+i+shift',
-	NavigateToSettingsBilling: 'g+b+shift',
-	NavigateToSettingsAPIKeys: 'g+k+shift',
-	NavigateToSettingsNotificationChannels: 'g+n+shift',
+	NavigateToSettings: 'shift+g',
+	NavigateToSettingsIngestion: 'shift+g+i',
+	NavigateToSettingsBilling: 'shift+g+b',
+	NavigateToSettingsAPIKeys: 'shift+g+k',
+	NavigateToSettingsNotificationChannels: 'shift+g+n',
 };
 
 export const GlobalShortcutsName = {
 	NavigateToServices: 'shift+s',
 	NavigateToTraces: 'shift+t',
-	NavigateToLogs: 'shift+l',
 	NavigateToDashboards: 'shift+d',
 	NavigateToAlerts: 'shift+a',
 	NavigateToExceptions: 'shift+e',
@@ -36,6 +40,7 @@ export const GlobalShortcutsName = {
 	ToggleSidebar: 'shift+b',
 	NavigateToHome: 'shift+h',
 	NavigateToTracesFunnel: 'shift+t+f',
+	NavigateToTracesViews: 'shift+t+v',
 	NavigateToMetricsSummary: 'shift+m',
 	NavigateToMetricsExplorer: 'shift+m+e',
 	NavigateToMetricsViews: 'shift+m+v',
@@ -44,6 +49,9 @@ export const GlobalShortcutsName = {
 	NavigateToSettingsBilling: 'shift+g+b',
 	NavigateToSettingsAPIKeys: 'shift+g+k',
 	NavigateToSettingsNotificationChannels: 'shift+g+n',
+	NavigateToLogs: 'shift+l',
+	NavigateToLogsPipelines: 'shift+l+p',
+	NavigateToLogsViews: 'shift+l+v',
 };
 
 export const GlobalShortcutsDescription = {
@@ -57,6 +65,7 @@ export const GlobalShortcutsDescription = {
 	NavigateToMessagingQueues: 'Navigate to Messaging Queues',
 	ToggleSidebar: 'Toggle sidebar visibility',
 	NavigateToTracesFunnel: 'Navigate to Traces Funnel',
+	NavigateToTracesViews: 'Navigate to Traces Views',
 	NavigateToMetricsSummary: 'Navigate to Metrics Summary',
 	NavigateToMetricsExplorer: 'Navigate to Metrics Explorer',
 	NavigateToMetricsViews: 'Navigate to Metrics Views',
@@ -66,4 +75,6 @@ export const GlobalShortcutsDescription = {
 	NavigateToSettingsAPIKeys: 'Navigate to API Keys Settings',
 	NavigateToSettingsNotificationChannels:
 		'Navigate to Notification Channels Settings',
+	NavigateToLogsPipelines: 'Navigate to Logs Pipelines',
+	NavigateToLogsViews: 'Navigate to Logs Views',
 };

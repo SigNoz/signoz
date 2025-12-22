@@ -4,13 +4,11 @@
 	left: 50%;
 	transform: translateX(-50%);
 	z-index: 9999;
-
-	// Critical: never block UI interaction
 	pointer-events: none;
 
 	&__panel {
 		display: flex;
-		gap: 16px;
+		gap: 20px;
 		padding: 8px 12px;
 
 		background: var(--bg-ink-500);
@@ -39,9 +37,30 @@
 		font-family: monospace;
 		font-size: 12px;
 		padding: 2px 6px;
+		display: flex;
 
 		border-radius: 4px;
 		background: var(--bg-slate-100);
+	}
+
+	&__key {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	min-width: 15px;
+	height: 20px;
+
+	border-radius: 4px;
+
+	background-color: var(--bg-slate-100);
+
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1;
+	color: var(--bg-vanilla-300);
+	flex-shrink: 0;
+
 	}
 }
 
