@@ -100,10 +100,14 @@ export function KeyboardHotkeysProvider({
 		pressedKeys.current.add(key);
 
 		if (event.shiftKey) pressedKeys.current.add('shift');
+		if (event.metaKey || event.ctrlKey) pressedKeys.current.add('meta');
+		if (event.altKey) pressedKeys.current.add('alt');
 
 		const combo = normalizeChord(pressedKeys.current);
 
 		if (shortcuts.current[combo]) {
+			event.preventDefault();
+			event.stopPropagation();
 			pendingCombo.current = combo;
 			wasExtended.current = false;
 		}
@@ -116,6 +120,8 @@ export function KeyboardHotkeysProvider({
 		pressedKeys.current.delete(key);
 
 		if (!event.shiftKey) pressedKeys.current.delete('shift');
+		if (!event.metaKey && !event.ctrlKey) pressedKeys.current.delete('meta');
+		if (!event.altKey) pressedKeys.current.delete('alt');
 
 		if (!pendingCombo.current) return;
 
