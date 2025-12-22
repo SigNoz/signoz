@@ -1568,6 +1568,78 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, metric
 	return result, nil
 }
 
+func (t *telemetryMetaStore) FetchTypeMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Type, error) {
+	if len(metricNames) == 0 {
+		return make(map[string]metrictypes.Type), nil
+	}
+
+	result := make(map[string]metrictypes.Type)
+	metricsType, err := t.fetchMetricsType(ctx, metricNames...)
+	if err != nil {
+		return nil, err
+	}
+
+	// For metrics not found in the database, set to UnspecifiedType
+	for _, metricName := range metricNames {
+		if metricType, exists := metricsType[metricName]; exists {
+			result[metricName] = metricType
+			continue
+		}
+		result[metricName] = metrictypes.UnspecifiedType
+	}
+
+	return result, nil
+}
+
+func (t *telemetryMetaStore) fetchMetricsType(ctx context.Context, metricNames ...string) (map[string]metrictypes.Type, error) {
+	result := make(map[string]metrictypes.Type)
+
+	sb := sqlbuilder.Select(
+		"metric_name",
+		"argMax(type, last_reported_unix_milli) as type",
+	).From(t.metricsDBName + "." + t.metricsFieldsTblName)
+
+	sb.Where(sb.In("metric_name", metricNames))
+	sb.GroupBy("metric_name")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	t.logger.DebugContext(ctx, "fetching metric type", "query", query, "args", args)
+
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch metric type")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var metricName, typeStr string
+		if err := rows.Scan(&metricName, &typeStr); err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan type result")
+		}
+
+		var metricType metrictypes.Type
+		switch strings.ToLower(strings.TrimSpace(typeStr)) {
+		case "gauge":
+			metricType = metrictypes.GaugeType
+		case "sum":
+			metricType = metrictypes.SumType
+		case "histogram":
+			metricType = metrictypes.HistogramType
+		case "summary":
+			metricType = metrictypes.SummaryType
+		case "exponentialhistogram":
+			metricType = metrictypes.ExpHistogramType
+		default:
+			metricType = metrictypes.UnspecifiedType
+		}
+
+		result[metricName] = metricType
+	}
+
+	return result, nil
+}
+
 func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
 	result := make(map[string]metrictypes.Temporality)
 

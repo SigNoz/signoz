@@ -30,4 +30,7 @@ type MetadataStore interface {
 
 	// FetchTemporalityMulti fetches the temporality for multiple metrics
 	FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error)
+
+	// FetchTypeMulti fetches the type for multiple metrics (e.g., Gauge, Sum, Histogram, ExponentialHistogram)
+	FetchTypeMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Type, error)
 }
