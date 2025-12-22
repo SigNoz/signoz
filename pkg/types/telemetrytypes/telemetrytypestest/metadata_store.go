@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // MockMetadataStore implements the MetadataStore interface for testing purposes
@@ -258,7 +259,7 @@ func (m *MockMetadataStore) SetAllValues(lookupKey string, values *telemetrytype
 }
 
 // FetchTemporality fetches the temporality for a metric
-func (m *MockMetadataStore) FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error) {
+func (m *MockMetadataStore) FetchTemporality(ctx context.Context, orgID valuer.UUID, metricName string) (metrictypes.Temporality, error) {
 	if temporality, exists := m.TemporalityMap[metricName]; exists {
 		return temporality, nil
 	}
@@ -266,7 +267,7 @@ func (m *MockMetadataStore) FetchTemporality(ctx context.Context, metricName str
 }
 
 // FetchTemporalityMulti fetches the temporality for multiple metrics
-func (m *MockMetadataStore) FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+func (m *MockMetadataStore) FetchTemporalityMulti(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]metrictypes.Temporality, error) {
 	result := make(map[string]metrictypes.Temporality)
 
 	for _, metricName := range metricNames {

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -25,10 +26,12 @@ type API struct {
 func NewAPI(
 	settings factory.ProviderSettings,
 	telemetryStore telemetrystore.TelemetryStore,
+	cache cache.Cache,
 ) *API {
 	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
 		settings,
 		telemetryStore,
+		cache,
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,
 		telemetrytraces.SpanAttributesKeysTblName,
