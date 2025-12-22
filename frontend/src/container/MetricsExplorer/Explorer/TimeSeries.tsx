@@ -69,7 +69,8 @@ function TimeSeries({
 						metricUnits,
 				  )
 				: [stagedQuery || initialQueriesMap[DataSource.METRICS]],
-		[showOneChartPerQuery, stagedQuery, metricUnits],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[showOneChartPerQuery, stagedQuery, JSON.stringify(metricUnits)],
 	);
 
 	const queries = useQueries(
