@@ -9,6 +9,7 @@ import {
 	MetricMetadata,
 	MetricMetadataResponse,
 } from 'types/api/metricsExplorer/v2/getMetricMetadata';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -22,9 +23,23 @@ import {
 	useGetMetrics,
 } from '../utils';
 
-const MOCK_QUERY_DATA: IBuilderQuery =
-	initialQueriesMap[DataSource.METRICS].builder.queryData[0];
+const MOCK_QUERY_DATA_1: IBuilderQuery = {
+	...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+	aggregateAttribute: {
+		...(initialQueriesMap[DataSource.METRICS].builder.queryData[0]
+			.aggregateAttribute as BaseAutocompleteData),
+		key: 'metric1',
+	},
+};
 
+const MOCK_QUERY_DATA_2: IBuilderQuery = {
+	...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+	aggregateAttribute: {
+		...(initialQueriesMap[DataSource.METRICS].builder.queryData[0]
+			.aggregateAttribute as BaseAutocompleteData),
+		key: 'metric2',
+	},
+};
 const MOCK_FORMULA_DATA: IBuilderFormula = {
 	expression: '1 + 1',
 	disabled: false,
@@ -36,7 +51,7 @@ const MOCK_QUERY_WITH_MULTIPLE_QUERY_DATA: Query = {
 	...initialQueriesMap[DataSource.METRICS],
 	builder: {
 		...initialQueriesMap[DataSource.METRICS].builder,
-		queryData: [MOCK_QUERY_DATA, MOCK_QUERY_DATA],
+		queryData: [MOCK_QUERY_DATA_1, MOCK_QUERY_DATA_2],
 		queryFormulas: [MOCK_FORMULA_DATA, MOCK_FORMULA_DATA],
 	},
 };
@@ -45,19 +60,20 @@ describe('splitQueryIntoOneChartPerQuery', () => {
 	it('should split a query with multiple queryData to multiple distinct queries, each with a single queryData', () => {
 		const result = splitQueryIntoOneChartPerQuery(
 			MOCK_QUERY_WITH_MULTIPLE_QUERY_DATA,
-			[undefined, 'unit1'],
+			['metric1', 'metric2'],
+			[undefined, 'unit2'],
 		);
 		expect(result).toHaveLength(4);
 		// Verify query 1 has the correct data
 		expect(result[0].builder.queryData).toHaveLength(1);
-		expect(result[0].builder.queryData[0]).toEqual(MOCK_QUERY_DATA);
+		expect(result[0].builder.queryData[0]).toEqual(MOCK_QUERY_DATA_1);
 		expect(result[0].builder.queryFormulas).toHaveLength(0);
 		expect(result[0].unit).toBeUndefined();
 		// Verify query 2 has the correct data
 		expect(result[1].builder.queryData).toHaveLength(1);
-		expect(result[1].builder.queryData[0]).toEqual(MOCK_QUERY_DATA);
+		expect(result[1].builder.queryData[0]).toEqual(MOCK_QUERY_DATA_2);
 		expect(result[1].builder.queryFormulas).toHaveLength(0);
-		expect(result[1].unit).toBe('unit1');
+		expect(result[1].unit).toBe('unit2');
 		// Verify query 3 has the correct data
 		expect(result[2].builder.queryFormulas).toHaveLength(1);
 		expect(result[2].builder.queryFormulas[0]).toEqual(MOCK_FORMULA_DATA);

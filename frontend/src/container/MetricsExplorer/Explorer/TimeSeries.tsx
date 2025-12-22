@@ -66,6 +66,7 @@ function TimeSeries({
 			showOneChartPerQuery
 				? splitQueryIntoOneChartPerQuery(
 						stagedQuery || initialQueriesMap[DataSource.METRICS],
+						metricNames,
 						metricUnits,
 				  )
 				: [stagedQuery || initialQueriesMap[DataSource.METRICS]],

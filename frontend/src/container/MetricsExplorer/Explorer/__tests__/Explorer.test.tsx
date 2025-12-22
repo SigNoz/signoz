@@ -15,6 +15,7 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import store from 'store';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import Explorer from '../Explorer';
@@ -299,14 +300,19 @@ describe('Explorer', () => {
 	});
 
 	it('one chart per query should enabled by default when there are multiple metrics with the same unit', () => {
+		const mockQueryData = {
+			...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+			aggregateAttribute: {
+				...(initialQueriesMap[DataSource.METRICS].builder.queryData[0]
+					.aggregateAttribute as BaseAutocompleteData),
+				key: 'metric1',
+			},
+		};
 		const mockStagedQueryWithMultipleQueries = {
 			...initialQueriesMap[DataSource.METRICS],
 			builder: {
 				...initialQueriesMap[DataSource.METRICS].builder,
-				queryData: [
-					initialQueriesMap[DataSource.METRICS].builder.queryData[0],
-					{ ...initialQueriesMap[DataSource.METRICS].builder.queryData[0] },
-				],
+				queryData: [mockQueryData, mockQueryData],
 			},
 		};
 

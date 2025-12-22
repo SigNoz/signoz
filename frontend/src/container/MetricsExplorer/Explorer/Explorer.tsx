@@ -205,9 +205,10 @@ function Explorer(): JSX.Element {
 		() =>
 			splitQueryIntoOneChartPerQuery(
 				stagedQuery || initialQueriesMap[DataSource.METRICS],
+				metricNames,
 				units,
 			),
-		[stagedQuery, units],
+		[stagedQuery, metricNames, units],
 	);
 
 	const [selectedMetricName, setSelectedMetricName] = useState<string | null>(

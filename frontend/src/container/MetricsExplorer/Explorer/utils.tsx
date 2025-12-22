@@ -12,22 +12,29 @@ import { v4 as uuid } from 'uuid';
  */
 export const splitQueryIntoOneChartPerQuery = (
 	query: Query,
+	metricNames: string[],
 	units: (string | undefined)[],
 ): Query[] => {
 	const queries: Query[] = [];
 
-	query.builder.queryData.forEach((currentQuery, index) => {
-		const newQuery = {
-			...query,
-			id: uuid(),
-			builder: {
-				...query.builder,
-				queryData: [currentQuery],
-				queryFormulas: [],
-			},
-			unit: units[index],
-		};
-		queries.push(newQuery);
+	query.builder.queryData.forEach((currentQuery) => {
+		if (currentQuery.aggregateAttribute?.key) {
+			const metricIndex = metricNames.indexOf(
+				currentQuery.aggregateAttribute?.key,
+			);
+			const unit = metricIndex >= 0 ? units[metricIndex] : undefined;
+			const newQuery = {
+				...query,
+				id: uuid(),
+				builder: {
+					...query.builder,
+					queryData: [currentQuery],
+					queryFormulas: [],
+				},
+				unit,
+			};
+			queries.push(newQuery);
+		}
 	});
 
 	query.builder.queryFormulas.forEach((currentFormula) => {
