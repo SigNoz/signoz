@@ -27,3 +27,10 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - signoz-devenv
+
+networks:
+  signoz-devenv:
+    external: true
+    name: signoz-devenv

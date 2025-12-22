@@ -51,8 +51,12 @@ help: ## Displays help.
 ##############################################################
 # devenv commands
 ##############################################################
+.PHONY: devenv-network
+devenv-network: ## Create shared network for devenv services
+	@docker network create signoz-devenv 2>/dev/null || true
+
 .PHONY: devenv-clickhouse
-devenv-clickhouse: ## Run clickhouse in devenv
+devenv-clickhouse: devenv-network ## Run clickhouse in devenv
 	@cd .devenv/docker/clickhouse; \
 	docker compose -f compose.yaml up -d
 
@@ -62,15 +66,28 @@ devenv-postgres: ## Run postgres in devenv
 	docker compose -f compose.yaml up -d
 
 .PHONY: devenv-signoz-otel-collector
-devenv-signoz-otel-collector: ## Run signoz-otel-collector in devenv (requires clickhouse to be running)
+devenv-signoz-otel-collector: devenv-network ## Run signoz-otel-collector in devenv (requires clickhouse to be running)
 	@cd .devenv/docker/signoz-otel-collector; \
 	docker compose -f compose.yaml up -d
 
 .PHONY: devenv-up
-devenv-up: devenv-clickhouse devenv-signoz-otel-collector ## Start both clickhouse and signoz-otel-collector for local development
+devenv-up: devenv-network devenv-clickhouse devenv-signoz-otel-collector ## Start both clickhouse and signoz-otel-collector for local development
 	@echo "Development environment is ready!"
 	@echo "   - ClickHouse: http://localhost:8123"
 	@echo "   - Signoz OTel Collector: grpc://localhost:4317, http://localhost:4318"
+
+.PHONY: devenv-down
+devenv-down: ## Remove all running devenv containers (Clickhouse, OTel Collector, Postgres, etc)
+	@cd .devenv/docker/clickhouse && docker compose -f compose.yaml down --volumes --remove-orphans --rmi all || true
+	@cd .devenv/docker/signoz-otel-collector && docker compose -f compose.yaml down --volumes --remove-orphans --rmi all || true
+	@cd .devenv/docker/postgres && docker compose -f compose.yaml down --volumes --remove-orphans --rmi all || true
+	@docker network rm signoz-devenv 2>/dev/null || true
+
+.PHONY: devenv-stop
+devenv-stop: ## Stop all running devenv containers (Clickhouse, OTel Collector, Postgres, etc)
+	@cd .devenv/docker/clickhouse && docker compose -f compose.yaml stop || true
+	@cd .devenv/docker/signoz-otel-collector && docker compose -f compose.yaml stop || true
+	@cd .devenv/docker/postgres && docker compose -f compose.yaml stop || true
 
 ##############################################################
 # go commands
