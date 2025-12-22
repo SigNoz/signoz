@@ -93,10 +93,13 @@ function Explorer(): JSX.Element {
 		// Else, set the y axis unit to empty if
 		// 1. There are more than one metric units and they are not the same
 		// 2. There are no metric units
+		// 3. There is exactly one metric unit but it is empty/undefined
 		if (units.length === 0) {
 			setYAxisUnit(undefined);
 		} else if (units.length === 1 && units[0]) {
 			setYAxisUnit(units[0]);
+		} else if (units.length === 1 && !units[0]) {
+			setYAxisUnit(undefined);
 		} else if (areAllMetricUnitsSame) {
 			if (units[0]) {
 				setYAxisUnit(units[0]);
