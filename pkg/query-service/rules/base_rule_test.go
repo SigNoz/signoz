@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -149,11 +150,21 @@ func createFirstSeenMap(metricName string, groupByFields []string, evalTime time
 }
 
 // mergeFirstSeenMaps merges multiple first_seen maps into one
+// When the same key exists in multiple maps, it keeps the lowest value
+// which simulatest the behavior of the ClickHouse query
+// finding the minimum first_seen timestamp across all groupBy attributes for a single series
 func mergeFirstSeenMaps(maps ...map[model.MetricMetadataLookupKey]int64) map[model.MetricMetadataLookupKey]int64 {
 	result := make(map[model.MetricMetadataLookupKey]int64)
 	for _, m := range maps {
 		for k, v := range m {
-			result[k] = v
+			if existingValue, exists := result[k]; exists {
+				// Keep the lowest value
+				if v < existingValue {
+					result[k] = v
+				}
+			} else {
+				result[k] = v
+			}
 		}
 	}
 	return result
@@ -197,11 +208,17 @@ func setupMetadataQueryMock(telemetryStore *telemetrystoretest.Provider, metricN
 
 	// Build args from series the same way we build lookup keys in FilterNewSeries
 	var args []any
+	uniqueArgsMap := make(map[string]struct{})
 	for _, s := range series {
 		labelMap := s.Labels
 		for _, metricName := range metricNames {
 			for _, groupByKey := range groupedFields {
 				if attrValue, ok := labelMap[groupByKey]; ok {
+					argKey := fmt.Sprintf("%s,%s,%s", metricName, groupByKey, attrValue)
+					if _, ok := uniqueArgsMap[argKey]; ok {
+						continue
+					}
+					uniqueArgsMap[argKey] = struct{}{}
 					args = append(args, metricName, groupByKey, attrValue)
 				}
 			}
@@ -255,46 +272,46 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 	settings := instrumentationtest.New().ToProviderSettings()
 
 	tests := []filterNewSeriesTestCase{
-		// {
-		// 	name: "mixed old and new series - Builder query",
-		// 	compositeQuery: &v3.CompositeQuery{
-		// 		QueryType: v3.QueryTypeBuilder,
-		// 		Queries: []qbtypes.QueryEnvelope{
-		// 			{
-		// 				Type: qbtypes.QueryTypeBuilder,
-		// 				Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-		// 					Name:         "A",
-		// 					StepInterval: qbtypes.Step{Duration: 60 * time.Second},
-		// 					Signal:       telemetrytypes.SignalMetrics,
-		// 					Aggregations: []qbtypes.MetricAggregation{
-		// 						{
-		// 							MetricName:       "request_total",
-		// 							TimeAggregation:  metrictypes.TimeAggregationCount,
-		// 							SpaceAggregation: metrictypes.SpaceAggregationSum,
-		// 						},
-		// 					},
-		// 					GroupBy: []qbtypes.GroupByKey{
-		// 						{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service_name"}},
-		// 						{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "env"}},
-		// 					},
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// 	series: []v3.Series{
-		// 		createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
-		// 		createTestSeries(map[string]string{"service_name": "svc-new", "env": "prod"}, nil),
-		// 		createTestSeries(map[string]string{"service_name": "svc-missing", "env": "stage"}, nil),
-		// 	},
-		// 	firstSeenMap: mergeFirstSeenMaps(
-		// 		createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old", "prod"),
-		// 		createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, false, "svc-new", "prod"),
-		// 		// svc-missing has no metadata, so it will be skipped
-		// 	),
-		// 	newGroupEvalDelay:   &defaultDelay,
-		// 	evalTime:            defaultEvalTime,
-		// 	expectedSkipIndexes: []int{1, 2}, // svc-new and svc-missing should be skipped
-		// },
+		{
+			name: "mixed old and new series - Builder query",
+			compositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypeBuilder,
+						Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+							Name:         "A",
+							StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+							Signal:       telemetrytypes.SignalMetrics,
+							Aggregations: []qbtypes.MetricAggregation{
+								{
+									MetricName:       "request_total",
+									TimeAggregation:  metrictypes.TimeAggregationCount,
+									SpaceAggregation: metrictypes.SpaceAggregationSum,
+								},
+							},
+							GroupBy: []qbtypes.GroupByKey{
+								{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service_name"}},
+								{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "env"}},
+							},
+						},
+					},
+				},
+			},
+			series: []v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc-new", "env": "prod"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc-missing", "env": "stage"}, nil),
+			},
+			firstSeenMap: mergeFirstSeenMaps(
+				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old", "prod"),
+				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, false, "svc-new", "prod"),
+				// svc-missing has no metadata, so it will be skipped
+			),
+			newGroupEvalDelay:   &defaultDelay,
+			evalTime:            defaultEvalTime,
+			expectedSkipIndexes: []int{1}, // svc-missing should be skipped as we can't decide if it is new or old series
+		},
 		{
 			name: "all new series - PromQL query",
 			compositeQuery: &v3.CompositeQuery{
@@ -444,33 +461,33 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			evalTime:            defaultEvalTime,
 			expectedSkipIndexes: []int{}, // series included as we can't decide if it's new or old
 		},
-		// {
-		// 	name: "series with missing metadata - PromQL",
-		// 	compositeQuery: &v3.CompositeQuery{
-		// 		QueryType: v3.QueryTypePromQL,
-		// 		Queries: []qbtypes.QueryEnvelope{
-		// 			{
-		// 				Type: qbtypes.QueryTypePromQL,
-		// 				Spec: qbtypes.PromQuery{
-		// 					Name:     "P1",
-		// 					Query:    "sum by (service_name,env) (rate(request_total[5m]))",
-		// 					Disabled: false,
-		// 					Step:     qbtypes.Step{Duration: 0},
-		// 					Stats:    false,
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// 	series: []v3.Series{
-		// 		createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
-		// 		createTestSeries(map[string]string{"service_name": "svc-no-metadata", "env": "prod"}, nil),
-		// 	},
-		// 	firstSeenMap: createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old", "prod"),
-		// 	// svc-no-metadata has no entry in firstSeenMap
-		// 	newGroupEvalDelay:   &defaultDelay,
-		// 	evalTime:            defaultEvalTime,
-		// 	expectedSkipIndexes: []int{1}, // missing metadata should be skipped
-		// },
+		{
+			name: "series with missing metadata - PromQL",
+			compositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypePromQL,
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypePromQL,
+						Spec: qbtypes.PromQuery{
+							Name:     "P1",
+							Query:    "sum by (service_name,env) (rate(request_total[5m]))",
+							Disabled: false,
+							Step:     qbtypes.Step{Duration: 0},
+							Stats:    false,
+						},
+					},
+				},
+			},
+			series: []v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc-no-metadata", "env": "prod"}, nil),
+			},
+			firstSeenMap: createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old", "prod"),
+			// svc-no-metadata has no entry in firstSeenMap
+			newGroupEvalDelay:   &defaultDelay,
+			evalTime:            defaultEvalTime,
+			expectedSkipIndexes: []int{}, // svc-no-metadata should not be skipped as we can't decide if it is new or old series
+		},
 		{
 			name: "series with partial metadata - ClickHouse",
 			compositeQuery: &v3.CompositeQuery{

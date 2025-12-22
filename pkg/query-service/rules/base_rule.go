@@ -616,14 +616,22 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []v
 
 	if len(lookupKeys) == 0 {
 		// No lookup keys to query, return empty skip list
-		// this can happen when the alert query has no groupBy keys
-		// in Alert query or it has no labels at all
-		// in this case, we include all series
+		// this can happen when the series has no labels at all
+		// in this case, we include all series as we don't know if it is new or old series
 		return []int{}, nil
 	}
 
+	// unique lookup keys
+	uniqueLookupKeysMap := make(map[model.MetricMetadataLookupKey]struct{})
+	uniqueLookupKeys := make([]model.MetricMetadataLookupKey, 0)
+	for _, key := range lookupKeys {
+		if _, ok := uniqueLookupKeysMap[key]; !ok {
+			uniqueLookupKeysMap[key] = struct{}{}
+			uniqueLookupKeys = append(uniqueLookupKeys, key)
+		}
+	}
 	// Query metadata for first_seen timestamps
-	firstSeenMap, err := r.reader.GetFirstSeenFromMetricMetadata(ctx, lookupKeys)
+	firstSeenMap, err := r.reader.GetFirstSeenFromMetricMetadata(ctx, uniqueLookupKeys)
 	if err != nil {
 		return nil, err
 	}
@@ -636,30 +644,32 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []v
 	for i := 0; i < len(series); i++ {
 		seriesKeys, ok := seriesIdxToLookupKeys[i]
 		if !ok {
-			// No matching labels used in groupBy from this series, include it
+			// No matching labels used in groupBy from this series, don't exclude it
 			// as we can't decide if it is new or old series
 			continue
 		}
 
+		// can't find single/multipe of these lookup keys in DB (can't decide factor)
+		// there is one but very old
+
 		// Find the maximum first_seen across all groupBy attributes for this series
 		// if the latest is old enough we're good, if latest is new we need to skip it
 		maxFirstSeen := int64(0)
-		// foundAnyMetricMetadata tracks if we found any metric metadata for this series
-		// if we didn't find any, we skip this series considering it as new series
-		// whose metadata is not available yet
-		foundAnyMetricMetadata := false
+		// metadataFound tracks if we have metadata for any of the lookup keys
+		metadataFound := false
+
 		for _, lookupKey := range seriesKeys {
 			if firstSeen, exists := firstSeenMap[lookupKey]; exists {
-				foundAnyMetricMetadata = true
+				metadataFound = true
 				if firstSeen > maxFirstSeen {
 					maxFirstSeen = firstSeen
 				}
 			}
 		}
 
-		// No metadata found - treat as new series, skip it
-		if !foundAnyMetricMetadata {
-			skipIndexes = append(skipIndexes, i)
+		// if we don't have metadata for any of the lookup keys, we can't decide if it is new or old series
+		// in that case, we don't add it to the skip indexes
+		if !metadataFound {
 			continue
 		}
 
@@ -670,7 +680,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []v
 			continue
 		}
 
-		// Old enough, include it (don't add to skipIndexes)
+		// Old enough, don't skip this series
 	}
 
 	if r.logger != nil && len(skipIndexes) > 0 {
