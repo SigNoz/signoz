@@ -4,7 +4,8 @@
 	width: 100%;
 	align-items: baseline;
 }
-.log-field-key, .log-field-key-colon {
+.log-field-key,
+.log-field-key-colon {
 	color: var(--text-vanilla-400, #c0c1c3);
 	font-size: 14px;
 	font-style: normal;
@@ -175,7 +176,8 @@
 }
 
 .lightMode {
-	.log-field-key, .log-field-key-colon {
+	.log-field-key,
+	.log-field-key-colon {
 		color: var(--text-slate-400);
 	}
 	.log-value {
@@ -189,7 +191,8 @@
 }
 
 .dark {
-	.log-field-key, .log-field-key-colon {
+	.log-field-key,
+	.log-field-key-colon {
 		color: rgba(255, 255, 255, 0.45);
 	}
 }
