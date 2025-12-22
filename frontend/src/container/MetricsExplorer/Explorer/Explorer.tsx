@@ -46,13 +46,15 @@ function Explorer(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
 
-	const metricNames = useMemo(
-		() =>
-			stagedQuery?.builder.queryData.map(
-				(query) => query.aggregateAttribute?.key ?? '',
-			) ?? [],
-		[stagedQuery],
-	);
+	const metricNames = useMemo(() => {
+		const currentMetricNames: string[] = [];
+		stagedQuery?.builder.queryData.forEach((query) => {
+			if (query.aggregateAttribute?.key) {
+				currentMetricNames.push(query.aggregateAttribute?.key);
+			}
+		});
+		return currentMetricNames;
+	}, [stagedQuery]);
 
 	const {
 		metrics,
@@ -67,7 +69,7 @@ function Explorer(): JSX.Element {
 			!isMetricUnitsLoading &&
 			!isMetricUnitsError &&
 			units.length > 0 &&
-			units.every((unit) => unit === units[0]),
+			units.every((unit) => unit && unit === units[0]),
 		[units, isMetricUnitsLoading, isMetricUnitsError],
 	);
 
