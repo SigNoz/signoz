@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -22,7 +23,8 @@ func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[ruler.Ruler,
 }
 
 func New(ctx context.Context, settings factory.ProviderSettings, config ruler.Config, sqlstore sqlstore.SQLStore) (ruler.Ruler, error) {
-	return &provider{ruleStore: sqlrulestore.NewRuleStore(sqlstore)}, nil
+	queryParser := queryparser.New(settings)
+	return &provider{ruleStore: sqlrulestore.NewRuleStore(sqlstore, queryParser, settings)}, nil
 }
 
 func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {

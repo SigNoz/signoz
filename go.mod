@@ -55,6 +55,8 @@ require (
 	github.com/spf13/cobra v1.10.1
 	github.com/srikanthccv/ClickHouse-go-mock v0.13.0
 	github.com/stretchr/testify v1.11.1
+	github.com/swaggest/jsonschema-go v0.3.78
+	github.com/swaggest/rest v0.2.75
 	github.com/tidwall/gjson v1.18.0
 	github.com/uptrace/bun v1.2.9
 	github.com/uptrace/bun/dialect/pgdialect v1.2.9
@@ -94,6 +96,8 @@ require (
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.15.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/swaggest/refl v1.4.0 // indirect
+	github.com/swaggest/usecase v1.3.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/uptrace/opentelemetry-go-extra/otelsql v0.3.2 // indirect
 	go.opentelemetry.io/collector/config/configretry v1.34.0 // indirect
@@ -256,6 +260,7 @@ require (
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/swaggest/openapi-go v0.2.60
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
