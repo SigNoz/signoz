@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/migrate"
 )
 
@@ -543,15 +544,9 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 				{Name: "tags", DataType: sqlschema.DataTypeText, Nullable: true},
 				{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			},
-			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
-				ColumnNames: []sqlschema.ColumnName{"id"},
-			},
+			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
 			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
-				{
-					ReferencingColumnName: "org_id",
-					ReferencedTableName:   "organizations",
-					ReferencedColumnName:  "id",
-				},
+				{ReferencingColumnName: sqlschema.ColumnName("org_id"), ReferencedTableName: sqlschema.TableName("organizations"), ReferencedColumnName: sqlschema.ColumnName("id")},
 			},
 		},
 		{
@@ -574,6 +569,179 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 				{ReferencingColumnName: sqlschema.ColumnName("user_id"), ReferencedTableName: sqlschema.TableName("users"), ReferencedColumnName: sqlschema.ColumnName("id")},
 			},
 		},
+		{
+			Name: "public_dashboard",
+			Columns: []*sqlschema.Column{
+				{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "time_range_enabled", DataType: sqlschema.DataTypeBoolean, Nullable: false},
+				{Name: "default_time_range", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "dashboard_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			},
+			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+				{ReferencingColumnName: sqlschema.ColumnName("dashboard_id"), ReferencedTableName: sqlschema.TableName("dashboard"), ReferencedColumnName: sqlschema.ColumnName("id")},
+			},
+		},
+		{
+			Name: "role",
+			Columns: []*sqlschema.Column{
+				{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "description", DataType: sqlschema.DataTypeText, Nullable: true},
+				{Name: "type", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			},
+			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+				{ReferencingColumnName: sqlschema.ColumnName("org_id"), ReferencedTableName: sqlschema.TableName("organizations"), ReferencedColumnName: sqlschema.ColumnName("id")},
+			},
+		},
+	}
+
+	// Adding authz tables which are dialect specific unfortunately due to the upstream.
+	switch migration.sqlstore.BunDB().Dialect().Name() {
+	case dialect.SQLite:
+		tables = append(tables,
+			&sqlschema.Table{
+				Name: "tuple",
+				Columns: []*sqlschema.Column{
+					{Name: "store", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "object_type", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "object_id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "relation", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "user_object_type", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "user_object_id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "user_relation", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "user_type", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "ulid", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "inserted_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+					{Name: "condition_name", DataType: sqlschema.DataTypeText, Nullable: true},
+					{Name: "condition_context", DataType: sqlschema.DataTypeText, Nullable: true},
+				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"store", "object_type", "object_id", "relation", "user_object_type", "user_object_id", "user_relation"}},
+			},
+			&sqlschema.Table{
+				Name: "authorization_model",
+				Columns: []*sqlschema.Column{
+					{Name: "store", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "authorization_model_id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "schema_version", DataType: sqlschema.DataTypeText, Nullable: false, Default: "1.1"},
+					{Name: "serialized_protobuf", DataType: sqlschema.DataTypeText, Nullable: false},
+				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"store", "authorization_model_id"}},
+			},
+			&sqlschema.Table{
+				Name: "store",
+				Columns: []*sqlschema.Column{
+					{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+					{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
+					{Name: "deleted_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
+				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+			},
+			&sqlschema.Table{
+				Name: "assertion",
+				Columns: []*sqlschema.Column{
+					{Name: "store", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "authorization_model_id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "assertions", DataType: sqlschema.DataTypeText, Nullable: true},
+				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"store", "authorization_model_id"}},
+			},
+			&sqlschema.Table{
+				Name: "changelog",
+				Columns: []*sqlschema.Column{
+					{Name: "store", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "object_type", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "object_id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "relation", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "user_object_type", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "user_object_id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "user_relation", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "operation", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "ulid", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "inserted_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+					{Name: "condition_name", DataType: sqlschema.DataTypeText, Nullable: true},
+					{Name: "condition_context", DataType: sqlschema.DataTypeText, Nullable: true},
+				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"store", "ulid", "object_type"}},
+			},
+		)
+	case dialect.PG:
+		tables = append(tables,
+			&sqlschema.Table{
+				Name: "tuple",
+				Columns: []*sqlschema.Column{
+					{Name: "store", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "object_type", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "object_id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "relation", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "_user", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "user_type", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "ulid", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "inserted_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+					{Name: "condition_name", DataType: sqlschema.DataTypeBytea, Nullable: true},
+					{Name: "condition_context", DataType: sqlschema.DataTypeText, Nullable: true},
+				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"store", "object_type", "object_id", "relation", "_user"}},
+			},
+			&sqlschema.Table{
+				Name: "authorization_model",
+				Columns: []*sqlschema.Column{
+					{Name: "store", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "authorization_model_id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "type", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "type_definition", DataType: sqlschema.DataTypeBytea, Nullable: true},
+					{Name: "schema_version", DataType: sqlschema.DataTypeText, Nullable: false, Default: "1.1"},
+					{Name: "serialized_protobuf", DataType: sqlschema.DataTypeBytea, Nullable: false},
+				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"store", "authorization_model_id", "type"}},
+			},
+			&sqlschema.Table{
+				Name: "store",
+				Columns: []*sqlschema.Column{
+					{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+					{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
+					{Name: "deleted_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
+				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+			},
+			&sqlschema.Table{
+				Name: "changelog",
+				Columns: []*sqlschema.Column{
+					{Name: "store", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "object_type", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "object_id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "relation", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "_user", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "operation", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "ulid", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "inserted_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+					{Name: "condition_name", DataType: sqlschema.DataTypeBytea, Nullable: true},
+					{Name: "condition_context", DataType: sqlschema.DataTypeText, Nullable: true},
+				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"store", "ulid", "object_type"}},
+			},
+			&sqlschema.Table{
+				Name: "assertion",
+				Columns: []*sqlschema.Column{
+					{Name: "store", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "authorization_model_id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "assertions", DataType: sqlschema.DataTypeBytea, Nullable: true},
+				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"store", "authorization_model_id"}},
+			},
+		)
+	default:
+		return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "unsupported dialect for authz tables: %s", migration.sqlstore.BunDB().Dialect().Name())
 	}
 
 	indices := []sqlschema.Index{
@@ -664,6 +832,18 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("org_domains"),
 			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("name"), sqlschema.ColumnName("org_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("public_dashboard"),
+			ColumnNames: []sqlschema.ColumnName{"dashboard_id"},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("role"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("name"), sqlschema.ColumnName("org_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("tuple"),
+			ColumnNames: []sqlschema.ColumnName{"ulid"},
 		},
 	}
 
