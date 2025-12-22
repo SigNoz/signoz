@@ -28,7 +28,11 @@ import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import MetricDetails from '../MetricDetails/MetricDetails';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
-import { splitQueryIntoOneChartPerQuery, useGetMetrics } from './utils';
+import {
+	getMetricUnits,
+	splitQueryIntoOneChartPerQuery,
+	useGetMetrics,
+} from './utils';
 
 const ONE_CHART_PER_QUERY_ENABLED_KEY = 'isOneChartPerQueryEnabled';
 
@@ -56,7 +60,7 @@ function Explorer(): JSX.Element {
 		isError: isMetricUnitsError,
 	} = useGetMetrics(metricNames);
 
-	const units = useMemo(() => metrics.map((metric) => metric?.unit), [metrics]);
+	const units = useMemo(() => getMetricUnits(metrics), [metrics]);
 
 	const areAllMetricUnitsSame = useMemo(
 		() =>

@@ -16,7 +16,11 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { splitQueryIntoOneChartPerQuery, useGetMetrics } from '../utils';
+import {
+	getMetricUnits,
+	splitQueryIntoOneChartPerQuery,
+	useGetMetrics,
+} from '../utils';
 
 const MOCK_QUERY_DATA: IBuilderQuery =
 	initialQueriesMap[DataSource.METRICS].builder.queryData[0];
@@ -123,5 +127,19 @@ describe('useGetMetrics', () => {
 		const { result } = renderHook(() => useGetMetrics(['metric1']));
 		expect(result.current.metrics).toHaveLength(1);
 		expect(result.current.metrics[0]).toBeUndefined();
+	});
+});
+
+describe('getMetricUnits', () => {
+	it('should return the same unit for units that are not known to the universal unit mapper', () => {
+		const result = getMetricUnits([MOCK_METRIC_METADATA]);
+		expect(result).toHaveLength(1);
+		expect(result[0]).toEqual(MOCK_METRIC_METADATA.unit);
+	});
+
+	it('should return universal unit for units that are known to the universal unit mapper', () => {
+		const result = getMetricUnits([{ ...MOCK_METRIC_METADATA, unit: 'seconds' }]);
+		expect(result).toHaveLength(1);
+		expect(result[0]).toBe('s');
 	});
 });

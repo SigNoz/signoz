@@ -1,3 +1,4 @@
+import { mapMetricUnitToUniversalUnit } from 'components/YAxisUnitSelector/utils';
 import { useGetMultipleMetrics } from 'hooks/metricsExplorer/useGetMultipleMetrics';
 import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -72,4 +73,18 @@ export function useGetMetrics(
 			.map((data) => data?.data),
 		isError: metricsData.some((metric) => metric.isError),
 	};
+}
+
+/**
+ * To get the units of the metrics in the universal unit standard.
+ * If the unit is not known to the universal unit mapper, it will return the unit as is.
+ * @param metrics - The metrics to get the units for
+ * @returns The units of the metrics, can be undefined if the metric has no unit
+ */
+export function getMetricUnits(
+	metrics: (MetricMetadata | undefined)[],
+): (string | undefined)[] {
+	return metrics
+		.map((metric) => metric?.unit)
+		.map((unit) => mapMetricUnitToUniversalUnit(unit) || undefined);
 }
