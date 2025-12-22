@@ -28,7 +28,7 @@ type CmdAction = {
 	perform: () => void;
 };
 
-type UserRole = 'ADMIN' | 'EDITOR' | 'VIEWER';
+type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
 export function CmdKPalette({
 	userRole,
 }: {

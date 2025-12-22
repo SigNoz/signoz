@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-export type UserRole = 'ADMIN' | 'EDITOR' | 'VIEWER';
+export type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
 
 export type CmdAction = {
 	id: string;
