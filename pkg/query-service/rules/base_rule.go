@@ -649,9 +649,6 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []v
 			continue
 		}
 
-		// can't find single/multipe of these lookup keys in DB (can't decide factor)
-		// there is one but very old
-
 		// Find the maximum first_seen across all groupBy attributes for this series
 		// if the latest is old enough we're good, if latest is new we need to skip it
 		maxFirstSeen := int64(0)

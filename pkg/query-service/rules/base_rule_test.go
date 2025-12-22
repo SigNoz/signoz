@@ -265,7 +265,7 @@ type filterNewSeriesTestCase struct {
 
 func TestBaseRule_FilterNewSeries(t *testing.T) {
 	defaultEvalTime := time.Unix(1700000000, 0)
-	defaultDelay := 30 * time.Minute
+	defaultDelay := 2 * time.Minute
 	defaultGroupByFields := []string{"service_name", "env"}
 
 	logger := instrumentationtest.New().Logger()
