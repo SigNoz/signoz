@@ -20,6 +20,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
+	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/promote/implpromote"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
@@ -39,6 +41,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
@@ -64,6 +67,7 @@ type Modules struct {
 	Services        services.Module
 	SpanPercentile  spanpercentile.Module
 	MetricsExplorer metricsexplorer.Module
+	Promote         promote.Module
 }
 
 func NewModules(
@@ -87,6 +91,7 @@ func NewModules(
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
 	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics)
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
+	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 	dashboard := impldashboard.NewModule(sqlstore, providerSettings, analytics, orgGetter, implrole.NewModule(implrole.NewStore(sqlstore), authz, nil), queryParser)
 
 	return Modules{
@@ -105,6 +110,7 @@ func NewModules(
 		Session:         implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
 		SpanPercentile:  implspanpercentile.NewModule(querier, providerSettings),
 		Services:        implservices.NewModule(querier, telemetryStore),
-		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, dashboard, providerSettings, config.MetricsExplorer),
+		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
+		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
 	}
 }

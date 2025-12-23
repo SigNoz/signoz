@@ -555,6 +555,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/settings/ttl", am.AdminAccess(aH.setCustomRetentionTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v2/settings/ttl", am.ViewAccess(aH.getCustomRetentionTTL)).Methods(http.MethodGet)
+
 	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.Signoz.Handlers.Apdex.Set)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.Signoz.Handlers.Apdex.Get)).Methods(http.MethodGet)
 
@@ -630,6 +631,7 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.Au
 	router.HandleFunc("/api/v2/metrics/metadata", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricMetadata)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/metrics/{metric_name}/metadata", am.EditAccess(ah.Signoz.Handlers.MetricsExplorer.UpdateMetricMetadata)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v2/metric/highlights", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricHighlights)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/metric/alerts", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricAlerts)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/metric/dashboards", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricDashboards)).Methods(http.MethodGet)
 }
 
