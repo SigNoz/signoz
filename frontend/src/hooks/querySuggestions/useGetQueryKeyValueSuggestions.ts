@@ -1,8 +1,6 @@
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { AxiosError, AxiosResponse } from 'axios';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
-import { ErrorResponse } from 'react-router-dom-v5-compat';
-import { SuccessResponse } from 'types/api';
 import { QueryKeyValueSuggestionsResponseProps } from 'types/api/querySuggestions/types';
 
 export const useGetQueryKeyValueSuggestions = ({
@@ -11,13 +9,15 @@ export const useGetQueryKeyValueSuggestions = ({
 	searchText,
 	signalSource,
 	metricName,
+	options,
 }: {
 	key: string;
 	signal: 'traces' | 'logs' | 'metrics';
 	searchText?: string;
 	signalSource?: 'meter' | '';
 	options?: UseQueryOptions<
-		SuccessResponse<QueryKeyValueSuggestionsResponseProps> | ErrorResponse
+		AxiosResponse<QueryKeyValueSuggestionsResponseProps>,
+		AxiosError
 	>;
 	metricName?: string;
 }): UseQueryResult<
@@ -41,4 +41,5 @@ export const useGetQueryKeyValueSuggestions = ({
 				signalSource: signalSource as 'meter' | '',
 				metricName: metricName || '',
 			}),
+		...options,
 	});
