@@ -23,7 +23,6 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
-		JsonBodyPrefix:   BodyJSONStringSearchPrefix,
 		JsonKeyToKey:     GetBodyJSONKey,
 	}
 
@@ -61,7 +60,6 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
-		JsonBodyPrefix:   BodyJSONStringSearchPrefix,
 		JsonKeyToKey:     GetBodyJSONKey,
 	}
 

@@ -300,7 +300,7 @@ function QueryAddOns({
 	);
 
 	return (
-		<div className="query-add-ons">
+		<div className="query-add-ons" data-testid="query-add-ons">
 			{selectedViews.length > 0 && (
 				<div className="selected-add-ons-content">
 					{selectedViews.find((view) => view.key === 'group_by') && (

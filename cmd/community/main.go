@@ -13,6 +13,7 @@ func main() {
 
 	// register a list of commands to the root command
 	registerServer(cmd.RootCmd, logger)
+	cmd.RegisterGenerate(cmd.RootCmd, logger)
 
 	cmd.Execute(logger)
 }

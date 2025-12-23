@@ -140,11 +140,11 @@ type UpdateMetricMetadataRequest struct {
 
 // TreemapRequest represents the payload for the metrics treemap endpoint.
 type TreemapRequest struct {
-	Filter  *qbtypes.Filter `json:"filter,omitempty"`
-	Start   int64           `json:"start"`
-	End     int64           `json:"end"`
-	Limit   int             `json:"limit"`
-	Treemap TreemapMode     `json:"treemap"`
+	Filter *qbtypes.Filter `json:"filter,omitempty"`
+	Start  int64           `json:"start"`
+	End    int64           `json:"end"`
+	Limit  int             `json:"limit"`
+	Mode   TreemapMode     `json:"mode"`
 }
 
 // Validate enforces basic constraints on TreemapRequest.
@@ -182,11 +182,11 @@ func (req *TreemapRequest) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
 	}
 
-	if req.Treemap != TreemapModeSamples && req.Treemap != TreemapModeTimeSeries {
+	if req.Mode != TreemapModeSamples && req.Mode != TreemapModeTimeSeries {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"invalid treemap mode %q: supported values are %q or %q",
-			req.Treemap,
+			req.Mode,
 			TreemapModeSamples,
 			TreemapModeTimeSeries,
 		)
@@ -219,6 +219,38 @@ type TreemapEntry struct {
 type TreemapResponse struct {
 	TimeSeries []TreemapEntry `json:"timeseries"`
 	Samples    []TreemapEntry `json:"samples"`
+}
+
+// MetricAlert represents an alert associated with a metric.
+type MetricAlert struct {
+	AlertName string `json:"alertName"`
+	AlertID   string `json:"alertId"`
+}
+
+// MetricAlertsResponse represents the response for metric alerts endpoint.
+type MetricAlertsResponse struct {
+	Alerts []MetricAlert `json:"alerts"`
+}
+
+// MetricDashboard represents a dashboard/widget referencing a metric.
+type MetricDashboard struct {
+	DashboardName string `json:"dashboardName"`
+	DashboardID   string `json:"dashboardId"`
+	WidgetID      string `json:"widgetId"`
+	WidgetName    string `json:"widgetName"`
+}
+
+// MetricDashboardsResponse represents the response for metric dashboards endpoint.
+type MetricDashboardsResponse struct {
+	Dashboards []MetricDashboard `json:"dashboards"`
+}
+
+// MetricHighlightsResponse is the output structure for the metric highlights endpoint.
+type MetricHighlightsResponse struct {
+	DataPoints       uint64 `json:"dataPoints"`
+	LastReceived     uint64 `json:"lastReceived"`
+	TotalTimeSeries  uint64 `json:"totalTimeSeries"`
+	ActiveTimeSeries uint64 `json:"activeTimeSeries"`
 }
 
 // MetricAttributesRequest represents the payload for the metric attributes endpoint.
