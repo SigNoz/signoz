@@ -1,9 +1,7 @@
 import http
-import json
 from typing import Callable, List
 
 import requests
-from sqlalchemy import sql
 from wiremock.client import (
     HttpMethods,
     Mapping,
@@ -138,7 +136,7 @@ def test_refresh_license(
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json()["data"]["valid_from"] == 1732146922
-   
+
     response = requests.post(
         url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),
         json={"method": "GET", "url": "/v2/licenses/me"},
