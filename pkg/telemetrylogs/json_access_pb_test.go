@@ -814,6 +814,9 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
 
 // testTypeSet returns a map of path->types and a getTypes function for testing
 // This represents the type information available in the test JSON structure
+//
+// TODO(Piyush): Remove this unparam nolint
+// nolint:unparam
 func testTypeSet() (map[string][]telemetrytypes.JSONDataType, func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error)) {
 	types := map[string][]telemetrytypes.JSONDataType{
 		"user.name":                                           {telemetrytypes.String},
