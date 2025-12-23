@@ -244,12 +244,6 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		telemetrytypes.FieldDataTypeArrayInt64,
 		telemetrytypes.FieldDataTypeNumber,
 		telemetrytypes.FieldDataTypeArrayNumber:
-		// case telemetrytypes.FieldDataTypeFloat64,
-		// 	telemetrytypes.FieldDataTypeArrayFloat64,
-		// 	telemetrytypes.FieldDataTypeInt64,
-		// 	telemetrytypes.FieldDataTypeArrayInt64,
-		// 	telemetrytypes.FieldDataTypeNumber,
-		// 	telemetrytypes.FieldDataTypeArrayNumber:
 		switch v := value.(type) {
 		// why? ; CH returns an error for a simple check
 		// attributes_number['http.status_code'] = 200 but not for attributes_number['http.status_code'] >= 200
