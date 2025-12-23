@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-const HOLD_DELAY_MS = 600;
+const HOLD_DELAY_MS = 500;
 
 function isTypingContext(target: EventTarget | null): boolean {
 	if (!(target instanceof HTMLElement)) return false;
