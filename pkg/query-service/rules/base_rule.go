@@ -15,6 +15,7 @@ import (
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
@@ -552,11 +553,34 @@ func (r *BaseRule) ShouldSkipNewGroups() bool {
 	return r.newGroupEvalDelay != nil && *r.newGroupEvalDelay > 0
 }
 
+// isFilterNewSeriesSupported checks if the query is supported for new series filtering
+func (r *BaseRule) isFilterNewSeriesSupported() bool {
+	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		for _, query := range r.ruleCondition.CompositeQuery.Queries {
+			if query.Type != qbtypes.QueryTypeBuilder {
+				continue
+			}
+			switch query.Spec.(type) {
+			// query spec is for Logs or Traces, return with blank metric names and group by fields
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				return false
+			}
+		}
+	}
+	return true
+}
+
 // extractMetricAndGroupBys extracts metric names and groupBy keys from the rule's query.
 // TODO: implement caching for query parsing results to avoid re-parsing the query + cache invalidation
 func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) ([]string, []string, error) {
 	var metricNames []string
 	var groupedFields []string
+
+	// check to avoid processing the query for Logs and Traces
+	// as excluding new series is not supported for Logs and Traces for now
+	if !r.isFilterNewSeriesSupported() {
+		return metricNames, groupedFields, nil
+	}
 
 	result, err := r.queryParser.AnalyzeCompositeQuery(ctx, r.ruleCondition.CompositeQuery)
 	if err != nil {

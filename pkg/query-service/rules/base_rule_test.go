@@ -661,6 +661,70 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			evalTime:            defaultEvalTime,
 			expectedSkipIndexes: []int{0}, // max first_seen is new, so should skip
 		},
+		{
+			name: "Logs query - should skip filtering and return empty skip indexes",
+			compositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypeBuilder,
+						Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+							Name:         "A",
+							StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+							Signal:       telemetrytypes.SignalLogs,
+							Aggregations: []qbtypes.LogAggregation{
+								{
+									Expression: "count()",
+								},
+							},
+							GroupBy: []qbtypes.GroupByKey{
+								{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service_name"}},
+							},
+						},
+					},
+				},
+			},
+			series: []v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
+			},
+			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay:   &defaultDelay,
+			evalTime:            defaultEvalTime,
+			expectedSkipIndexes: []int{}, // Logs queries should return early, no filtering
+		},
+		{
+			name: "Traces query - should skip filtering and return empty skip indexes",
+			compositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypeBuilder,
+						Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+							Name:         "A",
+							StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+							Signal:       telemetrytypes.SignalTraces,
+							Aggregations: []qbtypes.TraceAggregation{
+								{
+									Expression: "count()",
+								},
+							},
+							GroupBy: []qbtypes.GroupByKey{
+								{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service_name"}},
+							},
+						},
+					},
+				},
+			},
+			series: []v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
+			},
+			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay:   &defaultDelay,
+			evalTime:            defaultEvalTime,
+			expectedSkipIndexes: []int{}, // Traces queries should return early, no filtering
+		},
 	}
 
 	for _, tt := range tests {
