@@ -27,7 +27,7 @@ func (h *handler) HandlePromoteAndIndexPaths(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var req []promotetypes.PromotePath
+	var req []*promotetypes.PromotePath
 	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
 		render.Error(w, err)
 		return

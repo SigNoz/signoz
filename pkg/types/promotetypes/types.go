@@ -24,7 +24,7 @@ type PromotePath struct {
 	Indexes []WrappedIndex `json:"indexes,omitempty"`
 }
 
-func (i *PromotePath) Validate() error {
+func (i *PromotePath) ValidateAndSetDefaults() error {
 	if i.Path == "" {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path is required")
 	}

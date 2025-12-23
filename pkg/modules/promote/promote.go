@@ -9,7 +9,7 @@ import (
 
 type Module interface {
 	ListPromotedAndIndexedPaths(ctx context.Context) ([]promotetypes.PromotePath, error)
-	PromoteAndIndexPaths(ctx context.Context, paths ...promotetypes.PromotePath) error
+	PromoteAndIndexPaths(ctx context.Context, paths ...*promotetypes.PromotePath) error
 }
 
 type Handler interface {

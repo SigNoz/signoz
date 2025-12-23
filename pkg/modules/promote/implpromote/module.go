@@ -127,7 +127,7 @@ func (m *module) createIndexes(ctx context.Context, indexes []schemamigrator.Ind
 // PromoteAndIndexPaths handles promoting paths and creating indexes in one call.
 func (m *module) PromoteAndIndexPaths(
 	ctx context.Context,
-	paths ...promotetypes.PromotePath,
+	paths ...*promotetypes.PromotePath,
 ) error {
 	if len(paths) == 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty")
@@ -136,7 +136,7 @@ func (m *module) PromoteAndIndexPaths(
 	pathsStr := []string{}
 	// validate the paths
 	for _, path := range paths {
-		if err := path.Validate(); err != nil {
+		if err := path.ValidateAndSetDefaults(); err != nil {
 			return err
 		}
 		pathsStr = append(pathsStr, path.Path)
