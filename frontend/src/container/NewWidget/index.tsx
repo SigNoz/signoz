@@ -4,10 +4,7 @@ import './NewWidget.styles.scss';
 import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import {
-	PrecisionOption,
-	PrecisionOptionsEnum,
-} from 'components/Graph/yAxisConfig';
+import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { adjustQueryForV5 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
@@ -504,7 +501,7 @@ function NewWidget({
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								decimalPrecision:
-									selectedWidget?.decimalPrecision || PrecisionOptionsEnum.TWO,
+									selectedWidget?.decimalPrecision ?? PrecisionOptionsEnum.TWO,
 								panelTypes: graphType,
 								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,
@@ -535,7 +532,7 @@ function NewWidget({
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								decimalPrecision:
-									selectedWidget?.decimalPrecision || PrecisionOptionsEnum.TWO,
+									selectedWidget?.decimalPrecision ?? PrecisionOptionsEnum.TWO,
 								panelTypes: graphType,
 								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,

@@ -2,51 +2,11 @@
 # Owners are automatically requested for review for PRs that changes code
 # that they own.
 
-/frontend/ @YounixM @aks07
-/frontend/src/container/MetricsApplication @srikanthccv
-/frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
+/frontend/ @SigNoz/frontend-maintainers
 
 # Onboarding
 /frontend/src/container/OnboardingV2Container/onboarding-configs/onboarding-config-with-links.json @makeavish
 /frontend/src/container/OnboardingV2Container/AddDataSource/AddDataSource.tsx @makeavish
-
-# Dashboard, Alert, Metrics, Service Map, Services
-/frontend/src/container/ListOfDashboard/ @srikanthccv
-/frontend/src/container/NewDashboard/ @srikanthccv
-/frontend/src/pages/DashboardsListPage/ @srikanthccv
-/frontend/src/pages/DashboardWidget/ @srikanthccv
-/frontend/src/pages/NewDashboard/ @srikanthccv
-/frontend/src/providers/Dashboard/ @srikanthccv
-
-# Alerts
-/frontend/src/container/AlertHistory/ @srikanthccv
-/frontend/src/container/AllAlertChannels/ @srikanthccv
-/frontend/src/container/AnomalyAlertEvaluationView/ @srikanthccv
-/frontend/src/container/CreateAlertChannels/ @srikanthccv
-/frontend/src/container/CreateAlertRule/ @srikanthccv
-/frontend/src/container/EditAlertChannels/ @srikanthccv
-/frontend/src/container/FormAlertChannels/ @srikanthccv
-/frontend/src/container/FormAlertRules/ @srikanthccv
-/frontend/src/container/ListAlertRules/ @srikanthccv
-/frontend/src/container/TriggeredAlerts/ @srikanthccv
-/frontend/src/pages/AlertChannelCreate/ @srikanthccv
-/frontend/src/pages/AlertDetails/ @srikanthccv
-/frontend/src/pages/AlertHistory/ @srikanthccv
-/frontend/src/pages/AlertList/ @srikanthccv
-/frontend/src/pages/CreateAlert/ @srikanthccv
-/frontend/src/providers/Alert.tsx @srikanthccv
-
-# Metrics
-/frontend/src/container/MetricsExplorer/ @srikanthccv
-/frontend/src/pages/MetricsApplication/ @srikanthccv
-/frontend/src/pages/MetricsExplorer/ @srikanthccv
-
-# Services and Service Map
-/frontend/src/container/ServiceApplication/ @srikanthccv
-/frontend/src/container/ServiceTable/ @srikanthccv
-/frontend/src/pages/Services/ @srikanthccv
-/frontend/src/pages/ServiceTopLevelOperations/ @srikanthccv
-/frontend/src/container/Home/Services/ @srikanthccv
 
 /deploy/ @SigNoz/devops
 .github @SigNoz/devops

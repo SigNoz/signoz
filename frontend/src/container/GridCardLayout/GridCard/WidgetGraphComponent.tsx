@@ -67,7 +67,6 @@ function WidgetGraphComponent({
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const [deleteModal, setDeleteModal] = useState(false);
-	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
 	const { pathname, search } = useLocation();
 
@@ -316,18 +315,6 @@ function WidgetGraphComponent({
 			style={{
 				height: '100%',
 			}}
-			onMouseOver={(): void => {
-				setHovered(true);
-			}}
-			onFocus={(): void => {
-				setHovered(true);
-			}}
-			onMouseOut={(): void => {
-				setHovered(false);
-			}}
-			onBlur={(): void => {
-				setHovered(false);
-			}}
 			id={widget.id}
 			className="widget-graph-component-container"
 		>
@@ -377,7 +364,6 @@ function WidgetGraphComponent({
 
 			<div className="drag-handle">
 				<WidgetHeader
-					parentHover={hovered}
 					title={widget?.title}
 					widget={widget}
 					onView={handleOnView}

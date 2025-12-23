@@ -4,8 +4,9 @@ import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import AppLoading from 'components/AppLoading/AppLoading';
-import KBarCommandPalette from 'components/KBarCommandPalette/KBarCommandPalette';
+import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import NotFound from 'components/NotFound';
+import { ShiftHoldOverlayController } from 'components/ShiftOverlay/ShiftHoldOverlayController';
 import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -22,12 +23,11 @@ import { StatusCodes } from 'http-status-codes';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
-import AlertRuleProvider from 'providers/Alert';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
+import { CmdKProvider } from 'providers/cmdKProvider';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
-import { KBarCommandPaletteProvider } from 'providers/KBarCommandPaletteProvider';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
@@ -214,7 +214,10 @@ function App(): JSX.Element {
 	]);
 
 	useEffect(() => {
-		if (pathname === ROUTES.ONBOARDING) {
+		if (
+			pathname === ROUTES.ONBOARDING ||
+			pathname.startsWith('/public/dashboard/')
+		) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			window.Pylon('hideChatBubble');
@@ -362,35 +365,36 @@ function App(): JSX.Element {
 			<ConfigProvider theme={themeConfig}>
 				<Router history={history}>
 					<CompatRouter>
-						<KBarCommandPaletteProvider>
-							<KBarCommandPalette />
+						<CmdKProvider>
 							<NotificationProvider>
 								<ErrorModalProvider>
+									{isLoggedInState && <CmdKPalette userRole={user.role} />}
+									{isLoggedInState && (
+										<ShiftHoldOverlayController userRole={user.role} />
+									)}
 									<PrivateRoute>
 										<ResourceProvider>
 											<QueryBuilderProvider>
 												<DashboardProvider>
 													<KeyboardHotkeysProvider>
-														<AlertRuleProvider>
-															<AppLayout>
-																<PreferenceContextProvider>
-																	<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																		<Switch>
-																			{routes.map(({ path, component, exact }) => (
-																				<Route
-																					key={`${path}`}
-																					exact={exact}
-																					path={path}
-																					component={component}
-																				/>
-																			))}
-																			<Route exact path="/" component={Home} />
-																			<Route path="*" component={NotFound} />
-																		</Switch>
-																	</Suspense>
-																</PreferenceContextProvider>
-															</AppLayout>
-														</AlertRuleProvider>
+														<AppLayout>
+															<PreferenceContextProvider>
+																<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+																	<Switch>
+																		{routes.map(({ path, component, exact }) => (
+																			<Route
+																				key={`${path}`}
+																				exact={exact}
+																				path={path}
+																				component={component}
+																			/>
+																		))}
+																		<Route exact path="/" component={Home} />
+																		<Route path="*" component={NotFound} />
+																	</Switch>
+																</Suspense>
+															</PreferenceContextProvider>
+														</AppLayout>
 													</KeyboardHotkeysProvider>
 												</DashboardProvider>
 											</QueryBuilderProvider>
@@ -398,7 +402,7 @@ function App(): JSX.Element {
 									</PrivateRoute>
 								</ErrorModalProvider>
 							</NotificationProvider>
-						</KBarCommandPaletteProvider>
+						</CmdKProvider>
 					</CompatRouter>
 				</Router>
 			</ConfigProvider>
