@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/sqlroutingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authn/authnstore/sqlauthnstore"
 	"github.com/SigNoz/signoz/pkg/authz"
@@ -20,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
@@ -53,6 +55,7 @@ type SigNoz struct {
 	Prometheus             prometheus.Prometheus
 	Alertmanager           alertmanager.Alertmanager
 	Querier                querier.Querier
+	APIServer              apiserver.APIServer
 	Zeus                   zeus.Zeus
 	Licensing              licensing.Licensing
 	Emailing               emailing.Emailing
@@ -62,6 +65,7 @@ type SigNoz struct {
 	Authz                  authz.AuthZ
 	Modules                Modules
 	Handlers               Handlers
+	QueryParser            queryparser.QueryParser
 }
 
 func New(
@@ -309,6 +313,9 @@ func New(
 		return nil, err
 	}
 
+	// Initialize query parser
+	queryParser := queryparser.New(providerSettings)
+
 	// Initialize authns
 	store := sqlauthnstore.NewStore(sqlstore)
 	authNs, err := authNsCallback(ctx, providerSettings, store, licensing)
@@ -338,11 +345,34 @@ func New(
 		telemetrymetadata.AttributesMetadataLocalTableName,
 	)
 
+	global, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Global,
+		NewGlobalProviderFactories(),
+		"signoz",
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings, querier, licensing)
+	handlers := NewHandlers(modules, providerSettings, querier, licensing, global)
+
+	// Initialize the API server
+	apiserver, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.APIServer,
+		NewAPIServerProviderFactories(orgGetter, authz, global, modules, handlers),
+		"signoz",
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// Create a list of all stats collectors
 	statsCollectors := []statsreporter.StatsCollector{
@@ -394,6 +424,7 @@ func New(
 		Prometheus:             prometheus,
 		Alertmanager:           alertmanager,
 		Querier:                querier,
+		APIServer:              apiserver,
 		Zeus:                   zeus,
 		Licensing:              licensing,
 		Emailing:               emailing,
@@ -402,5 +433,6 @@ func New(
 		Authz:                  authz,
 		Modules:                modules,
 		Handlers:               handlers,
+		QueryParser:            queryParser,
 	}, nil
 }

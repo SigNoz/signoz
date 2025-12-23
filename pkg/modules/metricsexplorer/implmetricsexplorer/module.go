@@ -2,6 +2,7 @@ package implmetricsexplorer
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -10,16 +11,20 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
+	"golang.org/x/sync/errgroup"
 )
 
 type module struct {
@@ -29,10 +34,13 @@ type module struct {
 	condBuilder            qbtypes.ConditionBuilder
 	logger                 *slog.Logger
 	cache                  cache.Cache
+	ruleStore              ruletypes.RuleStore
+	dashboardModule        dashboard.Module
+	config                 metricsexplorer.Config
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings) metricsexplorer.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, dashboardModule dashboard.Module, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config) metricsexplorer.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -42,6 +50,9 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		logger:                 providerSettings.Logger,
 		telemetryMetadataStore: telemetryMetadataStore,
 		cache:                  cache,
+		ruleStore:              ruleStore,
+		dashboardModule:        dashboardModule,
+		config:                 cfg,
 	}
 }
 
@@ -94,7 +105,6 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsex
 	}, nil
 }
 
-// GetTreemap will return metrics treemap information once implemented.
 func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.TreemapRequest) (*metricsexplorertypes.TreemapResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
@@ -106,7 +116,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 	}
 
 	resp := &metricsexplorertypes.TreemapResponse{}
-	switch req.Treemap {
+	switch req.Mode {
 	case metricsexplorertypes.TreemapModeSamples:
 		entries, err := m.computeSamplesTreemap(ctx, req, filterWhereClause)
 		if err != nil {
@@ -190,6 +200,128 @@ func (m *module) UpdateMetricMetadata(ctx context.Context, orgID valuer.UUID, re
 	return nil
 }
 
+func (m *module) GetMetricAlerts(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricAlertsResponse, error) {
+	if metricName == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+	ruleAlerts, err := m.ruleStore.GetStoredRulesByMetricName(ctx, orgID.String(), metricName)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get stored rules by metric name")
+	}
+
+	alerts := make([]metricsexplorertypes.MetricAlert, len(ruleAlerts))
+	for i, ruleAlert := range ruleAlerts {
+		alerts[i] = metricsexplorertypes.MetricAlert{
+			AlertName: ruleAlert.AlertName,
+			AlertID:   ruleAlert.AlertID,
+		}
+	}
+
+	return &metricsexplorertypes.MetricAlertsResponse{
+		Alerts: alerts,
+	}, nil
+}
+
+func (m *module) GetMetricDashboards(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardsResponse, error) {
+	if metricName == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+	data, err := m.dashboardModule.GetByMetricNames(ctx, orgID, []string{metricName})
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get dashboards for metric")
+	}
+
+	dashboards := make([]metricsexplorertypes.MetricDashboard, 0)
+	if dashboardList, ok := data[metricName]; ok {
+		dashboards = make([]metricsexplorertypes.MetricDashboard, 0, len(dashboardList))
+		for _, item := range dashboardList {
+			dashboards = append(dashboards, metricsexplorertypes.MetricDashboard{
+				DashboardName: item["dashboard_name"],
+				DashboardID:   item["dashboard_id"],
+				WidgetID:      item["widget_id"],
+				WidgetName:    item["widget_name"],
+			})
+		}
+	}
+
+	return &metricsexplorertypes.MetricDashboardsResponse{
+		Dashboards: dashboards,
+	}, nil
+}
+
+// GetMetricHighlights returns highlights for a metric including data points, last received, total time series, and active time series.
+func (m *module) GetMetricHighlights(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricHighlightsResponse, error) {
+	if metricName == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric name is required")
+	}
+
+	var response metricsexplorertypes.MetricHighlightsResponse
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// Fetch data points
+	g.Go(func() error {
+		dataPoints, err := m.getMetricDataPoints(gCtx, metricName)
+		if err != nil {
+			return err
+		}
+		response.DataPoints = dataPoints
+		return nil
+	})
+
+	// Fetch last received
+	g.Go(func() error {
+		lastReceived, err := m.getMetricLastReceived(gCtx, metricName)
+		if err != nil {
+			return err
+		}
+		response.LastReceived = lastReceived
+		return nil
+	})
+
+	// Fetch total time series
+	g.Go(func() error {
+		totalTimeSeries, err := m.getTotalTimeSeriesForMetricName(gCtx, metricName)
+		if err != nil {
+			return err
+		}
+		response.TotalTimeSeries = totalTimeSeries
+		return nil
+	})
+
+	// Fetch active time series (using 120 minutes as default duration)
+	g.Go(func() error {
+		activeTimeSeries, err := m.getActiveTimeSeriesForMetricName(gCtx, metricName, 120*time.Minute)
+		if err != nil {
+			return err
+		}
+		response.ActiveTimeSeries = activeTimeSeries
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.MetricAttributesRequest) (*metricsexplorertypes.MetricAttributesResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	attributes, err := m.fetchMetricAttributes(ctx, req.MetricName, req.Start, req.End)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metricsexplorertypes.MetricAttributesResponse{
+		Attributes: attributes,
+		TotalKeys:  int64(len(attributes)),
+	}, nil
+}
+
 func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, []string) {
 	hits := make(map[string]*metricsexplorertypes.MetricMetadata)
 	misses := make([]string, 0)
@@ -231,8 +363,9 @@ func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, me
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch updated metrics metadata")
 	}
@@ -276,11 +409,11 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"metric_name",
-		"ANY_VALUE(description) AS description",
-		"ANY_VALUE(type) AS metric_type",
-		"ANY_VALUE(unit) AS metric_unit",
-		"ANY_VALUE(temporality) AS temporality",
-		"ANY_VALUE(is_monotonic) AS is_monotonic",
+		"anyLast(description) AS description",
+		"anyLast(type) AS metric_type",
+		"anyLast(unit) AS metric_unit",
+		"anyLast(temporality) AS temporality",
+		"anyLast(is_monotonic) AS is_monotonic",
 	)
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4TableName))
 	sb.Where(sb.In("metric_name", args...))
@@ -288,8 +421,9 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch metrics metadata from timeseries table")
 	}
@@ -373,7 +507,7 @@ func (m *module) validateMetricLabels(ctx context.Context, req *metricsexplorert
 			return err
 		}
 		if !hasLabel {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as histogram type", req.MetricName)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as histogram type: histogram metrics require the 'le' (less than or equal) label for bucket boundaries", req.MetricName)
 		}
 	}
 
@@ -383,7 +517,7 @@ func (m *module) validateMetricLabels(ctx context.Context, req *metricsexplorert
 			return err
 		}
 		if !hasLabel {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as summary type", req.MetricName)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric '%s' cannot be set as summary type: summary metrics require the 'quantile' label for quantile values", req.MetricName)
 		}
 	}
 
@@ -400,9 +534,10 @@ func (m *module) checkForLabelInMetric(ctx context.Context, metricName string, l
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	var hasLabel bool
 	db := m.telemetryStore.ClickhouseDB()
-	err := db.QueryRow(ctx, query, args...).Scan(&hasLabel)
+	err := db.QueryRow(valueCtx, query, args...).Scan(&hasLabel)
 	if err != nil {
 		return false, errors.WrapInternalf(err, errors.CodeInternal, "error checking metric label %q", label)
 	}
@@ -428,8 +563,9 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 
 	query, args := ib.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	if err := db.Exec(ctx, query, args...); err != nil {
+	if err := db.Exec(valueCtx, query, args...); err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to insert metrics metadata")
 	}
 
@@ -458,7 +594,6 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		return sqlbuilder.NewWhereClause(), nil
 	}
 
-	// TODO(nikhilmantri0902, srikanthccv): if this is the right way of dealing with  whereClauseSelectors
 	whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(expression)
 	for idx := range whereClauseSelectors {
 		whereClauseSelectors[idx].Signal = telemetrytypes.SignalMetrics
@@ -483,8 +618,8 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		FieldKeys: keys,
 	}
 
-	startNs := uint64(startMillis * 1_000_000)
-	endNs := uint64(endMillis * 1_000_000)
+	startNs := querybuilder.ToNanoSecs(uint64(startMillis))
+	endNs := querybuilder.ToNanoSecs(uint64(endMillis))
 
 	whereClause, err := querybuilder.PrepareWhereClause(expression, opts, startNs, endNs)
 	if err != nil {
@@ -581,8 +716,9 @@ func (m *module) fetchMetricsStatsWithSamples(
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute metrics stats with samples query")
 	}
@@ -650,8 +786,9 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplo
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute timeseries treemap query")
 	}
@@ -709,7 +846,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 	)
 	sampleCountsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
 	sampleCountsSB.Where(sampleCountsSB.Between("unix_milli", req.Start, req.End))
-	sampleCountsSB.Where("metric_name IN (SELECT metric_name FROM __metric_candidates)")
+	sampleCountsSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __metric_candidates)")
 
 	if filterWhereClause != nil {
 		fingerprintSB := sqlbuilder.NewSelectBuilder()
@@ -719,7 +856,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 		fingerprintSB.Where("NOT startsWith(metric_name, 'signoz')")
 		fingerprintSB.Where(fingerprintSB.E("__normalized", false))
 		fingerprintSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterWhereClause))
-		fingerprintSB.Where("metric_name IN (SELECT metric_name FROM __metric_candidates)")
+		fingerprintSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __metric_candidates)")
 		fingerprintSB.GroupBy("fingerprint")
 
 		sampleCountsSB.Where("fingerprint IN (SELECT fingerprint FROM __filtered_fingerprints)")
@@ -749,8 +886,9 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
 	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute samples treemap query")
 	}
@@ -770,4 +908,139 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 	}
 
 	return entries, nil
+}
+
+// getMetricDataPoints returns the total number of data points (samples) for a metric.
+func (m *module) getMetricDataPoints(ctx context.Context, metricName string) (uint64, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("sum(count) AS data_points")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4Agg30mTableName))
+	sb.Where(sb.E("metric_name", metricName))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	var dataPoints uint64
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
+	err := db.QueryRow(valueCtx, query, args...).Scan(&dataPoints)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get metrics data points")
+	}
+
+	return dataPoints, nil
+}
+
+// getMetricLastReceived returns the last received timestamp for a metric.
+func (m *module) getMetricLastReceived(ctx context.Context, metricName string) (uint64, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("MAX(last_reported_unix_milli) AS last_received_time")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(sb.E("metric_name", metricName))
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	var lastReceived sql.NullInt64
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
+	err := db.QueryRow(valueCtx, query, args...).Scan(&lastReceived)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get last received timestamp")
+	}
+
+	if !lastReceived.Valid {
+		return 0, nil
+	}
+
+	return uint64(lastReceived.Int64), nil
+}
+
+// getTotalTimeSeriesForMetricName returns the total number of unique time series for a metric.
+func (m *module) getTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("uniq(fingerprint) AS time_series_count")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41weekTableName))
+	sb.Where(sb.E("metric_name", metricName))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	var timeSeriesCount uint64
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
+	err := db.QueryRow(valueCtx, query, args...).Scan(&timeSeriesCount)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get total time series count")
+	}
+
+	return timeSeriesCount, nil
+}
+
+// getActiveTimeSeriesForMetricName returns the number of active time series for a metric within the given duration.
+func (m *module) getActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, error) {
+	milli := time.Now().Add(-duration).UnixMilli()
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("uniq(fingerprint) AS active_time_series")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4TableName))
+	sb.Where(sb.E("metric_name", metricName))
+	sb.Where(sb.GTE("unix_milli", milli))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	db := m.telemetryStore.ClickhouseDB()
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
+	var activeTimeSeries uint64
+	err := db.QueryRow(valueCtx, query, args...).Scan(&activeTimeSeries)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to get active time series count")
+	}
+
+	return activeTimeSeries, nil
+}
+
+func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, start, end *int64) ([]metricsexplorertypes.MetricAttribute, error) {
+	// Build query using sqlbuilder
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"attr_name AS key",
+		"groupUniqArray(1000)(attr_string_value) AS values",
+		"uniq(attr_string_value) AS valueCount",
+	)
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(sb.E("metric_name", metricName))
+	sb.Where("NOT startsWith(attr_name, '__')")
+
+	// Add time range filtering if provided
+	if start != nil {
+		// Filter by start time: attributes that were active at or after start time
+		sb.Where(sb.GE("last_reported_unix_milli", *start))
+	}
+	if end != nil {
+		// Filter by end time: attributes that were active at or before end time
+		sb.Where(sb.LE("first_reported_unix_milli", *end))
+	}
+
+	sb.GroupBy("attr_name")
+	sb.OrderBy("valueCount DESC")
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(valueCtx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch metric attributes")
+	}
+	defer rows.Close()
+
+	attributes := make([]metricsexplorertypes.MetricAttribute, 0)
+	for rows.Next() {
+		var attr metricsexplorertypes.MetricAttribute
+		if err := rows.Scan(&attr.Key, &attr.Values, &attr.ValueCount); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metric attribute row")
+		}
+		attributes = append(attributes, attr)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metric attribute rows")
+	}
+
+	return attributes, nil
 }

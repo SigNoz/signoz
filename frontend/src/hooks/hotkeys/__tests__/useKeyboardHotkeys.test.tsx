@@ -1,10 +1,17 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useEffect } from 'react';
 
 import {
 	KeyboardHotkeysProvider,
 	useKeyboardHotkeys,
 } from '../useKeyboardHotkeys';
+
+jest.mock('../../../providers/cmdKProvider', () => ({
+	useCmdK: (): { open: boolean } => ({
+		open: false,
+	}),
+}));
 
 function TestComponentWithRegister({
 	handleShortcut,
@@ -13,14 +20,13 @@ function TestComponentWithRegister({
 }): JSX.Element {
 	const { registerShortcut } = useKeyboardHotkeys();
 
-	registerShortcut('a', handleShortcut);
+	useEffect(() => {
+		registerShortcut('a', handleShortcut);
+	}, [registerShortcut, handleShortcut]);
 
-	return (
-		<div>
-			<span>Test Component</span>
-		</div>
-	);
+	return <span>Test Component</span>;
 }
+
 function TestComponentWithDeRegister({
 	handleShortcut,
 }: {
@@ -28,21 +34,18 @@ function TestComponentWithDeRegister({
 }): JSX.Element {
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	registerShortcut('b', handleShortcut);
+	useEffect(() => {
+		registerShortcut('b', handleShortcut);
+		deregisterShortcut('b');
+	}, [registerShortcut, deregisterShortcut, handleShortcut]);
 
-	// Deregister the shortcut before triggering it
-	deregisterShortcut('b');
-
-	return (
-		<div>
-			<span>Test Component</span>
-		</div>
-	);
+	return <span>Test Component</span>;
 }
 
 describe('KeyboardHotkeysProvider', () => {
 	it('registers and triggers shortcuts correctly', async () => {
 		const handleShortcut = jest.fn();
+		const user = userEvent.setup();
 
 		render(
 			<KeyboardHotkeysProvider>
@@ -50,15 +53,15 @@ describe('KeyboardHotkeysProvider', () => {
 			</KeyboardHotkeysProvider>,
 		);
 
-		// Trigger the registered shortcut
-		await userEvent.keyboard('a');
+		// fires on keyup
+		await user.keyboard('{a}');
 
-		// Assert that the handleShortcut function has been called
-		expect(handleShortcut).toHaveBeenCalled();
+		expect(handleShortcut).toHaveBeenCalledTimes(1);
 	});
 
-	it('deregisters shortcuts correctly', () => {
+	it('does not trigger deregistered shortcuts', async () => {
 		const handleShortcut = jest.fn();
+		const user = userEvent.setup();
 
 		render(
 			<KeyboardHotkeysProvider>
@@ -66,10 +69,8 @@ describe('KeyboardHotkeysProvider', () => {
 			</KeyboardHotkeysProvider>,
 		);
 
-		// Try to trigger the deregistered shortcut
-		userEvent.keyboard('b');
+		await user.keyboard('{b}');
 
-		// Assert that the handleShortcut function has NOT been called
 		expect(handleShortcut).not.toHaveBeenCalled();
 	});
 });
