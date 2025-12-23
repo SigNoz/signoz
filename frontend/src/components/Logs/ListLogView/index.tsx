@@ -25,13 +25,7 @@ import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButton
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
 import { getLogIndicatorType } from '../LogStateIndicator/utils';
 // styles
-import {
-	Container,
-	LogContainer,
-	LogText,
-	Text,
-	TextContainer,
-} from './styles';
+import { Container, LogContainer, LogText } from './styles';
 import { isValidLogField } from './util';
 
 interface LogFieldProps {
@@ -58,16 +52,18 @@ function LogGeneralField({
 	);
 
 	return (
-		<TextContainer>
-			<Text ellipsis type="secondary" className={cx('log-field-key', fontSize)}>
-				{`${fieldKey} : `}
-			</Text>
+		<div className="log-field-container">
+			<p className={cx('log-field-key', fontSize)} title={fieldKey}>
+				{fieldKey}
+			</p>
+			<span className={cx('log-field-key-colon', fontSize)}>&nbsp;:&nbsp;</span>
 			<LogText
 				dangerouslySetInnerHTML={html}
 				className={cx('log-value', fontSize)}
+				title={fieldValue}
 				linesPerRow={linesPerRow > 1 ? linesPerRow : undefined}
 			/>
-		</TextContainer>
+		</div>
 	);
 }
 
