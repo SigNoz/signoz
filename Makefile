@@ -72,6 +72,12 @@ devenv-up: devenv-clickhouse devenv-signoz-otel-collector ## Start both clickhou
 	@echo "   - ClickHouse: http://localhost:8123"
 	@echo "   - Signoz OTel Collector: grpc://localhost:4317, http://localhost:4318"
 
+.PHONY: devenv-clickhouse-clean
+devenv-clickhouse-clean: ## Clean all ClickHouse data from filesystem
+	@echo "Removing ClickHouse data..."
+	@rm -rf .devenv/docker/clickhouse/fs/tmp/*
+	@echo "ClickHouse data cleaned!"
+
 ##############################################################
 # go commands
 ##############################################################

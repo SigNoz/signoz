@@ -137,6 +137,50 @@ func (h *handler) GetMetricMetadata(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, metadata)
 }
 
+func (h *handler) GetMetricAlerts(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	metricName := strings.TrimSpace(req.URL.Query().Get("metricName"))
+	if metricName == "" {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName query parameter is required"))
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+	out, err := h.module.GetMetricAlerts(req.Context(), orgID, metricName)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	render.Success(rw, http.StatusOK, out)
+}
+
+func (h *handler) GetMetricDashboards(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	metricName := strings.TrimSpace(req.URL.Query().Get("metricName"))
+	if metricName == "" {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName query parameter is required"))
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+	out, err := h.module.GetMetricDashboards(req.Context(), orgID, metricName)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	render.Success(rw, http.StatusOK, out)
+}
+
 func (h *handler) GetMetricHighlights(rw http.ResponseWriter, req *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(req.Context())
 	if err != nil {
@@ -165,7 +209,6 @@ func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request)
 		render.Error(rw, err)
 		return
 	}
-
 	var in metricsexplorertypes.MetricAttributesRequest
 	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
 		render.Error(rw, err)

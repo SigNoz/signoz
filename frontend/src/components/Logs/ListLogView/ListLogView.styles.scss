@@ -1,11 +1,15 @@
-.log-field-key {
-	padding-right: 5px;
+.log-field-container {
+	display: flex;
+	overflow: hidden;
+	width: 100%;
+	align-items: baseline;
+}
+.log-field-key,
+.log-field-key-colon {
 	color: var(--text-vanilla-400, #c0c1c3);
 	font-size: 14px;
 	font-style: normal;
 	font-weight: 400;
-	line-height: 18px; /* 128.571% */
-	letter-spacing: -0.07px;
 
 	&.small {
 		font-size: 11px;
@@ -21,6 +25,20 @@
 		font-size: 14px;
 		line-height: 24px;
 	}
+}
+.log-field-key {
+	line-height: 18px; /* 128.571% */
+	letter-spacing: -0.07px;
+	white-space: nowrap;
+	display: inline-block;
+	max-width: 20vw;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	margin: 0;
+}
+.log-field-key-colon {
+	min-width: 0.8rem;
+	flex-shrink: 0;
 }
 .log-value {
 	color: var(--text-vanilla-400, #c0c1c3);
@@ -158,7 +176,8 @@
 }
 
 .lightMode {
-	.log-field-key {
+	.log-field-key,
+	.log-field-key-colon {
 		color: var(--text-slate-400);
 	}
 	.log-value {
@@ -168,5 +187,12 @@
 		&:hover {
 			background-color: var(--text-vanilla-200) !important;
 		}
+	}
+}
+
+.dark {
+	.log-field-key,
+	.log-field-key-colon {
+		color: rgba(255, 255, 255, 0.45);
 	}
 }

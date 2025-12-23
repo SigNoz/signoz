@@ -29,6 +29,20 @@ import { QueryBuilderContextType } from 'types/common/queryBuilder';
 import { ROLES, USER_ROLES } from 'types/roles';
 // import { MemoryRouter as V5MemoryRouter } from 'react-router-dom-v5-compat';
 
+// Mock ResizeObserver
+class ResizeObserverMock {
+	// eslint-disable-next-line class-methods-use-this
+	observe(): void {}
+
+	// eslint-disable-next-line class-methods-use-this
+	unobserve(): void {}
+
+	// eslint-disable-next-line class-methods-use-this
+	disconnect(): void {}
+}
+
+global.ResizeObserver = (ResizeObserverMock as unknown) as typeof ResizeObserver;
+
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {

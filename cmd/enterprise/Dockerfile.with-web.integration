@@ -1,0 +1,47 @@
+FROM node:18-bullseye AS build
+
+WORKDIR /opt/
+COPY ./frontend/ ./
+ENV NODE_OPTIONS=--max-old-space-size=8192
+RUN CI=1 yarn install
+RUN CI=1 yarn build
+
+FROM golang:1.24-bullseye
+
+ARG OS="linux"
+ARG TARGETARCH
+ARG ZEUSURL
+
+# This path is important for stacktraces
+WORKDIR $GOPATH/src/github.com/signoz/signoz
+WORKDIR /root
+
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
+		g++ \
+		gcc \
+		libc6-dev \
+		make \
+		pkg-config \
+	; \
+	rm -rf /var/lib/apt/lists/*
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY ./cmd/ ./cmd/
+COPY ./ee/ ./ee/
+COPY ./pkg/ ./pkg/
+COPY ./templates/email /root/templates
+
+COPY Makefile Makefile
+RUN TARGET_DIR=/root ARCHS=${TARGETARCH} ZEUS_URL=${ZEUSURL} LICENSE_URL=${ZEUSURL}/api/v1 make go-build-enterprise-race
+RUN mv /root/linux-${TARGETARCH}/signoz /root/signoz
+
+COPY --from=build /opt/build ./web/
+
+RUN chmod 755 /root /root/signoz
+
+ENTRYPOINT ["/root/signoz", "server"]
