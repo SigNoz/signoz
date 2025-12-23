@@ -1,4 +1,4 @@
-package configprovider
+package configflagger
 
 import (
 	"context"
@@ -55,7 +55,7 @@ func (p *provider) BooleanEvaluation(ctx context.Context, flag string, defaultVa
 	}
 
 	return openfeature.BoolResolutionDetail{
-		Value: value,
+		Value:                    value,
 		ProviderResolutionDetail: detail,
 	}
 }
@@ -78,7 +78,7 @@ func (p *provider) FloatEvaluation(ctx context.Context, flag string, defaultValu
 	}
 
 	return openfeature.FloatResolutionDetail{
-		Value: value,
+		Value:                    value,
 		ProviderResolutionDetail: detail,
 	}
 }
@@ -101,7 +101,7 @@ func (p *provider) StringEvaluation(ctx context.Context, flag string, defaultVal
 	}
 
 	return openfeature.StringResolutionDetail{
-		Value: value,
+		Value:                    value,
 		ProviderResolutionDetail: detail,
 	}
 }
@@ -124,7 +124,7 @@ func (p *provider) IntEvaluation(ctx context.Context, flag string, defaultValue 
 	}
 
 	return openfeature.IntResolutionDetail{
-		Value: value,
+		Value:                    value,
 		ProviderResolutionDetail: detail,
 	}
 }
@@ -147,7 +147,7 @@ func (p *provider) ObjectEvaluation(ctx context.Context, flag string, defaultVal
 	}
 
 	return openfeature.InterfaceResolutionDetail{
-		Value: value,
+		Value:                    value,
 		ProviderResolutionDetail: detail,
 	}
 }
@@ -156,6 +156,6 @@ func (provider *provider) Hooks() []openfeature.Hook {
 	return []openfeature.Hook{}
 }
 
-func (p *provider) List(ctx context.Context) []any {
-	return nil
+func (p *provider) List(ctx context.Context) ([]*featuretypes.Feature, error) {
+	return nil, nil
 }

@@ -3,6 +3,7 @@ package flagger
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
@@ -11,5 +12,5 @@ type Provider interface {
 	openfeature.FeatureProvider
 
 	// List returns all the feature flags
-	List(ctx context.Context) []any // TODO: Add type
+	List(ctx context.Context) ([]*featuretypes.Feature, error)
 }

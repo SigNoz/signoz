@@ -15,7 +15,7 @@ type Flagger interface {
 	Float(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext, defaultValue float64) (float64, error)
 	Int(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext, defaultValue int64) (int64, error)
 	Object(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext, defaultValue any) (any, error)
-	List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) []any // TODO: Add type
+	List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.Feature, error)
 }
 
 // This is the concrete implementation of the Flagger interface.
@@ -57,8 +57,6 @@ func New(ctx context.Context, ps factory.ProviderSettings, config Config, factor
 }
 
 func (f *flagger) Boolean(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext, defaultValue bool) (bool, error) {
-	
-	
 
 	return defaultValue, nil
 }
@@ -83,7 +81,7 @@ func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.
 	return defaultValue, nil
 }
 
-func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) []any {
+func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext)  ([]*featuretypes.Feature, error) {
 	// TODO: complete this
-	return nil
+	return nil, nil
 }
