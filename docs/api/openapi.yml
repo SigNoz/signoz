@@ -849,6 +849,75 @@ paths:
       summary: Deprecated create session by email password
       tags:
       - sessions
+  /api/v1/logs/promote_paths:
+    get:
+      deprecated: false
+      description: This endpoints promotes and indexes paths
+      operationId: PromotePaths
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/PromotetypesPromotePath'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Promote and index paths
+      tags:
+      - promoted_paths
+      - logs
+      - json_logs
+    post:
+      deprecated: false
+      description: This endpoints promotes and indexes paths
+      operationId: PromotePaths
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/PromotetypesPromotePath'
+              nullable: true
+              type: array
+      responses:
+        "201":
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Promote and index paths
+      tags:
+      - promoted_paths
+      - logs
+      - json_logs
   /api/v1/org/preferences:
     get:
       deprecated: false
@@ -2136,6 +2205,26 @@ components:
         value: {}
       type: object
     PreferencetypesValue:
+      type: object
+    PromotetypesPromotePath:
+      properties:
+        indexes:
+          items:
+            $ref: '#/components/schemas/PromotetypesWrappedIndex'
+          type: array
+        path:
+          type: string
+        promote:
+          type: boolean
+      type: object
+    PromotetypesWrappedIndex:
+      properties:
+        column_type:
+          type: string
+        granularity:
+          type: integer
+        type:
+          type: string
       type: object
     RenderErrorResponse:
       properties:

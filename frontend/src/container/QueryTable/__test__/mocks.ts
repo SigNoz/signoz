@@ -363,7 +363,6 @@ export const WidgetHeaderProps: any = {
 		title: 'Table - Panel',
 		yAxisUnit: 'none',
 	},
-	parentHover: false,
 	queryResponse: {
 		status: 'success',
 		isLoading: false,
