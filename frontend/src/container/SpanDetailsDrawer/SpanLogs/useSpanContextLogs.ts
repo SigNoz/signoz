@@ -31,6 +31,7 @@ interface UseSpanContextLogsReturn {
 	spanLogIds: Set<string>;
 	isLogSpanRelated: (logId: string) => boolean;
 	hasTraceIdLogs: boolean;
+	isTraceOnlyLoading: boolean;
 }
 
 const traceIdKey = {
@@ -284,7 +285,7 @@ export const useSpanContextLogs = ({
 		);
 	}, [timeRange.startTime, timeRange.endTime, traceOnlyFilter]);
 
-	const { data: traceOnlyData } = useQuery({
+	const { data: traceOnlyData, isLoading: isTraceOnlyLoading } = useQuery({
 		queryKey: [
 			REACT_QUERY_KEY.TRACE_ONLY_LOGS,
 			traceId,
@@ -318,5 +319,6 @@ export const useSpanContextLogs = ({
 		spanLogIds,
 		isLogSpanRelated,
 		hasTraceIdLogs,
+		isTraceOnlyLoading,
 	};
 };
