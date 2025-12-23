@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/huandu/go-sqlbuilder"
 )
 
 const (
@@ -217,6 +216,13 @@ const (
 		"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool," +
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string," +
 		"CAST((scope_string_key, scope_string_value), 'Map(String, String)') as scope "
+	LogsSQLSelectV2 = "SELECT " +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, " +
+		"attributes_string, " +
+		"attributes_number, " +
+		"attributes_bool, " +
+		"resources_string, " +
+		"scope_string "
 	TracesExplorerViewSQLSelectWithSubQuery = "(SELECT traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s ORDER BY durationNano DESC LIMIT 1 BY traceID"
 	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName as `subQuery.serviceName`, subQuery.name as `subQuery.name`, count() AS " +
@@ -681,7 +687,6 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{}
 var IsDotMetricsEnabled = false
 var PreferSpanMetrics = false
 var MaxJSONFlatteningDepth = 1
-var BodyJSONQueryEnabled = GetOrDefaultEnv("BODY_JSON_QUERY_ENABLED", "false") == "true"
 
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
@@ -722,15 +727,3 @@ const InspectMetricsMaxTimeDiff = 1800000
 
 const DotMetricsEnabled = "DOT_METRICS_ENABLED"
 const maxJSONFlatteningDepth = "MAX_JSON_FLATTENING_DEPTH"
-
-func LogsSQLSelectV2() string {
-	sb := sqlbuilder.NewSelectBuilder()
-	columns := []string{"timestamp", "id", "trace_id", "span_id", "trace_flags", "severity_text", "severity_number", "scope_name", "scope_version", "body"}
-	if BodyJSONQueryEnabled {
-		columns = append(columns, "body_json", "body_json_promoted")
-	}
-	columns = append(columns, "attributes_string", "attributes_number", "attributes_bool", "resources_string", "scope_string")
-	sb.Select(columns...)
-	query, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return query + " " // add space to avoid concatenation issues
-}
