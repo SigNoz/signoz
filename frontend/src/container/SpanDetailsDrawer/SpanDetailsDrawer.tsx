@@ -4,6 +4,7 @@ import {
 	Button,
 	Checkbox,
 	Input,
+	Modal,
 	Select,
 	Skeleton,
 	Tabs,
@@ -52,6 +53,7 @@ import { formatEpochTimestamp } from 'utils/timeUtils';
 
 import Attributes from './Attributes/Attributes';
 import { RelatedSignalsViews } from './constants';
+import EventAttribute from './Events/components/EventAttribute';
 import Events from './Events/Events';
 import LinkedSpans from './LinkedSpans/LinkedSpans';
 import SpanRelatedSignals from './SpanRelatedSignals/SpanRelatedSignals';
@@ -166,9 +168,25 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		setShouldUpdateUserPreference,
 	] = useState<boolean>(false);
 
+	const [statusMessageModalContent, setStatusMessageModalContent] = useState<{
+		title: string;
+		content: string;
+	} | null>(null);
+
 	const handleTimeRangeChange = useCallback((value: number): void => {
 		setShouldFetchSpanPercentilesData(true);
 		setSelectedTimeRange(value);
+	}, []);
+
+	const showStatusMessageModal = useCallback(
+		(title: string, content: string): void => {
+			setStatusMessageModalContent({ title, content });
+		},
+		[],
+	);
+
+	const handleStatusMessageModalCancel = useCallback((): void => {
+		setStatusMessageModalContent(null);
 	}, []);
 
 	const color = generateColor(
@@ -868,14 +886,11 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 						{selectedSpan.statusMessage && (
 							<div className="item">
-								<Typography.Text className="attribute-key">
-									status message
-								</Typography.Text>
-								<div className="value-wrapper">
-									<Typography.Text className="attribute-value">
-										{selectedSpan.statusMessage}
-									</Typography.Text>
-								</div>
+								<EventAttribute
+									attributeKey="status message"
+									attributeValue={selectedSpan.statusMessage}
+									onExpand={showStatusMessageModal}
+								/>
 							</div>
 						)}
 						<div className="item">
@@ -936,6 +951,19 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					key={activeDrawerView}
 				/>
 			)}
+
+			<Modal
+				title={statusMessageModalContent?.title}
+				open={!!statusMessageModalContent}
+				onCancel={handleStatusMessageModalCancel}
+				footer={null}
+				width="80vw"
+				centered
+			>
+				<pre className="attribute-with-expandable-popover__full-view">
+					{statusMessageModalContent?.content}
+				</pre>
+			</Modal>
 		</>
 	);
 }

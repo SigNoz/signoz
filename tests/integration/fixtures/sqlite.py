@@ -27,7 +27,6 @@ def sqlite(
         with engine.connect() as conn:
             result = conn.execute(sql.text("SELECT 1"))
             assert result.fetchone()[0] == 1
-            
 
         return types.TestContainerSQL(
             container=types.TestContainerDocker(
@@ -52,7 +51,6 @@ def sqlite(
         with engine.connect() as conn:
             result = conn.execute(sql.text("SELECT 1"))
             assert result.fetchone()[0] == 1
-
 
         return types.TestContainerSQL(
             container=types.TestContainerDocker(
