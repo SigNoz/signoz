@@ -20,6 +20,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
+	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/promote/implpromote"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
@@ -65,6 +67,7 @@ type Modules struct {
 	Services        services.Module
 	SpanPercentile  spanpercentile.Module
 	MetricsExplorer metricsexplorer.Module
+	Promote         promote.Module
 }
 
 func NewModules(
@@ -108,5 +111,6 @@ func NewModules(
 		SpanPercentile:  implspanpercentile.NewModule(querier, providerSettings),
 		Services:        implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
+		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
 	}
 }
