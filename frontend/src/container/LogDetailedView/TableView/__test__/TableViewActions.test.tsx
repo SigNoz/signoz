@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { LogViewMode } from 'container/LogsTable';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -70,19 +71,6 @@ jest.mock('react-router-dom', () => ({
 		search: '',
 		hash: '',
 		state: null,
-	}),
-}));
-
-jest.mock('../useAsyncJSONProcessing', () => ({
-	__esModule: true,
-	default: (): {
-		isLoading: boolean;
-		treeData: unknown[] | null;
-		error: string | null;
-	} => ({
-		isLoading: false,
-		treeData: null,
-		error: null,
 	}),
 }));
 
@@ -269,6 +257,7 @@ describe('TableViewActions', () => {
 		};
 
 		it('shows Add to Columns button when field is not selected', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			const onAddColumn = jest.fn();
 			const { container } = render(
 				<TableViewActions
@@ -285,7 +274,7 @@ describe('TableViewActions', () => {
 			);
 
 			const ellipsisButton = getEllipsisButton(container);
-			fireEvent.mouseOver(ellipsisButton);
+			await user.hover(ellipsisButton);
 
 			await waitFor(() => {
 				expect(screen.getByText(ADD_TO_COLUMNS_TEXT)).toBeInTheDocument();
@@ -293,6 +282,8 @@ describe('TableViewActions', () => {
 		});
 
 		it(`calls onAddColumn with correct field key when ${ADD_TO_COLUMNS_TEXT} is clicked`, async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
 			const onAddColumn = jest.fn();
 			const { container } = render(
 				<TableViewActions
@@ -309,19 +300,20 @@ describe('TableViewActions', () => {
 			);
 
 			const ellipsisButton = getEllipsisButton(container);
-			fireEvent.mouseOver(ellipsisButton);
+			await user.hover(ellipsisButton);
 
 			await waitFor(() => {
 				expect(screen.getByText(ADD_TO_COLUMNS_TEXT)).toBeInTheDocument();
 			});
 
 			const addButton = screen.getByText(ADD_TO_COLUMNS_TEXT);
-			fireEvent.click(addButton);
+			await user.click(addButton);
 
 			expect(onAddColumn).toHaveBeenCalledWith(TEST_FIELD);
 		});
 
 		it('shows Remove from Columns button when field is already selected', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			const onRemoveColumn = jest.fn();
 			const { container } = render(
 				<TableViewActions
@@ -341,7 +333,7 @@ describe('TableViewActions', () => {
 			);
 
 			const ellipsisButton = getEllipsisButton(container);
-			fireEvent.mouseOver(ellipsisButton);
+			await user.hover(ellipsisButton);
 
 			await waitFor(() => {
 				expect(screen.getByText(REMOVE_FROM_COLUMNS_TEXT)).toBeInTheDocument();
@@ -350,6 +342,7 @@ describe('TableViewActions', () => {
 		});
 
 		it(`calls onRemoveColumn with correct field key when ${REMOVE_FROM_COLUMNS_TEXT} is clicked`, async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			const onRemoveColumn = jest.fn();
 			const { container } = render(
 				<TableViewActions
@@ -369,14 +362,14 @@ describe('TableViewActions', () => {
 			);
 
 			const ellipsisButton = getEllipsisButton(container);
-			fireEvent.mouseOver(ellipsisButton);
+			await user.hover(ellipsisButton);
 
 			await waitFor(() => {
 				expect(screen.getByText('Remove from Columns')).toBeInTheDocument();
 			});
 
 			const removeButton = screen.getByText(REMOVE_FROM_COLUMNS_TEXT);
-			fireEvent.click(removeButton);
+			await user.click(removeButton);
 
 			expect(onRemoveColumn).toHaveBeenCalledWith(TEST_FIELD);
 		});
