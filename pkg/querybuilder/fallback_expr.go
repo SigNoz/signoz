@@ -219,6 +219,8 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 	case telemetrytypes.FieldDataTypeFloat64,
 		telemetrytypes.FieldDataTypeArrayFloat64:
 		switch v := value.(type) {
+		case float32, float64:
+			tblFieldName = castFloatHack(tblFieldName)
 		case string:
 			// check if it's a number inside a string
 			isNumber := false

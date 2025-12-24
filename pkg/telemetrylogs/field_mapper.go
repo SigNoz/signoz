@@ -148,9 +148,11 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			if strings.Contains(key.Name, ArraySep) || strings.Contains(key.Name, ArrayAnyIndex) {
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", key.Name)
 			}
-			expr := fmt.Sprintf("dynamicElement(%s, '%s')", BodyJSONColumnPrefix+key.Name, key.JSONDataType.StringValue())
+			fieldExpr := BodyJSONColumnPrefix + fmt.Sprintf("`%s`", key.Name)
+			expr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldExpr, key.JSONDataType.StringValue())
 			if key.Materialized {
-				expr = fmt.Sprintf("coalesce(%s, %s)", expr, fmt.Sprintf("dynamicElement(%s, '%s')", BodyPromotedColumnPrefix+key.Name, key.JSONDataType.StringValue()))
+				promotedFieldExpr := BodyPromotedColumnPrefix + fmt.Sprintf("`%s`", key.Name)
+				expr = fmt.Sprintf("coalesce(%s, %s)", expr, fmt.Sprintf("dynamicElement(%s, '%s')", promotedFieldExpr, key.JSONDataType.StringValue()))
 			}
 			// returning qbtypes.ErrColumnNotFound is a hack that will trigger the fallback expr logic to include all the types for the key
 			return expr, qbtypes.ErrColumnNotFound

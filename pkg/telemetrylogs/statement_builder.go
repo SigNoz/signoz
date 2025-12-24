@@ -253,8 +253,10 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(LogsV2ScopeNameColumn)
 		sb.SelectMore(LogsV2ScopeVersionColumn)
 		sb.SelectMore(LogsV2BodyColumn)
-		sb.SelectMore(LogsV2BodyJSONColumn)
-		sb.SelectMore(LogsV2BodyPromotedColumn)
+		if querybuilder.BodyJSONQueryEnabled {
+			sb.SelectMore(LogsV2BodyJSONColumn)
+			sb.SelectMore(LogsV2BodyPromotedColumn)
+		}
 		sb.SelectMore(LogsV2AttributesStringColumn)
 		sb.SelectMore(LogsV2AttributesNumberColumn)
 		sb.SelectMore(LogsV2AttributesBoolColumn)
