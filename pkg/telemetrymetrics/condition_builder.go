@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
@@ -139,9 +141,41 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	_ uint64,
-	_ uint64,
+	start uint64,
+	end uint64,
 ) (string, error) {
+	// Special handling for synthetic metrics-only field isTopLevelOperation
+	if key != nil && key.Name == "isTopLevelOperation" {
+		if operator != qbtypes.FilterOperatorEqual {
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "isTopLevelOperation only supports '=' operator")
+		}
+		// Accept true in bool or string form; anything else is invalid
+		isTrue := false
+		switch v := value.(type) {
+		case bool:
+			isTrue = v
+		case string:
+			isTrue = strings.ToLower(v) == "true"
+		default:
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "isTopLevelOperation expects boolean value, got %T", value)
+		}
+		if !isTrue {
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "isTopLevelOperation can only be filtered with value 'true'")
+		}
+
+		startSec := int64(start / 1000)
+		endSec := int64(end / 1000)
+
+		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+		return sqlbuilder.Escape(fmt.Sprintf(
+			"((JSONExtractString(labels, 'operation'), JSONExtractString(labels, 'service.name')) GLOBAL IN (SELECT DISTINCT name, serviceName FROM %s.%s WHERE time >= toDateTime(%d) AND time <= toDateTime(%d)))",
+			telemetrytraces.DBName,
+			telemetrytraces.TopLevelOperationsTableName,
+			startSec,
+			endSec,
+		)), nil
+	}
+
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
 	if err != nil {
 		return "", err
