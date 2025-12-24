@@ -5,15 +5,19 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type JSONAccessBranchType string
+type JSONAccessBranchType struct {
+	valuer.String
+}
+
+var (
+	BranchJSON    = JSONAccessBranchType{valuer.NewString("json")}
+	BranchDynamic = JSONAccessBranchType{valuer.NewString("dynamic")}
+)
+
 type JSONAccessPlan = []*JSONAccessNode
-
-const (
-	BranchJSON    JSONAccessBranchType = "json"
-	BranchDynamic JSONAccessBranchType = "dynamic"
-)
 
 type TerminalConfig struct {
 	Key       *TelemetryFieldKey
