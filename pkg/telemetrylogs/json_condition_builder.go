@@ -20,6 +20,7 @@ var (
 	CodeGroupByPlanEmpty         = errors.MustNewCode("group_by_plan_empty")
 	CodeArrayMapExpressionsEmpty = errors.MustNewCode("array_map_expressions_empty")
 	CodePromotedPlanMissing      = errors.MustNewCode("promoted_plan_missing")
+	CodeArrayNavigationFailed    = errors.MustNewCode("array_navigation_failed")
 )
 
 func (c *conditionBuilder) getTypes(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
@@ -181,7 +182,7 @@ func (c *conditionBuilder) buildArrayMembershipCondition(node *telemetrytypes.JS
 // recurseArrayHops recursively builds array traversal conditions
 func (c *conditionBuilder) recurseArrayHops(current *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if current == nil {
-		return "", fmt.Errorf("navigation failed, current node is nil")
+		return "", errors.NewInternalf(CodeArrayNavigationFailed, "navigation failed, current node is nil")
 	}
 
 	if current.IsTerminal {

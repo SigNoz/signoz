@@ -36,7 +36,7 @@ func NewFactory(
 }
 
 func newProvider(
-	ctx context.Context,
+	_ context.Context,
 	settings factory.ProviderSettings,
 	cfg querier.Config,
 	telemetryStore telemetrystore.TelemetryStore,
@@ -100,7 +100,7 @@ func newProvider(
 		traceAggExprRewriter,
 	)
 
-	// Create field mapper and condition builder for body JSON queries
+	// Create log statement builder
 	logFieldMapper := telemetrylogs.NewFieldMapper()
 	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, telemetryMetadataStore)
 	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
