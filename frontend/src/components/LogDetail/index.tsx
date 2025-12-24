@@ -90,7 +90,6 @@ function LogDetailInner({
 		(fieldName: string): void => {
 			if (config?.addColumn?.onSelect) {
 				// onSelect from SelectProps has signature (value, option), but handleSelectColumns only needs value
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				config.addColumn.onSelect(fieldName, {} as any);
 			}
 		},
