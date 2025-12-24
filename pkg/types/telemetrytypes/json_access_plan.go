@@ -5,16 +5,19 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
-	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type JSONAccessBranchType string
+type JSONAccessBranchType struct {
+	valuer.String
+}
+
+var (
+	BranchJSON    = JSONAccessBranchType{valuer.NewString("json")}
+	BranchDynamic = JSONAccessBranchType{valuer.NewString("dynamic")}
+)
+
 type JSONAccessPlan = []*JSONAccessNode
-
-const (
-	BranchJSON    JSONAccessBranchType = "json"
-	BranchDynamic JSONAccessBranchType = "dynamic"
-)
 
 type TerminalConfig struct {
 	Key       *TelemetryFieldKey
@@ -74,10 +77,6 @@ func (n *JSONAccessNode) Alias() string {
 }
 
 func (n *JSONAccessNode) FieldPath() string {
-	key := n.Name
-	if keycheck.IsBacktickRequired(key) {
-		key = "`" + key + "`"
-	}
-
+	key := "`" + n.Name + "`"
 	return n.Parent.Alias() + "." + key
 }

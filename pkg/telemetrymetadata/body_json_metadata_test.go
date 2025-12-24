@@ -2,11 +2,12 @@ package telemetrymetadata
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz-otel-collector/constants"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,9 +15,8 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 	testCases := []struct {
 		name              string
 		fieldKeySelectors []*telemetrytypes.FieldKeySelector
-		expectedSQL       []string // SQL should contain these strings
-		notExpectedSQL    []string // SQL should NOT contain these strings
-		expectedArgs      []any    // Args include search texts (if any) + limit value
+		expectedSQL       string
+		expectedArgs      []any
 		expectedLimit     int
 	}{
 
@@ -28,22 +28,7 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 					SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
 				},
 			},
-			expectedSQL: []string{
-				"SELECT",
-				"path",
-				"groupArray(DISTINCT type) AS types",
-				"max(last_seen) AS last_seen",
-				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
-				"WHERE",
-				"path = ?",
-				"GROUP BY path",
-				"ORDER BY last_seen DESC",
-				"LIMIT ?",
-			},
-			notExpectedSQL: []string{
-				"ILIKE",
-				"LIKE",
-			},
+			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (path = ?) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
 			expectedArgs:  []any{"user.name", defaultPathLimit},
 			expectedLimit: defaultPathLimit,
 		},
@@ -55,21 +40,7 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 					SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
 				},
 			},
-			expectedSQL: []string{
-				"SELECT",
-				"path",
-				"groupArray(DISTINCT type) AS types",
-				"max(last_seen) AS last_seen",
-				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
-				"WHERE",
-				"path LIKE ?",
-				"GROUP BY path",
-				"ORDER BY last_seen DESC",
-				"LIMIT ?",
-			},
-			notExpectedSQL: []string{
-				"path = ?",
-			},
+			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (path LIKE ?) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
 			expectedArgs:  []any{"user", 100},
 			expectedLimit: 100,
 		},
@@ -85,23 +56,7 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 					SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
 				},
 			},
-			expectedSQL: []string{
-				"SELECT",
-				"path",
-				"groupArray(DISTINCT type) AS types",
-				"max(last_seen) AS last_seen",
-				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
-				"WHERE",
-				"OR",
-				"path = ?",
-				"GROUP BY path",
-				"ORDER BY last_seen DESC",
-				"LIMIT ?",
-			},
-			notExpectedSQL: []string{
-				"ILIKE",
-				"LIKE",
-			},
+			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (path = ? OR path = ?) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
 			expectedArgs:  []any{"user.name", "user.age", defaultPathLimit},
 			expectedLimit: defaultPathLimit,
 		},
@@ -117,22 +72,7 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 					SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
 				},
 			},
-			expectedSQL: []string{
-				"SELECT",
-				"path",
-				"groupArray(DISTINCT type) AS types",
-				"max(last_seen) AS last_seen",
-				fmt.Sprintf("FROM %s.%s", DBName, PathTypesTableName),
-				"WHERE",
-				"OR",
-				"path LIKE ?",
-				"GROUP BY path",
-				"ORDER BY last_seen DESC",
-				"LIMIT ?",
-			},
-			notExpectedSQL: []string{
-				"path = ?",
-			},
+			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (path LIKE ? OR path LIKE ?) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
 			expectedArgs:  []any{"user", "admin", defaultPathLimit},
 			expectedLimit: defaultPathLimit,
 		},
@@ -144,13 +84,7 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 					SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
 				},
 			},
-			expectedSQL: []string{
-				"WHERE",
-				"path LIKE ?",
-			},
-			notExpectedSQL: []string{
-				"path = ?",
-			},
+			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (path LIKE ?) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
 			expectedArgs:  []any{"test", defaultPathLimit},
 			expectedLimit: defaultPathLimit,
 		},
@@ -161,49 +95,57 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 			query, args, limit, err := buildGetBodyJSONPathsQuery(tc.fieldKeySelectors)
 			require.NoError(t, err, "Error building query: %v", err)
 
-			// Verify query is not empty
-			require.NotEmpty(t, query, "Query should not be empty")
+			require.Equal(t, tc.expectedSQL, query)
+			require.Equal(t, tc.expectedArgs, args)
+			require.Equal(t, tc.expectedLimit, limit)
+		})
+	}
+}
 
-			// Verify expected SQL patterns are present
-			queryUpper := strings.ToUpper(query)
-			for _, expected := range tc.expectedSQL {
-				assert.Contains(t, queryUpper, strings.ToUpper(expected),
-					"Query should contain: %s\nActual query: %s", expected, query)
-			}
+func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
+	testCases := []struct {
+		name         string
+		cluster      string
+		filters      []string
+		expectedSQL  string
+		expectedArgs []any
+	}{
+		{
+			name:    "No filters",
+			cluster: "test-cluster",
+			filters: nil,
+			expectedSQL: "SELECT name, type_full, expr, granularity FROM clusterAllReplicas('test-cluster', system.data_skipping_indices) " +
+				"WHERE database = ? AND table = ? AND (LOWER(expr) LIKE LOWER(?) OR LOWER(expr) LIKE LOWER(?))",
+			expectedArgs: []any{
+				telemetrylogs.DBName,
+				telemetrylogs.LogsV2LocalTableName,
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyJSONColumnPrefix)),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
+			},
+		},
+		{
+			name:    "With filters",
+			cluster: "test-cluster",
+			filters: []string{"foo", "bar"},
+			expectedSQL: "SELECT name, type_full, expr, granularity FROM clusterAllReplicas('test-cluster', system.data_skipping_indices) " +
+				"WHERE database = ? AND table = ? AND (LOWER(expr) LIKE LOWER(?) OR LOWER(expr) LIKE LOWER(?)) AND (LOWER(expr) LIKE LOWER(?) OR LOWER(expr) LIKE LOWER(?))",
+			expectedArgs: []any{
+				telemetrylogs.DBName,
+				telemetrylogs.LogsV2LocalTableName,
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyJSONColumnPrefix)),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains("foo")),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains("bar")),
+			},
+		},
+	}
 
-			// Verify SQL patterns that should NOT be present
-			for _, notExpected := range tc.notExpectedSQL {
-				assert.NotContains(t, queryUpper, strings.ToUpper(notExpected),
-					"Query should NOT contain: %s\nActual query: %s", notExpected, query)
-			}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			query, args := buildListLogsJSONIndexesQuery(tc.cluster, tc.filters...)
 
-			// Verify limit matches expected
-			assert.Equal(t, tc.expectedLimit, limit, "Limit should match expected value")
-
-			// Verify arguments match (including limit as last arg)
-			assert.Equal(t, tc.expectedArgs, args, "Arguments should match. Expected: %v, Got: %v", tc.expectedArgs, args)
-
-			// Verify limit value is in args (should be last element)
-			if len(args) > 0 {
-				actualLimit := args[len(args)-1]
-				assert.Equal(t, tc.expectedLimit, actualLimit, "Last argument should be the limit value")
-			}
-
-			// Verify LIMIT placeholder is in query
-			assert.Contains(t, query, "LIMIT ?", "Query should contain LIMIT ? placeholder")
-
-			// Verify GROUP BY is present
-			assert.Contains(t, queryUpper, "GROUP BY", "Query should contain GROUP BY")
-			assert.Contains(t, queryUpper, "GROUP BY PATH", "Query should group by path")
-
-			// Verify ORDER BY is present
-			assert.Contains(t, queryUpper, "ORDER BY", "Query should contain ORDER BY")
-			assert.Contains(t, queryUpper, "LAST_SEEN DESC", "Query should ORDER BY last_seen DESC")
-
-			// Verify SELECT columns
-			assert.Contains(t, queryUpper, "PATH", "Query should select path")
-			assert.Contains(t, queryUpper, "GROUPARRAY(DISTINCT TYPE)", "Query should select groupArray(DISTINCT type)")
-			assert.Contains(t, queryUpper, "MAX(LAST_SEEN)", "Query should select max(last_seen)")
+			require.Equal(t, tc.expectedSQL, query)
+			require.Equal(t, tc.expectedArgs, args)
 		})
 	}
 }

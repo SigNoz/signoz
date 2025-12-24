@@ -574,7 +574,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	if constants.BodyJSONQueryEnabled {
-		bodyJSONPaths, finished, err := getBodyJSONPaths(ctx, t.telemetrystore, fieldKeySelectors) // LIKE for pattern matching
+		bodyJSONPaths, finished, err := t.getBodyJSONPaths(ctx, fieldKeySelectors) // LIKE for pattern matching
 		if err != nil {
 			t.logger.Error("failed to extract body JSON paths", "error", err)
 		}
@@ -1174,7 +1174,7 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 	}
 
 	if strings.HasPrefix(fieldValueSelector.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
-		return ListJSONValues(ctx, t.telemetrystore.ClickhouseDB(), fieldValueSelector.Name, limit)
+		return t.ListJSONValues(ctx, fieldValueSelector.Name, limit)
 	}
 
 	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(t.logsDBName + "." + t.logsFieldsTblName)

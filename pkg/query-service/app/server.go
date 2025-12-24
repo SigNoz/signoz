@@ -3,19 +3,21 @@ package app
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 
 	"github.com/gorilla/handlers"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -29,6 +31,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -36,10 +39,8 @@ import (
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 
-	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
-	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
@@ -106,7 +107,8 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.Prometheus,
 		signoz.Modules.OrgGetter,
 		signoz.Querier,
-		signoz.Instrumentation.Logger(),
+		signoz.Instrumentation.ToProviderSettings(),
+		signoz.QueryParser,
 	)
 	if err != nil {
 		return nil, err
@@ -132,6 +134,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
+		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
 	})
 	if err != nil {
 		return nil, err
@@ -221,6 +224,11 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	api.MetricExplorerRoutes(r, am)
 	api.RegisterTraceFunnelsRoutes(r, am)
 
+	err := s.signoz.APIServer.AddToRouter(r)
+	if err != nil {
+		return nil, err
+	}
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
@@ -231,7 +239,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 
 	handler = handlers.CompressHandler(handler)
 
-	err := web.AddToRouter(r)
+	err = web.AddToRouter(r)
 	if err != nil {
 		return nil, err
 	}
@@ -332,9 +340,10 @@ func makeRulesManager(
 	prometheus prometheus.Prometheus,
 	orgGetter organization.Getter,
 	querier querier.Querier,
-	logger *slog.Logger,
+	providerSettings factory.ProviderSettings,
+	queryParser queryparser.QueryParser,
 ) (*rules.Manager, error) {
-	ruleStore := sqlrulestore.NewRuleStore(sqlstore)
+	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
@@ -344,7 +353,7 @@ func makeRulesManager(
 		Logger:           zap.L(),
 		Reader:           ch,
 		Querier:          querier,
-		SLogger:          logger,
+		SLogger:          providerSettings.Logger,
 		Cache:            cache,
 		EvalDelay:        constants.GetEvalDelay(),
 		OrgGetter:        orgGetter,

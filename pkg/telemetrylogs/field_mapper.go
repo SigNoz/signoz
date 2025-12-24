@@ -7,8 +7,8 @@ import (
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/utils"
-	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -68,7 +68,7 @@ func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
 
-func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		return logsV2Columns["resource"], nil
@@ -92,7 +92,7 @@ func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.Telemet
 	case telemetrytypes.FieldContextBody:
 		// Body context is for JSON body fields
 		// Use body_json if feature flag is enabled
-		if constants.BodyJSONQueryEnabled {
+		if querybuilder.BodyJSONQueryEnabled {
 			return logsV2Columns[LogsV2BodyJSONColumn], nil
 		}
 		// Fall back to legacy body column
@@ -103,7 +103,7 @@ func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.Telemet
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
 				// Use body_json if feature flag is enabled and we have a body condition builder
-				if constants.BodyJSONQueryEnabled {
+				if querybuilder.BodyJSONQueryEnabled {
 					return logsV2Columns[LogsV2BodyJSONColumn], nil
 				}
 				// Fall back to legacy body column
@@ -123,12 +123,13 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		return "", err
 	}
 
-	if !constants.BodyJSONQueryEnabled && key.FieldContext == telemetrytypes.FieldContextBody {
+	if !querybuilder.BodyJSONQueryEnabled && key.FieldContext == telemetrytypes.FieldContextBody {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
 	}
 
 	// schema.JSONColumnType{} now can not be used in switch cases, so we need to check if the column is a JSON column
-	if column.IsJSONColumn() {
+	switch column.Type.GetType() {
+	case schema.ColumnTypeEnumJSON:
 		// json is only supported for resource context as of now
 		switch key.FieldContext {
 		case telemetrytypes.FieldContextResource:
@@ -156,43 +157,32 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		default:
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
-
-	}
-
-	switch column.Type {
-	case schema.ColumnTypeString,
-		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		schema.ColumnTypeUInt64,
-		schema.ColumnTypeUInt32,
-		schema.ColumnTypeUInt8:
+	case schema.ColumnTypeEnumLowCardinality:
+		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+		case schema.ColumnTypeEnumString:
+			return column.Name, nil
+		default:
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+		}
+	case schema.ColumnTypeEnumString,
+		schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
 		return column.Name, nil
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeString,
-	}:
-		// a key could have been materialized, if so return the materialized column name
-		if key.Materialized {
-			return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+	case schema.ColumnTypeEnumMap:
+		keyType := column.Type.(schema.MapColumnType).KeyType
+		if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 		}
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeFloat64,
-	}:
-		// a key could have been materialized, if so return the materialized column name
-		if key.Materialized {
-			return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+
+		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
+			// a key could have been materialized, if so return the materialized column name
+			if key.Materialized {
+				return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+			}
+			return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
+		default:
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
 		}
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeBool,
-	}:
-		// a key could have been materialized, if so return the materialized column name
-		if key.Materialized {
-			return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
-		}
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
 	}
 	// should not reach here
 	return column.Name, nil

@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/constants"
+	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 )
@@ -31,6 +31,11 @@ var (
 	CodeFailScanJSONValue       = errors.MustNewCode("fail_scan_json_value")
 	CodeFailScanVariant         = errors.MustNewCode("fail_scan_variant")
 	CodeFailBuildJSONPathsQuery = errors.MustNewCode("fail_build_json_paths_query")
+	CodeNoPathsToQueryIndexes   = errors.MustNewCode("no_paths_to_query_indexes_provided")
+
+	CodeFailedToPrepareBatch = errors.MustNewCode("failed_to_prepare_batch_promoted_paths")
+	CodeFailedToSendBatch    = errors.MustNewCode("failed_to_send_batch_promoted_paths")
+	CodeFailedToAppendPath   = errors.MustNewCode("failed_to_append_path_promoted_paths")
 )
 
 // GetBodyJSONPaths extracts body JSON paths from the path_types table
@@ -42,7 +47,7 @@ var (
 //
 // searchOperator: LIKE for pattern matching, EQUAL for exact match
 // Returns: (paths, error)
-func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.TelemetryStore,
+func (t *telemetryMetaStore) getBodyJSONPaths(ctx context.Context,
 	fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 
 	query, args, limit, err := buildGetBodyJSONPathsQuery(fieldKeySelectors)
@@ -50,13 +55,14 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 		return nil, false, err
 	}
 
-	rows, err := telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to extract body JSON keys")
 	}
 	defer rows.Close()
 
-	paths := []*telemetrytypes.TelemetryFieldKey{}
+	fieldKeys := []*telemetrytypes.TelemetryFieldKey{}
+	paths := []string{}
 	rowCount := 0
 	for rows.Next() {
 		var path string
@@ -68,40 +74,43 @@ func getBodyJSONPaths(ctx context.Context, telemetryStore telemetrystore.Telemet
 			return nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to scan body JSON key row")
 		}
 
-		promoted, err := IsPathPromoted(ctx, telemetryStore.ClickhouseDB(), path)
-		if err != nil {
-			return nil, false, err
-		}
-
-		indexes, err := listLogsIndexesClean(ctx, telemetryStore.ClickhouseDB(), telemetryStore.Cluster(), path)
-		if err != nil {
-			return nil, false, err
-		}
-
 		for _, typ := range typesArray {
 			mapping, found := telemetrytypes.MappingStringToJSONDataType[typ]
 			if !found {
 				return nil, false, errors.NewInternalf(CodeUnknownJSONDataType, "failed to map type string to JSON data type: %s", typ)
 			}
-			paths = append(paths, &telemetrytypes.TelemetryFieldKey{
+			fieldKeys = append(fieldKeys, &telemetrytypes.TelemetryFieldKey{
 				Name:          path,
 				Signal:        telemetrytypes.SignalLogs,
 				FieldContext:  telemetrytypes.FieldContextBody,
 				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[mapping],
 				JSONDataType:  &mapping,
-				Indexes:       indexes,
-				Materialized:  promoted,
 			})
 		}
 
+		paths = append(paths, path)
 		rowCount++
 	}
-
 	if rows.Err() != nil {
 		return nil, false, errors.WrapInternalf(rows.Err(), CodeFailIterateBodyJSONKeys, "error iterating body JSON keys")
 	}
 
-	return paths, rowCount <= limit, nil
+	promoted, err := t.GetPromotedPaths(ctx, paths...)
+	if err != nil {
+		return nil, false, err
+	}
+
+	indexes, err := t.getJSONPathIndexes(ctx, paths...)
+	if err != nil {
+		return nil, false, err
+	}
+
+	for _, fieldKey := range fieldKeys {
+		fieldKey.Materialized = promoted.Contains(fieldKey.Name)
+		fieldKey.Indexes = indexes[fieldKey.Name]
+	}
+
+	return fieldKeys, rowCount <= limit, nil
 }
 
 func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySelector) (string, []any, int, error) {
@@ -131,8 +140,8 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 		} else {
 			// Pattern matching for metadata API (defaults to LIKE behavior for other operators)
 			orClauses = append(orClauses, sb.Like("path", querybuilder.FormatValueForContains(keyName)))
-			limit += fieldKeySelector.Limit
 		}
+		limit += fieldKeySelector.Limit
 	}
 	sb.Where(sb.Or(orClauses...))
 
@@ -150,43 +159,52 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 	return query, args, limit, nil
 }
 
-func listLogsIndexesClean(ctx context.Context, conn clickhouse.Conn, cluster, path string) ([]telemetrytypes.JSONDataTypeIndex, error) {
-	// return empty slice if path is an array
-	if strings.Contains(path, telemetrylogs.ArraySep) || strings.Contains(path, telemetrylogs.ArrayAnyIndex) {
-		return nil, nil
+
+func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...string) (map[string][]telemetrytypes.JSONDataTypeIndex, error) {
+	filteredPaths := []string{}
+	for _, path := range paths {
+		if strings.Contains(path, telemetrylogs.ArraySep) || strings.Contains(path, telemetrylogs.ArrayAnyIndex) {
+			continue
+		}
+		filteredPaths = append(filteredPaths, path)
+	}
+	if len(filteredPaths) == 0 {
+		return nil, errors.NewInternalf(CodeNoPathsToQueryIndexes, "no paths to query indexes provided")
 	}
 
-	// list indexes for the path
-	indexes, err := ListLogsJSONIndexes(ctx, cluster, conn, path)
+	// list indexes for the paths
+	indexesMap, err := t.ListLogsJSONIndexes(ctx, filteredPaths...)
 	if err != nil {
-		return nil, err
+		return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to list JSON path indexes")
 	}
 
 	// build a set of indexes
-	cleanIndexes := []telemetrytypes.JSONDataTypeIndex{}
-	for _, index := range indexes {
-		columnExpr, columnType, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
-		if err != nil {
-			return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to unfold JSON sub column index expression: %s", index.Expression)
-		}
+	cleanIndexes := make(map[string][]telemetrytypes.JSONDataTypeIndex)
+	for path, indexes := range indexesMap {
+		for _, index := range indexes {
+			columnExpr, columnType, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
+			if err != nil {
+				return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to unfold JSON sub column index expression: %s", index.Expression)
+			}
 
-		jsonDataType, found := telemetrytypes.MappingStringToJSONDataType[columnType]
-		if !found {
-			return nil, errors.NewInternalf(CodeUnknownJSONDataType, "failed to map column type to JSON data type: %s", columnType)
-		}
+			jsonDataType, found := telemetrytypes.MappingStringToJSONDataType[columnType]
+			if !found {
+				return nil, errors.NewInternalf(CodeUnknownJSONDataType, "failed to map column type to JSON data type: %s", columnType)
+			}
 
-		if jsonDataType == telemetrytypes.String {
-			cleanIndexes = append(cleanIndexes, telemetrytypes.JSONDataTypeIndex{
-				Type:             telemetrytypes.String,
-				ColumnExpression: columnExpr,
-				IndexExpression:  index.Expression,
-			})
-		} else if strings.HasPrefix(index.Type, "minmax") {
-			cleanIndexes = append(cleanIndexes, telemetrytypes.JSONDataTypeIndex{
-				Type:             jsonDataType,
-				ColumnExpression: columnExpr,
-				IndexExpression:  index.Expression,
-			})
+			if jsonDataType == telemetrytypes.String {
+				cleanIndexes[path] = append(cleanIndexes[path], telemetrytypes.JSONDataTypeIndex{
+					Type:             telemetrytypes.String,
+					ColumnExpression: columnExpr,
+					IndexExpression:  index.Expression,
+				})
+			} else if strings.HasPrefix(index.Type, "minmax") {
+				cleanIndexes[path] = append(cleanIndexes[path], telemetrytypes.JSONDataTypeIndex{
+					Type:             jsonDataType,
+					ColumnExpression: columnExpr,
+					IndexExpression:  index.Expression,
+				})
+			}
 		}
 	}
 
@@ -194,8 +212,6 @@ func listLogsIndexesClean(ctx context.Context, conn clickhouse.Conn, cluster, pa
 }
 
 func buildListLogsJSONIndexesQuery(cluster string, filters ...string) (string, []any) {
-	// Build a better query using GROUP BY to deduplicate at database level
-	// This aggregates all types per path and gets the max last_seen, then applies LIMIT
 	sb := sqlbuilder.Select(
 		"name", "type_full", "expr", "granularity",
 	).From(fmt.Sprintf("clusterAllReplicas('%s', %s)", cluster, SkipIndexTableName))
@@ -216,15 +232,15 @@ func buildListLogsJSONIndexesQuery(cluster string, filters ...string) (string, [
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 
-func ListLogsJSONIndexes(ctx context.Context, cluster string, conn clickhouse.Conn, filters ...string) ([]schemamigrator.Index, error) {
-	query, args := buildListLogsJSONIndexesQuery(cluster, filters...)
-	rows, err := conn.Query(ctx, query, args...)
+func (t *telemetryMetaStore) ListLogsJSONIndexes(ctx context.Context, filters ...string) (map[string][]schemamigrator.Index, error) {
+	query, args := buildListLogsJSONIndexesQuery(t.telemetrystore.Cluster(), filters...)
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to load string indexed columns")
 	}
 	defer rows.Close()
 
-	indexes := []schemamigrator.Index{}
+	indexes := make(map[string][]schemamigrator.Index)
 	for rows.Next() {
 		var name string
 		var typeFull string
@@ -233,7 +249,7 @@ func ListLogsJSONIndexes(ctx context.Context, cluster string, conn clickhouse.Co
 		if err := rows.Scan(&name, &typeFull, &expr, &granularity); err != nil {
 			return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to scan string indexed column")
 		}
-		indexes = append(indexes, schemamigrator.Index{
+		indexes[name] = append(indexes[name], schemamigrator.Index{
 			Name:        name,
 			Type:        typeFull,
 			Expression:  expr,
@@ -244,9 +260,16 @@ func ListLogsJSONIndexes(ctx context.Context, cluster string, conn clickhouse.Co
 	return indexes, nil
 }
 
-func ListPromotedPaths(ctx context.Context, conn clickhouse.Conn) (map[string]struct{}, error) {
-	query := fmt.Sprintf("SELECT path FROM %s.%s", DBName, PromotedPathsTableName)
-	rows, err := conn.Query(ctx, query)
+func (t *telemetryMetaStore) ListPromotedPaths(ctx context.Context, paths ...string) (map[string]struct{}, error) {
+	sb := sqlbuilder.Select("path").From(fmt.Sprintf("%s.%s", DBName, PromotedPathsTableName))
+	pathConditions := []string{}
+	for _, path := range paths {
+		pathConditions = append(pathConditions, sb.Equal("path", path))
+	}
+	sb.Where(sb.Or(pathConditions...))
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, CodeFailLoadPromotedPaths, "failed to load promoted paths")
 	}
@@ -264,14 +287,15 @@ func ListPromotedPaths(ctx context.Context, conn clickhouse.Conn) (map[string]st
 	return next, nil
 }
 
-func ListJSONValues(ctx context.Context, conn clickhouse.Conn, path string, limit int) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+// TODO(Piyush): Remove this if not used in future
+func (t *telemetryMetaStore) ListJSONValues(ctx context.Context, path string, limit int) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	path = CleanPathPrefixes(path)
 
 	if strings.Contains(path, telemetrylogs.ArraySep) || strings.Contains(path, telemetrylogs.ArrayAnyIndex) {
 		return nil, false, errors.NewInvalidInputf(errors.CodeInvalidInput, "array paths are not supported")
 	}
 
-	promoted, err := IsPathPromoted(ctx, conn, path)
+	promoted, err := t.IsPathPromoted(ctx, path)
 	if err != nil {
 		return nil, false, err
 	}
@@ -301,9 +325,14 @@ func ListJSONValues(ctx context.Context, conn clickhouse.Conn, path string, limi
 	sb.Where(fmt.Sprintf("%s IS NOT NULL", path))
 	sb.Limit(limit)
 
+	contextWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	rows, err := conn.Query(ctx, query, args...)
+	rows, err := t.telemetrystore.ClickhouseDB().Query(contextWithTimeout, query, args...)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, false, errors.WrapTimeoutf(err, errors.CodeTimeout, "query timed out").WithAdditional("failed to list JSON values")
+		}
 		return nil, false, errors.WrapInternalf(err, CodeFailListJSONValues, "failed to list JSON values")
 	}
 	defer rows.Close()
@@ -344,19 +373,27 @@ func ListJSONValues(ctx context.Context, conn clickhouse.Conn, path string, limi
 					values.BoolValues = append(values.BoolValues, value)
 				case []*string:
 					for _, str := range value {
-						values.StringValues = append(values.StringValues, *str)
+						if str != nil {
+							values.StringValues = append(values.StringValues, *str)
+						}
 					}
 				case []*int64:
 					for _, num := range value {
-						values.NumberValues = append(values.NumberValues, float64(*num))
+						if num != nil {
+							values.NumberValues = append(values.NumberValues, float64(*num))
+						}
 					}
 				case []*float64:
 					for _, num := range value {
-						values.NumberValues = append(values.NumberValues, float64(*num))
+						if num != nil {
+							values.NumberValues = append(values.NumberValues, float64(*num))
+						}
 					}
 				case []*bool:
 					for _, boolVal := range value {
-						values.BoolValues = append(values.BoolValues, *boolVal)
+						if boolVal != nil {
+							values.BoolValues = append(values.BoolValues, *boolVal)
+						}
 					}
 				case chcol.Variant:
 					if !value.Nil() {
@@ -366,9 +403,9 @@ func ListJSONValues(ctx context.Context, conn clickhouse.Conn, path string, limi
 					}
 				case []chcol.Variant:
 					extractedValues := make([]any, len(value))
-					for _, variant := range value {
+					for idx, variant := range value {
 						if !variant.Nil() && variant.Type() != "JSON" { // skip JSON values cuz they're relevant for nested keys
-							extractedValues = append(extractedValues, variant.Any())
+							extractedValues[idx] = variant.Any()
 						}
 					}
 					if err := consume(extractedValues); err != nil {
@@ -413,10 +450,10 @@ func derefValue(v any) any {
 }
 
 // IsPathPromoted checks if a specific path is promoted
-func IsPathPromoted(ctx context.Context, conn clickhouse.Conn, path string) (bool, error) {
+func (t *telemetryMetaStore) IsPathPromoted(ctx context.Context, path string) (bool, error) {
 	split := strings.Split(path, telemetrylogs.ArraySep)
 	query := fmt.Sprintf("SELECT 1 FROM %s.%s WHERE path = ? LIMIT 1", DBName, PromotedPathsTableName)
-	rows, err := conn.Query(ctx, query, split[0])
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, split[0])
 	if err != nil {
 		return false, errors.WrapInternalf(err, CodeFailCheckPathPromoted, "failed to check if path %s is promoted", path)
 	}
@@ -425,10 +462,64 @@ func IsPathPromoted(ctx context.Context, conn clickhouse.Conn, path string) (boo
 	return rows.Next(), nil
 }
 
+// GetPromotedPaths checks if a specific path is promoted
+func (t *telemetryMetaStore) GetPromotedPaths(ctx context.Context, paths ...string) (*utils.ConcurrentSet[string], error) {
+	sb := sqlbuilder.Select("path").From(fmt.Sprintf("%s.%s", DBName, PromotedPathsTableName))
+	pathConditions := []string{}
+	for _, path := range paths {
+		pathConditions = append(pathConditions, sb.Equal("path", path))
+	}
+	sb.Where(sb.Or(pathConditions...))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, CodeFailCheckPathPromoted, "failed to get promoted paths")
+	}
+	defer rows.Close()
+
+	promotedPaths := utils.NewConcurrentSet[string]()
+	for rows.Next() {
+		var path string
+		if err := rows.Scan(&path); err != nil {
+			return nil, errors.WrapInternalf(err, CodeFailCheckPathPromoted, "failed to scan promoted path")
+		}
+		promotedPaths.Insert(path)
+	}
+
+	return promotedPaths, nil
+}
+
 // TODO(Piyush): Remove this function
 func CleanPathPrefixes(path string) string {
 	path = strings.TrimPrefix(path, telemetrytypes.BodyJSONStringSearchPrefix)
 	path = strings.TrimPrefix(path, telemetrylogs.BodyJSONColumnPrefix)
 	path = strings.TrimPrefix(path, telemetrylogs.BodyPromotedColumnPrefix)
 	return path
+}
+
+func (t *telemetryMetaStore) PromotePaths(ctx context.Context, paths ...string) error {
+	batch, err := t.telemetrystore.ClickhouseDB().PrepareBatch(ctx,
+		fmt.Sprintf("INSERT INTO %s.%s (path, created_at) VALUES", DBName,
+			PromotedPathsTableName))
+	if err != nil {
+		return errors.WrapInternalf(err, CodeFailedToPrepareBatch, "failed to prepare batch")
+	}
+
+	nowMs := uint64(time.Now().UnixMilli())
+	for _, p := range paths {
+		trimmed := strings.TrimSpace(p)
+		if trimmed == "" {
+			continue
+		}
+		if err := batch.Append(trimmed, nowMs); err != nil {
+			_ = batch.Abort()
+			return errors.WrapInternalf(err, CodeFailedToAppendPath, "failed to append path")
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return errors.WrapInternalf(err, CodeFailedToSendBatch, "failed to send batch")
+	}
+	return nil
 }

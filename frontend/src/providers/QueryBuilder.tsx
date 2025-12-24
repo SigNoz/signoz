@@ -565,8 +565,6 @@ export function QueryBuilderProvider({
 		setCurrentQuery((prevState) => {
 			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
 
-			console.log('prevState', prevState.builder.queryData);
-
 			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
 
 			return {

@@ -80,9 +80,13 @@ func (c *conditionBuilder) conditionFor(
 		case qbtypes.FilterOperatorNotLike:
 			return sb.NotILike(tblFieldName, value), nil
 		case qbtypes.FilterOperatorRegexp:
-			return fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), nil
+			// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+			// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
+			return fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
 		case qbtypes.FilterOperatorNotRegexp:
-			return fmt.Sprintf(`NOT match(LOWER(%s), LOWER(%s))`, tblFieldName, sb.Var(value)), nil
+			// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+			// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
+			return fmt.Sprintf(`NOT match(LOWER(%s), LOWER(%s))`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
 		}
 	}
 
@@ -118,9 +122,13 @@ func (c *conditionBuilder) conditionFor(
 		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
-		return fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value)), nil
+		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
+		return fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
 	case qbtypes.FilterOperatorNotRegexp:
-		return fmt.Sprintf(`NOT match(%s, %s)`, tblFieldName, sb.Var(value)), nil
+		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
+		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
+		return fmt.Sprintf(`NOT match(%s, %s)`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
 	// between and not between
 	case qbtypes.FilterOperatorBetween:
 		values, ok := value.([]any)
@@ -169,7 +177,7 @@ func (c *conditionBuilder) conditionFor(
 	// in the UI based query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		if key.FieldContext == telemetrytypes.FieldContextBody && !constants.BodyJSONQueryEnabled {
+		if key.FieldContext == telemetrytypes.FieldContextBody && !querybuilder.BodyJSONQueryEnabled {
 			if operator == qbtypes.FilterOperatorExists {
 				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			} else {
@@ -178,47 +186,57 @@ func (c *conditionBuilder) conditionFor(
 		}
 
 		var value any
-		// schema.JSONColumnType{} now can not be used in switch cases, so we need to check if the column is a JSON column
-		if column.IsJSONColumn() {
+		switch column.Type.GetType() {
+		case schema.ColumnTypeEnumJSON:
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.IsNotNull(tblFieldName), nil
 			} else {
 				return sb.IsNull(tblFieldName), nil
 			}
-		}
-		switch column.Type {
-		case schema.ColumnTypeString, schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}:
+		case schema.ColumnTypeEnumLowCardinality:
+			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+			case schema.ColumnTypeEnumString:
+				value = ""
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.NE(tblFieldName, value), nil
+				}
+				return sb.E(tblFieldName, value), nil
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+			}
+		case schema.ColumnTypeEnumString:
 			value = ""
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.NE(tblFieldName, value), nil
 			} else {
 				return sb.E(tblFieldName, value), nil
 			}
-		case schema.ColumnTypeUInt64, schema.ColumnTypeUInt32, schema.ColumnTypeUInt8:
+		case schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
 			value = 0
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.NE(tblFieldName, value), nil
 			} else {
 				return sb.E(tblFieldName, value), nil
 			}
-		case schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
-		}, schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeBool,
-		}, schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeFloat64,
-		}:
-			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
-			if key.Materialized {
-				leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+		case schema.ColumnTypeEnumMap:
+			keyType := column.Type.(schema.MapColumnType).KeyType
+			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 			}
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.E(leftOperand, true), nil
-			} else {
-				return sb.NE(leftOperand, true), nil
+
+			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
+				leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
+				if key.Materialized {
+					leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+				}
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.E(leftOperand, true), nil
+				} else {
+					return sb.NE(leftOperand, true), nil
+				}
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
 			}
 		default:
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
