@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	signozError "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
@@ -119,6 +120,146 @@ type RuleCondition struct {
 	RequireMinPoints  bool               `json:"requireMinPoints,omitempty"`
 	RequiredNumPoints int                `json:"requiredNumPoints,omitempty"`
 	Thresholds        *RuleThresholdData `json:"thresholds,omitempty"`
+}
+
+func (rc *RuleCondition) UnmarshalJSON(data []byte) error {
+	type Alias RuleCondition
+	aux := (*Alias)(rc)
+	if err := json.Unmarshal(data, aux); err != nil {
+		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "failed to parse rule condition json: %v", err)
+	}
+
+	var errs []error
+
+	// Validate CompositeQuery - must be non-nil and pass validation
+	if rc.CompositeQuery == nil {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite query is required"))
+	} else {
+		if err := rc.CompositeQuery.Validate(); err != nil {
+			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite query validation failed: %v", err))
+		}
+	}
+
+	// Validate CompareOp - must be valid enum
+	if !isValidCompareOp(rc.CompareOp) {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid compare operation: %s", rc.CompareOp))
+	}
+
+	// Validate Target - must be non-nil
+	if rc.Target == nil {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "target is required"))
+	}
+
+	// Validate AlertOnAbsent + AbsentFor - if AlertOnAbsent is true, AbsentFor must be > 0
+	if rc.AlertOnAbsent && rc.AbsentFor == 0 {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "absentFor must be greater than 0 when alertOnAbsent is true"))
+	}
+
+	// Validate MatchType - must be valid enum (including MatchTypeNone)
+	if !isValidMatchType(rc.MatchType) {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid match type: %s", rc.MatchType))
+	}
+
+	// Validate Seasonality - must be one of the allowed values when provided
+	if !isValidSeasonality(rc.Seasonality) {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid seasonality: %s", rc.Seasonality))
+	}
+
+	// Validate SelectedQueryName - must match one of the query names from CompositeQuery
+	if rc.SelectedQuery != "" && rc.CompositeQuery != nil {
+		queryNames := getAllQueryNames(rc.CompositeQuery)
+		if _, exists := queryNames[rc.SelectedQuery]; !exists {
+			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "selected query name '%s' does not match any query in composite query", rc.SelectedQuery))
+		}
+	}
+
+	// Validate RequireMinPoints + RequiredNumPoints - if RequireMinPoints is true, RequiredNumPoints must be > 0
+	if rc.RequireMinPoints && rc.RequiredNumPoints <= 0 {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "requiredNumPoints must be greater than 0 when requireMinPoints is true"))
+	}
+
+	if len(errs) > 0 {
+		return signozError.Join(errs...)
+	}
+
+	return nil
+}
+
+// getAllQueryNames extracts all query names from CompositeQuery across all query types
+// Returns a map of query names for quick lookup
+func getAllQueryNames(compositeQuery *v3.CompositeQuery) map[string]struct{} {
+	queryNames := make(map[string]struct{})
+
+	// Extract names from Queries (v5 envelopes)
+	if compositeQuery != nil && compositeQuery.Queries != nil {
+		for _, query := range compositeQuery.Queries {
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			case qbtypes.QueryBuilderFormula:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			case qbtypes.QueryBuilderTraceOperator:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			case qbtypes.PromQuery:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			case qbtypes.ClickHouseQuery:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			}
+		}
+	}
+
+	return queryNames
+}
+
+// isValidCompareOp validates that CompareOp is a valid enum value (including CompareOpNone)
+func isValidCompareOp(op CompareOp) bool {
+	switch op {
+	case CompareOpNone, ValueIsAbove, ValueIsBelow, ValueIsEq, ValueIsNotEq, ValueAboveOrEq, ValueBelowOrEq, ValueOutsideBounds:
+		return true
+	default:
+		return false
+	}
+}
+
+// isValidMatchType validates that MatchType is a valid enum value (including MatchTypeNone)
+func isValidMatchType(mt MatchType) bool {
+	switch mt {
+	case MatchTypeNone, AtleastOnce, AllTheTimes, OnAverage, InTotal, Last:
+		return true
+	default:
+		return false
+	}
+}
+
+// isValidSeasonality validates that Seasonality is one of the allowed values
+func isValidSeasonality(seasonality string) bool {
+	if seasonality == "" {
+		return true // empty seasonality is allowed (optional field)
+	}
+	switch seasonality {
+	case "hourly", "daily", "weekly":
+		return true
+	default:
+		return false
+	}
 }
 
 func (rc *RuleCondition) GetSelectedQueryName() string {

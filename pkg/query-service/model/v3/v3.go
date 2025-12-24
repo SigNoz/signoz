@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/converter"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -638,6 +639,13 @@ func (c *CompositeQuery) Validate() error {
 
 	if err := c.QueryType.Validate(); err != nil {
 		return fmt.Errorf("query type is invalid: %w", err)
+	}
+
+	// Validate Unit - if provided (non-empty), it should be a valid unit string
+	if c.Unit != "" {
+		if err := converter.Unit(c.Unit).Validate(); err != nil {
+			return err
+		}
 	}
 
 	return nil
