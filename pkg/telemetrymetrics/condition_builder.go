@@ -163,7 +163,7 @@ func (c *conditionBuilder) isMetricScopeField(keyName string) bool {
 // buildMetricScopeCondition handles synthetic field isTopLevelOperation for metrics signal.
 func (c *conditionBuilder) buildMetricScopeCondition(operator qbtypes.FilterOperator, value any, start uint64) (string, error) {
 	if operator != qbtypes.FilterOperatorEqual {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "isTopLevelOperation only supports '=' operator")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "%s only supports '=' operator", MetricScopeFieldIsTopLevelOperation)
 	}
 	// Accept true in bool or string form; anything else is invalid
 	isTrue := false
@@ -173,19 +173,19 @@ func (c *conditionBuilder) buildMetricScopeCondition(operator qbtypes.FilterOper
 	case string:
 		isTrue = strings.ToLower(v) == "true"
 	default:
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "isTopLevelOperation expects boolean value, got %T", value)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "%s expects boolean value, got %T", MetricScopeFieldIsTopLevelOperation, value)
 	}
 	if !isTrue {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "isTopLevelOperation can only be filtered with value 'true'")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "%s can only be filtered with value 'true'", MetricScopeFieldIsTopLevelOperation)
 	}
 
 	startSec := int64(start / 1000)
 
 	// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
-	return sqlbuilder.Escape(fmt.Sprintf(
+	return fmt.Sprintf(
 		"((JSONExtractString(labels, 'operation'), JSONExtractString(labels, 'service.name')) GLOBAL IN (SELECT DISTINCT name, serviceName FROM %s.%s WHERE time >= toDateTime(%d)))",
 		telemetrytraces.DBName,
 		telemetrytraces.TopLevelOperationsTableName,
 		startSec,
-	)), nil
+	), nil
 }
