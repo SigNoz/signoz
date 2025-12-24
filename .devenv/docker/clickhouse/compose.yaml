@@ -1,6 +1,6 @@
 services:
   clickhouse:
-    image: clickhouse/clickhouse-server:25.10.1
+    image: clickhouse/clickhouse-server:25.5.6
     container_name: clickhouse
     volumes:
       - ${PWD}/fs/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml

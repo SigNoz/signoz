@@ -7,9 +7,7 @@ import (
 	"testing"
 	"time"
 
-	eeconstants "github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -707,11 +705,9 @@ func testAddIndexedPaths(t *testing.T, statementBuilder *logQueryStatementBuilde
 }
 
 func enableBodyJSONQuery(_ *testing.T) {
-	eeconstants.BodyJSONQueryEnabled = true
-	constants.BodyJSONQueryEnabled = true
+	querybuilder.BodyJSONQueryEnabled = true
 }
 
 func disableBodyJSONQuery(_ *testing.T) {
-	eeconstants.BodyJSONQueryEnabled = false
-	constants.BodyJSONQueryEnabled = false
+	querybuilder.BodyJSONQueryEnabled = false
 }

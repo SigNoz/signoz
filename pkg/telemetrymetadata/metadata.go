@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -573,7 +572,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 	}
 
-	if constants.BodyJSONQueryEnabled {
+	if querybuilder.BodyJSONQueryEnabled {
 		bodyJSONPaths, finished, err := t.getBodyJSONPaths(ctx, fieldKeySelectors) // LIKE for pattern matching
 		if err != nil {
 			t.logger.Error("failed to extract body JSON paths", "error", err)

@@ -10,7 +10,7 @@ x-common: &common
 x-clickhouse-defaults: &clickhouse-defaults
   !!merge <<: *common
   # addding non LTS version due to this fix https://github.com/ClickHouse/ClickHouse/commit/32caf8716352f45c1b617274c7508c86b7d1afab
-  image: clickhouse/clickhouse-server:25.10.1
+  image: clickhouse/clickhouse-server:25.5.6
   tty: true
   labels:
     signoz.io/scrape: "true"
@@ -67,7 +67,7 @@ x-db-depend: &db-depend
 services:
   init-clickhouse:
     !!merge <<: *common
-    image: clickhouse/clickhouse-server:25.10.1
+    image: clickhouse/clickhouse-server:25.5.6
     container_name: signoz-init-clickhouse
     command:
       - bash

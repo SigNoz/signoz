@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
@@ -132,7 +133,7 @@ func (ic *LogParsingPipelineController) ValidatePipelines(ctx context.Context,
 
 func (ic *LogParsingPipelineController) getDefaultPipelines() ([]pipelinetypes.GettablePipeline, error) {
 	defaultPipelines := []pipelinetypes.GettablePipeline{}
-	if constants.BodyJSONQueryEnabled {
+	if querybuilder.BodyJSONQueryEnabled {
 		preprocessingPipeline := pipelinetypes.GettablePipeline{
 			StoreablePipeline: pipelinetypes.StoreablePipeline{
 				Name:    "Default Pipeline - PreProcessing Body",

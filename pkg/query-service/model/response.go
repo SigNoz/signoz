@@ -598,16 +598,13 @@ type SignozLog struct {
 	TraceFlags         uint32             `json:"trace_flags" ch:"trace_flags"`
 	SeverityText       string             `json:"severity_text" ch:"severity_text"`
 	SeverityNumber     uint8              `json:"severity_number" ch:"severity_number"`
-	Body               any                `json:"body" ch:"body"`
-	BodyJSON           map[string]any     `json:"-" ch:"body_json"`
-	BodyPromoted       map[string]any     `json:"-" ch:"body_json_promoted"`
+	Body               string             `json:"body" ch:"body"`
 	Resources_string   map[string]string  `json:"resources_string" ch:"resources_string"`
 	Attributes_string  map[string]string  `json:"attributes_string" ch:"attributes_string"`
 	Attributes_int64   map[string]int64   `json:"attributes_int" ch:"attributes_int64"`
 	Attributes_float64 map[string]float64 `json:"attributes_float" ch:"attributes_float64"`
 	Attributes_bool    map[string]bool    `json:"attributes_bool" ch:"attributes_bool"`
 }
-
 type GetLogsAggregatesResponse struct {
 	Items map[int64]LogsAggregatesResponseItem `json:"items"`
 }

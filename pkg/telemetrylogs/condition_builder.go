@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -39,7 +38,7 @@ func (c *conditionBuilder) conditionFor(
 
 	// For JSON columns, preserve the original value type (numeric, bool, etc.)
 	// Only format to string for non-JSON columns that need string formatting
-	isJSONColumn := column.IsJSONColumn() && constants.BodyJSONQueryEnabled && key.FieldContext == telemetrytypes.FieldContextBody
+	isJSONColumn := column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled && key.FieldContext == telemetrytypes.FieldContextBody
 	if !isJSONColumn {
 		switch operator {
 		case qbtypes.FilterOperatorContains,
@@ -259,7 +258,7 @@ func (c *conditionBuilder) ConditionFor(
 		return "", err
 	}
 
-	if !(key.FieldContext == telemetrytypes.FieldContextBody && constants.BodyJSONQueryEnabled) && operator.AddDefaultExistsFilter() {
+	if !(key.FieldContext == telemetrytypes.FieldContextBody && querybuilder.BodyJSONQueryEnabled) && operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
 		field, _ := c.fm.FieldFor(ctx, key)

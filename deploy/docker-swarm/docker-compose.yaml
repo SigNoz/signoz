@@ -11,7 +11,7 @@ x-common: &common
       max-file: "3"
 x-clickhouse-defaults: &clickhouse-defaults
   !!merge <<: *common
-  image: clickhouse/clickhouse-server:25.10.1
+  image: clickhouse/clickhouse-server:25.5.6
   tty: true
   deploy:
     labels:
@@ -62,7 +62,7 @@ x-db-depend: &db-depend
 services:
   init-clickhouse:
     !!merge <<: *common
-    image: clickhouse/clickhouse-server:25.10.1
+    image: clickhouse/clickhouse-server:25.5.6
     command:
       - bash
       - -c
