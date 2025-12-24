@@ -1,6 +1,12 @@
 /* eslint-disable */
-import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 import QueryAddOns from '../QueryV2/QueryAddOns/QueryAddOns';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -55,16 +61,7 @@ jest.mock('../QueryV2/QueryAddOns/HavingFilter/HavingFilter', () => ({
 	),
 }));
 
-jest.mock(
-	'container/QueryBuilder/filters/ReduceToFilter/ReduceToFilter',
-	() => ({
-		ReduceToFilter: ({ onChange }: any) => (
-			<button data-testid="reduce-to" onClick={() => onChange('sum')}>
-				ReduceToFilter
-			</button>
-		),
-	}),
-);
+// ReduceToFilter is not mocked - we test the actual Ant Design Select component
 
 function baseQuery(overrides: Partial<any> = {}): any {
 	return {
@@ -140,7 +137,7 @@ describe('QueryAddOns', () => {
 		expect(screen.getByTestId('order-by-content')).toBeInTheDocument();
 	});
 
-	it('limit input auto-opens when limit is set and changing it calls handler', () => {
+	it('limit input auto-opens when limit is set and changing it calls handler', async () => {
 		render(
 			<QueryAddOns
 				query={baseQuery({ limit: 5 })}
@@ -216,8 +213,12 @@ describe('QueryAddOns', () => {
 		expect(screen.getByTestId('reduce-to-content')).toBeInTheDocument();
 	});
 
-	it('calls handleSetQueryData when reduce-to value changes', () => {
-		const query = baseQuery({ reduceTo: 'avg' });
+	it('calls handleSetQueryData when reduce-to value changes', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const query = baseQuery({
+			reduceTo: 'avg',
+			aggregations: [{ id: 'a', operator: 'count', reduceTo: 'avg' }],
+		});
 		render(
 			<QueryAddOns
 				query={query}
@@ -230,20 +231,37 @@ describe('QueryAddOns', () => {
 			/>,
 		);
 
-		fireEvent.click(
-			screen
-				.getByTestId('reduce-to-content')
-				.querySelector('[data-testid="reduce-to"]')!,
-		);
+		// Wait for the reduce-to content section to be visible (it auto-opens when reduceTo is set)
+		await waitFor(() => {
+			expect(screen.getByTestId('reduce-to-content')).toBeInTheDocument();
+		});
 
-		expect(mockHandleSetQueryData).toHaveBeenCalledWith(0, {
-			...query,
-			aggregations: [
-				{
-					...(query.aggregations?.[0] as any),
-					reduceTo: 'sum',
-				},
-			],
+		// Get the Select component by its role (combobox)
+		// The Select is within the reduce-to-content section
+		const reduceToContent = screen.getByTestId('reduce-to-content');
+		const selectCombobox = within(reduceToContent).getByRole('combobox');
+
+		// Open the dropdown by clicking on the combobox
+		await user.click(selectCombobox);
+
+		// Wait for the dropdown listbox to appear
+		await screen.findByRole('listbox');
+
+		// Find and click the "Sum" option
+		const sumOption = await screen.findByText('Sum of values in timeframe');
+		await user.click(sumOption);
+
+		// Verify the handler was called with the correct value
+		await waitFor(() => {
+			expect(mockHandleSetQueryData).toHaveBeenCalledWith(0, {
+				...query,
+				aggregations: [
+					{
+						...(query.aggregations?.[0] as any),
+						reduceTo: 'sum',
+					},
+				],
+			});
 		});
 	});
 });

@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { render, screen, waitFor } from '@testing-library/react';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -9,7 +8,7 @@ const mockOnChange = jest.fn();
 
 function baseQuery(overrides: Partial<IBuilderQuery> = {}): IBuilderQuery {
 	return {
-		dataSource: 'traces' as any,
+		dataSource: 'traces',
 		aggregations: [],
 		groupBy: [],
 		orderBy: [],
@@ -26,18 +25,16 @@ describe('ReduceToFilter', () => {
 	});
 
 	it('initializes with default avg when no reduceTo is set', () => {
-		const { container } = render(
-			<ReduceToFilter query={baseQuery()} onChange={mockOnChange} />,
-		);
+		render(<ReduceToFilter query={baseQuery()} onChange={mockOnChange} />);
 
 		expect(screen.getByTestId('reduce-to')).toBeInTheDocument();
 		expect(
-			container.querySelector('.ant-select-selection-item'),
-		).toHaveTextContent('Average of values in timeframe');
+			screen.getByText('Average of values in timeframe'),
+		).toBeInTheDocument();
 	});
 
 	it('initializes from query.aggregations[0].reduceTo', () => {
-		const { container } = render(
+		render(
 			<ReduceToFilter
 				query={baseQuery({
 					aggregations: [{ reduceTo: 'sum' } as any],
@@ -47,13 +44,11 @@ describe('ReduceToFilter', () => {
 			/>,
 		);
 
-		expect(
-			container.querySelector('.ant-select-selection-item'),
-		).toHaveTextContent('Sum of values in timeframe');
+		expect(screen.getByText('Sum of values in timeframe')).toBeInTheDocument();
 	});
 
 	it('initializes from query.reduceTo when aggregations[0].reduceTo is not set', () => {
-		const { container } = render(
+		render(
 			<ReduceToFilter
 				query={baseQuery({
 					reduceTo: 'max',
@@ -63,13 +58,11 @@ describe('ReduceToFilter', () => {
 			/>,
 		);
 
-		expect(
-			container.querySelector('.ant-select-selection-item'),
-		).toHaveTextContent('Max of values in timeframe');
+		expect(screen.getByText('Max of values in timeframe')).toBeInTheDocument();
 	});
 
 	it('updates to sum when aggregateAttribute.type is SUM', async () => {
-		const { rerender, container } = render(
+		const { rerender } = render(
 			<ReduceToFilter
 				query={baseQuery({
 					aggregateAttribute: { key: 'test', type: MetricType.GAUGE },
@@ -88,9 +81,7 @@ describe('ReduceToFilter', () => {
 		);
 
 		await waitFor(() => {
-			expect(
-				container.querySelector('.ant-select-selection-item'),
-			).toHaveTextContent('Sum of values in timeframe');
+			expect(screen.getByText('Sum of values in timeframe')).toBeInTheDocument();
 		});
 	});
 });
