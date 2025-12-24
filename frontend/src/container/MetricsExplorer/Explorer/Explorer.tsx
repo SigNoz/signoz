@@ -86,6 +86,9 @@ function Explorer(): JSX.Element {
 	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
 	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
+	const unitsLength = useMemo(() => units.length, [units]);
+	const firstUnit = useMemo(() => units?.[0], [units]);
+
 	useEffect(() => {
 		// Set the y axis unit to the first metric unit if
 		// 1. There is one metric unit and it is not empty
@@ -94,23 +97,22 @@ function Explorer(): JSX.Element {
 		// 1. There are more than one metric units and they are not the same
 		// 2. There are no metric units
 		// 3. There is exactly one metric unit but it is empty/undefined
-		if (units.length === 0) {
+		if (unitsLength === 0) {
 			setYAxisUnit(undefined);
-		} else if (units.length === 1 && units[0]) {
-			setYAxisUnit(units[0]);
-		} else if (units.length === 1 && !units[0]) {
+		} else if (unitsLength === 1 && firstUnit) {
+			setYAxisUnit(firstUnit);
+		} else if (unitsLength === 1 && !firstUnit) {
 			setYAxisUnit(undefined);
 		} else if (areAllMetricUnitsSame) {
-			if (units[0]) {
-				setYAxisUnit(units[0]);
+			if (firstUnit) {
+				setYAxisUnit(firstUnit);
 			} else {
 				setYAxisUnit(undefined);
 			}
-		} else if (units.length > 1 && !areAllMetricUnitsSame) {
+		} else if (unitsLength > 1 && !areAllMetricUnitsSame) {
 			setYAxisUnit(undefined);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [JSON.stringify(units), areAllMetricUnitsSame]);
+	}, [unitsLength, firstUnit, areAllMetricUnitsSame]);
 
 	useEffect(() => {
 		// Don't apply logic during loading to avoid overwriting user preferences
