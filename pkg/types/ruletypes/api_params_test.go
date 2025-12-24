@@ -111,9 +111,12 @@ func TestParseIntoRule(t *testing.T) {
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"builderQueries": {
 							"A": {
+								"queryName": "A",
 								"expression": "A",
+								"dataSource": "metrics",
 								"disabled": false,
 								"aggregateAttribute": {
 									"key": "test_metric"
@@ -149,12 +152,17 @@ func TestParseIntoRule(t *testing.T) {
 			initRule: PostableRule{},
 			content: []byte(`{
 				"alert": "DefaultsRule",
+				"alertType": "METRIC_BASED_ALERT",
 				"ruleType": "threshold_rule",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"builderQueries": {
 							"A": {
+								"queryName": "A",
+								"expression": "A",
+								"dataSource": "metrics",
 								"disabled": false,
 								"aggregateAttribute": {
 									"key": "test_metric"
@@ -187,9 +195,11 @@ func TestParseIntoRule(t *testing.T) {
 			initRule: PostableRule{},
 			content: []byte(`{
 				"alert": "PromQLRule",
+				"alertType": "METRIC_BASED_ALERT",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "promql",
+						"panelType": "graph",
 						"promQueries": {
 							"A": {
 								"query": "rate(http_requests_total[5m])",
@@ -255,12 +265,17 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			initRule: PostableRule{},
 			content: []byte(`{
 				"alert": "SeverityLabelTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"schemaVersion": "v1",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"builderQueries": {
 							"A": {
+								"queryName": "A",
+								"expression": "A",
+								"dataSource": "metrics",
 								"aggregateAttribute": {
 									"key": "cpu_usage"
 								}
@@ -343,12 +358,17 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			initRule: PostableRule{},
 			content: []byte(`{
 				"alert": "NoLabelsTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"schemaVersion": "v1",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"builderQueries": {
 							"A": {
+								"queryName": "A",
+								"expression": "A",
+								"dataSource": "metrics",
 								"aggregateAttribute": {
 									"key": "memory_usage"
 								}
@@ -383,12 +403,17 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			initRule: PostableRule{},
 			content: []byte(`{
 				"alert": "OverwriteTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"schemaVersion": "v1",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"builderQueries": {
 							"A": {
+								"queryName": "A",
+								"expression": "A",
+								"dataSource": "metrics",
 								"aggregateAttribute": {
 									"key": "cpu_usage"
 								}
@@ -473,12 +498,17 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			initRule: PostableRule{},
 			content: []byte(`{
 				"alert": "V2Test",
+				"alertType": "METRIC_BASED_ALERT",
 				"schemaVersion": "v2",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"builderQueries": {
 							"A": {
+								"queryName": "A",
+								"expression": "A",
+								"dataSource": "metrics",
 								"aggregateAttribute": {
 									"key": "test_metric"
 								}
@@ -517,11 +547,16 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			initRule: PostableRule{},
 			content: []byte(`{
 				"alert": "DefaultSchemaTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"builderQueries": {
 							"A": {
+								"queryName": "A",
+								"expression": "A",
+								"dataSource": "metrics",
 								"aggregateAttribute": {
 									"key": "test_metric"
 								}
@@ -569,12 +604,16 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 	content := []byte(`{
 		"alert": "TestThresholds",
+		"alertType": "METRIC_BASED_ALERT",
 		"condition": {
 			"compositeQuery": {
 				"queryType": "builder",
+				"panelType": "graph",
 				"builderQueries": {
 					"A": {
+						"queryName": "A",
 						"expression": "A",
+						"dataSource": "metrics",
 						"disabled": false,
 						"aggregateAttribute": {
 							"key": "response_time"
@@ -638,14 +677,18 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 	content := []byte(`{
 		"schemaVersion": "v2",
 		"alert": "MultiThresholdAlert",
+		"alertType": "METRIC_BASED_ALERT",
 		"ruleType": "threshold_rule",
 		"condition": {
 			"compositeQuery": {
 				"queryType": "builder",
+				"panelType": "graph",
 				"unit": "%",
 				"builderQueries": {
 					"A": {
+						"queryName": "A",
 						"expression": "A",
+						"dataSource": "metrics",
 						"disabled": false,
 						"aggregateAttribute": {
 							"key": "cpu_usage"
@@ -731,10 +774,12 @@ func TestAnomalyNegationEval(t *testing.T) {
 			name: "anomaly rule with ValueIsBelow - should alert",
 			ruleJSON: []byte(`{
 				"alert": "AnomalyBelowTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"ruleType": "anomaly_rule",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"queries": [{
 							"type": "builder_query",
 							"spec": {
@@ -765,10 +810,12 @@ func TestAnomalyNegationEval(t *testing.T) {
 			name: "anomaly rule with ValueIsBelow; should not alert",
 			ruleJSON: []byte(`{
 				"alert": "AnomalyBelowTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"ruleType": "anomaly_rule",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"queries": [{
 							"type": "builder_query",
 							"spec": {
@@ -798,10 +845,12 @@ func TestAnomalyNegationEval(t *testing.T) {
 			name: "anomaly rule with ValueIsAbove; should alert",
 			ruleJSON: []byte(`{
 				"alert": "AnomalyAboveTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"ruleType": "anomaly_rule",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"queries": [{
 							"type": "builder_query",
 							"spec": {
@@ -832,10 +881,12 @@ func TestAnomalyNegationEval(t *testing.T) {
 			name: "anomaly rule with ValueIsAbove; should not alert",
 			ruleJSON: []byte(`{
 				"alert": "AnomalyAboveTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"ruleType": "anomaly_rule",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"queries": [{
 							"type": "builder_query",
 							"spec": {
@@ -865,10 +916,12 @@ func TestAnomalyNegationEval(t *testing.T) {
 			name: "anomaly rule with ValueIsBelow and AllTheTimes; should alert",
 			ruleJSON: []byte(`{
 				"alert": "AnomalyBelowAllTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"ruleType": "anomaly_rule",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"queries": [{
 							"type": "builder_query",
 							"spec": {
@@ -900,10 +953,12 @@ func TestAnomalyNegationEval(t *testing.T) {
 			name: "anomaly rule with ValueIsBelow and AllTheTimes; should not alert",
 			ruleJSON: []byte(`{
 				"alert": "AnomalyBelowAllTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"ruleType": "anomaly_rule",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"queries": [{
 							"type": "builder_query",
 							"spec": {
@@ -934,10 +989,12 @@ func TestAnomalyNegationEval(t *testing.T) {
 			name: "anomaly rule with ValueOutsideBounds; should alert",
 			ruleJSON: []byte(`{
 				"alert": "AnomalyOutOfBoundsTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"ruleType": "anomaly_rule",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"queries": [{
 							"type": "builder_query",
 							"spec": {
@@ -968,10 +1025,12 @@ func TestAnomalyNegationEval(t *testing.T) {
 			name: "non-anomaly threshold rule with ValueIsBelow; should alert",
 			ruleJSON: []byte(`{
 				"alert": "ThresholdTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"ruleType": "threshold_rule",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"queries": [{
 							"type": "builder_query",
 							"spec": {
@@ -1002,10 +1061,12 @@ func TestAnomalyNegationEval(t *testing.T) {
 			name: "non-anomaly rule with ValueIsBelow - should not alert",
 			ruleJSON: []byte(`{
 				"alert": "ThresholdTest",
+				"alertType": "METRIC_BASED_ALERT",
 				"ruleType": "threshold_rule",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
+						"panelType": "graph",
 						"queries": [{
 							"type": "builder_query",
 							"spec": {
