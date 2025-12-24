@@ -23,7 +23,7 @@ type Feature struct {
 	// Description of the feature
 	Description string `json:"description"`
 	// DefaultVariant of the feature
-	DefaultVariant Name `json:"defaultVariant"` // ? is the type correct here
+	DefaultVariant Name `json:"defaultVariant"`
 	// Variants of the feature
 	Variants map[Name]FeatureVariant `json:"variants"`
 }

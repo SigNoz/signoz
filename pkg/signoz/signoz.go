@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -66,6 +67,7 @@ type SigNoz struct {
 	Modules                Modules
 	Handlers               Handlers
 	QueryParser            queryparser.QueryParser
+	Flagger                flagger.Flagger
 }
 
 func New(
@@ -398,6 +400,20 @@ func New(
 		return nil, err
 	}
 
+	// Initialize flagger from the available flagger provider factories
+	defaultRegistry := flagger.MustNewRegistry()
+	flaggerProviderFactories := NewFlaggerProviderFactories(defaultRegistry)
+	flagger, err := flagger.New(
+		ctx,
+		providerSettings,
+		config.Flagger,
+		defaultRegistry,
+		flaggerProviderFactories.GetInOrder()...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
@@ -434,5 +450,6 @@ func New(
 		Modules:                modules,
 		Handlers:               handlers,
 		QueryParser:            queryParser,
+		Flagger:                flagger,
 	}, nil
 }

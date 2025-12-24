@@ -17,3 +17,7 @@ func NewFlaggerEvaluationContext(orgID valuer.UUID) FlaggerEvaluationContext {
 	})
 	return FlaggerEvaluationContext{ctx: ctx}
 }
+
+func (ctx FlaggerEvaluationContext) Ctx() openfeature.EvaluationContext {
+	return ctx.ctx
+}

@@ -12,21 +12,21 @@ import (
 type provider struct {
 	config   flagger.Config
 	settings factory.ScopedProviderSettings
-	registry featuretypes.Registry
+	defaultRegistry featuretypes.Registry
 }
 
-func NewFactory(registry featuretypes.Registry) factory.ProviderFactory[flagger.Provider, flagger.Config] {
+func NewFactory(defaultRegistry featuretypes.Registry) factory.ProviderFactory[flagger.Provider, flagger.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("config"), func(ctx context.Context, ps factory.ProviderSettings, c flagger.Config) (flagger.Provider, error) {
-		return New(ctx, ps, c, registry)
+		return New(ctx, ps, c, defaultRegistry)
 	})
 }
 
-func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, registry featuretypes.Registry) (flagger.Provider, error) {
+func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, defaultRegistry featuretypes.Registry) (flagger.Provider, error) {
 	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/pkg/flagger/configprovider")
 	return &provider{
 		config:   c,
 		settings: settings,
-		registry: registry,
+		defaultRegistry: defaultRegistry,
 	}, nil
 }
 
@@ -38,7 +38,7 @@ func (provider *provider) Metadata() openfeature.Metadata {
 
 func (p *provider) BooleanEvaluation(ctx context.Context, flag string, defaultValue bool, evalCtx openfeature.FlattenedContext) openfeature.BoolResolutionDetail {
 
-	feature, detail, err := p.registry.GetByString(flag)
+	feature, detail, err := p.defaultRegistry.GetByString(flag)
 	if err != nil {
 		return openfeature.BoolResolutionDetail{
 			Value:                    defaultValue,
@@ -61,7 +61,7 @@ func (p *provider) BooleanEvaluation(ctx context.Context, flag string, defaultVa
 }
 
 func (p *provider) FloatEvaluation(ctx context.Context, flag string, defaultValue float64, evalCtx openfeature.FlattenedContext) openfeature.FloatResolutionDetail {
-	feature, detail, err := p.registry.GetByString(flag)
+	feature, detail, err := p.defaultRegistry.GetByString(flag)
 	if err != nil {
 		return openfeature.FloatResolutionDetail{
 			Value:                    defaultValue,
@@ -84,7 +84,7 @@ func (p *provider) FloatEvaluation(ctx context.Context, flag string, defaultValu
 }
 
 func (p *provider) StringEvaluation(ctx context.Context, flag string, defaultValue string, evalCtx openfeature.FlattenedContext) openfeature.StringResolutionDetail {
-	feature, detail, err := p.registry.GetByString(flag)
+	feature, detail, err := p.defaultRegistry.GetByString(flag)
 	if err != nil {
 		return openfeature.StringResolutionDetail{
 			Value:                    defaultValue,
@@ -107,7 +107,7 @@ func (p *provider) StringEvaluation(ctx context.Context, flag string, defaultVal
 }
 
 func (p *provider) IntEvaluation(ctx context.Context, flag string, defaultValue int64, evalCtx openfeature.FlattenedContext) openfeature.IntResolutionDetail {
-	feature, detail, err := p.registry.GetByString(flag)
+	feature, detail, err := p.defaultRegistry.GetByString(flag)
 	if err != nil {
 		return openfeature.IntResolutionDetail{
 			Value:                    defaultValue,
@@ -130,7 +130,7 @@ func (p *provider) IntEvaluation(ctx context.Context, flag string, defaultValue 
 }
 
 func (p *provider) ObjectEvaluation(ctx context.Context, flag string, defaultValue any, evalCtx openfeature.FlattenedContext) openfeature.InterfaceResolutionDetail {
-	feature, detail, err := p.registry.GetByString(flag)
+	feature, detail, err := p.defaultRegistry.GetByString(flag)
 	if err != nil {
 		return openfeature.InterfaceResolutionDetail{
 			Value:                    defaultValue,

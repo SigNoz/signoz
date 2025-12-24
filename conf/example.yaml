@@ -278,3 +278,14 @@ tokenizer:
     token:
       # The maximum number of tokens a user can have. This limits the number of concurrent sessions a user can have.
       max_per_user: 5
+
+##################### Flagger #####################
+flagger:
+  # Overrides are the overrides for the feature flags.
+  overrides:
+    enabled: true
+    boolean: {}
+    string: {}
+    float: {}
+    int: {}
+    object: {}

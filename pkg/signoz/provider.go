@@ -20,6 +20,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/flagger/configflagger"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
@@ -54,6 +56,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/tokenizer/opaquetokenizer"
 	"github.com/SigNoz/signoz/pkg/tokenizer/tokenizerstore/sqltokenizerstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
@@ -251,5 +254,11 @@ func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore
 func NewGlobalProviderFactories() factory.NamedMap[factory.ProviderFactory[global.Global, global.Config]] {
 	return factory.MustNewNamedMap(
 		signozglobal.NewFactory(),
+	)
+}
+
+func NewFlaggerProviderFactories(defaultRegistry featuretypes.Registry) factory.NamedMap[factory.ProviderFactory[flagger.Provider, flagger.Config]] {
+	return factory.MustNewNamedMap(
+		configflagger.NewFactory(defaultRegistry),
 	)
 }
