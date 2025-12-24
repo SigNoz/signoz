@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import { Card, Typography } from 'antd';
+import { Card } from 'antd';
 import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';
 import { getActiveLogBackground } from 'utils/logs';
@@ -44,19 +44,6 @@ export const Container = styled(Card)<{
 
 		${({ $isActiveLog, $isDarkMode, $logType }): string =>
 			getActiveLogBackground($isActiveLog, $isDarkMode, $logType)}
-`;
-
-export const Text = styled(Typography.Text)`
-	&&& {
-		min-width: 2.5rem;
-		white-space: nowrap;
-	}
-`;
-
-export const TextContainer = styled.div`
-	display: flex;
-	overflow: hidden;
-	width: 100%;
 `;
 
 export const LogContainer = styled.div<LogContainerProps>`
