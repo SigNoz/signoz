@@ -99,3 +99,172 @@ func (p *queryParserImpl) AnalyzeCompositeQuery(ctx context.Context, compositeQu
 
 	return result, nil
 }
+
+// ValidateCompositeQuery validates a composite query by checking all queries in the queries array
+func (p *queryParserImpl) ValidateCompositeQuery(ctx context.Context, compositeQuery *qbtypes.CompositeQuery) error {
+	if compositeQuery == nil {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"composite query is required",
+		)
+	}
+
+	if len(compositeQuery.Queries) == 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"at least one query is required",
+		)
+	}
+
+	// Validate each query
+	for i, envelope := range compositeQuery.Queries {
+		queryId := qbtypes.GetQueryIdentifier(envelope, i)
+
+		switch envelope.Type {
+		case qbtypes.QueryTypeBuilder, qbtypes.QueryTypeSubQuery:
+			switch spec := envelope.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				if err := spec.Validate(qbtypes.RequestTypeTimeSeries); err != nil {
+					return errors.NewInvalidInputf(
+						errors.CodeInvalidInput,
+						"invalid %s: %s",
+						queryId,
+						err.Error(),
+					)
+				}
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				if err := spec.Validate(qbtypes.RequestTypeTimeSeries); err != nil {
+					return errors.NewInvalidInputf(
+						errors.CodeInvalidInput,
+						"invalid %s: %s",
+						queryId,
+						err.Error(),
+					)
+				}
+			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				if err := spec.Validate(qbtypes.RequestTypeTimeSeries); err != nil {
+					return errors.NewInvalidInputf(
+						errors.CodeInvalidInput,
+						"invalid %s: %s",
+						queryId,
+						err.Error(),
+					)
+				}
+			default:
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"unknown query spec type for %s",
+					queryId,
+				)
+			}
+		case qbtypes.QueryTypePromQL:
+			spec, ok := envelope.Spec.(qbtypes.PromQuery)
+			if !ok {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid spec for %s",
+					queryId,
+				)
+			}
+			if spec.Query == "" {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"query expression is required for %s",
+					queryId,
+				)
+			}
+			if err := validatePromQLQuery(spec.Query); err != nil {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid %s: %s",
+					queryId,
+					err.Error(),
+				)
+			}
+		case qbtypes.QueryTypeClickHouseSQL:
+			spec, ok := envelope.Spec.(qbtypes.ClickHouseQuery)
+			if !ok {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid spec for %s",
+					queryId,
+				)
+			}
+			if spec.Query == "" {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"query expression is required for %s",
+					queryId,
+				)
+			}
+			if err := validateClickHouseQuery(spec.Query); err != nil {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid %s: %s",
+					queryId,
+					err.Error(),
+				)
+			}
+		case qbtypes.QueryTypeFormula:
+			spec, ok := envelope.Spec.(qbtypes.QueryBuilderFormula)
+			if !ok {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid spec for %s",
+					queryId,
+				)
+			}
+			if spec.Expression == "" {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"expression is required for %s",
+					queryId,
+				)
+			}
+		case qbtypes.QueryTypeJoin:
+			_, ok := envelope.Spec.(qbtypes.QueryBuilderJoin)
+			if !ok {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid spec for %s",
+					queryId,
+				)
+			}
+		case qbtypes.QueryTypeTraceOperator:
+			spec, ok := envelope.Spec.(qbtypes.QueryBuilderTraceOperator)
+			if !ok {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid spec for %s",
+					queryId,
+				)
+			}
+			if spec.Expression == "" {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"expression is required for %s",
+					queryId,
+				)
+			}
+		default:
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"unknown query type '%s' for %s",
+				envelope.Type,
+				queryId,
+			).WithAdditional(
+				"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
+			)
+		}
+	}
+
+	// Check if all queries are disabled
+	if allDisabled := checkQueriesDisabled(compositeQuery); allDisabled {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"all queries are disabled - at least one query must be enabled",
+		)
+	}
+
+	return nil
+}

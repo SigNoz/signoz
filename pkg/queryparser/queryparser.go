@@ -14,4 +14,6 @@ type QueryParser interface {
 	AnalyzeQueryFilter(ctx context.Context, queryType querybuildertypesv5.QueryType, query string) (*queryfilterextractor.FilterResult, error)
 	// AnalyzeCompositeQuery extracts filter conditions from a composite query.
 	AnalyzeCompositeQuery(ctx context.Context, compositeQuery *v3.CompositeQuery) (*queryfilterextractor.FilterResult, error)
+	// ValidateCompositeQuery validates a composite query and returns an error if validation fails.
+	ValidateCompositeQuery(ctx context.Context, compositeQuery *querybuildertypesv5.CompositeQuery) error
 }
