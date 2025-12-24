@@ -92,14 +92,14 @@ function BodyTitleRenderer({
 
 			if (isObject) {
 				// For objects/arrays, stringify the entire structure
-				copyText = `"${cleanedKey}": ${JSON.stringify(value, null, 2)}`;
+				copyText = JSON.stringify(value, null, 2);
 			} else if (parentIsArray) {
-				// For array elements, copy just the value
-				copyText = `"${cleanedKey}": ${value}`;
+				// array elements
+				copyText = `${value}`;
 			} else {
-				// For primitive values, format as JSON key-value pair
-				const valueStr = typeof value === 'string' ? `"${value}"` : String(value);
-				copyText = `"${cleanedKey}": ${valueStr}`;
+				// primitive values
+				const valueStr = typeof value === 'string' ? value : String(value);
+				copyText = valueStr;
 			}
 
 			setCopy(copyText);
