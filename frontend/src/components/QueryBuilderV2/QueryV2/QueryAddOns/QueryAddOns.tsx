@@ -375,6 +375,7 @@ function QueryAddOns({
 						<div className="add-on-content" data-testid="limit-content">
 							<InputWithLabel
 								label="Limit"
+								type="number"
 								onChange={handleChangeLimit}
 								initialValue={query?.limit ?? undefined}
 								placeholder="Enter limit"
