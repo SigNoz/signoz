@@ -14,17 +14,19 @@ export const ReduceToFilter = memo(function ReduceToFilter({
 	onChange,
 }: ReduceToFilterProps): JSX.Element {
 	const isMounted = useRef<boolean>(false);
-	const isUserUpdated = useRef<boolean>(false);
 	const [currentValue, setCurrentValue] = useState<
 		SelectOption<ReduceOperators, string>
 	>(REDUCE_TO_VALUES[2]); // default to avg
 
+	const handleChange = (
+		newValue: SelectOption<ReduceOperators, string>,
+	): void => {
+		setCurrentValue(newValue);
+		onChange(newValue.value);
+	};
+
 	useEffect(
 		() => {
-			if (isUserUpdated.current) {
-				isUserUpdated.current = false;
-				return;
-			}
 			if (!isMounted.current) {
 				const reduceToValue =
 					(query.aggregations?.[0] as MetricAggregation)?.reduceTo || query.reduceTo;
@@ -42,22 +44,14 @@ export const ReduceToFilter = memo(function ReduceToFilter({
 				| undefined;
 
 			if (aggregationAttributeType === MetricType.SUM) {
-				setCurrentValue(REDUCE_TO_VALUES[1]);
+				handleChange(REDUCE_TO_VALUES[1]);
 			} else {
-				setCurrentValue(REDUCE_TO_VALUES[2]);
+				handleChange(REDUCE_TO_VALUES[2]);
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[query.aggregateAttribute?.type],
+		[query.aggregateAttribute?.key],
 	);
-
-	const handleChange = (
-		newValue: SelectOption<ReduceOperators, string>,
-	): void => {
-		isUserUpdated.current = true;
-		setCurrentValue(newValue);
-		onChange(newValue.value);
-	};
 
 	return (
 		<Select

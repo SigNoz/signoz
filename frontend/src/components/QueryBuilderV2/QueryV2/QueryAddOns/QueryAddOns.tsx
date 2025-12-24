@@ -220,8 +220,6 @@ function QueryAddOns({
 		);
 
 		const availableAddOnKeys = new Set(filteredAddOns.map((addOn) => addOn.key));
-
-		console.log({ activeAddOnKeys, availableAddOnKeys, query });
 		// Filter and set selected views: add-ons that are both active and available
 		setSelectedViews(
 			filteredAddOns.filter(

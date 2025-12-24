@@ -317,7 +317,7 @@ export const useQueryOperations: UseQueryOperations = ({
 									timeAggregation: MetricAggregateOperator.RATE,
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									spaceAggregation: '',
+									spaceAggregation: MetricAggregateOperator.SUM,
 								},
 							];
 						} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
@@ -326,7 +326,20 @@ export const useQueryOperations: UseQueryOperations = ({
 									timeAggregation: MetricAggregateOperator.AVG,
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									spaceAggregation: '',
+									spaceAggregation: MetricAggregateOperator.AVG,
+								},
+							];
+						} else if (
+							newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
+							newQuery.aggregateAttribute?.type ===
+								ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM
+						) {
+							newQuery.aggregations = [
+								{
+									timeAggregation: '',
+									metricName: newQuery.aggregateAttribute?.key || '',
+									temporality: '',
+									spaceAggregation: MetricAggregateOperator.P90,
 								},
 							];
 						} else {

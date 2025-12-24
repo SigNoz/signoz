@@ -41,6 +41,7 @@ describe('ReduceToFilter', () => {
 			<ReduceToFilter
 				query={baseQuery({
 					aggregations: [{ reduceTo: 'sum' } as any],
+					aggregateAttribute: { key: 'test', type: MetricType.SUM },
 				})}
 				onChange={mockOnChange}
 			/>,
@@ -54,7 +55,10 @@ describe('ReduceToFilter', () => {
 	it('initializes from query.reduceTo when aggregations[0].reduceTo is not set', () => {
 		const { container } = render(
 			<ReduceToFilter
-				query={baseQuery({ reduceTo: 'max' })}
+				query={baseQuery({
+					reduceTo: 'max',
+					aggregateAttribute: { key: 'test', type: MetricType.GAUGE },
+				})}
 				onChange={mockOnChange}
 			/>,
 		);
@@ -66,13 +70,18 @@ describe('ReduceToFilter', () => {
 
 	it('updates to sum when aggregateAttribute.type is SUM', async () => {
 		const { rerender, container } = render(
-			<ReduceToFilter query={baseQuery()} onChange={mockOnChange} />,
+			<ReduceToFilter
+				query={baseQuery({
+					aggregateAttribute: { key: 'test', type: MetricType.GAUGE },
+				})}
+				onChange={mockOnChange}
+			/>,
 		);
 
 		rerender(
 			<ReduceToFilter
 				query={baseQuery({
-					aggregateAttribute: { key: 'test', type: MetricType.SUM },
+					aggregateAttribute: { key: 'test2', type: MetricType.SUM },
 				})}
 				onChange={mockOnChange}
 			/>,
