@@ -11,8 +11,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -75,7 +77,8 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 	}
 
 	// Prepare phase
-	queryRangeReq, startMs, endMs, err := m.buildQueryRangeRequest(req)
+	useSpanMetrics := constants.PreferSpanMetrics
+	queryRangeReq, startMs, endMs, err := m.buildQueryRangeRequest(req, useSpanMetrics)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +90,13 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 	}
 
 	// Process phase
-	items, serviceNames := m.mapQueryRangeRespToServices(resp, startMs, endMs)
+	var items []*servicetypesv1.ResponseItem
+	var serviceNames []string
+	if useSpanMetrics {
+		items, serviceNames = m.mapSpanMetricsRespToServices(resp, startMs, endMs)
+	} else {
+		items, serviceNames = m.mapQueryRangeRespToServices(resp, startMs, endMs)
+	}
 	if len(items) == 0 {
 		return []*servicetypesv1.ResponseItem{}, nil
 	}
@@ -143,7 +152,7 @@ func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUI
 }
 
 // buildQueryRangeRequest constructs the QBv5 QueryRangeRequest and computes the time window.
-func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.QueryRangeRequest, uint64, uint64, error) {
+func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request, useSpanMetrics bool) (*qbtypes.QueryRangeRequest, uint64, uint64, error) {
 	// Parse start/end (nanoseconds) from strings and convert to milliseconds for QBv5
 	startNs, err := strconv.ParseUint(req.Start, 10, 64)
 	if err != nil {
@@ -162,6 +171,15 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.Q
 
 	startMs := startNs / 1_000_000
 	endMs := endNs / 1_000_000
+
+	// Prefer span metrics path when enabled via flag or explicit override
+	if useSpanMetrics {
+		reqV5, err := m.buildSpanMetricsQueryRangeRequest(startMs, endMs, req.Tags)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		return reqV5, startMs, endMs, nil
+	}
 
 	// tags filter
 	filterExpr, variables := buildFilterExpression(req.Tags)
@@ -211,6 +229,142 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.Q
 	return &reqV5, startMs, endMs, nil
 }
 
+// buildSpanMetricsQueryRangeRequest constructs span-metrics queries for services.
+func (m *module) buildSpanMetricsQueryRangeRequest(startMs, endMs uint64, tags []servicetypesv1.TagFilterItem) (*qbtypes.QueryRangeRequest, error) {
+	// base filters from request
+	filterExpr, variables := buildFilterExpression(tags)
+
+	// enforce top-level scope via synthetic field
+	scopeExpr := "isTopLevelOperation = 'true'"
+	if filterExpr != "" {
+		filterExpr = "(" + filterExpr + ") AND (" + scopeExpr + ")"
+	} else {
+		filterExpr = scopeExpr
+	}
+
+	// helper to merge an extra filter into base
+	withExtraFilter := func(extra string) string {
+		if extra == "" {
+			return filterExpr
+		}
+		return fmt.Sprintf("(%s) AND (%s)", filterExpr, extra)
+	}
+
+	// common groupBy on service.name
+	groupByService := []qbtypes.GroupByKey{
+		{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+			Name:          "service.name",
+			FieldContext:  telemetrytypes.FieldContextAttribute, // aligns with working payload
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Materialized:  true,
+		}},
+	}
+
+	queries := []qbtypes.QueryEnvelope{
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "p99_latency",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: filterExpr},
+				GroupBy: groupByService,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_latency.bucket",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationPercentile99,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "avg_latency",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: filterExpr},
+				GroupBy: groupByService,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_latency.sum",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationAvg,
+						SpaceAggregation: metrictypes.SpaceAggregationAvg,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "num_calls",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: filterExpr},
+				GroupBy: groupByService,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_calls_total",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "num_errors",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: withExtraFilter("status.code = 'STATUS_CODE_ERROR'")},
+				GroupBy: groupByService,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_calls_total",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "num_4xx",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: withExtraFilter("http_status_code LIKE '4%'")},
+				GroupBy: groupByService,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_calls_total",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+	}
+
+	reqV5 := qbtypes.QueryRangeRequest{
+		Start:       startMs,
+		End:         endMs,
+		RequestType: qbtypes.RequestTypeScalar,
+		Variables:   variables,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: queries,
+		},
+		FormatOptions: &qbtypes.FormatOptions{
+			FormatTableResultForUI: true,
+			FillGaps:               false,
+		},
+	}
+
+	return &reqV5, nil
+}
+
 // executeQuery calls the underlying Querier with the provided request.
 func (m *module) executeQuery(ctx context.Context, orgUUID valuer.UUID, qr *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
 	return m.Querier.QueryRange(ctx, orgUUID, qr)
@@ -227,6 +381,7 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 		return []*servicetypesv1.ResponseItem{}, []string{}
 	}
 
+	// traces path (original behavior)
 	// this stores the index at which service name is found in the response
 	serviceNameRespIndex := -1
 	aggIndexMappings := map[int]int{}
@@ -280,6 +435,105 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 			FourXXRate:   fourXXRate,
 			DataWarning:  servicetypesv1.DataWarning{TopLevelOps: []string{}},
 		})
+	}
+
+	return out, serviceNames
+}
+
+// TODO(nikhilmantri0902): add test cases for the functions in this PR
+// mapSpanMetricsRespToServices merges span-metrics scalar results keyed by service.name using queryName for aggregation mapping.
+func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, startMs, endMs uint64) ([]*servicetypesv1.ResponseItem, []string) {
+	// TODO(nikhilmantri0902, in case of nil response, should we return nil directly from here for both values)
+	if resp == nil || len(resp.Data.Results) == 0 {
+		return []*servicetypesv1.ResponseItem{}, []string{}
+	}
+	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
+	if !ok || sd == nil {
+		return []*servicetypesv1.ResponseItem{}, []string{}
+	}
+	// locate service.name column and aggregation columns by queryName
+	serviceNameRespIndex := -1
+	aggCols := make(map[string]int)
+	for i, c := range sd.Columns {
+		switch c.Type {
+		case qbtypes.ColumnTypeGroup:
+			if c.TelemetryFieldKey.Name == "service.name" || c.Name == "service.name" {
+				serviceNameRespIndex = i
+			}
+		case qbtypes.ColumnTypeAggregation:
+			if c.QueryName != "" {
+				aggCols[c.QueryName] = i
+			}
+		}
+	}
+	if serviceNameRespIndex == -1 {
+		return []*servicetypesv1.ResponseItem{}, []string{}
+	}
+
+	periodSeconds := float64((endMs - startMs) / 1000)
+
+	type agg struct {
+		p99    float64
+		avg    float64
+		calls  uint64
+		errors uint64
+		fourxx uint64
+	}
+	perSvc := make(map[string]*agg)
+
+	for _, row := range sd.Data {
+		svcName := fmt.Sprintf("%v", row[serviceNameRespIndex])
+		a := perSvc[svcName]
+		if a == nil {
+			a = &agg{}
+			perSvc[svcName] = a
+		}
+		for qn, idx := range aggCols {
+			val := toFloat(row, idx)
+			switch qn {
+			case "p99_latency":
+				a.p99 = val
+			case "avg_latency":
+				a.avg = val
+			case "num_calls":
+				a.calls = uint64(val)
+			case "num_errors":
+				a.errors = uint64(val)
+			case "num_4xx":
+				a.fourxx = uint64(val)
+			}
+		}
+	}
+
+	out := make([]*servicetypesv1.ResponseItem, 0, len(perSvc))
+	serviceNames := make([]string, 0, len(perSvc))
+	for svcName, a := range perSvc {
+		callRate := 0.0
+		if a.calls > 0 && periodSeconds > 0 {
+			callRate = float64(a.calls) / periodSeconds
+		}
+		errorRate := 0.0
+		if a.calls > 0 {
+			errorRate = float64(a.errors) * 100 / float64(a.calls)
+		}
+		fourXXRate := 0.0
+		if a.calls > 0 {
+			fourXXRate = float64(a.fourxx) * 100 / float64(a.calls)
+		}
+
+		out = append(out, &servicetypesv1.ResponseItem{
+			ServiceName:  svcName,
+			Percentile99: a.p99,
+			AvgDuration:  a.avg,
+			NumCalls:     a.calls,
+			CallRate:     callRate,
+			NumErrors:    a.errors,
+			ErrorRate:    errorRate,
+			Num4XX:       a.fourxx,
+			FourXXRate:   fourXXRate,
+			DataWarning:  servicetypesv1.DataWarning{TopLevelOps: []string{}},
+		})
+		serviceNames = append(serviceNames, svcName)
 	}
 
 	return out, serviceNames
