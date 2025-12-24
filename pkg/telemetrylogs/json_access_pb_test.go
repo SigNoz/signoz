@@ -87,7 +87,7 @@ func toTestNode(n *telemetrytypes.JSONAccessNode) *jsonAccessTestNode {
 	if len(n.Branches) > 0 {
 		out.Branches = make(map[string]*jsonAccessTestNode, len(n.Branches))
 		for bt, child := range n.Branches {
-			out.Branches[string(bt)] = toTestNode(child)
+			out.Branches[bt.StringValue()] = toTestNode(child)
 		}
 	}
 
