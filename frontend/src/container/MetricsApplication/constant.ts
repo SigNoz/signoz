@@ -1,6 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 
-import { DownloadOptions } from 'container/Download/Download.types';
 import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 import {
 	MetricAggregateOperator,
@@ -106,11 +105,6 @@ export enum WidgetKeys {
 	Db_system = 'db.system',
 	Db_system_norm = 'db_system',
 }
-
-export const topOperationMetricsDownloadOptions: DownloadOptions = {
-	isDownloadEnabled: true,
-	fileName: 'top-operation',
-} as const;
 
 export const SERVICE_CHART_ID = {
 	latency: 'SERVICE_OVERVIEW_LATENCY',
