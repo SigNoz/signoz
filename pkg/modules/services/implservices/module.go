@@ -77,11 +77,24 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
 
-	// Prepare phase
+	var (
+		startMs       uint64
+		endMs         uint64
+		err           error
+		queryRangeReq *qbtypes.QueryRangeRequest
+	)
+	// Prefer span metrics path when enabled via flag or explicit override
 	useSpanMetrics := req.UseSpanMetrics || constants.PreferSpanMetrics
-	queryRangeReq, startMs, endMs, err := m.buildQueryRangeRequest(req, useSpanMetrics)
-	if err != nil {
-		return nil, err
+	if useSpanMetrics {
+		queryRangeReq, startMs, endMs, err = m.buildSpanMetricsQueryRangeRequest(req)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		queryRangeReq, startMs, endMs, err = m.buildQueryRangeRequest(req)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Fetch phase
@@ -153,7 +166,7 @@ func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUI
 }
 
 // buildQueryRangeRequest constructs the QBv5 QueryRangeRequest and computes the time window.
-func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request, useSpanMetrics bool) (*qbtypes.QueryRangeRequest, uint64, uint64, error) {
+func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.QueryRangeRequest, uint64, uint64, error) {
 	// Parse start/end (nanoseconds) from strings and convert to milliseconds for QBv5
 	startNs, err := strconv.ParseUint(req.Start, 10, 64)
 	if err != nil {
@@ -172,15 +185,6 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request, useSpanMetr
 
 	startMs := startNs / 1_000_000
 	endMs := endNs / 1_000_000
-
-	// Prefer span metrics path when enabled via flag or explicit override
-	if useSpanMetrics {
-		reqV5, err := m.buildSpanMetricsQueryRangeRequest(startMs, endMs, req.Tags)
-		if err != nil {
-			return nil, 0, 0, err
-		}
-		return reqV5, startMs, endMs, nil
-	}
 
 	// tags filter
 	filterExpr, variables := buildFilterExpression(req.Tags)
@@ -231,9 +235,28 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request, useSpanMetr
 }
 
 // buildSpanMetricsQueryRangeRequest constructs span-metrics queries for services.
-func (m *module) buildSpanMetricsQueryRangeRequest(startMs, endMs uint64, tags []servicetypesv1.TagFilterItem) (*qbtypes.QueryRangeRequest, error) {
+func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.QueryRangeRequest, uint64, uint64, error) {
 	// base filters from request
-	filterExpr, variables := buildFilterExpression(tags)
+	// Parse start/end (nanoseconds) from strings and convert to milliseconds for QBv5
+	startNs, err := strconv.ParseUint(req.Start, 10, 64)
+	if err != nil {
+		return nil, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time: %v", err)
+	}
+	endNs, err := strconv.ParseUint(req.End, 10, 64)
+	if err != nil {
+		return nil, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time: %v", err)
+	}
+	if startNs >= endNs {
+		return nil, 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
+	}
+	if err := validateTagFilterItems(req.Tags); err != nil {
+		return nil, 0, 0, err
+	}
+
+	startMs := startNs / 1_000_000
+	endMs := endNs / 1_000_000
+
+	filterExpr, variables := buildFilterExpression(req.Tags)
 
 	// enforce top-level scope via synthetic field
 	scopeExpr := "isTopLevelOperation = 'true'"
@@ -356,7 +379,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(startMs, endMs uint64, tags [
 		},
 	}
 
-	return &reqV5, nil
+	return &reqV5, startMs, endMs, nil
 }
 
 // executeQuery calls the underlying Querier with the provided request.
