@@ -9,11 +9,13 @@ import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDas
 import updatePublicDashboardAPI from 'api/dashboard/public/updatePublicDashboard';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
 import { Copy, ExternalLink, Globe, Info, Loader2, Trash } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';
+import { USER_ROLES } from 'types/roles';
 
 export const TIME_RANGE_PRESETS_OPTIONS = [
 	{
@@ -51,6 +53,10 @@ function PublicDashboardSetting(): JSX.Element {
 	const [, setCopyPublicDashboardURL] = useCopyToClipboard();
 
 	const { selectedDashboard } = useDashboard();
+
+	const { user } = useAppContext();
+
+	const isAdmin = user?.role === USER_ROLES.ADMIN;
 
 	const handleDefaultTimeRange = useCallback((value: string): void => {
 		setDefaultTimeRange(value);
@@ -285,7 +291,7 @@ function PublicDashboardSetting(): JSX.Element {
 						<Button
 							type="primary"
 							className="create-public-dashboard-btn periscope-btn primary"
-							disabled={isLoading}
+							disabled={isLoading || !isAdmin}
 							onClick={handleCreatePublicDashboard}
 							loading={
 								isLoadingCreatePublicDashboard ||
@@ -309,7 +315,7 @@ function PublicDashboardSetting(): JSX.Element {
 							<Button
 								type="default"
 								className="periscope-btn secondary"
-								disabled={isLoading}
+								disabled={isLoading || !isAdmin}
 								onClick={handleRevokePublicDashboardAccess}
 								loading={isLoadingRevokePublicDashboardAccess}
 								icon={<Trash size={14} />}
@@ -320,7 +326,7 @@ function PublicDashboardSetting(): JSX.Element {
 							<Button
 								type="primary"
 								className="create-public-dashboard-btn periscope-btn primary"
-								disabled={isLoading}
+								disabled={isLoading || !isAdmin}
 								onClick={handleUpdatePublicDashboard}
 								loading={isLoadingUpdatePublicDashboard}
 								icon={<Globe size={14} />}
