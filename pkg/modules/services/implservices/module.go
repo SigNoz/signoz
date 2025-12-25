@@ -78,6 +78,7 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 
 	// Prepare phase
 	useSpanMetrics := constants.PreferSpanMetrics
+	fmt.Println("===> use span metrics:", useSpanMetrics)
 	queryRangeReq, startMs, endMs, err := m.buildQueryRangeRequest(req, useSpanMetrics)
 	if err != nil {
 		return nil, err
@@ -242,14 +243,6 @@ func (m *module) buildSpanMetricsQueryRangeRequest(startMs, endMs uint64, tags [
 		filterExpr = scopeExpr
 	}
 
-	// helper to merge an extra filter into base
-	withExtraFilter := func(extra string) string {
-		if extra == "" {
-			return filterExpr
-		}
-		return fmt.Sprintf("(%s) AND (%s)", filterExpr, extra)
-	}
-
 	// common groupBy on service.name
 	groupByService := []qbtypes.GroupByKey{
 		{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
@@ -316,7 +309,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(startMs, endMs uint64, tags [
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Name:    "num_errors",
 				Signal:  telemetrytypes.SignalMetrics,
-				Filter:  &qbtypes.Filter{Expression: withExtraFilter("status.code = 'STATUS_CODE_ERROR'")},
+				Filter:  &qbtypes.Filter{Expression: "status.code = 'STATUS_CODE_ERROR'"},
 				GroupBy: groupByService,
 				Aggregations: []qbtypes.MetricAggregation{
 					{
@@ -331,9 +324,10 @@ func (m *module) buildSpanMetricsQueryRangeRequest(startMs, endMs uint64, tags [
 		},
 		{Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:    "num_4xx",
-				Signal:  telemetrytypes.SignalMetrics,
-				Filter:  &qbtypes.Filter{Expression: withExtraFilter("http_status_code LIKE '4%'")},
+				Name:   "num_4xx",
+				Signal: telemetrytypes.SignalMetrics,
+				// TODO: fix this, below we should add filter for 4xx http status codes
+				Filter:  &qbtypes.Filter{Expression: ""},
 				GroupBy: groupByService,
 				Aggregations: []qbtypes.MetricAggregation{
 					{
