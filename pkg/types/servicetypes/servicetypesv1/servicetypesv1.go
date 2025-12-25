@@ -3,9 +3,10 @@ package servicetypesv1
 // Request mirrors the /services API input shape
 type Request struct {
 	// Start and End are epoch nanoseconds encoded as strings
-	Start string          `json:"start"`
-	End   string          `json:"end"`
-	Tags  []TagFilterItem `json:"tags"`
+	Start          string          `json:"start"`
+	End            string          `json:"end"`
+	UseSpanMetrics bool            `json:"useSpanMetrics"`
+	Tags           []TagFilterItem `json:"tags"`
 }
 
 type TagFilterItem struct {

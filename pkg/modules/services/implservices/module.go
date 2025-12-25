@@ -3,6 +3,7 @@ package implservices
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"strconv"
@@ -77,8 +78,7 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 	}
 
 	// Prepare phase
-	useSpanMetrics := constants.PreferSpanMetrics
-	fmt.Println("===> use span metrics:", useSpanMetrics)
+	useSpanMetrics := req.UseSpanMetrics || constants.PreferSpanMetrics
 	queryRangeReq, startMs, endMs, err := m.buildQueryRangeRequest(req, useSpanMetrics)
 	if err != nil {
 		return nil, err
@@ -451,7 +451,7 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 	for i, c := range sd.Columns {
 		switch c.Type {
 		case qbtypes.ColumnTypeGroup:
-			if c.TelemetryFieldKey.Name == "service.name" || c.Name == "service.name" {
+			if c.Name == "service.name" {
 				serviceNameRespIndex = i
 			}
 		case qbtypes.ColumnTypeAggregation:
@@ -486,9 +486,9 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 			val := toFloat(row, idx)
 			switch qn {
 			case "p99_latency":
-				a.p99 = val
+				a.p99 = val * math.Pow(10, 6)
 			case "avg_latency":
-				a.avg = val
+				a.avg = val * math.Pow(10, 6)
 			case "num_calls":
 				a.calls = uint64(val)
 			case "num_errors":
