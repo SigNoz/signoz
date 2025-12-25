@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -80,8 +80,9 @@ describe('ReduceToFilter', () => {
 			/>,
 		);
 
-		await waitFor(() => {
-			expect(screen.getByText('Sum of values in timeframe')).toBeInTheDocument();
-		});
+		const reduceToFilterText = (await screen.findByText(
+			'Sum of values in timeframe',
+		)) as HTMLElement;
+		expect(reduceToFilterText).toBeInTheDocument();
 	});
 });
