@@ -111,6 +111,7 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 	} else {
 		items, serviceNames = m.mapQueryRangeRespToServices(resp, startMs, endMs)
 	}
+
 	if len(items) == 0 {
 		return []*servicetypesv1.ResponseItem{}, nil
 	}
