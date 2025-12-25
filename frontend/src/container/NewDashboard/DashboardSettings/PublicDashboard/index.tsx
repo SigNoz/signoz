@@ -8,6 +8,7 @@ import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
 import updatePublicDashboardAPI from 'api/dashboard/public/updatePublicDashboard';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
+import { useNotifications } from 'hooks/useNotifications';
 import { Copy, ExternalLink, Globe, Info, Loader2, Trash } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -15,7 +16,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';
+import APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
+import { showErrorNotificationV2 } from 'utils/errorV2';
 
 export const TIME_RANGE_PRESETS_OPTIONS = [
 	{
@@ -53,6 +56,7 @@ function PublicDashboardSetting(): JSX.Element {
 	const [, setCopyPublicDashboardURL] = useCopyToClipboard();
 
 	const { selectedDashboard } = useDashboard();
+	const { notifications } = useNotifications();
 
 	const { user } = useAppContext();
 
@@ -108,8 +112,8 @@ function PublicDashboardSetting(): JSX.Element {
 		onSuccess: () => {
 			toast.success('Public dashboard created successfully');
 		},
-		onError: () => {
-			toast.error('Failed to create public dashboard');
+		onError: (error: APIError) => {
+			showErrorNotificationV2(notifications, error as APIError);
 		},
 	});
 
@@ -121,8 +125,8 @@ function PublicDashboardSetting(): JSX.Element {
 		onSuccess: () => {
 			toast.success('Public dashboard updated successfully');
 		},
-		onError: () => {
-			toast.error('Failed to update public dashboard');
+		onError: (error: APIError) => {
+			showErrorNotificationV2(notifications, error as APIError);
 		},
 	});
 
@@ -134,8 +138,8 @@ function PublicDashboardSetting(): JSX.Element {
 		onSuccess: () => {
 			toast.success('Dashboard unpublished successfully');
 		},
-		onError: () => {
-			toast.error('Failed to unpublish dashboard');
+		onError: (error: APIError) => {
+			showErrorNotificationV2(notifications, error as APIError);
 		},
 	});
 
@@ -153,7 +157,7 @@ function PublicDashboardSetting(): JSX.Element {
 		if (!selectedDashboard) return;
 
 		updatePublicDashboard({
-			dashboardId: selectedDashboard.id,
+			dashboardId: `${selectedDashboard.id}-public`,
 			timeRangeEnabled,
 			defaultTimeRange,
 		});
