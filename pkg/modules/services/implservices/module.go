@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"time"
-
+	"sort"
 	"strconv"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -84,7 +84,8 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 		queryRangeReq *qbtypes.QueryRangeRequest
 	)
 	// Prefer span metrics path when enabled via flag or explicit override
-	useSpanMetrics := req.UseSpanMetrics || constants.PreferSpanMetrics
+	// TODO(nikhilmantri0902): the following constant should be read from the en variable in this module itself.
+	useSpanMetrics := constants.PreferSpanMetrics
 	if useSpanMetrics {
 		queryRangeReq, startMs, endMs, err = m.buildSpanMetricsQueryRangeRequest(req)
 		if err != nil {
@@ -132,9 +133,22 @@ func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req 
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
 
-	qr, err := m.buildTopOpsQueryRangeRequest(req)
-	if err != nil {
-		return nil, err
+	var (
+		qr  *qbtypes.QueryRangeRequest
+		err error
+	)
+	// Prefer span metrics path when enabled via flag
+	useSpanMetrics := constants.PreferSpanMetrics
+	if useSpanMetrics {
+		qr, err = m.buildSpanMetricsTopOpsQueryRangeRequest(req)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		qr, err = m.buildTopOpsQueryRangeRequest(req)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	resp, err := m.executeQuery(ctx, orgUUID, qr)
@@ -142,7 +156,17 @@ func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req 
 		return nil, err
 	}
 
-	items := m.mapTopOpsQueryRangeResp(resp)
+	var items []servicetypesv1.OperationItem
+	if useSpanMetrics {
+		items = m.mapSpanMetricsTopOpsResp(resp)
+		// Apply limit after merging multiple queries
+		if req.Limit > 0 && len(items) > req.Limit {
+			items = items[:req.Limit]
+		}
+	} else {
+		items = m.mapTopOpsQueryRangeResp(resp)
+	}
+
 	return items, nil
 }
 
@@ -152,9 +176,22 @@ func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUI
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
 
-	qr, err := m.buildEntryPointOpsQueryRangeRequest(req)
-	if err != nil {
-		return nil, err
+	var (
+		qr  *qbtypes.QueryRangeRequest
+		err error
+	)
+	// Prefer span metrics path when enabled via flag
+	useSpanMetrics := constants.PreferSpanMetrics
+	if useSpanMetrics {
+		qr, err = m.buildSpanMetricsEntryPointOpsQueryRangeRequest(req)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		qr, err = m.buildEntryPointOpsQueryRangeRequest(req)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	resp, err := m.executeQuery(ctx, orgUUID, qr)
@@ -162,7 +199,17 @@ func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUI
 		return nil, err
 	}
 
-	items := m.mapEntryPointOpsQueryRangeResp(resp)
+	var items []servicetypesv1.OperationItem
+	if useSpanMetrics {
+		items = m.mapSpanMetricsEntryPointOpsResp(resp)
+		// Apply limit after merging multiple queries
+		if req.Limit > 0 && len(items) > req.Limit {
+			items = items[:req.Limit]
+		}
+	} else {
+		items = m.mapEntryPointOpsQueryRangeResp(resp)
+	}
+
 	return items, nil
 }
 
@@ -674,6 +721,494 @@ func (m *module) mapTopOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []ser
 		out = append(out, item)
 	}
 	return out
+}
+
+// buildSpanMetricsTopOpsQueryRangeRequest constructs span-metrics queries for top operations.
+func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.OperationsRequest) (*qbtypes.QueryRangeRequest, error) {
+	if req.Service == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "service is required")
+	}
+	startNs, err := strconv.ParseUint(req.Start, 10, 64)
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time: %v", err)
+	}
+	endNs, err := strconv.ParseUint(req.End, 10, 64)
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time: %v", err)
+	}
+	if startNs >= endNs {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
+	}
+	if req.Limit < 1 || req.Limit > 5000 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
+	}
+	if err := validateTagFilterItems(req.Tags); err != nil {
+		return nil, err
+	}
+
+	startMs := startNs / 1_000_000
+	endMs := endNs / 1_000_000
+
+	// Build service filter
+	serviceTag := servicetypesv1.TagFilterItem{
+		Key:          "service.name",
+		Operator:     "in",
+		StringValues: []string{req.Service},
+	}
+	tags := append([]servicetypesv1.TagFilterItem{serviceTag}, req.Tags...)
+	filterExpr, variables := buildFilterExpression(tags)
+
+	// Common groupBy on operation
+	groupByOperation := []qbtypes.GroupByKey{
+		{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+			Name:          "operation",
+			FieldContext:  telemetrytypes.FieldContextAttribute,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Materialized:  true,
+		}},
+	}
+
+	// Build error filter for num_errors query
+	errorFilterExpr := filterExpr
+	if filterExpr != "" {
+		errorFilterExpr = "(" + filterExpr + ") AND (status.code = 'STATUS_CODE_ERROR')"
+	} else {
+		errorFilterExpr = "status.code = 'STATUS_CODE_ERROR'"
+	}
+
+	queries := []qbtypes.QueryEnvelope{
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "p50_latency",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: filterExpr},
+				GroupBy: groupByOperation,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_latency.bucket",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationPercentile50,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "p95_latency",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: filterExpr},
+				GroupBy: groupByOperation,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_latency.bucket",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationPercentile95,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "p99_latency",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: filterExpr},
+				GroupBy: groupByOperation,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_latency.bucket",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationPercentile99,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "num_calls",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: filterExpr},
+				GroupBy: groupByOperation,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_calls_total",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "num_errors",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: errorFilterExpr},
+				GroupBy: groupByOperation,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_calls_total",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+	}
+
+	reqV5 := qbtypes.QueryRangeRequest{
+		Start:       startMs,
+		End:         endMs,
+		RequestType: qbtypes.RequestTypeScalar,
+		Variables:   variables,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: queries,
+		},
+	}
+
+	return &reqV5, nil
+}
+
+// mapSpanMetricsTopOpsResp maps span-metrics scalar results to OperationItem array using queryName for aggregation mapping.
+func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []servicetypesv1.OperationItem {
+	if resp == nil || len(resp.Data.Results) == 0 {
+		return []servicetypesv1.OperationItem{}
+	}
+	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
+	if !ok || sd == nil {
+		return []servicetypesv1.OperationItem{}
+	}
+
+	// Locate operation column and aggregation columns by queryName
+	operationIdx := -1
+	aggCols := make(map[string]int)
+	for i, c := range sd.Columns {
+		switch c.Type {
+		case qbtypes.ColumnTypeGroup:
+			if c.Name == "operation" {
+				operationIdx = i
+			}
+		case qbtypes.ColumnTypeAggregation:
+			if c.QueryName != "" {
+				aggCols[c.QueryName] = i
+			}
+		}
+	}
+
+	if operationIdx == -1 {
+		return []servicetypesv1.OperationItem{}
+	}
+
+	// Group data by operation name and merge aggregations
+	type agg struct {
+		p50    float64
+		p95    float64
+		p99    float64
+		calls  uint64
+		errors uint64
+	}
+	perOp := make(map[string]*agg)
+
+	for _, row := range sd.Data {
+		opName := fmt.Sprintf("%v", row[operationIdx])
+		a := perOp[opName]
+		if a == nil {
+			a = &agg{}
+			perOp[opName] = a
+		}
+		for qn, idx := range aggCols {
+			val := toFloat(row, idx)
+			switch qn {
+			case "p50_latency":
+				a.p50 = val * math.Pow(10, 6) // convert seconds to nanoseconds
+			case "p95_latency":
+				a.p95 = val * math.Pow(10, 6)
+			case "p99_latency":
+				a.p99 = val * math.Pow(10, 6)
+			case "num_calls":
+				a.calls = uint64(val)
+			case "num_errors":
+				a.errors = uint64(val)
+			}
+		}
+	}
+
+	// Convert to OperationItem array and sort by P99 desc
+	out := make([]servicetypesv1.OperationItem, 0, len(perOp))
+	for opName, a := range perOp {
+		out = append(out, servicetypesv1.OperationItem{
+			Name:       opName,
+			P50:        a.p50,
+			P95:        a.p95,
+			P99:        a.p99,
+			NumCalls:   a.calls,
+			ErrorCount: a.errors,
+		})
+	}
+
+	// Sort by P99 descending (matching traces behavior)
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].P99 > out[j].P99
+	})
+
+	return out
+}
+
+// mapSpanMetricsEntryPointOpsResp maps span-metrics scalar results to OperationItem array for entry point operations.
+// Uses queryName for aggregation mapping.
+func (m *module) mapSpanMetricsEntryPointOpsResp(resp *qbtypes.QueryRangeResponse) []servicetypesv1.OperationItem {
+	if resp == nil || len(resp.Data.Results) == 0 {
+		return []servicetypesv1.OperationItem{}
+	}
+	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
+	if !ok || sd == nil {
+		return []servicetypesv1.OperationItem{}
+	}
+
+	// Locate operation column and aggregation columns by queryName
+	operationIdx := -1
+	aggCols := make(map[string]int)
+	for i, c := range sd.Columns {
+		switch c.Type {
+		case qbtypes.ColumnTypeGroup:
+			if c.Name == "operation" {
+				operationIdx = i
+			}
+		case qbtypes.ColumnTypeAggregation:
+			if c.QueryName != "" {
+				aggCols[c.QueryName] = i
+			}
+		}
+	}
+
+	if operationIdx == -1 {
+		return []servicetypesv1.OperationItem{}
+	}
+
+	// Group data by operation name and merge aggregations
+	type agg struct {
+		p50    float64
+		p95    float64
+		p99    float64
+		calls  uint64
+		errors uint64
+	}
+	perOp := make(map[string]*agg)
+
+	for _, row := range sd.Data {
+		opName := fmt.Sprintf("%v", row[operationIdx])
+		a := perOp[opName]
+		if a == nil {
+			a = &agg{}
+			perOp[opName] = a
+		}
+		for qn, idx := range aggCols {
+			val := toFloat(row, idx)
+			switch qn {
+			case "p50_latency":
+				a.p50 = val * math.Pow(10, 6) // convert seconds to nanoseconds
+			case "p95_latency":
+				a.p95 = val * math.Pow(10, 6)
+			case "p99_latency":
+				a.p99 = val * math.Pow(10, 6)
+			case "num_calls":
+				a.calls = uint64(val)
+			case "num_errors":
+				a.errors = uint64(val)
+			}
+		}
+	}
+
+	// Convert to OperationItem array and sort by P99 desc
+	out := make([]servicetypesv1.OperationItem, 0, len(perOp))
+	for opName, a := range perOp {
+		out = append(out, servicetypesv1.OperationItem{
+			Name:       opName,
+			P50:        a.p50,
+			P95:        a.p95,
+			P99:        a.p99,
+			NumCalls:   a.calls,
+			ErrorCount: a.errors,
+		})
+	}
+
+	// Sort by P99 descending (matching traces behavior)
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].P99 > out[j].P99
+	})
+
+	return out
+}
+
+// buildSpanMetricsEntryPointOpsQueryRangeRequest constructs span-metrics queries for entry point operations.
+// Similar to buildSpanMetricsTopOpsQueryRangeRequest but includes isTopLevelOperation filter.
+func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetypesv1.OperationsRequest) (*qbtypes.QueryRangeRequest, error) {
+	if req.Service == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "service is required")
+	}
+	startNs, err := strconv.ParseUint(req.Start, 10, 64)
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time: %v", err)
+	}
+	endNs, err := strconv.ParseUint(req.End, 10, 64)
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time: %v", err)
+	}
+	if startNs >= endNs {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be before end")
+	}
+	if req.Limit < 1 || req.Limit > 5000 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
+	}
+	if err := validateTagFilterItems(req.Tags); err != nil {
+		return nil, err
+	}
+
+	startMs := startNs / 1_000_000
+	endMs := endNs / 1_000_000
+
+	// Build service filter
+	serviceTag := servicetypesv1.TagFilterItem{
+		Key:          "service.name",
+		Operator:     "in",
+		StringValues: []string{req.Service},
+	}
+	tags := append([]servicetypesv1.TagFilterItem{serviceTag}, req.Tags...)
+	filterExpr, variables := buildFilterExpression(tags)
+
+	// Enforce top-level scope via synthetic field (entry point operations only)
+	scopeExpr := "isTopLevelOperation = 'true'"
+	if filterExpr != "" {
+		filterExpr = "(" + filterExpr + ") AND (" + scopeExpr + ")"
+	} else {
+		filterExpr = scopeExpr
+	}
+
+	// Common groupBy on operation
+	groupByOperation := []qbtypes.GroupByKey{
+		{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+			Name:          "operation",
+			FieldContext:  telemetrytypes.FieldContextAttribute,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Materialized:  true,
+		}},
+	}
+
+	// Build error filter for num_errors query
+	errorFilterExpr := filterExpr
+	if filterExpr != "" {
+		errorFilterExpr = "(" + filterExpr + ") AND (status.code = 'STATUS_CODE_ERROR')"
+	} else {
+		errorFilterExpr = "status.code = 'STATUS_CODE_ERROR'"
+	}
+
+	queries := []qbtypes.QueryEnvelope{
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "p50_latency",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: filterExpr},
+				GroupBy: groupByOperation,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_latency.bucket",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationPercentile50,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "p95_latency",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: filterExpr},
+				GroupBy: groupByOperation,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_latency.bucket",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationPercentile95,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "p99_latency",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: filterExpr},
+				GroupBy: groupByOperation,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_latency.bucket",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationPercentile99,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "num_calls",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: filterExpr},
+				GroupBy: groupByOperation,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_calls_total",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+		{Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:    "num_errors",
+				Signal:  telemetrytypes.SignalMetrics,
+				Filter:  &qbtypes.Filter{Expression: errorFilterExpr},
+				GroupBy: groupByOperation,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_calls_total",
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+			},
+		},
+	}
+
+	reqV5 := qbtypes.QueryRangeRequest{
+		Start:       startMs,
+		End:         endMs,
+		RequestType: qbtypes.RequestTypeScalar,
+		Variables:   variables,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: queries,
+		},
+	}
+
+	return &reqV5, nil
 }
 
 func (m *module) buildEntryPointOpsQueryRangeRequest(req *servicetypesv1.OperationsRequest) (*qbtypes.QueryRangeRequest, error) {
