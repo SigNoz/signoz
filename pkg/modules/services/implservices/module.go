@@ -886,32 +886,8 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 	if resp == nil || len(resp.Data.Results) == 0 {
 		return []servicetypesv1.OperationItem{}
 	}
-	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
-	if !ok || sd == nil {
-		return []servicetypesv1.OperationItem{}
-	}
 
-	// Locate operation column and aggregation columns by queryName
-	operationIdx := -1
-	aggCols := make(map[string]int)
-	for i, c := range sd.Columns {
-		switch c.Type {
-		case qbtypes.ColumnTypeGroup:
-			if c.Name == "operation" {
-				operationIdx = i
-			}
-		case qbtypes.ColumnTypeAggregation:
-			if c.QueryName != "" {
-				aggCols[c.QueryName] = i
-			}
-		}
-	}
-
-	if operationIdx == -1 {
-		return []servicetypesv1.OperationItem{}
-	}
-
-	// Group data by operation name and merge aggregations
+	// Group data by operation name and merge aggregations from all results
 	type agg struct {
 		p50    float64
 		p95    float64
@@ -921,16 +897,62 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 	}
 	perOp := make(map[string]*agg)
 
-	for _, row := range sd.Data {
-		opName := fmt.Sprintf("%v", row[operationIdx])
-		a := perOp[opName]
-		if a == nil {
-			a = &agg{}
-			perOp[opName] = a
+	// Iterate through all results (each query returns a separate ScalarData)
+	for _, result := range resp.Data.Results {
+		sd, ok := result.(*qbtypes.ScalarData)
+		if !ok || sd == nil {
+			continue
 		}
-		for qn, idx := range aggCols {
-			val := toFloat(row, idx)
-			switch qn {
+
+		// Skip empty results
+		if len(sd.Columns) == 0 || len(sd.Data) == 0 {
+			continue
+		}
+
+		// Find operation column index (should be consistent across all results)
+		operationIdx := -1
+		for i, c := range sd.Columns {
+			if c.Type == qbtypes.ColumnTypeGroup && c.Name == "operation" {
+				operationIdx = i
+				break
+			}
+		}
+
+		if operationIdx == -1 {
+			continue
+		}
+
+		// Find aggregation column index
+		aggIdx := -1
+		for i, c := range sd.Columns {
+			if c.Type == qbtypes.ColumnTypeAggregation {
+				aggIdx = i
+				break
+			}
+		}
+
+		if aggIdx == -1 {
+			continue
+		}
+
+		// Process each row in this result and merge by operation name
+		queryName := sd.QueryName
+		for _, row := range sd.Data {
+			if len(row) <= operationIdx || len(row) <= aggIdx {
+				continue
+			}
+
+			opName := fmt.Sprintf("%v", row[operationIdx])
+			val := toFloat(row, aggIdx)
+
+			a := perOp[opName]
+			if a == nil {
+				a = &agg{}
+				perOp[opName] = a
+			}
+
+			// Map values based on queryName
+			switch queryName {
 			case "p50_latency":
 				a.p50 = val * math.Pow(10, 6) // convert seconds to nanoseconds
 			case "p95_latency":
@@ -943,6 +965,10 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 				a.errors = uint64(val)
 			}
 		}
+	}
+
+	if len(perOp) == 0 {
+		return []servicetypesv1.OperationItem{}
 	}
 
 	// Convert to OperationItem array and sort by P99 desc
@@ -972,32 +998,8 @@ func (m *module) mapSpanMetricsEntryPointOpsResp(resp *qbtypes.QueryRangeRespons
 	if resp == nil || len(resp.Data.Results) == 0 {
 		return []servicetypesv1.OperationItem{}
 	}
-	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
-	if !ok || sd == nil {
-		return []servicetypesv1.OperationItem{}
-	}
 
-	// Locate operation column and aggregation columns by queryName
-	operationIdx := -1
-	aggCols := make(map[string]int)
-	for i, c := range sd.Columns {
-		switch c.Type {
-		case qbtypes.ColumnTypeGroup:
-			if c.Name == "operation" {
-				operationIdx = i
-			}
-		case qbtypes.ColumnTypeAggregation:
-			if c.QueryName != "" {
-				aggCols[c.QueryName] = i
-			}
-		}
-	}
-
-	if operationIdx == -1 {
-		return []servicetypesv1.OperationItem{}
-	}
-
-	// Group data by operation name and merge aggregations
+	// Group data by operation name and merge aggregations from all results
 	type agg struct {
 		p50    float64
 		p95    float64
@@ -1007,16 +1009,62 @@ func (m *module) mapSpanMetricsEntryPointOpsResp(resp *qbtypes.QueryRangeRespons
 	}
 	perOp := make(map[string]*agg)
 
-	for _, row := range sd.Data {
-		opName := fmt.Sprintf("%v", row[operationIdx])
-		a := perOp[opName]
-		if a == nil {
-			a = &agg{}
-			perOp[opName] = a
+	// Iterate through all results (each query returns a separate ScalarData)
+	for _, result := range resp.Data.Results {
+		sd, ok := result.(*qbtypes.ScalarData)
+		if !ok || sd == nil {
+			continue
 		}
-		for qn, idx := range aggCols {
-			val := toFloat(row, idx)
-			switch qn {
+
+		// Skip empty results
+		if len(sd.Columns) == 0 || len(sd.Data) == 0 {
+			continue
+		}
+
+		// Find operation column index (should be consistent across all results)
+		operationIdx := -1
+		for i, c := range sd.Columns {
+			if c.Type == qbtypes.ColumnTypeGroup && c.Name == "operation" {
+				operationIdx = i
+				break
+			}
+		}
+
+		if operationIdx == -1 {
+			continue
+		}
+
+		// Find aggregation column index
+		aggIdx := -1
+		for i, c := range sd.Columns {
+			if c.Type == qbtypes.ColumnTypeAggregation {
+				aggIdx = i
+				break
+			}
+		}
+
+		if aggIdx == -1 {
+			continue
+		}
+
+		// Process each row in this result and merge by operation name
+		queryName := sd.QueryName
+		for _, row := range sd.Data {
+			if len(row) <= operationIdx || len(row) <= aggIdx {
+				continue
+			}
+
+			opName := fmt.Sprintf("%v", row[operationIdx])
+			val := toFloat(row, aggIdx)
+
+			a := perOp[opName]
+			if a == nil {
+				a = &agg{}
+				perOp[opName] = a
+			}
+
+			// Map values based on queryName
+			switch queryName {
 			case "p50_latency":
 				a.p50 = val * math.Pow(10, 6) // convert seconds to nanoseconds
 			case "p95_latency":
@@ -1029,6 +1077,10 @@ func (m *module) mapSpanMetricsEntryPointOpsResp(resp *qbtypes.QueryRangeRespons
 				a.errors = uint64(val)
 			}
 		}
+	}
+
+	if len(perOp) == 0 {
+		return []servicetypesv1.OperationItem{}
 	}
 
 	// Convert to OperationItem array and sort by P99 desc
