@@ -113,8 +113,6 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 		return nil, err
 	}
 
-	fmt.Println("======> resp:", marshalInterface(resp))
-
 	// Process phase
 	var items []*servicetypesv1.ResponseItem
 	var serviceNames []string
