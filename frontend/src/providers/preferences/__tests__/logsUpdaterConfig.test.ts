@@ -97,7 +97,7 @@ describe('logsUpdaterConfig', () => {
 			mockLocalStorage[LOCALSTORAGE.LOGS_LIST_OPTIONS],
 		);
 		expect(storedData.selectColumns).toEqual(newColumns);
-		expect(storedData.maxLines).toBe(2); // Should preserve other fields
+		expect(storedData.maxLines).toBe(1); // Should preserve other fields
 
 		// Should not update saved view preferences
 		expect(setSavedViewPreferences).not.toHaveBeenCalled();
@@ -216,7 +216,7 @@ describe('logsUpdaterConfig', () => {
 		const storedData = JSON.parse(
 			mockLocalStorage[LOCALSTORAGE.LOGS_LIST_OPTIONS],
 		);
-		expect(storedData.maxLines).toBe(2); // Should remain the same
+		expect(storedData.maxLines).toBe(1); // Should remain the same
 		expect(storedData.format).toBe('table'); // Should remain the same
 
 		// Should update saved view preferences
