@@ -164,6 +164,30 @@ func TestValidateCompositeQuery(t *testing.T) {
 			compositeQuery: &v3.CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
+						Type: qbtypes.QueryTypeBuilder,
+						Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+							Name:   "A",
+							Signal: telemetrytypes.SignalTraces,
+							Aggregations: []qbtypes.TraceAggregation{
+								{
+									Expression: "count()",
+								},
+							},
+						},
+					},
+					{
+						Type: qbtypes.QueryTypeBuilder,
+						Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+							Name:   "B",
+							Signal: telemetrytypes.SignalTraces,
+							Aggregations: []qbtypes.TraceAggregation{
+								{
+									Expression: "count()",
+								},
+							},
+						},
+					},
+					{
 						Type: qbtypes.QueryTypeTraceOperator,
 						Spec: qbtypes.QueryBuilderTraceOperator{
 							Name:       "trace_operator",
@@ -221,7 +245,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 				},
 			},
 			wantErr:     true,
-			errContains: "failed to parse promql query",
+			errContains: "unclosed left parenthesis",
 		},
 		{
 			name: "invalid ClickHouse query - empty query should return error",
@@ -253,7 +277,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 				},
 			},
 			wantErr:     true,
-			errContains: "failed to parse clickhouse query",
+			errContains: "query parse error",
 		},
 		{
 			name: "invalid formula query - empty expression should return error",
@@ -269,7 +293,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 				},
 			},
 			wantErr:     true,
-			errContains: "expression is required",
+			errContains: "formula expression cannot be blank",
 		},
 		{
 			name: "invalid trace operator query - empty expression should return error",
@@ -285,7 +309,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 				},
 			},
 			wantErr:     true,
-			errContains: "expression is required",
+			errContains: "expression cannot be empty",
 		},
 		{
 			name: "all queries disabled should return error",
@@ -406,7 +430,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 				},
 			},
 			wantErr:     true,
-			errContains: "invalid",
+			errContains: "query parse error",
 		},
 		{
 			name: "unknown query type should return error",
