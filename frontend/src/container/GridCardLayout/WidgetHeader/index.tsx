@@ -48,7 +48,6 @@ interface IWidgetHeaderProps {
 	onView: VoidFunction;
 	onDelete?: VoidFunction;
 	onClone?: VoidFunction;
-	parentHover: boolean;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps, unknown> & {
 			warning?: Warning;
@@ -69,7 +68,6 @@ function WidgetHeader({
 	onView,
 	onDelete,
 	onClone,
-	parentHover,
 	queryResponse,
 	threshold,
 	headerMenuList,
@@ -315,8 +313,6 @@ function WidgetHeader({
 								<MoreOutlined
 									data-testid="widget-header-options"
 									className={`widget-header-more-options ${
-										parentHover ? 'widget-header-hover' : ''
-									} ${
 										globalSearchAvailable ? 'widget-header-more-options-visible' : ''
 									}`}
 								/>
