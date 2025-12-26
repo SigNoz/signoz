@@ -758,6 +758,14 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 	tags := append([]servicetypesv1.TagFilterItem{serviceTag}, req.Tags...)
 	filterExpr, variables := buildFilterExpression(tags)
 
+	// Build error filter for num_errors query
+	var errorFilterExpr string
+	if filterExpr != "" {
+		errorFilterExpr = "(" + filterExpr + ") AND (status.code = 'STATUS_CODE_ERROR')"
+	} else {
+		errorFilterExpr = "status.code = 'STATUS_CODE_ERROR'"
+	}
+
 	// Common groupBy on operation
 	groupByOperation := []qbtypes.GroupByKey{
 		{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
@@ -766,14 +774,6 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 			Materialized:  true,
 		}},
-	}
-
-	// Build error filter for num_errors query
-	errorFilterExpr := filterExpr
-	if filterExpr != "" {
-		errorFilterExpr = "(" + filterExpr + ") AND (status.code = 'STATUS_CODE_ERROR')"
-	} else {
-		errorFilterExpr = "status.code = 'STATUS_CODE_ERROR'"
 	}
 
 	queries := []qbtypes.QueryEnvelope{
@@ -1092,6 +1092,14 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 		filterExpr = scopeExpr
 	}
 
+	// Build error filter for num_errors query
+	var errorFilterExpr string
+	if filterExpr != "" {
+		errorFilterExpr = "(" + filterExpr + ") AND (status.code = 'STATUS_CODE_ERROR')"
+	} else {
+		errorFilterExpr = "status.code = 'STATUS_CODE_ERROR'"
+	}
+
 	// Common groupBy on operation
 	groupByOperation := []qbtypes.GroupByKey{
 		{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
@@ -1100,14 +1108,6 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 			Materialized:  true,
 		}},
-	}
-
-	// Build error filter for num_errors query
-	errorFilterExpr := filterExpr
-	if filterExpr != "" {
-		errorFilterExpr = "(" + filterExpr + ") AND (status.code = 'STATUS_CODE_ERROR')"
-	} else {
-		errorFilterExpr = "status.code = 'STATUS_CODE_ERROR'"
 	}
 
 	queries := []qbtypes.QueryEnvelope{
