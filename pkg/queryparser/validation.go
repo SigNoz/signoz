@@ -2,7 +2,7 @@ package queryparser
 
 import (
 	clickhouse "github.com/AfterShip/clickhouse-sql-parser/parser"
-	"github.com/SigNoz/signoz/pkg/errors"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/prometheus/prometheus/promql/parser"
 )
@@ -11,9 +11,19 @@ import (
 func validatePromQLQuery(query string) error {
 	_, err := parser.ParseExpr(query)
 	if err != nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse promql query: %s", err.Error())
+		if syntaxErrs, ok := err.(parser.ParseErrors); ok {
+			syntaxErr := syntaxErrs[0]
+			startPosition := int(syntaxErr.PositionRange.Start)
+			endPosition := int(syntaxErr.PositionRange.End)
+			return &QueryParseError{
+				StartPosition: &startPosition,
+				EndPosition:   &endPosition,
+				ErrorMessage:  syntaxErr.Error(),
+				Query:         query,
+			}
+		}
 	}
-	return nil
+	return err
 }
 
 // validateClickHouseQuery validates a ClickHouse SQL query syntax using the ClickHouse parser
@@ -21,13 +31,20 @@ func validateClickHouseQuery(query string) error {
 	p := clickhouse.NewParser(query)
 	_, err := p.ParseStmts()
 	if err != nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse clickhouse query: %s", err.Error())
+		// TODO: errors returned here is errors.errorString, rather than using regex to parser the error
+		// we should think on using some other library that parses the CH query in more accurate manner,
+		// current CH parser only does very minimal checks.
+		// Sample Error: "line 0:36 expected table name or subquery, got ;\nSELECT department, avg(salary) FROM ;\n                                    ^\n"
+		return &QueryParseError{
+			ErrorMessage: err.Error(),
+			Query:        query,
+		}
 	}
 	return nil
 }
 
 // checkQueriesDisabled checks if all queries are disabled. Returns true if all queries are disabled, false otherwise.
-func checkQueriesDisabled(compositeQuery *qbtypes.CompositeQuery) bool {
+func checkQueriesDisabled(compositeQuery *v3.CompositeQuery) bool {
 	for _, envelope := range compositeQuery.Queries {
 		switch envelope.Type {
 		case qbtypes.QueryTypeBuilder, qbtypes.QueryTypeSubQuery:

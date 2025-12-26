@@ -101,7 +101,7 @@ func (p *queryParserImpl) AnalyzeCompositeQuery(ctx context.Context, compositeQu
 }
 
 // ValidateCompositeQuery validates a composite query by checking all queries in the queries array
-func (p *queryParserImpl) ValidateCompositeQuery(ctx context.Context, compositeQuery *qbtypes.CompositeQuery) error {
+func (p *queryParserImpl) ValidateCompositeQuery(ctx context.Context, compositeQuery *v3.CompositeQuery) error {
 	if compositeQuery == nil {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
@@ -174,12 +174,7 @@ func (p *queryParserImpl) ValidateCompositeQuery(ctx context.Context, compositeQ
 				)
 			}
 			if err := validatePromQLQuery(spec.Query); err != nil {
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"invalid %s: %s",
-					queryId,
-					err.Error(),
-				)
+				return err
 			}
 		case qbtypes.QueryTypeClickHouseSQL:
 			spec, ok := envelope.Spec.(qbtypes.ClickHouseQuery)
@@ -198,12 +193,7 @@ func (p *queryParserImpl) ValidateCompositeQuery(ctx context.Context, compositeQ
 				)
 			}
 			if err := validateClickHouseQuery(spec.Query); err != nil {
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"invalid %s: %s",
-					queryId,
-					err.Error(),
-				)
+				return err
 			}
 		case qbtypes.QueryTypeFormula:
 			spec, ok := envelope.Spec.(qbtypes.QueryBuilderFormula)
@@ -222,13 +212,16 @@ func (p *queryParserImpl) ValidateCompositeQuery(ctx context.Context, compositeQ
 				)
 			}
 		case qbtypes.QueryTypeJoin:
-			_, ok := envelope.Spec.(qbtypes.QueryBuilderJoin)
+			spec, ok := envelope.Spec.(qbtypes.QueryBuilderJoin)
 			if !ok {
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
 					"invalid spec for %s",
 					queryId,
 				)
+			}
+			if err := spec.Validate(); err != nil {
+				return err
 			}
 		case qbtypes.QueryTypeTraceOperator:
 			spec, ok := envelope.Spec.(qbtypes.QueryBuilderTraceOperator)
@@ -239,12 +232,9 @@ func (p *queryParserImpl) ValidateCompositeQuery(ctx context.Context, compositeQ
 					queryId,
 				)
 			}
-			if spec.Expression == "" {
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"expression is required for %s",
-					queryId,
-				)
+			err := spec.ValidateTraceOperator(compositeQuery.Queries)
+			if err != nil {
+				return err
 			}
 		default:
 			return errors.NewInvalidInputf(

@@ -1,6 +1,7 @@
 package querybuildertypesv5
 
 import (
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -15,6 +16,15 @@ var (
 	JoinTypeFull  = JoinType{valuer.NewString("full")}
 	JoinTypeCross = JoinType{valuer.NewString("cross")}
 )
+
+func (j JoinType) Validate() error {
+	switch j {
+	case JoinTypeInner, JoinTypeLeft, JoinTypeRight, JoinTypeFull, JoinTypeCross:
+		return nil
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid join type: %s", j.StringValue())
+	}
+}
 
 type QueryRef struct {
 	Name string `json:"name"`
@@ -51,6 +61,25 @@ type QueryBuilderJoin struct {
 	Limit                 int                    `json:"limit,omitempty"`
 	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitempty"`
 	Functions             []Function             `json:"functions,omitempty"`
+}
+
+func (q *QueryBuilderJoin) Validate() error {
+	if q.Name == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "name is required")
+	}
+	if q.Left.Name == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "left name is required")
+	}
+	if q.Right.Name == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "right name is required")
+	}
+	if err := q.Type.Validate(); err != nil {
+		return err
+	}
+	if q.On == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "on is required")
+	}
+	return nil
 }
 
 // Copy creates a deep copy of QueryBuilderJoin
