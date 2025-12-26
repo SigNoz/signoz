@@ -204,12 +204,8 @@ func (p *queryParserImpl) ValidateCompositeQuery(ctx context.Context, compositeQ
 					queryId,
 				)
 			}
-			if spec.Expression == "" {
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"expression is required for %s",
-					queryId,
-				)
+			if err := spec.Validate(); err != nil {
+				return err
 			}
 		case qbtypes.QueryTypeJoin:
 			spec, ok := envelope.Spec.(qbtypes.QueryBuilderJoin)

@@ -1,6 +1,8 @@
 package querybuildertypesv5
 
 import (
+	"strings"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -64,19 +66,19 @@ type QueryBuilderJoin struct {
 }
 
 func (q *QueryBuilderJoin) Validate() error {
-	if q.Name == "" {
+	if strings.TrimSpace(q.Name) == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "name is required")
 	}
-	if q.Left.Name == "" {
+	if strings.TrimSpace(q.Left.Name) == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "left name is required")
 	}
-	if q.Right.Name == "" {
+	if strings.TrimSpace(q.Right.Name) == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "right name is required")
 	}
 	if err := q.Type.Validate(); err != nil {
 		return err
 	}
-	if q.On == "" {
+	if strings.TrimSpace(q.On) == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "on is required")
 	}
 	return nil
