@@ -9,13 +9,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/require"
 )
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogs(t *testing.T) {
-	fm := NewFieldMapper()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
+	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 
 	// Define a comprehensive set of field keys to support all test cases
@@ -2422,7 +2424,8 @@ func TestFilterExprLogs(t *testing.T) {
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogsConflictNegation(t *testing.T) {
-	fm := NewFieldMapper()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
+	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 
 	// Define a comprehensive set of field keys to support all test cases

@@ -145,6 +145,8 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	testCases := []struct {
 		name           string
+		tsStart        uint64
+		tsEnd          uint64
 		key            telemetrytypes.TelemetryFieldKey
 		expectedResult string
 		expectedError  error
@@ -203,7 +205,7 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := fm.FieldFor(ctx, &tc.key)
+			result, err := fm.FieldFor(ctx, tc.tsStart, tc.tsEnd, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)

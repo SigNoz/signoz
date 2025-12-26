@@ -1,9 +1,12 @@
 package telemetrylogs
 
 import (
+	"context"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // Helper function to limit string length for display
@@ -950,4 +953,24 @@ func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryF
 		}
 	}
 	return keysMap
+}
+
+// mockKeyEvolutionMetadata builds a mock org-scoped key evolution metadata map for a column evolution.
+func mockKeyEvolutionMetadata(ctx context.Context, orgId valuer.UUID, releaseTime time.Time) map[string]map[string][]*telemetrytypes.KeyEvolutionMetadataKey {
+	metadata := make(map[string]map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
+
+	// Make sure to initialize the inner map before assignment to prevent 'assignment to entry in nil map'
+	orgIdStr := orgId.String()
+	if _, exists := metadata[orgIdStr]; !exists {
+		metadata[orgIdStr] = make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
+	}
+	newKeyEvolutionMetadataEntry := telemetrytypes.KeyEvolutionMetadataKey{
+		BaseColumn:     "resources_string",
+		BaseColumnType: "Map(LowCardinality(String), String)",
+		NewColumn:      "resource",
+		NewColumnType:  "JSON(max_dynamic_paths=100)",
+		ReleaseTime:    releaseTime,
+	}
+	metadata[orgIdStr]["resources_string"] = []*telemetrytypes.KeyEvolutionMetadataKey{&newKeyEvolutionMetadataEntry}
+	return metadata
 }
