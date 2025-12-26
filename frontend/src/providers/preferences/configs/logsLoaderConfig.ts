@@ -39,7 +39,7 @@ const logsLoaders = {
 				return {
 					columns: validLogColumns.length > 0 ? validLogColumns : [],
 					formatting: {
-						maxLines: parsed.maxLines ?? 2,
+						maxLines: parsed.maxLines ?? 1,
 						format: parsed.format ?? 'table',
 						fontSize: parsed.fontSize ?? 'small',
 						version: parsed.version ?? 1,
@@ -65,7 +65,7 @@ const logsLoaders = {
 			return {
 				columns: validLogColumns.length > 0 ? validLogColumns : [],
 				formatting: {
-					maxLines: options.maxLines ?? 2,
+					maxLines: options.maxLines ?? 1,
 					format: options.format ?? 'table',
 					fontSize: options.fontSize ?? 'small',
 					version: options.version ?? 1,
@@ -80,7 +80,7 @@ const logsLoaders = {
 	} => ({
 		columns: defaultLogsSelectedColumns,
 		formatting: {
-			maxLines: 2,
+			maxLines: 1,
 			format: 'table',
 			fontSize: 'small' as FontSize,
 			version: 1,

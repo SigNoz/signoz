@@ -21,7 +21,7 @@ const getTracesUpdaterConfig = (
 			setSavedViewPreferences({
 				columns: newColumns,
 				formatting: {
-					maxLines: 2,
+					maxLines: 1,
 					format: 'table',
 					fontSize: 'small' as FontSize,
 					version: 1,

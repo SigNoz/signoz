@@ -7,7 +7,7 @@ export const URL_OPTIONS = 'options';
 
 export const defaultOptionsQuery: OptionsQuery = {
 	selectColumns: [],
-	maxLines: 2,
+	maxLines: 1,
 	format: 'raw',
 	fontSize: FontSize.SMALL,
 };
