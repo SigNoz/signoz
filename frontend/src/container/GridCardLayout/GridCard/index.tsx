@@ -167,7 +167,6 @@ function GridCardGraph({
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [updatedQuery]);
-	console.log('requestData', requestData);
 
 	const isLogsQuery = useMemo(
 		() =>
