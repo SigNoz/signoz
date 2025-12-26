@@ -2,6 +2,7 @@ package implservices
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"sort"
@@ -70,6 +71,14 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 	return ops, nil
 }
 
+func marshalInterface(inter any) string {
+	json, err := json.Marshal(inter)
+	if err != nil {
+		return ""
+	}
+	return string(json)
+}
+
 // Get implements services.Module
 // Builds a QBv5 traces aggregation grouped by service.name and maps results to ResponseItem.
 func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, error) {
@@ -103,6 +112,8 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("======> resp:", marshalInterface(resp))
 
 	// Process phase
 	var items []*servicetypesv1.ResponseItem
@@ -314,6 +325,14 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 		filterExpr = scopeExpr
 	}
 
+	// Build error filter for num_errors query
+	var errorFilterExpr string
+	if filterExpr != "" {
+		errorFilterExpr = "(" + filterExpr + ") AND (status.code = 'STATUS_CODE_ERROR')"
+	} else {
+		errorFilterExpr = "status.code = 'STATUS_CODE_ERROR'"
+	}
+
 	// common groupBy on service.name
 	groupByService := []qbtypes.GroupByKey{
 		{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
@@ -380,7 +399,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Name:    "num_errors",
 				Signal:  telemetrytypes.SignalMetrics,
-				Filter:  &qbtypes.Filter{Expression: "status.code = 'STATUS_CODE_ERROR'"},
+				Filter:  &qbtypes.Filter{Expression: errorFilterExpr},
 				GroupBy: groupByService,
 				Aggregations: []qbtypes.MetricAggregation{
 					{
@@ -398,7 +417,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 				Name:   "num_4xx",
 				Signal: telemetrytypes.SignalMetrics,
 				// TODO: fix this, below we should add filter for 4xx http status codes
-				Filter:  &qbtypes.Filter{Expression: ""},
+				Filter:  &qbtypes.Filter{Expression: errorFilterExpr},
 				GroupBy: groupByService,
 				Aggregations: []qbtypes.MetricAggregation{
 					{
