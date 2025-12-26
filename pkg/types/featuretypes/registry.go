@@ -12,6 +12,9 @@ type Registry interface {
 
 	// Returns the feature and the resolution detail for the given string name
 	GetByString(name string) (*Feature, openfeature.ProviderResolutionDetail, error)
+
+	// Returns all the features in the registry
+	List() []*Feature
 }
 
 // Concrete implementation of the Registry interface
@@ -115,4 +118,12 @@ func (r *registry) GetByString(name string) (f *Feature, detail openfeature.Prov
 	}
 
 	return r.Get(featureName)
+}
+
+func (r *registry) List() []*Feature {
+	features := make([]*Feature, 0, len(r.features))
+	for _, f := range r.features {
+		features = append(features, f)
+	}
+	return features
 }

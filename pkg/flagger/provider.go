@@ -12,5 +12,5 @@ type Provider interface {
 	openfeature.FeatureProvider
 
 	// List returns all the feature flags
-	List(ctx context.Context) ([]*featuretypes.Feature, error)
+	List(ctx context.Context) ([]*featuretypes.GettableFeature, error)
 }

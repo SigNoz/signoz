@@ -1,12 +1,15 @@
 package featuretypes
 
 import (
+	"slices"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
 var (
 	ErrCodeFeatureVariantNotFound        = errors.MustNewCode("feature_variant_not_found")
+	ErrCodeFeatureValueNotFound          = errors.MustNewCode("feature_value_not_found")
 	ErrCodeFeatureVariantKindMismatch    = errors.MustNewCode("feature_variant_kind_mismatch")
 	ErrCodeFeatureDefaultVariantNotFound = errors.MustNewCode("feature_default_variant_not_found")
 	ErrCodeFeatureNotFound               = errors.MustNewCode("feature_not_found")
@@ -42,6 +45,18 @@ type GettableFeature struct {
 	*FeatureVariant
 }
 
+type GettableFeatureWithResolution struct {
+	Name           string         `json:"name"`
+	Kind           string         `json:"kind"`
+	Stage          string         `json:"stage"`
+	Description    string         `json:"description"`
+	DefaultVariant string         `json:"defaultVariant"`
+	Variants       map[string]any `json:"variants"`
+	ResolvedValue  any            `json:"resolvedValue"`
+	ValueSource    string         `json:"valueSource"`
+}
+
+// This is the helper function to get the value of a variant of a feature
 func VariantValue[T any](feature *Feature, variant Name) (t T, detail openfeature.ProviderResolutionDetail, err error) {
 	value, ok := feature.Variants[variant]
 	if !ok {
@@ -71,4 +86,52 @@ func VariantValue[T any](feature *Feature, variant Name) (t T, detail openfeatur
 	}
 
 	return
+}
+
+// This is the helper function to get the variant by value for the given feature
+func VariantByValue[T comparable](feature *Feature, value T) (featureVariant *FeatureVariant, err error) {
+
+	// technically this method should not be called for object kind
+	// but just for fallback
+	if feature.Kind == KindObject {
+		// return the default variant - just for fallback
+		// ? think more on this
+		return &FeatureVariant{Variant: feature.DefaultVariant, Value: value}, nil
+	}
+
+	for _, variant := range feature.Variants {
+		if variant.Value == value {
+			return &variant, nil
+		}
+	}
+
+	return
+}
+
+func IsValidValue[T comparable](feature *Feature, value T) (bool, error) {
+	if feature.Kind == KindObject {
+		return true, nil
+	}
+
+	values, err := allFeatureValues[T](feature)
+	if err != nil {
+		return false, err
+	}
+
+	if !slices.Contains(values, value) {
+		return false, errors.Newf(errors.TypeInvalidInput, ErrCodeFeatureValueNotFound, "value %v not found for feature %s in variants %v", value, feature.Name.String(), feature.Variants)
+	}
+	return true, nil
+}
+
+func allFeatureValues[T any](feature *Feature) (values []T, err error) {
+	values = make([]T, 0, len(feature.Variants))
+	for _, variant := range feature.Variants {
+		v, _, err := VariantValue[T](feature, variant.Variant)
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, v)
+	}
+	return values, nil
 }

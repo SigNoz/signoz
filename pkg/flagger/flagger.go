@@ -10,12 +10,12 @@ import (
 
 // This is the consumer facing interface for the Flagger service.
 type Flagger interface {
-	Boolean(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (bool, error)
-	String(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (string, error)
-	Float(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (float64, error)
-	Int(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (int64, error)
-	Object(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (any, error)
-	List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.Feature, error)
+	Boolean(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (bool, string, error)
+	String(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (string, string, error)
+	Float(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (float64, string, error)
+	Int(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (int64, string, error)
+	Object(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (any, string, error)
+	List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.GettableFeatureWithResolution, error)
 }
 
 // This is the concrete implementation of the Flagger interface.
@@ -58,12 +58,12 @@ func New(ctx context.Context, ps factory.ProviderSettings, config Config, defaul
 	}, nil
 }
 
-func (f *flagger) Boolean(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (bool, error) {
+func (f *flagger) Boolean(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (bool, string, error) {
 	// check if the feature is present in the default registry
 	feature, _, err := f.defaultRegistry.GetByString(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
-		return false, err
+		return false, "", err
 	}
 
 	// get the default value from the feature from default registry
@@ -71,7 +71,7 @@ func (f *flagger) Boolean(ctx context.Context, flag string, evalCtx featuretypes
 	if err != nil {
 		// something which should never happen
 		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", "error", err, "flag", flag)
-		return false, err
+		return false, "", err
 	}
 
 	// * this logic can be optimised based on priority of the clients and short circuiting
@@ -84,19 +84,19 @@ func (f *flagger) Boolean(ctx context.Context, flag string, evalCtx featuretypes
 		}
 
 		if value != defaultValue {
-			return value, nil
+			return value, client.Metadata().Domain(), nil
 		}
 	}
 
-	return defaultValue, nil
+	return defaultValue, "defaultRegistry", nil
 }
 
-func (f *flagger) String(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (string, error) {
+func (f *flagger) String(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (string, string, error) {
 	// check if the feature is present in the default registry
 	feature, _, err := f.defaultRegistry.GetByString(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
-		return "", err
+		return "", "", err
 	}
 
 	// get the default value from the feature from default registry
@@ -104,7 +104,7 @@ func (f *flagger) String(ctx context.Context, flag string, evalCtx featuretypes.
 	if err != nil {
 		// something which should never happen
 		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", "error", err, "flag", flag)
-		return "", err
+		return "", "", err
 	}
 
 	// * this logic can be optimised based on priority of the clients and short circuiting
@@ -117,19 +117,19 @@ func (f *flagger) String(ctx context.Context, flag string, evalCtx featuretypes.
 		}
 
 		if value != defaultValue {
-			return value, nil
+			return value, client.Metadata().Domain(), nil
 		}
 	}
 
-	return defaultValue, nil
+	return defaultValue, "defaultRegistry", nil
 }
 
-func (f *flagger) Float(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (float64, error) {
+func (f *flagger) Float(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (float64, string, error) {
 	// check if the feature is present in the default registry
 	feature, _, err := f.defaultRegistry.GetByString(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
-		return 0, err
+		return 0, "", err
 	}
 
 	// get the default value from the feature from default registry
@@ -137,7 +137,7 @@ func (f *flagger) Float(ctx context.Context, flag string, evalCtx featuretypes.F
 	if err != nil {
 		// something which should never happen
 		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", "error", err, "flag", flag)
-		return 0, err
+		return 0, "", err
 	}
 
 	// * this logic can be optimised based on priority of the clients and short circuiting
@@ -150,19 +150,19 @@ func (f *flagger) Float(ctx context.Context, flag string, evalCtx featuretypes.F
 		}
 
 		if value != defaultValue {
-			return value, nil
+			return value, client.Metadata().Domain(), nil
 		}
 	}
 
-	return defaultValue, nil
+	return defaultValue, "defaultRegistry", nil
 }
 
-func (f *flagger) Int(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (int64, error) {
+func (f *flagger) Int(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (int64, string, error) {
 	// check if the feature is present in the default registry
 	feature, _, err := f.defaultRegistry.GetByString(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
-		return 0, err
+		return 0, "", err
 	}
 
 	// get the default value from the feature from default registry
@@ -170,7 +170,7 @@ func (f *flagger) Int(ctx context.Context, flag string, evalCtx featuretypes.Fla
 	if err != nil {
 		// something which should never happen
 		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", "error", err, "flag", flag)
-		return 0, err
+		return 0, "", err
 	}
 
 	// * this logic can be optimised based on priority of the clients and short circuiting
@@ -183,19 +183,19 @@ func (f *flagger) Int(ctx context.Context, flag string, evalCtx featuretypes.Fla
 		}
 
 		if value != defaultValue {
-			return value, nil
+			return value, client.Metadata().Domain(), nil
 		}
 	}
 
-	return defaultValue, nil
+	return defaultValue, "defaultRegistry", nil
 }
 
-func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (any, error) {
+func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (any, string, error) {
 	// check if the feature is present in the default registry
 	feature, _, err := f.defaultRegistry.GetByString(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
-		return nil, err
+		return nil, "", err
 	}
 
 	// get the default value from the feature from default registry
@@ -203,7 +203,7 @@ func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.
 	if err != nil {
 		// something which should never happen
 		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", "error", err, "flag", flag)
-		return nil, err
+		return nil, "", err
 	}
 
 	// * this logic can be optimised based on priority of the clients and short circuiting
@@ -216,14 +216,69 @@ func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.
 		}
 
 		if value != defaultValue {
-			return value, nil
+			return value, client.Metadata().Domain(), nil
 		}
 	}
 
-	return defaultValue, nil
+	return defaultValue, "defaultRegistry", nil
 }
 
-func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.Feature, error) {
-	// TODO: complete this
-	return nil, nil
+func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.GettableFeatureWithResolution, error) {
+	// get all the feature from the default registry
+	features := f.defaultRegistry.List()
+
+	result := make([]*featuretypes.GettableFeatureWithResolution, 0, len(features))
+
+	for _, feature := range features {
+
+		variants := make(map[string]any, len(feature.Variants))
+		for name, variant := range feature.Variants {
+			variants[name.String()] = variant.Value
+		}
+
+		var resolvedValue any
+		var source string
+		var err error
+
+		switch feature.Kind {
+		case featuretypes.KindBoolean:
+			resolvedValue, source, err = f.Boolean(ctx, feature.Name.String(), evalCtx)
+			if err != nil {
+				return nil, err
+			}
+		case featuretypes.KindString:
+			resolvedValue, source, err = f.Boolean(ctx, feature.Name.String(), evalCtx)
+			if err != nil {
+				return nil, err
+			}
+		case featuretypes.KindFloat:
+			resolvedValue, source, err = f.Boolean(ctx, feature.Name.String(), evalCtx)
+			if err != nil {
+				return nil, err
+			}
+		case featuretypes.KindInt:
+			resolvedValue, source, err = f.Boolean(ctx, feature.Name.String(), evalCtx)
+			if err != nil {
+				return nil, err
+			}
+		case featuretypes.KindObject:
+			resolvedValue, source, err = f.Boolean(ctx, feature.Name.String(), evalCtx)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		result = append(result, &featuretypes.GettableFeatureWithResolution{
+			Name:           feature.Name.String(),
+			Kind:           feature.Kind.StringValue(),
+			Stage:          feature.Stage.StringValue(),
+			Description:    feature.Description,
+			DefaultVariant: feature.DefaultVariant.String(),
+			Variants:       variants,
+			ResolvedValue:  resolvedValue,
+			ValueSource:    source,
+		})
+	}
+
+	return result, nil
 }
