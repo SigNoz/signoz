@@ -2,7 +2,6 @@ package implservices
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math"
 	"sort"
@@ -69,14 +68,6 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 		ops[serviceName] = append(ops[serviceName], name)
 	}
 	return ops, nil
-}
-
-func marshalInterface(inter any) string {
-	json, err := json.Marshal(inter)
-	if err != nil {
-		return ""
-	}
-	return string(json)
 }
 
 // Get implements services.Module
