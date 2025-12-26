@@ -220,8 +220,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
 		OrgID: orgId.String(),
 	})
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
-	setupResourcesStringEvolutionMetadata(ctx, storeWithMetadata, orgId, releaseTime)
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(mockKeyEvolutionMetadata(ctx, orgId, releaseTime))
 
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
@@ -344,7 +343,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
@@ -454,7 +453,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
@@ -529,7 +528,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
@@ -626,7 +625,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()

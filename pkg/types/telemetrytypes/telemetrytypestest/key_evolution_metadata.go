@@ -13,9 +13,9 @@ type MockKeyEvolutionMetadataStore struct {
 }
 
 // NewMockKeyEvolutionMetadataStore creates a new instance of MockKeyEvolutionMetadataStore with initialized maps
-func NewMockKeyEvolutionMetadataStore() *MockKeyEvolutionMetadataStore {
+func NewMockKeyEvolutionMetadataStore(metadata map[string]map[string][]*telemetrytypes.KeyEvolutionMetadataKey) *MockKeyEvolutionMetadataStore {
 	return &MockKeyEvolutionMetadataStore{
-		metadata: make(map[string]map[string][]*telemetrytypes.KeyEvolutionMetadataKey),
+		metadata: metadata,
 	}
 }
 
@@ -37,15 +37,4 @@ func (m *MockKeyEvolutionMetadataStore) Get(ctx context.Context, orgId valuer.UU
 	result := make([]*telemetrytypes.KeyEvolutionMetadataKey, len(keys))
 	copy(result, keys)
 	return result
-}
-
-// Add adds a metadata key for the given key name and orgId
-func (m *MockKeyEvolutionMetadataStore) Add(ctx context.Context, orgId valuer.UUID, keyName string, key *telemetrytypes.KeyEvolutionMetadataKey) {
-	if m.metadata == nil {
-		m.metadata = make(map[string]map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
-	}
-	if m.metadata[orgId.String()] == nil {
-		m.metadata[orgId.String()] = make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
-	}
-	m.metadata[orgId.String()][keyName] = append(m.metadata[orgId.String()][keyName], key)
 }

@@ -17,5 +17,4 @@ type KeyEvolutionMetadataKey struct {
 
 type KeyEvolutionMetadataStore interface {
 	Get(ctx context.Context, orgId valuer.UUID, keyName string) []*KeyEvolutionMetadataKey
-	Add(ctx context.Context, orgId valuer.UUID, keyName string, key *KeyEvolutionMetadataKey)
 }

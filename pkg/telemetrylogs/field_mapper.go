@@ -134,7 +134,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 		// get all evolution for the column
 		evolutions := m.evolutionMetadataStore.Get(ctx, orgID, baseColumn.Name)
 
-		// restricting now to just one entry where we know we changes from map to json
+		// restricting now to just one entry where we know we changed from map to json
 		if len(evolutions) > 0 && evolutions[0].ReleaseTime.Before(tsStartTime) {
 			return fmt.Sprintf("%s.`%s`::String", column.Name, key.Name), nil
 		}

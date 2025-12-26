@@ -11,7 +11,7 @@ import (
 
 // TestLikeAndILikeWithoutWildcards_Warns Tests that LIKE/ILIKE without wildcards add warnings and include docs URL
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 
@@ -48,7 +48,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 // TestLikeAndILikeWithWildcards_NoWarn Tests that LIKE/ILIKE with wildcards do not add warnings
 func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 

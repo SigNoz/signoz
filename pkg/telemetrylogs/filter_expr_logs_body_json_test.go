@@ -14,7 +14,7 @@ import (
 
 // TestFilterExprLogsBodyJSON tests a comprehensive set of query patterns for body JSON search
 func TestFilterExprLogsBodyJSON(t *testing.T) {
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 

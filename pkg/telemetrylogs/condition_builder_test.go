@@ -373,7 +373,7 @@ func TestConditionFor(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	conditionBuilder := NewConditionBuilder(fm)
 
@@ -427,7 +427,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	conditionBuilder := NewConditionBuilder(fm)
 
@@ -687,7 +687,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	conditionBuilder := NewConditionBuilder(fm)
 

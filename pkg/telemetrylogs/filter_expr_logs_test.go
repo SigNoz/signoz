@@ -16,7 +16,7 @@ import (
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogs(t *testing.T) {
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 
@@ -2424,7 +2424,7 @@ func TestFilterExprLogs(t *testing.T) {
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogsConflictNegation(t *testing.T) {
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
 

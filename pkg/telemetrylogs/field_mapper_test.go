@@ -168,7 +168,7 @@ func TestGetColumn(t *testing.T) {
 		},
 	}
 
-	mockStore := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	mockStore := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(mockStore)
 
 	for _, tc := range testCases {
@@ -266,7 +266,7 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockStore := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+			mockStore := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 			fm := NewFieldMapper(mockStore)
 			result, err := fm.FieldFor(ctx, 0, 0, &tc.key)
 
@@ -302,9 +302,8 @@ func TestFieldForWithEvolutionMetadata(t *testing.T) {
 	fallbackResult := "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)"
 
 	// Set up stores once
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
-	setupResourcesStringEvolutionMetadata(ctx, storeWithMetadata, orgId, releaseTime)
-	storeWithoutMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore()
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(mockKeyEvolutionMetadata(ctx, orgId, releaseTime))
+	storeWithoutMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 
 	testCases := []struct {
 		name           string

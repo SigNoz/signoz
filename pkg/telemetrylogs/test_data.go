@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -956,19 +955,22 @@ func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryF
 	return keysMap
 }
 
-// buildKeyEvolutionMetadataForResourcesString returns key evolution metadata for resources_string.
-// This can be used to populate a mock key evolution metadata store in tests.
-func buildKeyEvolutionMetadataForResourcesString(releaseTime time.Time) *telemetrytypes.KeyEvolutionMetadataKey {
-	return &telemetrytypes.KeyEvolutionMetadataKey{
+// mockKeyEvolutionMetadata builds a mock org-scoped key evolution metadata map for a column evolution.
+func mockKeyEvolutionMetadata(ctx context.Context, orgId valuer.UUID, releaseTime time.Time) map[string]map[string][]*telemetrytypes.KeyEvolutionMetadataKey {
+	metadata := make(map[string]map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
+
+	// Make sure to initialize the inner map before assignment to prevent 'assignment to entry in nil map'
+	orgIdStr := orgId.String()
+	if _, exists := metadata[orgIdStr]; !exists {
+		metadata[orgIdStr] = make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
+	}
+	newKeyEvolutionMetadataEntry := telemetrytypes.KeyEvolutionMetadataKey{
 		BaseColumn:     "resources_string",
 		BaseColumnType: "Map(LowCardinality(String), String)",
 		NewColumn:      "resource",
 		NewColumnType:  "JSON(max_dynamic_paths=100)",
 		ReleaseTime:    releaseTime,
 	}
-}
-
-// setupResourcesStringEvolutionMetadata sets up resources_string evolution metadata in the mock store.
-func setupResourcesStringEvolutionMetadata(ctx context.Context, m *telemetrytypestest.MockKeyEvolutionMetadataStore, orgId valuer.UUID, releaseTime time.Time) {
-	m.Add(ctx, orgId, "resources_string", buildKeyEvolutionMetadataForResourcesString(releaseTime))
+	metadata[orgIdStr]["resources_string"] = []*telemetrytypes.KeyEvolutionMetadataKey{&newKeyEvolutionMetadataEntry}
+	return metadata
 }
