@@ -304,6 +304,39 @@ func isValidLabelValue(v string) bool {
 	return utf8.ValidString(v)
 }
 
+// isValidAlertType validates that the AlertType is one of the allowed enum values
+func isValidAlertType(alertType AlertType) bool {
+	switch alertType {
+	case AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions:
+		return true
+	default:
+		return false
+	}
+}
+
+// isValidRuleType validates that the RuleType is one of the allowed enum values
+func isValidRuleType(ruleType RuleType) bool {
+	switch ruleType {
+	case RuleTypeThreshold, RuleTypeProm, RuleTypeAnomaly:
+		return true
+	default:
+		return false
+	}
+}
+
+// isValidVersion validates that the version is one of the supported versions
+func isValidVersion(version string) bool {
+	if version == "" {
+		return true // empty version is allowed (optional field)
+	}
+	switch version {
+	case "v3", "v4", "v5":
+		return true
+	default:
+		return false
+	}
+}
+
 func isAllQueriesDisabled(compositeQuery *v3.CompositeQuery) bool {
 	if compositeQuery == nil {
 		return false
@@ -357,6 +390,26 @@ func (r *PostableRule) validate() error {
 
 	if isAllQueriesDisabled(r.RuleCondition.CompositeQuery) {
 		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "all queries are disabled in rule condition"))
+	}
+
+	// Validate AlertName - required field
+	if r.AlertName == "" {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "alert name is required"))
+	}
+
+	// Validate AlertType - must be one of the allowed enum values
+	if !isValidAlertType(r.AlertType) {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid alert type: %s, must be one of: METRIC_BASED_ALERT, TRACES_BASED_ALERT, LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT", r.AlertType))
+	}
+
+	// Validate RuleType - must be one of the allowed enum values
+	if !isValidRuleType(r.RuleType) {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid rule type: %s, must be one of: threshold_rule, promql_rule, anomaly_rule", r.RuleType))
+	}
+
+	// Validate Version - must be one of the supported versions if provided
+	if !isValidVersion(r.Version) {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid version: %s, must be one of: v3, v4, v5", r.Version))
 	}
 
 	for k, v := range r.Labels {

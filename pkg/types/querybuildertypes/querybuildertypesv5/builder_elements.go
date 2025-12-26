@@ -539,6 +539,11 @@ func (f Function) Copy() Function {
 	return c
 }
 
+// Validate validates the Function by calling Validate on its Name
+func (f Function) Validate() error {
+	return f.Name.Validate()
+}
+
 type LimitBy struct {
 	// keys to limit by
 	Keys []string `json:"keys"`

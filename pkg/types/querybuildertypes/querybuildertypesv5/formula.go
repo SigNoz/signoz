@@ -73,6 +73,53 @@ func (f *QueryBuilderFormula) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Validate validates the QueryBuilderFormula
+func (f QueryBuilderFormula) Validate() error {
+	// Validate name is not blank
+	if strings.TrimSpace(f.Name) == "" {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"formula name cannot be blank",
+		)
+	}
+
+	// Validate expression is not blank
+	if strings.TrimSpace(f.Expression) == "" {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"formula expression cannot be blank",
+		)
+	}
+
+	// If having is not null, validate that expression is not blank
+	if f.Having != nil {
+		if strings.TrimSpace(f.Having.Expression) == "" {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"having expression cannot be blank when having clause is present",
+			)
+		}
+	}
+
+	// Validate functions if present
+	for i, fn := range f.Functions {
+		if err := fn.Validate(); err != nil {
+			fnId := fmt.Sprintf("function #%d", i+1)
+			if f.Name != "" {
+				fnId = fmt.Sprintf("function #%d in formula '%s'", i+1, f.Name)
+			}
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"invalid %s: %s",
+				fnId,
+				err.Error(),
+			)
+		}
+	}
+
+	return nil
+}
+
 // small container to store the query name and index or alias reference
 // for a variable in the formula expression
 // read below for more details on aggregation references

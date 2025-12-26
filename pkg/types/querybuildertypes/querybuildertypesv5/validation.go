@@ -10,8 +10,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// getQueryIdentifier returns a friendly identifier for a query based on its type and name/content
-func getQueryIdentifier(envelope QueryEnvelope, index int) string {
+// GetQueryIdentifier returns a friendly identifier for a query based on its type and name/content
+func GetQueryIdentifier(envelope QueryEnvelope, index int) string {
 	switch envelope.Type {
 	case QueryTypeBuilder, QueryTypeSubQuery:
 		switch spec := envelope.Spec.(type) {
@@ -567,7 +567,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 			switch spec := envelope.Spec.(type) {
 			case QueryBuilderQuery[TraceAggregation]:
 				if err := spec.Validate(r.RequestType); err != nil {
-					queryId := getQueryIdentifier(envelope, i)
+					queryId := GetQueryIdentifier(envelope, i)
 					return wrapValidationError(err, queryId, "invalid %s: %s")
 				}
 				// Check name uniqueness for non-formula context
@@ -583,7 +583,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 				}
 			case QueryBuilderQuery[LogAggregation]:
 				if err := spec.Validate(r.RequestType); err != nil {
-					queryId := getQueryIdentifier(envelope, i)
+					queryId := GetQueryIdentifier(envelope, i)
 					return wrapValidationError(err, queryId, "invalid %s: %s")
 				}
 				// Check name uniqueness for non-formula context
@@ -599,7 +599,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 				}
 			case QueryBuilderQuery[MetricAggregation]:
 				if err := spec.Validate(r.RequestType); err != nil {
-					queryId := getQueryIdentifier(envelope, i)
+					queryId := GetQueryIdentifier(envelope, i)
 					return wrapValidationError(err, queryId, "invalid %s: %s")
 				}
 				// Check name uniqueness for non-formula context
@@ -614,7 +614,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 					queryNames[spec.Name] = true
 				}
 			default:
-				queryId := getQueryIdentifier(envelope, i)
+				queryId := GetQueryIdentifier(envelope, i)
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
 					"unknown spec type for %s",
@@ -625,7 +625,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 			// Formula validation is handled separately
 			spec, ok := envelope.Spec.(QueryBuilderFormula)
 			if !ok {
-				queryId := getQueryIdentifier(envelope, i)
+				queryId := GetQueryIdentifier(envelope, i)
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
 					"invalid spec for %s",
@@ -633,7 +633,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 				)
 			}
 			if spec.Expression == "" {
-				queryId := getQueryIdentifier(envelope, i)
+				queryId := GetQueryIdentifier(envelope, i)
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
 					"expression is required for %s",
@@ -644,7 +644,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 			// Join validation is handled separately
 			_, ok := envelope.Spec.(QueryBuilderJoin)
 			if !ok {
-				queryId := getQueryIdentifier(envelope, i)
+				queryId := GetQueryIdentifier(envelope, i)
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
 					"invalid spec for %s",
@@ -654,7 +654,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 		case QueryTypeTraceOperator:
 			spec, ok := envelope.Spec.(QueryBuilderTraceOperator)
 			if !ok {
-				queryId := getQueryIdentifier(envelope, i)
+				queryId := GetQueryIdentifier(envelope, i)
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
 					"invalid spec for %s",
@@ -662,7 +662,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 				)
 			}
 			if spec.Expression == "" {
-				queryId := getQueryIdentifier(envelope, i)
+				queryId := GetQueryIdentifier(envelope, i)
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
 					"expression is required for %s",
@@ -673,7 +673,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 			// PromQL validation is handled separately
 			spec, ok := envelope.Spec.(PromQuery)
 			if !ok {
-				queryId := getQueryIdentifier(envelope, i)
+				queryId := GetQueryIdentifier(envelope, i)
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
 					"invalid spec for %s",
@@ -681,7 +681,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 				)
 			}
 			if spec.Query == "" {
-				queryId := getQueryIdentifier(envelope, i)
+				queryId := GetQueryIdentifier(envelope, i)
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
 					"query expression is required for %s",
@@ -692,7 +692,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 			// ClickHouse SQL validation is handled separately
 			spec, ok := envelope.Spec.(ClickHouseQuery)
 			if !ok {
-				queryId := getQueryIdentifier(envelope, i)
+				queryId := GetQueryIdentifier(envelope, i)
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
 					"invalid spec for %s",
@@ -700,7 +700,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 				)
 			}
 			if spec.Query == "" {
-				queryId := getQueryIdentifier(envelope, i)
+				queryId := GetQueryIdentifier(envelope, i)
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
 					"query expression is required for %s",
@@ -708,7 +708,7 @@ func (r *QueryRangeRequest) validateCompositeQuery() error {
 				)
 			}
 		default:
-			queryId := getQueryIdentifier(envelope, i)
+			queryId := GetQueryIdentifier(envelope, i)
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"unknown query type '%s' for %s",
@@ -735,7 +735,7 @@ func (c *CompositeQuery) Validate(requestType RequestType) error {
 	// Validate each query
 	for i, envelope := range c.Queries {
 		if err := validateQueryEnvelope(envelope, requestType); err != nil {
-			queryId := getQueryIdentifier(envelope, i)
+			queryId := GetQueryIdentifier(envelope, i)
 			return wrapValidationError(err, queryId, "invalid %s: %s")
 		}
 	}
