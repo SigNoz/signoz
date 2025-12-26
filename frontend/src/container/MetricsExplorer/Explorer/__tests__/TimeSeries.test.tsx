@@ -3,13 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { UpdateMetricMetadataResponse } from 'api/metricsExplorer/updateMetricMetadata';
-import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useUpdateMetricMetadataHooks from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { UseUpdateMetricMetadataProps } from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { UseMutationResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import TimeSeries from '../TimeSeries';
 import { TimeSeriesProps } from '../types';
@@ -26,23 +24,6 @@ jest
 		mutate: mockUpdateMetricMetadata,
 		isLoading: false,
 	} as Partial<MockUpdateMetricMetadata>) as MockUpdateMetricMetadata);
-
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
-	const base = initialQueriesMap.metrics;
-	const query: Query = {
-		...base,
-		builder: {
-			...base.builder,
-			queryData: [...base.builder.queryData, { ...base.builder.queryData[0] }],
-		},
-	};
-	return {
-		useQueryBuilder: (): { stagedQuery: Query; currentQuery: Query } => ({
-			stagedQuery: query,
-			currentQuery: query,
-		}),
-	};
-});
 
 jest.mock('container/TimeSeriesView/TimeSeriesView', () => ({
 	__esModule: true,
@@ -107,6 +88,7 @@ function renderTimeSeries(
 			handleOpenMetricDetails={mockSetIsMetricDetailsOpen}
 			yAxisUnit="count"
 			setYAxisUnit={mockSetYAxisUnit}
+			showYAxisUnitSelector={false}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...overrides}
 		/>,
@@ -151,6 +133,8 @@ describe('TimeSeries', () => {
 		);
 	});
 
+	// TODO: Unskip this test once the save unit button is implemented
+	// Tracking at - https://github.com/SigNoz/engineering-pod/issues/3495
 	it.skip('shows Save unit button when metric had no unit but one is selected', () => {
 		const { findByText, getByRole } = renderTimeSeries({
 			metricUnits: [undefined],
@@ -168,6 +152,8 @@ describe('TimeSeries', () => {
 		expect(yesButton).toBeEnabled();
 	});
 
+	// TODO: Unskip this test once the save unit button is implemented
+	// Tracking at - https://github.com/SigNoz/engineering-pod/issues/3495
 	it.skip('clicking on save unit button shoould upated metric metadata', () => {
 		const user = userEvent.setup();
 		const { getByRole } = renderTimeSeries({

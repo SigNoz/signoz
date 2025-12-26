@@ -256,6 +256,14 @@ function Explorer(): JSX.Element {
 		return undefined;
 	}, [disableOneChartPerQuery, splitedQueries.length, units.length]);
 
+	// Show the y axis unit selector if -
+	// 1. There is only one metric
+	// 2. The metric has no saved unit
+	const showYAxisUnitSelector = useMemo(
+		() => !isMetricUnitsLoading && units.length === 1 && !units[0],
+		[units, isMetricUnitsLoading],
+	);
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-explore-container">
@@ -322,6 +330,7 @@ function Explorer(): JSX.Element {
 							handleOpenMetricDetails={handleOpenMetricDetails}
 							yAxisUnit={yAxisUnit}
 							setYAxisUnit={setYAxisUnit}
+							showYAxisUnitSelector={showYAxisUnitSelector}
 						/>
 					)}
 					{/* TODO: Enable once we have resolved all related metrics issues */}

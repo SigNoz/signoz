@@ -12,7 +12,7 @@ import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { AlertTriangle } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -34,6 +34,7 @@ function TimeSeries({
 	handleOpenMetricDetails,
 	yAxisUnit,
 	setYAxisUnit,
+	showYAxisUnitSelector,
 }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
@@ -137,14 +138,6 @@ function TimeSeries({
 		setYAxisUnit(value);
 	};
 
-	// Show the y axis unit selector if -
-	// 1. There is only one metric
-	// 2. The metric has no saved unit
-	const showYAxisUnitSelector = useMemo(
-		() => !isMetricUnitsLoading && metricUnits.length === 1 && !metricUnits[0],
-		[metricUnits, isMetricUnitsLoading],
-	);
-
 	// TODO: Enable once we have resolved all related metrics v2 api issues
 	// Show the save unit button if
 	// 1. There is only one metric
@@ -193,28 +186,6 @@ function TimeSeries({
 	// 		},
 	// 	);
 	// };
-
-	const noUnitWarning = useCallback(
-		(metricName: string): JSX.Element => (
-			<Tooltip
-				className="no-unit-warning"
-				title={
-					<Typography.Text>
-						This metric does not have a unit. Please set one for it in the{' '}
-						<Typography.Link
-							onClick={(): void => handleOpenMetricDetails(metricName)}
-						>
-							metric details
-						</Typography.Link>{' '}
-						page.
-					</Typography.Text>
-				}
-			>
-				<AlertTriangle size={16} color={Color.BG_AMBER_400} />
-			</Tooltip>
-		),
-		[handleOpenMetricDetails],
-	);
 
 	return (
 		<>
@@ -278,7 +249,24 @@ function TimeSeries({
 							// eslint-disable-next-line react/no-array-index-key
 							key={index}
 						>
-							{isMetricUnitEmpty && metricName && noUnitWarning(metricName)}
+							{isMetricUnitEmpty && metricName && (
+								<Tooltip
+									className="no-unit-warning"
+									title={
+										<Typography.Text>
+											This metric does not have a unit. Please set one for it in the{' '}
+											<Typography.Link
+												onClick={(): void => handleOpenMetricDetails(metricName)}
+											>
+												metric details
+											</Typography.Link>{' '}
+											page.
+										</Typography.Text>
+									}
+								>
+									<AlertTriangle size={16} color={Color.BG_AMBER_400} />
+								</Tooltip>
+							)}
 							<TimeSeriesView
 								isFilterApplied={false}
 								isError={queries[index].isError}

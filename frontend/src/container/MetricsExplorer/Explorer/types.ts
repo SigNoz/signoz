@@ -22,6 +22,7 @@ export interface TimeSeriesProps {
 	handleOpenMetricDetails: (metricName: string) => void;
 	yAxisUnit: string | undefined;
 	setYAxisUnit: (unit: string) => void;
+	showYAxisUnitSelector: boolean;
 }
 
 export interface RelatedMetricsProps {
