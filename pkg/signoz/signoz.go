@@ -219,7 +219,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.SQLMigration,
-		NewSQLMigrationProviderFactories(sqlstore, sqlschema, telemetrystore, providerSettings),
+		NewSQLMigrationProviderFactories(sqlstore, sqlschema),
 	)
 	if err != nil {
 		return nil, err

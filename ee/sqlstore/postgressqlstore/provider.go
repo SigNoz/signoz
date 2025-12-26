@@ -18,7 +18,6 @@ type provider struct {
 	settings  factory.ScopedProviderSettings
 	sqldb     *sql.DB
 	bundb     *sqlstore.BunDB
-	dialect   *dialect
 	formatter sqlstore.SQLFormatter
 }
 
@@ -58,11 +57,11 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	pgDialect := pgdialect.New()
 	bunDB := sqlstore.NewBunDB(settings, sqldb, pgDialect, hooks)
+
 	return &provider{
 		settings:  settings,
 		sqldb:     sqldb,
 		bundb:     bunDB,
-		dialect:   new(dialect),
 		formatter: newFormatter(bunDB.Dialect()),
 	}, nil
 }
@@ -73,10 +72,6 @@ func (provider *provider) BunDB() *bun.DB {
 
 func (provider *provider) SQLDB() *sql.DB {
 	return provider.sqldb
-}
-
-func (provider *provider) Dialect() sqlstore.SQLDialect {
-	return provider.dialect
 }
 
 func (provider *provider) Formatter() sqlstore.SQLFormatter {
@@ -106,8 +101,4 @@ func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, for
 	}
 
 	return err
-}
-
-func (dialect *dialect) ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error {
-	return nil
 }

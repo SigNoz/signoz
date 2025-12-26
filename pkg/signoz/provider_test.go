@@ -45,8 +45,6 @@ func TestNewProviderFactories(t *testing.T) {
 		NewSQLMigrationProviderFactories(
 			sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual),
 			sqlschematest.New(map[string]*sqlschema.Table{}, map[string][]*sqlschema.UniqueConstraint{}, map[string]sqlschema.Index{}),
-			telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherEqual),
-			instrumentationtest.New().ToProviderSettings(),
 		)
 	})
 

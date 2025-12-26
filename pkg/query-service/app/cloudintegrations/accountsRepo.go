@@ -176,7 +176,7 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 	onConflictClause := ""
 	if len(onConflictSetStmts) > 0 {
 		onConflictClause = fmt.Sprintf(
-			"conflict(id, provider, org_id) do update SET\n%s",
+			"conflict(id) do update SET\n%s",
 			strings.Join(onConflictSetStmts, ",\n"),
 		)
 	}

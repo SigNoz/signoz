@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -55,11 +54,6 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		render.Error(rw, err)
 		return
-	}
-
-	dashboardMigrator := transition.NewDashboardMigrateV5(handler.providerSettings.Logger, nil, nil)
-	if req["version"] != "v5" {
-		dashboardMigrator.Migrate(ctx, req)
 	}
 
 	dashboard, err := handler.module.Create(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.UserID), req)

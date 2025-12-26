@@ -21,15 +21,6 @@ type SQLMigration interface {
 	Down(context.Context, *bun.DB) error
 }
 
-var (
-	OrgReference                = "org"
-	UserReference               = "user"
-	UserReferenceNoCascade      = "user_no_cascade"
-	FactorPasswordReference     = "factor_password"
-	CloudIntegrationReference   = "cloud_integration"
-	AgentConfigVersionReference = "agent_config_version"
-)
-
 func New(
 	ctx context.Context,
 	settings factory.ProviderSettings,
