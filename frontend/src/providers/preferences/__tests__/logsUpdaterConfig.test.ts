@@ -41,7 +41,7 @@ describe('logsUpdaterConfig', () => {
 	const mockPreferences: Preferences = {
 		columns: [],
 		formatting: {
-			maxLines: 2,
+			maxLines: 1,
 			format: 'table' as LogViewMode,
 			fontSize: 'small' as FontSize,
 			version: 1,
@@ -80,7 +80,7 @@ describe('logsUpdaterConfig', () => {
 					dataType: DataTypes.String,
 				},
 			],
-			maxLines: 2,
+			maxLines: 1,
 		});
 
 		logsUpdater.updateColumns(newColumns, PreferenceMode.DIRECT);
@@ -153,7 +153,7 @@ describe('logsUpdaterConfig', () => {
 					dataType: DataTypes.String,
 				},
 			],
-			maxLines: 2,
+			maxLines: 1,
 			format: 'table',
 		});
 
@@ -206,7 +206,7 @@ describe('logsUpdaterConfig', () => {
 					dataType: DataTypes.String,
 				},
 			],
-			maxLines: 2,
+			maxLines: 1,
 			format: 'table',
 		});
 
