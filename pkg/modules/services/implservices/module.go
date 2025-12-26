@@ -842,7 +842,7 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 					{
 						MetricName:       "signoz_calls_total",
 						Temporality:      metrictypes.Delta,
-						TimeAggregation:  metrictypes.TimeAggregationRate,
+						TimeAggregation:  metrictypes.TimeAggregationIncrease,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
@@ -859,7 +859,7 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 					{
 						MetricName:       "signoz_calls_total",
 						Temporality:      metrictypes.Delta,
-						TimeAggregation:  metrictypes.TimeAggregationRate,
+						TimeAggregation:  metrictypes.TimeAggregationIncrease,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
@@ -1228,7 +1228,7 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 					{
 						MetricName:       "signoz_calls_total",
 						Temporality:      metrictypes.Delta,
-						TimeAggregation:  metrictypes.TimeAggregationRate,
+						TimeAggregation:  metrictypes.TimeAggregationIncrease,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
@@ -1245,7 +1245,7 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 					{
 						MetricName:       "signoz_calls_total",
 						Temporality:      metrictypes.Delta,
-						TimeAggregation:  metrictypes.TimeAggregationRate,
+						TimeAggregation:  metrictypes.TimeAggregationIncrease,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
