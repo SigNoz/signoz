@@ -191,6 +191,13 @@ func (r *BaseRule) currentAlerts() []*ruletypes.Alert {
 	return alerts
 }
 
+// ShouldSendUnmatched returns true if the rule should send unmatched samples
+// during alert evaluation, even if they don't match the rule condition.
+// This is useful in testing the rule.
+func (r *BaseRule) ShouldSendUnmatched() bool {
+	return r.sendUnmatched
+}
+
 // ActiveAlertsLabelFP returns a map of active alert labels fingerprint and
 // the fingerprint is computed using the QueryResultLables.Hash() method.
 // We use the QueryResultLables instead of labels as these labels are raw labels

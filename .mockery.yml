@@ -1,0 +1,10 @@
+# Link to template variables: https://pkg.go.dev/github.com/vektra/mockery/v3/config#TemplateData
+template: testify
+packages:
+  github.com/SigNoz/signoz/pkg/alertmanager:
+    config:
+      all: true
+      dir: '{{.InterfaceDir}}/mocks'
+      filename: "mocks.go"
+      structname: 'Mock{{.InterfaceName}}'
+      pkgname: '{{.SrcPackageName}}mock'

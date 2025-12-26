@@ -138,7 +138,8 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	var resultVector ruletypes.Vector
 	for _, series := range res {
 		resultSeries, err := r.Threshold.Eval(toCommonSeries(series), r.Unit(), ruletypes.EvalData{
-			ActiveAlerts: r.ActiveAlertsLabelFP(),
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+			SendUnmatched: r.ShouldSendUnmatched(),
 		})
 		if err != nil {
 			return nil, err

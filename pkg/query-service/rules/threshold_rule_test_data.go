@@ -27,6 +27,10 @@ type recoveryTestCase struct {
 	expectedTarget         float64
 	expectedRecoveryTarget float64
 	thresholdName          string // for hash calculation
+	// Optional fields for SendUnmatched scenarios
+	sendUnmatched       bool    // whether to set EvalData.SendUnmatched
+	expectSamples       *int    // if set, assert exact sample count
+	expectedSampleValue float64 // used when expectSamples is set
 }
 
 // thresholdExpectation defines expected behavior for a single threshold in multi-threshold tests
