@@ -5,7 +5,7 @@ import updateMetricMetadata, {
 import { useMutation, UseMutationResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
-interface UseUpdateMetricMetadataProps {
+export interface UseUpdateMetricMetadataProps {
 	metricName: string;
 	payload: UpdateMetricMetadataProps;
 }
