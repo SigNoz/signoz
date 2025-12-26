@@ -137,7 +137,6 @@ function GridCardGraph({
 				originalGraphType: widget.panelTypes,
 			};
 		}
-		updatedQuery.builder.queryData[0].pageSize = 10;
 		const initialDataSource = updatedQuery.builder.queryData[0].dataSource;
 		return {
 			query: updatedQuery,
@@ -168,6 +167,7 @@ function GridCardGraph({
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [updatedQuery]);
+	console.log('requestData', requestData);
 
 	const isLogsQuery = useMemo(
 		() =>

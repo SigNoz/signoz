@@ -120,7 +120,6 @@ function FullView({
 				originalGraphType: selectedPanelType,
 			};
 		}
-		updatedQuery.builder.queryData[0].pageSize = 10;
 		return {
 			query: updatedQuery,
 			graphType: PANEL_TYPES.LIST,
