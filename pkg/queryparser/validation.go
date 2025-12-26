@@ -1,8 +1,14 @@
 package queryparser
 
 import (
+	"bytes"
+	"text/template"
+	"time"
+
 	clickhouse "github.com/AfterShip/clickhouse-sql-parser/parser"
+	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/prometheus/prometheus/promql/parser"
 )
@@ -28,8 +34,35 @@ func validatePromQLQuery(query string) error {
 
 // validateClickHouseQuery validates a ClickHouse SQL query syntax using the ClickHouse parser
 func validateClickHouseQuery(query string) error {
-	p := clickhouse.NewParser(query)
-	_, err := p.ParseStmts()
+	// Assign the default template variables with dummy values
+	variables := make(map[string]interface{})
+	start := time.Now().UnixMilli()
+	end := start + 1000
+	querytemplate.AssignReservedVars(variables, start, end)
+
+	// Apply the values for default template variables before parsing the query
+	tmpl := template.New("clickhouse-query")
+	tmpl, err := tmpl.Parse(query)
+	if err != nil {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"failed to parse clickhouse query: %s",
+			err.Error(),
+		)
+	}
+	var queryBuffer bytes.Buffer
+	err = tmpl.Execute(&queryBuffer, variables)
+	if err != nil {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"failed to execute clickhouse query template: %s",
+			err.Error(),
+		)
+	}
+
+	// Parse the ClickHouse query with the default template variables applied
+	p := clickhouse.NewParser(queryBuffer.String())
+	_, err = p.ParseStmts()
 	if err != nil {
 		// TODO: errors returned here is errors.errorString, rather than using regex to parser the error
 		// we should think on using some other library that parses the CH query in more accurate manner,

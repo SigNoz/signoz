@@ -140,24 +140,9 @@ func (rc *RuleCondition) UnmarshalJSON(data []byte) error {
 		}
 	}
 
-	// Validate CompareOp - must be valid enum
-	if !isValidCompareOp(rc.CompareOp) {
-		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid compare operation: %s", rc.CompareOp))
-	}
-
-	// Validate Target - must be non-nil
-	if rc.Target == nil {
-		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "target is required"))
-	}
-
 	// Validate AlertOnAbsent + AbsentFor - if AlertOnAbsent is true, AbsentFor must be > 0
 	if rc.AlertOnAbsent && rc.AbsentFor == 0 {
 		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "absentFor must be greater than 0 when alertOnAbsent is true"))
-	}
-
-	// Validate MatchType - must be valid enum (including MatchTypeNone)
-	if !isValidMatchType(rc.MatchType) {
-		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid match type: %s", rc.MatchType))
 	}
 
 	// Validate Seasonality - must be one of the allowed values when provided
@@ -227,26 +212,6 @@ func getAllQueryNames(compositeQuery *v3.CompositeQuery) map[string]struct{} {
 	}
 
 	return queryNames
-}
-
-// isValidCompareOp validates that CompareOp is a valid enum value (including CompareOpNone)
-func isValidCompareOp(op CompareOp) bool {
-	switch op {
-	case CompareOpNone, ValueIsAbove, ValueIsBelow, ValueIsEq, ValueIsNotEq, ValueAboveOrEq, ValueBelowOrEq, ValueOutsideBounds:
-		return true
-	default:
-		return false
-	}
-}
-
-// isValidMatchType validates that MatchType is a valid enum value (including MatchTypeNone)
-func isValidMatchType(mt MatchType) bool {
-	switch mt {
-	case MatchTypeNone, AtleastOnce, AllTheTimes, OnAverage, InTotal, Last:
-		return true
-	default:
-		return false
-	}
 }
 
 // isValidSeasonality validates that Seasonality is one of the allowed values
