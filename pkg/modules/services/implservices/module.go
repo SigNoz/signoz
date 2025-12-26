@@ -535,8 +535,6 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 		return []*servicetypesv1.ResponseItem{}, []string{}
 	}
 
-	periodSeconds := float64((endMs - startMs) / 1000)
-
 	type agg struct {
 		p99    float64
 		avg    float64
@@ -573,10 +571,8 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 	out := make([]*servicetypesv1.ResponseItem, 0, len(perSvc))
 	serviceNames := make([]string, 0, len(perSvc))
 	for svcName, a := range perSvc {
-		callRate := 0.0
-		if a.calls > 0 && periodSeconds > 0 {
-			callRate = float64(a.calls) / periodSeconds
-		}
+		// a.calls is already a rate (calls/second) from TimeAggregationRate, no need to divide by periodSeconds
+		callRate := float64(a.calls)
 		errorRate := 0.0
 		if a.calls > 0 {
 			errorRate = float64(a.errors) * 100 / float64(a.calls)
