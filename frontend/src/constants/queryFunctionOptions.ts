@@ -68,8 +68,8 @@ export const metricQueryFunctionOptions: SelectOption<string, string>[] = [
 		label: 'Time Shift',
 	},
 	{
-		value: QueryFunctionsTypes.TIME_SHIFT,
-		label: 'Time Shift',
+		value: QueryFunctionsTypes.FILL_ZERO,
+		label: 'Fill Zero',
 	},
 ];
 
@@ -155,5 +155,8 @@ export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
 	timeShift: {
 		showInput: true,
 		inputType: 'text',
+	},
+	fillZero: {
+		showInput: false,
 	},
 };
