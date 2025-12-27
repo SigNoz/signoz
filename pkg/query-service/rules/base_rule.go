@@ -13,7 +13,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
@@ -88,6 +90,11 @@ type BaseRule struct {
 	sqlstore sqlstore.SQLStore
 
 	evaluation ruletypes.Evaluation
+
+	// newGroupEvalDelay is the grace period for new alert groups
+	newGroupEvalDelay *time.Duration
+
+	queryParser queryparser.QueryParser
 }
 
 type RuleOption func(*BaseRule)
@@ -122,6 +129,12 @@ func WithSQLStore(sqlstore sqlstore.SQLStore) RuleOption {
 	}
 }
 
+func WithQueryParser(queryParser queryparser.QueryParser) RuleOption {
+	return func(r *BaseRule) {
+		r.queryParser = queryParser
+	}
+}
+
 func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader interfaces.Reader, opts ...RuleOption) (*BaseRule, error) {
 	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
@@ -152,6 +165,12 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
 		Threshold:         threshold,
 		evaluation:        evaluation,
+	}
+
+	// Store newGroupEvalDelay and groupBy keys from NotificationSettings
+	if p.NotificationSettings != nil && p.NotificationSettings.NewGroupEvalDelay != nil {
+		newGroupEvalDelay := time.Duration(*p.NotificationSettings.NewGroupEvalDelay)
+		baseRule.newGroupEvalDelay = &newGroupEvalDelay
 	}
 
 	if baseRule.evalWindow == 0 {
@@ -527,4 +546,167 @@ func (r *BaseRule) PopulateTemporality(ctx context.Context, orgID valuer.UUID, q
 		}
 	}
 	return nil
+}
+
+// ShouldSkipNewGroups returns true if new group filtering should be applied
+func (r *BaseRule) ShouldSkipNewGroups() bool {
+	return r.newGroupEvalDelay != nil && *r.newGroupEvalDelay > 0
+}
+
+// isFilterNewSeriesSupported checks if the query is supported for new series filtering
+func (r *BaseRule) isFilterNewSeriesSupported() bool {
+	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		for _, query := range r.ruleCondition.CompositeQuery.Queries {
+			if query.Type != qbtypes.QueryTypeBuilder {
+				continue
+			}
+			switch query.Spec.(type) {
+			// query spec is for Logs or Traces, return with blank metric names and group by fields
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// extractMetricAndGroupBys extracts metric names and groupBy keys from the rule's query.
+// TODO: implement caching for query parsing results to avoid re-parsing the query + cache invalidation
+func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) ([]string, []string, error) {
+	var metricNames []string
+	var groupedFields []string
+
+	// check to avoid processing the query for Logs and Traces
+	// as excluding new series is not supported for Logs and Traces for now
+	if !r.isFilterNewSeriesSupported() {
+		return metricNames, groupedFields, nil
+	}
+
+	result, err := r.queryParser.AnalyzeCompositeQuery(ctx, r.ruleCondition.CompositeQuery)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	metricNames = result.MetricNames
+	for _, col := range result.GroupByColumns {
+		groupedFields = append(groupedFields, col.OriginField)
+	}
+
+	return metricNames, groupedFields, nil
+}
+
+// FilterNewSeriesIndexes filters out items that are too new based on metadata first_seen timestamps.
+// Returns the indexes that should be skipped (not included in the result).
+func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []v3.Series) ([]int, error) {
+	// Extract metric names and groupBy keys
+	metricNames, groupedFields, err := r.extractMetricAndGroupBys(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(metricNames) == 0 || len(groupedFields) == 0 {
+		// No metrics or groupBy keys, nothing to filter (non-ideal case, return early)
+		return []int{}, nil
+	}
+
+	// Build lookup keys from series which will be used to query metadata from CH
+	lookupKeys := make([]model.MetricMetadataLookupKey, 0)
+	seriesIdxToLookupKeys := make(map[int][]model.MetricMetadataLookupKey) // series index -> lookup keys
+
+	for i := 0; i < len(series); i++ {
+		metricLabelMap := series[i].Labels
+
+		// Collect groupBy attribute-value pairs for this series
+		seriesKeys := make([]model.MetricMetadataLookupKey, 0)
+
+		for _, metricName := range metricNames {
+			for _, groupByKey := range groupedFields {
+				if attrValue, ok := metricLabelMap[groupByKey]; ok {
+					lookupKey := model.MetricMetadataLookupKey{
+						MetricName:     metricName,
+						AttributeName:  groupByKey,
+						AttributeValue: attrValue,
+					}
+					lookupKeys = append(lookupKeys, lookupKey)
+					seriesKeys = append(seriesKeys, lookupKey)
+				}
+			}
+		}
+
+		if len(seriesKeys) > 0 {
+			seriesIdxToLookupKeys[i] = seriesKeys
+		}
+	}
+
+	if len(lookupKeys) == 0 {
+		// No lookup keys to query, return empty skip list
+		// this can happen when the series has no labels at all
+		// in this case, we include all series as we don't know if it is new or old series
+		return []int{}, nil
+	}
+
+	// unique lookup keys
+	uniqueLookupKeysMap := make(map[model.MetricMetadataLookupKey]struct{})
+	uniqueLookupKeys := make([]model.MetricMetadataLookupKey, 0)
+	for _, key := range lookupKeys {
+		if _, ok := uniqueLookupKeysMap[key]; !ok {
+			uniqueLookupKeysMap[key] = struct{}{}
+			uniqueLookupKeys = append(uniqueLookupKeys, key)
+		}
+	}
+	// Query metadata for first_seen timestamps
+	firstSeenMap, err := r.reader.GetFirstSeenFromMetricMetadata(ctx, uniqueLookupKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter series based on first_seen + delay
+	skipIndexes := make([]int, 0)
+	evalTimeMs := ts.UnixMilli()
+	newGroupEvalDelayMs := r.newGroupEvalDelay.Milliseconds()
+
+	for i := 0; i < len(series); i++ {
+		seriesKeys, ok := seriesIdxToLookupKeys[i]
+		if !ok {
+			// No matching labels used in groupBy from this series, don't exclude it
+			// as we can't decide if it is new or old series
+			continue
+		}
+
+		// Find the maximum first_seen across all groupBy attributes for this series
+		// if the latest is old enough we're good, if latest is new we need to skip it
+		maxFirstSeen := int64(0)
+		// metadataFound tracks if we have metadata for any of the lookup keys
+		metadataFound := false
+
+		for _, lookupKey := range seriesKeys {
+			if firstSeen, exists := firstSeenMap[lookupKey]; exists {
+				metadataFound = true
+				if firstSeen > maxFirstSeen {
+					maxFirstSeen = firstSeen
+				}
+			}
+		}
+
+		// if we don't have metadata for any of the lookup keys, we can't decide if it is new or old series
+		// in that case, we don't add it to the skip indexes
+		if !metadataFound {
+			continue
+		}
+
+		// Check if first_seen + delay has passed
+		if maxFirstSeen+newGroupEvalDelayMs > evalTimeMs {
+			// Still within grace period, skip this series
+			skipIndexes = append(skipIndexes, i)
+			continue
+		}
+
+		// Old enough, don't skip this series
+	}
+
+	if r.logger != nil && len(skipIndexes) > 0 {
+		r.logger.InfoContext(ctx, "Filtered new series", "rule_name", r.Name(), "skipped_count", len(skipIndexes), "total_count", len(series), "delay_ms", newGroupEvalDelayMs)
+	}
+
+	return skipIndexes, nil
 }

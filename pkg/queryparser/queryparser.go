@@ -3,6 +3,7 @@ package queryparser
 import (
 	"context"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/queryparser/queryfilterextractor"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
@@ -11,4 +12,6 @@ import (
 type QueryParser interface {
 	// AnalyzeQueryFilter extracts filter conditions from a given query string.
 	AnalyzeQueryFilter(ctx context.Context, queryType querybuildertypesv5.QueryType, query string) (*queryfilterextractor.FilterResult, error)
+	// AnalyzeCompositeQuery extracts filter conditions from a composite query.
+	AnalyzeCompositeQuery(ctx context.Context, compositeQuery *v3.CompositeQuery) (*queryfilterextractor.FilterResult, error)
 }

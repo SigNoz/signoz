@@ -361,6 +361,7 @@ func makeRulesManager(
 		RuleStore:        ruleStore,
 		MaintenanceStore: maintenanceStore,
 		SqlStore:         sqlstore,
+		QueryParser:      queryParser,
 	}
 
 	// create Manager

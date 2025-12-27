@@ -376,6 +376,7 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		RuleStore:           ruleStore,
 		MaintenanceStore:    maintenanceStore,
 		SqlStore:            sqlstore,
+		QueryParser:         queryParser,
 	}
 
 	// create Manager
