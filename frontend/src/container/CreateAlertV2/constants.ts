@@ -72,3 +72,5 @@ export const defaultPostableAlertRuleV2: PostableAlertRuleV2 = {
 	alert: 'TEST_ALERT',
 	evaluation: defaultEvaluation,
 };
+
+export const ALL_SELECTED_VALUE = '__all__';
