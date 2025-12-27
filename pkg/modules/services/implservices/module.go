@@ -544,11 +544,11 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 	}
 
 	type agg struct {
-		p99    float64
-		avg    float64
-		calls  uint64
-		errors uint64
-		fourxx uint64
+		p99        float64
+		avg        float64
+		callRate   float64
+		errorRate  float64
+		fourxxRate float64
 	}
 	perSvc := make(map[string]*agg)
 
@@ -567,11 +567,11 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 			case "avg_latency":
 				a.avg = val * math.Pow(10, 6)
 			case "num_calls":
-				a.calls = uint64(val)
+				a.callRate = val
 			case "num_errors":
-				a.errors = uint64(val)
+				a.errorRate = val
 			case "num_4xx":
-				a.fourxx = uint64(val)
+				a.fourxxRate = val
 			}
 		}
 	}
@@ -580,25 +580,21 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 	serviceNames := make([]string, 0, len(perSvc))
 	for svcName, a := range perSvc {
 		// a.calls is already a rate (calls/second) from TimeAggregationRate, no need to divide by periodSeconds
-		callRate := float64(a.calls)
 		errorRate := 0.0
-		if a.calls > 0 {
-			errorRate = float64(a.errors) * 100 / float64(a.calls)
+		if a.callRate > 0 {
+			errorRate = a.errorRate * 100 / a.callRate
 		}
 		fourXXRate := 0.0
-		if a.calls > 0 {
-			fourXXRate = float64(a.fourxx) * 100 / float64(a.calls)
+		if a.callRate > 0 {
+			fourXXRate = a.fourxxRate * 100 / a.callRate
 		}
 
 		out = append(out, &servicetypesv1.ResponseItem{
 			ServiceName:  svcName,
 			Percentile99: a.p99,
 			AvgDuration:  a.avg,
-			NumCalls:     a.calls,
-			CallRate:     callRate,
-			NumErrors:    a.errors,
+			CallRate:     a.callRate,
 			ErrorRate:    errorRate,
-			Num4XX:       a.fourxx,
 			FourXXRate:   fourXXRate,
 			DataWarning:  servicetypesv1.DataWarning{TopLevelOps: []string{}},
 		})
