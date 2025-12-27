@@ -15,7 +15,7 @@ function FilteredTable({
 	const allGroupsAlerts = useMemo(
 		() =>
 			groupBy(FilterAlerts(allAlerts, selectedFilter), (obj) =>
-				selectedGroup.map((e) => obj.labels[`${e.value}`]).join('+'),
+				selectedGroup.map((e) => obj.labels?.[`${e.value}`]).join('+'),
 			),
 		[selectedGroup, allAlerts, selectedFilter],
 	);
@@ -51,11 +51,14 @@ function FilteredTable({
 				}
 
 				const objects = tagsAlert[0].labels;
+				if (!objects) return null;
 				const keysArray = Object.keys(objects);
 				const valueArray: string[] = [];
 
 				keysArray.forEach((e) => {
-					valueArray.push(objects[e]);
+					if (objects[e]) {
+						valueArray.push(objects[e] as string);
+					}
 				});
 
 				const tags = tagsValue

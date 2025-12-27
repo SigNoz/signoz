@@ -1,5 +1,5 @@
 export interface Alerts {
-	labels: AlertsLabel;
+	labels?: AlertsLabel;
 	annotations: {
 		description: string;
 		summary: string;
@@ -26,7 +26,7 @@ interface Receivers {
 }
 
 interface AlertsLabel {
-	[key: string]: string;
+	[key: string]: string | undefined;
 }
 
 export interface Props {

@@ -37,6 +37,7 @@ export const FilterAlerts = (
 
 	allAlerts.forEach((alert) => {
 		const { labels } = alert;
+		if (!labels) return;
 		Object.keys(labels).forEach((e) => {
 			const selectedKey = objectMap.get(e);
 
