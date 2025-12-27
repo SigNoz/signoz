@@ -260,6 +260,15 @@
 		line-height: 22px; /* 157.143% */
 		letter-spacing: -0.07px;
 		padding: 20px 16px 0px 16px;
+
+		.dashboard-description-link {
+			color: var(--bg-robin-400);
+			text-decoration: underline;
+
+			&:hover {
+				color: var(--bg-robin-300);
+			}
+		}
 	}
 
 	.dashboard-variables {
@@ -637,6 +646,14 @@
 
 		.dashboard-description-section {
 			color: var(--bg-ink-400);
+
+			.dashboard-description-link {
+				color: var(--bg-robin-500);
+
+				&:hover {
+					color: var(--bg-robin-400);
+				}
+			}
 		}
 	}
 	.dashboard-settings {
