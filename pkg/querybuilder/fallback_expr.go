@@ -45,7 +45,7 @@ func CollisionHandledFinalExpr(
 
 	addCondition := func(key *telemetrytypes.TelemetryFieldKey) error {
 		sb := sqlbuilder.NewSelectBuilder()
-        condition, err := cb.ConditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, 0, 0)
+		condition, err := cb.ConditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, 0, 0)
 		if err != nil {
 			return err
 		}
@@ -236,7 +236,12 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 
 		// if the key is a number, the value is a string, we will let clickHouse handle the conversion
 		case float32, float64:
-			tblFieldName = castFloatHack(tblFieldName)
+			if key.Signal == telemetrytypes.SignalMetrics {
+				// need null safety for metrics labels columns
+				tblFieldName = castFloat(tblFieldName)
+			} else {
+				tblFieldName = castFloatHack(tblFieldName)
+			}
 		case string:
 			// check if it's a number inside a string
 			isNumber := false
@@ -248,11 +253,19 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 				// try to convert the number attribute to string
 				tblFieldName = castString(tblFieldName) // numeric col vs string literal
 			} else {
-				tblFieldName = castFloatHack(tblFieldName)
+				if key.Signal == telemetrytypes.SignalMetrics {
+					tblFieldName = castFloat(tblFieldName)
+				} else {
+					tblFieldName = castFloatHack(tblFieldName)
+				}
 			}
 		case []any:
 			if allFloats(v) {
-				tblFieldName = castFloatHack(tblFieldName)
+				if key.Signal == telemetrytypes.SignalMetrics {
+					tblFieldName = castFloat(tblFieldName)
+				} else {
+					tblFieldName = castFloatHack(tblFieldName)
+				}
 			} else if hasString(v) {
 				tblFieldName, value = castString(tblFieldName), toStrings(v)
 			}
@@ -271,6 +284,11 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 	return tblFieldName, value
 }
 
+// TODO(nikhilmantri0902, srikanthccv): Replacing all usages of castFloatHack with castFloat in
+// DataTypeCollisionHandledFieldName, as metrics contain float data type fields in labels that are empty
+// string for example http.status_code. Hence 'OrNull' is needed.
+// but with this change, OrNull functions in clickhouse only accept string type, hence adding
+// toString below.
 func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
 func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
 func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
