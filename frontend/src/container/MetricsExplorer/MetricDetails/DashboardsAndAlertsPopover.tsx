@@ -1,37 +1,56 @@
 import { Color } from '@signozhq/design-tokens';
 import { Dropdown, Typography } from 'antd';
+import { Skeleton } from 'antd/lib';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { useGetMetricAlerts } from 'hooks/metricsExplorer/v2/useGetMetricAlerts';
+import { useGetMetricDashboards } from 'hooks/metricsExplorer/v2/useGetMetricDashboards';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { Bell, Grid } from 'lucide-react';
 import { useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
+import { pluralize } from 'utils/pluralize';
 
 import { DashboardsAndAlertsPopoverProps } from './types';
+import { transformMetricAlerts, transformMetricDashboards } from './utils';
 
 function DashboardsAndAlertsPopover({
-	alerts,
-	dashboards,
+	metricName,
 }: DashboardsAndAlertsPopoverProps): JSX.Element | null {
 	const { safeNavigate } = useSafeNavigate();
 	const params = useUrlQuery();
 
+	const {
+		data: alertsData,
+		isLoading: isLoadingAlerts,
+		isError: isErrorAlerts,
+	} = useGetMetricAlerts(metricName);
+
+	const {
+		data: dashboardsData,
+		isLoading: isLoadingDashboards,
+		isError: isErrorDashboards,
+	} = useGetMetricDashboards(metricName);
+
+	const alerts = transformMetricAlerts(alertsData);
+	const dashboards = transformMetricDashboards(dashboardsData);
+
 	const alertsPopoverContent = useMemo(() => {
 		if (alerts && alerts.length > 0) {
 			return alerts.map((alert) => ({
-				key: alert.alert_id,
+				key: alert.alertId,
 				label: (
 					<Typography.Link
-						key={alert.alert_id}
+						key={alert.alertId}
 						onClick={(): void => {
-							params.set(QueryParams.ruleId, alert.alert_id);
+							params.set(QueryParams.ruleId, alert.alertId);
 							history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 						}}
 						className="dashboards-popover-content-item"
 					>
-						{alert.alert_name || alert.alert_id}
+						{alert.alertName || alert.alertId}
 					</Typography.Link>
 				),
 			}));
@@ -39,41 +58,44 @@ function DashboardsAndAlertsPopover({
 		return null;
 	}, [alerts, params]);
 
-	const uniqueDashboards = useMemo(
-		() =>
-			dashboards?.filter(
-				(item, index, self) =>
-					index === self.findIndex((t) => t.dashboard_id === item.dashboard_id),
-			),
-		[dashboards],
-	);
-
 	const dashboardsPopoverContent = useMemo(() => {
-		if (uniqueDashboards && uniqueDashboards.length > 0) {
-			return uniqueDashboards.map((dashboard) => ({
-				key: dashboard.dashboard_id,
+		if (dashboards && dashboards.length > 0) {
+			return dashboards.map((dashboard) => ({
+				key: dashboard.dashboardId,
 				label: (
 					<Typography.Link
-						key={dashboard.dashboard_id}
+						key={dashboard.dashboardId}
 						onClick={(): void => {
 							safeNavigate(
 								generatePath(ROUTES.DASHBOARD, {
-									dashboardId: dashboard.dashboard_id,
+									dashboardId: dashboard.dashboardId,
 								}),
 							);
 						}}
 						className="dashboards-popover-content-item"
 					>
-						{dashboard.dashboard_name || dashboard.dashboard_id}
+						{dashboard.dashboardName || dashboard.dashboardId}
 					</Typography.Link>
 				),
 			}));
 		}
 		return null;
-	}, [uniqueDashboards, safeNavigate]);
+	}, [dashboards, safeNavigate]);
 
-	if (!dashboardsPopoverContent && !alertsPopoverContent) {
-		return null;
+	if (isLoadingAlerts || isLoadingDashboards) {
+		return (
+			<div className="dashboards-and-alerts-popover-container">
+				<Skeleton title={false} paragraph={{ rows: 1 }} active />
+			</div>
+		);
+	}
+
+	// If there are no dashboards or alerts or both have errors, don't show the popover
+	const hidePopover =
+		(!dashboardsPopoverContent && !alertsPopoverContent) ||
+		(isErrorAlerts && isErrorDashboards);
+	if (hidePopover) {
+		return <div className="dashboards-and-alerts-popover-container" />;
 	}
 
 	return (
@@ -92,8 +114,7 @@ function DashboardsAndAlertsPopover({
 					>
 						<Grid size={12} color={Color.BG_SIENNA_500} />
 						<Typography.Text>
-							{uniqueDashboards?.length} dashboard
-							{uniqueDashboards?.length === 1 ? '' : 's'}
+							{pluralize(dashboards.length, 'dashboard', 'dashboards')}
 						</Typography.Text>
 					</div>
 				</Dropdown>
@@ -112,7 +133,7 @@ function DashboardsAndAlertsPopover({
 					>
 						<Bell size={12} color={Color.BG_SAKURA_500} />
 						<Typography.Text>
-							{alerts?.length} alert {alerts?.length === 1 ? 'rule' : 'rules'}
+							{pluralize(alerts.length, 'alert rule', 'alert rules')}
 						</Typography.Text>
 					</div>
 				</Dropdown>

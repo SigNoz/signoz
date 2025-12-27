@@ -39,6 +39,7 @@
 		gap: 12px;
 
 		.metric-details-content-grid {
+			height: 50px;
 			.labels-row,
 			.values-row {
 				display: grid;
@@ -72,6 +73,7 @@
 		.dashboards-and-alerts-popover-container {
 			display: flex;
 			gap: 16px;
+			height: 32px;
 
 			.dashboards-and-alerts-popover {
 				border-radius: 20px;
@@ -148,7 +150,6 @@
 
 				.all-attributes-search-input {
 					width: 300px;
-					border: 1px solid var(--bg-slate-300);
 				}
 			}
 
@@ -161,6 +162,7 @@
 							.ant-typography:first-child {
 								font-family: 'Geist Mono';
 								color: var(--bg-robin-400);
+								background-color: transparent;
 							}
 						}
 						.all-attributes-contribution {
@@ -237,6 +239,7 @@
 			}
 
 			.metric-metadata-value {
+				height: 67px;
 				background: rgba(22, 25, 34, 0.4);
 				overflow-x: scroll;
 				.field-renderer-container {
@@ -264,6 +267,33 @@
 
 			.ant-collapse-content {
 				border-top-width: 0.5px !important;
+			}
+		}
+
+		.metrics-metadata-accordion {
+			.ant-collapse-item {
+				.ant-collapse-content {
+					height: 268px;
+
+					.ant-collapse-content-box {
+						.metrics-metadata-skeleton-container {
+							margin: 12px;
+						}
+					}
+				}
+			}
+		}
+
+		.metrics-all-attributes-accordion {
+			.ant-collapse-item {
+				.ant-collapse-content {
+					height: 600px;
+					.ant-collapse-content-box {
+						.all-attributes-skeleton-container {
+							margin: 12px;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -330,18 +360,26 @@
 	.metric-details-content {
 		.metrics-accordion {
 			.metrics-accordion-header {
-				.action-button {
-					.ant-typography {
-						color: var(--bg-slate-400);
+				.action-menu {
+					.action-button {
+						.ant-typography {
+							color: var(--bg-slate-400);
+						}
 					}
 				}
 			}
 
 			.metrics-accordion-content {
 				.metric-metadata-key {
+					.field-renderer-container {
+						.label {
+							color: var(--bg-slate-300);
+						}
+					}
+
 					.all-attributes-key {
 						.ant-typography:last-child {
-							color: var(--bg-slate-400);
+							color: var(--bg-vanilla-200);
 							background-color: var(--bg-robin-300);
 						}
 					}
