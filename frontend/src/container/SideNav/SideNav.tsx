@@ -67,6 +67,8 @@ import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
 import { showErrorNotification } from 'utils/error';
+import { genericNavigate } from 'utils/genericNavigate';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 
 import { useCmdK } from '../../providers/cmdKProvider';
 import { routeConfig } from './config';
@@ -292,8 +294,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		icon: <Cog size={16} />,
 	};
 
-	const isCtrlMetaKey = (e: MouseEvent): boolean => e.ctrlKey || e.metaKey;
-
 	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
 	const [
@@ -411,7 +411,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
 	const openInNewTab = (path: string): void => {
-		window.open(path, '_blank');
+		window.open(path, '_blank', 'noopener,noreferrer');
 	};
 
 	const onClickGetStarted = (event: MouseEvent): void => {
@@ -424,7 +424,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			? ROUTES.GET_STARTED_WITH_CLOUD
 			: ROUTES.GET_STARTED;
 
-		if (isCtrlMetaKey(event)) {
+		if (isCtrlOrMMetaKey(event)) {
 			openInNewTab(onboaringRoute);
 		} else {
 			history.push(onboaringRoute);
@@ -439,7 +439,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			const queryString = getQueryString(availableParams || [], params);
 
 			if (pathname !== key) {
-				if (event && isCtrlMetaKey(event)) {
+				if (event && isCtrlOrMMetaKey(event)) {
 					openInNewTab(`${key}?${queryString.join('&')}`);
 				} else {
 					history.push(`${key}?${queryString.join('&')}`, {
@@ -634,11 +634,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const handleMenuItemClick = (event: MouseEvent, item: SidebarItem): void => {
 		if (item.key === ROUTES.SETTINGS) {
-			if (isCtrlMetaKey(event)) {
-				openInNewTab(settingsRoute);
-			} else {
-				history.push(settingsRoute);
-			}
+			genericNavigate(settingsRoute, event);
 		} else if (item.key === 'quick-search') {
 			openCmdK();
 		} else if (item) {
@@ -809,7 +805,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		);
 
 		if (item && !('type' in item) && item.isExternal && item.url) {
-			window.open(item.url, '_blank');
+			window.open(item.url, '_blank', 'noopener,noreferrer');
 		}
 
 		if (item && !('type' in item)) {

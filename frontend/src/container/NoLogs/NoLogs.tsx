@@ -1,13 +1,14 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './NoLogs.styles.scss';
 
 import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
 import { ArrowUpRight } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 import DOCLINKS from 'utils/docLinks';
+import { genericNavigate } from 'utils/genericNavigate';
 
 export default function NoLogs({
 	dataSource,
@@ -15,6 +16,8 @@ export default function NoLogs({
 	dataSource: DataSource;
 }): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+
+	const REL_NOOPENER_NOREFERRER = 'noopener,noreferrer';
 
 	const handleLinkClick = (
 		e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
@@ -38,13 +41,25 @@ export default function NoLogs({
 			} else {
 				link = ROUTES.GET_STARTED_LOGS_MANAGEMENT;
 			}
-			history.push(link);
+			genericNavigate(link, e);
 		} else if (dataSource === 'traces') {
-			window.open(DOCLINKS.TRACES_EXPLORER_EMPTY_STATE, '_blank');
+			window.open(
+				DOCLINKS.TRACES_EXPLORER_EMPTY_STATE,
+				'_blank',
+				REL_NOOPENER_NOREFERRER,
+			);
 		} else if (dataSource === DataSource.METRICS) {
-			window.open(DOCLINKS.METRICS_EXPLORER_EMPTY_STATE, '_blank');
+			window.open(
+				DOCLINKS.METRICS_EXPLORER_EMPTY_STATE,
+				'_blank',
+				REL_NOOPENER_NOREFERRER,
+			);
 		} else {
-			window.open(`${DOCLINKS.USER_GUIDE}${dataSource}/`, '_blank');
+			window.open(
+				`${DOCLINKS.USER_GUIDE}${dataSource}/`,
+				'_blank',
+				REL_NOOPENER_NOREFERRER,
+			);
 		}
 	};
 	return (
@@ -59,7 +74,12 @@ export default function NoLogs({
 					</span>
 				</Typography>
 
-				<Typography.Link className="send-logs-link" onClick={handleLinkClick}>
+				<Typography.Link
+					className="send-logs-link"
+					onClick={(e: React.MouseEvent<HTMLAnchorElement, MouseEvent>): void =>
+						handleLinkClick(e)
+					}
+				>
 					Sending {dataSource} to SigNoz <ArrowUpRight size={16} />
 				</Typography.Link>
 			</div>

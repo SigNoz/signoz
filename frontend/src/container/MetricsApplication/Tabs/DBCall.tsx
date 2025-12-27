@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-identical-functions */
 import { Col } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -179,14 +180,17 @@ function DBCall(): JSX.Element {
 					type="default"
 					size="small"
 					id="database_call_rps_button"
-					onClick={onViewTracePopupClick({
-						servicename,
-						selectedTraceTags,
-						timestamp: selectedTimeStamp,
-						apmToTraceQuery,
-						stepInterval,
-						safeNavigate,
-					})}
+					onClick={(event): void =>
+						onViewTracePopupClick({
+							servicename,
+							selectedTraceTags,
+							timestamp: selectedTimeStamp,
+							apmToTraceQuery,
+							stepInterval,
+							safeNavigate,
+							event,
+						})
+					}
 				>
 					View Traces
 				</Button>
@@ -215,14 +219,17 @@ function DBCall(): JSX.Element {
 					type="default"
 					size="small"
 					id="database_call_avg_duration_button"
-					onClick={onViewTracePopupClick({
-						servicename,
-						selectedTraceTags,
-						timestamp: selectedTimeStamp,
-						apmToTraceQuery,
-						stepInterval,
-						safeNavigate,
-					})}
+					onClick={(event): void =>
+						onViewTracePopupClick({
+							servicename,
+							selectedTraceTags,
+							timestamp: selectedTimeStamp,
+							apmToTraceQuery,
+							stepInterval,
+							safeNavigate,
+							event,
+						})
+					}
 				>
 					View Traces
 				</Button>
