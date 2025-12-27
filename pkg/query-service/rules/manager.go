@@ -154,6 +154,8 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "evaluation is invalid: %v", err)
 	}
+	// calculate eval delay based on rule config
+	evalDelay := CalculateEvalDelay(opts.Rule, opts.ManagerOpts.EvalDelay)
 
 	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold {
 		// create a threshold rule
@@ -164,7 +166,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			opts.Reader,
 			opts.Querier,
 			opts.SLogger,
-			WithEvalDelay(opts.ManagerOpts.EvalDelay),
+			WithEvalDelay(evalDelay),
 			WithSQLStore(opts.SQLStore),
 		)
 
