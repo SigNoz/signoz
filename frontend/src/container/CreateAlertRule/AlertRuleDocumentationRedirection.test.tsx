@@ -1,23 +1,11 @@
 import ROUTES from 'constants/routes';
 import * as usePrefillAlertConditions from 'container/FormAlertRules/usePrefillAlertConditions';
+import AlertTypeSelectionPage from 'pages/AlertTypeSelection';
 import CreateAlertPage from 'pages/CreateAlert';
 import { act, fireEvent, render } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { ALERT_TYPE_TO_TITLE, ALERT_TYPE_URL_MAP } from './constants';
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALERTS_NEW}`,
-	}),
-}));
-
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
-	}),
-}));
 
 jest
 	.spyOn(usePrefillAlertConditions, 'usePrefillAlertConditions')
@@ -66,13 +54,20 @@ describe('Alert rule documentation redirection', () => {
 		window.open = mockWindowOpen;
 	});
 
+	jest.mock('react-router-dom', () => ({
+		...jest.requireActual('react-router-dom'),
+		useLocation: (): { pathname: string } => ({
+			pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALERT_TYPE_SELECTION}`,
+		}),
+	}));
+
 	beforeEach(() => {
 		act(() => {
 			renderResult = render(
-				<CreateAlertPage />,
+				<AlertTypeSelectionPage />,
 				{},
 				{
-					initialRoute: ROUTES.ALERTS_NEW,
+					initialRoute: ROUTES.ALERT_TYPE_SELECTION,
 				},
 			);
 		});
@@ -117,18 +112,20 @@ describe('Alert rule documentation redirection', () => {
 
 		expect(mockWindowOpen).toHaveBeenCalledTimes(alertTypeCount);
 	});
+});
 
+describe('Create alert page redirection', () => {
 	Object.values(AlertTypes)
 		.filter((type) => type !== AlertTypes.ANOMALY_BASED_ALERT)
 		.forEach((alertType) => {
 			it(`should redirect to create alert page for ${alertType} and "Check an example alert" should redirect to the correct documentation`, () => {
-				const { getByTestId, getByRole } = renderResult;
-
-				const alertTypeLink = getByTestId(`alert-type-card-${alertType}`);
-
-				act(() => {
-					fireEvent.click(alertTypeLink);
-				});
+				const { getByRole } = render(
+					<CreateAlertPage />,
+					{},
+					{
+						initialRoute: `${ROUTES.ALERTS_NEW}?alertType=${alertType}`,
+					},
+				);
 
 				act(() => {
 					fireEvent.click(

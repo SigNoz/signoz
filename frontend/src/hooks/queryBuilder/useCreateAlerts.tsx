@@ -11,6 +11,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import pick from 'lodash-es/pick';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useMemo } from 'react';
 import { useMutation } from 'react-query';
@@ -19,6 +20,21 @@ import { AppState } from 'store/reducers';
 import { IDashboardVariable, Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
+
+function serializeThresholds(
+	thresholds?: ThresholdProps[],
+): Partial<ThresholdProps>[] {
+	if (!thresholds) return [];
+	return thresholds?.map((threshold) =>
+		pick(threshold, [
+			'thresholdOperator',
+			'thresholdValue',
+			'thresholdUnit',
+			'thresholdLabel',
+			'thresholdColor',
+		]),
+	);
+}
 
 const useCreateAlerts = (
 	widget?: Widgets,
@@ -84,7 +100,7 @@ const useCreateAlerts = (
 				}=${widget.panelTypes}&version=${ENTITY_VERSION_V5}`;
 
 				history.push(url, {
-					thresholds,
+					thresholds: serializeThresholds(thresholds),
 				});
 			},
 			onError: () => {
