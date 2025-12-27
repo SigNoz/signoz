@@ -700,11 +700,17 @@
 
 		.ant-btn {
 			box-shadow: none;
+			position: relative;
 		}
 
 		.tab {
 			border: 1px solid var(--bg-slate-400);
 			width: 114px;
+			z-index: 1;
+		}
+
+		.tab:hover {
+			z-index: 3;
 		}
 
 		.tab::before {
@@ -715,6 +721,7 @@
 			background: var(--bg-slate-400);
 			color: var(--text-vanilla-100);
 			border: 1px solid var(--bg-slate-400);
+			z-index: 2;
 		}
 
 		.selected_view::before {
