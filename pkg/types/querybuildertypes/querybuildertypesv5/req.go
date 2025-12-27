@@ -218,13 +218,13 @@ func (r *QueryRangeRequest) StepIntervalForQuery(name string) int64 {
 	for _, query := range r.CompositeQuery.Queries {
 		switch spec := query.Spec.(type) {
 		case QueryBuilderQuery[TraceAggregation]:
-			stepsMap[spec.Name] = int64(spec.StepInterval.Seconds())
+			stepsMap[spec.Name] = spec.StepInterval.Milliseconds()
 		case QueryBuilderQuery[LogAggregation]:
-			stepsMap[spec.Name] = int64(spec.StepInterval.Seconds())
+			stepsMap[spec.Name] = spec.StepInterval.Milliseconds()
 		case QueryBuilderQuery[MetricAggregation]:
-			stepsMap[spec.Name] = int64(spec.StepInterval.Seconds())
+			stepsMap[spec.Name] = spec.StepInterval.Milliseconds()
 		case PromQuery:
-			stepsMap[spec.Name] = int64(spec.Step.Seconds())
+			stepsMap[spec.Name] = spec.Step.Milliseconds()
 		}
 	}
 

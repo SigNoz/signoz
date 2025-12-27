@@ -698,7 +698,7 @@ func TestFuncFillZero(t *testing.T) {
 			},
 			start: 1000,
 			end:   3000,
-			step:  1,
+			step:  1000,
 			expected: &TimeSeries{
 				Values: []*TimeSeriesValue{
 					{Timestamp: 1000, Value: 1.0},
@@ -717,7 +717,7 @@ func TestFuncFillZero(t *testing.T) {
 			},
 			start: 1000,
 			end:   3000,
-			step:  1,
+			step:  1000,
 			expected: &TimeSeries{
 				Values: []*TimeSeriesValue{
 					{Timestamp: 1000, Value: 1.0},
@@ -737,7 +737,7 @@ func TestFuncFillZero(t *testing.T) {
 			},
 			start: 1000,
 			end:   6000,
-			step:  1,
+			step:  1000,
 			expected: &TimeSeries{
 				Values: []*TimeSeriesValue{
 					{Timestamp: 1000, Value: 1.0},
@@ -761,7 +761,7 @@ func TestFuncFillZero(t *testing.T) {
 			},
 			start: 1000,
 			end:   6000,
-			step:  1,
+			step:  1000,
 			expected: &TimeSeries{
 				Values: []*TimeSeriesValue{
 					{Timestamp: 1000, Value: 1.0},
@@ -780,7 +780,7 @@ func TestFuncFillZero(t *testing.T) {
 			},
 			start: 1000,
 			end:   3000,
-			step:  1,
+			step:  1000,
 			expected: &TimeSeries{
 				Values: []*TimeSeriesValue{
 					{Timestamp: 1000, Value: 0},
@@ -798,7 +798,7 @@ func TestFuncFillZero(t *testing.T) {
 			},
 			start: 1000,
 			end:   3000,
-			step:  1,
+			step:  1000,
 			expected: &TimeSeries{
 				Values: []*TimeSeriesValue{
 					{Timestamp: 1000, Value: 1.0},
@@ -820,7 +820,7 @@ func TestFuncFillZero(t *testing.T) {
 			},
 			start: 1000,
 			end:   4000,
-			step:  1,
+			step:  1000,
 			expected: &TimeSeries{
 				Values: []*TimeSeriesValue{
 					{Timestamp: 1000, Value: 1.0},
@@ -841,7 +841,7 @@ func TestFuncFillZero(t *testing.T) {
 			},
 			start: 50000,  // Not aligned to 60s
 			end:   250000, // Not aligned to 60s
-			step:  60,     // 60 seconds
+			step:  60000,  // 60 seconds
 			expected: &TimeSeries{
 				Values: []*TimeSeriesValue{
 					{Timestamp: 0, Value: 0}, // Aligned start
@@ -890,7 +890,7 @@ func TestApplyFunction_FillZero(t *testing.T) {
 		Args: []FunctionArg{
 			{Value: 1000.0}, // start
 			{Value: 4000.0}, // end
-			{Value: 1.0},    // step
+			{Value: 1000.0}, // step
 		},
 	}
 

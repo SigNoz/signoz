@@ -936,7 +936,7 @@ func gcd(a, b int64) int64 {
 func (q *querier) prepareFillZeroArgsWithStep(functions []qbtypes.Function, req *qbtypes.QueryRangeRequest, step int64) []qbtypes.Function {
 	needsCopy := false
 	for _, fn := range functions {
-		if fn.Name == qbtypes.FunctionNameFillZero && len(fn.Args) == 0 {
+		if fn.Name == qbtypes.FunctionNameFillZero && len(fn.Args) < 3 {
 			needsCopy = true
 			break
 		}
@@ -950,14 +950,25 @@ func (q *querier) prepareFillZeroArgsWithStep(functions []qbtypes.Function, req 
 	copy(updatedFunctions, functions)
 
 	for i, fn := range updatedFunctions {
-		if fn.Name == qbtypes.FunctionNameFillZero && len(fn.Args) == 0 {
-			fn.Args = []qbtypes.FunctionArg{
-				{Value: float64(req.Start)},
-				{Value: float64(req.End)},
-				{Value: float64(step)},
-			}
-			updatedFunctions[i] = fn
+		if fn.Name != qbtypes.FunctionNameFillZero || len(fn.Args) >= 3 {
+			continue
 		}
+
+		args := make([]qbtypes.FunctionArg, 3)
+		copy(args, fn.Args)
+
+		if len(fn.Args) < 1 {
+			args[0] = qbtypes.FunctionArg{Value: float64(req.Start)}
+		}
+		if len(fn.Args) < 2 {
+			args[1] = qbtypes.FunctionArg{Value: float64(req.End)}
+		}
+		if len(fn.Args) < 3 {
+			args[2] = qbtypes.FunctionArg{Value: float64(step)}
+		}
+
+		fn.Args = args
+		updatedFunctions[i] = fn
 	}
 
 	return updatedFunctions
