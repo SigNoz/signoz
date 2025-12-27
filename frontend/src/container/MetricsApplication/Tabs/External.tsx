@@ -238,6 +238,86 @@ function External(): JSX.Element {
 		setSelectedData,
 	);
 
+	const onErrorPercentageClick = useCallback(
+		(
+			xValue: number,
+			yValue: number,
+			mouseX: number,
+			mouseY: number,
+			data: any,
+		): void => {
+			onGraphClickHandler(
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				'external_call_error_percentage',
+				data,
+			);
+		},
+		[onGraphClickHandler],
+	);
+
+	const onDurationClick = useCallback(
+		(
+			xValue: number,
+			yValue: number,
+			mouseX: number,
+			mouseY: number,
+			data: any,
+		): void => {
+			onGraphClickHandler(
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				'external_call_duration',
+				data,
+			);
+		},
+		[onGraphClickHandler],
+	);
+
+	const onRPSByAddressClick = useCallback(
+		(
+			xValue: number,
+			yValue: number,
+			mouseX: number,
+			mouseY: number,
+			data: any,
+		): void => {
+			onGraphClickHandler(
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				'external_call_rps_by_address',
+				data,
+			);
+		},
+		[onGraphClickHandler],
+	);
+
+	const onDurationByAddressClick = useCallback(
+		(
+			xValue: number,
+			yValue: number,
+			mouseX: number,
+			mouseY: number,
+			data: any,
+		): void => {
+			onGraphClickHandler(
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				'external_call_duration_by_address',
+				data,
+			);
+		},
+		[onGraphClickHandler],
+	);
+
 	return (
 		<>
 			<Row gutter={24}>
@@ -266,16 +346,7 @@ function External(): JSX.Element {
 							<Graph
 								headerMenuList={MENU_ITEMS}
 								widget={externalCallErrorWidget}
-								onClickHandler={(xValue, yValue, mouseX, mouseY, data): void => {
-									onGraphClickHandler(
-										xValue,
-										yValue,
-										mouseX,
-										mouseY,
-										'external_call_error_percentage',
-										data,
-									);
-								}}
+								onClickHandler={onErrorPercentageClick}
 								onDragSelect={onDragSelect}
 								version={ENTITY_VERSION_V4}
 							/>
@@ -309,16 +380,7 @@ function External(): JSX.Element {
 							<Graph
 								headerMenuList={MENU_ITEMS}
 								widget={externalCallDurationWidget}
-								onClickHandler={(xValue, yValue, mouseX, mouseY, data): void => {
-									onGraphClickHandler(
-										xValue,
-										yValue,
-										mouseX,
-										mouseY,
-										'external_call_duration',
-										data,
-									);
-								}}
+								onClickHandler={onDurationClick}
 								onDragSelect={onDragSelect}
 								version={ENTITY_VERSION_V4}
 							/>
@@ -353,16 +415,7 @@ function External(): JSX.Element {
 							<Graph
 								widget={externalCallRPSWidget}
 								headerMenuList={MENU_ITEMS}
-								onClickHandler={(xValue, yValue, mouseX, mouseY, data): Promise<void> =>
-									onGraphClickHandler(
-										xValue,
-										yValue,
-										mouseX,
-										mouseY,
-										'external_call_rps_by_address',
-										data,
-									)
-								}
+								onClickHandler={onRPSByAddressClick}
 								onDragSelect={onDragSelect}
 								version={ENTITY_VERSION_V4}
 							/>
@@ -396,16 +449,7 @@ function External(): JSX.Element {
 							<Graph
 								widget={externalCallDurationAddressWidget}
 								headerMenuList={MENU_ITEMS}
-								onClickHandler={(xValue, yValue, mouseX, mouseY, data): void => {
-									onGraphClickHandler(
-										xValue,
-										yValue,
-										mouseX,
-										mouseY,
-										'external_call_duration_by_address',
-										data,
-									);
-								}}
+								onClickHandler={onDurationByAddressClick}
 								onDragSelect={onDragSelect}
 								version={ENTITY_VERSION_V4}
 							/>

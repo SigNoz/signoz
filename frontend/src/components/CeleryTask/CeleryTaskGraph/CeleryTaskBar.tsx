@@ -132,34 +132,117 @@ function CeleryTaskBar({
 		[selectedFilters, celerySuccessStateData],
 	);
 
-	const onGraphClick = (
-		widgetData: Widgets,
-		xValue: number,
-		_yValue: number,
-		_mouseX: number,
-		_mouseY: number,
-		data?: {
-			[key: string]: string;
+	const onGraphClick = useCallback(
+		(
+			widgetData: Widgets,
+			xValue: number,
+			_yValue: number,
+			_mouseX: number,
+			_mouseY: number,
+			data?: {
+				[key: string]: string;
+			},
+		): void => {
+			const { start, end } = getStartAndEndTimesInMilliseconds(xValue);
+
+			// Extract entity and value from data
+			const [firstDataPoint] = Object.entries(data || {});
+			const [entity, value] = (firstDataPoint || ([] as unknown)) as [
+				string,
+				string,
+			];
+
+			if (!isEmpty(entity) || !isEmpty(value)) {
+				onClick?.({
+					entity,
+					value,
+					timeRange: [start, end],
+					widgetData,
+				});
+			}
 		},
-	): void => {
-		const { start, end } = getStartAndEndTimesInMilliseconds(xValue);
+		[onClick],
+	);
 
-		// Extract entity and value from data
-		const [firstDataPoint] = Object.entries(data || {});
-		const [entity, value] = (firstDataPoint || ([] as unknown)) as [
-			string,
-			string,
-		];
+	const onAllStateClick = useCallback(
+		(
+			xValue: number,
+			yValue: number,
+			mouseX: number,
+			mouseY: number,
+			data?: any,
+		): void => {
+			onGraphClick(
+				celerySlowestTasksTableWidgetData,
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				data,
+			);
+		},
+		[onGraphClick],
+	);
 
-		if (!isEmpty(entity) || !isEmpty(value)) {
-			onClick?.({
-				entity,
-				value,
-				timeRange: [start, end],
-				widgetData,
-			});
-		}
-	};
+	const onFailedStateClick = useCallback(
+		(
+			xValue: number,
+			yValue: number,
+			mouseX: number,
+			mouseY: number,
+			data?: any,
+		): void => {
+			onGraphClick(
+				celeryFailedTasksTableWidgetData,
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				data,
+			);
+		},
+		[onGraphClick],
+	);
+
+	const onRetryStateClick = useCallback(
+		(
+			xValue: number,
+			yValue: number,
+			mouseX: number,
+			mouseY: number,
+			data?: any,
+		): void => {
+			onGraphClick(
+				celeryRetryTasksTableWidgetData,
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				data,
+			);
+		},
+		[onGraphClick],
+	);
+
+	const onSuccessStateClick = useCallback(
+		(
+			xValue: number,
+			yValue: number,
+			mouseX: number,
+			mouseY: number,
+			data?: any,
+		): void => {
+			onGraphClick(
+				celerySuccessTasksTableWidgetData,
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				data,
+			);
+		},
+		[onGraphClick],
+	);
 
 	const { getCustomSeries } = useGetGraphCustomSeries({
 		isDarkMode,
@@ -185,16 +268,7 @@ function CeleryTaskBar({
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
-						onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
-							onGraphClick(
-								celerySlowestTasksTableWidgetData,
-								xValue,
-								yValue,
-								mouseX,
-								mouseY,
-								data,
-							)
-						}
+						onClickHandler={onAllStateClick}
 						customSeries={getCustomSeries}
 						dataAvailable={checkIfDataExists}
 					/>
@@ -205,16 +279,7 @@ function CeleryTaskBar({
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
-						onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
-							onGraphClick(
-								celeryFailedTasksTableWidgetData,
-								xValue,
-								yValue,
-								mouseX,
-								mouseY,
-								data,
-							)
-						}
+						onClickHandler={onFailedStateClick}
 						customSeries={getCustomSeries}
 					/>
 				)}
@@ -224,16 +289,7 @@ function CeleryTaskBar({
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
-						onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
-							onGraphClick(
-								celeryRetryTasksTableWidgetData,
-								xValue,
-								yValue,
-								mouseX,
-								mouseY,
-								data,
-							)
-						}
+						onClickHandler={onRetryStateClick}
 						customSeries={getCustomSeries}
 					/>
 				)}
@@ -243,16 +299,7 @@ function CeleryTaskBar({
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
-						onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
-							onGraphClick(
-								celerySuccessTasksTableWidgetData,
-								xValue,
-								yValue,
-								mouseX,
-								mouseY,
-								data,
-							)
-						}
+						onClickHandler={onSuccessStateClick}
 						customSeries={getCustomSeries}
 					/>
 				)}
