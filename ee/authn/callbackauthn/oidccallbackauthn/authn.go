@@ -2,6 +2,7 @@ package oidccallbackauthn
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/authn"
@@ -20,7 +21,7 @@ const (
 )
 
 var (
-	scopes []string = []string{"email", oidc.ScopeOpenID}
+	scopes []string = []string{"email", "profile", oidc.ScopeOpenID}
 )
 
 var _ authn.CallbackAuthN = (*AuthN)(nil)
@@ -126,7 +127,39 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		}
 	}
 
-	return authtypes.NewCallbackIdentity("", email, authDomain.StorableAuthDomain().OrgID, state), nil
+	// DEBUG: Print all assertion values to see what's being received
+	fmt.Printf("\n=== DEBUG: All assertion values ===\n")
+	for key, attr := range claims {
+		fmt.Printf("  Key: %q, Value: %v\n", key, attr)
+	}
+	fmt.Printf("=================================\n\n")
+
+	name := ""
+	if nameClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Name; nameClaim != "" {
+		if n, ok := claims[nameClaim].(string); ok {
+			name = n
+		}
+	}
+
+	var groups []string
+	if groupsClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Groups; groupsClaim != "" {
+		if g, ok := claims[groupsClaim].([]interface{}); ok {
+			for _, group := range g {
+				if gs, ok := group.(string); ok {
+					groups = append(groups, gs)
+				}
+			}
+		}
+	}
+
+	role := ""
+	if roleClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Role; roleClaim != "" {
+		if r, ok := claims[roleClaim].(string); ok {
+			role = r
+		}
+	}
+
+	return authtypes.NewCallbackIdentity(name, email, authDomain.StorableAuthDomain().OrgID, state, groups, role), nil
 }
 
 func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDomain) *authtypes.AuthNProviderInfo {
