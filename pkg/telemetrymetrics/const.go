@@ -7,3 +7,5 @@ var IntrinsicFields = []string{
 	"type",
 	"is_monotonic",
 }
+
+const MetricScopeFieldIsTopLevelOperation = "isTopLevelOperation"
