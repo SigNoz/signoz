@@ -78,7 +78,7 @@ func newProvider(
 		telemetryMetadataStore,
 	)
 
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, "", nil)
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, nil)
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		settings,
 		telemetryMetadataStore,
@@ -102,14 +102,13 @@ func newProvider(
 
 	// Create log statement builder
 	logFieldMapper := telemetrylogs.NewFieldMapper()
-	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, telemetryMetadataStore)
 	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
 		settings,
 		resourceFilterFieldMapper,
 		resourceFilterConditionBuilder,
 		telemetryMetadataStore,
 		telemetrylogs.DefaultFullTextColumn,
-		telemetrylogs.BodyJSONStringSearchPrefix,
 		telemetrylogs.GetBodyJSONKey,
 	)
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
@@ -117,7 +116,6 @@ func newProvider(
 		telemetrylogs.DefaultFullTextColumn,
 		logFieldMapper,
 		logConditionBuilder,
-		telemetrylogs.BodyJSONStringSearchPrefix,
 		telemetrylogs.GetBodyJSONKey,
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
@@ -128,7 +126,6 @@ func newProvider(
 		logResourceFilterStmtBuilder,
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
-		telemetrylogs.BodyJSONStringSearchPrefix,
 		telemetrylogs.GetBodyJSONKey,
 	)
 

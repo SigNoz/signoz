@@ -23,7 +23,6 @@ type logQueryStatementBuilder struct {
 	aggExprRewriter           qbtypes.AggExprRewriter
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
-	jsonBodyPrefix string
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 }
 
@@ -37,7 +36,6 @@ func NewLogQueryStatementBuilder(
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
-	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
@@ -50,7 +48,6 @@ func NewLogQueryStatementBuilder(
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
 		fullTextColumn:            fullTextColumn,
-		jsonBodyPrefix:            jsonBodyPrefix,
 		jsonKeyToKey:              jsonKeyToKey,
 	}
 }
@@ -171,6 +168,25 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 			overallMatch = overallMatch || findMatch(IntrinsicFields)
 		}
 
+		if strings.Contains(k.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
+			k.Name = strings.TrimPrefix(k.Name, telemetrytypes.BodyJSONStringSearchPrefix)
+			fieldKeys, found := keys[k.Name]
+			if found && len(fieldKeys) > 0 {
+				k.FieldContext = fieldKeys[0].FieldContext
+				k.FieldDataType = fieldKeys[0].FieldDataType
+				k.Materialized = fieldKeys[0].Materialized
+				k.JSONDataType = fieldKeys[0].JSONDataType
+				k.Indexes = fieldKeys[0].Indexes
+
+				overallMatch = true // because we found a match
+			} else {
+				b.logger.InfoContext(ctx, "overriding the field context and data type", "key", k.Name)
+				k.FieldContext = telemetrytypes.FieldContextBody
+				k.FieldDataType = telemetrytypes.FieldDataTypeString
+				k.JSONDataType = &telemetrytypes.String
+			}
+		}
+
 		if !overallMatch {
 			// check if all the key for the given field have been materialized, if so
 			// set the key to materialized
@@ -221,6 +237,9 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
+	// Collect array join info for body JSON fields
+	var arrayJoinClauses []string
+
 	// Select timestamp and id by default
 	sb.Select(LogsV2TimestampColumn)
 	sb.SelectMore(LogsV2IDColumn)
@@ -234,6 +253,10 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(LogsV2ScopeNameColumn)
 		sb.SelectMore(LogsV2ScopeVersionColumn)
 		sb.SelectMore(LogsV2BodyColumn)
+		if querybuilder.BodyJSONQueryEnabled {
+			sb.SelectMore(LogsV2BodyJSONColumn)
+			sb.SelectMore(LogsV2BodyPromotedColumn)
+		}
 		sb.SelectMore(LogsV2AttributesStringColumn)
 		sb.SelectMore(LogsV2AttributesNumberColumn)
 		sb.SelectMore(LogsV2AttributesBoolColumn)
@@ -246,6 +269,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			if query.SelectFields[index].Name == LogsV2TimestampColumn || query.SelectFields[index].Name == LogsV2IDColumn {
 				continue
 			}
+
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
 			colExpr, err := b.fm.ColumnExpressionFor(ctx, &query.SelectFields[index], keys)
 			if err != nil {
@@ -255,8 +279,12 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		}
 	}
 
-	// From table
-	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
+	// From table (inject ARRAY JOINs if collected)
+	fromBase := fmt.Sprintf("%s.%s", DBName, LogsV2TableName)
+	if len(arrayJoinClauses) > 0 {
+		fromBase = fromBase + " " + strings.Join(arrayJoinClauses, " ")
+	}
+	sb.From(fromBase)
 
 	// Add filter conditions
 	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
@@ -330,13 +358,17 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 
 	var allGroupByArgs []any
 
+	// Collect array join info for body JSON fields
+	var arrayJoinClauses []string
+
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
 		if err != nil {
 			return nil, err
 		}
+
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
@@ -358,7 +390,13 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
 	}
 
-	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
+	// Add FROM clause
+	fromBase := fmt.Sprintf("%s.%s", DBName, LogsV2TableName)
+	if len(arrayJoinClauses) > 0 {
+		fromBase = fromBase + " " + strings.Join(arrayJoinClauses, " ")
+	}
+	sb.From(fromBase)
+
 	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 
 	if err != nil {
@@ -404,7 +442,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
-
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
@@ -431,7 +468,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
-
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
@@ -478,11 +514,15 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	var allGroupByArgs []any
 
+	// Collect array join info for body JSON fields
+	var arrayJoinClauses []string
+
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonBodyPrefix, b.jsonKeyToKey)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
 		if err != nil {
 			return nil, err
 		}
+
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
@@ -508,8 +548,12 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		}
 	}
 
-	// From table
-	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
+	// From table (inject ARRAY JOINs if collected)
+	fromBase := fmt.Sprintf("%s.%s", DBName, LogsV2TableName)
+	if len(arrayJoinClauses) > 0 {
+		fromBase = fromBase + " " + strings.Join(arrayJoinClauses, " ")
+	}
+	sb.From(fromBase)
 
 	// Add filter conditions
 	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
@@ -654,7 +698,6 @@ func (b *logQueryStatementBuilder) buildResourceFilterCTE(
 	start, end uint64,
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
-
 	return b.resourceFilterStmtBuilder.Build(
 		ctx,
 		start,

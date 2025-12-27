@@ -30,7 +30,7 @@ func (pb *JSONAccessPlanBuilder) buildPlan(ctx context.Context, index int, paren
 	}
 
 	part := pb.parts[index]
-	pathSoFar := strings.Join(pb.parts[:index+1], ArraySep)
+	pathSoFar := strings.Join(pb.parts[:index+1], telemetrytypes.ArraySep)
 	isTerminal := index == len(pb.parts)-1
 
 	// Calculate progression parameters based on parent's values
@@ -110,8 +110,8 @@ func PlanJSON(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, op qbt
 
 	// TODO: PlanJSON requires the Start and End of the Query to select correct column between promoted and body_json using
 	// creation time in distributed_promoted_paths
-	path := strings.ReplaceAll(key.Name, ArrayAnyIndex, ArraySep)
-	parts := strings.Split(path, ArraySep)
+	path := strings.ReplaceAll(key.Name, telemetrytypes.ArrayAnyIndex, telemetrytypes.ArraySep)
+	parts := strings.Split(path, telemetrytypes.ArraySep)
 
 	pb := &JSONAccessPlanBuilder{
 		key:        key,
