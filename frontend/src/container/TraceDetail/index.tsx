@@ -38,7 +38,6 @@ import SubTreeMessage from './SubTree';
 import {
 	formUrlParams,
 	getSortedData,
-	getTreeLevelsCount,
 	IIntervalUnit,
 	INTERVAL_UNITS,
 	SPAN_DETAILS_LEFT_COL_WIDTH,
@@ -180,10 +179,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 									<TraceFlameGraph
 										key={tree.id}
 										treeData={tree}
-										traceMetaData={{
-											...traceMetaData,
-											levels: getTreeLevelsCount(tree),
-										}}
+										traceMetaData={traceMetaData}
 										hoveredSpanId={activeHoverId}
 										selectedSpanId={activeSelectedId}
 										onSpanHover={setActiveHoverId}
