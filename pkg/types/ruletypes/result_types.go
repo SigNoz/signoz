@@ -19,7 +19,11 @@ type Sample struct {
 
 	IsMissing bool
 
-	Target float64
+	// IsRecovering is true if the sample is part of a recovering alert.
+	IsRecovering bool
+
+	Target         float64
+	RecoveryTarget *float64
 
 	TargetUnit string
 }

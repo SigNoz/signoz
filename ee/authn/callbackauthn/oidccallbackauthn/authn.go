@@ -129,6 +129,12 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	return authtypes.NewCallbackIdentity("", email, authDomain.StorableAuthDomain().OrgID, state), nil
 }
 
+func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDomain) *authtypes.AuthNProviderInfo {
+	return &authtypes.AuthNProviderInfo{
+		RelayStatePath: nil,
+	}
+}
+
 func (a *AuthN) oidcProviderAndoauth2Config(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (*oidc.Provider, *oauth2.Config, error) {
 	if authDomain.AuthDomainConfig().OIDC.IssuerAlias != "" {
 		ctx = oidc.InsecureIssuerURLContext(ctx, authDomain.AuthDomainConfig().OIDC.IssuerAlias)

@@ -8,6 +8,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/analytics/noopanalytics"
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
+	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/cache/rediscache"
@@ -15,8 +18,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
 	"github.com/SigNoz/signoz/pkg/emailing/smtpemailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/global"
+	"github.com/SigNoz/signoz/pkg/global/signozglobal"
+	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
+	"github.com/SigNoz/signoz/pkg/modules/promote/implpromote"
+	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -155,6 +166,9 @@ func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFacto
 			telemetrystore.TelemetryStoreHookFactoryFunc(func(s string) factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
 				return telemetrystorehook.NewLoggingFactory()
 			}),
+			telemetrystore.TelemetryStoreHookFactoryFunc(func(s string) factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
+				return telemetrystorehook.NewInstrumentationFactory(s)
+			}),
 		),
 	)
 }
@@ -210,10 +224,32 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 	)
 }
 
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, global global.Global, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+	return factory.MustNewNamedMap(
+		signozapiserver.NewFactory(
+			orgGetter,
+			authz,
+			implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
+			impluser.NewHandler(modules.User, modules.UserGetter),
+			implsession.NewHandler(modules.Session),
+			implauthdomain.NewHandler(modules.AuthDomain),
+			implpreference.NewHandler(modules.Preference),
+			signozglobal.NewHandler(global),
+			implpromote.NewHandler(modules.Promote),
+		),
+	)
+}
+
 func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.NamedMap[factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config]] {
 	tokenStore := sqltokenizerstore.NewStore(sqlstore)
 	return factory.MustNewNamedMap(
 		opaquetokenizer.NewFactory(cache, tokenStore, orgGetter),
 		jwttokenizer.NewFactory(cache, tokenStore),
+	)
+}
+
+func NewGlobalProviderFactories() factory.NamedMap[factory.ProviderFactory[global.Global, global.Config]] {
+	return factory.MustNewNamedMap(
+		signozglobal.NewFactory(),
 	)
 }

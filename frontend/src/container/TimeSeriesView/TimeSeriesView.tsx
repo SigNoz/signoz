@@ -81,6 +81,7 @@ function TimeSeriesView({
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>([]);
+
 	const legendScrollPositionRef = useRef<{
 		scrollTop: number;
 		scrollLeft: number;

@@ -621,10 +621,10 @@ func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 	}
 
 	// Test that threshold can evaluate properly
-	vector, err := threshold.ShouldAlert(v3.Series{
+	vector, err := threshold.Eval(v3.Series{
 		Points: []v3.Point{{Value: 0.15, Timestamp: 1000}}, // 150ms in seconds
 		Labels: map[string]string{"test": "label"},
-	}, "")
+	}, "", EvalData{})
 	if err != nil {
 		t.Fatalf("Unexpected error in shouldAlert: %v", err)
 	}
@@ -698,20 +698,20 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 	}
 
 	// Test with a value that should trigger both WARNING and CRITICAL thresholds
-	vector, err := threshold.ShouldAlert(v3.Series{
+	vector, err := threshold.Eval(v3.Series{
 		Points: []v3.Point{{Value: 95.0, Timestamp: 1000}}, // 95% CPU usage
 		Labels: map[string]string{"service": "test"},
-	}, "")
+	}, "", EvalData{})
 	if err != nil {
 		t.Fatalf("Unexpected error in shouldAlert: %v", err)
 	}
 
 	assert.Equal(t, 2, len(vector))
 
-	vector, err = threshold.ShouldAlert(v3.Series{
+	vector, err = threshold.Eval(v3.Series{
 		Points: []v3.Point{{Value: 75.0, Timestamp: 1000}}, // 75% CPU usage
 		Labels: map[string]string{"service": "test"},
-	}, "")
+	}, "", EvalData{})
 	if err != nil {
 		t.Fatalf("Unexpected error in shouldAlert: %v", err)
 	}
@@ -719,7 +719,7 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 	assert.Equal(t, 1, len(vector))
 }
 
-func TestAnomalyNegationShouldAlert(t *testing.T) {
+func TestAnomalyNegationEval(t *testing.T) {
 	tests := []struct {
 		name          string
 		ruleJSON      []byte
@@ -1046,9 +1046,9 @@ func TestAnomalyNegationShouldAlert(t *testing.T) {
 				t.Fatalf("unexpected error from GetRuleThreshold: %v", err)
 			}
 
-			resultVector, err := ruleThreshold.ShouldAlert(tt.series, "")
+			resultVector, err := ruleThreshold.Eval(tt.series, "", EvalData{})
 			if err != nil {
-				t.Fatalf("unexpected error from ShouldAlert: %v", err)
+				t.Fatalf("unexpected error from Eval: %v", err)
 			}
 
 			shouldAlert := len(resultVector) > 0

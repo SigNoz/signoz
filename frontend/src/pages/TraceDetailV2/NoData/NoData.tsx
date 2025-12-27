@@ -15,7 +15,7 @@ function NoData(): JSX.Element {
 				<Typography.Text className="not-found-text-1">
 					Uh-oh! We cannot show the selected trace.
 					<span className="not-found-text-2">
-						This can happen in either of the two scenraios -
+						This can happen in either of the two scenarios -
 					</span>
 				</Typography.Text>
 			</section>

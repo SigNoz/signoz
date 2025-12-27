@@ -19,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -60,6 +61,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
+		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
 	})
 
 	if err != nil {
@@ -91,10 +93,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	// routes available only in ee version
 	router.HandleFunc("/api/v1/features", am.ViewAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
-
-	// paid plans specific routes
-	router.HandleFunc("/api/v1/complete/saml", am.OpenAccess(ah.Signoz.Handlers.Session.CreateSessionBySAMLCallback)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/complete/oidc", am.OpenAccess(ah.Signoz.Handlers.Session.CreateSessionByOIDCCallback)).Methods(http.MethodGet)
 
 	// base overrides
 	router.HandleFunc("/api/v1/version", am.OpenAccess(ah.getVersion)).Methods(http.MethodGet)

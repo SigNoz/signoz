@@ -22,4 +22,7 @@ type CallbackAuthN interface {
 
 	// Handle the callback from the provider.
 	HandleCallback(context.Context, url.Values) (*authtypes.CallbackIdentity, error)
+
+	// Get provider info such as `relay state`
+	ProviderInfo(context.Context, *authtypes.AuthDomain) *authtypes.AuthNProviderInfo
 }

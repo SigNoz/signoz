@@ -220,7 +220,7 @@ func (p *PostablePipeline) IsValid() error {
 	// check the filter
 	_, err := queryBuilderToExpr.Parse(p.Filter)
 	if err != nil {
-		return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "filter for pipeline %v is not correct", p.Name)
+		return err
 	}
 
 	idUnique := map[string]struct{}{}
@@ -403,7 +403,7 @@ func isValidOperator(op PipelineOperator) error {
 		!isValidOtelValue(op.To) ||
 		!isValidOtelValue(op.Field) {
 		valueErrStr := "value should have prefix of body, attributes, resource"
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s for operator Id %s", valueErrStr, op.ID)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s for operator: %s in position: %d with id: %s", valueErrStr, op.Type, op.OrderId, op.ID)
 	}
 	return nil
 }

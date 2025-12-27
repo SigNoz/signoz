@@ -27,7 +27,6 @@ func TestFilterExprLogs(t *testing.T) {
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
-		JsonBodyPrefix:   BodyJSONStringSearchPrefix,
 		JsonKeyToKey:     GetBodyJSONKey,
 	}
 
@@ -2387,7 +2386,7 @@ func TestFilterExprLogs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-            clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
 
 			if tc.shouldPass {
 				if err != nil {
@@ -2448,7 +2447,6 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
-		JsonBodyPrefix:   BodyJSONStringSearchPrefix,
 		JsonKeyToKey:     GetBodyJSONKey,
 	}
 
@@ -2506,7 +2504,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-            clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
 
 			if tc.shouldPass {
 				if err != nil {

@@ -244,6 +244,10 @@
 			}
 		}
 	}
+	// Add border-bottom to table cells when pagination is not present
+	.ant-spin-container:not(:has(.ant-pagination)) .ant-table-cell {
+		border-bottom: 1px solid var(--bg-slate-500) !important;
+	}
 
 	.endpoints-table-container {
 		display: flex;
@@ -422,30 +426,28 @@
 		gap: 8px;
 		.endpoint-meta-data-pill {
 			display: flex;
-			align-items: flex-start;
 			border-radius: 4px;
 			border: 1px solid var(--bg-slate-300);
-			width: fit-content;
+			overflow: hidden;
+			box-sizing: content-box;
 			.endpoint-meta-data-label {
-				display: flex;
 				padding: 6px 8px;
-				align-items: center;
-				gap: 4px;
 				border-right: 1px solid var(--bg-slate-300);
 				color: var(--text-vanilla-100);
+				font-size: 14px;
+				line-height: 18px; /* 128.571% */
+				letter-spacing: -0.07px;
+				padding: 6px 8px;
 				background: var(--bg-slate-500);
-				height: calc(100% - 12px);
 			}
 
 			.endpoint-meta-data-value {
-				display: flex;
 				padding: 6px 8px;
-				justify-content: center;
-				align-items: center;
-				gap: 10px;
 				color: var(--text-vanilla-400);
 				background: var(--bg-slate-400);
-				height: calc(100% - 12px);
+				font-size: 14px;
+				line-height: 18px;
+				letter-spacing: -0.07px;
 			}
 		}
 	}
@@ -453,9 +455,23 @@
 	.endpoint-details-filters-container {
 		display: flex;
 		flex-direction: row;
+		align-items: center;
+		border: 1px solid var(--bg-slate-500);
+		height: 36px;
+		box-sizing: content-box;
+		.ant-select-selector {
+			border: none !important;
+		}
 
 		.endpoint-details-filters-container-dropdown {
 			width: 120px;
+			border-right: 1px solid var(--bg-slate-500);
+			height: 36px;
+			display: flex;
+			align-items: center;
+			.ant-select-single {
+				height: 32px;
+			}
 		}
 
 		.endpoint-details-filters-container-search {
@@ -996,7 +1012,6 @@
 
 .lightMode {
 	.ant-drawer-header {
-		border-bottom: 1px solid var(--bg-vanilla-400);
 		background: var(--bg-vanilla-100);
 	}
 
@@ -1007,6 +1022,25 @@
 	}
 
 	.domain-detail-drawer {
+		.endpoint-details-card,
+		.status-code-table-container,
+		.endpoint-details-filters-container,
+		.endpoint-details-filters-container-dropdown,
+		.ant-radio-button-wrapper,
+		.views-tabs-container,
+		.ant-btn-default.tab,
+		.tab::before,
+		.endpoint-meta-data-pill,
+		.endpoint-meta-data-label,
+		.endpoints-table-container,
+		.group-by-label,
+		.ant-select-selector,
+		.ant-drawer-header {
+			border-color: var(--bg-vanilla-300) !important;
+		}
+		.views-tabs .tab::before {
+			background: var(--bg-vanilla-300);
+		}
 		.title {
 			color: var(--text-ink-300);
 		}
@@ -1031,7 +1065,6 @@
 
 			.selected_view {
 				background: var(--bg-vanilla-300);
-				border: 1px solid var(--bg-slate-300);
 				color: var(--text-ink-400);
 			}
 
@@ -1160,7 +1193,11 @@
 		}
 	}
 
+	.top-services-content {
+		border-color: var(--bg-vanilla-300);
+	}
 	.dependent-services-container {
+		border: none;
 		padding: 10px 12px;
 		.top-services-item {
 			display: flex;
@@ -1187,9 +1224,29 @@
 				}
 
 				.top-services-item-progress-bar {
-					background-color: var(--bg-vanilla-300);
-					border: 1px solid var(--bg-slate-300);
+					background-color: var(--bg-vanilla-200);
+					border: 1px solid var(--bg-vanilla-300);
 				}
+			}
+		}
+		.ant-table {
+			.ant-table-thead > tr > th {
+				color: var(--text-ink-300);
+			}
+
+			.ant-table-cell {
+				&,
+				&:has(.top-services-item-latency) {
+					background: var(--bg-vanilla-100);
+				}
+				color: var(--text-ink-300);
+			}
+
+			.ant-table-tbody > tr:hover > td {
+				background: var(--bg-vanilla-200);
+			}
+			.table-row-dark {
+				background: var(--bg-vanilla-300);
 			}
 		}
 
@@ -1224,5 +1281,9 @@
 				}
 			}
 		}
+	}
+	// Add border-bottom to table cells when pagination is not present
+	.ant-spin-container:not(:has(.ant-pagination)) .ant-table-cell {
+		border-bottom: 1px solid var(--bg-vanilla-300) !important;
 	}
 }

@@ -95,7 +95,7 @@ type Reader interface {
 	GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error)
 
 	// Query Progress tracking helpers.
-	ReportQueryStartForProgressTracking(queryId string) (reportQueryFinished func(), err *model.ApiError)
+	ReportQueryStartForProgressTracking(queryId string) (reportQueryFinished func(), apiErr *model.ApiError)
 	SubscribeToQueryProgress(queryId string) (<-chan model.QueryProgress, func(), *model.ApiError)
 
 	GetCountOfThings(ctx context.Context, query string) (uint64, error)
@@ -127,7 +127,6 @@ type Reader interface {
 	GetInspectMetricsFingerprints(ctx context.Context, attributes []string, req *metrics_explorer.InspectMetricsRequest) ([]string, *model.ApiError)
 	GetInspectMetrics(ctx context.Context, req *metrics_explorer.InspectMetricsRequest, fingerprints []string) (*metrics_explorer.InspectMetricsResponse, *model.ApiError)
 
-	DeleteMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricName string) *model.ApiError
 	UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *model.UpdateMetricsMetadata) *model.ApiError
 	GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]*model.UpdateMetricsMetadata, *model.ApiError)
 
