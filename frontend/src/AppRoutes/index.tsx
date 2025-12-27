@@ -4,8 +4,9 @@ import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import AppLoading from 'components/AppLoading/AppLoading';
-import KBarCommandPalette from 'components/KBarCommandPalette/KBarCommandPalette';
+import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import NotFound from 'components/NotFound';
+import { ShiftHoldOverlayController } from 'components/ShiftOverlay/ShiftHoldOverlayController';
 import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -24,9 +25,9 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
+import { CmdKProvider } from 'providers/cmdKProvider';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
-import { KBarCommandPaletteProvider } from 'providers/KBarCommandPaletteProvider';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
@@ -364,10 +365,13 @@ function App(): JSX.Element {
 			<ConfigProvider theme={themeConfig}>
 				<Router history={history}>
 					<CompatRouter>
-						<KBarCommandPaletteProvider>
-							<KBarCommandPalette />
+						<CmdKProvider>
 							<NotificationProvider>
 								<ErrorModalProvider>
+									{isLoggedInState && <CmdKPalette userRole={user.role} />}
+									{isLoggedInState && (
+										<ShiftHoldOverlayController userRole={user.role} />
+									)}
 									<PrivateRoute>
 										<ResourceProvider>
 											<QueryBuilderProvider>
@@ -398,7 +402,7 @@ function App(): JSX.Element {
 									</PrivateRoute>
 								</ErrorModalProvider>
 							</NotificationProvider>
-						</KBarCommandPaletteProvider>
+						</CmdKProvider>
 					</CompatRouter>
 				</Router>
 			</ConfigProvider>

@@ -5,19 +5,6 @@
 	gap: 12px;
 }
 
-.selectOptionContainer {
-	display: flex;
-	gap: 8px;
-	justify-content: space-between;
-	align-items: center;
-	overflow-x: auto;
-
-	&::-webkit-scrollbar {
-		width: 0.2rem;
-		height: 0.2rem;
-	}
-}
-
 .logs-popup {
 	&.hide-scroll {
 		.rc-virtual-list-holder {
