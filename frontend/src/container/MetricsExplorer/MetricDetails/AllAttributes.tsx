@@ -1,8 +1,17 @@
-import { Button, Collapse, Input, Menu, Popover, Typography } from 'antd';
+import {
+	Button,
+	Collapse,
+	Input,
+	Menu,
+	Popover,
+	Skeleton,
+	Typography,
+} from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
 import { ResizeTable } from 'components/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
+import { useGetMetricAttributes } from 'hooks/metricsExplorer/v2/useGetMetricAttributes';
 import { useNotifications } from 'hooks/useNotifications';
 import { Compass, Copy, Search } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -13,7 +22,9 @@ import ROUTES from '../../../constants/routes';
 import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import { AllAttributesProps, AllAttributesValueProps } from './types';
-import { getMetricDetailsQuery } from './utils';
+import { getMetricDetailsQuery, transformMetricAttributes } from './utils';
+
+const ALL_ATTRIBUTES_KEY = 'all-attributes';
 
 export function AllAttributesValue({
 	filterKey,
@@ -110,13 +121,20 @@ export function AllAttributesValue({
 
 function AllAttributes({
 	metricName,
-	attributes,
 	metricType,
 }: AllAttributesProps): JSX.Element {
 	const [searchString, setSearchString] = useState('');
-	const [activeKey, setActiveKey] = useState<string | string[]>(
-		'all-attributes',
-	);
+	const [activeKey, setActiveKey] = useState<string[]>([ALL_ATTRIBUTES_KEY]);
+
+	const {
+		data: attributesData,
+		isLoading: isLoadingAttributes,
+		isError: isErrorAttributes,
+	} = useGetMetricAttributes({
+		metricName,
+	});
+
+	const { attributes } = transformMetricAttributes(attributesData);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
@@ -178,7 +196,7 @@ function AllAttributes({
 			attributes.filter(
 				(attribute) =>
 					attribute.key.toLowerCase().includes(searchString.toLowerCase()) ||
-					attribute.value.some((value) =>
+					attribute.values.some((value) =>
 						value.toLowerCase().includes(searchString.toLowerCase()),
 					),
 			),
@@ -195,7 +213,7 @@ function AllAttributes({
 						},
 						value: {
 							key: attribute.key,
-							value: attribute.value,
+							value: attribute.values,
 						},
 				  }))
 				: [],
@@ -252,8 +270,38 @@ function AllAttributes({
 		],
 	);
 
-	const items = useMemo(
-		() => [
+	const emptyText = useMemo(
+		() =>
+			isErrorAttributes ? 'Error fetching attributes' : 'No attributes found',
+		[isErrorAttributes],
+	);
+
+	const items = useMemo(() => {
+		let children;
+		if (isLoadingAttributes) {
+			children = (
+				<div className="all-attributes-skeleton-container">
+					<Skeleton active title={false} paragraph={{ rows: 8 }} />
+				</div>
+			);
+		} else {
+			children = (
+				<ResizeTable
+					columns={columns}
+					loading={isLoadingAttributes}
+					tableLayout="fixed"
+					dataSource={tableData}
+					pagination={false}
+					showHeader={false}
+					className="metrics-accordion-content all-attributes-content"
+					scroll={{ y: 600 }}
+					locale={{
+						emptyText,
+					}}
+				/>
+			);
+		}
+		return [
 			{
 				label: (
 					<div className="metrics-accordion-header">
@@ -270,32 +318,22 @@ function AllAttributes({
 							onClick={(e): void => {
 								e.stopPropagation();
 							}}
+							disabled={isLoadingAttributes}
 						/>
 					</div>
 				),
 				key: 'all-attributes',
-				children: (
-					<ResizeTable
-						columns={columns}
-						tableLayout="fixed"
-						dataSource={tableData}
-						pagination={false}
-						showHeader={false}
-						className="metrics-accordion-content all-attributes-content"
-						scroll={{ y: 600 }}
-					/>
-				),
+				children,
 			},
-		],
-		[columns, tableData, searchString],
-	);
+		];
+	}, [searchString, columns, isLoadingAttributes, tableData, emptyText]);
 
 	return (
 		<Collapse
 			bordered
-			className="metrics-accordion metrics-metadata-accordion"
+			className="metrics-accordion metrics-all-attributes-accordion"
 			activeKey={activeKey}
-			onChange={(keys): void => setActiveKey(keys)}
+			onChange={(keys): void => setActiveKey(keys as string[])}
 			items={items}
 		/>
 	);
