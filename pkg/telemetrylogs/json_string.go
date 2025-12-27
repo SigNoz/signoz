@@ -11,7 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func ParseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetrytypes.FieldDataType, any) {
+func parseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetrytypes.FieldDataType, any) {
 
 	valueType := telemetrytypes.FieldDataTypeString
 
@@ -55,7 +55,7 @@ func inferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 	case float32, float64:
 		valueType = telemetrytypes.FieldDataTypeFloat64
 	case string:
-		valueType, value = ParseStrValue(v, operator)
+		valueType, value = parseStrValue(v, operator)
 	case bool:
 		valueType = telemetrytypes.FieldDataTypeBool
 	}

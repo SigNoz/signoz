@@ -489,7 +489,8 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 				GroupBy: []qbtypes.GroupByKey{
 					{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "body.status",
+							Name:         "status",
+							FieldContext: telemetrytypes.FieldContextBody,
 						},
 					},
 				},

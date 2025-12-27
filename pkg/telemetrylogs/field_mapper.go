@@ -123,11 +123,6 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		return "", err
 	}
 
-	if !querybuilder.BodyJSONQueryEnabled && key.FieldContext == telemetrytypes.FieldContextBody {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
-	}
-
-	// schema.JSONColumnType{} now can not be used in switch cases, so we need to check if the column is a JSON column
 	switch column.Type.GetType() {
 	case schema.ColumnTypeEnumJSON:
 		// json is only supported for resource context as of now
@@ -145,7 +140,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			}
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		case telemetrytypes.FieldContextBody:
-			if strings.Contains(key.Name, ArraySep) || strings.Contains(key.Name, ArrayAnyIndex) {
+			if strings.Contains(key.Name, telemetrytypes.ArraySep) || strings.Contains(key.Name, telemetrytypes.ArrayAnyIndex) {
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", key.Name)
 			}
 			fieldExpr := BodyJSONColumnPrefix + fmt.Sprintf("`%s`", key.Name)

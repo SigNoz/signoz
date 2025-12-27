@@ -132,7 +132,7 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 	orClauses := []string{}
 	for _, fieldKeySelector := range fieldKeySelectors {
 		// replace [*] with []
-		fieldKeySelector.Name = strings.ReplaceAll(fieldKeySelector.Name, telemetrylogs.ArrayAnyIndex, telemetrylogs.ArraySep)
+		fieldKeySelector.Name = strings.ReplaceAll(fieldKeySelector.Name, telemetrytypes.ArrayAnyIndex, telemetrytypes.ArraySep)
 		// Extract search text for body JSON keys
 		keyName := CleanPathPrefixes(fieldKeySelector.Name)
 		if fieldKeySelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
@@ -163,7 +163,7 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...string) (map[string][]telemetrytypes.JSONDataTypeIndex, error) {
 	filteredPaths := []string{}
 	for _, path := range paths {
-		if strings.Contains(path, telemetrylogs.ArraySep) || strings.Contains(path, telemetrylogs.ArrayAnyIndex) {
+		if strings.Contains(path, telemetrytypes.ArraySep) || strings.Contains(path, telemetrytypes.ArrayAnyIndex) {
 			continue
 		}
 		filteredPaths = append(filteredPaths, path)
@@ -291,7 +291,7 @@ func (t *telemetryMetaStore) ListPromotedPaths(ctx context.Context, paths ...str
 func (t *telemetryMetaStore) ListJSONValues(ctx context.Context, path string, limit int) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	path = CleanPathPrefixes(path)
 
-	if strings.Contains(path, telemetrylogs.ArraySep) || strings.Contains(path, telemetrylogs.ArrayAnyIndex) {
+	if strings.Contains(path, telemetrytypes.ArraySep) || strings.Contains(path, telemetrytypes.ArrayAnyIndex) {
 		return nil, false, errors.NewInvalidInputf(errors.CodeInvalidInput, "array paths are not supported")
 	}
 
@@ -451,7 +451,7 @@ func derefValue(v any) any {
 
 // IsPathPromoted checks if a specific path is promoted
 func (t *telemetryMetaStore) IsPathPromoted(ctx context.Context, path string) (bool, error) {
-	split := strings.Split(path, telemetrylogs.ArraySep)
+	split := strings.Split(path, telemetrytypes.ArraySep)
 	query := fmt.Sprintf("SELECT 1 FROM %s.%s WHERE path = ? LIMIT 1", DBName, PromotedPathsTableName)
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, split[0])
 	if err != nil {

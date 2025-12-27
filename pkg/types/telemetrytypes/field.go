@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -17,9 +18,13 @@ var (
 	FieldSelectorMatchTypeFuzzy = FieldSelectorMatchType{valuer.NewString("fuzzy")}
 )
 
-// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries
-// e.g., "body.status" where "body." is the prefix
-const BodyJSONStringSearchPrefix = `body.`
+const (
+	// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries
+	// e.g., "body.status" where "body." is the prefix
+	BodyJSONStringSearchPrefix = "body."
+	ArraySep                   = jsontypeexporter.ArraySeparator
+	ArrayAnyIndex              = "[*]."
+)
 
 type TelemetryFieldKey struct {
 	Name          string        `json:"name"`

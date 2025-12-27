@@ -638,7 +638,7 @@ func buildTestTelemetryMetadataStore(promotedPaths ...string) *telemetrytypestes
 	for path, jsonTypes := range types {
 		promoted := false
 
-		split := strings.Split(path, ArraySep)
+		split := strings.Split(path, telemetrytypes.ArraySep)
 		if path == "message" {
 			promoted = true
 		} else if slices.Contains(promotedPaths, split[0]) {
@@ -694,7 +694,7 @@ func buildJSONTestStatementBuilder(_ *testing.T, promotedPaths ...string) *logQu
 func testAddIndexedPaths(t *testing.T, statementBuilder *logQueryStatementBuilder, telemetryFieldKeys ...*telemetrytypes.TelemetryFieldKey) {
 	mockMetadataStore := statementBuilder.metadataStore.(*telemetrytypestest.MockMetadataStore)
 	for _, key := range telemetryFieldKeys {
-		if strings.Contains(key.Name, ArraySep) || strings.Contains(key.Name, ArrayAnyIndex) {
+		if strings.Contains(key.Name, telemetrytypes.ArraySep) || strings.Contains(key.Name, telemetrytypes.ArrayAnyIndex) {
 			t.Fatalf("array paths are not supported: %s", key.Name)
 		}
 
