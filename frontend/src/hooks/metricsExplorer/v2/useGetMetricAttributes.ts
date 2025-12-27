@@ -1,7 +1,7 @@
 import { getMetricAttributes } from 'api/metricsExplorer/v2/getMetricAttributes';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
-import { ErrorResponseV2, SuccessResponseV2 } from 'types/api';
+import { SuccessResponseV2 } from 'types/api';
 import {
 	GetMetricAttributesRequest,
 	GetMetricAttributesResponse,
@@ -10,14 +10,11 @@ import {
 type UseGetMetricAttributes = (
 	requestData: GetMetricAttributesRequest,
 	options?: UseQueryOptions<
-		SuccessResponseV2<GetMetricAttributesResponse> | ErrorResponseV2,
+		SuccessResponseV2<GetMetricAttributesResponse>,
 		Error
 	>,
 	headers?: Record<string, string>,
-) => UseQueryResult<
-	SuccessResponseV2<GetMetricAttributesResponse> | ErrorResponseV2,
-	Error
->;
+) => UseQueryResult<SuccessResponseV2<GetMetricAttributesResponse>, Error>;
 
 export const useGetMetricAttributes: UseGetMetricAttributes = (
 	requestData,
@@ -31,10 +28,7 @@ export const useGetMetricAttributes: UseGetMetricAttributes = (
 		requestData.end,
 	];
 
-	return useQuery<
-		SuccessResponseV2<GetMetricAttributesResponse> | ErrorResponseV2,
-		Error
-	>({
+	return useQuery<SuccessResponseV2<GetMetricAttributesResponse>, Error>({
 		queryFn: ({ signal }) => getMetricAttributes(requestData, signal, headers),
 		...options,
 		queryKey,

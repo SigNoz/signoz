@@ -2,11 +2,29 @@ import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { SpaceAggregation, TimeAggregation } from 'api/v5/v5';
 import { initialQueriesMap } from 'constants/queryBuilder';
+import { SuccessResponseV2 } from 'types/api';
+import {
+	GetMetricAlertsResponse,
+	GetMetricAttributesResponse,
+	GetMetricDashboardsResponse,
+	GetMetricHighlightsResponse,
+	GetMetricMetadataResponse,
+	UpdateMetricMetadataRequest,
+} from 'types/api/metricsExplorer/v2';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
-export function formatTimestampToReadableDate(timestamp: string): string {
+import {
+	MetricAlert,
+	MetricAttribute,
+	MetricDashboard,
+	MetricHighlight,
+	MetricMetadata,
+	MetricMetadataState,
+} from './types';
+
+export function formatTimestampToReadableDate(timestamp: number): string {
 	const date = new Date(timestamp);
 	const now = new Date();
 	const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -158,5 +176,151 @@ export function getMetricDetailsQuery(
 			queryFormulas: [],
 			queryTraceOperator: [],
 		},
+	};
+}
+
+export function transformMetricHighlights(
+	apiData: SuccessResponseV2<GetMetricHighlightsResponse> | undefined,
+): MetricHighlight | null {
+	if (!apiData || !apiData.data || !apiData.data.data) {
+		return null;
+	}
+
+	const {
+		dataPoints,
+		lastReceived,
+		totalTimeSeries,
+		activeTimeSeries,
+	} = apiData.data.data;
+
+	return {
+		dataPoints,
+		lastReceived,
+		totalTimeSeries,
+		activeTimeSeries,
+	};
+}
+
+export function transformMetricAlerts(
+	apiData: SuccessResponseV2<GetMetricAlertsResponse> | undefined,
+): MetricAlert[] {
+	if (
+		!apiData ||
+		!apiData.data ||
+		!apiData.data.data ||
+		!apiData.data.data.alerts
+	) {
+		return [];
+	}
+	return apiData.data.data.alerts.map((alert) => ({
+		alertName: alert.alertName,
+		alertId: alert.alertId,
+	}));
+}
+
+export function transformMetricDashboards(
+	apiData: SuccessResponseV2<GetMetricDashboardsResponse> | undefined,
+): MetricDashboard[] {
+	if (
+		!apiData ||
+		!apiData.data ||
+		!apiData.data.data ||
+		!apiData.data.data.dashboards
+	) {
+		return [];
+	}
+	const dashboards = apiData.data.data.dashboards.map((dashboard) => ({
+		dashboardName: dashboard.dashboardName,
+		dashboardId: dashboard.dashboardId,
+		widgetId: dashboard.widgetId,
+		widgetName: dashboard.widgetName,
+	}));
+	// Remove duplicate dashboards
+	return dashboards.filter(
+		(dashboard, index, self) =>
+			index === self.findIndex((t) => t.dashboardId === dashboard.dashboardId),
+	);
+}
+
+export function transformTemporality(temporality: string): Temporality {
+	switch (temporality) {
+		case 'delta':
+			return Temporality.DELTA;
+		case 'cumulative':
+			return Temporality.CUMULATIVE;
+		default:
+			return Temporality.DELTA;
+	}
+}
+
+export function transformMetricType(type: string): MetricType {
+	switch (type) {
+		case 'sum':
+			return MetricType.SUM;
+		case 'gauge':
+			return MetricType.GAUGE;
+		case 'summary':
+			return MetricType.SUMMARY;
+		case 'histogram':
+			return MetricType.HISTOGRAM;
+		case 'exponential_histogram':
+			return MetricType.EXPONENTIAL_HISTOGRAM;
+		default:
+			return MetricType.SUM;
+	}
+}
+
+export function transformMetricMetadata(
+	apiData: SuccessResponseV2<GetMetricMetadataResponse> | undefined,
+): MetricMetadata | null {
+	if (!apiData || !apiData.data || !apiData.data.data) {
+		return null;
+	}
+	const {
+		type,
+		description,
+		unit,
+		temporality,
+		isMonotonic,
+	} = apiData.data.data;
+
+	return {
+		metricType: transformMetricType(type),
+		description,
+		unit,
+		temporality: transformTemporality(temporality),
+		isMonotonic,
+	};
+}
+
+export function transformUpdateMetricMetadataRequest(
+	metricMetadata: MetricMetadataState,
+): UpdateMetricMetadataRequest {
+	return {
+		type: metricMetadata.metricType,
+		description: metricMetadata.description,
+		unit: metricMetadata.unit || '',
+		temporality: metricMetadata.temporality || '',
+		isMonotonic: determineIsMonotonic(
+			metricMetadata.metricType,
+			metricMetadata.temporality,
+		),
+	};
+}
+
+export function transformMetricAttributes(
+	apiData: SuccessResponseV2<GetMetricAttributesResponse> | undefined,
+): { attributes: MetricAttribute[]; totalKeys: number } {
+	if (!apiData || !apiData.data || !apiData.data.data) {
+		return { attributes: [], totalKeys: 0 };
+	}
+	const { attributes, totalKeys } = apiData.data.data;
+	return {
+		attributes: attributes.map((attribute) => ({
+			key: attribute.key,
+			values: attribute.values,
+			valueCount: attribute.valueCount,
+		})),
+		totalKeys,
 	};
 }

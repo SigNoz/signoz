@@ -58,3 +58,20 @@ export interface GetMetricDashboardsResponse {
 		}[];
 	};
 }
+
+export interface UpdateMetricMetadataRequest {
+	type: string;
+	description: string;
+	temporality: string;
+	unit: string;
+	isMonotonic: boolean;
+}
+
+export interface UpdateMetricMetadataResponse {
+	status: string;
+}
+
+export interface UseUpdateMetricMetadataProps {
+	metricName: string;
+	payload: UpdateMetricMetadataRequest;
+}

@@ -2,18 +2,18 @@ import { ApiV2Instance as axios } from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { GetMetricMetadataResponse } from 'types/api/metricsExplorer/v2';
+import {
+	UpdateMetricMetadataRequest,
+	UpdateMetricMetadataResponse,
+} from 'types/api/metricsExplorer/v2';
 
-export const getMetricMetadata = async (
+const updateMetricMetadata = async (
 	metricName: string,
-	signal?: AbortSignal,
-	headers?: Record<string, string>,
-): Promise<SuccessResponseV2<GetMetricMetadataResponse>> => {
+	props: UpdateMetricMetadataRequest,
+): Promise<SuccessResponseV2<UpdateMetricMetadataResponse>> => {
 	try {
-		const encodedMetricName = encodeURIComponent(metricName);
-		const response = await axios.get(`/metrics/${encodedMetricName}/metadata`, {
-			signal,
-			headers,
+		const response = await axios.post(`/metrics/${metricName}/metadata`, {
+			...props,
 		});
 
 		return {
@@ -24,3 +24,5 @@ export const getMetricMetadata = async (
 		return ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };
+
+export default updateMetricMetadata;
