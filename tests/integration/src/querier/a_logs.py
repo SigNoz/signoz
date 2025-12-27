@@ -67,6 +67,7 @@ def test_logs_list(
                     "code.file": "/opt/integration.go",
                     "code.function": "com.example.Integration.process",
                     "code.line": 120,
+                    "metric.domain_id": "d-001",
                     "telemetry.sdk.language": "go",
                 },
                 body="This is a log message, coming from a go application",
@@ -141,6 +142,7 @@ def test_logs_list(
         "code.function": "com.example.Integration.process",
         "log.iostream": "stdout",
         "logtag": "F",
+        "metric.domain_id": "d-001",
         "telemetry.sdk.language": "go",
     }
     assert rows[0]["data"]["attributes_number"] == {"code.line": 120}
@@ -307,6 +309,86 @@ def test_logs_list(
     values = response.json()["data"]["values"]["numberValues"]
     assert len(values) == 1
     assert 120 in values
+
+    # Query keys from the fields API with context specified in the key
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "searchText": "resource.servic",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    keys = response.json()["data"]["keys"]
+    assert "service.name" in keys
+    assert any(k["fieldContext"] == "resource" for k in keys["service.name"])
+
+    # Do not treat `metric.` as a context prefix for logs
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "searchText": "metric.do",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    keys = response.json()["data"]["keys"]
+    assert "metric.domain_id" in keys
+
+    # Query values of service.name resource attribute using context-prefixed key
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "name": "resource.service.name",
+            "searchText": "",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["values"]["stringValues"]
+    assert "go" in values
+    assert "java" in values
+
+    # Query values of metric.domain_id (string attribute) and ensure context collision doesn't break it
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "name": "metric.domain_id",
+            "searchText": "",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["values"]["stringValues"]
+    assert "d-001" in values
 
 
 def test_logs_time_series_count(

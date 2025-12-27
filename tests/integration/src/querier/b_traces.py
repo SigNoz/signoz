@@ -373,3 +373,43 @@ def test_traces_list(
     assert len(values) == 2
 
     assert set(values) == set(["POST", "PATCH"])
+
+    # Query keys from the fields API with context specified in the key
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "traces",
+            "searchText": "resource.servic",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    keys = response.json()["data"]["keys"]
+    assert "service.name" in keys
+    assert any(k["fieldContext"] == "resource" for k in keys["service.name"])
+
+    # Query values of service.name resource attribute using context-prefixed key
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "traces",
+            "name": "resource.service.name",
+            "searchText": "",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["values"]["stringValues"]
+    assert set(values) == set(["topic-service", "http-service"])
