@@ -54,6 +54,7 @@ function modifyKeyVal(pair: IQueryPair, mapping: KeyValueMapping): string {
 	const mapOne = (val: string | undefined): string | undefined => {
 		if (val == null) return val;
 		const t = String(val).trim();
+		// Skip variables for now. We will handle them later.
 		if (t.startsWith('$')) return t;
 		const raw = isQuoted(t) ? unquote(t) : t;
 		return mapping.valueMappings[raw] ?? raw;
@@ -94,8 +95,7 @@ function modifyKeyVal(pair: IQueryPair, mapping: KeyValueMapping): string {
 }
 
 // Replace keys/values in an expression using provided mappings.
-// This only wires parsing, ordering, and reconstruction. The actual replacement
-// logic lives in modifyKeyVal.
+// wires parsing, ordering, and reconstruction.
 export function replaceKeysAndValuesInExpression(
 	expression: string,
 	mappingList: KeyValueMapping[],
