@@ -20,7 +20,7 @@ const store = createStore(
 
 export type AppDispatch = typeof store.dispatch;
 
-if (window !== undefined) {
+if (window !== undefined && process.env.NODE_ENV === 'development') {
 	window.store = store;
 }
 
