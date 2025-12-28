@@ -171,7 +171,7 @@ const config = {
 	plugins,
 	optimization: {
 		chunkIds: 'named',
-		concatenateModules: false,
+		concatenateModules: true, // Enable module concatenation for better tree-shaking and smaller bundles
 		emitOnErrors: true,
 		flagIncludedChunks: true,
 		innerGraph: true, // tells webpack whether to conduct inner graph analysis for unused exports.
@@ -181,6 +181,85 @@ const config = {
 		nodeEnv: 'production',
 		runtimeChunk: {
 			name: (entrypoint) => `runtime~${entrypoint.name}`,
+		},
+		splitChunks: {
+			chunks: 'all',
+			maxInitialRequests: 30,
+			minSize: 20000,
+			cacheGroups: {
+				// Vendor libraries - React, React-DOM, Redux, Router
+				vendor: {
+					test: /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|react-redux|redux|@reduxjs)[\\/]/,
+					name: 'vendors-react',
+					priority: 30,
+					reuseExistingChunk: true,
+					enforce: true,
+				},
+				// Ant Design icons (separate from core - icons are huge)
+				antdIcons: {
+					test: /[\\/]node_modules[\\/](@ant-design\/icons)[\\/]/,
+					name: 'vendors-antd-icons',
+					priority: 25,
+					reuseExistingChunk: true,
+					enforce: true,
+				},
+				// Ant Design core (without icons) - matches antd and @ant-design but not @ant-design/icons
+				antd: {
+					test: /[\\/]node_modules[\\/](antd|@ant-design(?!\/icons))[\\/]/,
+					name: 'vendors-antd',
+					priority: 20,
+					reuseExistingChunk: true,
+					enforce: true,
+				},
+				// SigNoz UI components
+				signozhq: {
+					test: /[\\/]node_modules[\\/](@signozhq)[\\/]/,
+					name: 'vendors-signozhq',
+					priority: 19,
+					reuseExistingChunk: true,
+					enforce: true,
+				},
+				// Chart libraries
+				charts: {
+					test: /[\\/]node_modules[\\/](uplot|chart\.js|@visx|@tanstack\/react-table|@tanstack\/react-virtual)[\\/]/,
+					name: 'vendors-charts',
+					priority: 18,
+					reuseExistingChunk: true,
+					enforce: true,
+				},
+				// React Query
+				reactQuery: {
+					test: /[\\/]node_modules[\\/](react-query|@tanstack\/react-query)[\\/]/,
+					name: 'vendors-react-query',
+					priority: 17,
+					reuseExistingChunk: true,
+					enforce: true,
+				},
+				// Large utility libraries
+				utilities: {
+					test: /[\\/]node_modules[\\/](lodash-es|@dnd-kit|dayjs|axios|i18next)[\\/]/,
+					name: 'vendors-utilities',
+					priority: 15,
+					reuseExistingChunk: true,
+					enforce: true,
+				},
+				// Monaco editor (very large)
+				monaco: {
+					test: /[\\/]node_modules[\\/](@monaco-editor|monaco-editor)[\\/]/,
+					name: 'vendors-monaco',
+					priority: 16,
+					reuseExistingChunk: true,
+					enforce: true,
+				},
+				// Other vendor libraries
+				common: {
+					test: /[\\/]node_modules[\\/]/,
+					name: 'vendors-common',
+					priority: 10,
+					minChunks: 2,
+					reuseExistingChunk: true,
+				},
+			},
 		},
 		minimizer: [
 			new TerserPlugin({
