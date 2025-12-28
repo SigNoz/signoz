@@ -845,6 +845,14 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 			TableName:   sqlschema.TableName("tuple"),
 			ColumnNames: []sqlschema.ColumnName{"ulid"},
 		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("auth_token"),
+			ColumnNames: []sqlschema.ColumnName{"access_token"},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("auth_token"),
+			ColumnNames: []sqlschema.ColumnName{"refresh_token"},
+		},
 	}
 
 	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
