@@ -72,6 +72,12 @@ devenv-up: devenv-clickhouse devenv-signoz-otel-collector ## Start both clickhou
 	@echo "   - ClickHouse: http://localhost:8123"
 	@echo "   - Signoz OTel Collector: grpc://localhost:4317, http://localhost:4318"
 
+.PHONY: devenv-clickhouse-clean
+devenv-clickhouse-clean: ## Clean all ClickHouse data from filesystem
+	@echo "Removing ClickHouse data..."
+	@rm -rf .devenv/docker/clickhouse/fs/tmp/*
+	@echo "ClickHouse data cleaned!"
+
 ##############################################################
 # go commands
 ##############################################################
@@ -86,7 +92,7 @@ go-run-enterprise: ## Runs the enterprise go backend server
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
 	go run -race \
-		$(GO_BUILD_CONTEXT_ENTERPRISE)/*.go
+		$(GO_BUILD_CONTEXT_ENTERPRISE)/*.go server
 
 .PHONY: go-test
 go-test: ## Runs go unit tests

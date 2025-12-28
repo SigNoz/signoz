@@ -206,6 +206,10 @@
 			.ant-select-selector {
 				border-color: var(--bg-vanilla-300);
 				background: var(--bg-vanilla-300);
+
+				.ant-select-selection-item {
+					color: var(--text-ink-400);
+				}
 			}
 
 			.ant-input-number {

@@ -3,25 +3,27 @@ package opamp
 import (
 	"context"
 	"crypto/sha256"
-	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig"
-	coreModel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"go.opentelemetry.io/collector/confmap"
 	"go.uber.org/zap"
 )
 
+var (
+	CodeNoAgentsAvailable          = errors.MustNewCode("no_agents_available")
+	CodeOpAmpServerDown            = errors.MustNewCode("opamp_server_down")
+	CodeMultipleAgentsNotSupported = errors.MustNewCode("multiple_agents_not_supported")
+)
+
 // inserts or updates ingestion controller processors depending
 // on the signal (metrics or traces)
-func UpsertControlProcessors(
-	ctx context.Context,
-	signal string,
-	processors map[string]interface{},
-	callback model.OnChangeCallback,
-) (hash string, fnerr *coreModel.ApiError) {
+func UpsertControlProcessors(ctx context.Context, signal string,
+	processors map[string]interface{}, callback model.OnChangeCallback,
+) (string, error) {
 	// note: only processors enabled through tracesPipelinePlan will be added
 	// to pipeline. To enable or disable processors from pipeline, call
 	// AddToTracePipeline() or RemoveFromTracesPipeline() prior to calling
@@ -31,33 +33,24 @@ func UpsertControlProcessors(
 
 	if signal != string(Metrics) && signal != string(Traces) {
 		zap.L().Error("received invalid signal int UpsertControlProcessors", zap.String("signal", signal))
-		fnerr = coreModel.BadRequest(fmt.Errorf(
-			"signal not supported in ingestion rules: %s", signal,
-		))
-		return
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "signal not supported in ingestion rules: %s", signal)
 	}
 
 	if opAmpServer == nil {
-		fnerr = coreModel.UnavailableError(fmt.Errorf(
-			"opamp server is down, unable to push config to agent at this moment",
-		))
-		return
+		return "", errors.NewInternalf(CodeOpAmpServerDown, "opamp server is down, unable to push config to agent at this moment")
 	}
 
 	agents := opAmpServer.agents.GetAllAgents()
 	if len(agents) == 0 {
-		fnerr = coreModel.UnavailableError(fmt.Errorf("no agents available at the moment"))
-		return
+		return "", errors.NewInternalf(CodeNoAgentsAvailable, "no agents available at the moment")
 	}
 
 	if len(agents) > 1 && signal == string(Traces) {
 		zap.L().Debug("found multiple agents. this feature is not supported for traces pipeline (sampling rules)")
-		fnerr = coreModel.BadRequest(fmt.Errorf("multiple agents not supported in sampling rules"))
-		return
+		return "", errors.NewInvalidInputf(CodeMultipleAgentsNotSupported, "multiple agents not supported in sampling rules")
 	}
-
+	hash := ""
 	for _, agent := range agents {
-
 		agenthash, err := addIngestionControlToAgent(agent, signal, processors, false)
 		if err != nil {
 			zap.L().Error("failed to push ingestion rules config to agent", zap.String("agentID", agent.AgentID), zap.Error(err))
