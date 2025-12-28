@@ -40,7 +40,7 @@ import { initialQueryMeterWithType } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { INITIAL_ALERT_THRESHOLD_STATE } from 'container/CreateAlertV2/context/constants';
 import dayjs from 'dayjs';
-import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
+import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -302,11 +302,11 @@ function MultiIngestionSettings(): JSX.Element {
 	};
 
 	const {
-		data: deploymentsData,
-		isLoading: isLoadingDeploymentsData,
-		isFetching: isFetchingDeploymentsData,
-		isError: isErrorDeploymentsData,
-	} = useGetDeploymentsData(!isEnterpriseSelfHostedUser);
+		data: globalConfig,
+		isLoading: isLoadingGlobalConfig,
+		isFetching: isFetchingGlobalConfig,
+		isError: isErrorGlobalConfig,
+	} = useGetGlobalConfig(!isEnterpriseSelfHostedUser);
 
 	const {
 		mutate: createIngestionKey,
@@ -1409,10 +1409,10 @@ function MultiIngestionSettings(): JSX.Element {
 					</Typography.Text>
 				</header>
 
-				{!isErrorDeploymentsData &&
-					!isLoadingDeploymentsData &&
-					!isFetchingDeploymentsData &&
-					deploymentsData && (
+				{!isErrorGlobalConfig &&
+					!isLoadingGlobalConfig &&
+					!isFetchingGlobalConfig &&
+					globalConfig && (
 						<div className="ingestion-setup-details-links">
 							<div className="ingestion-key-url-container">
 								<div className="ingestion-key-url-label">Ingestion URL</div>
@@ -1421,29 +1421,10 @@ function MultiIngestionSettings(): JSX.Element {
 									onClick={(e): void => {
 										e.stopPropagation();
 										e.preventDefault();
-										handleCopyKey(
-											`ingest.${deploymentsData?.data.data.cluster.region.dns}`,
-										);
+										handleCopyKey(`${globalConfig?.data.data.ingestion_url}`);
 									}}
 								>
-									ingest.{deploymentsData?.data.data.cluster.region.dns}
-									<Copy className="copy-key-btn" size={12} />
-								</div>
-							</div>
-
-							<div className="ingestion-data-region-container">
-								<div className="ingestion-data-region-label">Region</div>
-								<div
-									className="ingestion-data-region-value"
-									onClick={(e): void => {
-										e.stopPropagation();
-										e.preventDefault();
-										handleCopyKey(deploymentsData?.data.data.cluster.region.name || '');
-									}}
-								>
-									<Typography.Text className="ingestion-data-region-value-text">
-										{deploymentsData?.data.data.cluster.region.name}
-									</Typography.Text>
+									{globalConfig?.data.data.ingestion_url}
 									<Copy className="copy-key-btn" size={12} />
 								</div>
 							</div>
