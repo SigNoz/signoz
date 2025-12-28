@@ -38,18 +38,17 @@ import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import {
-	BasicThreshold,
-	NEW_ALERT_SCHEMA_VERSION,
-	PostableAlertRuleV2,
-} from 'types/api/alerts/alertTypesV2';
 import { GettableAlert } from 'types/api/alerts/get';
 
 import DeleteAlert from './DeleteAlert';
 import { ColumnButton, SearchContainer } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
-import { alertActionLogEvent, filterAlerts } from './utils';
+import {
+	alertActionLogEvent,
+	filterAlerts,
+	getSeverityFromAlert,
+} from './utils';
 
 const { Search } = Input;
 
@@ -316,37 +315,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'labels',
 			width: 80,
 			key: 'severity',
-			sorter: (a, b): number => {
-				const getSeverity = (alert: GettableAlert): string => {
-					if (alert?.schemaVersion === NEW_ALERT_SCHEMA_VERSION) {
-						const condition = alert?.condition as PostableAlertRuleV2['condition'];
-						const thresholds = condition?.thresholds?.spec;
-						if (thresholds && thresholds.length > 0) {
-							return thresholds.map((t: BasicThreshold) => t.name).join(', ');
-						}
-						return '';
-					}
-					return alert?.labels?.severity || '';
-				};
-				return getSeverity(a).length - getSeverity(b).length;
-			},
-			render: (value, record): JSX.Element => {
-				if (record?.schemaVersion === NEW_ALERT_SCHEMA_VERSION) {
-					const condition = record?.condition as PostableAlertRuleV2['condition'];
-					const thresholds = condition?.thresholds?.spec;
-					if (thresholds && thresholds.length > 0) {
-						const severities = thresholds
-							.map((t: BasicThreshold) => t.name)
-							.join(', ');
-						return <Typography>{severities}</Typography>;
-					}
-					return <Typography>-</Typography>;
-				}
-				const objectKeys = value ? Object.keys(value) : [];
-				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
-				const severityValue = withSeverityKey ? value[withSeverityKey] : '-';
-
-				return <Typography>{severityValue}</Typography>;
+			sorter: (a, b): number =>
+				getSeverityFromAlert(a).length - getSeverityFromAlert(b).length,
+			render: (_, record): JSX.Element => {
+				const severity = getSeverityFromAlert(record);
+				return <Typography>{severity || '-'}</Typography>;
 			},
 			sortOrder: sortedInfo.columnKey === 'severity' ? sortedInfo.order : null,
 		},

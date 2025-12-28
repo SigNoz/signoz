@@ -8,7 +8,7 @@ import {
 } from 'types/api/alerts/alertTypesV2';
 import { GettableAlert } from 'types/api/alerts/get';
 
-const getSeverityFromAlert = (alert: GettableAlert): string => {
+export const getSeverityFromAlert = (alert: GettableAlert): string => {
 	if (alert?.schemaVersion === NEW_ALERT_SCHEMA_VERSION) {
 		const condition = alert?.condition as PostableAlertRuleV2['condition'];
 		const thresholds = condition?.thresholds?.spec;
