@@ -91,77 +91,25 @@ func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
 		// the anomaly alert
 		return result
 	case FunctionNameFillZero:
-		start, end, step, ok := resolveFillZeroParams(args, result)
-		if !ok {
+		// fillZero expects 3 arguments: start, end, step (all in milliseconds)
+		if len(args) < 3 {
 			return result
 		}
-		return funcFillZero(result, start, end, step)
+		start, err := parseFloat64Arg(args[0].Value)
+		if err != nil {
+			return result
+		}
+		end, err := parseFloat64Arg(args[1].Value)
+		if err != nil {
+			return result
+		}
+		step, err := parseFloat64Arg(args[2].Value)
+		if err != nil || step <= 0 {
+			return result
+		}
+		return funcFillZero(result, int64(start), int64(end), int64(step))
 	}
 	return result
-}
-
-// resolveFillZeroParams extracts start, end, and step for fillZero.
-// If start or end are missing, it falls back to the series' min and max timestamps.
-func resolveFillZeroParams(args []FunctionArg, series *TimeSeries) (int64, int64, int64, bool) {
-	var (
-		start    int64
-		end      int64
-		step     int64
-		hasStart bool
-		hasEnd   bool
-		hasStep  bool
-	)
-
-	if len(args) > 0 {
-		if v, err := parseFloat64Arg(args[0].Value); err == nil {
-			start = int64(v)
-			hasStart = true
-		}
-	}
-	if len(args) > 1 {
-		if v, err := parseFloat64Arg(args[1].Value); err == nil {
-			end = int64(v)
-			hasEnd = true
-		}
-	}
-	if len(args) > 2 {
-		if v, err := parseFloat64Arg(args[2].Value); err == nil {
-			step = int64(v)
-			hasStep = true
-		}
-	}
-
-	if !hasStep || step <= 0 {
-		return 0, 0, 0, false
-	}
-
-	if (!hasStart || !hasEnd) && series != nil && len(series.Values) > 0 {
-		minTS := series.Values[0].Timestamp
-		maxTS := series.Values[0].Timestamp
-		for _, v := range series.Values[1:] {
-			if v.Timestamp < minTS {
-				minTS = v.Timestamp
-			}
-			if v.Timestamp > maxTS {
-				maxTS = v.Timestamp
-			}
-		}
-
-		if !hasStart {
-			start = minTS
-			hasStart = true
-		}
-		if !hasEnd {
-			end = maxTS
-			hasEnd = true
-		}
-	}
-
-	if !hasStart || !hasEnd {
-		return 0, 0, 0, false
-	}
-
-	return start, end, step, true
 }
 
 // parseFloat64Arg parses an argument to float64
