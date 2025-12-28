@@ -60,6 +60,28 @@ func (q *promqlQuery) Window() (uint64, uint64) {
 	return q.tr.From, q.tr.To
 }
 
+func isAllValue(value any) bool {
+	if strVal, ok := value.(string); ok && strVal == "__all__" {
+		return true
+	}
+
+	// check for slice types
+	switch v := value.(type) {
+	case []any:
+		if len(v) == 1 {
+			if strVal, ok := v[0].(string); ok && strVal == "__all__" {
+				return true
+			}
+		}
+	case []string:
+		if len(v) == 1 && v[0] == "__all__" {
+			return true
+		}
+	}
+
+	return false
+}
+
 // removeAllVarMatchers removes label matchers from a PromQL query that reference variables with __all__ value.
 // This method parses the query, walks the AST to remove matching matchers, and returns the modified query string.
 // If parsing or walking fails, it returns an error.
@@ -68,7 +90,7 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 	allVars := make(map[string]bool)
 	for k, v := range vars {
 		if v.Type == qbv5.DynamicVariableType {
-			if allVal, ok := v.Value.(string); ok && allVal == "__all__" {
+			if isAllValue(v.Value) {
 				allVars[k] = true
 			}
 		}
