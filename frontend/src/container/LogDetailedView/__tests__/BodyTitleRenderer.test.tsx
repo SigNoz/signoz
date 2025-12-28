@@ -51,7 +51,7 @@ describe('BodyTitleRenderer', () => {
 		await user.click(screen.getByText('name'));
 
 		await waitFor(() => {
-			expect(mockSetCopy).toHaveBeenCalledWith('"user.name": "John"');
+			expect(mockSetCopy).toHaveBeenCalledWith('John');
 			expect(mockNotification).toHaveBeenCalledWith(
 				expect.objectContaining({
 					message: expect.stringContaining('user.name'),
@@ -75,7 +75,7 @@ describe('BodyTitleRenderer', () => {
 		await user.click(screen.getByText('0'));
 
 		await waitFor(() => {
-			expect(mockSetCopy).toHaveBeenCalledWith('"items[*].0": arrayElement');
+			expect(mockSetCopy).toHaveBeenCalledWith('arrayElement');
 		});
 	});
 
@@ -96,9 +96,8 @@ describe('BodyTitleRenderer', () => {
 
 		await waitFor(() => {
 			const callArg = mockSetCopy.mock.calls[0][0];
-			expect(callArg).toContain('"user.metadata":');
-			expect(callArg).toContain('"id": 123');
-			expect(callArg).toContain('"active": true');
+			const expectedJson = JSON.stringify(testObject, null, 2);
+			expect(callArg).toBe(expectedJson);
 			expect(mockNotification).toHaveBeenCalledWith(
 				expect.objectContaining({
 					message: expect.stringContaining('object copied'),

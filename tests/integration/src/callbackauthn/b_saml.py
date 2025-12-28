@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Callable, List, Dict, Any
+from typing import Any, Callable, Dict, List
 
 import requests
 from selenium import webdriver
@@ -93,9 +93,10 @@ def test_create_auth_domain(
         f"{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}",
         {
             "saml_idp_initiated_sso_url_name": "idp-initiated-saml-test",
-            "saml_idp_initiated_sso_relay_state": relay_state_url
-        }
+            "saml_idp_initiated_sso_relay_state": relay_state_url,
+        },
     )
+
 
 def test_saml_authn(
     signoz: SigNoz,
@@ -163,7 +164,10 @@ def test_idp_initiated_saml_authn(
     assert len(session_context["orgs"]) == 1
     assert len(session_context["orgs"][0]["authNSupport"]["callback"]) == 1
 
-    idp_initiated_login_url = idp.container.host_configs["6060"].base() + "/realms/master/protocol/saml/clients/idp-initiated-saml-test"
+    idp_initiated_login_url = (
+        idp.container.host_configs["6060"].base()
+        + "/realms/master/protocol/saml/clients/idp-initiated-saml-test"
+    )
 
     driver.get(idp_initiated_login_url)
     idp_login("viewer.idp.initiated@saml.integration.test", "password")

@@ -32,6 +32,7 @@ const ADD_ONS_KEYS = {
 	ORDER_BY: 'order_by',
 	LIMIT: 'limit',
 	LEGEND_FORMAT: 'legend_format',
+	REDUCE_TO: 'reduce_to',
 };
 
 const ADD_ONS_KEYS_TO_QUERY_PATH = {
@@ -40,13 +41,14 @@ const ADD_ONS_KEYS_TO_QUERY_PATH = {
 	[ADD_ONS_KEYS.ORDER_BY]: 'orderBy',
 	[ADD_ONS_KEYS.LIMIT]: 'limit',
 	[ADD_ONS_KEYS.LEGEND_FORMAT]: 'legend',
+	[ADD_ONS_KEYS.REDUCE_TO]: 'reduceTo',
 };
 
 const ADD_ONS = [
 	{
 		icon: <BarChart2 size={14} />,
 		label: 'Group By',
-		key: 'group_by',
+		key: ADD_ONS_KEYS.GROUP_BY,
 		description:
 			'Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments.',
 		docLink: 'https://signoz.io/docs/userguide/query-builder-v5/#grouping',
@@ -54,7 +56,7 @@ const ADD_ONS = [
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Having',
-		key: 'having',
+		key: ADD_ONS_KEYS.HAVING,
 		description:
 			'Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500',
 		docLink:
@@ -63,7 +65,7 @@ const ADD_ONS = [
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Order By',
-		key: 'order_by',
+		key: ADD_ONS_KEYS.ORDER_BY,
 		description:
 			'Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers.',
 		docLink:
@@ -72,7 +74,7 @@ const ADD_ONS = [
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Limit',
-		key: 'limit',
+		key: ADD_ONS_KEYS.LIMIT,
 		description:
 			'Show only the top/bottom N results. Perfect for focusing on outliers, reducing noise, and improving dashboard performance.',
 		docLink:
@@ -81,7 +83,7 @@ const ADD_ONS = [
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Legend format',
-		key: 'legend_format',
+		key: ADD_ONS_KEYS.LEGEND_FORMAT,
 		description:
 			'Customize series labels using variables like {{service.name}}-{{endpoint}}. Makes charts readable at a glance during incident investigation.',
 		docLink:
@@ -92,7 +94,7 @@ const ADD_ONS = [
 const REDUCE_TO = {
 	icon: <ScrollText size={14} />,
 	label: 'Reduce to',
-	key: 'reduce_to',
+	key: ADD_ONS_KEYS.REDUCE_TO,
 	description:
 		'Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value.',
 	docLink:
@@ -218,10 +220,9 @@ function QueryAddOns({
 		);
 
 		const availableAddOnKeys = new Set(filteredAddOns.map((addOn) => addOn.key));
-
 		// Filter and set selected views: add-ons that are both active and available
 		setSelectedViews(
-			ADD_ONS.filter(
+			filteredAddOns.filter(
 				(addOn) =>
 					activeAddOnKeys.has(addOn.key) && availableAddOnKeys.has(addOn.key),
 			),
@@ -300,7 +301,7 @@ function QueryAddOns({
 	);
 
 	return (
-		<div className="query-add-ons">
+		<div className="query-add-ons" data-testid="query-add-ons">
 			{selectedViews.length > 0 && (
 				<div className="selected-add-ons-content">
 					{selectedViews.find((view) => view.key === 'group_by') && (
