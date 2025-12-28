@@ -16,10 +16,18 @@ interface UseGetYAxisUnitResult {
 
 /**
  * Hook to get the y-axis unit for a given metrics-based query.
- * @param selectedQueryName
+ * @param selectedQueryName - The name of the query to get the y-axis unit for.
+ * @param params.enabled - Active state of the hook.
  * @returns `{ yAxisUnit, isLoading, isError }` The y-axis unit, loading state, and error state
  */
-function useGetYAxisUnit(selectedQueryName?: string): UseGetYAxisUnitResult {
+function useGetYAxisUnit(
+	selectedQueryName?: string,
+	params: {
+		enabled?: boolean;
+	} = {
+		enabled: true,
+	},
+): UseGetYAxisUnitResult {
 	const { stagedQuery } = useQueryBuilder();
 	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
@@ -61,7 +69,7 @@ function useGetYAxisUnit(selectedQueryName?: string): UseGetYAxisUnitResult {
 
 	const { metrics, isLoading, isError } = useGetMetrics(
 		metricNames ?? [],
-		!!metricNames,
+		!!metricNames && params?.enabled,
 	);
 
 	const units = useMemo(() => getMetricUnits(metrics), [metrics]);
