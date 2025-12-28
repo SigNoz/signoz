@@ -5,12 +5,11 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/cmd"
-	"github.com/SigNoz/signoz/ee/authz/openfgaauthz"
-	"github.com/SigNoz/signoz/ee/authz/openfgaschema"
-	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/authz/openfgaauthz"
+	"github.com/SigNoz/signoz/pkg/authz/openfgaschema"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
@@ -24,7 +23,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -56,13 +54,6 @@ func registerServer(parentCmd *cobra.Command, logger *slog.Logger) {
 func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) error {
 	// print the version
 	version.Info.PrettyPrint(config.Version)
-
-	// add enterprise sqlstore factories to the community sqlstore factories
-	sqlstoreFactories := signoz.NewSQLStoreProviderFactories()
-	if err := sqlstoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory())); err != nil {
-		logger.ErrorContext(ctx, "failed to add postgressqlstore factory", "error", err)
-		return err
-	}
 
 	signoz, err := signoz.New(
 		ctx,
