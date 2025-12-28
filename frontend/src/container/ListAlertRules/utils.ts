@@ -1,7 +1,24 @@
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import {
+	BasicThreshold,
+	NEW_ALERT_SCHEMA_VERSION,
+	PostableAlertRuleV2,
+} from 'types/api/alerts/alertTypesV2';
 import { GettableAlert } from 'types/api/alerts/get';
+
+const getSeverityFromAlert = (alert: GettableAlert): string => {
+	if (alert?.schemaVersion === NEW_ALERT_SCHEMA_VERSION) {
+		const condition = alert?.condition as PostableAlertRuleV2['condition'];
+		const thresholds = condition?.thresholds?.spec;
+		if (thresholds && thresholds.length > 0) {
+			return thresholds.map((t: BasicThreshold) => t.name).join(', ');
+		}
+		return '';
+	}
+	return alert.labels?.severity || '';
+};
 
 export const filterAlerts = (
 	allAlertRules: GettableAlert[],
@@ -12,7 +29,7 @@ export const filterAlerts = (
 	const value = filter.trim().toLowerCase();
 	return allAlertRules.filter((alert) => {
 		const alertName = alert.alert?.toLowerCase();
-		const severity = alert.labels?.severity?.toLowerCase();
+		const severity = getSeverityFromAlert(alert).toLowerCase();
 
 		// Create a string of all label keys and values for searching
 		const labelSearchString = Object.entries(alert.labels || {})
