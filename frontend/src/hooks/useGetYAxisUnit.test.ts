@@ -150,7 +150,7 @@ describe('useGetYAxisUnit', () => {
 		]);
 
 		mockUseQueryBuilder.mockReturnValueOnce(({
-			currentQuery: mockCurrentQuery,
+			stagedQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 
 		renderHook(() => useGetYAxisUnit());
@@ -172,7 +172,7 @@ describe('useGetYAxisUnit', () => {
 			} as Query['builder']['queryData'][number],
 		]);
 		mockUseQueryBuilder.mockReturnValueOnce(({
-			currentQuery: mockCurrentQuery,
+			stagedQuery: mockCurrentQuery,
 		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
 
 		renderHook(() => useGetYAxisUnit('query2'));

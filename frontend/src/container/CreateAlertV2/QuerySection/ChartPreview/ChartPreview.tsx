@@ -9,6 +9,7 @@ import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -19,7 +20,12 @@ export interface ChartPreviewProps {
 
 function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 	const { currentQuery, panelType, stagedQuery } = useQueryBuilder();
-	const { thresholdState, alertState, setAlertState } = useCreateAlertState();
+	const {
+		alertType,
+		thresholdState,
+		alertState,
+		setAlertState,
+	} = useCreateAlertState();
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -33,11 +39,13 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 		selectedQueryName,
 	);
 
+	// Every time a new metric is selected, set the y-axis unit to its unit value if present
+	// Only for metrics-based alerts
 	useEffect(() => {
-		if (initialYAxisUnit && !yAxisUnit) {
+		if (alertType === AlertTypes.METRICS_BASED_ALERT) {
 			setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: initialYAxisUnit });
 		}
-	}, [initialYAxisUnit, setAlertState, yAxisUnit]);
+	}, [initialYAxisUnit, setAlertState, alertType]);
 
 	const headline = (
 		<div className="chart-preview-headline">
