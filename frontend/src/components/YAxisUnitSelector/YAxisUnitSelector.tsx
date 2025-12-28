@@ -76,7 +76,7 @@ function YAxisUnitSelector({
 						<Tooltip title={incompatibleUnitMessage}>
 							<WarningFilled />
 						</Tooltip>
-					) : null
+					) : undefined
 				}
 				className={classNames({
 					'warning-state': incompatibleUnitMessage,
