@@ -153,20 +153,10 @@ func NewFormulaEvaluator(expressionStr string, canDefaultZero map[string]bool) (
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse expression")
 	}
 
-	normalizedCanDefaultZero := make(map[string]bool, len(canDefaultZero)*3)
-	for k, v := range canDefaultZero {
-		if k == "" {
-			continue
-		}
-		normalizedCanDefaultZero[k] = v
-		normalizedCanDefaultZero[strings.ToUpper(k)] = v
-		normalizedCanDefaultZero[strings.ToLower(k)] = v
-	}
-
 	evaluator := &FormulaEvaluator{
 		expression:     expression,
 		variables:      expression.Vars(),
-		canDefaultZero: normalizedCanDefaultZero,
+		canDefaultZero: canDefaultZero,
 		aggRefs:        make(map[string]aggregationRef),
 	}
 
@@ -201,13 +191,13 @@ func parseAggregationReference(variable string) (aggregationRef, error) {
 		// Simple query reference like "A" - defaults to first aggregation (index 0)
 		defaultIndex := 0
 		return aggregationRef{
-			QueryName: strings.ToUpper(parts[0]),
+			QueryName: parts[0],
 			Index:     &defaultIndex,
 		}, nil
 	}
 
 	if len(parts) == 2 {
-		queryName := strings.ToUpper(parts[0])
+		queryName := parts[0]
 		reference := parts[1]
 
 		// Try to parse as index
@@ -287,15 +277,20 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 		seriesMetadata: make(map[string]*TimeSeries),
 	}
 
-	normalizedSeriesMap := make(map[string]*TimeSeriesData, len(timeSeriesData))
-	for name, ts := range timeSeriesData {
-		normalizedSeriesMap[strings.ToUpper(name)] = ts
-	}
-
 	for variable, aggRef := range fe.aggRefs {
 		// We are only interested in the time series data for the queries that are
 		// involved in the formula expression.
-		data, exists := normalizedSeriesMap[aggRef.QueryName]
+		data, exists := timeSeriesData[aggRef.QueryName]
+		if !exists {
+			// try case-insensitive lookup
+			for k, v := range timeSeriesData {
+				if strings.EqualFold(k, aggRef.QueryName) {
+					data = v
+					exists = true
+					break
+				}
+			}
+		}
 		if !exists {
 			continue
 		}
