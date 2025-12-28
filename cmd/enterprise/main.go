@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log/slog"
 
 	"github.com/SigNoz/signoz/cmd"
@@ -22,22 +21,26 @@ func main() {
 	// register a list of commands to the root command
 	registerServer(cmd.RootCmd, logger)
 	cmd.RegisterGenerate(cmd.RootCmd, logger)
+	cmd.RegisterMetastore(
+		cmd.RootCmd,
+		logger,
+		func() factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]] {
+			factories := signoz.NewSQLStoreProviderFactories()
+			if err := factories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory())); err != nil {
+				panic(err)
+			}
 
-	// TODO(grandwizard28): DRY this code
-	sqlstoreFactories := signoz.NewSQLStoreProviderFactories()
-	if err := sqlstoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory())); err != nil {
-		logger.ErrorContext(context.TODO(), "failed to add postgressqlstore factory", "error", err)
-		panic(err)
-	}
+			return factories
+		},
+		func(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
+			factories := signoz.NewSQLSchemaProviderFactories(sqlstore)
+			if err := factories.Add(postgressqlschema.NewFactory(sqlstore)); err != nil {
+				panic(err)
+			}
 
-	cmd.RegisterSQL(cmd.RootCmd, logger, func(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
-		existingFactories := signoz.NewSQLSchemaProviderFactories(sqlstore)
-		if err := existingFactories.Add(postgressqlschema.NewFactory(sqlstore)); err != nil {
-			panic(err)
-		}
-
-		return existingFactories
-	}, sqlstoreFactories)
+			return factories
+		},
+	)
 
 	cmd.Execute(logger)
 }
