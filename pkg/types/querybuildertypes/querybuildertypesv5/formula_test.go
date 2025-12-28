@@ -866,10 +866,10 @@ func TestComplexExpression(t *testing.T) {
 
 func TestCaseInsensitiveQueryNames(t *testing.T) {
 	tests := []struct {
-		name       string
-		expression string
-		tsData     map[string]*TimeSeriesData
-		expected   float64
+		name           string
+		expression     string
+		tsData         map[string]*TimeSeriesData
+		expectedValues []float64
 	}{
 		{
 			name:       "lowercase query names",
@@ -888,7 +888,7 @@ func TestCaseInsensitiveQueryNames(t *testing.T) {
 					},
 				}),
 			},
-			expected: 5.0,
+			expectedValues: []float64{5.0},
 		},
 		{
 			name:       "mixed case query names",
@@ -907,7 +907,7 @@ func TestCaseInsensitiveQueryNames(t *testing.T) {
 					},
 				}),
 			},
-			expected: 5.0,
+			expectedValues: []float64{5.0},
 		},
 		{
 			name:       "uppercase query names with lowercase data keys",
@@ -926,7 +926,7 @@ func TestCaseInsensitiveQueryNames(t *testing.T) {
 					},
 				}),
 			},
-			expected: 5.0,
+			expectedValues: []float64{5.0},
 		},
 		{
 			name:       "all lowercase",
@@ -945,7 +945,7 @@ func TestCaseInsensitiveQueryNames(t *testing.T) {
 					},
 				}),
 			},
-			expected: 10.0,
+			expectedValues: []float64{10.0},
 		},
 		{
 			name:       "complex expression with mixed case",
@@ -970,7 +970,31 @@ func TestCaseInsensitiveQueryNames(t *testing.T) {
 					},
 				}),
 			},
-			expected: 11.0, // 5 + 3 * 2 = 11
+			expectedValues: []float64{11.0}, // 5 + 3 * 2 = 11
+		},
+		{
+			name:       "lowercase variables with default zero missing point",
+			expression: "a + b",
+			tsData: map[string]*TimeSeriesData{
+				"A": createFormulaTestTimeSeriesData("A", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{
+							1: 10,
+							2: 20,
+						}),
+					},
+				}),
+				"B": createFormulaTestTimeSeriesData("B", []*TimeSeries{
+					{
+						Labels: createLabels(map[string]string{}),
+						Values: createValues(map[int64]float64{
+							1: 5,
+						}),
+					},
+				}),
+			},
+			expectedValues: []float64{15.0, 20.0}, // t1: 10+5, t2: 20+0
 		},
 	}
 
@@ -984,8 +1008,10 @@ func TestCaseInsensitiveQueryNames(t *testing.T) {
 			require.NotNil(t, result)
 
 			assert.Equal(t, 1, len(result), "should have exactly one result series")
-			assert.Equal(t, 1, len(result[0].Values), "should have exactly one value")
-			assert.Equal(t, tt.expected, result[0].Values[0].Value, "calculated value should match expected")
+			assert.Equal(t, len(tt.expectedValues), len(result[0].Values), "should match expected number of values")
+			for i, v := range tt.expectedValues {
+				assert.InDelta(t, v, result[0].Values[i].Value, 0.0001, "value at index %d should match", i)
+			}
 		})
 	}
 }

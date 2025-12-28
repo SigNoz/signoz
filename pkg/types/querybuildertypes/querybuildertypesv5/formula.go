@@ -153,10 +153,28 @@ func NewFormulaEvaluator(expressionStr string, canDefaultZero map[string]bool) (
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse expression")
 	}
 
+	// Normalize canDefaultZero keys to match variable casing from expression
+	normalizedCanDefaultZero := make(map[string]bool)
+	vars := expression.Vars()
+	for _, variable := range vars {
+		// If exact match exists, use it
+		if val, ok := canDefaultZero[variable]; ok {
+			normalizedCanDefaultZero[variable] = val
+			continue
+		}
+		// Otherwise try case-insensitive lookup
+		for k, v := range canDefaultZero {
+			if strings.EqualFold(k, variable) {
+				normalizedCanDefaultZero[variable] = v
+				break
+			}
+		}
+	}
+
 	evaluator := &FormulaEvaluator{
 		expression:     expression,
-		variables:      expression.Vars(),
-		canDefaultZero: canDefaultZero,
+		variables:      vars,
+		canDefaultZero: normalizedCanDefaultZero,
 		aggRefs:        make(map[string]aggregationRef),
 	}
 
