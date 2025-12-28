@@ -8,11 +8,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
+	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -36,6 +38,8 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ session.Handler }{},
 		struct{ authdomain.Handler }{},
 		struct{ preference.Handler }{},
+		struct{ global.Handler }{},
+		struct{ promote.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err

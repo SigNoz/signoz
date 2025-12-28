@@ -6,11 +6,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
+	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -28,6 +30,8 @@ type provider struct {
 	sessionHandler    session.Handler
 	authDomainHandler authdomain.Handler
 	preferenceHandler preference.Handler
+	globalHandler     global.Handler
+	promoteHandler    promote.Handler
 }
 
 func NewFactory(
@@ -38,9 +42,11 @@ func NewFactory(
 	sessionHandler session.Handler,
 	authDomainHandler authdomain.Handler,
 	preferenceHandler preference.Handler,
+	globalHandler global.Handler,
+	promoteHandler promote.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler)
 	})
 }
 
@@ -55,6 +61,8 @@ func newProvider(
 	sessionHandler session.Handler,
 	authDomainHandler authdomain.Handler,
 	preferenceHandler preference.Handler,
+	globalHandler global.Handler,
+	promoteHandler promote.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -68,6 +76,8 @@ func newProvider(
 		sessionHandler:    sessionHandler,
 		authDomainHandler: authDomainHandler,
 		preferenceHandler: preferenceHandler,
+		globalHandler:     globalHandler,
+		promoteHandler:    promoteHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -96,11 +106,19 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addPreferenceRoutes(router); err != nil {
+		return err
+	}
+
 	if err := provider.addUserRoutes(router); err != nil {
 		return err
 	}
 
-	if err := provider.addPreferenceRoutes(router); err != nil {
+	if err := provider.addGlobalRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addPromoteRoutes(router); err != nil {
 		return err
 	}
 

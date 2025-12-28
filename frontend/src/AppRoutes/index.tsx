@@ -6,6 +6,7 @@ import logEvent from 'api/common/logEvent';
 import AppLoading from 'components/AppLoading/AppLoading';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import NotFound from 'components/NotFound';
+import { ShiftHoldOverlayController } from 'components/ShiftOverlay/ShiftHoldOverlayController';
 import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -368,6 +369,9 @@ function App(): JSX.Element {
 							<NotificationProvider>
 								<ErrorModalProvider>
 									{isLoggedInState && <CmdKPalette userRole={user.role} />}
+									{isLoggedInState && (
+										<ShiftHoldOverlayController userRole={user.role} />
+									)}
 									<PrivateRoute>
 										<ResourceProvider>
 											<QueryBuilderProvider>

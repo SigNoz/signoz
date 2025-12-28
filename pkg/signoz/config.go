@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -39,6 +40,9 @@ import (
 
 // Config defines the entire input configuration of signoz.
 type Config struct {
+	// Global config
+	Global global.Config `mapstructure:"global"`
+
 	// Version config
 	Version version.Config `mapstructure:"version"`
 
@@ -141,6 +145,7 @@ func (df *DeprecatedFlags) RegisterFlags(cmd *cobra.Command) {
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {
 	configFactories := []factory.ConfigFactory{
+		global.NewConfigFactory(),
 		version.NewConfigFactory(),
 		instrumentation.NewConfigFactory(),
 		analytics.NewConfigFactory(),

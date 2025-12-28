@@ -18,10 +18,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
 	"github.com/SigNoz/signoz/pkg/emailing/smtpemailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/global"
+	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
+	"github.com/SigNoz/signoz/pkg/modules/promote/implpromote"
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
@@ -221,7 +224,7 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 	)
 }
 
-func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, global global.Global, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
 	return factory.MustNewNamedMap(
 		signozapiserver.NewFactory(
 			orgGetter,
@@ -231,6 +234,8 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			implsession.NewHandler(modules.Session),
 			implauthdomain.NewHandler(modules.AuthDomain),
 			implpreference.NewHandler(modules.Preference),
+			signozglobal.NewHandler(global),
+			implpromote.NewHandler(modules.Promote),
 		),
 	)
 }
@@ -240,5 +245,11 @@ func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore
 	return factory.MustNewNamedMap(
 		opaquetokenizer.NewFactory(cache, tokenStore, orgGetter),
 		jwttokenizer.NewFactory(cache, tokenStore),
+	)
+}
+
+func NewGlobalProviderFactories() factory.NamedMap[factory.ProviderFactory[global.Global, global.Config]] {
+	return factory.MustNewNamedMap(
+		signozglobal.NewFactory(),
 	)
 }

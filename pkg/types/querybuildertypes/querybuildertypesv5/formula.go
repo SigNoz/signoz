@@ -153,10 +153,28 @@ func NewFormulaEvaluator(expressionStr string, canDefaultZero map[string]bool) (
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse expression")
 	}
 
+	// Normalize canDefaultZero keys to match variable casing from expression
+	normalizedCanDefaultZero := make(map[string]bool)
+	vars := expression.Vars()
+	for _, variable := range vars {
+		// If exact match exists, use it
+		if val, ok := canDefaultZero[variable]; ok {
+			normalizedCanDefaultZero[variable] = val
+			continue
+		}
+		// Otherwise try case-insensitive lookup
+		for k, v := range canDefaultZero {
+			if strings.EqualFold(k, variable) {
+				normalizedCanDefaultZero[variable] = v
+				break
+			}
+		}
+	}
+
 	evaluator := &FormulaEvaluator{
 		expression:     expression,
-		variables:      expression.Vars(),
-		canDefaultZero: canDefaultZero,
+		variables:      vars,
+		canDefaultZero: normalizedCanDefaultZero,
 		aggRefs:        make(map[string]aggregationRef),
 	}
 
@@ -281,6 +299,16 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 		// We are only interested in the time series data for the queries that are
 		// involved in the formula expression.
 		data, exists := timeSeriesData[aggRef.QueryName]
+		if !exists {
+			// try case-insensitive lookup
+			for k, v := range timeSeriesData {
+				if strings.EqualFold(k, aggRef.QueryName) {
+					data = v
+					exists = true
+					break
+				}
+			}
+		}
 		if !exists {
 			continue
 		}
