@@ -1413,6 +1413,10 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
 			return
 		}
+		if apiErr, ok := err.(*model.ApiError); ok {
+			RespondError(w, apiErr, nil)
+			return
+		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
@@ -1441,6 +1445,10 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
+			return
+		}
+		if apiErr, ok := err.(*model.ApiError); ok {
+			RespondError(w, apiErr, nil)
 			return
 		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
