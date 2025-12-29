@@ -9,7 +9,7 @@ x-common: &common
       max-file: "3"
 x-clickhouse-defaults: &clickhouse-defaults
   !!merge <<: *common
-  image: clickhouse/clickhouse-server:25.5.6
+  image: clickhouse/clickhouse-server:25.10.1
   tty: true
   labels:
     signoz.io/scrape: "true"
@@ -26,7 +26,7 @@ x-clickhouse-defaults: &clickhouse-defaults
       - wget
       - --spider
       - -q
-      - 0.0.0.0:8123/ping
+      - http://localhost:8123/ping
     interval: 30s
     timeout: 5s
     retries: 3
@@ -62,7 +62,7 @@ x-db-depend: &db-depend
 services:
   init-clickhouse:
     !!merge <<: *common
-    image: clickhouse/clickhouse-server:25.5.6
+    image: clickhouse/clickhouse-server:25.10.1
     container_name: signoz-init-clickhouse
     command:
       - bash
@@ -97,10 +97,10 @@ services:
   clickhouse:
     !!merge <<: *clickhouse-defaults
     container_name: signoz-clickhouse
-    # ports:
-    #   - "9000:9000"
-    #   - "8123:8123"
-    #   - "9181:9181"
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+      - "9181:9181"
     volumes:
       - ../common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
       - ../common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
@@ -144,29 +144,38 @@ services:
       retries: 3
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.129.12}
+    image: signoz/signoz-otel-collector:nikhil-dev-1
     container_name: signoz-otel-collector
     command:
       - --config=/etc/otel-collector-config.yaml
-      - --manager-config=/etc/manager-config.yaml
+      # - --manager-config=/etc/manager-config.yaml
       - --copy-path=/var/tmp/collector-config.yaml
-      - --feature-gates=-pkg.translator.prometheus.NormalizeName
+      - --feature-gates=pkg.translator.prometheus.NormalizeName
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
       - ../common/signoz/otel-collector-opamp-config.yaml:/etc/manager-config.yaml
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
       - LOW_CARDINAL_EXCEPTION_GROUPING=false
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=9000
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+      - CLICKHOUSE_LOG_DATABASE=signoz_logs
+      - CLICKHOUSE_TRACE_DATABASE=signoz_traces
+      - CLICKHOUSE_METER_DATABASE=signoz_meter
+      - CLICKHOUSE_DATABASE=signoz_metrics
+      - TENANT_ID=default
     ports:
       # - "1777:1777"     # pprof extension
       - "4317:4317" # OTLP gRPC receiver
       - "4318:4318" # OTLP HTTP receiver
-    depends_on:
-      signoz:
-        condition: service_healthy
+    # depends_on:
+    #   signoz:
+    #     condition: service_healthy
   schema-migrator-sync:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.129.12}
+    image: us-central1-docker.pkg.dev/signoz-registry/signoz-schema-migrator/signoz-schema-migrator:${OTELCOL_TAG:-v0.129.12-c51e67f}
     container_name: schema-migrator-sync
     command:
       - sync
@@ -178,7 +187,7 @@ services:
     restart: on-failure
   schema-migrator-async:
     !!merge <<: *db-depend
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.129.12}
+    image: us-central1-docker.pkg.dev/signoz-registry/signoz-schema-migrator/signoz-schema-migrator:${OTELCOL_TAG:-v0.129.12-c51e67f}
     container_name: schema-migrator-async
     command:
       - async
@@ -187,11 +196,11 @@ services:
     restart: on-failure
 networks:
   signoz-net:
-    name: signoz-net
+    name: signoz-net-new
 volumes:
   clickhouse:
-    name: signoz-clickhouse
+    name: signoz-clickhouse-new
   sqlite:
-    name: signoz-sqlite
+    name: signoz-sqlite-new
   zookeeper-1:
-    name: signoz-zookeeper-1
+    name: signoz-zookeeper-1-new

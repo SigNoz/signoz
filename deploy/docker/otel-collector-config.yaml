@@ -1,112 +1,199 @@
 connectors:
   signozmeter:
-    metrics_flush_interval: 1h
     dimensions:
-      - name: service.name
-      - name: deployment.environment
-      - name: host.name
-receivers:
-  otlp:
-    protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
-      http:
-        endpoint: 0.0.0.0:4318
-  prometheus:
-    config:
-      global:
-        scrape_interval: 60s
-      scrape_configs:
-        - job_name: otel-collector
-          static_configs:
-          - targets:
-              - localhost:8888
-            labels:
-              job_name: otel-collector
+    - name: service.name
+    - name: deployment.environment
+    - name: host.name
+    - name: signoz.workspace.key.id
+    metrics_flush_interval: 1h
+exporters:
+  clickhouselogsexporter:
+    dsn: tcp://${env:CLICKHOUSE_USER}:${env:CLICKHOUSE_PASSWORD}@${env:CLICKHOUSE_HOST}:${env:CLICKHOUSE_PORT}/${env:CLICKHOUSE_LOG_DATABASE}
+    sending_queue: {}
+    timeout: 45s
+    use_new_schema: true
+  clickhousetraces:
+    datasource: tcp://${env:CLICKHOUSE_USER}:${env:CLICKHOUSE_PASSWORD}@${env:CLICKHOUSE_HOST}:${env:CLICKHOUSE_PORT}/${env:CLICKHOUSE_TRACE_DATABASE}
+    low_cardinal_exception_grouping: ${env:LOW_CARDINAL_EXCEPTION_GROUPING}
+    sending_queue: {}
+    timeout: 45s
+    use_new_schema: true
+  metadataexporter:
+    cache:
+      provider: in_memory
+    dsn: tcp://${env:CLICKHOUSE_USER}:${env:CLICKHOUSE_PASSWORD}@${env:CLICKHOUSE_HOST}:${env:CLICKHOUSE_PORT}/signoz_metadata
+    enabled: true
+    tenant_id: ${env:TENANT_ID}
+    timeout: 45s
+  signozclickhousemeter:
+    dsn: tcp://${env:CLICKHOUSE_USER}:${env:CLICKHOUSE_PASSWORD}@${env:CLICKHOUSE_HOST}:${env:CLICKHOUSE_PORT}/${env:CLICKHOUSE_METER_DATABASE}
+    sending_queue: {}
+    timeout: 45s
+  signozclickhousemetrics:
+    dsn: tcp://${env:CLICKHOUSE_USER}:${env:CLICKHOUSE_PASSWORD}@${env:CLICKHOUSE_HOST}:${env:CLICKHOUSE_PORT}/${env:CLICKHOUSE_DATABASE}
+    timeout: 45s
+extensions:
+  pprof:
+    endpoint: localhost:1777
+  signoz_health_check:
+    endpoint: 0.0.0.0:13133
+  zpages:
+    endpoint: localhost:55679
 processors:
   batch:
-    send_batch_size: 10000
-    send_batch_max_size: 11000
-    timeout: 10s
+    send_batch_max_size: 25000
+    send_batch_size: 20000
+    timeout: 1s
   batch/meter:
     send_batch_max_size: 25000
     send_batch_size: 20000
     timeout: 1s
-  resourcedetection:
-    # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
-    detectors: [env, system]
-    timeout: 2s
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 2048
+    spike_limit_mib: 128
   signozspanmetrics/delta:
-    metrics_exporter: signozclickhousemetrics
-    metrics_flush_interval: 60s
-    latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
-    dimensions_cache_size: 100000
     aggregation_temporality: AGGREGATION_TEMPORALITY_DELTA
-    enable_exp_histogram: true
     dimensions:
-      - name: service.namespace
-        default: default
-      - name: deployment.environment
-        default: default
-      # This is added to ensure the uniqueness of the timeseries
-      # Otherwise, identical timeseries produced by multiple replicas of
-      # collectors result in incorrect APM metrics
-      - name: signoz.collector.id
-      - name: service.version
-      - name: browser.platform
-      - name: browser.mobile
-      - name: k8s.cluster.name
-      - name: k8s.node.name
-      - name: k8s.namespace.name
-      - name: host.name
-      - name: host.type
-      - name: container.name
-extensions:
-  health_check:
-    endpoint: 0.0.0.0:13133
-  pprof:
-    endpoint: 0.0.0.0:1777
-exporters:
-  clickhousetraces:
-    datasource: tcp://clickhouse:9000/signoz_traces
-    low_cardinal_exception_grouping: ${env:LOW_CARDINAL_EXCEPTION_GROUPING}
-    use_new_schema: true
-  signozclickhousemetrics:
-    dsn: tcp://clickhouse:9000/signoz_metrics
-  clickhouselogsexporter:
-    dsn: tcp://clickhouse:9000/signoz_logs
-    timeout: 10s
-    use_new_schema: true
-  signozclickhousemeter:
-    dsn: tcp://clickhouse:9000/signoz_meter
-    timeout: 45s
-    sending_queue:
-      enabled: false
+    - default: default
+      name: service.namespace
+    - default: default
+      name: deployment.environment
+    - name: signoz.collector.id
+    - name: special.random.attribute.spiderman
+    dimensions_cache_size: 100000
+    latency_histogram_buckets:
+    - 100us
+    - 1ms
+    - 2ms
+    - 6ms
+    - 10ms
+    - 50ms
+    - 100ms
+    - 250ms
+    - 500ms
+    - 1000ms
+    - 1400ms
+    - 2000ms
+    - 5s
+    - 10s
+    - 20s
+    - 40s
+    - 60s
+    metrics_exporter: signozclickhousemetrics
+receivers:
+  httplogreceiver/heroku:
+    endpoint: 0.0.0.0:8081
+    source: heroku
+  httplogreceiver/json:
+    endpoint: 0.0.0.0:8082
+    source: json
+  jaeger:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:14250
+      thrift_http:
+        endpoint: 0.0.0.0:14268
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+        max_recv_msg_size_mib: 16
+      http:
+        endpoint: 0.0.0.0:4318
+  signozkafkareceiver/logs:
+    brokers:
+    - redpanda-0.redpanda.saas-system.svc.cluster.local:9093
+    - redpanda-1.redpanda.saas-system.svc.cluster.local:9093
+    - redpanda-2.redpanda.saas-system.svc.cluster.local:9093
+    group_id: ${env:TENANT_ID}-otel-collector
+    initial_offset: earliest
+    message_marking:
+      after: true
+      on_error: false
+    sarama_consumer_config:
+      fetch_max_bytes: 209715200
+      max_processing_time: 15s
+    topic: ${env:TENANT_ID}_logs
+  signozkafkareceiver/metrics:
+    brokers:
+    - redpanda-0.redpanda.saas-system.svc.cluster.local:9093
+    - redpanda-1.redpanda.saas-system.svc.cluster.local:9093
+    - redpanda-2.redpanda.saas-system.svc.cluster.local:9093
+    group_id: ${env:TENANT_ID}-otel-collector
+    initial_offset: earliest
+    message_marking:
+      after: true
+      on_error: false
+    sarama_consumer_config:
+      fetch_max_bytes: 209715200
+      max_processing_time: 15s
+    topic: ${env:TENANT_ID}_metrics
+  signozkafkareceiver/traces:
+    brokers:
+    - redpanda-0.redpanda.saas-system.svc.cluster.local:9093
+    - redpanda-1.redpanda.saas-system.svc.cluster.local:9093
+    - redpanda-2.redpanda.saas-system.svc.cluster.local:9093
+    group_id: ${env:TENANT_ID}-otel-collector
+    initial_offset: earliest
+    message_marking:
+      after: true
+      on_error: false
+    sarama_consumer_config:
+      fetch_max_bytes: 209715200
+      max_processing_time: 15s
+    topic: ${env:TENANT_ID}_traces
 service:
+  extensions:
+  - signoz_health_check
+  - zpages
+  - pprof
+  pipelines:
+    logs:
+      exporters:
+      - clickhouselogsexporter
+      - metadataexporter
+      - signozmeter
+      processors:
+      - memory_limiter
+      - batch
+      receivers:
+      - otlp
+    metrics:
+      exporters:
+      - metadataexporter
+      - signozclickhousemetrics
+      - signozmeter
+      processors:
+      - memory_limiter
+      - batch
+      receivers:
+      - otlp
+    metrics/meter:
+      exporters:
+      - signozclickhousemeter
+      processors:
+      - batch/meter
+      receivers:
+      - signozmeter
+    traces:
+      exporters:
+      - clickhousetraces
+      - metadataexporter
+      - signozmeter
+      processors:
+      - memory_limiter
+      - signozspanmetrics/delta
+      - batch
+      receivers:
+      - otlp
   telemetry:
     logs:
       encoding: json
-  extensions:
-    - health_check
-    - pprof
-  pipelines:
-    traces:
-      receivers: [otlp]
-      processors: [signozspanmetrics/delta, batch]
-      exporters: [clickhousetraces, signozmeter]
     metrics:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [signozclickhousemetrics, signozmeter]
-    metrics/prometheus:
-      receivers: [prometheus]
-      processors: [batch]
-      exporters: [signozclickhousemetrics, signozmeter]
-    logs:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [clickhouselogsexporter, signozmeter]
-    metrics/meter:
-      receivers: [signozmeter]
-      processors: [batch/meter]
-      exporters: [signozclickhousemeter]
+      readers:
+      - pull:
+          exporter:
+            prometheus:
+              host: 0.0.0.0
+              port: 8888
