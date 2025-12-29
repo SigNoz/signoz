@@ -18,8 +18,9 @@ func FromGlobs(paths []string) (*alertmanagertemplate.Template, error) {
 	}
 
 	if err := t.Parse(bytes.NewReader([]byte(`
-	
-	{{ define "__ruleIdPath" }}{{ range .CommonLabels.SortedPairs }}{{ if eq .Name "ruleId" }}{{ if match "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" .Value }}/edit?ruleId={{ .Value | urlquery }}{{ end }}{{ end }}{{ end }}{{ end }}
+	{{ define "__ruleIdValue" }}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}{{ .Value }}{{- end -}}{{- end -}}{{- end }}
+	{{ define "__isTestAlert" }}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "testAlert" -}}{{- if eq .Value "true" -}}true{{- end -}}{{- end -}}{{- end -}}{{- end }}
+	{{ define "__ruleIdPath" }}{{- $ruleId := "" -}}{{- $isTestAlert := "" -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}{{- $ruleId = .Value -}}{{- end -}}{{- if eq .Name "testAlert" -}}{{- if eq .Value "true" -}}{{- $isTestAlert = "true" -}}{{- end -}}{{- end -}}{{- end -}}{{- if $ruleId -}}/edit?ruleId={{ $ruleId | urlquery }}{{- if $isTestAlert -}}&testAlert=true{{- end -}}{{- else if $isTestAlert -}}?testAlert=true{{- end -}}{{- end }}
 	{{ define "__alertmanagerURL" }}{{ .ExternalURL }}/alerts{{ template "__ruleIdPath" . }}{{ end }}
 	{{ define "msteamsv2.default.titleLink" }}{{ template "__alertmanagerURL" . }}{{ end }}
 	`))); err != nil {
