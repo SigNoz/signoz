@@ -377,7 +377,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 					{
 						MetricName:       "signoz_calls_total",
 						Temporality:      metrictypes.Delta,
-						TimeAggregation:  metrictypes.TimeAggregationRate,
+						TimeAggregation:  metrictypes.TimeAggregationIncrease,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
@@ -394,25 +394,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 					{
 						MetricName:       "signoz_calls_total",
 						Temporality:      metrictypes.Delta,
-						TimeAggregation:  metrictypes.TimeAggregationRate,
-						SpaceAggregation: metrictypes.SpaceAggregationSum,
-						ReduceTo:         qbtypes.ReduceToAvg,
-					},
-				},
-			},
-		},
-		{Type: qbtypes.QueryTypeBuilder,
-			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:   "num_4xx",
-				Signal: telemetrytypes.SignalMetrics,
-				// TODO: fix this, below we should add filter for 4xx http status codes
-				Filter:  &qbtypes.Filter{Expression: errorFilterExpr},
-				GroupBy: groupByService,
-				Aggregations: []qbtypes.MetricAggregation{
-					{
-						MetricName:       "signoz_calls_total",
-						Temporality:      metrictypes.Delta,
-						TimeAggregation:  metrictypes.TimeAggregationRate,
+						TimeAggregation:  metrictypes.TimeAggregationIncrease,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
@@ -544,11 +526,10 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 	}
 
 	type agg struct {
-		p99        float64
-		avg        float64
-		callRate   float64
-		errorRate  float64
-		fourxxRate float64
+		p99Latency float64
+		avgLatency float64
+		numCalls   float64
+		numErrors  float64
 	}
 	perSvc := make(map[string]*agg)
 
@@ -563,39 +544,42 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 			val := toFloat(row, idx)
 			switch qn {
 			case "p99_latency":
-				a.p99 = val * math.Pow(10, 6)
+				a.p99Latency = val * math.Pow(10, 6) // convert to nanoseconds because frontend expects this
 			case "avg_latency":
-				a.avg = val * math.Pow(10, 6)
+				a.avgLatency = val * math.Pow(10, 6) // convert to nanoseconds because frontend expects this
 			case "num_calls":
-				a.callRate = val
+				a.numCalls = val
 			case "num_errors":
-				a.errorRate = val
-			case "num_4xx":
-				a.fourxxRate = val
+				a.numErrors = val
 			}
 		}
 	}
 
 	out := make([]*servicetypesv1.ResponseItem, 0, len(perSvc))
 	serviceNames := make([]string, 0, len(perSvc))
+
+	periodSeconds := float64((endMs - startMs) / 1000)
+
 	for svcName, a := range perSvc {
 		// a.calls is already a rate (calls/second) from TimeAggregationRate, no need to divide by periodSeconds
 		errorRate := 0.0
-		if a.callRate > 0 {
-			errorRate = a.errorRate * 100 / a.callRate
+		if a.numCalls > 0 {
+			errorRate = a.numErrors * 100 / a.numCalls
 		}
-		fourXXRate := 0.0
-		if a.callRate > 0 {
-			fourXXRate = a.fourxxRate * 100 / a.callRate
+
+		callRate := 0.0
+		if a.numCalls > 0 {
+			callRate = a.numCalls / periodSeconds
 		}
 
 		out = append(out, &servicetypesv1.ResponseItem{
 			ServiceName:  svcName,
-			Percentile99: a.p99,
-			AvgDuration:  a.avg,
-			CallRate:     a.callRate,
+			Percentile99: a.p99Latency,
+			AvgDuration:  a.avgLatency,
+			CallRate:     callRate,
 			ErrorRate:    errorRate,
-			FourXXRate:   fourXXRate,
+			NumCalls:     uint64(a.numCalls),
+			NumErrors:    uint64(a.numErrors),
 			DataWarning:  servicetypesv1.DataWarning{TopLevelOps: []string{}},
 		})
 		serviceNames = append(serviceNames, svcName)

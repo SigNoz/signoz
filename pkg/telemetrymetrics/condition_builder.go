@@ -185,7 +185,8 @@ func (c *conditionBuilder) buildMetricScopeCondition(operator qbtypes.FilterOper
 	return fmt.Sprintf(
 		"((JSONExtractString(labels, 'operation'), JSONExtractString(labels, 'service.name')) GLOBAL IN (SELECT DISTINCT name, serviceName FROM %s.%s WHERE time >= toDateTime(%d)))",
 		telemetrytraces.DBName,
-		telemetrytraces.LocalTopLevelOperationsTableName,
+		// telemetrytraces.LocalTopLevelOperationsTableName,
+		telemetrytraces.TopLevelOperationsTableName,
 		startSec,
 	), nil
 }
