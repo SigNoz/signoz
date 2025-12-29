@@ -220,11 +220,6 @@ func (m *fieldMapper) ColumnExpressionFor(
 				if key.Materialized {
 					colName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
 					colNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
-					if key.FieldDataType == telemetrytypes.FieldDataTypeBool {
-						// For boolean materialized fields, we do not create exists column
-						// So we use the same column name and check if it's true then only use the value
-						colNameExists = colName
-					}
 					args = append(args, fmt.Sprintf("%s==true, %s", colNameExists, colName))
 				}
 
