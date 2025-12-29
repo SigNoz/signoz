@@ -16,15 +16,9 @@ function DashboardSettingsContent({
 	variableViewModeRef: React.MutableRefObject<(() => void) | undefined>;
 }): JSX.Element {
 	const { user } = useAppContext();
-	const {
-		isCloudUser,
-		isEnterpriseSelfHostedUser,
-		isCommunityEnterpriseUser,
-	} = useGetTenantLicense();
+	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
-	const enablePublicDashboard =
-		(isCloudUser || isEnterpriseSelfHostedUser || isCommunityEnterpriseUser) &&
-		user?.role === USER_ROLES.ADMIN;
+	const enablePublicDashboard = isCloudUser || isEnterpriseSelfHostedUser;
 
 	const publicDashboardItem = {
 		label: (

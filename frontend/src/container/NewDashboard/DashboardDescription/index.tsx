@@ -20,6 +20,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
@@ -99,6 +100,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		setSelectedRowWidgetId,
 		handleDashboardLockToggle,
 	} = useDashboard();
+
+	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
+
+	const isPublicDashboardEnabled = isCloudUser || isEnterpriseSelfHostedUser;
 
 	const selectedData = selectedDashboard
 		? {
@@ -303,12 +308,14 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const {
 		data: publicDashboardResponse,
-		// refetch: refetchPublicDashboardData,
 		isLoading: isLoadingPublicDashboardData,
 		isFetching: isFetchingPublicDashboardData,
 		error: errorPublicDashboardData,
 		isError: isErrorPublicDashboardData,
-	} = useGetPublicDashboardMeta(selectedDashboard?.id || '');
+	} = useGetPublicDashboardMeta(
+		selectedDashboard?.id || '',
+		isPublicDashboardEnabled,
+	);
 
 	useEffect(() => {
 		if (!isLoadingPublicDashboardData && !isFetchingPublicDashboardData) {

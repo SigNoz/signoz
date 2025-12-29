@@ -8,6 +8,7 @@ import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
 import updatePublicDashboardAPI from 'api/dashboard/public/updatePublicDashboard';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Copy, ExternalLink, Globe, Info, Loader2, Trash } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -61,6 +62,10 @@ function PublicDashboardSetting(): JSX.Element {
 
 	const { selectedDashboard } = useDashboard();
 
+	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
+
+	const isPublicDashboardEnabled = isCloudUser || isEnterpriseSelfHostedUser;
+
 	const { user } = useAppContext();
 
 	const isAdmin = user?.role === USER_ROLES.ADMIN;
@@ -79,9 +84,12 @@ function PublicDashboardSetting(): JSX.Element {
 		isFetching: isFetchingPublicDashboard,
 		refetch: refetchPublicDashboard,
 		error: errorPublicDashboard,
-	} = useGetPublicDashboardMeta(selectedDashboard?.id || '');
+	} = useGetPublicDashboardMeta(
+		selectedDashboard?.id || '',
+		isPublicDashboardEnabled,
+	);
 
-	const isPublicDashboardEnabled = !!publicDashboardData?.publicPath;
+	const isPublicDashboard = !!publicDashboardData?.publicPath;
 
 	useEffect(() => {
 		if (publicDashboardResponse?.data) {
@@ -223,7 +231,7 @@ function PublicDashboardSetting(): JSX.Element {
 					level={5}
 					className="public-dashboard-setting-content-title"
 				>
-					{isPublicDashboardEnabled
+					{isPublicDashboard
 						? 'This dashboard is publicly accessible. Anyone with the link can view it.'
 						: 'This dashboard is private. Publish it to make it accessible to anyone with the link.'}
 				</Typography.Title>
@@ -253,7 +261,7 @@ function PublicDashboardSetting(): JSX.Element {
 					/>
 				</div>
 
-				{isPublicDashboardEnabled && (
+				{isPublicDashboard && (
 					<div className="public-dashboard-url">
 						<div className="url-label-container">
 							<Typography.Text className="url-label">
@@ -294,7 +302,7 @@ function PublicDashboardSetting(): JSX.Element {
 				</div>
 
 				<div className="public-dashboard-setting-actions">
-					{!isPublicDashboardEnabled ? (
+					{!isPublicDashboard ? (
 						<Button
 							type="primary"
 							className="create-public-dashboard-btn periscope-btn primary"

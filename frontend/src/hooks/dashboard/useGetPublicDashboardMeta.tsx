@@ -7,6 +7,7 @@ import APIError from 'types/api/error';
 
 export const useGetPublicDashboardMeta = (
 	id: string,
+	enabled: boolean,
 ): UseQueryResult<SuccessResponseV2<PublicDashboardMetaProps>, APIError> =>
 	useQuery<SuccessResponseV2<PublicDashboardMetaProps>, APIError>({
 		queryFn: () => getPublicDashboardMetaAPI({ id }),
@@ -14,6 +15,6 @@ export const useGetPublicDashboardMeta = (
 			console.error('Error getting public dashboard', error);
 		},
 		queryKey: [REACT_QUERY_KEY.GET_PUBLIC_DASHBOARD_META, id],
-		enabled: !!id,
+		enabled: !!id && enabled,
 		keepPreviousData: false,
 	});
