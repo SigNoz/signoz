@@ -1,7 +1,25 @@
 import axios from 'api';
-import { AxiosResponse } from 'axios';
-import { GlobalConfigDataProps } from 'types/api/globalConfig/types';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import { AxiosError } from 'axios';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import {
+	GlobalConfigData,
+	GlobalConfigDataProps,
+} from 'types/api/globalConfig/types';
 
-export const getGlobalConfig = (): Promise<
-	AxiosResponse<GlobalConfigDataProps>
-> => axios.get(`/global/config`);
+const getGlobalConfig = async (): Promise<
+	SuccessResponseV2<GlobalConfigData>
+> => {
+	try {
+		const response = await axios.get<GlobalConfigDataProps>(`/global/config`);
+
+		return {
+			httpStatusCode: response.status,
+			data: response.data.data,
+		};
+	} catch (error) {
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+	}
+};
+
+export default getGlobalConfig;

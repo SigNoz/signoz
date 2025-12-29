@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './IngestionSettings.styles.scss';
 
+import { Callout } from '@signozhq/callout';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -306,6 +307,7 @@ function MultiIngestionSettings(): JSX.Element {
 		isLoading: isLoadingGlobalConfig,
 		isFetching: isFetchingGlobalConfig,
 		isError: isErrorGlobalConfig,
+		error: globalConfigError,
 	} = useGetGlobalConfig(!isEnterpriseSelfHostedUser);
 
 	const {
@@ -1409,27 +1411,37 @@ function MultiIngestionSettings(): JSX.Element {
 					</Typography.Text>
 				</header>
 
-				{!isErrorGlobalConfig &&
-					!isLoadingGlobalConfig &&
-					!isFetchingGlobalConfig &&
-					globalConfig && (
-						<div className="ingestion-setup-details-links">
-							<div className="ingestion-key-url-container">
-								<div className="ingestion-key-url-label">Ingestion URL</div>
-								<div
-									className="ingestion-key-url-value"
-									onClick={(e): void => {
-										e.stopPropagation();
-										e.preventDefault();
-										handleCopyKey(`${globalConfig?.data.data.ingestion_url}`);
-									}}
-								>
-									{globalConfig?.data.data.ingestion_url}
-									<Copy className="copy-key-btn" size={12} />
-								</div>
+				{!isLoadingGlobalConfig && !isFetchingGlobalConfig && !isErrorGlobalConfig && (
+					<div className="ingestion-setup-details-links">
+						<div className="ingestion-key-url-container">
+							<div className="ingestion-key-url-label">Ingestion URL</div>
+							<div
+								className="ingestion-key-url-value"
+								onClick={(e): void => {
+									e.stopPropagation();
+									e.preventDefault();
+									handleCopyKey(`${globalConfig?.data.ingestion_url}`);
+								}}
+							>
+								{globalConfig?.data.ingestion_url}
+								<Copy className="copy-key-btn" size={12} />
 							</div>
 						</div>
-					)}
+					</div>
+				)}
+
+				{isErrorGlobalConfig && (
+					<div className="ingestion-url-error-container">
+						<Callout
+							type="warning"
+							size="small"
+							showIcon
+							message={globalConfigError?.getErrorCode()}
+							description={globalConfigError?.getErrorMessage()}
+							className="callout"
+						/>
+					</div>
+				)}
 
 				<div className="ingestion-keys-search-add-new">
 					<Input

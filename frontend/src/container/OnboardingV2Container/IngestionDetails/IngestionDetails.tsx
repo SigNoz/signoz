@@ -127,18 +127,22 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 												</Typography.Text>
 
 												<Typography.Text className="ingestion-region-value-copy">
-													{globalConfig?.data?.data?.ingestion_url}
+													{globalConfig?.data?.ingestion_url}
 
 													<Copy
 														size={14}
 														className="copy-btn"
 														onClick={(): void => {
 															logEvent(
-																`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.REGION_COPIED}`,
+																`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_URL_COPIED}`,
 																{},
 															);
 
-															handleCopyKey(`${globalConfig?.data?.data?.ingestion_url}`);
+															const ingestionURL = globalConfig?.data?.ingestion_url;
+
+															if (ingestionURL) {
+																handleCopyKey(ingestionURL);
+															}
 														}}
 													/>
 												</Typography.Text>
