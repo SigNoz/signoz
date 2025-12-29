@@ -305,7 +305,7 @@ func TestColumnExpressionFor(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
-			name: "Simple column type - timestamp",
+			name: "Simple column type - timestamp with explicit datatype",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "timestamp",
 				FieldContext:  telemetrytypes.FieldContextLog,

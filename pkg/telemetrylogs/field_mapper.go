@@ -169,7 +169,7 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, key *telemetrytypes.Telemet
 }
 
 // ColumnExpressionFor returns an aliased expression for a given TelemetryFieldKey,
-// Example: "attribute_strings['http.method'] AS `http.method`".
+// Example: "attributes_string['http.method'] AS `http.method`".
 //
 // It handles cases where the field key lacks sufficient context by attempting to
 // resolve the appropriate context from the provided keys map. If multiple contexts
@@ -178,7 +178,7 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, key *telemetrytypes.Telemet
 //
 // This method is a wrapper over FieldFor to provide better error messages and aliasing.
 //
-// If no context is found, it returns an error optinally suggests a correction if a close match exists,
+// If no context is found, it returns an error optionally suggests a correction if a close match exists,
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
 	field *telemetrytypes.TelemetryFieldKey,
@@ -218,7 +218,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 				if key.Materialized {
 					colName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
 					colNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
-					if field.FieldDataType == telemetrytypes.FieldDataTypeBool {
+					if key.FieldDataType == telemetrytypes.FieldDataTypeBool {
 						// For boolean materialized fields, we do not create exists column
 						// So we use the same column name and check if it's true then only use the value
 						colNameExists = colName
