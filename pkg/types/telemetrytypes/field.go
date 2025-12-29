@@ -105,6 +105,20 @@ func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
 	return fieldKeySelector
 }
 
+func GetKeyTextFromFieldKey(key TelemetryFieldKey) string {
+	var sb strings.Builder
+	if key.FieldContext != FieldContextUnspecified {
+		sb.WriteString(key.FieldContext.StringValue())
+		sb.WriteString(".")
+	}
+	sb.WriteString(key.Name)
+	if key.FieldDataType != FieldDataTypeUnspecified {
+		sb.WriteString(":")
+		sb.WriteString(key.FieldDataType.StringValue())
+	}
+	return sb.String()
+}
+
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
 	return fmt.Sprintf("`%s_%s_%s`", key.FieldContext.String, fieldDataTypes[key.FieldDataType.StringValue()].StringValue(), strings.ReplaceAll(key.Name, ".", "$$"))
 }

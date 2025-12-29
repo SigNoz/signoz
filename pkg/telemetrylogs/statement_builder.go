@@ -91,6 +91,9 @@ func (b *logQueryStatementBuilder) Build(
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 }
 
+// getKeySelectors extracts all TelemetryFieldKey used in the given query.
+//
+// It includes keys from aggregations, filters, group by, and order by clauses.
 func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []*telemetrytypes.FieldKeySelector {
 	var keySelectors []*telemetrytypes.FieldKeySelector
 
@@ -117,6 +120,15 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  query.Order[idx].Key.FieldContext,
 			FieldDataType: query.Order[idx].Key.FieldDataType,
+		})
+	}
+
+	for idx := range query.SelectFields {
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:          query.SelectFields[idx].Name,
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  query.SelectFields[idx].FieldContext,
+			FieldDataType: query.SelectFields[idx].FieldDataType,
 		})
 	}
 

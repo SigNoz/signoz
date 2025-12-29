@@ -34,7 +34,7 @@ const (
 	LogsV2AttributesBoolColumn   = "attributes_bool"
 	LogsV2ResourcesStringColumn  = "resources_string"
 	LogsV2ScopeStringColumn      = "scope_string"
-
+	LogsV2ResourceColumn         = "resource"
 	BodyJSONColumnPrefix     = constants.BodyJSONColumnPrefix
 	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
 	ArraySep                 = jsontypeexporter.ArraySeparator

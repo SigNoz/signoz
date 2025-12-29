@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetColumn(t *testing.T) {
+func TestColumnFor(t *testing.T) {
 	ctx := context.Background()
 
 	testCases := []struct {
@@ -180,7 +181,7 @@ func TestGetColumn(t *testing.T) {
 	}
 }
 
-func TestGetFieldKeyName(t *testing.T) {
+func TestFieldFor(t *testing.T) {
 	ctx := context.Background()
 
 	testCases := []struct {
@@ -207,6 +208,15 @@ func TestGetFieldKeyName(t *testing.T) {
 			},
 			expectedResult: "attributes_string['user.id']",
 			expectedError:  nil,
+		},
+		{
+			name: "Map column type - dataType missing attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "user.id",
+				FieldContext: telemetrytypes.FieldContextAttribute,
+			},
+			expectedResult: "",
+			expectedError:  qbtypes.ErrColumnNotFound,
 		},
 		{
 			name: "Map column type - number attribute",
@@ -263,6 +273,245 @@ func TestGetFieldKeyName(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fm := NewFieldMapper()
 			result, err := fm.FieldFor(ctx, &tc.key)
+
+			if tc.expectedError != nil {
+				assert.Equal(t, tc.expectedError, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestColumnExpressionFor(t *testing.T) {
+	ctx := context.Background()
+
+	testCases := []struct {
+		name           string
+		key            telemetrytypes.TelemetryFieldKey
+		keys           map[string][]*telemetrytypes.TelemetryFieldKey
+		expectedResult string
+		expectedError  error
+	}{
+		{
+			name: "Simple column type - timestamp",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "timestamp",
+				FieldContext: telemetrytypes.FieldContextLog,
+			},
+			keys:           nil,
+			expectedResult: "timestamp AS `timestamp`",
+			expectedError:  nil,
+		},
+		{
+			name: "Simple column type - timestamp",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "timestamp",
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			keys:           nil,
+			expectedResult: "timestamp AS `timestamp`",
+			expectedError:  nil,
+		},
+		{
+			name: "Map column type - string attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			keys:           nil,
+			expectedResult: "attributes_string['user.id'] AS `user.id`",
+			expectedError:  nil,
+		},
+		{
+			name: "Map column type - number attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "request.size",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			},
+			keys:           nil,
+			expectedResult: "attributes_number['request.size'] AS `request.size`",
+			expectedError:  nil,
+		},
+		{
+			name: "Map column type - bool attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "request.success",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeBool,
+			},
+			keys:           nil,
+			expectedResult: "attributes_bool['request.success'] AS `request.success`",
+			expectedError:  nil,
+		},
+		{
+			name: "Map column type - resource attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			keys:           nil,
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) AS `service.name`",
+			expectedError:  nil,
+		},
+		{
+			name: "Map column type - resource attribute - materialized",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+			keys:           nil,
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$$$name_exists`==true, `resource_string_service$$$$name`, NULL) AS `service.name`",
+			expectedError:  nil,
+		},
+		{
+			name: "Scope field - scope name",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "name",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			keys:           nil,
+			expectedResult: "scope_name AS `name`",
+			expectedError:  nil,
+		},
+		{
+			name: "Field with missing context fallback to keys",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "http.method",
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"http.method": {
+					{
+						Name:          "http.method",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			expectedResult: "attributes_string['http.method'] AS `http.method`",
+			expectedError:  nil,
+		},
+		{
+			name: "Field with missing context fallback to keys with multiple context options",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "http.status_code",
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"http.status_code": {
+					{
+						Name:          "http.status_code",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+					{
+						Name:          "http.status_code",
+						FieldContext:  telemetrytypes.FieldContextResource,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			expectedResult: "multiIf(mapContains(attributes_string, 'http.status_code'), attributes_string['http.status_code'], resource.`http.status_code` IS NOT NULL, resource.`http.status_code`::String, mapContains(resources_string, 'http.status_code'), resources_string['http.status_code'], NULL) AS `http.status_code`",
+			expectedError:  nil,
+		},
+		{
+			name: "Field with missing context fallback to keys with multiple dataType with data type provided",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "http.status_code",
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"http.status_code": {
+					{
+						Name:          "http.status_code",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+					{
+						Name:          "http.status_code",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+					},
+				},
+			},
+			expectedResult: "attributes_string['http.status_code'] AS `http.status_code`",
+			expectedError:  nil,
+		},
+		{
+			name: "Field with missing context fallback to keys with multiple dataType",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "http.status_code",
+			},
+			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"http.status_code": {
+					{
+						Name:          "http.status_code",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+					{
+						Name:          "http.status_code",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+					},
+				},
+			},
+			expectedResult: "multiIf(mapContains(attributes_string, 'http.status_code'), attributes_string['http.status_code'], mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL) AS `http.status_code`",
+			expectedError:  nil,
+		},
+		{
+			name: "Field with missing context fallback to keys with multiple context and dataType options",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "http.status_code",
+			},
+			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"http.status_code": {
+					{
+						Name:          "http.status_code",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+					{
+						Name:          "http.status_code",
+						FieldContext:  telemetrytypes.FieldContextResource,
+						FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+					},
+				},
+			},
+			expectedResult: "multiIf(mapContains(attributes_string, 'http.status_code'), attributes_string['http.status_code'], resource.`http.status_code` IS NOT NULL, resource.`http.status_code`::String, mapContains(resources_string, 'http.status_code'), resources_string['http.status_code'], NULL) AS `http.status_code`",
+			expectedError:  nil,
+		},
+		{
+			name: "Non-existent column",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "nonexistent_field",
+			},
+			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"existent_field": {
+					{
+						Name:          "existent_field",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			expectedResult: "",
+			expectedError:  errors.Wrap(qbtypes.ErrColumnNotFound, errors.TypeInvalidInput, errors.CodeInvalidInput, "did you mean: 'existent_field'?"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fm := NewFieldMapper()
+			result, err := fm.ColumnExpressionFor(ctx, &tc.key, tc.keys)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)

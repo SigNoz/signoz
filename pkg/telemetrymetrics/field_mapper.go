@@ -93,7 +93,7 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, key *telemetrytypes.Telemet
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
 	field *telemetrytypes.TelemetryFieldKey,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
 	colName, err := m.FieldFor(ctx, field)
