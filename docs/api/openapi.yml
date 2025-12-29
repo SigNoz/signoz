@@ -1739,7 +1739,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/FeaturetypesGettableFeatureWithResolution'
+                      $ref: '#/components/schemas/FeaturetypesGettableFeature'
                     type: array
                   status:
                     type: string
@@ -2218,7 +2218,7 @@ components:
         message:
           type: string
       type: object
-    FeaturetypesGettableFeatureWithResolution:
+    FeaturetypesGettableFeature:
       properties:
         defaultVariant:
           type: string
