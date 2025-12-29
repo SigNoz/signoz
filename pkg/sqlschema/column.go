@@ -9,7 +9,6 @@ import (
 var (
 	DataTypeText      = DataType{s: valuer.NewString("TEXT"), z: ""}
 	DataTypeBytea     = DataType{s: valuer.NewString("BYTEA"), z: ""}
-	DataTypeVarchar   = DataType{s: valuer.NewString("VARCHAR"), z: ""} // Do not use this data type. Use DataTypeText instead.
 	DataTypeBigInt    = DataType{s: valuer.NewString("BIGINT"), z: int64(0)}
 	DataTypeInteger   = DataType{s: valuer.NewString("INTEGER"), z: int64(0)}
 	DataTypeNumeric   = DataType{s: valuer.NewString("NUMERIC"), z: float64(0)}
