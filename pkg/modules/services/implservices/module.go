@@ -2,6 +2,7 @@ package implservices
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"sort"
@@ -152,6 +153,8 @@ func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req 
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("===> resp:", marshalInterface(resp))
 
 	var items []servicetypesv1.OperationItem
 	if useSpanMetrics {
@@ -848,6 +851,11 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 	return &reqV5, nil
 }
 
+func marshalInterface(inter any) string {
+	b, _ := json.Marshal(inter)
+	return string(b)
+}
+
 // mapSpanMetricsTopOpsResp maps span-metrics scalar results to OperationItem array using queryName for aggregation mapping.
 func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []servicetypesv1.OperationItem {
 	if resp == nil || len(resp.Data.Results) == 0 {
@@ -904,10 +912,13 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 
 		// Process each row in this result and merge by operation name
 		queryName := sd.QueryName
+		fmt.Println("====> queryName:", queryName)
 		for _, row := range sd.Data {
 			if len(row) <= operationIdx || len(row) <= aggIdx {
 				continue
 			}
+
+			fmt.Println("====> row:", marshalInterface(row))
 
 			opName := fmt.Sprintf("%v", row[operationIdx])
 
@@ -926,9 +937,9 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 			case "p99_latency":
 				a.p99 = toFloat(row, aggIdx) * math.Pow(10, 6)
 			case "num_calls":
-				a.numCalls = toUint64(row, aggIdx)
+				a.numCalls = uint64(toFloat(row, aggIdx))
 			case "num_errors":
-				a.numErrors = toUint64(row, aggIdx)
+				a.numErrors = uint64(toFloat(row, aggIdx))
 			}
 		}
 	}
@@ -1200,9 +1211,9 @@ func (m *module) mapSpanMetricsEntryPointOpsResp(resp *qbtypes.QueryRangeRespons
 			case "p99_latency":
 				a.p99 = toFloat(row, aggIdx) * math.Pow(10, 6)
 			case "num_calls":
-				a.numCalls = toUint64(row, aggIdx)
+				a.numCalls = uint64(toFloat(row, aggIdx))
 			case "num_errors":
-				a.numErrors = toUint64(row, aggIdx)
+				a.numErrors = uint64(toFloat(row, aggIdx))
 			}
 		}
 	}
