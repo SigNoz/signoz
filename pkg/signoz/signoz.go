@@ -358,18 +358,32 @@ func New(
 		return nil, err
 	}
 
+	// Initialize flagger from the available flagger provider factories
+	defaultRegistry := flagger.MustNewRegistry()
+	flaggerProviderFactories := NewFlaggerProviderFactories(defaultRegistry)
+	flagger, err := flagger.New(
+		ctx,
+		providerSettings,
+		config.Flagger,
+		defaultRegistry,
+		flaggerProviderFactories.GetInOrder()...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize all modules
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings, querier, licensing, global)
+	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger)
 
 	// Initialize the API server
 	apiserver, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.APIServer,
-		NewAPIServerProviderFactories(orgGetter, authz, global, modules, handlers),
+		NewAPIServerProviderFactories(orgGetter, authz, global, modules, handlers, flagger),
 		"signoz",
 	)
 	if err != nil {
@@ -395,20 +409,6 @@ func New(
 		config.StatsReporter,
 		NewStatsReporterProviderFactories(telemetrystore, statsCollectors, orgGetter, userGetter, tokenizer, version.Info, config.Analytics),
 		config.StatsReporter.Provider(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Initialize flagger from the available flagger provider factories
-	defaultRegistry := flagger.MustNewRegistry()
-	flaggerProviderFactories := NewFlaggerProviderFactories(defaultRegistry)
-	flagger, err := flagger.New(
-		ctx,
-		providerSettings,
-		config.Flagger,
-		defaultRegistry,
-		flaggerProviderFactories.GetInOrder()...,
 	)
 	if err != nil {
 		return nil, err

@@ -63,7 +63,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
@@ -567,7 +566,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/features", am.ViewAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/features", am.ViewAccess(aH.getFlaggerFeatures)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/health", am.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodPost)
@@ -2024,21 +2022,6 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	aH.Respond(w, featureSet)
-}
-
-func (aH *APIHandler) getFlaggerFeatures(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	// Create evaluation context (could get orgID from claims if needed)
-	evalCtx := featuretypes.NewFlaggerEvaluationContext(valuer.GenerateUUID())
-
-	features, err := aH.Signoz.Flagger.List(ctx, evalCtx)
-	if err != nil {
-		aH.HandleError(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	aH.Respond(w, features)
 }
 
 // getHealth is used to check the health of the service.

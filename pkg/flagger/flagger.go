@@ -8,13 +8,21 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
+// Any feature flag provider has to implement this interface.
+type FlaggerProvider interface {
+	openfeature.FeatureProvider
+
+	// List returns all the feature flags
+	List(ctx context.Context) ([]*featuretypes.GettableFeature, error)
+}
+
 // This is the consumer facing interface for the Flagger service.
 type Flagger interface {
-	Boolean(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (bool, string, error)
-	String(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (string, string, error)
-	Float(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (float64, string, error)
-	Int(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (int64, string, error)
-	Object(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (any, string, error)
+	Boolean(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (bool, error)
+	String(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (string, error)
+	Float(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (float64, error)
+	Int(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (int64, error)
+	Object(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (any, error)
 	List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.GettableFeatureWithResolution, error)
 }
 
@@ -22,15 +30,15 @@ type Flagger interface {
 type flagger struct {
 	defaultRegistry featuretypes.Registry
 	settings        factory.ScopedProviderSettings
-	providers       map[string]Provider
+	providers       map[string]FlaggerProvider
 	clients         map[string]*openfeature.Client
 }
 
-func New(ctx context.Context, ps factory.ProviderSettings, config Config, defaultRegistry featuretypes.Registry, factories ...factory.ProviderFactory[Provider, Config]) (Flagger, error) {
+func New(ctx context.Context, ps factory.ProviderSettings, config Config, defaultRegistry featuretypes.Registry, factories ...factory.ProviderFactory[FlaggerProvider, Config]) (Flagger, error) {
 
 	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/pkg/flagger")
 
-	providers := make(map[string]Provider)
+	providers := make(map[string]FlaggerProvider)
 	clients := make(map[string]*openfeature.Client)
 
 	for _, factory := range factories {
@@ -58,12 +66,12 @@ func New(ctx context.Context, ps factory.ProviderSettings, config Config, defaul
 	}, nil
 }
 
-func (f *flagger) Boolean(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (bool, string, error) {
+func (f *flagger) Boolean(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (bool, error) {
 	// check if the feature is present in the default registry
 	feature, _, err := f.defaultRegistry.GetByString(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
-		return false, "", err
+		return false, err
 	}
 
 	// get the default value from the feature from default registry
@@ -71,7 +79,7 @@ func (f *flagger) Boolean(ctx context.Context, flag string, evalCtx featuretypes
 	if err != nil {
 		// something which should never happen
 		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", "error", err, "flag", flag)
-		return false, "", err
+		return false, err
 	}
 
 	// * this logic can be optimised based on priority of the clients and short circuiting
@@ -84,19 +92,19 @@ func (f *flagger) Boolean(ctx context.Context, flag string, evalCtx featuretypes
 		}
 
 		if value != defaultValue {
-			return value, client.Metadata().Domain(), nil
+			return value, nil
 		}
 	}
 
-	return defaultValue, "defaultRegistry", nil
+	return defaultValue, nil
 }
 
-func (f *flagger) String(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (string, string, error) {
+func (f *flagger) String(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (string, error) {
 	// check if the feature is present in the default registry
 	feature, _, err := f.defaultRegistry.GetByString(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
-		return "", "", err
+		return "", err
 	}
 
 	// get the default value from the feature from default registry
@@ -104,7 +112,7 @@ func (f *flagger) String(ctx context.Context, flag string, evalCtx featuretypes.
 	if err != nil {
 		// something which should never happen
 		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", "error", err, "flag", flag)
-		return "", "", err
+		return "", err
 	}
 
 	// * this logic can be optimised based on priority of the clients and short circuiting
@@ -117,19 +125,19 @@ func (f *flagger) String(ctx context.Context, flag string, evalCtx featuretypes.
 		}
 
 		if value != defaultValue {
-			return value, client.Metadata().Domain(), nil
+			return value, nil
 		}
 	}
 
-	return defaultValue, "defaultRegistry", nil
+	return defaultValue, nil
 }
 
-func (f *flagger) Float(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (float64, string, error) {
+func (f *flagger) Float(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (float64, error) {
 	// check if the feature is present in the default registry
 	feature, _, err := f.defaultRegistry.GetByString(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
-		return 0, "", err
+		return 0, err
 	}
 
 	// get the default value from the feature from default registry
@@ -137,7 +145,7 @@ func (f *flagger) Float(ctx context.Context, flag string, evalCtx featuretypes.F
 	if err != nil {
 		// something which should never happen
 		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", "error", err, "flag", flag)
-		return 0, "", err
+		return 0, err
 	}
 
 	// * this logic can be optimised based on priority of the clients and short circuiting
@@ -150,19 +158,19 @@ func (f *flagger) Float(ctx context.Context, flag string, evalCtx featuretypes.F
 		}
 
 		if value != defaultValue {
-			return value, client.Metadata().Domain(), nil
+			return value, nil
 		}
 	}
 
-	return defaultValue, "defaultRegistry", nil
+	return defaultValue, nil
 }
 
-func (f *flagger) Int(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (int64, string, error) {
+func (f *flagger) Int(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (int64, error) {
 	// check if the feature is present in the default registry
 	feature, _, err := f.defaultRegistry.GetByString(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
-		return 0, "", err
+		return 0, err
 	}
 
 	// get the default value from the feature from default registry
@@ -170,7 +178,7 @@ func (f *flagger) Int(ctx context.Context, flag string, evalCtx featuretypes.Fla
 	if err != nil {
 		// something which should never happen
 		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", "error", err, "flag", flag)
-		return 0, "", err
+		return 0, err
 	}
 
 	// * this logic can be optimised based on priority of the clients and short circuiting
@@ -183,19 +191,19 @@ func (f *flagger) Int(ctx context.Context, flag string, evalCtx featuretypes.Fla
 		}
 
 		if value != defaultValue {
-			return value, client.Metadata().Domain(), nil
+			return value, nil
 		}
 	}
 
-	return defaultValue, "defaultRegistry", nil
+	return defaultValue, nil
 }
 
-func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (any, string, error) {
+func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (any, error) {
 	// check if the feature is present in the default registry
 	feature, _, err := f.defaultRegistry.GetByString(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
-		return nil, "", err
+		return nil, err
 	}
 
 	// get the default value from the feature from default registry
@@ -203,7 +211,7 @@ func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.
 	if err != nil {
 		// something which should never happen
 		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", "error", err, "flag", flag)
-		return nil, "", err
+		return nil, err
 	}
 
 	// * this logic can be optimised based on priority of the clients and short circuiting
@@ -216,68 +224,59 @@ func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.
 		}
 
 		if value != defaultValue {
-			return value, client.Metadata().Domain(), nil
+			return value, nil
 		}
 	}
 
-	return defaultValue, "defaultRegistry", nil
+	return defaultValue, nil
 }
 
 func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.GettableFeatureWithResolution, error) {
 	// get all the feature from the default registry
-	features := f.defaultRegistry.List()
+	allFeatures := f.defaultRegistry.List()
 
-	result := make([]*featuretypes.GettableFeatureWithResolution, 0, len(features))
+	// make a map of name of feature -> the dict we want to create from all features
+	featureMap := make(map[string]*featuretypes.GettableFeatureWithResolution, len(allFeatures))
 
-	for _, feature := range features {
-
+	for _, feature := range allFeatures {
 		variants := make(map[string]any, len(feature.Variants))
-		for name, variant := range feature.Variants {
-			variants[name.String()] = variant.Value
+		for name, value := range feature.Variants {
+			variants[name.String()] = value.Value
 		}
 
-		var resolvedValue any
-		var source string
-		var err error
-
-		switch feature.Kind {
-		case featuretypes.KindBoolean:
-			resolvedValue, source, err = f.Boolean(ctx, feature.Name.String(), evalCtx)
-			if err != nil {
-				return nil, err
-			}
-		case featuretypes.KindString:
-			resolvedValue, source, err = f.Boolean(ctx, feature.Name.String(), evalCtx)
-			if err != nil {
-				return nil, err
-			}
-		case featuretypes.KindFloat:
-			resolvedValue, source, err = f.Boolean(ctx, feature.Name.String(), evalCtx)
-			if err != nil {
-				return nil, err
-			}
-		case featuretypes.KindInt:
-			resolvedValue, source, err = f.Boolean(ctx, feature.Name.String(), evalCtx)
-			if err != nil {
-				return nil, err
-			}
-		case featuretypes.KindObject:
-			resolvedValue, source, err = f.Boolean(ctx, feature.Name.String(), evalCtx)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		result = append(result, &featuretypes.GettableFeatureWithResolution{
+		featureMap[feature.Name.String()] = &featuretypes.GettableFeatureWithResolution{
 			Name:           feature.Name.String(),
 			Kind:           feature.Kind.StringValue(),
 			Stage:          feature.Stage.StringValue(),
 			Description:    feature.Description,
 			DefaultVariant: feature.DefaultVariant.String(),
 			Variants:       variants,
-			ResolvedValue:  resolvedValue,
-			ValueSource:    source,
-		})
+			ResolvedValue:  feature.Variants[feature.DefaultVariant].Value,
+			ValueSource:    "default",
+		}
+	}
+
+	// now call each provider and fix the value in feature map
+	for _, provider := range f.providers {
+		pFeatures, err := provider.List(ctx)
+		if err != nil {
+			f.settings.Logger().WarnContext(ctx, "failed to get features from provider", "error", err, "provider", provider.Metadata().Name)
+			continue
+		}
+
+		// merge
+		for _, pFeature := range pFeatures {
+			if existing, ok := featureMap[pFeature.Name]; ok {
+				existing.ResolvedValue = pFeature.Value
+				existing.ValueSource = provider.Metadata().Name
+			}
+		}
+	}
+
+	result := make([]*featuretypes.GettableFeatureWithResolution, 0, len(allFeatures))
+
+	for _, f := range featureMap {
+		result = append(result, f)
 	}
 
 	return result, nil

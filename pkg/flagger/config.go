@@ -3,8 +3,12 @@ package flagger
 import "github.com/SigNoz/signoz/pkg/factory"
 
 type Config struct {
-	// Config are the overrides for the feature flags which come directly from the config file.
-	Config map[string]any `mapstructure:"config"`
+	// Features are the features and there overrides which come directly from the config file.
+	Config ConfigFeatures `mapstructure:"config"`
+}
+
+type ConfigFeatures struct {
+	EnableInterpolation bool `mapstructure:"enable_interpolation"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -16,7 +20,7 @@ func NewConfigFactory() factory.ConfigFactory {
 // newConfig creates a new config with the default values.
 func newConfig() factory.Config {
 	return &Config{
-		Config: make(map[string]any),
+		Config: ConfigFeatures{},
 	}
 }
 

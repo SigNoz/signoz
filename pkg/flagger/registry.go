@@ -14,16 +14,7 @@ func MustNewRegistry() featuretypes.Registry {
 			Stage:          featuretypes.StageStable,
 			Description:    "Enable interpolation in statement builder",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
-			Variants: map[featuretypes.Name]featuretypes.FeatureVariant{
-				featuretypes.MustNewName("disabled"): {
-					Variant: featuretypes.MustNewName("disabled"),
-					Value:   false,
-				},
-				featuretypes.MustNewName("enabled"): {
-					Variant: featuretypes.MustNewName("enabled"),
-					Value:   true,
-				},
-			},
+			Variants:       getBooleanVariants(),
 		},
 	)
 	if err != nil {
@@ -31,4 +22,17 @@ func MustNewRegistry() featuretypes.Registry {
 	}
 
 	return registry
+}
+
+func getBooleanVariants() map[featuretypes.Name]featuretypes.FeatureVariant {
+	return map[featuretypes.Name]featuretypes.FeatureVariant{
+		featuretypes.MustNewName("disabled"): {
+			Variant: featuretypes.MustNewName("disabled"),
+			Value:   false,
+		},
+		featuretypes.MustNewName("enabled"): {
+			Variant: featuretypes.MustNewName("enabled"),
+			Value:   true,
+		},
+	}
 }

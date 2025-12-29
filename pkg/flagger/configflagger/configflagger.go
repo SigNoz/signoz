@@ -2,8 +2,6 @@ package configflagger
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -17,55 +15,36 @@ type provider struct {
 	// This is the default registry that will be containing all the supported features along with there all possible variants
 	defaultRegistry featuretypes.Registry
 	// These are the feature variants that are configured in the config file and will be used as overrides
-	featureVariants map[featuretypes.Name]featuretypes.FeatureVariant
+	featureVariants map[featuretypes.Name]*featuretypes.FeatureVariant
 }
 
-func NewFactory(defaultRegistry featuretypes.Registry) factory.ProviderFactory[flagger.Provider, flagger.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("config"), func(ctx context.Context, ps factory.ProviderSettings, c flagger.Config) (flagger.Provider, error) {
+func NewFactory(defaultRegistry featuretypes.Registry) factory.ProviderFactory[flagger.FlaggerProvider, flagger.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("config"), func(ctx context.Context, ps factory.ProviderSettings, c flagger.Config) (flagger.FlaggerProvider, error) {
 		return New(ctx, ps, c, defaultRegistry)
 	})
 }
 
-func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, defaultRegistry featuretypes.Registry) (flagger.Provider, error) {
+func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, defaultRegistry featuretypes.Registry) (flagger.FlaggerProvider, error) {
 	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/pkg/flagger/configflagger")
 
-	featureVariants := make(map[featuretypes.Name]featuretypes.FeatureVariant)
+	featureVariants := make(map[featuretypes.Name]*featuretypes.FeatureVariant)
 
-	// read all the values from the config and build the featureVariants map
-	for key, value := range c.Config {
-		// Check if the feature is valid
-		feature, _, err := defaultRegistry.GetByString(key)
+	// handle each supported feature individually
+	featureValues := c.Config
+
+	// For feature: `enable_interpolation`
+	{
+		f, _, err := defaultRegistry.GetByString("enable_interpolation")
 		if err != nil {
 			return nil, err
 		}
-
-		if feature.Kind == featuretypes.KindObject {
-			// simply add the value to the featureVariants map
-			featureVariants[feature.Name] = featuretypes.FeatureVariant{
-				Variant: featuretypes.MustNewName("from_config"),
-				Value:   value,
+		if featureValues.EnableInterpolation && featureValues.EnableInterpolation != f.Variants[f.DefaultVariant].Value {
+			v, err := defaultRegistry.GetVariantByNameAndValue(f.Name.String(), featureValues.EnableInterpolation)
+			if err != nil {
+				return nil, err
 			}
-			continue
+			featureVariants[f.Name] = v
 		}
-
-		convertedValue, err := convertValueToKind(value, featuretypes.Kind(feature.Kind))
-		if err != nil {
-			return nil, err
-		}
-
-		// check if the value is valid
-		if ok, err := featuretypes.IsValidValue(feature, convertedValue); err != nil || !ok {
-			return nil, err
-		}
-
-		// get the variant by value
-		variant, err := featuretypes.VariantByValue(feature, convertedValue)
-		if err != nil {
-			return nil, err
-		}
-
-		// add the variant to the featureVariants map
-		featureVariants[feature.Name] = *variant
 	}
 
 	return &provider{
@@ -267,47 +246,21 @@ func (provider *provider) Hooks() []openfeature.Hook {
 }
 
 func (p *provider) List(ctx context.Context) ([]*featuretypes.GettableFeature, error) {
-	return nil, nil
-}
+	result := make([]*featuretypes.GettableFeature, 0, len(p.featureVariants))
 
-func convertValueToKind(value any, kind featuretypes.Kind) (any, error) {
-	switch kind {
-	case featuretypes.KindBoolean:
-		switch v := value.(type) {
-		case bool:
-			return v, nil
-		case string:
-			return strconv.ParseBool(v)
-		default:
-			return nil, fmt.Errorf("cannot convert %T to bool", value)
+	for featureName, variant := range p.featureVariants {
+		feature, _, err := p.defaultRegistry.Get(featureName)
+		if err != nil {
+			return nil, err
 		}
-	case featuretypes.KindString:
-		return fmt.Sprintf("%v", value), nil
-	case featuretypes.KindInt:
-		switch v := value.(type) {
-		case int64:
-			return v, nil
-		case int:
-			return int64(v), nil
-		case float64:
-			return int64(v), nil
-		case string:
-			return strconv.ParseInt(v, 10, 64)
-		default:
-			return nil, fmt.Errorf("cannot convert %T to int64", value)
-		}
-	case featuretypes.KindFloat:
-		switch v := value.(type) {
-		case float64:
-			return v, nil
-		case int:
-			return float64(v), nil
-		case string:
-			return strconv.ParseFloat(v, 64)
-		default:
-			return nil, fmt.Errorf("cannot convert %T to float64", value)
-		}
-	default:
-		return value, nil
+		result = append(result, &featuretypes.GettableFeature{
+			Name:        feature.Name.String(),
+			Kind:        feature.Kind.StringValue(),
+			Stage:       feature.Kind.StringValue(),
+			Description: feature.Description,
+			Value:       variant.Value,
+		})
 	}
+
+	return result, nil
 }

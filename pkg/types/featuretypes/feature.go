@@ -39,10 +39,21 @@ type FeatureVariant struct {
 	Value any `json:"value"`
 }
 
-// Consumer facing feature struct
 type GettableFeature struct {
-	*Feature
-	*FeatureVariant
+	Name        string `json:"name"`
+	Kind        string `json:"kind"`
+	Stage       string `json:"stage"`
+	Description string `json:"description"`
+	Value       any    `json:"value"`
+}
+
+type GettableFeatureWithVariants struct {
+	Name           string         `json:"name"`
+	Kind           string         `json:"kind"`
+	Stage          string         `json:"stage"`
+	Description    string         `json:"description"`
+	DefaultVariant string         `json:"defaultVariant"`
+	Variants       map[string]any `json:"variants"`
 }
 
 type GettableFeatureWithResolution struct {

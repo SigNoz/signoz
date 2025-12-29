@@ -227,7 +227,7 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 	)
 }
 
-func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, global global.Global, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, global global.Global, modules Modules, handlers Handlers, flaggerService flagger.Flagger) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
 	return factory.MustNewNamedMap(
 		signozapiserver.NewFactory(
 			orgGetter,
@@ -239,6 +239,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			implpreference.NewHandler(modules.Preference),
 			signozglobal.NewHandler(global),
 			implpromote.NewHandler(modules.Promote),
+			handlers.FlaggerHandler,
 		),
 	)
 }
@@ -257,7 +258,7 @@ func NewGlobalProviderFactories() factory.NamedMap[factory.ProviderFactory[globa
 	)
 }
 
-func NewFlaggerProviderFactories(defaultRegistry featuretypes.Registry) factory.NamedMap[factory.ProviderFactory[flagger.Provider, flagger.Config]] {
+func NewFlaggerProviderFactories(defaultRegistry featuretypes.Registry) factory.NamedMap[factory.ProviderFactory[flagger.FlaggerProvider, flagger.Config]] {
 	return factory.MustNewNamedMap(
 		configflagger.NewFactory(defaultRegistry),
 	)
