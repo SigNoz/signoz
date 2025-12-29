@@ -2231,8 +2231,6 @@ components:
         resolvedValue: {}
         stage:
           type: string
-        valueSource:
-          type: string
         variants:
           additionalProperties: {}
           nullable: true
