@@ -365,7 +365,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 		},
 		{Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:    "num_calls",
+				Name:    "call_rate",
 				Signal:  telemetrytypes.SignalMetrics,
 				Filter:  &qbtypes.Filter{Expression: filterExpr},
 				GroupBy: groupByService,
@@ -373,7 +373,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 					{
 						MetricName:       "signoz_calls_total",
 						Temporality:      metrictypes.Delta,
-						TimeAggregation:  metrictypes.TimeAggregationIncrease,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
@@ -382,7 +382,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 		},
 		{Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:    "num_errors",
+				Name:    "error_rate",
 				Signal:  telemetrytypes.SignalMetrics,
 				Filter:  &qbtypes.Filter{Expression: errorFilterExpr},
 				GroupBy: groupByService,
@@ -390,7 +390,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 					{
 						MetricName:       "signoz_calls_total",
 						Temporality:      metrictypes.Delta,
-						TimeAggregation:  metrictypes.TimeAggregationIncrease,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
@@ -524,8 +524,8 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 	type agg struct {
 		p99Latency float64
 		avgLatency float64
-		numCalls   float64
-		numErrors  float64
+		callRate   float64
+		errorRate  float64
 	}
 	perSvc := make(map[string]*agg)
 
@@ -543,10 +543,10 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 				a.p99Latency = val * math.Pow(10, 6) // convert to nanoseconds because frontend expects this
 			case "avg_latency":
 				a.avgLatency = val * math.Pow(10, 6) // convert to nanoseconds because frontend expects this
-			case "num_calls":
-				a.numCalls = val
-			case "num_errors":
-				a.numErrors = val
+			case "call_rate":
+				a.callRate = val
+			case "error_rate":
+				a.errorRate = val
 			}
 		}
 	}
@@ -554,28 +554,19 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 	out := make([]*servicetypesv1.ResponseItem, 0, len(perSvc))
 	serviceNames := make([]string, 0, len(perSvc))
 
-	periodSeconds := float64((endMs - startMs) / 1000)
-
 	for svcName, a := range perSvc {
 		// a.calls is already a rate (calls/second) from TimeAggregationRate, no need to divide by periodSeconds
 		errorRate := 0.0
-		if a.numCalls > 0 {
-			errorRate = a.numErrors * 100 / a.numCalls
-		}
-
-		callRate := 0.0
-		if a.numCalls > 0 {
-			callRate = a.numCalls / periodSeconds
+		if a.callRate > 0 {
+			errorRate = a.errorRate * 100 / a.callRate
 		}
 
 		out = append(out, &servicetypesv1.ResponseItem{
 			ServiceName:  svcName,
 			Percentile99: a.p99Latency,
 			AvgDuration:  a.avgLatency,
-			CallRate:     callRate,
+			CallRate:     a.callRate,
 			ErrorRate:    errorRate,
-			NumCalls:     uint64(a.numCalls),
-			NumErrors:    uint64(a.numErrors),
 			DataWarning:  servicetypesv1.DataWarning{TopLevelOps: []string{}},
 		})
 		serviceNames = append(serviceNames, svcName)
