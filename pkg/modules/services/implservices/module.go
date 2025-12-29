@@ -107,7 +107,7 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 	var items []*servicetypesv1.ResponseItem
 	var serviceNames []string
 	if useSpanMetrics {
-		items, serviceNames = m.mapSpanMetricsRespToServices(resp, startMs, endMs)
+		items, serviceNames = m.mapSpanMetricsRespToServices(resp)
 	} else {
 		items, serviceNames = m.mapQueryRangeRespToServices(resp, startMs, endMs)
 	}
@@ -153,8 +153,6 @@ func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req 
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("===> resp:", marshalInterface(resp))
 
 	var items []servicetypesv1.OperationItem
 	if useSpanMetrics {
@@ -507,7 +505,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 
 // TODO(nikhilmantri0902): add test cases for the functions in this PR
 // mapSpanMetricsRespToServices merges span-metrics scalar results keyed by service.name using queryName for aggregation mapping.
-func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, startMs, endMs uint64) ([]*servicetypesv1.ResponseItem, []string) {
+func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse) ([]*servicetypesv1.ResponseItem, []string) {
 	// TODO(nikhilmantri0902, in case of nil response, should we return nil directly from here for both values)
 	if resp == nil || len(resp.Data.Results) == 0 {
 		return []*servicetypesv1.ResponseItem{}, []string{}
@@ -912,13 +910,10 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 
 		// Process each row in this result and merge by operation name
 		queryName := sd.QueryName
-		fmt.Println("====> queryName:", queryName)
 		for _, row := range sd.Data {
 			if len(row) <= operationIdx || len(row) <= aggIdx {
 				continue
 			}
-
-			fmt.Println("====> row:", marshalInterface(row))
 
 			opName := fmt.Sprintf("%v", row[operationIdx])
 
