@@ -98,7 +98,7 @@ func VariantByValue[T comparable](feature *Feature, value T) (featureVariant *Fe
 		}
 	}
 
-	return
+	return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeFeatureVariantNotFound, "no variant found for value %v for feature %s in variants %v", value, feature.Name.String(), feature.Variants)
 }
 
 func IsValidValue[T comparable](feature *Feature, value T) (bool, error) {
