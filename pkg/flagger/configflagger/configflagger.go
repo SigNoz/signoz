@@ -236,11 +236,13 @@ func (p *provider) List(ctx context.Context) ([]*featuretypes.GettableFeature, e
 			return nil, err
 		}
 		result = append(result, &featuretypes.GettableFeature{
-			Name:        feature.Name.String(),
-			Kind:        feature.Kind.StringValue(),
-			Stage:       feature.Stage.StringValue(),
-			Description: feature.Description,
-			Value:       variant.Value,
+			Name:           feature.Name.String(),
+			Kind:           feature.Kind.StringValue(),
+			Stage:          feature.Stage.StringValue(),
+			Description:    feature.Description,
+			DefaultVariant: feature.DefaultVariant.String(),
+			Variants:       nil,
+			ResolvedValue:  variant.Value,
 		})
 	}
 

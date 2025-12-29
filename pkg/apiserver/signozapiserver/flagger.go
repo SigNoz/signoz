@@ -17,7 +17,7 @@ func (provider *provider) addFlaggerRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the supported features and their details",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*featuretypes.GettableFeatureWithResolution, 0),
+		Response:            make([]*featuretypes.GettableFeature, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},

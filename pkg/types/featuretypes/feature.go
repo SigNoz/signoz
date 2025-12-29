@@ -40,14 +40,6 @@ type FeatureVariant struct {
 }
 
 type GettableFeature struct {
-	Name        string `json:"name"`
-	Kind        string `json:"kind"`
-	Stage       string `json:"stage"`
-	Description string `json:"description"`
-	Value       any    `json:"value"`
-}
-
-type GettableFeatureWithResolution struct {
 	Name           string         `json:"name"`
 	Kind           string         `json:"kind"`
 	Stage          string         `json:"stage"`

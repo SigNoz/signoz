@@ -23,7 +23,7 @@ type Flagger interface {
 	Float(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (float64, error)
 	Int(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (int64, error)
 	Object(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (any, error)
-	List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.GettableFeatureWithResolution, error)
+	List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.GettableFeature, error)
 }
 
 // This is the concrete implementation of the Flagger interface.
@@ -233,12 +233,12 @@ func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.
 	return defaultValue, nil
 }
 
-func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.GettableFeatureWithResolution, error) {
+func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.GettableFeature, error) {
 	// get all the feature from the default registry
 	allFeatures := f.defaultRegistry.List()
 
 	// make a map of name of feature -> the dict we want to create from all features
-	featureMap := make(map[string]*featuretypes.GettableFeatureWithResolution, len(allFeatures))
+	featureMap := make(map[string]*featuretypes.GettableFeature, len(allFeatures))
 
 	for _, feature := range allFeatures {
 		variants := make(map[string]any, len(feature.Variants))
@@ -246,7 +246,7 @@ func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluati
 			variants[name.String()] = value.Value
 		}
 
-		featureMap[feature.Name.String()] = &featuretypes.GettableFeatureWithResolution{
+		featureMap[feature.Name.String()] = &featuretypes.GettableFeature{
 			Name:           feature.Name.String(),
 			Kind:           feature.Kind.StringValue(),
 			Stage:          feature.Stage.StringValue(),
@@ -268,12 +268,12 @@ func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluati
 		// merge
 		for _, pFeature := range pFeatures {
 			if existing, ok := featureMap[pFeature.Name]; ok {
-				existing.ResolvedValue = pFeature.Value
+				existing.ResolvedValue = pFeature.ResolvedValue
 			}
 		}
 	}
 
-	result := make([]*featuretypes.GettableFeatureWithResolution, 0, len(allFeatures))
+	result := make([]*featuretypes.GettableFeature, 0, len(allFeatures))
 
 	for _, f := range featureMap {
 		result = append(result, f)
