@@ -1420,7 +1420,12 @@ function MultiIngestionSettings(): JSX.Element {
 								onClick={(e): void => {
 									e.stopPropagation();
 									e.preventDefault();
-									handleCopyKey(`${globalConfig?.data.ingestion_url}`);
+
+									const ingestionURL = globalConfig?.data?.ingestion_url;
+
+									if (ingestionURL) {
+										handleCopyKey(ingestionURL);
+									}
 								}}
 							>
 								{globalConfig?.data.ingestion_url}

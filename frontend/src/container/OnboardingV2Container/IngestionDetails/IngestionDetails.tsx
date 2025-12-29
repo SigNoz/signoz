@@ -1,4 +1,6 @@
-import { Skeleton, Typography } from 'antd';
+import './IngestionDetails.styles.scss';
+
+import { Button, Skeleton, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { AxiosError } from 'axios';
 import { DOCS_BASE_URL } from 'constants/app';
@@ -57,6 +59,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 		isLoading: isLoadingGlobalConfig,
 		isFetching: isFetchingGlobalConfig,
 		isError: isErrorGlobalConfig,
+		error: globalConfigError,
 	} = useGetGlobalConfig(true);
 
 	const handleCopyKey = (text: string): void => {
@@ -118,14 +121,13 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 								</div>
 							) : (
 								<div className="ingestion-key-region-details-section">
-									{!isErrorGlobalConfig &&
-										!isLoadingGlobalConfig &&
-										!isFetchingGlobalConfig && (
-											<div className="ingestion-region-container">
-												<Typography.Text className="ingestion-region-label">
-													Ingestion URL
-												</Typography.Text>
+									{!isLoadingGlobalConfig && !isFetchingGlobalConfig && (
+										<div className="ingestion-region-container">
+											<Typography.Text className="ingestion-region-label">
+												Ingestion URL
+											</Typography.Text>
 
+											{!isErrorGlobalConfig && (
 												<Typography.Text className="ingestion-region-value-copy">
 													{globalConfig?.data?.ingestion_url}
 
@@ -146,8 +148,31 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 														}}
 													/>
 												</Typography.Text>
-											</div>
-										)}
+											)}
+
+											{isErrorGlobalConfig && (
+												<Tooltip
+													rootClassName="ingestion-url-error-tooltip"
+													arrow={false}
+													title={
+														<div className="ingestion-url-error-content">
+															<Typography.Text className="ingestion-url-error-code">
+																{globalConfigError?.getErrorCode()}
+															</Typography.Text>
+
+															<Typography.Text className="ingestion-url-error-message">
+																{globalConfigError?.getErrorMessage()}
+															</Typography.Text>
+														</div>
+													}
+													placement="topLeft"
+												>
+													<Button type="text" icon={<TriangleAlert size={14} />} />
+												</Tooltip>
+											)}
+										</div>
+									)}
+
 									<div className="ingestion-key-container">
 										<Typography.Text className="ingestion-key-label">
 											<Key size={14} /> Ingestion Key
