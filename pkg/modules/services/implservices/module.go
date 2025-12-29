@@ -209,6 +209,22 @@ func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUI
 	return items, nil
 }
 
+// executeQuery calls the underlying Querier with the provided request.
+func (m *module) executeQuery(ctx context.Context, orgUUID valuer.UUID, qr *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
+	return m.Querier.QueryRange(ctx, orgUUID, qr)
+}
+
+// attachTopLevelOps fetches top-level ops from TelemetryStore and attaches them to items.
+func (m *module) attachTopLevelOps(ctx context.Context, serviceNames []string, startMs uint64, items []*servicetypesv1.ResponseItem) error {
+	startTime := time.UnixMilli(int64(startMs)).UTC()
+	opsMap, err := m.FetchTopLevelOperations(ctx, startTime, serviceNames)
+	if err != nil {
+		return err
+	}
+	applyOpsToItems(items, opsMap)
+	return nil
+}
+
 // buildQueryRangeRequest constructs the QBv5 QueryRangeRequest and computes the time window.
 func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.QueryRangeRequest, uint64, uint64, error) {
 	// Parse start/end (nanoseconds) from strings and convert to milliseconds for QBv5
@@ -276,6 +292,76 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.Q
 	}
 
 	return &reqV5, startMs, endMs, nil
+}
+
+// mapQueryRangeRespToServices converts the raw query response into service items and collected service names.
+func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, startMs, endMs uint64) ([]*servicetypesv1.ResponseItem, []string) {
+	if resp == nil || len(resp.Data.Results) == 0 { // no rows
+		return []*servicetypesv1.ResponseItem{}, []string{}
+	}
+
+	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData) // empty rows
+	if !ok || sd == nil {
+		return []*servicetypesv1.ResponseItem{}, []string{}
+	}
+
+	// traces path (original behavior)
+	// this stores the index at which service name is found in the response
+	serviceNameRespIndex := -1
+	aggIndexMappings := map[int]int{}
+	for i, c := range sd.Columns {
+		switch c.Type {
+		case qbtypes.ColumnTypeGroup:
+			if c.TelemetryFieldKey.Name == "service.name" {
+				serviceNameRespIndex = i
+			}
+		case qbtypes.ColumnTypeAggregation:
+			aggIndexMappings[int(c.AggregationIndex)] = i
+		}
+	}
+
+	periodSeconds := float64((endMs - startMs) / 1000)
+
+	out := make([]*servicetypesv1.ResponseItem, 0, len(sd.Data))
+	serviceNames := make([]string, 0, len(sd.Data))
+	for _, row := range sd.Data {
+		svcName := fmt.Sprintf("%v", row[serviceNameRespIndex])
+		serviceNames = append(serviceNames, svcName)
+
+		p99 := toFloat(row, aggIndexMappings[0])
+		avgDuration := toFloat(row, aggIndexMappings[1])
+		numCalls := toUint64(row, aggIndexMappings[2])
+		numErrors := toUint64(row, aggIndexMappings[3])
+		num4xx := toUint64(row, aggIndexMappings[4])
+
+		callRate := 0.0
+		if numCalls > 0 {
+			callRate = float64(numCalls) / periodSeconds
+		}
+		errorRate := 0.0
+		if numCalls > 0 {
+			errorRate = float64(numErrors) * 100 / float64(numCalls) // percentage
+		}
+		fourXXRate := 0.0
+		if numCalls > 0 {
+			fourXXRate = float64(num4xx) * 100 / float64(numCalls) // percentage
+		}
+
+		out = append(out, &servicetypesv1.ResponseItem{
+			ServiceName:  svcName,
+			Percentile99: p99,
+			AvgDuration:  avgDuration,
+			NumCalls:     numCalls,
+			CallRate:     callRate,
+			NumErrors:    numErrors,
+			ErrorRate:    errorRate,
+			Num4XX:       num4xx,
+			FourXXRate:   fourXXRate,
+			DataWarning:  servicetypesv1.DataWarning{TopLevelOps: []string{}},
+		})
+	}
+
+	return out, serviceNames
 }
 
 // buildSpanMetricsQueryRangeRequest constructs span-metrics queries for services.
@@ -416,81 +502,6 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 	return &reqV5, startMs, endMs, nil
 }
 
-// executeQuery calls the underlying Querier with the provided request.
-func (m *module) executeQuery(ctx context.Context, orgUUID valuer.UUID, qr *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
-	return m.Querier.QueryRange(ctx, orgUUID, qr)
-}
-
-// mapQueryRangeRespToServices converts the raw query response into service items and collected service names.
-func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, startMs, endMs uint64) ([]*servicetypesv1.ResponseItem, []string) {
-	if resp == nil || len(resp.Data.Results) == 0 { // no rows
-		return []*servicetypesv1.ResponseItem{}, []string{}
-	}
-
-	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData) // empty rows
-	if !ok || sd == nil {
-		return []*servicetypesv1.ResponseItem{}, []string{}
-	}
-
-	// traces path (original behavior)
-	// this stores the index at which service name is found in the response
-	serviceNameRespIndex := -1
-	aggIndexMappings := map[int]int{}
-	for i, c := range sd.Columns {
-		switch c.Type {
-		case qbtypes.ColumnTypeGroup:
-			if c.TelemetryFieldKey.Name == "service.name" {
-				serviceNameRespIndex = i
-			}
-		case qbtypes.ColumnTypeAggregation:
-			aggIndexMappings[int(c.AggregationIndex)] = i
-		}
-	}
-
-	periodSeconds := float64((endMs - startMs) / 1000)
-
-	out := make([]*servicetypesv1.ResponseItem, 0, len(sd.Data))
-	serviceNames := make([]string, 0, len(sd.Data))
-	for _, row := range sd.Data {
-		svcName := fmt.Sprintf("%v", row[serviceNameRespIndex])
-		serviceNames = append(serviceNames, svcName)
-
-		p99 := toFloat(row, aggIndexMappings[0])
-		avgDuration := toFloat(row, aggIndexMappings[1])
-		numCalls := toUint64(row, aggIndexMappings[2])
-		numErrors := toUint64(row, aggIndexMappings[3])
-		num4xx := toUint64(row, aggIndexMappings[4])
-
-		callRate := 0.0
-		if numCalls > 0 {
-			callRate = float64(numCalls) / periodSeconds
-		}
-		errorRate := 0.0
-		if numCalls > 0 {
-			errorRate = float64(numErrors) * 100 / float64(numCalls) // percentage
-		}
-		fourXXRate := 0.0
-		if numCalls > 0 {
-			fourXXRate = float64(num4xx) * 100 / float64(numCalls) // percentage
-		}
-
-		out = append(out, &servicetypesv1.ResponseItem{
-			ServiceName:  svcName,
-			Percentile99: p99,
-			AvgDuration:  avgDuration,
-			NumCalls:     numCalls,
-			CallRate:     callRate,
-			NumErrors:    numErrors,
-			ErrorRate:    errorRate,
-			Num4XX:       num4xx,
-			FourXXRate:   fourXXRate,
-			DataWarning:  servicetypesv1.DataWarning{TopLevelOps: []string{}},
-		})
-	}
-
-	return out, serviceNames
-}
-
 // TODO(nikhilmantri0902): add test cases for the functions in this PR
 // mapSpanMetricsRespToServices merges span-metrics scalar results keyed by service.name using queryName for aggregation mapping.
 func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, startMs, endMs uint64) ([]*servicetypesv1.ResponseItem, []string) {
@@ -573,17 +584,6 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 	}
 
 	return out, serviceNames
-}
-
-// attachTopLevelOps fetches top-level ops from TelemetryStore and attaches them to items.
-func (m *module) attachTopLevelOps(ctx context.Context, serviceNames []string, startMs uint64, items []*servicetypesv1.ResponseItem) error {
-	startTime := time.UnixMilli(int64(startMs)).UTC()
-	opsMap, err := m.FetchTopLevelOperations(ctx, startTime, serviceNames)
-	if err != nil {
-		return err
-	}
-	applyOpsToItems(items, opsMap)
-	return nil
 }
 
 func (m *module) buildTopOpsQueryRangeRequest(req *servicetypesv1.OperationsRequest) (*qbtypes.QueryRangeRequest, error) {
@@ -811,7 +811,7 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 						Temporality:      metrictypes.Delta,
 						TimeAggregation:  metrictypes.TimeAggregationIncrease,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
-						ReduceTo:         qbtypes.ReduceToAvg,
+						ReduceTo:         qbtypes.ReduceToSum,
 					},
 				},
 			},
@@ -828,7 +828,7 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 						Temporality:      metrictypes.Delta,
 						TimeAggregation:  metrictypes.TimeAggregationIncrease,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
-						ReduceTo:         qbtypes.ReduceToAvg,
+						ReduceTo:         qbtypes.ReduceToSum,
 					},
 				},
 			},
@@ -856,11 +856,11 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 
 	// Group data by operation name and merge aggregations from all results
 	type agg struct {
-		p50    float64
-		p95    float64
-		p99    float64
-		calls  uint64
-		errors uint64
+		p50       float64
+		p95       float64
+		p99       float64
+		numCalls  uint64
+		numErrors uint64
 	}
 	perOp := make(map[string]*agg)
 
@@ -910,7 +910,6 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 			}
 
 			opName := fmt.Sprintf("%v", row[operationIdx])
-			val := toFloat(row, aggIdx)
 
 			a := perOp[opName]
 			if a == nil {
@@ -921,15 +920,15 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 			// Map values based on queryName
 			switch queryName {
 			case "p50_latency":
-				a.p50 = val * math.Pow(10, 6) // convert seconds to nanoseconds
+				a.p50 = toFloat(row, aggIdx) * math.Pow(10, 6) // convert seconds to nanoseconds
 			case "p95_latency":
-				a.p95 = val * math.Pow(10, 6)
+				a.p95 = toFloat(row, aggIdx) * math.Pow(10, 6)
 			case "p99_latency":
-				a.p99 = val * math.Pow(10, 6)
+				a.p99 = toFloat(row, aggIdx) * math.Pow(10, 6)
 			case "num_calls":
-				a.calls = uint64(val)
+				a.numCalls = toUint64(row, aggIdx)
 			case "num_errors":
-				a.errors = uint64(val)
+				a.numErrors = toUint64(row, aggIdx)
 			}
 		}
 	}
@@ -946,120 +945,8 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 			P50:        a.p50,
 			P95:        a.p95,
 			P99:        a.p99,
-			NumCalls:   a.calls,
-			ErrorCount: a.errors,
-		})
-	}
-
-	// Sort by P99 descending (matching traces behavior)
-	sort.Slice(out, func(i, j int) bool {
-		return out[i].P99 > out[j].P99
-	})
-
-	return out
-}
-
-// mapSpanMetricsEntryPointOpsResp maps span-metrics scalar results to OperationItem array for entry point operations.
-// Uses queryName for aggregation mapping.
-func (m *module) mapSpanMetricsEntryPointOpsResp(resp *qbtypes.QueryRangeResponse) []servicetypesv1.OperationItem {
-	if resp == nil || len(resp.Data.Results) == 0 {
-		return []servicetypesv1.OperationItem{}
-	}
-
-	// Group data by operation name and merge aggregations from all results
-	type agg struct {
-		p50    float64
-		p95    float64
-		p99    float64
-		calls  uint64
-		errors uint64
-	}
-	perOp := make(map[string]*agg)
-
-	// Iterate through all results (each query returns a separate ScalarData)
-	for _, result := range resp.Data.Results {
-		sd, ok := result.(*qbtypes.ScalarData)
-		if !ok || sd == nil {
-			continue
-		}
-
-		// Skip empty results
-		if len(sd.Columns) == 0 || len(sd.Data) == 0 {
-			continue
-		}
-
-		// Find operation column index (should be consistent across all results)
-		operationIdx := -1
-		for i, c := range sd.Columns {
-			if c.Type == qbtypes.ColumnTypeGroup && c.Name == "operation" {
-				operationIdx = i
-				break
-			}
-		}
-
-		if operationIdx == -1 {
-			continue
-		}
-
-		// Find aggregation column index
-		aggIdx := -1
-		for i, c := range sd.Columns {
-			if c.Type == qbtypes.ColumnTypeAggregation {
-				aggIdx = i
-				break
-			}
-		}
-
-		if aggIdx == -1 {
-			continue
-		}
-
-		// Process each row in this result and merge by operation name
-		queryName := sd.QueryName
-		for _, row := range sd.Data {
-			if len(row) <= operationIdx || len(row) <= aggIdx {
-				continue
-			}
-
-			opName := fmt.Sprintf("%v", row[operationIdx])
-			val := toFloat(row, aggIdx)
-
-			a := perOp[opName]
-			if a == nil {
-				a = &agg{}
-				perOp[opName] = a
-			}
-
-			// Map values based on queryName
-			switch queryName {
-			case "p50_latency":
-				a.p50 = val * math.Pow(10, 6) // convert seconds to nanoseconds
-			case "p95_latency":
-				a.p95 = val * math.Pow(10, 6)
-			case "p99_latency":
-				a.p99 = val * math.Pow(10, 6)
-			case "num_calls":
-				a.calls = uint64(val)
-			case "num_errors":
-				a.errors = uint64(val)
-			}
-		}
-	}
-
-	if len(perOp) == 0 {
-		return []servicetypesv1.OperationItem{}
-	}
-
-	// Convert to OperationItem array and sort by P99 desc
-	out := make([]servicetypesv1.OperationItem, 0, len(perOp))
-	for opName, a := range perOp {
-		out = append(out, servicetypesv1.OperationItem{
-			Name:       opName,
-			P50:        a.p50,
-			P95:        a.p95,
-			P99:        a.p99,
-			NumCalls:   a.calls,
-			ErrorCount: a.errors,
+			NumCalls:   a.numCalls,
+			ErrorCount: a.numErrors,
 		})
 	}
 
@@ -1197,7 +1084,7 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 						Temporality:      metrictypes.Delta,
 						TimeAggregation:  metrictypes.TimeAggregationIncrease,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
-						ReduceTo:         qbtypes.ReduceToAvg,
+						ReduceTo:         qbtypes.ReduceToSum,
 					},
 				},
 			},
@@ -1214,7 +1101,7 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 						Temporality:      metrictypes.Delta,
 						TimeAggregation:  metrictypes.TimeAggregationIncrease,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
-						ReduceTo:         qbtypes.ReduceToAvg,
+						ReduceTo:         qbtypes.ReduceToSum,
 					},
 				},
 			},
@@ -1232,6 +1119,117 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 	}
 
 	return &reqV5, nil
+}
+
+// mapSpanMetricsEntryPointOpsResp maps span-metrics scalar results to OperationItem array for entry point operations.
+// Uses queryName for aggregation mapping.
+func (m *module) mapSpanMetricsEntryPointOpsResp(resp *qbtypes.QueryRangeResponse) []servicetypesv1.OperationItem {
+	if resp == nil || len(resp.Data.Results) == 0 {
+		return []servicetypesv1.OperationItem{}
+	}
+
+	// Group data by operation name and merge aggregations from all results
+	type agg struct {
+		p50       float64
+		p95       float64
+		p99       float64
+		numCalls  uint64
+		numErrors uint64
+	}
+	perOp := make(map[string]*agg)
+
+	// Iterate through all results (each query returns a separate ScalarData)
+	for _, result := range resp.Data.Results {
+		sd, ok := result.(*qbtypes.ScalarData)
+		if !ok || sd == nil {
+			continue
+		}
+
+		// Skip empty results
+		if len(sd.Columns) == 0 || len(sd.Data) == 0 {
+			continue
+		}
+
+		// Find operation column index (should be consistent across all results)
+		operationIdx := -1
+		for i, c := range sd.Columns {
+			if c.Type == qbtypes.ColumnTypeGroup && c.Name == "operation" {
+				operationIdx = i
+				break
+			}
+		}
+
+		if operationIdx == -1 {
+			continue
+		}
+
+		// Find aggregation column index
+		aggIdx := -1
+		for i, c := range sd.Columns {
+			if c.Type == qbtypes.ColumnTypeAggregation {
+				aggIdx = i
+				break
+			}
+		}
+
+		if aggIdx == -1 {
+			continue
+		}
+
+		// Process each row in this result and merge by operation name
+		queryName := sd.QueryName
+		for _, row := range sd.Data {
+			if len(row) <= operationIdx || len(row) <= aggIdx {
+				continue
+			}
+
+			opName := fmt.Sprintf("%v", row[operationIdx])
+
+			a := perOp[opName]
+			if a == nil {
+				a = &agg{}
+				perOp[opName] = a
+			}
+
+			// Map values based on queryName
+			switch queryName {
+			case "p50_latency":
+				a.p50 = toFloat(row, aggIdx) * math.Pow(10, 6) // convert seconds to nanoseconds
+			case "p95_latency":
+				a.p95 = toFloat(row, aggIdx) * math.Pow(10, 6)
+			case "p99_latency":
+				a.p99 = toFloat(row, aggIdx) * math.Pow(10, 6)
+			case "num_calls":
+				a.numCalls = toUint64(row, aggIdx)
+			case "num_errors":
+				a.numErrors = toUint64(row, aggIdx)
+			}
+		}
+	}
+
+	if len(perOp) == 0 {
+		return []servicetypesv1.OperationItem{}
+	}
+
+	// Convert to OperationItem array and sort by P99 desc
+	out := make([]servicetypesv1.OperationItem, 0, len(perOp))
+	for opName, a := range perOp {
+		out = append(out, servicetypesv1.OperationItem{
+			Name:       opName,
+			P50:        a.p50,
+			P95:        a.p95,
+			P99:        a.p99,
+			NumCalls:   a.numCalls,
+			ErrorCount: a.numErrors,
+		})
+	}
+
+	// Sort by P99 descending (matching traces behavior)
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].P99 > out[j].P99
+	})
+
+	return out
 }
 
 func (m *module) buildEntryPointOpsQueryRangeRequest(req *servicetypesv1.OperationsRequest) (*qbtypes.QueryRangeRequest, error) {
