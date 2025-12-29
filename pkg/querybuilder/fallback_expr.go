@@ -284,11 +284,6 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 	return tblFieldName, value
 }
 
-// TODO(nikhilmantri0902, srikanthccv): Replacing all usages of castFloatHack with castFloat in
-// DataTypeCollisionHandledFieldName, as metrics contain float data type fields in labels that are empty
-// string for example http.status_code. Hence 'OrNull' is needed.
-// but with this change, OrNull functions in clickhouse only accept string type, hence adding
-// toString below.
 func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
 func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
 func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
