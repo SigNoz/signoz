@@ -86,7 +86,6 @@ func TestNewProviderFactories(t *testing.T) {
 			nil,
 			Modules{},
 			Handlers{},
-			nil,
 		)
 	})
 }

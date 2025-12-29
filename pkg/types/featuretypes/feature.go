@@ -47,15 +47,6 @@ type GettableFeature struct {
 	Value       any    `json:"value"`
 }
 
-type GettableFeatureWithVariants struct {
-	Name           string         `json:"name"`
-	Kind           string         `json:"kind"`
-	Stage          string         `json:"stage"`
-	Description    string         `json:"description"`
-	DefaultVariant string         `json:"defaultVariant"`
-	Variants       map[string]any `json:"variants"`
-}
-
 type GettableFeatureWithResolution struct {
 	Name           string         `json:"name"`
 	Kind           string         `json:"kind"`
@@ -64,7 +55,6 @@ type GettableFeatureWithResolution struct {
 	DefaultVariant string         `json:"defaultVariant"`
 	Variants       map[string]any `json:"variants"`
 	ResolvedValue  any            `json:"resolvedValue"`
-	ValueSource    string         `json:"valueSource"`
 }
 
 // This is the helper function to get the value of a variant of a feature
@@ -145,4 +135,17 @@ func allFeatureValues[T any](feature *Feature) (values []T, err error) {
 		values = append(values, v)
 	}
 	return values, nil
+}
+
+func GetBooleanVariants() map[Name]FeatureVariant {
+	return map[Name]FeatureVariant{
+		MustNewName("disabled"): {
+			Variant: MustNewName("disabled"),
+			Value:   false,
+		},
+		MustNewName("enabled"): {
+			Variant: MustNewName("enabled"),
+			Value:   true,
+		},
+	}
 }

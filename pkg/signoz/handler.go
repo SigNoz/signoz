@@ -4,7 +4,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
-	flaggerPkg "github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
@@ -38,10 +38,10 @@ type Handlers struct {
 	Services        services.Handler
 	MetricsExplorer metricsexplorer.Handler
 	Global          global.Handler
-	FlaggerHandler  flaggerPkg.Handler
+	FlaggerHandler  flagger.Handler
 }
 
-func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing, global global.Global, flagger flaggerPkg.Flagger) Handlers {
+func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing, global global.Global, flaggerService flagger.Flagger) Handlers {
 	return Handlers{
 		SavedView:       implsavedview.NewHandler(modules.SavedView),
 		Apdex:           implapdex.NewHandler(modules.Apdex),
@@ -53,6 +53,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, que
 		MetricsExplorer: implmetricsexplorer.NewHandler(modules.MetricsExplorer),
 		SpanPercentile:  implspanpercentile.NewHandler(modules.SpanPercentile),
 		Global:          signozglobal.NewHandler(global),
-		FlaggerHandler:  flaggerPkg.NewHandler(flagger, providerSettings),
+		FlaggerHandler:  flagger.NewHandler(flaggerService, modules.OrgGetter),
 	}
 }

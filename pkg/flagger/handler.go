@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -16,25 +17,42 @@ type Handler interface {
 }
 
 type handler struct {
-	flagger          Flagger
-	providerSettings factory.ProviderSettings
+	flagger   Flagger
+	orgGetter organization.Getter
 }
 
-func NewHandler(flagger Flagger, providerSettings factory.ProviderSettings) Handler {
+func NewHandler(flagger Flagger, orgGetter organization.Getter) Handler {
 	return &handler{
-		flagger:          flagger,
-		providerSettings: providerSettings,
+		flagger:   flagger,
+		orgGetter: orgGetter,
 	}
 }
 
-func (h *handler) GetFeatures(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) GetFeatures(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	// Create evaluation context (could get orgID from claims if needed)
-	evalCtx := featuretypes.NewFlaggerEvaluationContext(valuer.GenerateUUID())
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-	features, err := h.flagger.List(ctx, evalCtx)
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	org, err := handler.orgGetter.Get(ctx, orgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(org.ID)
+
+	features, err := handler.flagger.List(ctx, evalCtx)
 	if err != nil {
 		render.Error(rw, err)
 		return

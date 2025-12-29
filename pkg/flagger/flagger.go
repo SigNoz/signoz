@@ -254,7 +254,6 @@ func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluati
 			DefaultVariant: feature.DefaultVariant.String(),
 			Variants:       variants,
 			ResolvedValue:  feature.Variants[feature.DefaultVariant].Value,
-			ValueSource:    "default",
 		}
 	}
 
@@ -270,7 +269,6 @@ func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluati
 		for _, pFeature := range pFeatures {
 			if existing, ok := featureMap[pFeature.Name]; ok {
 				existing.ResolvedValue = pFeature.Value
-				existing.ValueSource = provider.Metadata().Name
 			}
 		}
 	}

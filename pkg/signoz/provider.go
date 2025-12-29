@@ -227,7 +227,7 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 	)
 }
 
-func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, global global.Global, modules Modules, handlers Handlers, flaggerService flagger.Flagger) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, global global.Global, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
 	return factory.MustNewNamedMap(
 		signozapiserver.NewFactory(
 			orgGetter,
