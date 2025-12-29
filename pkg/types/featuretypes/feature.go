@@ -1,8 +1,6 @@
 package featuretypes
 
 import (
-	"slices"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/open-feature/go-sdk/openfeature"
 )
@@ -99,34 +97,6 @@ func VariantByValue[T comparable](feature *Feature, value T) (featureVariant *Fe
 	}
 
 	return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeFeatureVariantNotFound, "no variant found for value %v for feature %s in variants %v", value, feature.Name.String(), feature.Variants)
-}
-
-func IsValidValue[T comparable](feature *Feature, value T) (bool, error) {
-	if feature.Kind == KindObject {
-		return true, nil
-	}
-
-	values, err := allFeatureValues[T](feature)
-	if err != nil {
-		return false, err
-	}
-
-	if !slices.Contains(values, value) {
-		return false, errors.Newf(errors.TypeInvalidInput, ErrCodeFeatureValueNotFound, "value %v not found for feature %s in variants %v", value, feature.Name.String(), feature.Variants)
-	}
-	return true, nil
-}
-
-func allFeatureValues[T any](feature *Feature) (values []T, err error) {
-	values = make([]T, 0, len(feature.Variants))
-	for _, variant := range feature.Variants {
-		v, _, err := VariantValue[T](feature, variant.Variant)
-		if err != nil {
-			return nil, err
-		}
-		values = append(values, v)
-	}
-	return values, nil
 }
 
 func GetBooleanVariants() map[Name]FeatureVariant {

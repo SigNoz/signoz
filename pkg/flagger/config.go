@@ -8,7 +8,6 @@ type Config struct {
 }
 
 type ConfigFeatures struct {
-	EnableInterpolation bool `mapstructure:"enable_interpolation"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
