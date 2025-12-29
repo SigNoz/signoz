@@ -29,24 +29,6 @@ func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, def
 
 	featureVariants := make(map[featuretypes.Name]*featuretypes.FeatureVariant)
 
-	// handle each supported feature individually
-	featureValues := c.Config
-
-	// For feature: `enable_interpolation`
-	{
-		f, _, err := defaultRegistry.GetByString("enable_interpolation")
-		if err != nil {
-			return nil, err
-		}
-		if featureValues.EnableInterpolation != f.Variants[f.DefaultVariant].Value {
-			v, err := defaultRegistry.GetVariantByNameAndValue(f.Name.String(), featureValues.EnableInterpolation)
-			if err != nil {
-				return nil, err
-			}
-			featureVariants[f.Name] = v
-		}
-	}
-
 	return &provider{
 		config:          c,
 		settings:        settings,

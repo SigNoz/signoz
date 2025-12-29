@@ -7,16 +7,7 @@ var (
 )
 
 func MustNewRegistry() featuretypes.Registry {
-	registry, err := featuretypes.NewRegistry(
-		&featuretypes.Feature{
-			Name:           FeatureEnableInterpolation,
-			Kind:           featuretypes.KindBoolean,
-			Stage:          featuretypes.StageStable,
-			Description:    "Enable interpolation in statement builder",
-			DefaultVariant: featuretypes.MustNewName("disabled"),
-			Variants:       featuretypes.GetBooleanVariants(),
-		},
-	)
+	registry, err := featuretypes.NewRegistry()
 	if err != nil {
 		panic(err)
 	}
