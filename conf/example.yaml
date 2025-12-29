@@ -286,10 +286,10 @@ flagger:
     boolean:
       enable_interpolation: true
     string:
-      feature_X: value
+      feature_x: value
     float:
-      feature_Y: 0.0
+      feature_y: 0.0
     integer:
-      feature_Z: -1
+      feature_z: -1
     object:
-      feature_W: {}
+      feature_w: {}
