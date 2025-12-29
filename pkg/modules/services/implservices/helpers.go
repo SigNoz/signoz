@@ -2,12 +2,24 @@ package implservices
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 )
+
+func getOrDefaultEnv(key string, fallback string) string {
+	log.Println("key", key, "fallback", fallback)
+
+	v := os.Getenv(key)
+	if len(v) == 0 {
+		return fallback
+	}
+	return v
+}
 
 // validateTagFilterItems validates the tag filter items. This should be used before using
 // buildFilterExpression or any other function that uses tag filter items.

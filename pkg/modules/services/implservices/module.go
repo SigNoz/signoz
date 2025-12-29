@@ -12,7 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -85,7 +84,6 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 	)
 	// Prefer span metrics path when enabled via flag or explicit override
 	// TODO(nikhilmantri0902): the following constant should be read from the en variable in this module itself.
-	useSpanMetrics := constants.PreferSpanMetrics
 	if useSpanMetrics {
 		queryRangeReq, startMs, endMs, err = m.buildSpanMetricsQueryRangeRequest(req)
 		if err != nil {
@@ -138,7 +136,6 @@ func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req 
 		err error
 	)
 	// Prefer span metrics path when enabled via flag
-	useSpanMetrics := constants.PreferSpanMetrics
 	if useSpanMetrics {
 		qr, err = m.buildSpanMetricsTopOpsQueryRangeRequest(req)
 		if err != nil {
@@ -181,7 +178,6 @@ func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUI
 		err error
 	)
 	// Prefer span metrics path when enabled via flag
-	useSpanMetrics := constants.PreferSpanMetrics
 	if useSpanMetrics {
 		qr, err = m.buildSpanMetricsEntryPointOpsQueryRangeRequest(req)
 		if err != nil {
