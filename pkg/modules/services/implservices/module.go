@@ -2,7 +2,6 @@ package implservices
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math"
 	"sort"
@@ -847,11 +846,6 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 	}
 
 	return &reqV5, nil
-}
-
-func marshalInterface(inter any) string {
-	b, _ := json.Marshal(inter)
-	return string(b)
 }
 
 // mapSpanMetricsTopOpsResp maps span-metrics scalar results to OperationItem array using queryName for aggregation mapping.
