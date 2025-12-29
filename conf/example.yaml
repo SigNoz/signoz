@@ -283,4 +283,13 @@ tokenizer:
 flagger:
   # Config are the overrides for the feature flags which come directly from the config file.
   config:
-    enable_interpolation: true
+    boolean:
+      enable_interpolation: true
+    string:
+      feature_X: value
+    float:
+      feature_Y: 0.0
+    integer:
+      feature_Z: -1
+    object:
+      feature_W: {}

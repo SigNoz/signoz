@@ -13,26 +13,96 @@ type provider struct {
 	config   flagger.Config
 	settings factory.ScopedProviderSettings
 	// This is the default registry that will be containing all the supported features along with there all possible variants
-	defaultRegistry featuretypes.Registry
+	registry featuretypes.Registry
 	// These are the feature variants that are configured in the config file and will be used as overrides
 	featureVariants map[featuretypes.Name]*featuretypes.FeatureVariant
 }
 
-func NewFactory(defaultRegistry featuretypes.Registry) factory.ProviderFactory[flagger.FlaggerProvider, flagger.Config] {
+func NewFactory(registry featuretypes.Registry) factory.ProviderFactory[flagger.FlaggerProvider, flagger.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("config"), func(ctx context.Context, ps factory.ProviderSettings, c flagger.Config) (flagger.FlaggerProvider, error) {
-		return New(ctx, ps, c, defaultRegistry)
+		return New(ctx, ps, c, registry)
 	})
 }
 
-func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, defaultRegistry featuretypes.Registry) (flagger.FlaggerProvider, error) {
+func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, registry featuretypes.Registry) (flagger.FlaggerProvider, error) {
 	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/pkg/flagger/configflagger")
 
 	featureVariants := make(map[featuretypes.Name]*featuretypes.FeatureVariant)
 
+	for name, value := range c.Config.Boolean {
+		feature, _, err := registry.GetByString(name)
+		if err != nil {
+			return nil, err
+		}
+
+		variant, err := featuretypes.VariantByValue(feature, value)
+		if err != nil {
+			return nil, err
+		}
+
+		featureVariants[feature.Name] = variant
+	}
+
+	for name, value := range c.Config.String {
+		feature, _, err := registry.GetByString(name)
+		if err != nil {
+			return nil, err
+		}
+
+		variant, err := featuretypes.VariantByValue(feature, value)
+		if err != nil {
+			return nil, err
+		}
+
+		featureVariants[feature.Name] = variant
+	}
+
+	for name, value := range c.Config.Float {
+		feature, _, err := registry.GetByString(name)
+		if err != nil {
+			return nil, err
+		}
+
+		variant, err := featuretypes.VariantByValue(feature, value)
+		if err != nil {
+			return nil, err
+		}
+
+		featureVariants[feature.Name] = variant
+	}
+
+	for name, value := range c.Config.Integer {
+		feature, _, err := registry.GetByString(name)
+		if err != nil {
+			return nil, err
+		}
+
+		variant, err := featuretypes.VariantByValue(feature, value)
+		if err != nil {
+			return nil, err
+		}
+
+		featureVariants[feature.Name] = variant
+	}
+
+	for name, value := range c.Config.Object {
+		feature, _, err := registry.GetByString(name)
+		if err != nil {
+			return nil, err
+		}
+
+		variant, err := featuretypes.VariantByValue(feature, value)
+		if err != nil {
+			return nil, err
+		}
+
+		featureVariants[feature.Name] = variant
+	}
+
 	return &provider{
 		config:          c,
 		settings:        settings,
-		defaultRegistry: defaultRegistry,
+		registry:        registry,
 		featureVariants: featureVariants,
 	}, nil
 }
@@ -45,7 +115,7 @@ func (provider *provider) Metadata() openfeature.Metadata {
 
 func (p *provider) BooleanEvaluation(ctx context.Context, flag string, defaultValue bool, evalCtx openfeature.FlattenedContext) openfeature.BoolResolutionDetail {
 	// check if the feature is present in the default registry
-	feature, detail, err := p.defaultRegistry.GetByString(flag)
+	feature, detail, err := p.registry.GetByString(flag)
 	if err != nil {
 		return openfeature.BoolResolutionDetail{
 			Value:                    defaultValue,
@@ -81,7 +151,7 @@ func (p *provider) BooleanEvaluation(ctx context.Context, flag string, defaultVa
 
 func (p *provider) FloatEvaluation(ctx context.Context, flag string, defaultValue float64, evalCtx openfeature.FlattenedContext) openfeature.FloatResolutionDetail {
 	// check if the feature is present in the default registry
-	feature, detail, err := p.defaultRegistry.GetByString(flag)
+	feature, detail, err := p.registry.GetByString(flag)
 	if err != nil {
 		return openfeature.FloatResolutionDetail{
 			Value:                    defaultValue,
@@ -117,7 +187,7 @@ func (p *provider) FloatEvaluation(ctx context.Context, flag string, defaultValu
 
 func (p *provider) StringEvaluation(ctx context.Context, flag string, defaultValue string, evalCtx openfeature.FlattenedContext) openfeature.StringResolutionDetail {
 	// check if the feature is present in the default registry
-	feature, detail, err := p.defaultRegistry.GetByString(flag)
+	feature, detail, err := p.registry.GetByString(flag)
 	if err != nil {
 		return openfeature.StringResolutionDetail{
 			Value:                    defaultValue,
@@ -153,7 +223,7 @@ func (p *provider) StringEvaluation(ctx context.Context, flag string, defaultVal
 
 func (p *provider) IntEvaluation(ctx context.Context, flag string, defaultValue int64, evalCtx openfeature.FlattenedContext) openfeature.IntResolutionDetail {
 	// check if the feature is present in the default registry
-	feature, detail, err := p.defaultRegistry.GetByString(flag)
+	feature, detail, err := p.registry.GetByString(flag)
 	if err != nil {
 		return openfeature.IntResolutionDetail{
 			Value:                    defaultValue,
@@ -189,7 +259,7 @@ func (p *provider) IntEvaluation(ctx context.Context, flag string, defaultValue 
 
 func (p *provider) ObjectEvaluation(ctx context.Context, flag string, defaultValue any, evalCtx openfeature.FlattenedContext) openfeature.InterfaceResolutionDetail {
 	// check if the feature is present in the default registry
-	feature, detail, err := p.defaultRegistry.GetByString(flag)
+	feature, detail, err := p.registry.GetByString(flag)
 	if err != nil {
 		return openfeature.InterfaceResolutionDetail{
 			Value:                    defaultValue,
@@ -231,7 +301,7 @@ func (p *provider) List(ctx context.Context) ([]*featuretypes.GettableFeature, e
 	result := make([]*featuretypes.GettableFeature, 0, len(p.featureVariants))
 
 	for featureName, variant := range p.featureVariants {
-		feature, _, err := p.defaultRegistry.Get(featureName)
+		feature, _, err := p.registry.Get(featureName)
 		if err != nil {
 			return nil, err
 		}

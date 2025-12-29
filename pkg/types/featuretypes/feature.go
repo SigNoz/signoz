@@ -99,7 +99,7 @@ func VariantByValue[T comparable](feature *Feature, value T) (featureVariant *Fe
 	return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeFeatureVariantNotFound, "no variant found for value %v for feature %s in variants %v", value, feature.Name.String(), feature.Variants)
 }
 
-func GetBooleanVariants() map[Name]FeatureVariant {
+func NewBooleanVariants() map[Name]FeatureVariant {
 	return map[Name]FeatureVariant{
 		MustNewName("disabled"): {
 			Variant: MustNewName("disabled"),

@@ -15,9 +15,6 @@ type Registry interface {
 
 	// Returns all the features in the registry
 	List() []*Feature
-
-	// Returns the variant by feature name and value for the given feature
-	GetVariantByNameAndValue(name string, value any) (*FeatureVariant, error)
 }
 
 // Concrete implementation of the Registry interface
@@ -129,19 +126,4 @@ func (r *registry) List() []*Feature {
 		features = append(features, f)
 	}
 	return features
-}
-
-func (r *registry) GetVariantByNameAndValue(name string, value any) (*FeatureVariant, error) {
-	f, _, err := r.GetByString(name)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, variant := range f.Variants {
-		if variant.Value == value {
-			return &variant, nil
-		}
-	}
-
-	return nil, errors.Newf(errors.TypeNotFound, ErrCodeFeatureVariantNotFound, "no variant found with value %v for feature %s in variants %v", value, name, f.Variants)
 }

@@ -258,8 +258,8 @@ func NewGlobalProviderFactories() factory.NamedMap[factory.ProviderFactory[globa
 	)
 }
 
-func NewFlaggerProviderFactories(defaultRegistry featuretypes.Registry) factory.NamedMap[factory.ProviderFactory[flagger.FlaggerProvider, flagger.Config]] {
+func NewFlaggerProviderFactories(registry featuretypes.Registry) factory.NamedMap[factory.ProviderFactory[flagger.FlaggerProvider, flagger.Config]] {
 	return factory.MustNewNamedMap(
-		configflagger.NewFactory(defaultRegistry),
+		configflagger.NewFactory(registry),
 	)
 }

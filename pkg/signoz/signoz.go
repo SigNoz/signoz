@@ -359,13 +359,13 @@ func New(
 	}
 
 	// Initialize flagger from the available flagger provider factories
-	defaultRegistry := flagger.MustNewRegistry()
-	flaggerProviderFactories := NewFlaggerProviderFactories(defaultRegistry)
+	flaggerRegistry := flagger.MustNewRegistry()
+	flaggerProviderFactories := NewFlaggerProviderFactories(flaggerRegistry)
 	flagger, err := flagger.New(
 		ctx,
 		providerSettings,
 		config.Flagger,
-		defaultRegistry,
+		flaggerRegistry,
 		flaggerProviderFactories.GetInOrder()...,
 	)
 	if err != nil {
