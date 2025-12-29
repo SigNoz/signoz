@@ -230,13 +230,28 @@ func (m *fieldMapper) ColumnExpressionFor(
 				case telemetrytypes.FieldContextResource:
 					args = append(args, fmt.Sprintf("%s.`%s` IS NOT NULL, %s.`%s`::String", LogsV2ResourceColumn, key.Name, LogsV2ResourceColumn, key.Name))
 					args = append(args, fmt.Sprintf("mapContains(%s, '%s'), %s['%s']", LogsV2ResourcesStringColumn, key.Name, LogsV2ResourcesStringColumn, key.Name))
-				case telemetrytypes.FieldContextScope, telemetrytypes.FieldContextAttribute:
+				case telemetrytypes.FieldContextAttribute:
 					column, err := m.getColumn(ctx, key)
 					// should not error out as we have created this key
 					if err != nil {
 						return "", errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, err.Error())
 					}
 					args = append(args, fmt.Sprintf("mapContains(%s, '%s'), %s['%s']", column.Name, key.Name, column.Name, key.Name))
+
+				case telemetrytypes.FieldContextScope:
+					column, err := m.getColumn(ctx, key)
+					// should not error out as we have created this key
+					if err != nil {
+						return "", errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, err.Error())
+					}
+					// Check if the column is a map type or a direct string column
+					if column.Type == schema.ColumnTypeString {
+						// For direct string columns like scope_name or scope_version
+						args = append(args, fmt.Sprintf("%s != '', %s", column.Name, column.Name))
+					} else {
+						// For map columns like scope_string, use mapContains
+						args = append(args, fmt.Sprintf("mapContains(%s, '%s'), %s['%s']", column.Name, key.Name, column.Name, key.Name))
+					}
 
 				default:
 					colName, err := m.FieldFor(ctx, key)
