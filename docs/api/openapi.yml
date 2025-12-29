@@ -853,7 +853,7 @@ paths:
     get:
       deprecated: false
       description: This endpoints promotes and indexes paths
-      operationId: PromotePaths
+      operationId: ListPromotedAndIndexedPaths
       responses:
         "200":
           content:
@@ -883,13 +883,11 @@ paths:
           description: Internal Server Error
       summary: Promote and index paths
       tags:
-      - promoted_paths
       - logs
-      - json_logs
     post:
       deprecated: false
       description: This endpoints promotes and indexes paths
-      operationId: PromotePaths
+      operationId: HandlePromoteAndIndexPaths
       requestBody:
         content:
           application/json:
@@ -915,9 +913,7 @@ paths:
           description: Internal Server Error
       summary: Promote and index paths
       tags:
-      - promoted_paths
       - logs
-      - json_logs
   /api/v1/org/preferences:
     get:
       deprecated: false
