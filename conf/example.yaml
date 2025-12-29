@@ -284,12 +284,7 @@ flagger:
   # Config are the overrides for the feature flags which come directly from the config file.
   config:
     boolean:
-      enable_interpolation: true
     string:
-      feature_x: value
     float:
-      feature_y: 0.0
     integer:
-      feature_z: -1
     object:
-      feature_w: {}

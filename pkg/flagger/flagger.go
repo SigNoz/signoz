@@ -35,7 +35,6 @@ type flagger struct {
 }
 
 func New(ctx context.Context, ps factory.ProviderSettings, config Config, registry featuretypes.Registry, factories ...factory.ProviderFactory[FlaggerProvider, Config]) (Flagger, error) {
-
 	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/pkg/flagger")
 
 	providers := make(map[string]FlaggerProvider)
