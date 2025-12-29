@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -17,14 +16,12 @@ type Handler interface {
 }
 
 type handler struct {
-	flagger   Flagger
-	orgGetter organization.Getter
+	flagger Flagger
 }
 
-func NewHandler(flagger Flagger, orgGetter organization.Getter) Handler {
+func NewHandler(flagger Flagger) Handler {
 	return &handler{
-		flagger:   flagger,
-		orgGetter: orgGetter,
+		flagger: flagger,
 	}
 }
 
@@ -44,13 +41,7 @@ func (handler *handler) GetFeatures(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	org, err := handler.orgGetter.Get(ctx, orgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	evalCtx := featuretypes.NewFlaggerEvaluationContext(org.ID)
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
 
 	features, err := handler.flagger.List(ctx, evalCtx)
 	if err != nil {

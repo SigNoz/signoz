@@ -53,6 +53,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, que
 		MetricsExplorer: implmetricsexplorer.NewHandler(modules.MetricsExplorer),
 		SpanPercentile:  implspanpercentile.NewHandler(modules.SpanPercentile),
 		Global:          signozglobal.NewHandler(global),
-		FlaggerHandler:  flagger.NewHandler(flaggerService, modules.OrgGetter),
+		FlaggerHandler:  flagger.NewHandler(flaggerService),
 	}
 }
