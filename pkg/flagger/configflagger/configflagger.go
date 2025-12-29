@@ -38,7 +38,7 @@ func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, def
 		if err != nil {
 			return nil, err
 		}
-		if featureValues.EnableInterpolation && featureValues.EnableInterpolation != f.Variants[f.DefaultVariant].Value {
+		if featureValues.EnableInterpolation != f.Variants[f.DefaultVariant].Value {
 			v, err := defaultRegistry.GetVariantByNameAndValue(f.Name.String(), featureValues.EnableInterpolation)
 			if err != nil {
 				return nil, err
@@ -256,7 +256,7 @@ func (p *provider) List(ctx context.Context) ([]*featuretypes.GettableFeature, e
 		result = append(result, &featuretypes.GettableFeature{
 			Name:        feature.Name.String(),
 			Kind:        feature.Kind.StringValue(),
-			Stage:       feature.Kind.StringValue(),
+			Stage:       feature.Stage.StringValue(),
 			Description: feature.Description,
 			Value:       variant.Value,
 		})

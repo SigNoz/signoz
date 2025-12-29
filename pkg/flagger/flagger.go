@@ -223,9 +223,11 @@ func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.
 			continue
 		}
 
-		if value != defaultValue {
-			return value, nil
-		}
+		// ! for object we do not compare with the default value for now, we will figure this out better in future coming releases
+		// if value != defaultValue {
+		// 	return value, nil
+		// }
+		return value, nil
 	}
 
 	return defaultValue, nil
