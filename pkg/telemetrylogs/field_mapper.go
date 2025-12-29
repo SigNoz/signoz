@@ -202,7 +202,9 @@ func (m *fieldMapper) ColumnExpressionFor(
 				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
 			}
 		} else if len(keysForField) == 1 {
-			// this should never be the case as this would be handled by populateMissingFieldContextAndDataType
+			// This case is expected to be handled by populateMissingFieldContextAndDataType.
+			// If we reach here, it indicates an internal inconsistency in field preprocessing.
+			return "", errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unexpected single key for field `%s`", field.Name)
 		} else {
 			// select any non-empty value from the keys
 			args := []string{}
