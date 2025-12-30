@@ -4,7 +4,9 @@ import (
 	"context"
 	"testing"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -20,13 +22,6 @@ func makeKey(name string, dataType telemetrytypes.JSONDataType, materialized boo
 		Name:         name,
 		JSONDataType: &dataType,
 		Materialized: materialized,
-	}
-}
-
-// makeGetTypes creates a getTypes function from a map of path -> types
-func makeGetTypes(typesMap map[string][]telemetrytypes.JSONDataType) func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
-	return func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
-		return typesMap[path], nil
 	}
 }
 
@@ -237,7 +232,7 @@ func TestNode_FieldPath(t *testing.T) {
 // ============================================================================
 
 func TestPlanJSON_BasicStructure(t *testing.T) {
-	_, getTypes := testTypeSet()
+	_, metadataStore := testTypeSet()
 
 	tests := []struct {
 		name         string
@@ -292,7 +287,7 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			plans, err := PlanJSON(context.Background(), tt.key, qbtypes.FilterOperatorEqual, "John", getTypes)
+			plans, err := PlanJSON(context.Background(), tt.key, qbtypes.FilterOperatorEqual, "John", metadataStore)
 			if tt.expectErr {
 				require.Error(t, err)
 				require.Nil(t, plans)
@@ -306,7 +301,7 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 }
 
 func TestPlanJSON_ArrayPaths(t *testing.T) {
-	_, getTypes := testTypeSet()
+	_, metadataStore := testTypeSet()
 
 	tests := []struct {
 		name         string
@@ -442,7 +437,7 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			key := makeKey(tt.path, telemetrytypes.String, false)
-			plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, "John", getTypes)
+			plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, "John", metadataStore)
 			require.NoError(t, err)
 			require.NotNil(t, plans)
 			require.Len(t, plans, 1)
@@ -453,13 +448,13 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 }
 
 func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
-	_, getTypes := testTypeSet()
+	_, metadataStore := testTypeSet()
 	path := "education[].awards[].type"
 	value := "sports"
 
 	t.Run("Non-promoted plan", func(t *testing.T) {
 		key := makeKey(path, telemetrytypes.String, false)
-		plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, value, getTypes)
+		plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, value, metadataStore)
 		require.NoError(t, err)
 		require.Len(t, plans, 1)
 
@@ -501,7 +496,7 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 
 	t.Run("Promoted plan", func(t *testing.T) {
 		key := makeKey(path, telemetrytypes.String, true)
-		plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, value, getTypes)
+		plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, value, metadataStore)
 		require.NoError(t, err)
 		require.Len(t, plans, 2)
 
@@ -576,7 +571,7 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 }
 
 func TestPlanJSON_EdgeCases(t *testing.T) {
-	_, getTypes := testTypeSet()
+	_, metadataStore := testTypeSet()
 
 	tests := []struct {
 		name         string
@@ -695,7 +690,7 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 				keyType = telemetrytypes.String
 			}
 			key := makeKey(tt.path, keyType, false)
-			plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, tt.value, getTypes)
+			plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, tt.value, metadataStore)
 			require.NoError(t, err)
 			got := plansToYAML(t, plans)
 			require.YAMLEq(t, tt.expectedYAML, got)
@@ -704,10 +699,10 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 }
 
 func TestPlanJSON_TreeStructure(t *testing.T) {
-	_, getTypes := testTypeSet()
+	_, metadataStore := testTypeSet()
 	path := "education[].awards[].participated[].team[].branch"
 	key := makeKey(path, telemetrytypes.String, false)
-	plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, "John", getTypes)
+	plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, "John", metadataStore)
 	require.NoError(t, err)
 	require.Len(t, plans, 1)
 
@@ -812,9 +807,91 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
 // Test Data Setup
 // ============================================================================
 
-// testTypeSet returns a map of path->types and a getTypes function for testing
+// mockMetadataStore is a test implementation of MetadataStore that uses a types map
+type mockMetadataStore struct {
+	types map[string][]telemetrytypes.JSONDataType
+}
+
+func (m *mockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
+	result := make(map[string][]*telemetrytypes.TelemetryFieldKey)
+	if fieldKeySelector != nil {
+		if types, ok := m.types[fieldKeySelector.Name]; ok {
+			keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(types))
+			for _, t := range types {
+				key := &telemetrytypes.TelemetryFieldKey{
+					Name:         fieldKeySelector.Name,
+					JSONDataType: &t,
+					Signal:       telemetrytypes.SignalLogs,
+				}
+				keys = append(keys, key)
+			}
+			result[fieldKeySelector.Name] = keys
+		}
+	}
+	return result, true, nil
+}
+
+func (m *mockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
+	result := make(map[string][]*telemetrytypes.TelemetryFieldKey)
+	for _, selector := range fieldKeySelectors {
+		if types, ok := m.types[selector.Name]; ok {
+			keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(types))
+			for _, t := range types {
+				key := &telemetrytypes.TelemetryFieldKey{
+					Name:         selector.Name,
+					JSONDataType: &t,
+					Signal:       telemetrytypes.SignalLogs,
+				}
+				keys = append(keys, key)
+			}
+			result[selector.Name] = keys
+		}
+	}
+	return result, true, nil
+}
+
+func (m *mockMetadataStore) GetKey(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
+	keys, _, err := m.GetKeys(ctx, fieldKeySelector)
+	if err != nil {
+		return nil, err
+	}
+	if fieldKeySelector != nil {
+		return keys[fieldKeySelector.Name], nil
+	}
+	return nil, nil
+}
+
+func (m *mockMetadataStore) GetRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
+	return nil, true, nil
+}
+
+func (m *mockMetadataStore) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+	return &telemetrytypes.TelemetryFieldValues{}, true, nil
+}
+
+func (m *mockMetadataStore) FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error) {
+	return metrictypes.Unknown, nil
+}
+
+func (m *mockMetadataStore) FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+	return make(map[string]metrictypes.Temporality), nil
+}
+
+func (m *mockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...string) (map[string][]schemamigrator.Index, error) {
+	return make(map[string][]schemamigrator.Index), nil
+}
+
+func (m *mockMetadataStore) ListPromotedPaths(ctx context.Context, paths ...string) (map[string]struct{}, error) {
+	return make(map[string]struct{}), nil
+}
+
+func (m *mockMetadataStore) PromotePaths(ctx context.Context, paths ...string) error {
+	return nil
+}
+
+// testTypeSet returns a map of path->types and a mock MetadataStore for testing
 // This represents the type information available in the test JSON structure
-func testTypeSet() (map[string][]telemetrytypes.JSONDataType, func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error)) {
+func testTypeSet() (map[string][]telemetrytypes.JSONDataType, telemetrytypes.MetadataStore) {
 	types := map[string][]telemetrytypes.JSONDataType{
 		"user.name":                                           {telemetrytypes.String},
 		"user.age":                                            {telemetrytypes.Int64, telemetrytypes.String},
@@ -873,5 +950,5 @@ func testTypeSet() (map[string][]telemetrytypes.JSONDataType, func(ctx context.C
 		"message": {telemetrytypes.String},
 	}
 
-	return types, makeGetTypes(types)
+	return types, &mockMetadataStore{types: types}
 }

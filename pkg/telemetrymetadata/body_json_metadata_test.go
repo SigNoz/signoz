@@ -40,8 +40,8 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 					SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
 				},
 			},
-			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (path LIKE ?) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
-			expectedArgs:  []any{"user", 100},
+			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (LOWER(path) LIKE LOWER(?)) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
+			expectedArgs:  []any{"%user%", 100},
 			expectedLimit: 100,
 		},
 		{
@@ -72,8 +72,8 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 					SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
 				},
 			},
-			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (path LIKE ? OR path LIKE ?) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
-			expectedArgs:  []any{"user", "admin", defaultPathLimit},
+			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (LOWER(path) LIKE LOWER(?) OR LOWER(path) LIKE LOWER(?)) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
+			expectedArgs:  []any{"%user%", "%admin%", defaultPathLimit},
 			expectedLimit: defaultPathLimit,
 		},
 		{
@@ -84,8 +84,8 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 					SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
 				},
 			},
-			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (path LIKE ?) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
-			expectedArgs:  []any{"test", defaultPathLimit},
+			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (LOWER(path) LIKE LOWER(?)) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
+			expectedArgs:  []any{"%test%", defaultPathLimit},
 			expectedLimit: defaultPathLimit,
 		},
 	}

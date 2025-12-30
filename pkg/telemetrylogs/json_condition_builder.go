@@ -23,30 +23,11 @@ var (
 	CodeArrayNavigationFailed    = errors.MustNewCode("array_navigation_failed")
 )
 
-func (c *conditionBuilder) getTypes(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
-	keys, _, err := c.metadataStore.GetKeys(ctx, &telemetrytypes.FieldKeySelector{
-		Name:              path,
-		SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
-		Signal:            telemetrytypes.SignalLogs,
-		Limit:             1,
-	})
-	if err != nil {
-		return nil, err
-	}
-	types := []telemetrytypes.JSONDataType{}
-	for _, key := range keys[path] {
-		if key.JSONDataType != nil {
-			types = append(types, *key.JSONDataType)
-		}
-	}
-	return types, nil
-}
-
 // BuildCondition builds the full WHERE condition for body_json JSON paths
 func (c *conditionBuilder) buildJSONCondition(ctx context.Context, key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 
-	plan, err := PlanJSON(ctx, key, operator, value, c.getTypes)
+	plan, err := PlanJSON(ctx, key, operator, value, c.metadataStore)
 	if err != nil {
 		return "", err
 	}
@@ -69,8 +50,6 @@ func (c *conditionBuilder) emitPlannedCondition(plan *telemetrytypes.JSONAccessN
 	if err != nil {
 		return "", err
 	}
-
-	// sb.AddWhereClause(sqlbuilder.NewWhereClause().AddWhereExpr(sb.Args, compiled))
 	return compiled, nil
 }
 
@@ -131,8 +110,16 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 		if err != nil {
 			return "", err
 		}
+
+		// if qb has a definitive value, we can skip adding a condition to
+		// check the existance of the path in the json column
+		if value != emptyValue {
+			return cond, nil
+		}
+
 		conditions = append(conditions, cond)
-		// Switch operator to EXISTS
+		// Switch operator to EXISTS since indexed paths on assumedNotNull, indexes will always have a default value
+		// So we flip the operator to Exists and filter the rows that actually have the value
 		operator = qbtypes.FilterOperatorExists
 	}
 
@@ -294,7 +281,7 @@ type GroupByArrayJoinInfo struct {
 func (c *conditionBuilder) BuildGroupBy(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*GroupByArrayJoinInfo, error) {
 	path := strings.TrimPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix)
 
-	plan, err := PlanJSON(ctx, key, qbtypes.FilterOperatorExists, nil, c.getTypes)
+	plan, err := PlanJSON(ctx, key, qbtypes.FilterOperatorExists, nil, c.metadataStore)
 	if err != nil {
 		return nil, err
 	}

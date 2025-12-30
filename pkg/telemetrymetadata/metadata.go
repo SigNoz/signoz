@@ -1172,10 +1172,6 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 		limit = 50
 	}
 
-	if strings.HasPrefix(fieldValueSelector.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
-		return t.ListJSONValues(ctx, fieldValueSelector.Name, limit)
-	}
-
 	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(t.logsDBName + "." + t.logsFieldsTblName)
 
 	if fieldValueSelector.Name != "" {
