@@ -38,6 +38,8 @@ class MetricsTimeSeries(ABC):
         type_: str = "Sum",
         is_monotonic: bool = True,
         env: str = "default",
+        resource_attrs: dict[str, str] = {},
+        scope_attrs: dict[str, str] = {},
     ) -> None:
         self.env = env
         self.metric_name = metric_name
@@ -48,8 +50,8 @@ class MetricsTimeSeries(ABC):
         self.is_monotonic = is_monotonic
         self.labels = json.dumps(labels, separators=(",", ":"))
         self.attrs = labels
-        self.scope_attrs = {}
-        self.resource_attrs = {}
+        self.scope_attrs = scope_attrs
+        self.resource_attrs = resource_attrs
         self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
         self.__normalized = False
         
@@ -143,6 +145,8 @@ class Metrics(ABC):
         type_: str = "Sum",
         is_monotonic: bool = True,
         env: str = "default",
+        resource_attributes: dict[str, str] = {},
+        scope_attributes: dict[str, str] = {},
     ) -> None:
         self.metric_name = metric_name
         self.labels = labels
@@ -151,7 +155,6 @@ class Metrics(ABC):
         self.value = value
         self.flags = flags
         
-        # Create time series entry
         self.time_series = MetricsTimeSeries(
             metric_name=metric_name,
             labels=labels,
@@ -162,9 +165,10 @@ class Metrics(ABC):
             type_=type_,
             is_monotonic=is_monotonic,
             env=env,
+            resource_attrs=resource_attributes,
+            scope_attrs=scope_attributes,
         )
         
-        # Create sample entry using the same fingerprint
         self.sample = MetricsSample(
             metric_name=metric_name,
             fingerprint=self.time_series.fingerprint,
@@ -187,7 +191,6 @@ def insert_metrics(
         - distributed_time_series_v4 (time series metadata)
         - distributed_samples_v4 (actual sample values)
         """
-        # Deduplicate time series by fingerprint
         time_series_map: dict[int, MetricsTimeSeries] = {}
         for metric in metrics:
             fp = int(metric.time_series.fingerprint)

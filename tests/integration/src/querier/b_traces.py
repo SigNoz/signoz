@@ -415,7 +415,7 @@ def test_traces_list(
     assert set(values) == set(["topic-service", "http-service"])
 
 
-def test_traces_fill_gaps_no_group_by(
+def test_traces_fill_gaps(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -593,7 +593,7 @@ def test_traces_fill_gaps_with_group_by(
         assert len(values) >= 5, f"Expected at least 5 gap-filled values, got {len(values)}"
 
 
-def test_traces_fill_gaps_formula_no_group_by(
+def test_traces_fill_gaps_formula(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -773,7 +773,7 @@ def test_traces_fill_gaps_formula_with_group_by(
     assert len(results) >= 1
 
 
-def test_traces_fill_zero_no_group_by(
+def test_traces_fill_zero(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -952,7 +952,7 @@ def test_traces_fill_zero_with_group_by(
         assert len(values) >= 5, f"Expected at least 5 gap-filled values, got {len(values)}"
 
 
-def test_traces_fill_zero_formula_no_group_by(
+def test_traces_fill_zero_formula(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
