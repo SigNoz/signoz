@@ -21,7 +21,7 @@ func FromGlobs(paths []string) (*alertmanagertemplate.Template, error) {
 	if err := t.Parse(bytes.NewReader([]byte(`
 	{{ define "__ruleIdPath" }}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}/edit?ruleId={{ .Value | urlquery }}{{- end -}}{{- end -}}{{- end }}
 	{{ define "__testRuleIdPath" }}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}?ruleId={{ .Value | urlquery }}{{- end -}}{{- end -}}{{- end }}
-	{{ define "__alertmanagerURL" }}{{- $isTestAlert := "" -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "testAlert" -}}{{- if eq .Value "true" -}}{{- $isTestAlert = "true" -}}{{- end -}}{{- end -}}{{- end -}}{{- if $isTestAlert -}}{{ .ExternalURL }}/alerts/test{{ template "__testRuleIdPath" . }}{{- else -}}{{ .ExternalURL }}/alerts{{ template "__ruleIdPath" . }}{{- end -}}{{ end }}
+	{{ define "__alertmanagerURL" }}{{- $isTestAlert := "" -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "testalert" -}}{{- if eq .Value "true" -}}{{- $isTestAlert = "true" -}}{{- end -}}{{- end -}}{{- end -}}{{- if $isTestAlert -}}{{ .ExternalURL }}/alerts/test{{ template "__testRuleIdPath" . }}{{- else -}}{{ .ExternalURL }}/alerts{{ template "__ruleIdPath" . }}{{- end -}}{{ end }}
 	{{ define "msteamsv2.default.titleLink" }}{{ template "__alertmanagerURL" . }}{{ end }}
 	`))); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error parsing alertmanager templates")

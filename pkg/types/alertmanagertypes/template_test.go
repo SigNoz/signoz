@@ -129,7 +129,7 @@ func TestFromGlobs(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels: model.LabelSet{
-							"testAlert": "true",
+							"testalert": "true",
 						},
 					},
 					UpdatedAt: time.Now(),
@@ -144,7 +144,7 @@ func TestFromGlobs(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels: model.LabelSet{
-							"testAlert": "true",
+							"testalert": "true",
 							"ruleId":    "01961575-461c-7668-875f-05d374062bfc",
 						},
 					},
