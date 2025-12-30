@@ -1,4 +1,4 @@
-import './QueryBuilderSearch.styles.scss';
+import './OptionRenderer.styles.scss';
 
 import { Tooltip } from 'antd';
 
@@ -13,7 +13,11 @@ function OptionRenderer({
 	return (
 		<span className="option">
 			{type ? (
-				<Tooltip title={`${value}`} placement="topLeft">
+				<Tooltip
+					title={`${value}`}
+					placement="topLeft"
+					rootClassName="option-renderer-tooltip"
+				>
 					<div className="selectOptionContainer">
 						<div className="option-value">{value}</div>
 						<div className="option-meta-data-container">
@@ -29,7 +33,11 @@ function OptionRenderer({
 					</div>
 				</Tooltip>
 			) : (
-				<Tooltip title={label} placement="topLeft">
+				<Tooltip
+					title={label}
+					placement="topLeft"
+					rootClassName="option-renderer-tooltip"
+				>
 					<span>{label}</span>
 				</Tooltip>
 			)}

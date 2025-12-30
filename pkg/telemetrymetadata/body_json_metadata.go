@@ -245,7 +245,7 @@ func (t *telemetryMetaStore) ListLogsJSONIndexes(ctx context.Context, filters ..
 	}
 	defer rows.Close()
 
-	indexesMap := make(map[string][]schemamigrator.Index)
+	indexes := make(map[string][]schemamigrator.Index)
 	for rows.Next() {
 		var name string
 		var typeFull string
@@ -254,7 +254,7 @@ func (t *telemetryMetaStore) ListLogsJSONIndexes(ctx context.Context, filters ..
 		if err := rows.Scan(&name, &typeFull, &expr, &granularity); err != nil {
 			return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to scan string indexed column")
 		}
-		indexesMap[name] = append(indexesMap[name], schemamigrator.Index{
+		indexes[name] = append(indexes[name], schemamigrator.Index{
 			Name:        name,
 			Type:        typeFull,
 			Expression:  expr,
@@ -262,7 +262,7 @@ func (t *telemetryMetaStore) ListLogsJSONIndexes(ctx context.Context, filters ..
 		})
 	}
 
-	return indexesMap, nil
+	return indexes, nil
 }
 
 func (t *telemetryMetaStore) ListPromotedPaths(ctx context.Context, paths ...string) (map[string]struct{}, error) {
