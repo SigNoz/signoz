@@ -31,3 +31,7 @@ func (typeableRole *typeableRole) Name() Name {
 func (typeableRole *typeableRole) Prefix(orgID valuer.UUID) string {
 	return typeableRole.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + typeableRole.Name().String()
 }
+
+func (typeableRole *typeableRole) Scope(relation Relation) string {
+	return typeableRole.Name().String() + ":" + relation.StringValue()
+}

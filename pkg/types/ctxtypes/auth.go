@@ -14,6 +14,7 @@ var (
 	AuthTypeTokenizer = AuthType{valuer.NewString("tokenizer")}
 	AuthTypeAPIKey    = AuthType{valuer.NewString("api_key")}
 	AuthTypeInternal  = AuthType{valuer.NewString("internal")}
+	AuthTypeAnonymous = AuthType{valuer.NewString("anonymous")}
 )
 
 type authTypeKey struct{}
