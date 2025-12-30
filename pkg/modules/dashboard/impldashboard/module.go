@@ -211,7 +211,7 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
-func (module *module) GetPublic(_ context.Context, _ valuer.UUID) (*dashboardtypes.PublicDashboard, error) {
+func (module *module) GetPublic(_ context.Context, _, _ valuer.UUID) (*dashboardtypes.PublicDashboard, error) {
 	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
@@ -227,7 +227,7 @@ func (module *module) GetPublicDashboardSelectorsAndOrg(_ context.Context, _ val
 	return nil, valuer.UUID{}, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
-func (module *module) UpdatePublic(_ context.Context, _ *dashboardtypes.PublicDashboard) error {
+func (module *module) UpdatePublic(_ context.Context, _ valuer.UUID, _ *dashboardtypes.PublicDashboard) error {
 	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 

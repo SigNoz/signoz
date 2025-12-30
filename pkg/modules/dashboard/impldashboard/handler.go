@@ -260,7 +260,7 @@ func (handler *handler) GetPublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	publicDashboard, err := handler.module.GetPublic(ctx, id)
+	publicDashboard, err := handler.module.GetPublic(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -285,7 +285,7 @@ func (handler *handler) GetPublicData(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	publicDashboard, err := handler.module.GetPublic(ctx, valuer.MustNewUUID(dashboard.ID))
+	publicDashboard, err := handler.module.GetPublic(ctx, dashboard.OrgID, valuer.MustNewUUID(dashboard.ID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -322,7 +322,7 @@ func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *htt
 		return
 	}
 
-	publicDashboard, err := handler.module.GetPublic(ctx, valuer.MustNewUUID(dashboard.ID))
+	publicDashboard, err := handler.module.GetPublic(ctx, dashboard.OrgID, valuer.MustNewUUID(dashboard.ID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -398,14 +398,14 @@ func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	publicDashboard, err := handler.module.GetPublic(ctx, id)
+	publicDashboard, err := handler.module.GetPublic(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
 	publicDashboard.Update(req.TimeRangeEnabled, req.DefaultTimeRange)
-	err = handler.module.UpdatePublic(ctx, publicDashboard)
+	err = handler.module.UpdatePublic(ctx, valuer.MustNewUUID(claims.OrgID), publicDashboard)
 	if err != nil {
 		render.Error(rw, err)
 		return

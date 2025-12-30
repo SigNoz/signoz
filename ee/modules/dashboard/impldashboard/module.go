@@ -46,6 +46,11 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 }
 
 func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
 	storablePublicDashboard, err := module.store.GetPublic(ctx, publicDashboard.DashboardID.StringValue())
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
@@ -85,7 +90,12 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 	return nil
 }
 
-func (module *module) GetPublic(ctx context.Context, dashboardID valuer.UUID) (*dashboardtypes.PublicDashboard, error) {
+func (module *module) GetPublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) (*dashboardtypes.PublicDashboard, error) {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
 	storablePublicDashboard, err := module.store.GetPublic(ctx, dashboardID.StringValue())
 	if err != nil {
 		return nil, err
@@ -133,7 +143,12 @@ func (module *module) GetPublicWidgetQueryRange(ctx context.Context, id valuer.U
 	return module.querier.QueryRange(ctx, dashboard.OrgID, query)
 }
 
-func (module *module) UpdatePublic(ctx context.Context, publicDashboard *dashboardtypes.PublicDashboard) error {
+func (module *module) UpdatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
 	return module.store.UpdatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
 }
 
@@ -168,7 +183,12 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 }
 
 func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
-	publicDashboard, err := module.GetPublic(ctx, dashboardID)
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	publicDashboard, err := module.GetPublic(ctx, orgID, dashboardID)
 	if err != nil {
 		return err
 	}

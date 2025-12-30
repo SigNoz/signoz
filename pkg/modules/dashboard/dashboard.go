@@ -18,7 +18,7 @@ type Module interface {
 	CreatePublic(context.Context, valuer.UUID, *dashboardtypes.PublicDashboard) error
 
 	// gets the public sharing config for the dashboard
-	GetPublic(context.Context, valuer.UUID) (*dashboardtypes.PublicDashboard, error)
+	GetPublic(context.Context, valuer.UUID, valuer.UUID) (*dashboardtypes.PublicDashboard, error)
 
 	// get the dashboard data by public dashboard id
 	GetDashboardByPublicID(context.Context, valuer.UUID) (*dashboardtypes.Dashboard, error)
@@ -30,7 +30,7 @@ type Module interface {
 	GetPublicDashboardSelectorsAndOrg(context.Context, valuer.UUID, []*types.Organization) ([]authtypes.Selector, valuer.UUID, error)
 
 	// updates the public sharing config for a dashboard
-	UpdatePublic(context.Context, *dashboardtypes.PublicDashboard) error
+	UpdatePublic(context.Context, valuer.UUID, *dashboardtypes.PublicDashboard) error
 
 	// deletes the public sharing config and disables public sharing for the dashboard
 	DeletePublic(context.Context, valuer.UUID, valuer.UUID) error

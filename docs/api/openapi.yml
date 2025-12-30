@@ -1482,7 +1482,7 @@ paths:
       tags:
       - users
   /api/v1/public/dashboards/{id}:
-    delete:
+    get:
       deprecated: false
       description: This endpoints returns the sanitized dashboard data for public
         access
@@ -1515,7 +1515,7 @@ paths:
       tags:
       - dashboard
   /api/v1/public/dashboards/{id}/widgets/{idx}/query_range:
-    delete:
+    get:
       deprecated: false
       description: This endpoint return query range results for a widget of public
         dashboard

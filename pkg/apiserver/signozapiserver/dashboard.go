@@ -105,7 +105,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
@@ -133,7 +133,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
