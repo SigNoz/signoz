@@ -120,5 +120,6 @@ module.exports = {
 				usePrettierrc: true,
 			},
 		],
+		'react/jsx-props-no-spreading': 'warn',
 	},
 };
