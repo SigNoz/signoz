@@ -52,21 +52,6 @@ func TestFromGlobs(t *testing.T) {
 			expected: "http://localhost:8080/alerts/edit?ruleId=2d8edca5-4f24-4266-afd1-28cefadcfa88",
 		},
 		{
-			name: "SingleAlertWithInvalidRuleId",
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels: model.LabelSet{
-							"ruleId": "43textabc",
-						},
-					},
-					UpdatedAt: time.Now(),
-					Timeout:   false,
-				},
-			},
-			expected: "http://localhost:8080/alerts",
-		},
-		{
 			name: "MultipleAlertsWithMismatchingRuleId",
 			alerts: []*types.Alert{
 				{
@@ -137,6 +122,37 @@ func TestFromGlobs(t *testing.T) {
 				},
 			},
 			expected: "http://localhost:8080/alerts",
+		},
+		{
+			name: "TestAlertWithNoRuleId",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{
+							"testAlert": "true",
+						},
+					},
+					UpdatedAt: time.Now(),
+					Timeout:   false,
+				},
+			},
+			expected: "http://localhost:8080/alerts/test",
+		},
+		{
+			name: "TestAlertWithRuleId",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{
+							"testAlert": "true",
+							"ruleId":    "01961575-461c-7668-875f-05d374062bfc",
+						},
+					},
+					UpdatedAt: time.Now(),
+					Timeout:   false,
+				},
+			},
+			expected: "http://localhost:8080/alerts/test?ruleId=01961575-461c-7668-875f-05d374062bfc",
 		},
 	}
 

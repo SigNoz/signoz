@@ -10,7 +10,8 @@ import (
 // FromGlobs overrides the default alertmanager template to add a ruleIdPath template.
 // This is used to generate a link to the rule in the alertmanager.
 //
-// It explicitly checks for a ruleId that is a number and then generates a path to the rule.
+// It checks for a ruleId label and generates a path to the rule.
+// If testAlert=true label is present, it routes to /alerts/test instead of /alerts.
 func FromGlobs(paths []string) (*alertmanagertemplate.Template, error) {
 	t, err := alertmanagertemplate.FromGlobs(paths)
 	if err != nil {
@@ -18,10 +19,9 @@ func FromGlobs(paths []string) (*alertmanagertemplate.Template, error) {
 	}
 
 	if err := t.Parse(bytes.NewReader([]byte(`
-	{{ define "__ruleIdValue" }}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}{{ .Value }}{{- end -}}{{- end -}}{{- end }}
-	{{ define "__isTestAlert" }}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "testAlert" -}}{{- if eq .Value "true" -}}true{{- end -}}{{- end -}}{{- end -}}{{- end }}
-	{{ define "__ruleIdPath" }}{{- $ruleId := "" -}}{{- $isTestAlert := "" -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}{{- $ruleId = .Value -}}{{- end -}}{{- if eq .Name "testAlert" -}}{{- if eq .Value "true" -}}{{- $isTestAlert = "true" -}}{{- end -}}{{- end -}}{{- end -}}{{- if $ruleId -}}/edit?ruleId={{ $ruleId | urlquery }}{{- if $isTestAlert -}}&testAlert=true{{- end -}}{{- else if $isTestAlert -}}?testAlert=true{{- end -}}{{- end }}
-	{{ define "__alertmanagerURL" }}{{ .ExternalURL }}/alerts{{ template "__ruleIdPath" . }}{{ end }}
+	{{ define "__ruleIdPath" }}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}/edit?ruleId={{ .Value | urlquery }}{{- end -}}{{- end -}}{{- end }}
+	{{ define "__testRuleIdPath" }}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}?ruleId={{ .Value | urlquery }}{{- end -}}{{- end -}}{{- end }}
+	{{ define "__alertmanagerURL" }}{{- $isTestAlert := "" -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "testAlert" -}}{{- if eq .Value "true" -}}{{- $isTestAlert = "true" -}}{{- end -}}{{- end -}}{{- end -}}{{- if $isTestAlert -}}{{ .ExternalURL }}/alerts/test{{ template "__testRuleIdPath" . }}{{- else -}}{{ .ExternalURL }}/alerts{{ template "__ruleIdPath" . }}{{- end -}}{{ end }}
 	{{ define "msteamsv2.default.titleLink" }}{{ template "__alertmanagerURL" . }}{{ end }}
 	`))); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error parsing alertmanager templates")
