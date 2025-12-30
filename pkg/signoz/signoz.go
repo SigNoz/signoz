@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -66,6 +67,7 @@ type SigNoz struct {
 	Modules                Modules
 	Handlers               Handlers
 	QueryParser            queryparser.QueryParser
+	Flagger                flagger.Flagger
 }
 
 func New(
@@ -356,11 +358,25 @@ func New(
 		return nil, err
 	}
 
+	// Initialize flagger from the available flagger provider factories
+	flaggerRegistry := flagger.MustNewRegistry()
+	flaggerProviderFactories := NewFlaggerProviderFactories(flaggerRegistry)
+	flagger, err := flagger.New(
+		ctx,
+		providerSettings,
+		config.Flagger,
+		flaggerRegistry,
+		flaggerProviderFactories.GetInOrder()...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize all modules
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings, querier, licensing, global)
+	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger)
 
 	// Initialize the API server
 	apiserver, err := factory.NewProviderFromNamedMap(
@@ -434,5 +450,6 @@ func New(
 		Modules:                modules,
 		Handlers:               handlers,
 		QueryParser:            queryParser,
+		Flagger:                flagger,
 	}, nil
 }

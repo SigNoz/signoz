@@ -40,7 +40,7 @@ func TestNewHandlers(t *testing.T) {
 	require.NoError(t, err)
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{})
 
-	handlers := NewHandlers(modules, providerSettings, nil, nil, nil)
+	handlers := NewHandlers(modules, providerSettings, nil, nil, nil, nil)
 
 	reflectVal := reflect.ValueOf(handlers)
 	for i := 0; i < reflectVal.NumField(); i++ {
