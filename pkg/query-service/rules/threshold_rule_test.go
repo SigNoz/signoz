@@ -609,13 +609,6 @@ func TestThresholdRuleClickHouseTmpl(t *testing.T) {
 	}
 }
 
-type queryMatcherAny struct {
-}
-
-func (m *queryMatcherAny) Match(x string, y string) error {
-	return nil
-}
-
 func TestThresholdRuleUnitCombinations(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
 		AlertName: "Units test",
