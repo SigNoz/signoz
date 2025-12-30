@@ -760,7 +760,8 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 						Temporality:      metrictypes.Delta,
 						TimeAggregation:  metrictypes.TimeAggregationRate,
 						SpaceAggregation: metrictypes.SpaceAggregationPercentile50,
-						ReduceTo:         qbtypes.ReduceToAvg,
+						// TODO(nikhilmantri0902): is taking average over timestamps, representative of the p99 over all the values? Can some better reduce function be applied?
+						ReduceTo: qbtypes.ReduceToAvg,
 					},
 				},
 			},
