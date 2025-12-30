@@ -141,7 +141,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		sb.LT("unix_milli", end),
 	)
 	if query.Filter != nil && query.Filter.Expression != "" {
-		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		filterWhere, err = querybuilder.PrepareWhereClause(ctx, query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
@@ -224,7 +224,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 	)
 
 	if query.Filter != nil && query.Filter.Expression != "" {
-		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		filterWhere, err = querybuilder.PrepareWhereClause(ctx, query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
@@ -288,7 +288,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		baseSb.LT("unix_milli", end),
 	)
 	if query.Filter != nil && query.Filter.Expression != "" {
-		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		filterWhere, err = querybuilder.PrepareWhereClause(ctx, query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,

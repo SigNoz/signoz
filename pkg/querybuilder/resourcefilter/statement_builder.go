@@ -145,7 +145,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 
 // addConditions adds both filter and time conditions to the query
 func (b *resourceFilterStatementBuilder[T]) addConditions(
-	_ context.Context,
+	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[T],
@@ -156,7 +156,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	if query.Filter != nil && query.Filter.Expression != "" {
 
 		// warnings would be encountered as part of the main condition already
-		filterWhereClause, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		filterWhereClause, err := querybuilder.PrepareWhereClause(ctx, query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Logger:             b.logger,
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,
@@ -168,7 +168,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			// there is no need for "key" not found error for resource filtering
 			IgnoreNotFoundKeys: true,
 			Variables:          variables,
-        }, start, end)
+		}, start, end)
 
 		if err != nil {
 			return err

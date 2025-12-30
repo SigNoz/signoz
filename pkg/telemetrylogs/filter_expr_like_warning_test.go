@@ -1,6 +1,7 @@
 package telemetrylogs
 
 import (
+	"context"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -35,7 +36,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 	for _, expr := range tests {
 		t.Run(expr, func(t *testing.T) {
-			clause, err := querybuilder.PrepareWhereClause(expr, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(context.Background(), expr, opts, 0, 0)
 			require.NoError(t, err)
 			require.NotNil(t, clause)
 
@@ -72,7 +73,7 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 
 	for _, expr := range tests {
 		t.Run(expr, func(t *testing.T) {
-			clause, err := querybuilder.PrepareWhereClause(expr, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(context.Background(), expr, opts, 0, 0)
 			require.NoError(t, err)
 			require.NotNil(t, clause)
 

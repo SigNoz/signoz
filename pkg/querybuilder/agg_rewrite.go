@@ -209,6 +209,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		// Map the predicate (last argument)
 		origPred := args[len(args)-1].String()
 		whereClause, err := PrepareWhereClause(
+			v.ctx,
 			origPred,
 			FilterExprVisitorOpts{
 				Logger:           v.logger,

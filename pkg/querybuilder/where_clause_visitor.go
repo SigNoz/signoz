@@ -46,6 +46,7 @@ type filterExpressionVisitor struct {
 }
 
 type FilterExprVisitorOpts struct {
+	Context            context.Context
 	Logger             *slog.Logger
 	FieldMapper        qbtypes.FieldMapper
 	ConditionBuilder   qbtypes.ConditionBuilder
@@ -90,7 +91,7 @@ type PreparedWhereClause struct {
 }
 
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
-func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64, endNs uint64) (*PreparedWhereClause, error) {
+func PrepareWhereClause(ctx context.Context, query string, opts FilterExprVisitorOpts, startNs uint64, endNs uint64) (*PreparedWhereClause, error) {
 
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
@@ -147,7 +148,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64
 	}
 
 	// Visit the parse tree with our ClickHouse visitor
-	cond := visitor.Visit(tree).(string)
+	cond := visitor.Visit(ctx, tree).(string)
 
 	if len(visitor.errors) > 0 {
 		// combine all errors into a single error
@@ -174,7 +175,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64
 }
 
 // Visit dispatches to the specific visit method based on node type
-func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
+func (v *filterExpressionVisitor) Visit(ctx context.Context, tree antlr.ParseTree) any {
 	// Handle nil nodes to prevent panic
 	if tree == nil {
 		return ""
@@ -182,61 +183,61 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 
 	switch t := tree.(type) {
 	case *grammar.QueryContext:
-		return v.VisitQuery(t)
+		return v.VisitQuery(ctx, t)
 	case *grammar.ExpressionContext:
-		return v.VisitExpression(t)
+		return v.VisitExpression(ctx, t)
 	case *grammar.OrExpressionContext:
-		return v.VisitOrExpression(t)
+		return v.VisitOrExpression(ctx, t)
 	case *grammar.AndExpressionContext:
-		return v.VisitAndExpression(t)
+		return v.VisitAndExpression(ctx, t)
 	case *grammar.UnaryExpressionContext:
-		return v.VisitUnaryExpression(t)
+		return v.VisitUnaryExpression(ctx, t)
 	case *grammar.PrimaryContext:
-		return v.VisitPrimary(t)
+		return v.VisitPrimary(ctx, t)
 	case *grammar.ComparisonContext:
-		return v.VisitComparison(t)
+		return v.VisitComparison(ctx, t)
 	case *grammar.InClauseContext:
-		return v.VisitInClause(t)
+		return v.VisitInClause(ctx, t)
 	case *grammar.NotInClauseContext:
-		return v.VisitNotInClause(t)
+		return v.VisitNotInClause(ctx, t)
 	case *grammar.ValueListContext:
-		return v.VisitValueList(t)
+		return v.VisitValueList(ctx, t)
 	case *grammar.FullTextContext:
-		return v.VisitFullText(t)
+		return v.VisitFullText(ctx, t)
 	case *grammar.FunctionCallContext:
-		return v.VisitFunctionCall(t)
+		return v.VisitFunctionCall(ctx, t)
 	case *grammar.FunctionParamListContext:
-		return v.VisitFunctionParamList(t)
+		return v.VisitFunctionParamList(ctx, t)
 	case *grammar.FunctionParamContext:
-		return v.VisitFunctionParam(t)
+		return v.VisitFunctionParam(ctx, t)
 	case *grammar.ArrayContext:
-		return v.VisitArray(t)
+		return v.VisitArray(ctx, t)
 	case *grammar.ValueContext:
-		return v.VisitValue(t)
+		return v.VisitValue(ctx, t)
 	case *grammar.KeyContext:
-		return v.VisitKey(t)
+		return v.VisitKey(ctx, t)
 	default:
 		return ""
 	}
 }
 
-func (v *filterExpressionVisitor) VisitQuery(ctx *grammar.QueryContext) any {
+func (v *filterExpressionVisitor) VisitQuery(ctx context.Context, tree *grammar.QueryContext) any {
 
-	return v.Visit(ctx.Expression())
+	return v.Visit(ctx, tree.Expression())
 }
 
 // VisitExpression passes through to the orExpression
-func (v *filterExpressionVisitor) VisitExpression(ctx *grammar.ExpressionContext) any {
-	return v.Visit(ctx.OrExpression())
+func (v *filterExpressionVisitor) VisitExpression(ctx context.Context, tree *grammar.ExpressionContext) any {
+	return v.Visit(ctx, tree.OrExpression())
 }
 
 // VisitOrExpression handles OR expressions
-func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionContext) any {
-	andExpressions := ctx.AllAndExpression()
+func (v *filterExpressionVisitor) VisitOrExpression(ctx context.Context, tree *grammar.OrExpressionContext) any {
+	andExpressions := tree.AllAndExpression()
 
 	andExpressionConditions := make([]string, len(andExpressions))
 	for i, expr := range andExpressions {
-		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
+		if condExpr, ok := v.Visit(ctx, expr).(string); ok && condExpr != "" {
 			andExpressionConditions[i] = condExpr
 		}
 	}
@@ -253,12 +254,12 @@ func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionCon
 }
 
 // VisitAndExpression handles AND expressions
-func (v *filterExpressionVisitor) VisitAndExpression(ctx *grammar.AndExpressionContext) any {
-	unaryExpressions := ctx.AllUnaryExpression()
+func (v *filterExpressionVisitor) VisitAndExpression(ctx context.Context, tree *grammar.AndExpressionContext) any {
+	unaryExpressions := tree.AllUnaryExpression()
 
 	unaryExpressionConditions := make([]string, len(unaryExpressions))
 	for i, expr := range unaryExpressions {
-		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
+		if condExpr, ok := v.Visit(ctx, expr).(string); ok && condExpr != "" {
 			unaryExpressionConditions[i] = condExpr
 		}
 	}
@@ -275,11 +276,11 @@ func (v *filterExpressionVisitor) VisitAndExpression(ctx *grammar.AndExpressionC
 }
 
 // VisitUnaryExpression handles NOT expressions
-func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpressionContext) any {
-	result := v.Visit(ctx.Primary()).(string)
+func (v *filterExpressionVisitor) VisitUnaryExpression(ctx context.Context, tree *grammar.UnaryExpressionContext) any {
+	result := v.Visit(ctx, tree.Primary()).(string)
 
 	// Check if this is a NOT expression
-	if ctx.NOT() != nil {
+	if tree.NOT() != nil {
 		return fmt.Sprintf("NOT (%s)", result)
 	}
 
@@ -287,23 +288,23 @@ func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpress
 }
 
 // VisitPrimary handles grouped expressions, comparisons, function calls, and full-text search
-func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
-	if ctx.OrExpression() != nil {
+func (v *filterExpressionVisitor) VisitPrimary(ctx context.Context, tree *grammar.PrimaryContext) any {
+	if tree.OrExpression() != nil {
 		// This is a parenthesized expression
-		if condExpr, ok := v.Visit(ctx.OrExpression()).(string); ok && condExpr != "" {
-			return fmt.Sprintf("(%s)", v.Visit(ctx.OrExpression()).(string))
+		if condExpr, ok := v.Visit(ctx, tree.OrExpression()).(string); ok && condExpr != "" {
+			return fmt.Sprintf("(%s)", v.Visit(ctx, tree.OrExpression()).(string))
 		}
 		return ""
-	} else if ctx.Comparison() != nil {
-		return v.Visit(ctx.Comparison())
-	} else if ctx.FunctionCall() != nil {
-		return v.Visit(ctx.FunctionCall())
-	} else if ctx.FullText() != nil {
-		return v.Visit(ctx.FullText())
+	} else if tree.Comparison() != nil {
+		return v.Visit(ctx, tree.Comparison())
+	} else if tree.FunctionCall() != nil {
+		return v.Visit(ctx, tree.FunctionCall())
+	} else if tree.FullText() != nil {
+		return v.Visit(ctx, tree.FullText())
 	}
 
 	// Handle standalone key/value as a full text search term
-	if ctx.GetChildCount() == 1 {
+	if tree.GetChildCount() == 1 {
 		if v.skipFullTextFilter {
 			return ""
 		}
@@ -312,12 +313,12 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			v.errors = append(v.errors, "full text search is not supported")
 			return ""
 		}
-		child := ctx.GetChild(0)
+		child := tree.GetChild(0)
 		if keyCtx, ok := child.(*grammar.KeyContext); ok {
 			// create a full text search condition on the body field
 
 			keyText := keyCtx.GetText()
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(keyText), v.builder, v.startNs, v.endNs)
+			cond, err := v.conditionBuilder.ConditionFor(ctx, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(keyText), v.builder, v.startNs, v.endNs)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 				return ""
@@ -337,7 +338,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 				v.errors = append(v.errors, fmt.Sprintf("unsupported value type: %s", valCtx.GetText()))
 				return ""
 			}
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, v.startNs, v.endNs)
+			cond, err := v.conditionBuilder.ConditionFor(ctx, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, v.startNs, v.endNs)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 				return ""
@@ -350,8 +351,8 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 }
 
 // VisitComparison handles all comparison operators
-func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
-	keys := v.Visit(ctx.Key()).([]*telemetrytypes.TelemetryFieldKey)
+func (v *filterExpressionVisitor) VisitComparison(ctx context.Context, tree *grammar.ComparisonContext) any {
+	keys := v.Visit(ctx, tree.Key()).([]*telemetrytypes.TelemetryFieldKey)
 
 	// if key is missing and can be ignored, the condition is ignored
 	if len(keys) == 0 && v.ignoreNotFoundKeys {
@@ -374,14 +375,14 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	}
 
 	// Handle EXISTS specially
-	if ctx.EXISTS() != nil {
+	if tree.EXISTS() != nil {
 		op := qbtypes.FilterOperatorExists
-		if ctx.NOT() != nil {
+		if tree.NOT() != nil {
 			op = qbtypes.FilterOperatorNotExists
 		}
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, nil, v.builder, v.startNs, v.endNs)
+			condition, err := v.conditionBuilder.ConditionFor(ctx, key, op, nil, v.builder, v.startNs, v.endNs)
 			if err != nil {
 				return ""
 			}
@@ -398,14 +399,14 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	}
 
 	// Handle IN clause
-	if ctx.InClause() != nil || ctx.NotInClause() != nil {
+	if tree.InClause() != nil || tree.NotInClause() != nil {
 
 		var values []any
 		var retValue any
-		if ctx.InClause() != nil {
-			retValue = v.Visit(ctx.InClause())
-		} else if ctx.NotInClause() != nil {
-			retValue = v.Visit(ctx.NotInClause())
+		if tree.InClause() != nil {
+			retValue = v.Visit(ctx, tree.InClause())
+		} else if tree.NotInClause() != nil {
+			retValue = v.Visit(ctx, tree.NotInClause())
 		}
 		switch ret := retValue.(type) {
 		case []any:
@@ -448,12 +449,12 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 
 		op := qbtypes.FilterOperatorIn
-		if ctx.NotInClause() != nil {
+		if tree.NotInClause() != nil {
 			op = qbtypes.FilterOperatorNotIn
 		}
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, values, v.builder, v.startNs, v.endNs)
+			condition, err := v.conditionBuilder.ConditionFor(ctx, key, op, values, v.builder, v.startNs, v.endNs)
 			if err != nil {
 				return ""
 			}
@@ -469,23 +470,23 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	}
 
 	// Handle BETWEEN
-	if ctx.BETWEEN() != nil {
+	if tree.BETWEEN() != nil {
 		op := qbtypes.FilterOperatorBetween
-		if ctx.NOT() != nil {
+		if tree.NOT() != nil {
 			op = qbtypes.FilterOperatorNotBetween
 		}
 
-		values := ctx.AllValue()
+		values := tree.AllValue()
 		if len(values) != 2 {
 			return ""
 		}
 
-		value1 := v.Visit(values[0])
-		value2 := v.Visit(values[1])
+		value1 := v.Visit(ctx, values[0])
+		value2 := v.Visit(ctx, values[1])
 
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, []any{value1, value2}, v.builder, v.startNs, v.endNs)
+			condition, err := v.conditionBuilder.ConditionFor(ctx, key, op, []any{value1, value2}, v.builder, v.startNs, v.endNs)
 			if err != nil {
 				return ""
 			}
@@ -501,9 +502,9 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	}
 
 	// Get all values for operations that need them
-	values := ctx.AllValue()
+	values := tree.AllValue()
 	if len(values) > 0 {
-		value := v.Visit(values[0])
+		value := v.Visit(ctx, values[0])
 
 		if var_, ok := value.(string); ok {
 			// check if this is a variables
@@ -532,45 +533,45 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		var op qbtypes.FilterOperator
 
 		// Handle each type of comparison
-		if ctx.EQUALS() != nil {
+		if tree.EQUALS() != nil {
 			op = qbtypes.FilterOperatorEqual
-		} else if ctx.NOT_EQUALS() != nil || ctx.NEQ() != nil {
+		} else if tree.NOT_EQUALS() != nil || tree.NEQ() != nil {
 			op = qbtypes.FilterOperatorNotEqual
-		} else if ctx.LT() != nil {
+		} else if tree.LT() != nil {
 			op = qbtypes.FilterOperatorLessThan
-		} else if ctx.LE() != nil {
+		} else if tree.LE() != nil {
 			op = qbtypes.FilterOperatorLessThanOrEq
-		} else if ctx.GT() != nil {
+		} else if tree.GT() != nil {
 			op = qbtypes.FilterOperatorGreaterThan
-		} else if ctx.GE() != nil {
+		} else if tree.GE() != nil {
 			op = qbtypes.FilterOperatorGreaterThanOrEq
-		} else if ctx.LIKE() != nil {
+		} else if tree.LIKE() != nil {
 			op = qbtypes.FilterOperatorLike
-			if ctx.NOT() != nil {
+			if tree.NOT() != nil {
 				op = qbtypes.FilterOperatorNotLike
 			}
 			v.warnIfLikeWithoutWildcards("LIKE", value)
-		} else if ctx.ILIKE() != nil {
+		} else if tree.ILIKE() != nil {
 			op = qbtypes.FilterOperatorILike
-			if ctx.NOT() != nil {
+			if tree.NOT() != nil {
 				op = qbtypes.FilterOperatorNotILike
 			}
 			v.warnIfLikeWithoutWildcards("ILIKE", value)
-		} else if ctx.REGEXP() != nil {
+		} else if tree.REGEXP() != nil {
 			op = qbtypes.FilterOperatorRegexp
-			if ctx.NOT() != nil {
+			if tree.NOT() != nil {
 				op = qbtypes.FilterOperatorNotRegexp
 			}
-		} else if ctx.CONTAINS() != nil {
+		} else if tree.CONTAINS() != nil {
 			op = qbtypes.FilterOperatorContains
-			if ctx.NOT() != nil {
+			if tree.NOT() != nil {
 				op = qbtypes.FilterOperatorNotContains
 			}
 		}
 
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, value, v.builder, v.startNs, v.endNs)
+			condition, err := v.conditionBuilder.ConditionFor(ctx, key, op, value, v.builder, v.startNs, v.endNs)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
 				return ""
@@ -603,35 +604,35 @@ func (v *filterExpressionVisitor) warnIfLikeWithoutWildcards(op string, value an
 }
 
 // VisitInClause handles IN expressions
-func (v *filterExpressionVisitor) VisitInClause(ctx *grammar.InClauseContext) any {
-	if ctx.ValueList() != nil {
-		return v.Visit(ctx.ValueList())
+func (v *filterExpressionVisitor) VisitInClause(ctx context.Context, tree *grammar.InClauseContext) any {
+	if tree.ValueList() != nil {
+		return v.Visit(ctx, tree.ValueList())
 	}
-	return v.Visit(ctx.Value())
+	return v.Visit(ctx, tree.Value())
 }
 
 // VisitNotInClause handles NOT IN expressions
-func (v *filterExpressionVisitor) VisitNotInClause(ctx *grammar.NotInClauseContext) any {
-	if ctx.ValueList() != nil {
-		return v.Visit(ctx.ValueList())
+func (v *filterExpressionVisitor) VisitNotInClause(ctx context.Context, tree *grammar.NotInClauseContext) any {
+	if tree.ValueList() != nil {
+		return v.Visit(ctx, tree.ValueList())
 	}
-	return v.Visit(ctx.Value())
+	return v.Visit(ctx, tree.Value())
 }
 
 // VisitValueList handles comma-separated value lists
-func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) any {
-	values := ctx.AllValue()
+func (v *filterExpressionVisitor) VisitValueList(ctx context.Context, tree *grammar.ValueListContext) any {
+	values := tree.AllValue()
 
 	parts := []any{}
 	for _, val := range values {
-		parts = append(parts, v.Visit(val))
+		parts = append(parts, v.Visit(ctx, val))
 	}
 
 	return parts
 }
 
 // VisitFullText handles standalone quoted strings for full-text search
-func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
+func (v *filterExpressionVisitor) VisitFullText(ctx context.Context, tree *grammar.FullTextContext) any {
 
 	if v.skipFullTextFilter {
 		return ""
@@ -639,17 +640,17 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 
 	var text string
 
-	if ctx.QUOTED_TEXT() != nil {
-		text = trimQuotes(ctx.QUOTED_TEXT().GetText())
-	} else if ctx.FREETEXT() != nil {
-		text = ctx.FREETEXT().GetText()
+	if tree.QUOTED_TEXT() != nil {
+		text = trimQuotes(tree.QUOTED_TEXT().GetText())
+	} else if tree.FREETEXT() != nil {
+		text = tree.FREETEXT().GetText()
 	}
 
 	if v.fullTextColumn == nil {
 		v.errors = append(v.errors, "full text search is not supported")
 		return ""
 	}
-	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, v.startNs, v.endNs)
+	cond, err := v.conditionBuilder.ConditionFor(ctx, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, v.startNs, v.endNs)
 	if err != nil {
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ""
@@ -658,27 +659,27 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 }
 
 // VisitFunctionCall handles function calls like has(), hasAny(), etc.
-func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
+func (v *filterExpressionVisitor) VisitFunctionCall(ctx context.Context, tree *grammar.FunctionCallContext) any {
 	if v.skipFunctionCalls {
 		return ""
 	}
 
 	// Get function name based on which token is present
 	var functionName string
-	if ctx.HAS() != nil {
+	if tree.HAS() != nil {
 		functionName = "has"
-	} else if ctx.HASANY() != nil {
+	} else if tree.HASANY() != nil {
 		functionName = "hasAny"
-	} else if ctx.HASALL() != nil {
+	} else if tree.HASALL() != nil {
 		functionName = "hasAll"
-	} else if ctx.HASTOKEN() != nil {
+	} else if tree.HASTOKEN() != nil {
 		functionName = "hasToken"
 	} else {
 		// Default fallback
-		v.errors = append(v.errors, fmt.Sprintf("unknown function `%s`", ctx.GetText()))
+		v.errors = append(v.errors, fmt.Sprintf("unknown function `%s`", tree.GetText()))
 		return ""
 	}
-	params := v.Visit(ctx.FunctionParamList()).([]any)
+	params := v.Visit(ctx, tree.FunctionParamList()).([]any)
 
 	if len(params) < 2 {
 		v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key and value parameters", functionName))
@@ -716,7 +717,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		} else {
 			// this is that all other functions only support array fields
 			if key.FieldContext == telemetrytypes.FieldContextBody {
-				fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
+				fieldName, _ = v.jsonKeyToKey(ctx, key, qbtypes.FilterOperatorUnknown, value)
 			} else {
 				// TODO(add docs for json body search)
 				if v.mainErrorURL == "" {
@@ -747,66 +748,66 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 }
 
 // VisitFunctionParamList handles the parameter list for function calls
-func (v *filterExpressionVisitor) VisitFunctionParamList(ctx *grammar.FunctionParamListContext) any {
-	params := ctx.AllFunctionParam()
+func (v *filterExpressionVisitor) VisitFunctionParamList(ctx context.Context, tree *grammar.FunctionParamListContext) any {
+	params := tree.AllFunctionParam()
 	parts := make([]any, len(params))
 
 	for i, param := range params {
-		parts[i] = v.Visit(param)
+		parts[i] = v.Visit(ctx, param)
 	}
 
 	return parts
 }
 
 // VisitFunctionParam handles individual parameters in function calls
-func (v *filterExpressionVisitor) VisitFunctionParam(ctx *grammar.FunctionParamContext) any {
-	if ctx.Key() != nil {
-		return v.Visit(ctx.Key())
-	} else if ctx.Value() != nil {
-		return v.Visit(ctx.Value())
-	} else if ctx.Array() != nil {
-		return v.Visit(ctx.Array())
+func (v *filterExpressionVisitor) VisitFunctionParam(ctx context.Context, tree *grammar.FunctionParamContext) any {
+	if tree.Key() != nil {
+		return v.Visit(ctx, tree.Key())
+	} else if tree.Value() != nil {
+		return v.Visit(ctx, tree.Value())
+	} else if tree.Array() != nil {
+		return v.Visit(ctx, tree.Array())
 	}
 
 	return "" // Should not happen with valid input
 }
 
 // VisitArray handles array literals
-func (v *filterExpressionVisitor) VisitArray(ctx *grammar.ArrayContext) any {
-	return v.Visit(ctx.ValueList())
+func (v *filterExpressionVisitor) VisitArray(ctx context.Context, tree *grammar.ArrayContext) any {
+	return v.Visit(ctx, tree.ValueList())
 }
 
 // VisitValue handles literal values: strings, numbers, booleans
-func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
-	if ctx.QUOTED_TEXT() != nil {
-		txt := ctx.QUOTED_TEXT().GetText()
+func (v *filterExpressionVisitor) VisitValue(ctx context.Context, tree *grammar.ValueContext) any {
+	if tree.QUOTED_TEXT() != nil {
+		txt := tree.QUOTED_TEXT().GetText()
 		// trim quotes and return the value
 		return trimQuotes(txt)
-	} else if ctx.NUMBER() != nil {
-		number, err := strconv.ParseFloat(ctx.NUMBER().GetText(), 64)
+	} else if tree.NUMBER() != nil {
+		number, err := strconv.ParseFloat(tree.NUMBER().GetText(), 64)
 		if err != nil {
-			v.errors = append(v.errors, fmt.Sprintf("failed to parse number %s", ctx.NUMBER().GetText()))
+			v.errors = append(v.errors, fmt.Sprintf("failed to parse number %s", tree.NUMBER().GetText()))
 			return ""
 		}
 		return number
-	} else if ctx.BOOL() != nil {
+	} else if tree.BOOL() != nil {
 		// Convert to ClickHouse boolean literal
-		boolText := strings.ToLower(ctx.BOOL().GetText())
+		boolText := strings.ToLower(tree.BOOL().GetText())
 		return boolText == "true"
-	} else if ctx.KEY() != nil {
+	} else if tree.KEY() != nil {
 		// Why do we have a KEY context here?
 		// When the user writes an expression like `service.name=redis`
 		// The `redis` part is a VALUE context but parsed as a KEY token
 		// so we return the text as is
-		return ctx.KEY().GetText()
+		return tree.KEY().GetText()
 	}
 
 	return "" // Should not happen with valid input
 }
 
 // VisitKey handles field/column references
-func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
-	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(ctx.GetText())
+func (v *filterExpressionVisitor) VisitKey(ctx context.Context, tree *grammar.KeyContext) any {
+	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(tree.GetText())
 	keyName := fieldKey.Name
 
 	fieldKeysForName := v.fieldKeys[keyName]

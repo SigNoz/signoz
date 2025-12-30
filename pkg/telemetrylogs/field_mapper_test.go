@@ -187,12 +187,17 @@ func TestGetColumn(t *testing.T) {
 
 func TestGetFieldKeyName(t *testing.T) {
 	ctx := context.Background()
+	orgId := valuer.GenerateUUID()
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: orgId.String(),
+	})
 
 	testCases := []struct {
-		name           string
-		key            telemetrytypes.TelemetryFieldKey
-		expectedResult string
-		expectedError  error
+		name            string
+		key             telemetrytypes.TelemetryFieldKey
+		expectedResult  string
+		expectedError   error
+		addExistsFilter bool
 	}{
 		{
 			name: "Simple column type - timestamp",
@@ -200,8 +205,9 @@ func TestGetFieldKeyName(t *testing.T) {
 				Name:         "timestamp",
 				FieldContext: telemetrytypes.FieldContextLog,
 			},
-			expectedResult: "timestamp",
-			expectedError:  nil,
+			expectedResult:  "timestamp",
+			expectedError:   nil,
+			addExistsFilter: false,
 		},
 		{
 			name: "Map column type - string attribute",
@@ -210,8 +216,9 @@ func TestGetFieldKeyName(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
-			expectedResult: "attributes_string['user.id']",
-			expectedError:  nil,
+			expectedResult:  "attributes_string['user.id']",
+			expectedError:   nil,
+			addExistsFilter: false,
 		},
 		{
 			name: "Map column type - number attribute",
@@ -220,8 +227,9 @@ func TestGetFieldKeyName(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeNumber,
 			},
-			expectedResult: "attributes_number['request.size']",
-			expectedError:  nil,
+			expectedResult:  "attributes_number['request.size']",
+			expectedError:   nil,
+			addExistsFilter: false,
 		},
 		{
 			name: "Map column type - bool attribute",
@@ -230,17 +238,19 @@ func TestGetFieldKeyName(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeBool,
 			},
-			expectedResult: "attributes_bool['request.success']",
-			expectedError:  nil,
+			expectedResult:  "attributes_bool['request.success']",
+			expectedError:   nil,
+			addExistsFilter: false,
 		},
 		{
-			name: "Map column type - resource attribute - json",
+			name: "Map column type - resource attribute",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
-			expectedError:  nil,
+			expectedResult:  "multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedError:   nil,
+			addExistsFilter: false,
 		},
 		{
 			name: "Map column type - resource attribute - Materialized - json",
@@ -250,8 +260,9 @@ func TestGetFieldKeyName(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
 			},
-			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL)",
-			expectedError:  nil,
+			expectedResult:  "multiIf(`resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL)",
+			expectedError:   nil,
+			addExistsFilter: false,
 		},
 		{
 			name: "Non-existent column",
@@ -280,89 +291,277 @@ func TestGetFieldKeyName(t *testing.T) {
 	}
 }
 
-func TestFieldForWithEvolutionMetadata(t *testing.T) {
-	ctx := context.Background()
-	orgId := valuer.GenerateUUID()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: orgId.String(),
-	})
-
-	// Create a test release time
-	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
-	releaseTimeNano := uint64(releaseTime.UnixNano())
-
-	// Common test key
-	serviceNameKey := telemetrytypes.TelemetryFieldKey{
+func TestBuildEvolutionMultiIfExpression(t *testing.T) {
+	baseColumnExpr := "mapContains(resources_string, 'service.name'), resources_string['service.name']"
+	key := &telemetrytypes.TelemetryFieldKey{
 		Name:         "service.name",
 		FieldContext: telemetrytypes.FieldContextResource,
 	}
 
-	// Common expected results
-	jsonOnlyResult := "resource.`service.name`::String"
-	fallbackResult := "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)"
-
-	// Set up stores once
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(mockKeyEvolutionMetadata(ctx, orgId, releaseTime))
-	storeWithoutMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
-
 	testCases := []struct {
 		name           string
-		tsStart        uint64
-		tsEnd          uint64
-		key            telemetrytypes.TelemetryFieldKey
-		mockStore      *telemetrytypestest.MockKeyEvolutionMetadataStore
+		evolutions     []*telemetrytypes.KeyEvolutionMetadataKey
+		key            *telemetrytypes.TelemetryFieldKey
+		baseColumnExpr string
+		tsStartTime    time.Time
+		tsEndTime      time.Time
 		expectedResult string
-		expectedError  error
 	}{
 		{
-			name:           "Resource attribute - tsStart before release time (use fallback with multiIf)",
-			tsStart:        releaseTimeNano - uint64(24*time.Hour.Nanoseconds()),
-			tsEnd:          releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
-			key:            serviceNameKey,
-			mockStore:      storeWithMetadata,
-			expectedResult: fallbackResult,
-			expectedError:  nil,
+			name:           "No evolution",
+			evolutions:     []*telemetrytypes.KeyEvolutionMetadataKey{},
+			key:            key,
+			baseColumnExpr: baseColumnExpr,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 		},
 		{
-			name:           "Resource attribute - tsStart after release time (use new json column)",
-			tsStart:        releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
-			tsEnd:          releaseTimeNano + uint64(48*time.Hour.Nanoseconds()),
-			key:            serviceNameKey,
-			mockStore:      storeWithMetadata,
-			expectedResult: jsonOnlyResult,
-			expectedError:  nil,
+			name: "Single evolution before tsStartTime",
+			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			baseColumnExpr: baseColumnExpr,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource.`service.name`::String IS NOT NULL, resource.`service.name`::String, NULL)",
 		},
 		{
-			name:           "Resource attribute - no evolution metadata (use fallback with multiIf)",
-			tsStart:        releaseTimeNano,
-			tsEnd:          releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
-			key:            serviceNameKey,
-			mockStore:      storeWithoutMetadata,
-			expectedResult: fallbackResult,
-			expectedError:  nil,
+			name: "Single evolution exactly at tsStartTime",
+			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			baseColumnExpr: baseColumnExpr,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource.`service.name`::String IS NOT NULL, resource.`service.name`::String, NULL)",
 		},
 		{
-			name:           "Resource attribute - tsStart exactly at release time (use fallback with multiIf)",
-			tsStart:        releaseTimeNano,
-			tsEnd:          releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
-			key:            serviceNameKey,
-			mockStore:      storeWithMetadata,
-			expectedResult: fallbackResult,
-			expectedError:  nil,
+			name: "Single evolution after tsStartTime",
+			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			baseColumnExpr: baseColumnExpr,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource.`service.name`::String IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+		},
+		{
+			name: "Single evolution after tsEndTime - newest evolution should be included",
+			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			baseColumnExpr: baseColumnExpr,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+		},
+		{
+			name: "Single evolution after tsEndTime - newest evolution should be included - materialized",
+			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "service.name",
+				FieldContext: telemetrytypes.FieldContextResource,
+				Materialized: true,
+			},
+			baseColumnExpr: "`resource_string_service$$name_exists`==true, `resource_string_service$$name`",
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(`resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL)",
+		},
+		{
+			name: "Multiple evolutions before tsStartTime - only latest should be included",
+			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v1",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v2",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			baseColumnExpr: baseColumnExpr,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource_v2.`service.name`::String IS NOT NULL, resource_v2.`service.name`::String, NULL)",
+		},
+		{
+			name: "Multiple evolutions after tsStartTime - all should be included",
+			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v1",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).Add(24 * time.Hour),
+				},
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v2",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).Add(48 * time.Hour),
+				},
+			},
+			key:            key,
+			baseColumnExpr: baseColumnExpr,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource_v2.`service.name`::String IS NOT NULL, resource_v2.`service.name`::String, resource_v1.`service.name`::String IS NOT NULL, resource_v1.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+		},
+		{
+			name: "Mix of evolutions before and after tsStartTime",
+			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v1",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v2",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v3",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).Add(24 * time.Hour),
+				},
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v4",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).Add(48 * time.Hour),
+				},
+			},
+			key:            key,
+			baseColumnExpr: baseColumnExpr,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource_v4.`service.name`::String IS NOT NULL, resource_v4.`service.name`::String, resource_v3.`service.name`::String IS NOT NULL, resource_v3.`service.name`::String, resource_v2.`service.name`::String IS NOT NULL, resource_v2.`service.name`::String, NULL)",
+		},
+		{
+			name: "Evolution exactly at tsEndTime - should not be included",
+			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			baseColumnExpr: baseColumnExpr,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+		},
+
+		{
+			name: "Evolution at tsStartTime and after tsStartTime",
+			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v1",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v2",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).Add(24 * time.Hour),
+				},
+			},
+			key:            key,
+			baseColumnExpr: baseColumnExpr,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource_v2.`service.name`::String IS NOT NULL, resource_v2.`service.name`::String, resource_v1.`service.name`::String IS NOT NULL, resource_v1.`service.name`::String, NULL)",
+		},
+		{
+			name: "Evolution before tsStartTime and at tsStartTime - latest before should be included",
+			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v1",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v2",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource_v2.`service.name`::String IS NOT NULL, resource_v2.`service.name`::String, NULL)",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper(tc.mockStore)
-			result, err := fm.FieldFor(ctx, tc.tsStart, tc.tsEnd, &tc.key)
-
-			if tc.expectedError != nil {
-				assert.Equal(t, tc.expectedError, err)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedResult, result)
-			}
+			result := buildEvolutionMultiIfExpression(tc.evolutions, tc.key, tc.tsStartTime, tc.tsEndTime, tc.baseColumnExpr)
+			assert.Equal(t, tc.expectedResult, result)
 		})
 	}
 }

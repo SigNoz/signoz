@@ -621,7 +621,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 	startNs := querybuilder.ToNanoSecs(uint64(startMillis))
 	endNs := querybuilder.ToNanoSecs(uint64(endMillis))
 
-	whereClause, err := querybuilder.PrepareWhereClause(expression, opts, startNs, endNs)
+	whereClause, err := querybuilder.PrepareWhereClause(ctx, expression, opts, startNs, endNs)
 	if err != nil {
 		return nil, err
 	}

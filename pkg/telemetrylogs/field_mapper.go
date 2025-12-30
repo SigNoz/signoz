@@ -106,6 +106,80 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	return nil, qbtypes.ErrColumnNotFound
 }
 
+func buildEvolutionMultiIfExpression(evolutions []*telemetrytypes.KeyEvolutionMetadataKey, key *telemetrytypes.TelemetryFieldKey, tsStartTime time.Time, tsEndTime time.Time, baseColExpr string) string {
+	// Collect relevant evolutions for the time range [tsStart, tsEnd]
+	// Strategy:
+	// 1. Include only the latest evolution with releaseTime <= tsStartTime (for backward compatibility)
+	// 2. Include all evolutions with releaseTime > tsStartTime and <= tsEndTime (active during query range)
+	// 3. Order from newest to oldest so multiIf checks newest columns first
+	// 4. Add base column as final fallback
+
+	relevantEvolutions := []string{}
+	var latestBeforeStartColumn string
+	var singleEvolutionColumn string
+
+	// Helper function to build column expression from evolution
+	buildColumnExpr := func(evolution *telemetrytypes.KeyEvolutionMetadataKey) string {
+		switch evolution.NewColumnType {
+		// TODO: instead of string comparison, we can parse the column type and then compare the types
+		case "JSON(max_dynamic_paths=100)":
+			singleEvolutionColumn := fmt.Sprintf("%s.`%s`::String IS NOT NULL, %s.`%s`::String", evolution.NewColumn, key.Name, evolution.NewColumn, key.Name)
+			return singleEvolutionColumn
+		case "Map(LowCardinality(String), String)":
+			if key.Materialized {
+				oldKeyName := telemetrytypes.FieldKeyToMaterializedColumnName(key)
+				oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+				singleEvolutionColumn = fmt.Sprintf("%s==true, %s", oldKeyNameExists, oldKeyName)
+				return singleEvolutionColumn
+			} else {
+				singleEvolutionColumn = fmt.Sprintf("mapContains(%s, '%s'), %s['%s']", evolution.NewColumn, key.Name, evolution.NewColumn, key.Name)
+				return singleEvolutionColumn
+			}
+		}
+		return ""
+	}
+
+	// assuming evolutions are sorted by increasing release time
+	for _, evolution := range evolutions {
+		// Skip evolutions released after the query range
+		if evolution.ReleaseTime.After(tsEndTime) || evolution.ReleaseTime.Equal(tsEndTime) {
+			continue
+		}
+
+		column := buildColumnExpr(evolution)
+		if column == "" {
+			continue
+		}
+
+		// If evolution was released before or at tsStartTime, track it as the latest one
+		// Since evolutions are sorted by increasing release time, the last one we see is the latest
+		if evolution.ReleaseTime.Before(tsStartTime) || evolution.ReleaseTime.Equal(tsStartTime) {
+			latestBeforeStartColumn = column
+		} else if evolution.ReleaseTime.After(tsStartTime) {
+			// Evolution was released after tsStartTime, include it
+			relevantEvolutions = append(relevantEvolutions, column)
+		}
+	}
+
+	// Reverse the order so we check newest columns first (since evolutions are sorted by increasing release time)
+	// multiIf checks conditions in order, so we want: newest -> ... -> oldest -> base -> NULL
+	for i, j := 0, len(relevantEvolutions)-1; i < j; i, j = i+1, j-1 {
+		relevantEvolutions[i], relevantEvolutions[j] = relevantEvolutions[j], relevantEvolutions[i]
+	}
+
+	// Add the latest evolution before/at tsStartTime at the end (it's older than the ones after tsStartTime)
+	if latestBeforeStartColumn != "" {
+		relevantEvolutions = append(relevantEvolutions, latestBeforeStartColumn)
+	} else {
+		// this means that evolution was added after tsStartTime
+		// we need to add the base column as the latest evolution
+		relevantEvolutions = append(relevantEvolutions, baseColExpr)
+	}
+
+	return "multiIf(" + strings.Join(relevantEvolutions, ", ") + ", NULL)"
+
+}
+
 func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	column, err := m.getColumn(ctx, key)
 	if err != nil {
@@ -121,6 +195,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 
 		baseColumn := logsV2Columns["resources_string"]
 		tsStartTime := time.Unix(0, int64(tsStart))
+		tsEndTime := time.Unix(0, int64(tsEnd))
 
 		// Extract orgId from context
 		var orgID valuer.UUID
@@ -131,22 +206,23 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 			}
 		}
 
-		// get all evolution for the column
-		evolutions := m.evolutionMetadataStore.Get(ctx, orgID, baseColumn.Name)
-
-		// restricting now to just one entry where we know we changed from map to json
-		if len(evolutions) > 0 && evolutions[0].ReleaseTime.Before(tsStartTime) {
-			return fmt.Sprintf("%s.`%s`::String", evolutions[0].NewColumn, key.Name), nil
-		}
-
+		baseColExpr := ""
+		// Fallback when no evolutions exist
 		if key.Materialized {
 			oldKeyName := telemetrytypes.FieldKeyToMaterializedColumnName(key)
 			oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
-			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, %s==true, %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldKeyNameExists, oldKeyName), nil
+			baseColExpr = fmt.Sprintf("%s==true, %s", oldKeyNameExists, oldKeyName)
 		} else {
 			attrVal := fmt.Sprintf("%s['%s']", baseColumn.Name, key.Name)
-			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, baseColumn.Name, key.Name, attrVal), nil
+			baseColExpr = fmt.Sprintf("mapContains(%s, '%s'), %s", baseColumn.Name, key.Name, attrVal)
 		}
+
+		// get all evolution for the column
+		evolutions := m.evolutionMetadataStore.Get(ctx, orgID, baseColumn.Name)
+
+		data := buildEvolutionMultiIfExpression(evolutions, key, tsStartTime, tsEndTime, baseColExpr)
+		return data, nil
+
 	case schema.ColumnTypeEnumLowCardinality:
 		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
 		case schema.ColumnTypeEnumString:

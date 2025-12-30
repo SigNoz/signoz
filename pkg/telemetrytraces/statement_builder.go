@@ -726,7 +726,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 // buildFilterCondition builds SQL condition from filter expression
 func (b *traceQueryStatementBuilder) addFilterCondition(
-	_ context.Context,
+	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
@@ -739,7 +739,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression
-		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		preparedWhereClause, err = querybuilder.PrepareWhereClause(ctx, query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Logger:             b.logger,
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,

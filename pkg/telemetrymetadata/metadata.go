@@ -973,7 +973,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 			return nil, false, err
 		}
 
-		whereClause, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
+		whereClause, err := querybuilder.PrepareWhereClause(ctx, fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
 			Logger:           t.logger,
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,

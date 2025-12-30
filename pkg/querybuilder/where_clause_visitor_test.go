@@ -1,6 +1,7 @@
 package querybuilder
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -58,7 +59,7 @@ func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
 				Variables: tt.variables,
 			}
 
-			_, err := PrepareWhereClause(tt.expr, opts, 0, 0)
+			_, err := PrepareWhereClause(context.Background(), tt.expr, opts, 0, 0)
 
 			if tt.expectError {
 				if err == nil {
