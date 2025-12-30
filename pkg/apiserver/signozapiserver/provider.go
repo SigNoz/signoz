@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
@@ -32,6 +33,7 @@ type provider struct {
 	preferenceHandler preference.Handler
 	globalHandler     global.Handler
 	promoteHandler    promote.Handler
+	flaggerHandler    flagger.Handler
 }
 
 func NewFactory(
@@ -44,9 +46,10 @@ func NewFactory(
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
+	flaggerHandler flagger.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler)
 	})
 }
 
@@ -63,6 +66,7 @@ func newProvider(
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
+	flaggerHandler flagger.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -78,6 +82,7 @@ func newProvider(
 		preferenceHandler: preferenceHandler,
 		globalHandler:     globalHandler,
 		promoteHandler:    promoteHandler,
+		flaggerHandler:    flaggerHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -119,6 +124,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addPromoteRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addFlaggerRoutes(router); err != nil {
 		return err
 	}
 
