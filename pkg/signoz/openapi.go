@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
@@ -41,6 +42,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ preference.Handler }{},
 		struct{ global.Handler }{},
 		struct{ promote.Handler }{},
+		struct{ flagger.Handler }{},
 		struct{ dashboard.Module }{},
 		struct{ dashboard.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})

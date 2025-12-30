@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
@@ -33,6 +34,7 @@ type provider struct {
 	preferenceHandler preference.Handler
 	globalHandler     global.Handler
 	promoteHandler    promote.Handler
+	flaggerHandler    flagger.Handler
 	dashboardModule   dashboard.Module
 	dashboardHandler  dashboard.Handler
 }
@@ -47,11 +49,12 @@ func NewFactory(
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
+	flaggerHandler flagger.Handler,
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, dashboardModule, dashboardHandler)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flagger, dashboardModule, dashboardHandler)
 	})
 }
 
@@ -68,6 +71,7 @@ func newProvider(
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
+	flaggerHandler flagger.Handler,
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 ) (apiserver.APIServer, error) {
@@ -85,6 +89,7 @@ func newProvider(
 		preferenceHandler: preferenceHandler,
 		globalHandler:     globalHandler,
 		promoteHandler:    promoteHandler,
+		flaggerHandler:    flaggerHandler,
 		dashboardModule:   dashboardModule,
 		dashboardHandler:  dashboardHandler,
 	}
@@ -128,6 +133,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addPromoteRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addFlaggerRoutes(router); err != nil {
 		return err
 	}
 

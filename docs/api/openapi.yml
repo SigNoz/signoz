@@ -1992,6 +1992,51 @@ paths:
       summary: Update user preference
       tags:
       - preferences
+  /api/v2/features:
+    get:
+      deprecated: false
+      description: This endpoint returns the supported features and their details
+      operationId: GetFeatures
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/FeaturetypesGettableFeature'
+                    type: array
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get features
+      tags:
+      - features
   /api/v2/orgs/me:
     get:
       deprecated: false
@@ -2492,6 +2537,24 @@ components:
       properties:
         message:
           type: string
+      type: object
+    FeaturetypesGettableFeature:
+      properties:
+        defaultVariant:
+          type: string
+        description:
+          type: string
+        kind:
+          type: string
+        name:
+          type: string
+        resolvedValue: {}
+        stage:
+          type: string
+        variants:
+          additionalProperties: {}
+          nullable: true
+          type: object
       type: object
     PreferencetypesPreference:
       properties:
