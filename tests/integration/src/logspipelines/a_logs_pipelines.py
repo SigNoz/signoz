@@ -14,17 +14,9 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 
-@pytest.fixture(name="logspipelines_test_suite_setup", scope="package", autouse=True)
-def logspipelines_test_suite_setup(create_user_admin):  # pylint: disable=unused-argument
-    # This fixture creates an admin user for the entire logspipelines test suite
-    # The create_user_admin fixture is executed just by being a dependency
-    print("Setting up logspipelines test suite")
-    yield
-
-
 def test_create_logs_pipeline_success(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -96,7 +88,7 @@ def test_create_logs_pipeline_success(
 
 def test_list_logs_pipelines_success(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -170,7 +162,7 @@ def test_list_logs_pipelines_success(
 
 def test_list_logs_pipelines_by_version(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -300,7 +292,7 @@ def test_list_logs_pipelines_by_version(
 
 def test_preview_logs_pipelines_success(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -376,7 +368,7 @@ def test_preview_logs_pipelines_success(
 
 def test_create_multiple_pipelines_success(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -462,7 +454,7 @@ def test_create_multiple_pipelines_success(
 
 def test_delete_all_pipelines_success(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
