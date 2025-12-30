@@ -41,11 +41,11 @@ export const QueryV2 = forwardRef(function QueryV2(
 		isMultiQueryAllowed = false,
 		onSignalSourceChange,
 		signalSourceChangeEnabled = false,
-		queriesCount = 1,
+		canDelete = false,
 	}: QueryProps & {
 		onSignalSourceChange: (value: string) => void;
 		signalSourceChangeEnabled: boolean;
-		queriesCount: number;
+		canDelete: boolean;
 	},
 	ref: ForwardedRef<HTMLDivElement>,
 ): JSX.Element {
@@ -201,7 +201,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 												icon: <Copy size={14} />,
 												onClick: handleCloneEntity,
 											},
-											...(queriesCount && queriesCount > 1
+											...(canDelete
 												? [
 														{
 															label: 'Delete',
