@@ -148,11 +148,12 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	// Filter out new series if newGroupEvalDelay is configured
 	if r.ShouldSkipNewGroups() {
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, matrixToProcess)
+		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
-			return nil, filterErr
+		} else {
+			matrixToProcess = filteredSeries
 		}
-		matrixToProcess = filteredSeries
 	}
 
 	var resultVector ruletypes.Vector

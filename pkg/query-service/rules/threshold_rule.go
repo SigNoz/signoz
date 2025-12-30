@@ -485,11 +485,12 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 	seriesToProcess := queryResult.Series
 	if r.ShouldSkipNewGroups() {
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
+		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
-			return nil, filterErr
+		} else {
+			seriesToProcess = filteredSeries
 		}
-		seriesToProcess = filteredSeries
 	}
 
 	for _, series := range seriesToProcess {
@@ -575,12 +576,14 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	seriesToProcess := queryResult.Series
 	if r.ShouldSkipNewGroups() {
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
+		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
-			return nil, filterErr
+		} else {
+			seriesToProcess = filteredSeries
 		}
-		seriesToProcess = filteredSeries
 	}
+
 	for _, series := range seriesToProcess {
 		if r.Condition() != nil && r.Condition().RequireMinPoints {
 			if len(series.Points) < r.Condition().RequiredNumPoints {

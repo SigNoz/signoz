@@ -243,11 +243,12 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 	seriesToProcess := queryResult.AnomalyScores
 	if r.ShouldSkipNewGroups() {
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
+		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
-			return nil, filterErr
+		} else {
+			seriesToProcess = filteredSeries
 		}
-		seriesToProcess = filteredSeries
 	}
 
 	for _, series := range seriesToProcess {
@@ -306,11 +307,12 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 	seriesToProcess := queryResult.AnomalyScores
 	if r.ShouldSkipNewGroups() {
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
+		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
-			return nil, filterErr
+		} else {
+			seriesToProcess = filteredSeries
 		}
-		seriesToProcess = filteredSeries
 	}
 
 	for _, series := range seriesToProcess {
