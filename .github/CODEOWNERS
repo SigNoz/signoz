@@ -47,5 +47,7 @@
 /pkg/telemetrytraces/ @srikanthccv
 
 # AuthN / AuthZ Owners 
-
 /pkg/authz/ @vikrantgupta25 @therealpandey
+
+# Integration tests
+/tests/integration/ @therealpandey
