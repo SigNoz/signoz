@@ -33,6 +33,7 @@
 	width: 29px;
 	flex-shrink: 0;
 	object-fit: contain;
+	opacity: 1;
 }
 
 .trust-footer-text {
@@ -50,7 +51,7 @@
 	gap: 6px;
 	text-decoration: none;
 	transition: opacity 0.2s ease;
-	
+
 	&:hover {
 		opacity: 0.8;
 	}
@@ -75,22 +76,22 @@
 		border-color: var(--bg-vanilla-300, #e9e9e9);
 		box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.08);
 	}
-	
+
+	.trust-footer-icon {
+		filter: brightness(0) saturate(100%) invert(25%) sepia(8%) saturate(518%)
+			hue-rotate(192deg) brightness(80%) contrast(95%);
+		opacity: 0.9;
+	}
+
 	.trust-footer-text {
 		color: var(--text-neutral-light-200, #80828d);
 	}
-	
+
 	.trust-footer-link-icon {
 		color: var(--text-neutral-light-100, #62636c);
 	}
-	
+
 	.trust-footer-separator {
 		background: var(--bg-vanilla-300, #e9e9e9);
 	}
 }
-
-
-
-
-
-

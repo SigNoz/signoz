@@ -142,20 +142,22 @@
 	}
 
 	.bg-dot-pattern {
-		background: radial-gradient(
-			circle,
-			var(--bg-neutral-light-50, #1e1f24) 1px,
-			transparent 1px
-		);
+		background: radial-gradient(circle, rgba(35, 38, 46, 1) 1px, transparent 1px);
+		background-size: 12px 12px;
 	}
 
 	.auth-page-gradient {
 		background: radial-gradient(
-			ellipse at center -500px,
-			rgba(78, 116, 248, 0.15) 0%,
-			transparent 70%
+			ellipse at center top,
+			rgba(78, 116, 248, 0.12) 0%,
+			transparent 60%
 		);
-		opacity: 0.2;
+		opacity: 0.8;
+		filter: blur(200px);
+
+		@media (min-width: 768px) {
+			filter: blur(300px);
+		}
 	}
 
 	.auth-page-line-left,
