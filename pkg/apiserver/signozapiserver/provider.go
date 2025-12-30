@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
@@ -32,6 +33,8 @@ type provider struct {
 	preferenceHandler preference.Handler
 	globalHandler     global.Handler
 	promoteHandler    promote.Handler
+	dashboardModule   dashboard.Module
+	dashboardHandler  dashboard.Handler
 }
 
 func NewFactory(
@@ -44,9 +47,11 @@ func NewFactory(
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
+	dashboardModule dashboard.Module,
+	dashboardHandler dashboard.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, dashboardModule, dashboardHandler)
 	})
 }
 
@@ -63,6 +68,8 @@ func newProvider(
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
+	dashboardModule dashboard.Module,
+	dashboardHandler dashboard.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -119,6 +126,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addPromoteRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addDashboardRoutes(router); err != nil {
 		return err
 	}
 

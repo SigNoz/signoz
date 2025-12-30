@@ -316,17 +316,17 @@ func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *htt
 		return
 	}
 
-	// dashboard, err := handler.module.GetDashboardByPublicID(ctx, id)
-	// if err != nil {
-	// 	render.Error(rw, err)
-	// 	return
-	// }
+	dashboard, err := handler.module.GetDashboardByPublicID(ctx, id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-	// publicDashboard, err := handler.module.GetPublic(ctx, valuer.MustNewUUID(dashboard.ID))
-	// if err != nil {
-	// 	render.Error(rw, err)
-	// 	return
-	// }
+	publicDashboard, err := handler.module.GetPublic(ctx, valuer.MustNewUUID(dashboard.ID))
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
 	widgetIdx, err := strconv.ParseUint(widgetIndex, 10, 64)
 	if err != nil {
@@ -334,34 +334,34 @@ func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *htt
 		return
 	}
 
-	// var startTime, endTime uint64
-	// if publicDashboard.TimeRangeEnabled {
-	// 	startTimeUint, err := strconv.ParseUint(r.URL.Query().Get("startTime"), 10, 64)
-	// 	if err != nil {
-	// 		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid startTime"))
-	// 		return
-	// 	}
+	var startTime, endTime uint64
+	if publicDashboard.TimeRangeEnabled {
+		startTimeUint, err := strconv.ParseUint(r.URL.Query().Get("startTime"), 10, 64)
+		if err != nil {
+			render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid startTime"))
+			return
+		}
 
-	// 	endTimeUint, err := strconv.ParseUint(r.URL.Query().Get("endTime"), 10, 64)
-	// 	if err != nil {
-	// 		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid endTime"))
-	// 		return
-	// 	}
+		endTimeUint, err := strconv.ParseUint(r.URL.Query().Get("endTime"), 10, 64)
+		if err != nil {
+			render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid endTime"))
+			return
+		}
 
-	// 	startTime = startTimeUint
-	// 	endTime = endTimeUint
-	// } else {
-	// 	timeRange, err := time.ParseDuration(publicDashboard.DefaultTimeRange)
-	// 	if err != nil {
-	// 		// this should't happen as we shouldn't let such values in DB
-	// 		panic(err)
-	// 	}
+		startTime = startTimeUint
+		endTime = endTimeUint
+	} else {
+		timeRange, err := time.ParseDuration(publicDashboard.DefaultTimeRange)
+		if err != nil {
+			// this should't happen as we shouldn't let such values in DB
+			panic(err)
+		}
 
-	// 	startTime = uint64(time.Now().Add(-timeRange).UnixMilli())
-	// 	endTime = uint64(time.Now().UnixMilli())
-	// }
+		startTime = uint64(time.Now().Add(-timeRange).UnixMilli())
+		endTime = uint64(time.Now().UnixMilli())
+	}
 
-	queryRangeResults, err := handler.module.GetPublicWidgetQueryRange(ctx, id, widgetIdx)
+	queryRangeResults, err := handler.module.GetPublicWidgetQueryRange(ctx, id, widgetIdx, startTime, endTime)
 	if err != nil {
 		render.Error(rw, err)
 		return

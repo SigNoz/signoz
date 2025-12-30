@@ -14,25 +14,25 @@ import (
 )
 
 type Module interface {
-	// enables public sharing for dashboard.
+	// creates public sharing config and enables public sharing for the dashboard
 	CreatePublic(context.Context, valuer.UUID, *dashboardtypes.PublicDashboard) error
 
-	// gets the config for public sharing by dashboard_id.
+	// gets the public sharing config for the dashboard
 	GetPublic(context.Context, valuer.UUID) (*dashboardtypes.PublicDashboard, error)
 
 	// get the dashboard data by public dashboard id
 	GetDashboardByPublicID(context.Context, valuer.UUID) (*dashboardtypes.Dashboard, error)
 
 	// gets the query results by widget index and public shared id for a dashboard
-	GetPublicWidgetQueryRange(context.Context, valuer.UUID, uint64) (*querybuildertypesv5.QueryRangeResponse, error)
+	GetPublicWidgetQueryRange(context.Context, valuer.UUID, uint64, uint64, uint64) (*querybuildertypesv5.QueryRangeResponse, error)
 
-	// gets the org and selector for the given public dashboard
-	GetPublicDashboardOrgAndSelectors(context.Context, valuer.UUID, []*types.Organization) ([]authtypes.Selector, valuer.UUID, error)
+	// gets the selectors and org for the given public dashboard
+	GetPublicDashboardSelectorsAndOrg(context.Context, valuer.UUID, []*types.Organization) ([]authtypes.Selector, valuer.UUID, error)
 
-	// updates the config for public sharing.
+	// updates the public sharing config for a dashboard
 	UpdatePublic(context.Context, *dashboardtypes.PublicDashboard) error
 
-	// disables the public sharing for the dashboard.
+	// deletes the public sharing config and disables public sharing for the dashboard
 	DeletePublic(context.Context, valuer.UUID, valuer.UUID) error
 
 	Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)

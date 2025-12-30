@@ -57,10 +57,6 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 	return dashboard, nil
 }
 
-func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
-	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
-}
-
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
 	storableDashboard, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
@@ -68,22 +64,6 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	}
 
 	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
-}
-
-func (module *module) GetPublic(ctx context.Context, dashboardID valuer.UUID) (*dashboardtypes.PublicDashboard, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
-}
-
-func (module *module) GetDashboardByPublicID(ctx context.Context, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
-}
-
-func (module *module) GetPublicWidgetQueryRange(context.Context, valuer.UUID, uint64) (*querybuildertypesv5.QueryRangeResponse, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
-}
-
-func (module *module) GetPublicDashboardOrgAndSelectors(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
-	return nil, valuer.UUID{}, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
@@ -117,10 +97,6 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	return dashboard, nil
-}
-
-func (module *module) UpdatePublic(ctx context.Context, publicDashboard *dashboardtypes.PublicDashboard) error {
-	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, role types.Role, lock bool) error {
@@ -162,10 +138,6 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	return nil
-}
-
-func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
-	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
 func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
@@ -232,6 +204,35 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 
 func (module *module) MustGetTypeables() []authtypes.Typeable {
 	return []authtypes.Typeable{dashboardtypes.TypeableMetaResourceDashboard, dashboardtypes.TypeableMetaResourcesDashboards}
+}
+
+// not supported
+func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
+	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) GetPublic(_ context.Context, _ valuer.UUID) (*dashboardtypes.PublicDashboard, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) GetDashboardByPublicID(_ context.Context, _ valuer.UUID) (*dashboardtypes.Dashboard, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) GetPublicWidgetQueryRange(context.Context, valuer.UUID, uint64, uint64, uint64) (*querybuildertypesv5.QueryRangeResponse, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) GetPublicDashboardSelectorsAndOrg(_ context.Context, _ valuer.UUID, _ []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+	return nil, valuer.UUID{}, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) UpdatePublic(_ context.Context, _ *dashboardtypes.PublicDashboard) error {
+	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) DeletePublic(_ context.Context, _ valuer.UUID, _ valuer.UUID) error {
+	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
 // checkBuilderQueriesForMetricNames checks builder.queryData[] for aggregations[].metricName

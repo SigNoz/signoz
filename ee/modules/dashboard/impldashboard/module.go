@@ -45,10 +45,6 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 	}
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
-	return module.pkgDashboardModule.Create(ctx, orgID, createdBy, creator, data)
-}
-
 func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
 	storablePublicDashboard, err := module.store.GetPublic(ctx, publicDashboard.DashboardID.StringValue())
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
@@ -89,10 +85,6 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 	return nil
 }
 
-func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
-	return module.pkgDashboardModule.Get(ctx, orgID, id)
-}
-
 func (module *module) GetPublic(ctx context.Context, dashboardID valuer.UUID) (*dashboardtypes.PublicDashboard, error) {
 	storablePublicDashboard, err := module.store.GetPublic(ctx, dashboardID.StringValue())
 	if err != nil {
@@ -111,11 +103,7 @@ func (module *module) GetDashboardByPublicID(ctx context.Context, id valuer.UUID
 	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
 }
 
-func (module *module) GetPublicWidgetQueryRange(context.Context, valuer.UUID, uint64) (*querybuildertypesv5.QueryRangeResponse, error) {
-	panic("unimplemented")
-}
-
-func (module *module) GetPublicDashboardOrgAndSelectors(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
 	orgIDs := make([]string, len(orgs))
 	for idx, org := range orgs {
 		orgIDs[idx] = org.ID.StringValue()
@@ -131,20 +119,22 @@ func (module *module) GetPublicDashboardOrgAndSelectors(ctx context.Context, id 
 	}, storableDashboard.OrgID, nil
 }
 
-func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
-	return module.pkgDashboardModule.List(ctx, orgID)
-}
+func (module *module) GetPublicWidgetQueryRange(ctx context.Context, id valuer.UUID, widgetIdx, startTime, endTime uint64) (*querybuildertypesv5.QueryRangeResponse, error) {
+	dashboard, err := module.GetDashboardByPublicID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
 
-func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboard, diff int) (*dashboardtypes.Dashboard, error) {
-	return module.pkgDashboardModule.Update(ctx, orgID, id, updatedBy, data, diff)
+	query, err := dashboard.GetWidgetQuery(startTime, endTime, widgetIdx, module.settings.Logger())
+	if err != nil {
+		return nil, err
+	}
+
+	return module.querier.QueryRange(ctx, dashboard.OrgID, query)
 }
 
 func (module *module) UpdatePublic(ctx context.Context, publicDashboard *dashboardtypes.PublicDashboard) error {
 	return module.store.UpdatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
-}
-
-func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, role types.Role, lock bool) error {
-	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, role, lock)
 }
 
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
@@ -209,10 +199,6 @@ func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashb
 	return nil
 }
 
-func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
-	return module.pkgDashboardModule.GetByMetricNames(ctx, orgID, metricNames)
-}
-
 func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
 	dashboards, err := module.store.List(ctx, orgID)
 	if err != nil {
@@ -230,6 +216,30 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	return stats, nil
 }
 
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
+	return module.pkgDashboardModule.Create(ctx, orgID, createdBy, creator, data)
+}
+
+func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
+	return module.pkgDashboardModule.Get(ctx, orgID, id)
+}
+
+func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
+	return module.pkgDashboardModule.GetByMetricNames(ctx, orgID, metricNames)
+}
+
 func (module *module) MustGetTypeables() []authtypes.Typeable {
 	return module.pkgDashboardModule.MustGetTypeables()
+}
+
+func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
+	return module.pkgDashboardModule.List(ctx, orgID)
+}
+
+func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboard, diff int) (*dashboardtypes.Dashboard, error) {
+	return module.pkgDashboardModule.Update(ctx, orgID, id, updatedBy, data, diff)
+}
+
+func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, role types.Role, lock bool) error {
+	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, role, lock)
 }
