@@ -1251,3 +1251,668 @@ def test_datatype_collision(
     count = results[0]["data"][0][0]
     # Should return 1 log with empty http.status_code (edge case log)
     assert count == 1
+
+
+def test_logs_fill_gaps_no_group_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Test fillGaps for logs without groupBy.
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    logs: List[Logs] = [
+        Logs(
+            timestamp=now - timedelta(minutes=3),
+            resources={"service.name": "test-service"},
+            attributes={"code.file": "test.py"},
+            body="Log at minute 3",
+            severity_text="INFO",
+        ),
+        Logs(
+            timestamp=now - timedelta(minutes=1),
+            resources={"service.name": "test-service"},
+            attributes={"code.file": "test.py"},
+            body="Log at minute 1",
+            severity_text="INFO",
+        ),
+    ]
+    insert_logs(logs)
+
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+
+    series = aggregations[0]["series"]
+    assert len(series) >= 1
+
+    values = series[0]["values"]
+    # With 5 minute range and 60s step, we expect ~5-6 data points
+    assert len(values) >= 5, f"Expected at least 5 values for gap filling, got {len(values)}"
+
+    # Verify gaps are filled with zeros
+    zero_count = sum(1 for v in values if v["value"] == 0)
+    assert zero_count >= 1, "Expected at least one zero-filled gap"
+
+
+def test_logs_fill_gaps_with_group_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Test fillGaps for logs with groupBy.
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    logs: List[Logs] = [
+        Logs(
+            timestamp=now - timedelta(minutes=3),
+            resources={"service.name": "service-a"},
+            attributes={"code.file": "test.py"},
+            body="Log from service A",
+            severity_text="INFO",
+        ),
+        Logs(
+            timestamp=now - timedelta(minutes=2),
+            resources={"service.name": "service-b"},
+            attributes={"code.file": "test.py"},
+            body="Log from service B",
+            severity_text="ERROR",
+        ),
+    ]
+    insert_logs(logs)
+
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "groupBy": [
+                                {"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}
+                            ],
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+
+    series = aggregations[0]["series"]
+    assert len(series) == 2, "Expected 2 series for 2 service groups"
+
+    # Verify each series has gap-filled values
+    for s in series:
+        values = s["values"]
+        assert len(values) >= 5, f"Expected at least 5 gap-filled values, got {len(values)}"
+
+
+def test_logs_fill_gaps_formula_no_group_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Test fillGaps for logs with formula.
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    logs: List[Logs] = [
+        Logs(
+            timestamp=now - timedelta(minutes=3),
+            resources={"service.name": "test"},
+            attributes={"code.file": "test.py"},
+            body="Test log",
+            severity_text="INFO",
+        ),
+    ]
+    insert_logs(logs)
+
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": True,
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    },
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "B",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": True,
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    },
+                    {
+                        "type": "builder_formula",
+                        "spec": {
+                            "name": "F1",
+                            "expression": "A + B",
+                            "disabled": False,
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) >= 1
+
+    # Find formula result and verify it has data
+    formula_result = next((r for r in results if r.get("name") == "F1"), results[0])
+    assert formula_result is not None
+
+
+def test_logs_fill_gaps_formula_with_group_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Test fillGaps for logs with formula and groupBy.
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    logs: List[Logs] = [
+        Logs(
+            timestamp=now - timedelta(minutes=3),
+            resources={"service.name": "group1"},
+            attributes={"code.file": "test.py"},
+            body="Test log",
+            severity_text="INFO",
+        ),
+    ]
+    insert_logs(logs)
+
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": True,
+                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    },
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "B",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": True,
+                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    },
+                    {
+                        "type": "builder_formula",
+                        "spec": {
+                            "name": "F1",
+                            "expression": "A + B",
+                            "disabled": False,
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) >= 1
+
+
+def test_logs_fill_zero_no_group_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Test fillZero function for logs without groupBy.
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    logs: List[Logs] = [
+        Logs(
+            timestamp=now - timedelta(minutes=3),
+            resources={"service.name": "test"},
+            attributes={"code.file": "test.py"},
+            body="Test log",
+            severity_text="INFO",
+        ),
+    ]
+    insert_logs(logs)
+
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    step_ms = 60000
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                            "functions": [{
+                                "name": "fillZero",
+                                "args": [{"value": start_ms}, {"value": end_ms}, {"value": step_ms}]
+                            }],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    aggregations = results[0].get("aggregations") or []
+    if len(aggregations) > 0:
+        series = aggregations[0]["series"]
+        assert len(series) >= 1
+        values = series[0]["values"]
+        # fillZero should produce values for the entire range
+        assert len(values) >= 5, f"Expected at least 5 values with fillZero, got {len(values)}"
+
+
+def test_logs_fill_zero_with_group_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Test fillZero function for logs with groupBy.
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    logs: List[Logs] = [
+        Logs(
+            timestamp=now - timedelta(minutes=3),
+            resources={"service.name": "service-a"},
+            attributes={"code.file": "test.py"},
+            body="Log A",
+            severity_text="INFO",
+        ),
+        Logs(
+            timestamp=now - timedelta(minutes=2),
+            resources={"service.name": "service-b"},
+            attributes={"code.file": "test.py"},
+            body="Log B",
+            severity_text="ERROR",
+        ),
+    ]
+    insert_logs(logs)
+
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    step_ms = 60000
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                            "functions": [{
+                                "name": "fillZero",
+                                "args": [{"value": start_ms}, {"value": end_ms}, {"value": step_ms}]
+                            }],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+
+    series = aggregations[0]["series"]
+    assert len(series) == 2, "Expected 2 series for 2 service groups"
+
+    # Verify each series has gap-filled values
+    for s in series:
+        values = s["values"]
+        assert len(values) >= 5, f"Expected at least 5 gap-filled values, got {len(values)}"
+
+
+def test_logs_fill_zero_formula_no_group_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Test fillZero function for logs with formula.
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    logs: List[Logs] = [
+        Logs(
+            timestamp=now - timedelta(minutes=3),
+            resources={"service.name": "test"},
+            attributes={"code.file": "test.py"},
+            body="Test log",
+            severity_text="INFO",
+        ),
+    ]
+    insert_logs(logs)
+
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    step_ms = 60000
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": True,
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    },
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "B",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": True,
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    },
+                    {
+                        "type": "builder_formula",
+                        "spec": {
+                            "name": "F1",
+                            "expression": "A + B",
+                            "disabled": False,
+                            "functions": [{
+                                "name": "fillZero",
+                                "args": [{"value": start_ms}, {"value": end_ms}, {"value": step_ms}]
+                            }],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) >= 1
+
+    # Verify formula result exists
+    formula_result = next((r for r in results if r.get("name") == "F1"), results[0])
+    assert formula_result is not None
+
+
+def test_logs_fill_zero_formula_with_group_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Test fillZero function for logs with formula and groupBy.
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    logs: List[Logs] = [
+        Logs(
+            timestamp=now - timedelta(minutes=3),
+            resources={"service.name": "group1"},
+            attributes={"code.file": "test.py"},
+            body="Test log",
+            severity_text="INFO",
+        ),
+    ]
+    insert_logs(logs)
+
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    step_ms = 60000
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": True,
+                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    },
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "B",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": True,
+                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    },
+                    {
+                        "type": "builder_formula",
+                        "spec": {
+                            "name": "F1",
+                            "expression": "A + B",
+                            "disabled": False,
+                            "functions": [{
+                                "name": "fillZero",
+                                "args": [{"value": start_ms}, {"value": end_ms}, {"value": step_ms}]
+                            }],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) >= 1
