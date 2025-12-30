@@ -45,7 +45,7 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, que
 	return Handlers{
 		SavedView:       implsavedview.NewHandler(modules.SavedView),
 		Apdex:           implapdex.NewHandler(modules.Apdex),
-		Dashboard:       impldashboard.NewHandler(modules.Dashboard, providerSettings, querier, licensing),
+		Dashboard:       impldashboard.NewHandler(modules.Dashboard, providerSettings),
 		QuickFilter:     implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:     impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport:   implrawdataexport.NewHandler(modules.RawDataExport),

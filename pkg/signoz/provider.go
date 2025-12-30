@@ -240,6 +240,8 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			signozglobal.NewHandler(global),
 			implpromote.NewHandler(modules.Promote),
 			handlers.FlaggerHandler,
+			modules.Dashboard,
+			handlers.Dashboard,
 		),
 	)
 }
