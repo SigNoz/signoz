@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -16,14 +17,17 @@ type Module interface {
 	// enables public sharing for dashboard.
 	CreatePublic(context.Context, valuer.UUID, *dashboardtypes.PublicDashboard) error
 
-	// gets the config for public sharing by org_id and dashboard_id.
-	GetPublic(context.Context, valuer.UUID, valuer.UUID) (*dashboardtypes.PublicDashboard, error)
+	// gets the config for public sharing by dashboard_id.
+	GetPublic(context.Context, valuer.UUID) (*dashboardtypes.PublicDashboard, error)
 
 	// get the dashboard data by public dashboard id
 	GetDashboardByPublicID(context.Context, valuer.UUID) (*dashboardtypes.Dashboard, error)
 
-	// gets the org for the given public dashboard
-	GetPublicDashboardOrgAndSelectors(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error)
+	// gets the query results by widget index and public shared id for a dashboard
+	GetPublicWidgetQueryRange(context.Context, valuer.UUID, uint64) (*querybuildertypesv5.QueryRangeResponse, error)
+
+	// gets the org and selector for the given public dashboard
+	GetPublicDashboardOrgAndSelectors(context.Context, valuer.UUID, []*types.Organization) ([]authtypes.Selector, valuer.UUID, error)
 
 	// updates the config for public sharing.
 	UpdatePublic(context.Context, *dashboardtypes.PublicDashboard) error

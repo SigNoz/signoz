@@ -121,7 +121,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 			return ah.Signoz.Modules.Dashboard.GetPublicDashboardOrgAndSelectors(req.Context(), id, orgs)
 		})).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/public/dashboards/{id}/widgets/{index}/query_range", am.CheckWithoutClaims(
+	router.HandleFunc("/api/v1/public/dashboards/{id}/widgets/{idx}/query_range", am.CheckWithoutClaims(
 		ah.Signoz.Handlers.Dashboard.GetPublicWidgetQueryRange,
 		authtypes.RelationRead, authtypes.RelationRead,
 		dashboardtypes.TypeableMetaResourcePublicDashboard,
