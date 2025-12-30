@@ -20,7 +20,13 @@ import GraphTypes, {
 } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { ConciergeBell, LineChart, Plus, Spline } from 'lucide-react';
+import {
+	ConciergeBell,
+	LineChart,
+	Plus,
+	Spline,
+	SquareArrowOutUpRight,
+} from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
@@ -140,11 +146,7 @@ function RightContainer({
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
 
-	const onCreateAlertsHandler = useCreateAlerts(
-		selectedWidget,
-		'panelView',
-		thresholds,
-	);
+	const onCreateAlertsHandler = useCreateAlerts(selectedWidget, 'panelView');
 
 	const allowThreshold = panelTypeVsThreshold[selectedGraph];
 	const allowSoftMinMax = panelTypeVsSoftMinMax[selectedGraph];
@@ -530,6 +532,7 @@ function RightContainer({
 					<div className="left-section">
 						<ConciergeBell size={14} className="bell-icon" />
 						<Typography.Text className="alerts-text">Alerts</Typography.Text>
+						<SquareArrowOutUpRight size={10} className="info-icon" />
 					</div>
 					<Plus size={14} className="plus-icon" />
 				</section>
