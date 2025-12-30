@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"net/url"
 
-	"html/template"
 	tmplhtml "html/template"
 	tmpltext "text/template"
 
@@ -15,7 +14,7 @@ import (
 // customTemplateOption returns an Option that adds custom functions to the template.
 func customTemplateOption() alertmanagertemplate.Option {
 	return func(text *tmpltext.Template, html *tmplhtml.Template) {
-		funcs := template.FuncMap{
+		funcs := tmpltext.FuncMap{
 			"urlescape": func(value string) string {
 				return url.PathEscape(value)
 			},
