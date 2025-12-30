@@ -1,13 +1,18 @@
 import './SignUp.styles.scss';
 
-import { Button, Form, Input, Typography } from 'antd';
+import { Button } from '@signozhq/button';
+import { Callout } from '@signozhq/callout';
+import { Input } from '@signozhq/input';
+import { Form, Input as AntdInput, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import accept from 'api/v1/invite/id/accept';
 import getInviteDetails from 'api/v1/invite/id/get';
 import signUpApi from 'api/v1/register/post';
 import passwordAuthNContext from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
+import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
+import { ArrowRight } from 'lucide-react';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -20,6 +25,7 @@ import { FormContainer, Label } from './styles';
 
 type FormValues = {
 	email: string;
+	firstName: string;
 	organizationName: string;
 	password: string;
 	confirmPassword: string;
@@ -33,6 +39,8 @@ function SignUp(): JSX.Element {
 	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
 		false,
 	);
+	const [formError, setFormError] = useState<APIError | null>();
+	console.log(formError);
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
@@ -118,6 +126,7 @@ function SignUp(): JSX.Element {
 			await afterLogin(token.data.accessToken, token.data.refreshToken);
 		} catch (error) {
 			showErrorModal(error as APIError);
+			setFormError(error as APIError);
 		}
 	};
 
@@ -136,6 +145,7 @@ function SignUp(): JSX.Element {
 
 			await afterLogin(token.data.accessToken, token.data.refreshToken);
 		} catch (error) {
+			setFormError(error as APIError);
 			notifications.error({
 				message: (error as APIError).getErrorCode(),
 				description: (error as APIError).getErrorMessage(),
@@ -185,24 +195,29 @@ function SignUp(): JSX.Element {
 		return (
 			loading ||
 			!values.email ||
+			!values.firstName ||
 			!values.password ||
 			!values.confirmPassword ||
 			confirmPasswordError
 		);
 	};
 
-	return (
-		<div className="signup-page-container">
-			<div className="perilin-bg" />
-			<div className="signup-page-content">
-				<div className="brand-container">
-					<img
-						src="/Logos/signoz-brand-logo.svg"
-						alt="logo"
-						className="brand-logo"
-					/>
+	console.log(confirmPasswordError);
 
-					<div className="brand-title">SigNoz</div>
+	return (
+		<AuthPageContainer>
+			<div className="signup-card">
+				<div className="signup-form-header">
+					<div className="signup-header-icon">
+						<img src="/svgs/tv.svg" alt="TV" width="32" height="32" />
+					</div>
+					<Typography.Title level={4} className="signup-header-title">
+						Create your account
+					</Typography.Title>
+					<Typography.Paragraph className="signup-header-subtitle">
+						You&apos;re almost in. Create a password to start monitoring your
+						applications with SigNoz.
+					</Typography.Paragraph>
 				</div>
 
 				<FormContainer
@@ -211,75 +226,112 @@ function SignUp(): JSX.Element {
 					form={form}
 					className="signup-form"
 				>
-					<div className="signup-form-header">
-						<Typography.Paragraph className="signup-form-header-text">
-							You&apos;re almost in. Create a password to start monitoring your
-							applications with SigNoz.
-						</Typography.Paragraph>
-					</div>
+					<div className="signup-form-container">
+						<div className="signup-form-fields">
+							<div className="signup-field-container">
+								<Label htmlFor="signupEmail">Email address</Label>
+								<FormContainer.Item noStyle name="email">
+									<Input
+										placeholder="e.g. john@signoz.io"
+										type="email"
+										autoFocus
+										required
+										id="signupEmail"
+										disabled={isDetailsDisable}
+										className="signup-form-input"
+									/>
+								</FormContainer.Item>
+							</div>
 
-					<div className="email-container">
-						<Label htmlFor="signupEmail">Email</Label>
-						<FormContainer.Item noStyle name="email">
-							<Input
-								placeholder="name@yourcompany.com"
-								type="email"
-								autoFocus
-								required
-								id="signupEmail"
-								disabled={isDetailsDisable}
-							/>
-						</FormContainer.Item>
-					</div>
+							<div className="signup-field-container">
+								<Label htmlFor="firstName">Name</Label>
+								<FormContainer.Item noStyle name="firstName">
+									<Input
+										placeholder="e.g. John"
+										type="text"
+										required
+										id="firstName"
+										disabled={isDetailsDisable}
+										className="signup-form-input"
+									/>
+								</FormContainer.Item>
+							</div>
 
-					<div className="password-container">
-						<Label htmlFor="currentPassword">Password</Label>
-						<FormContainer.Item noStyle name="password">
-							<Input.Password required id="currentPassword" />
-						</FormContainer.Item>
-					</div>
+							<div className="signup-field-container">
+								<Label htmlFor="currentPassword">Set your password</Label>
+								<FormContainer.Item noStyle name="password">
+									<AntdInput.Password
+										required
+										id="currentPassword"
+										placeholder="Enter new password"
+										disabled={loading}
+										className="signup-antd-input"
+									/>
+								</FormContainer.Item>
+							</div>
 
-					<div className="password-container">
-						<Label htmlFor="confirmPassword">Confirm Password</Label>
-						<FormContainer.Item noStyle name="confirmPassword">
-							<Input.Password required id="confirmPassword" />
-						</FormContainer.Item>
-					</div>
-
-					<div className="password-error-container">
-						{confirmPasswordError && (
-							<Typography.Paragraph
-								id="password-confirm-error"
-								className="password-error-message"
-							>
-								Passwords don’t match. Please try again
-							</Typography.Paragraph>
-						)}
+							<div className="signup-field-container">
+								<Label htmlFor="confirmPassword">Confirm your new password</Label>
+								<FormContainer.Item noStyle name="confirmPassword">
+									<AntdInput.Password
+										required
+										id="confirmPassword"
+										placeholder="Confirm your new password"
+										disabled={loading}
+										className="signup-antd-input"
+									/>
+								</FormContainer.Item>
+							</div>
+						</div>
 					</div>
 
 					{isSignUp && (
-						<Typography.Paragraph className="signup-info-message">
-							* This will create an admin account. If you are not an admin, please ask
-							your admin for an invite link
-						</Typography.Paragraph>
+						<Callout
+							type="info"
+							size="small"
+							showIcon
+							className="signup-info-callout"
+							description="This will create an admin account. If you are not an admin, please ask your admin for an invite link"
+						/>
 					)}
 
-					<div className="signup-button-container">
+					{confirmPasswordError && (
+						<Callout
+							type="error"
+							size="small"
+							showIcon
+							className="signup-error-callout"
+							description="Passwords don't match. Please try again."
+						/>
+					)}
+
+					{formError && !confirmPasswordError && (
+						<Callout
+							type="error"
+							size="small"
+							showIcon
+							className="signup-error-callout"
+							message={formError.getErrorCode() || undefined}
+							description={formError.getErrorMessage() || 'Something went wrong'}
+						/>
+					)}
+
+					<div className="signup-form-actions">
 						<Button
-							type="primary"
-							htmlType="submit"
+							variant="solid"
+							color="primary"
+							onClick={handleSubmit}
 							data-attr="signup"
-							loading={loading}
 							disabled={isValidForm()}
-							className="periscope-btn primary next-btn"
-							block
+							className="signup-submit-button"
+							suffixIcon={<ArrowRight size={16} />}
 						>
 							Access My Workspace
 						</Button>
 					</div>
 				</FormContainer>
 			</div>
-		</div>
+		</AuthPageContainer>
 	);
 }
 

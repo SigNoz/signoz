@@ -10,11 +10,13 @@ export const FormWrapper = styled(Card)`
 `;
 
 export const Label = styled.label`
-	margin-bottom: 11px;
-	margin-top: 19px;
+	margin-bottom: 0;
+	margin-top: 0;
 	display: inline-block;
-	font-size: 1rem;
-	line-height: 24px;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1;
+	color: var(--levels-l1-foreground, #eceef2);
 `;
 
 export const ButtonContainer = styled.div`
