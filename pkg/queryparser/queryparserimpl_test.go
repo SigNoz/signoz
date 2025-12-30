@@ -96,10 +96,13 @@ func TestBaseRule_ExtractMetricAndGroupBys(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cq := mustCompositeQuery(t, tt.payload)
-			res, err := queryParser.AnalyzeCompositeQuery(ctx, cq)
+			results, err := queryParser.AnalyzeCompositeQuery(ctx, cq)
 			require.NoError(t, err)
-			require.ElementsMatch(t, tt.wantMetrics, res.MetricNames)
-			require.ElementsMatch(t, tt.wantGroupBy, res.GroupByColumns)
+			require.Len(t, results, len(cq.Queries), "number of results should match number of queries")
+			for _, result := range results {
+				require.ElementsMatch(t, tt.wantMetrics, result.MetricNames)
+				require.ElementsMatch(t, tt.wantGroupBy, result.GroupByColumns)
+			}
 		})
 	}
 }

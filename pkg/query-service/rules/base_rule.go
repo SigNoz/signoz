@@ -582,14 +582,17 @@ func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) ([]string, []st
 		return metricNames, groupedFields, nil
 	}
 
-	result, err := r.queryParser.AnalyzeCompositeQuery(ctx, r.ruleCondition.CompositeQuery)
+	results, err := r.queryParser.AnalyzeCompositeQuery(ctx, r.ruleCondition.CompositeQuery)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	metricNames = result.MetricNames
-	for _, col := range result.GroupByColumns {
-		groupedFields = append(groupedFields, col.OriginField)
+	// Aggregate results from all queries
+	for _, result := range results {
+		metricNames = append(metricNames, result.MetricNames...)
+		for _, col := range result.GroupByColumns {
+			groupedFields = append(groupedFields, col.OriginField)
+		}
 	}
 
 	return metricNames, groupedFields, nil

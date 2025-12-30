@@ -787,13 +787,17 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			queryParser := queryparser.New(settings)
 
 			// Use query parser to extract metric names and groupBy fields
-			analyzeResult, err := queryParser.AnalyzeCompositeQuery(context.Background(), tt.compositeQuery)
+			analyzeResults, err := queryParser.AnalyzeCompositeQuery(context.Background(), tt.compositeQuery)
 			require.NoError(t, err)
 
-			metricNames := analyzeResult.MetricNames
+			// Aggregate results from all queries
+			metricNames := []string{}
 			groupedFields := []string{}
-			for _, col := range analyzeResult.GroupByColumns {
-				groupedFields = append(groupedFields, col.OriginField)
+			for _, result := range analyzeResults {
+				metricNames = append(metricNames, result.MetricNames...)
+				for _, col := range result.GroupByColumns {
+					groupedFields = append(groupedFields, col.OriginField)
+				}
 			}
 
 			// Setup metadata query mock
