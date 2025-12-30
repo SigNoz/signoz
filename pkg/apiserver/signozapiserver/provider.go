@@ -85,6 +85,8 @@ func newProvider(
 		preferenceHandler: preferenceHandler,
 		globalHandler:     globalHandler,
 		promoteHandler:    promoteHandler,
+		dashboardModule:   dashboardModule,
+		dashboardHandler:  dashboardHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)

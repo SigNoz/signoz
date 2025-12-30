@@ -7,92 +7,76 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addDashboardRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/global/config", handler.New(provider.authZ.EditAccess(provider.globalHandler.GetConfig), handler.OpenAPIDef{
-		ID:                  "GetGlobalConfig",
-		Tags:                []string{"global"},
-		Summary:             "Get global config",
-		Description:         "This endpoints returns global config",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            new(types.GettableGlobalConfig),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.CreatePublic), handler.OpenAPIDef{
-		ID:                  "GetGlobalConfig",
-		Tags:                []string{"global"},
-		Summary:             "Get global config",
-		Description:         "This endpoints returns global config",
-		Request:             nil,
+		ID:                  "CreatePublicDashboard",
+		Tags:                []string{"dashboard"},
+		Summary:             "Create public dashboard",
+		Description:         "This endpoints creates public sharing config and enables public sharing of the dashboard",
+		Request:             new(dashboardtypes.PostablePublicDashboard),
 		RequestContentType:  "",
-		Response:            new(types.GettableGlobalConfig),
+		Response:            new(types.Identifiable),
 		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
+		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.GetPublic), handler.OpenAPIDef{
-		ID:                  "GetGlobalConfig",
-		Tags:                []string{"global"},
-		Summary:             "Get global config",
-		Description:         "This endpoints returns global config",
+		ID:                  "GetPublicDashboard",
+		Tags:                []string{"dashboard"},
+		Summary:             "Get public dashboard",
+		Description:         "This endpoints returns public sharing config for a dashboard",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.GettableGlobalConfig),
+		Response:            new(dashboardtypes.GettablePublicDasbhboard),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.UpdatePublic), handler.OpenAPIDef{
-		ID:                  "GetGlobalConfig",
-		Tags:                []string{"global"},
-		Summary:             "Get global config",
-		Description:         "This endpoints returns global config",
-		Request:             nil,
+		ID:                  "UpdatePublicDashboard",
+		Tags:                []string{"dashboard"},
+		Summary:             "Update public dashboard",
+		Description:         "This endpoints updates the public sharing config for a dashboard",
+		Request:             new(dashboardtypes.UpdatablePublicDashboard),
 		RequestContentType:  "",
-		Response:            new(types.GettableGlobalConfig),
+		Response:            nil,
 		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
+		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.DeletePublic), handler.OpenAPIDef{
-		ID:                  "GetGlobalConfig",
-		Tags:                []string{"global"},
-		Summary:             "Get global config",
-		Description:         "This endpoints returns global config",
+		ID:                  "DeletePublicDashboard",
+		Tags:                []string{"dashboard"},
+		Summary:             "Delete public dashboard",
+		Description:         "This endpoints deletes the public sharing config and disables the public sharing of a dashboard",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.GettableGlobalConfig),
+		Response:            nil,
 		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
+		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -109,18 +93,18 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 
 			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
 		}), handler.OpenAPIDef{
-		ID:                  "GetGlobalConfig",
-		Tags:                []string{"global"},
-		Summary:             "Get global config",
-		Description:         "This endpoints returns global config",
+		ID:                  "GetPublicDashboardData",
+		Tags:                []string{"dashboard"},
+		Summary:             "Get public dashboard data",
+		Description:         "This endpoints returns the sanitized dashboard data for public access",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.GettableGlobalConfig),
+		Response:            new(dashboardtypes.GettablePublicDashboardData),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -137,18 +121,18 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 
 			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
 		}), handler.OpenAPIDef{
-		ID:                  "GetGlobalConfig",
-		Tags:                []string{"global"},
-		Summary:             "Get global config",
-		Description:         "This endpoints returns global config",
+		ID:                  "GetPublicDashboardWidgetQueryRange",
+		Tags:                []string{"dashboard"},
+		Summary:             "Get query range result",
+		Description:         "This endpoint return query range results for a widget of public dashboard",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.GettableGlobalConfig),
+		Response:            new(querybuildertypesv5.QueryRangeResponse),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
