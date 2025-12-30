@@ -563,7 +563,7 @@ function RightContainer({
 	);
 }
 
-interface RightContainerProps {
+export interface RightContainerProps {
 	title: string;
 	setTitle: Dispatch<SetStateAction<string>>;
 	description: string;
