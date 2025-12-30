@@ -1,6 +1,8 @@
 import './Login.styles.scss';
 
-import { Button, Form, Input, Select, Space, Tooltip, Typography } from 'antd';
+import { Button } from '@signozhq/button';
+import { Callout } from '@signozhq/callout';
+import { Form, Input, Select, Tooltip, Typography } from 'antd';
 import getVersion from 'api/v1/version/get';
 import get from 'api/v2/sessions/context/get';
 import post from 'api/v2/sessions/email_password/post';
@@ -9,7 +11,7 @@ import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
-import { useErrorModal } from 'providers/ErrorModalProvider';
+// import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { ErrorV2 } from 'types/api';
@@ -61,7 +63,8 @@ function Login(): JSX.Element {
 		setIsLoadingSessionsContext,
 	] = useState<boolean>(false);
 	const [form] = Form.useForm<FormValues>();
-	const { showErrorModal } = useErrorModal();
+	// const { showErrorModal } = useErrorModal();
+	const [errorMessage, setErrorMessage] = useState<APIError>();
 
 	// setupCompleted information to route to signup page in case setup is incomplete
 	const {
@@ -102,7 +105,8 @@ function Login(): JSX.Element {
 				setSessionsOrgId(sessionsContextResponse.data.orgs[0].id);
 			}
 		} catch (error) {
-			showErrorModal(error as APIError);
+			// showErrorModal(error as APIError);
+			setErrorMessage(error as APIError);
 		}
 		setIsLoadingSessionsContext(false);
 	};
@@ -205,7 +209,8 @@ function Login(): JSX.Element {
 				window.location.href = url;
 			}
 		} catch (error) {
-			showErrorModal(error as APIError);
+			// showErrorModal(error as APIError);
+			setErrorMessage(error as APIError);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -213,7 +218,18 @@ function Login(): JSX.Element {
 
 	useEffect(() => {
 		if (callbackAuthError) {
-			showErrorModal(
+			// showErrorModal(
+			// 	new APIError({
+			// 		httpStatusCode: 500,
+			// 		error: {
+			// 			code: callbackAuthErrorCode,
+			// 			message: callbackAuthErrorMessage,
+			// 			url: callbackAuthErrorURL,
+			// 			errors: parseErrors(callbackAuthErrorAdditional),
+			// 		},
+			// 	}),
+			// );
+			setErrorMessage(
 				new APIError({
 					httpStatusCode: 500,
 					error: {
@@ -231,110 +247,137 @@ function Login(): JSX.Element {
 		callbackAuthErrorCode,
 		callbackAuthErrorMessage,
 		callbackAuthErrorURL,
-		showErrorModal,
+		// showErrorModal,
+		setErrorMessage,
 	]);
 
 	useEffect(() => {
 		if (sessionsOrgWarning) {
-			showErrorModal(
+			// showErrorModal(
+			// 	new APIError({
+			// 		error: {
+			// 			code: sessionsOrgWarning.code,
+			// 			message: sessionsOrgWarning.message,
+			// 			url: sessionsOrgWarning.url,
+			// 			errors: sessionsOrgWarning.errors,
+			// 		},
+			// 		httpStatusCode: 400,
+			// 	}),
+			// );
+			setErrorMessage(
 				new APIError({
+					httpStatusCode: 400,
 					error: {
 						code: sessionsOrgWarning.code,
 						message: sessionsOrgWarning.message,
 						url: sessionsOrgWarning.url,
 						errors: sessionsOrgWarning.errors,
 					},
-					httpStatusCode: 400,
 				}),
 			);
 		}
-	}, [sessionsOrgWarning, showErrorModal]);
+	}, [sessionsOrgWarning, setErrorMessage]);
+
+	console.log(errorMessage);
 
 	return (
 		<div className="login-form-container">
 			<FormContainer form={form} onFinish={onSubmitHandler}>
 				<div className="login-form-header">
-					<Typography.Paragraph className="login-form-header-text">
+					<div className="login-form-emoji">
+						<img src="/svgs/tv.svg" alt="TV" width="32" height="32" />
+					</div>
+					<Typography.Title level={4} className="login-form-title">
+						Sign in to your workspace
+					</Typography.Title>
+					<Typography.Paragraph className="login-form-description">
 						Sign in to monitor, trace, and troubleshoot your applications
 						effortlessly.
 					</Typography.Paragraph>
 				</div>
 
-				<ParentContainer>
-					<Label htmlFor="signupEmail" style={{ marginTop: 0 }}>
-						Email
-					</Label>
-					<FormContainer.Item name="email">
-						<Input
-							type="email"
-							id="email"
-							data-testid="email"
-							required
-							placeholder="name@yourcompany.com"
-							autoFocus
-							disabled={versionLoading}
-							className="login-form-input"
-							onPressEnter={onNextHandler}
-						/>
-					</FormContainer.Item>
-				</ParentContainer>
-
-				{sessionsContext && sessionsContext.orgs.length > 1 && (
+				<div className="login-form-card">
 					<ParentContainer>
-						<Label htmlFor="orgId">Organization Name</Label>
-						<FormContainer.Item name="orgId">
-							<Select
-								id="orgId"
-								data-testid="orgId"
-								className="login-form-input"
-								placeholder="Select your organization"
-								options={sessionsContext.orgs.map((org) => ({
-									value: org.id,
-									label: org.name || 'default',
-								}))}
-								onChange={(value: string): void => {
-									setSessionsOrgId(value);
-								}}
-							/>
-						</FormContainer.Item>
-					</ParentContainer>
-				)}
-
-				{sessionsContext && isPasswordAuthN && (
-					<ParentContainer>
-						<Label htmlFor="Password">Password</Label>
-						<FormContainer.Item name="password">
-							<Input.Password
+						<Label htmlFor="signupEmail">Email address</Label>
+						<FormContainer.Item name="email">
+							<Input
+								type="email"
+								id="email"
+								data-testid="email"
 								required
-								id="currentPassword"
-								data-testid="password"
-								disabled={isSubmitting}
+								placeholder="e.g. john@signoz.io"
+								autoFocus
+								disabled={versionLoading}
 								className="login-form-input"
+								onPressEnter={onNextHandler}
 							/>
 						</FormContainer.Item>
-
-						<div style={{ marginTop: 8 }}>
-							<Tooltip title="Ask your admin to reset your password and send you a new invite link">
-								<Typography.Link>Forgot password?</Typography.Link>
-							</Tooltip>
-						</div>
 					</ParentContainer>
+
+					{sessionsContext && sessionsContext.orgs.length > 1 && (
+						<ParentContainer>
+							<Label htmlFor="orgId">Organization Name</Label>
+							<FormContainer.Item name="orgId">
+								<Select
+									id="orgId"
+									data-testid="orgId"
+									className="login-form-input"
+									placeholder="Select your organization"
+									options={sessionsContext.orgs.map((org) => ({
+										value: org.id,
+										label: org.name || 'default',
+									}))}
+									onChange={(value: string): void => {
+										setSessionsOrgId(value);
+									}}
+								/>
+							</FormContainer.Item>
+						</ParentContainer>
+					)}
+
+					{sessionsContext && isPasswordAuthN && (
+						<ParentContainer>
+							<div className="password-label-container">
+								<Label htmlFor="Password">Password</Label>
+								<Tooltip title="Ask your admin to reset your password and send you a new invite link">
+									<Typography.Link className="forgot-password-link">
+										Forgot password?
+									</Typography.Link>
+								</Tooltip>
+							</div>
+							<FormContainer.Item name="password">
+								<Input.Password
+									required
+									placeholder="Enter password"
+									id="currentPassword"
+									data-testid="password"
+									disabled={isSubmitting}
+									className="login-form-input"
+								/>
+							</FormContainer.Item>
+						</ParentContainer>
+					)}
+				</div>
+
+				{errorMessage && (
+					<Callout
+						type="error"
+						size="small"
+						showIcon
+						className="login-error-callout"
+						description={errorMessage.getErrorMessage()}
+					/>
 				)}
 
-				<Space
-					style={{ marginTop: 16 }}
-					align="start"
-					direction="vertical"
-					size={20}
-				>
+				<div className="login-form-actions">
 					{!sessionsContext && (
 						<Button
 							disabled={versionLoading || sessionsContextLoading}
-							type="primary"
+							variant="solid"
 							onClick={onNextHandler}
 							data-testid="initiate_login"
-							className="periscope-btn primary next-btn"
-							icon={<ArrowRight size={12} />}
+							className="login-submit-btn"
+							suffixIcon={<ArrowRight size={12} />}
 						>
 							Next
 						</Button>
@@ -343,31 +386,33 @@ function Login(): JSX.Element {
 					{sessionsContext && isCallbackAuthN && (
 						<Button
 							disabled={isSubmitting}
-							type="primary"
-							htmlType="submit"
+							variant="solid"
+							type="submit"
+							color="primary"
 							data-testid="callback_authn_submit"
 							data-attr="signup"
-							className="periscope-btn primary next-btn"
-							icon={<ArrowRight size={12} />}
+							className="login-submit-btn"
+							suffixIcon={<ArrowRight size={12} />}
 						>
-							Login With Callback
+							Sign in with SSO
 						</Button>
 					)}
 
 					{sessionsContext && isPasswordAuthN && (
 						<Button
 							disabled={isSubmitting}
-							type="primary"
+							variant="solid"
+							color="primary"
 							data-testid="password_authn_submit"
-							htmlType="submit"
+							type="submit"
 							data-attr="signup"
-							className="periscope-btn primary next-btn"
-							icon={<ArrowRight size={12} />}
+							className="login-submit-btn"
+							suffixIcon={<ArrowRight size={12} />}
 						>
-							Login
+							Sign in with Password
 						</Button>
 					)}
-				</Space>
+				</div>
 			</FormContainer>
 		</div>
 	);

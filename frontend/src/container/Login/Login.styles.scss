@@ -1,44 +1,180 @@
+@import '@signozhq/design-tokens/dist/style.css';
+
 .login-form-container {
 	display: flex;
 	justify-content: center;
 	width: 100%;
 	align-items: flex-start;
+}
 
-	.login-form-header {
-		margin-bottom: 16px;
+.login-form-header {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin-bottom: 32px;
+	text-align: center;
+	width: 100%;
+}
+
+.login-form-emoji {
+	width: 32px;
+	height: 32px;
+	font-size: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.login-form-title {
+	font-family: Inter, sans-serif;
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 1;
+	letter-spacing: 0;
+	color: var(--levels-l1-foreground, #eceef2);
+	margin: 0 !important;
+}
+
+.login-form-description {
+	font-family: Inter, sans-serif;
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 20px;
+	letter-spacing: -0.065px;
+	color: var(--semantic-secondary-foreground, #adb4c2);
+	max-width: 317px;
+	margin: 0 !important;
+	text-align: center;
+}
+
+.login-form-card {
+	width: 100%;
+	background: var(--semantic-secondary-background, #121317);
+	border: 1px solid var(--semantic-secondary-border, #23262e);
+	border-radius: 4px;
+	padding: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+.login-error-callout {
+	margin-top: 24px;
+}
+
+.password-label-container {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	margin-bottom: 12px;
+}
+
+.forgot-password-link {
+	font-family: Inter, sans-serif;
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 1;
+	letter-spacing: -0.065px;
+	color: var(--text-neutral-dark-200) !important;
+
+	&:hover {
+		color: var(--text-neutral-dark-300) !important;
+	}
+}
+
+.login-form-input {
+	height: 32px;
+	background: var(--levels-l3-background, #23262e);
+	border: 1px solid var(--levels-l3-border, #2c303a);
+	border-radius: 2px;
+	padding: 6px 8px;
+	font-family: Inter, sans-serif;
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 1;
+	letter-spacing: -0.065px;
+	color: var(--levels-l1-foreground, #eceef2);
+
+	&::placeholder {
+		color: var(--levels-l3-foreground, #747b8b);
 	}
 
-	.login-form-header-text {
-		color: var(--text-vanilla-300);
+	&:hover {
+		border-color: var(--levels-l3-border, #2c303a);
 	}
 
-	.next-btn {
-		padding: 0px 16px;
+	&:focus {
+		border-color: var(--semantic-primary-background, #4e74f8);
+		box-shadow: none;
+	}
+}
+
+.login-form-actions {
+	width: 100%;
+	margin-top: 24px;
+}
+
+.login-submit-btn {
+	width: 100%;
+	height: 32px;
+	padding: 10px 16px;
+	background: var(--semantic-primary-background, #4e74f8);
+	border: none;
+	border-radius: 2px;
+	font-family: Inter, sans-serif;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 1;
+	color: var(--semantic-primary-foreground, #eceef2);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+
+	&:hover:not(:disabled) {
+		background: var(--semantic-primary-background, #4e74f8);
+		opacity: 0.9;
 	}
 
-	.login-form-input {
-		height: 40px;
-	}
-
-	.no-acccount {
-		color: var(--text-vanilla-300);
-		font-size: 12px;
-		margin-top: 16px;
+	&:disabled {
+		background: var(--semantic-primary-background, #4e74f8);
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 }
 
 .lightMode {
-	.login-form-container {
-		.login-form-header {
-			color: var(--text-ink-500);
+	.login-form-title {
+		color: var(--text-ink-500);
+	}
+
+	.login-form-description {
+		color: var(--text-neutral-light-200, #80828d);
+	}
+
+	.login-form-card {
+		background: var(--bg-base-white, #ffffff);
+		border-color: var(--bg-vanilla-300, #e9e9e9);
+	}
+
+	.forgot-password-link {
+		color: var(--text-neutral-dark-300);
+	}
+
+	.login-form-input {
+		background: var(--bg-vanilla-200, #f5f5f5);
+		border-color: var(--bg-vanilla-300, #e9e9e9);
+		color: var(--text-ink-500);
+
+		&::placeholder {
+			color: var(--text-neutral-light-200, #80828d);
 		}
 
-		.login-form-header-text {
-			color: var(--text-ink-500);
-		}
-
-		.no-acccount {
-			color: var(--text-ink-500);
+		&:focus {
+			border-color: var(--semantic-primary-background, #4e74f8);
 		}
 	}
 }
