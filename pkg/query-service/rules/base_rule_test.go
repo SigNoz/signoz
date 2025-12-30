@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
@@ -845,27 +846,41 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 
 			require.NoError(t, err)
 
-			// Verify the filtered series count matches expected
-			require.Equal(t, len(tt.expectedFiltered), len(filteredSeries), "filtered series count should match expected")
-
-			// Build a map to track which expected series have been matched
-			matchedExpected := make(map[int]bool, len(tt.expectedFiltered))
-			for _, filtered := range filteredSeries {
-				found := false
-				for i, expected := range tt.expectedFiltered {
-					if !matchedExpected[i] && seriesEqual(filtered, expected) {
-						matchedExpected[i] = true
-						found = true
-						break
-					}
-				}
-				require.True(t, found, "filtered series should match one of the expected series: %+v", filtered.Labels)
+			// Build a map to count occurrences of each unique label combination in expected series
+			expectedCounts := make(map[string]int)
+			for _, expected := range tt.expectedFiltered {
+				key := labelsKey(expected.Labels)
+				expectedCounts[key]++
 			}
 
-			// Verify all expected series were matched
-			for i, expected := range tt.expectedFiltered {
-				require.True(t, matchedExpected[i], "expected series at index %d should be in filtered result: %+v", i, expected.Labels)
+			// Build a map to count occurrences of each unique label combination in filtered series
+			actualCounts := make(map[string]int)
+			for _, filtered := range filteredSeries {
+				key := labelsKey(filtered.Labels)
+				actualCounts[key]++
+			}
+
+			// Verify counts match for all expected label combinations
+			for key, expectedCount := range expectedCounts {
+				actualCount := actualCounts[key]
+				require.Equal(t, expectedCount, actualCount, "series with labels %s should appear %d times, but found %d times", key, expectedCount, actualCount)
+			}
+
+			// Verify no unexpected series were found (all actual series should be in expected)
+			require.Equal(t, len(tt.expectedFiltered), len(filteredSeries), "filtered series count should match expected")
+			for key := range actualCounts {
+				_, exists := expectedCounts[key]
+				require.True(t, exists, "unexpected series found with labels: %s", key)
 			}
 		})
 	}
+}
+
+// labelsKey creates a deterministic string key from a labels map
+// This is used to group series by their unique label combinations
+func labelsKey(lbls map[string]string) string {
+	if len(lbls) == 0 {
+		return ""
+	}
+	return labels.FromMap(lbls).String()
 }
