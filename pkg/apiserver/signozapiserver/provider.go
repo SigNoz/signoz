@@ -153,3 +153,9 @@ func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
 		{Name: ctxtypes.AuthTypeTokenizer.StringValue(), Scopes: []string{role.String()}},
 	}
 }
+
+func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
+	return []handler.OpenAPISecurityScheme{
+		{Name: ctxtypes.AuthTypeAnonymous.StringValue(), Scopes: scopes},
+	}
+}

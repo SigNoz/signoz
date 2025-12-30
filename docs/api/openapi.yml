@@ -1505,12 +1505,27 @@ paths:
                     type: string
                 type: object
           description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+      security:
+      - anonymous:
+        - public-dashboard:read
       summary: Get public dashboard data
       tags:
       - dashboard
@@ -1543,12 +1558,27 @@ paths:
                     type: string
                 type: object
           description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+      security:
+      - anonymous:
+        - public-dashboard:read
       summary: Get query range result
       tags:
       - dashboard
