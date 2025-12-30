@@ -341,7 +341,6 @@ export const getViewQuery = (
 			?.metricName;
 
 		if (isMetricQuery && isApmMetric(metricName || '')) {
-			console.log('metricName', metricName);
 			const transformedExpression = replaceKeysAndValuesInExpression(
 				newFilterExpression?.expression || '',
 				METRIC_TO_LOGS_TRACES_MAPPINGS,
