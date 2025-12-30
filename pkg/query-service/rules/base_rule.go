@@ -595,9 +595,9 @@ func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) ([]string, []st
 	return metricNames, groupedFields, nil
 }
 
-// FilterNewSeriesIndexes filters out items that are too new based on metadata first_seen timestamps.
-// Returns the indexes that should be skipped (not included in the result).
-func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []v3.Series) ([]int, error) {
+// FilterNewSeries filters out items that are too new based on metadata first_seen timestamps.
+// Returns the filtered series (old ones) excluding new series that are still within the grace period.
+func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*v3.Series) ([]*v3.Series, error) {
 	// Extract metric names and groupBy keys
 	metricNames, groupedFields, err := r.extractMetricAndGroupBys(ctx)
 	if err != nil {
@@ -605,8 +605,8 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []v
 	}
 
 	if len(metricNames) == 0 || len(groupedFields) == 0 {
-		// No metrics or groupBy keys, nothing to filter (non-ideal case, return early)
-		return []int{}, nil
+		// No metrics or groupBy keys, nothing to filter (non-ideal case, return all series)
+		return series, nil
 	}
 
 	// Build lookup keys from series which will be used to query metadata from CH
@@ -639,10 +639,10 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []v
 	}
 
 	if len(lookupKeys) == 0 {
-		// No lookup keys to query, return empty skip list
+		// No lookup keys to query, return all series
 		// this can happen when the series has no labels at all
-		// in this case, we include all series as we don't know if it is new or old series
-		return []int{}, nil
+		// in that case, we include all series as we don't know if it is new or old series
+		return series, nil
 	}
 
 	// unique lookup keys
@@ -661,15 +661,16 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []v
 	}
 
 	// Filter series based on first_seen + delay
-	skipIndexes := make([]int, 0)
+	filteredSeries := make([]*v3.Series, 0, len(series))
 	evalTimeMs := ts.UnixMilli()
 	newGroupEvalDelayMs := r.newGroupEvalDelay.Milliseconds()
 
 	for i := 0; i < len(series); i++ {
 		seriesKeys, ok := seriesIdxToLookupKeys[i]
 		if !ok {
-			// No matching labels used in groupBy from this series, don't exclude it
+			// No matching labels used in groupBy from this series, include it
 			// as we can't decide if it is new or old series
+			filteredSeries = append(filteredSeries, series[i])
 			continue
 		}
 
@@ -689,24 +690,26 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []v
 		}
 
 		// if we don't have metadata for any of the lookup keys, we can't decide if it is new or old series
-		// in that case, we don't add it to the skip indexes
+		// in that case, we include it
 		if !metadataFound {
+			filteredSeries = append(filteredSeries, series[i])
 			continue
 		}
 
 		// Check if first_seen + delay has passed
 		if maxFirstSeen+newGroupEvalDelayMs > evalTimeMs {
 			// Still within grace period, skip this series
-			skipIndexes = append(skipIndexes, i)
 			continue
 		}
 
-		// Old enough, don't skip this series
+		// Old enough, include this series
+		filteredSeries = append(filteredSeries, series[i])
 	}
 
-	if r.logger != nil && len(skipIndexes) > 0 {
-		r.logger.InfoContext(ctx, "Filtered new series", "rule_name", r.Name(), "skipped_count", len(skipIndexes), "total_count", len(series), "delay_ms", newGroupEvalDelayMs)
+	skippedCount := len(series) - len(filteredSeries)
+	if skippedCount > 0 {
+		r.logger.InfoContext(ctx, "Filtered new series", "rule_name", r.Name(), "skipped_count", skippedCount, "total_count", len(series), "delay_ms", newGroupEvalDelayMs)
 	}
 
-	return skipIndexes, nil
+	return filteredSeries, nil
 }

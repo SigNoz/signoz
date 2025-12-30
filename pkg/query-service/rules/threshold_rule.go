@@ -378,42 +378,6 @@ func (r *ThresholdRule) GetSelectedQuery() string {
 	return r.ruleCondition.GetSelectedQueryName()
 }
 
-// filterNewSeries filters out new series based on the first_seen timestamp.
-func (r *ThresholdRule) filterNewSeries(ctx context.Context, ts time.Time, series []*v3.Series) ([]*v3.Series, error) {
-	// Convert []*v3.Series to []v3.Series for filtering
-	v3Series := make([]v3.Series, 0, len(series))
-	for _, s := range series {
-		v3Series = append(v3Series, *s)
-	}
-
-	// Get indexes to skip
-	skipIndexes, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, v3Series)
-	if filterErr != nil {
-		r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
-		return nil, filterErr
-	}
-
-	// if no series are skipped, return the original series
-	if len(skipIndexes) == 0 {
-		return series, nil
-	}
-
-	// Create a map of skip indexes for efficient lookup
-	skippedIdxMap := make(map[int]struct{}, len(skipIndexes))
-	for _, idx := range skipIndexes {
-		skippedIdxMap[idx] = struct{}{}
-	}
-
-	// Filter out skipped series
-	oldSeries := make([]*v3.Series, 0, len(series)-len(skipIndexes))
-	for i, s := range series {
-		if _, shouldSkip := skippedIdxMap[i]; !shouldSkip {
-			oldSeries = append(oldSeries, s)
-		}
-	}
-	return oldSeries, nil
-}
-
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
 
 	params, err := r.prepareQueryRange(ctx, ts)
@@ -520,7 +484,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 	// Filter out new series if newGroupEvalDelay is configured
 	seriesToProcess := queryResult.Series
 	if r.ShouldSkipNewGroups() {
-		filteredSeries, filterErr := r.filterNewSeries(ctx, ts, seriesToProcess)
+		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
 		if filterErr != nil {
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
 			return nil, filterErr
@@ -610,7 +574,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	// Filter out new series if newGroupEvalDelay is configured
 	seriesToProcess := queryResult.Series
 	if r.ShouldSkipNewGroups() {
-		filteredSeries, filterErr := r.filterNewSeries(ctx, ts, seriesToProcess)
+		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
 		if filterErr != nil {
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
 			return nil, filterErr

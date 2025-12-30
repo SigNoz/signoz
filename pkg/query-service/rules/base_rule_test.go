@@ -101,17 +101,37 @@ func TestBaseRule_RequireMinPoints(t *testing.T) {
 	}
 }
 
-// createTestSeries creates a v3.Series with the given labels and optional points
+// createTestSeries creates a *v3.Series with the given labels and optional points
 // so we don't exactly need the points in the series because the labels are used to determine if the series is new or old
 // we use the labels to create a lookup key for the series and then check the first_seen timestamp for the series in the metadata table
-func createTestSeries(labels map[string]string, points []v3.Point) v3.Series {
+func createTestSeries(labels map[string]string, points []v3.Point) *v3.Series {
 	if points == nil {
 		points = []v3.Point{}
 	}
-	return v3.Series{
+	return &v3.Series{
 		Labels: labels,
 		Points: points,
 	}
+}
+
+// seriesEqual compares two v3.Series by their labels
+// Returns true if the series have the same labels (order doesn't matter)
+func seriesEqual(s1, s2 *v3.Series) bool {
+	if s1 == nil && s2 == nil {
+		return true
+	}
+	if s1 == nil || s2 == nil {
+		return false
+	}
+	if len(s1.Labels) != len(s2.Labels) {
+		return false
+	}
+	for k, v := range s1.Labels {
+		if s2.Labels[k] != v {
+			return false
+		}
+	}
+	return true
 }
 
 // calculateFirstSeen calculates first_seen timestamp based on evalTime, delay, and isOld flag
@@ -201,7 +221,7 @@ func createPostableRule(compositeQuery *v3.CompositeQuery) ruletypes.PostableRul
 }
 
 // setupMetadataQueryMock sets up the ClickHouse mock for GetFirstSeenFromMetricMetadata query
-func setupMetadataQueryMock(telemetryStore *telemetrystoretest.Provider, metricNames []string, groupedFields []string, series []v3.Series, firstSeenMap map[model.MetricMetadataLookupKey]int64) {
+func setupMetadataQueryMock(telemetryStore *telemetrystoretest.Provider, metricNames []string, groupedFields []string, series []*v3.Series, firstSeenMap map[model.MetricMetadataLookupKey]int64) {
 	if len(firstSeenMap) == 0 || len(series) == 0 {
 		return
 	}
@@ -253,14 +273,14 @@ func setupMetadataQueryMock(telemetryStore *telemetrystoretest.Provider, metricN
 
 // filterNewSeriesTestCase represents a test case for FilterNewSeries
 type filterNewSeriesTestCase struct {
-	name                string
-	compositeQuery      *v3.CompositeQuery
-	series              []v3.Series
-	firstSeenMap        map[model.MetricMetadataLookupKey]int64
-	newGroupEvalDelay   *time.Duration
-	evalTime            time.Time
-	expectedSkipIndexes []int
-	expectError         bool
+	name              string
+	compositeQuery    *v3.CompositeQuery
+	series            []*v3.Series
+	firstSeenMap      map[model.MetricMetadataLookupKey]int64
+	newGroupEvalDelay *time.Duration
+	evalTime          time.Time
+	expectedFiltered  []*v3.Series // series that should be in the final filtered result (old enough)
+	expectError       bool
 }
 
 func TestBaseRule_FilterNewSeries(t *testing.T) {
@@ -298,7 +318,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-new", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-missing", "env": "stage"}, nil),
@@ -306,11 +326,14 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			firstSeenMap: mergeFirstSeenMaps(
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old", "prod"),
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, false, "svc-new", "prod"),
-				// svc-missing has no metadata, so it will be skipped
+				// svc-missing has no metadata, so it will be included
 			),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{1}, // svc-missing should be skipped as we can't decide if it is new or old series
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc-missing", "env": "stage"}, nil),
+			}, // svc-old and svc-missing should be included; svc-new is filtered out
 		},
 		{
 			name: "all new series - PromQL query",
@@ -329,7 +352,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-new1", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-new2", "env": "stage"}, nil),
 			},
@@ -337,9 +360,9 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, false, "svc-new1", "prod"),
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, false, "svc-new2", "stage"),
 			),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{0, 1}, // all should be skipped
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered:  []*v3.Series{}, // all should be filtered out (new series)
 		},
 		{
 			name: "all old series - ClickHouse query",
@@ -356,7 +379,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-old1", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-old2", "env": "stage"}, nil),
 			},
@@ -364,9 +387,12 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old1", "prod"),
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old2", "stage"),
 			),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // none should be skipped
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc-old1", "env": "prod"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc-old2", "env": "stage"}, nil),
+			}, // all should be included (old series)
 		},
 		{
 			name: "no grouping in query - Builder",
@@ -391,13 +417,15 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
-			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // early return, no filtering
+			firstSeenMap:      make(map[model.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
+			}, // early return, no filtering - all series included
 		},
 		{
 			name: "no metric names - Builder",
@@ -419,13 +447,15 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
-			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // early return, no filtering
+			firstSeenMap:      make(map[model.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
+			}, // early return, no filtering - all series included
 		},
 		{
 			name: "series with no matching labels - Builder",
@@ -453,13 +483,15 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"status": "200"}, nil), // no service_name or env
 			},
-			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // series included as we can't decide if it's new or old
+			firstSeenMap:      make(map[model.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"status": "200"}, nil),
+			}, // series included as we can't decide if it's new or old
 		},
 		{
 			name: "series with missing metadata - PromQL",
@@ -478,15 +510,18 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-no-metadata", "env": "prod"}, nil),
 			},
 			firstSeenMap: createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old", "prod"),
 			// svc-no-metadata has no entry in firstSeenMap
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // svc-no-metadata should not be skipped as we can't decide if it is new or old series
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc-no-metadata", "env": "prod"}, nil),
+			}, // both should be included - svc-old is old, svc-no-metadata can't be decided
 		},
 		{
 			name: "series with partial metadata - ClickHouse",
@@ -503,7 +538,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-partial", "env": "prod"}, nil),
 			},
 			// Only provide metadata for service_name, not env
@@ -511,9 +546,11 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				{MetricName: "request_total", AttributeName: "service_name", AttributeValue: "svc-partial"}: calculateFirstSeen(defaultEvalTime, defaultDelay, true),
 				// env metadata is missing
 			},
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // has some metadata, uses max first_seen which is old
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc-partial", "env": "prod"}, nil),
+			}, // has some metadata, uses max first_seen which is old
 		},
 		{
 			name: "empty series array - Builder",
@@ -541,11 +578,11 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series:              []v3.Series{},
-			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{},
+			series:            []*v3.Series{},
+			firstSeenMap:      make(map[model.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered:  []*v3.Series{},
 		},
 		{
 			name: "zero delay - Builder",
@@ -573,13 +610,15 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
-			firstSeenMap:        createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
-			newGroupEvalDelay:   func() *time.Duration { d := time.Duration(0); return &d }(), // zero delay
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // with zero delay, all series pass
+			firstSeenMap:      createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
+			newGroupEvalDelay: func() *time.Duration { d := time.Duration(0); return &d }(), // zero delay
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
+			}, // with zero delay, all series pass
 		},
 		{
 			name: "multiple metrics with same groupBy keys - Builder",
@@ -612,16 +651,18 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap: mergeFirstSeenMaps(
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
 				createFirstSeenMap("error_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
 			),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{},
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
+			},
 		},
 		{
 			name: "series with multiple groupBy attributes where one is new and one is old - Builder",
@@ -649,7 +690,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			// service_name is old, env is new - should use max (new)
@@ -657,9 +698,9 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createFirstSeenMap("request_total", []string{"service_name"}, defaultEvalTime, defaultDelay, true, "svc1"),
 				createFirstSeenMap("request_total", []string{"env"}, defaultEvalTime, defaultDelay, false, "prod"),
 			),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{0}, // max first_seen is new, so should skip
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered:  []*v3.Series{}, // max first_seen is new, so should be filtered out
 		},
 		{
 			name: "Logs query - should skip filtering and return empty skip indexes",
@@ -684,14 +725,17 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			},
-			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // Logs queries should return early, no filtering
+			firstSeenMap:      make(map[model.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
+			}, // Logs queries should return early, no filtering - all included
 		},
 		{
 			name: "Traces query - should skip filtering and return empty skip indexes",
@@ -716,14 +760,17 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			},
-			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // Traces queries should return early, no filtering
+			firstSeenMap:      make(map[model.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
+			}, // Traces queries should return early, no filtering - all included
 		},
 	}
 
@@ -789,7 +836,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			rule, err := NewBaseRule("test-rule", valuer.GenerateUUID(), &postableRule, reader, WithQueryParser(queryParser), WithLogger(logger))
 			require.NoError(t, err)
 
-			skipIndexes, err := rule.FilterNewSeries(context.Background(), tt.evalTime, tt.series)
+			filteredSeries, err := rule.FilterNewSeries(context.Background(), tt.evalTime, tt.series)
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -797,7 +844,28 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.ElementsMatch(t, tt.expectedSkipIndexes, skipIndexes, "skip indexes should match")
+
+			// Verify the filtered series count matches expected
+			require.Equal(t, len(tt.expectedFiltered), len(filteredSeries), "filtered series count should match expected")
+
+			// Build a map to track which expected series have been matched
+			matchedExpected := make(map[int]bool, len(tt.expectedFiltered))
+			for _, filtered := range filteredSeries {
+				found := false
+				for i, expected := range tt.expectedFiltered {
+					if !matchedExpected[i] && seriesEqual(filtered, expected) {
+						matchedExpected[i] = true
+						found = true
+						break
+					}
+				}
+				require.True(t, found, "filtered series should match one of the expected series: %+v", filtered.Labels)
+			}
+
+			// Verify all expected series were matched
+			for i, expected := range tt.expectedFiltered {
+				require.True(t, matchedExpected[i], "expected series at index %d should be in filtered result: %+v", i, expected.Labels)
+			}
 		})
 	}
 }
