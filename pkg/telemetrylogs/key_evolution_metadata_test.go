@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	clickHouseQueryPattern = "SELECT.*base_column.*FROM.*distributed_column_key_evolution_metadata.*WHERE.*base_column.*=.*"
+	clickHouseQueryPattern = "SELECT.*base_column.*FROM.*distributed_key_evolution_metadata.*WHERE.*base_column.*=.*"
 	clickHouseColumns      = []cmock.ColumnType{
 		{Name: base_column, Type: "String"},
 		{Name: base_column_type, Type: "String"},

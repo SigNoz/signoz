@@ -18,7 +18,7 @@ import (
 
 const (
 	// KeyEvolutionMetadataTableName is the table name for key evolution metadata
-	KeyEvolutionMetadataTableName = "distributed_column_key_evolution_metadata"
+	KeyEvolutionMetadataTableName = "distributed_key_evolution_metadata"
 	// KeyEvolutionMetadataDBName is the database name for key evolution metadata
 	KeyEvolutionMetadataDBName = "signoz_logs"
 	// KeyEvolutionMetadataCacheKeyPrefix is the prefix for cache keys

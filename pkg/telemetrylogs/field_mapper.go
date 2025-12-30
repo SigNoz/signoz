@@ -122,6 +122,9 @@ func buildEvolutionMultiIfExpression(evolutions []*telemetrytypes.KeyEvolutionMe
 	buildColumnExpr := func(evolution *telemetrytypes.KeyEvolutionMetadataKey) string {
 		switch evolution.NewColumnType {
 		// TODO: instead of string comparison, we can parse the column type and then compare the types
+		case "JSON_PATH":
+			singleEvolutionColumn = fmt.Sprintf("%s IS NOT NULL, %s", evolution.NewColumn, evolution.NewColumn)
+			return singleEvolutionColumn
 		case "JSON(max_dynamic_paths=100)":
 			singleEvolutionColumn := fmt.Sprintf("%s.`%s`::String IS NOT NULL, %s.`%s`::String", evolution.NewColumn, key.Name, evolution.NewColumn, key.Name)
 			return singleEvolutionColumn
