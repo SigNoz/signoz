@@ -145,6 +145,16 @@ describe('drilldownUtils', () => {
 		];
 
 		it('should transform metrics query when drilling down to logs', () => {
+			const mappingsByAttr = Object.fromEntries(
+				METRIC_TO_LOGS_TRACES_MAPPINGS.map((m) => [m.attribute, m]),
+			) as Record<
+				string,
+				{ newAttribute: string; valueMappings: Record<string, string> }
+			>;
+			const spanKindMapping = mappingsByAttr['span.kind'];
+			const spanKindKey = spanKindMapping.newAttribute;
+			const spanKindServer = spanKindMapping.valueMappings.SPAN_KIND_SERVER;
+
 			const result = getViewQuery(
 				mockMetricsQuery,
 				mockFilters,
@@ -166,7 +176,7 @@ describe('drilldownUtils', () => {
 				expect(filterExpression).not.toContain(`operation = 'GET'`);
 
 				// Rule 3: span.kind → kind
-				expect(filterExpression).toContain(`kind = '2'`);
+				expect(filterExpression).toContain(`${spanKindKey} = '${spanKindServer}'`);
 				expect(filterExpression).not.toContain(`span.kind = SPAN_KIND_SERVER`);
 
 				// Rule 4: status.code → status_code_string with value mapping
@@ -176,6 +186,16 @@ describe('drilldownUtils', () => {
 		});
 
 		it('should transform metrics query when drilling down to traces', () => {
+			const mappingsByAttr = Object.fromEntries(
+				METRIC_TO_LOGS_TRACES_MAPPINGS.map((m) => [m.attribute, m]),
+			) as Record<
+				string,
+				{ newAttribute: string; valueMappings: Record<string, string> }
+			>;
+			const spanKindMapping = mappingsByAttr['span.kind'];
+			const spanKindKey = spanKindMapping.newAttribute;
+			const spanKindServer = spanKindMapping.valueMappings.SPAN_KIND_SERVER;
+
 			const result = getViewQuery(
 				mockMetricsQuery,
 				mockFilters,
@@ -197,7 +217,7 @@ describe('drilldownUtils', () => {
 				expect(filterExpression).not.toContain(`operation = 'GET'`);
 
 				// Rule 3: span.kind → kind
-				expect(filterExpression).toContain(`kind = '2'`);
+				expect(filterExpression).toContain(`${spanKindKey} = '${spanKindServer}'`);
 				expect(filterExpression).not.toContain(`span.kind = SPAN_KIND_SERVER`);
 
 				// Rule 4: status.code → status_code_string with value mapping
@@ -207,6 +227,16 @@ describe('drilldownUtils', () => {
 		});
 
 		it('should handle complex filter expressions with multiple transformations', () => {
+			const mappingsByAttr = Object.fromEntries(
+				METRIC_TO_LOGS_TRACES_MAPPINGS.map((m) => [m.attribute, m]),
+			) as Record<
+				string,
+				{ newAttribute: string; valueMappings: Record<string, string> }
+			>;
+			const spanKindMapping = mappingsByAttr['span.kind'];
+			const spanKindKey = spanKindMapping.newAttribute;
+			const spanKindClient = spanKindMapping.valueMappings.SPAN_KIND_CLIENT;
+
 			const complexQuery: Query = {
 				...mockMetricsQuery,
 				builder: {
@@ -236,7 +266,7 @@ describe('drilldownUtils', () => {
 			if (filterExpression) {
 				// All transformations should be applied
 				expect(filterExpression).toContain(`name = 'POST'`);
-				expect(filterExpression).toContain(`kind = '3'`);
+				expect(filterExpression).toContain(`${spanKindKey} = '${spanKindClient}'`);
 				expect(filterExpression).toContain(`status_code_string = 'Error'`);
 				expect(filterExpression).toContain(`http.status_code = 500`);
 			}
@@ -347,6 +377,16 @@ describe('drilldownUtils', () => {
 		});
 
 		it('should preserve non-metric attributes during transformation', () => {
+			const mappingsByAttr = Object.fromEntries(
+				METRIC_TO_LOGS_TRACES_MAPPINGS.map((m) => [m.attribute, m]),
+			) as Record<
+				string,
+				{ newAttribute: string; valueMappings: Record<string, string> }
+			>;
+			const spanKindMapping = mappingsByAttr['span.kind'];
+			const spanKindKey = spanKindMapping.newAttribute;
+			const spanKindServer = spanKindMapping.valueMappings.SPAN_KIND_SERVER;
+
 			const mixedQuery: Query = {
 				...mockMetricsQuery,
 				builder: {
@@ -374,7 +414,7 @@ describe('drilldownUtils', () => {
 			if (filterExpression) {
 				// Transformed attributes
 				expect(filterExpression).toContain(`name = 'GET'`);
-				expect(filterExpression).toContain(`kind = '2'`);
+				expect(filterExpression).toContain(`${spanKindKey} = '${spanKindServer}'`);
 
 				// Preserved non-metric attributes
 				expect(filterExpression).toContain('service = "test-service"');
@@ -385,8 +425,13 @@ describe('drilldownUtils', () => {
 		it('should handle all span.kind value mappings correctly', () => {
 			const mappingsByAttr = Object.fromEntries(
 				METRIC_TO_LOGS_TRACES_MAPPINGS.map((m) => [m.attribute, m]),
-			) as Record<string, { valueMappings: Record<string, string> }>;
-			const spanKindMap = mappingsByAttr['span.kind'].valueMappings;
+			) as Record<
+				string,
+				{ newAttribute: string; valueMappings: Record<string, string> }
+			>;
+			const spanKindMapping = mappingsByAttr['span.kind'];
+			const spanKindKey = spanKindMapping.newAttribute;
+			const spanKindMap = spanKindMapping.valueMappings;
 
 			Object.entries(spanKindMap).forEach(([input, expected]) => {
 				const testQuery: Query = {
@@ -412,7 +457,7 @@ describe('drilldownUtils', () => {
 				);
 				const filterExpression = result?.builder.queryData[0]?.filter?.expression;
 
-				expect(filterExpression).toContain(`kind = '${expected}'`);
+				expect(filterExpression).toContain(`${spanKindKey} = '${expected}'`);
 				expect(filterExpression).not.toContain(`span.kind = ${input}`);
 			});
 		});

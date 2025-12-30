@@ -21,13 +21,13 @@ export const METRIC_TO_LOGS_TRACES_MAPPINGS: KeyValueMapping[] = [
 	},
 	{
 		attribute: 'span.kind',
-		newAttribute: 'kind',
+		newAttribute: 'kind_string',
 		valueMappings: {
-			SPAN_KIND_INTERNAL: '1',
-			SPAN_KIND_SERVER: '2',
-			SPAN_KIND_CLIENT: '3',
-			SPAN_KIND_PRODUCER: '4',
-			SPAN_KIND_CONSUMER: '5',
+			SPAN_KIND_INTERNAL: 'Internal',
+			SPAN_KIND_SERVER: 'Server',
+			SPAN_KIND_CLIENT: 'Client',
+			SPAN_KIND_PRODUCER: 'Producer',
+			SPAN_KIND_CONSUMER: 'Consumer',
 		},
 	},
 	{

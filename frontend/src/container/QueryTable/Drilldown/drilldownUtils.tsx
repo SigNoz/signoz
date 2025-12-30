@@ -5,6 +5,7 @@ import {
 	OPERATORS,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { isApmMetric } from 'container/PanelWrapper/utils';
 import {
 	METRIC_TO_LOGS_TRACES_MAPPINGS,
 	replaceKeysAndValuesInExpression,
@@ -19,6 +20,7 @@ import {
 	Query,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { MetricAggregation } from 'types/api/v5/queryRange';
 import { v4 as uuid } from 'uuid';
 
 export function getBaseMeta(
@@ -333,9 +335,13 @@ export const getViewQuery = (
 		// TEMP LOGIC - TO BE REMOVED LATER
 		// ===========================================
 		// Apply metric-to-logs/traces transformations
-		const isMetricQuery =
-			getQueryData(query, queryName)?.dataSource === 'metrics';
-		if (isMetricQuery) {
+		const specificQuery = getQueryData(query, queryName);
+		const isMetricQuery = specificQuery?.dataSource === 'metrics';
+		const metricName = (specificQuery?.aggregations?.[0] as MetricAggregation)
+			?.metricName;
+
+		if (isMetricQuery && isApmMetric(metricName || '')) {
+			console.log('metricName', metricName);
 			const transformedExpression = replaceKeysAndValuesInExpression(
 				newFilterExpression?.expression || '',
 				METRIC_TO_LOGS_TRACES_MAPPINGS,
