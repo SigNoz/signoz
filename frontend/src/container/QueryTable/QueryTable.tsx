@@ -85,8 +85,6 @@ export function QueryTable({
 		renderColumnCell,
 	]);
 
-	const downloadableData = createDownloadableData(newDataSource, columnLabels);
-
 	const tableColumns = modifyColumns ? modifyColumns(newColumns) : newColumns;
 
 	const handleColumnClick = useCallback(
@@ -171,6 +169,12 @@ export function QueryTable({
 		const source = filterTable ?? newDataSource;
 		return source.slice(pagination.offset, pagination.offset + pagination.limit);
 	}, [filterTable, newDataSource, pagination.offset, pagination.limit]);
+
+	// Use filtered data for download (all filtered rows, not just current page)
+	const downloadableData = createDownloadableData(
+		filterTable ?? newDataSource,
+		columnLabels,
+	);
 
 	const handlePageChange = useCallback(
 		(page: number, pageSize: number): void => {
