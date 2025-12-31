@@ -305,7 +305,6 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 		return []*servicetypesv1.ResponseItem{}, []string{}
 	}
 
-	// traces path (original behavior)
 	// this stores the index at which service name is found in the response
 	serviceNameRespIndex := -1
 	aggIndexMappings := map[int]int{}
