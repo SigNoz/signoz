@@ -17,7 +17,6 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 def test_create_logs_pipeline_success(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -105,7 +104,6 @@ def test_create_logs_pipeline_success(
 def test_list_logs_pipelines_success(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -195,7 +193,6 @@ def test_list_logs_pipelines_success(
 def test_list_logs_pipelines_by_version(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -358,7 +355,6 @@ def test_list_logs_pipelines_by_version(
 def test_preview_logs_pipelines_success(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -453,7 +449,6 @@ def test_preview_logs_pipelines_success(
 def test_create_multiple_pipelines_success(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -568,7 +563,6 @@ def test_create_multiple_pipelines_success(
 def test_delete_all_pipelines_success(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
