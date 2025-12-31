@@ -2,7 +2,6 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './IngestionSettings.styles.scss';
 
-import { Callout } from '@signozhq/callout';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -60,11 +59,12 @@ import {
 	PlusIcon,
 	Search,
 	Trash2,
+	TriangleAlert,
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { useHistory } from 'react-router-dom';
@@ -305,7 +305,6 @@ function MultiIngestionSettings(): JSX.Element {
 	const {
 		data: globalConfig,
 		isLoading: isLoadingGlobalConfig,
-		isFetching: isFetchingGlobalConfig,
 		isError: isErrorGlobalConfig,
 		error: globalConfigError,
 	} = useGetGlobalConfig(!isEnterpriseSelfHostedUser);
@@ -450,12 +449,15 @@ function MultiIngestionSettings(): JSX.Element {
 			});
 	};
 
-	const handleCopyKey = (text: string): void => {
-		handleCopyToClipboard(text);
-		notifications.success({
-			message: 'Copied to clipboard',
-		});
-	};
+	const handleCopyKey = useCallback(
+		(text: string): void => {
+			handleCopyToClipboard(text);
+			notifications.success({
+				message: 'Copied to clipboard',
+			});
+		},
+		[handleCopyToClipboard, notifications],
+	);
 
 	const gbToBytes = (gb: number): number => Math.round(gb * 1024 ** 3);
 
@@ -1393,6 +1395,19 @@ function MultiIngestionSettings(): JSX.Element {
 		});
 	};
 
+	const handleCopyIngestionURL = useCallback(
+		(e: React.MouseEvent<HTMLDivElement>): void => {
+			e.stopPropagation();
+			e.preventDefault();
+
+			const ingestionURL = globalConfig?.data?.ingestion_url;
+			if (ingestionURL) {
+				handleCopyKey(ingestionURL);
+			}
+		},
+		[globalConfig, handleCopyKey],
+	);
+
 	return (
 		<div className="ingestion-key-container">
 			<div className="ingestion-key-content">
@@ -1411,40 +1426,41 @@ function MultiIngestionSettings(): JSX.Element {
 					</Typography.Text>
 				</header>
 
-				{!isLoadingGlobalConfig && !isFetchingGlobalConfig && !isErrorGlobalConfig && (
+				{!isLoadingGlobalConfig && (
 					<div className="ingestion-setup-details-links">
 						<div className="ingestion-key-url-container">
 							<div className="ingestion-key-url-label">Ingestion URL</div>
-							<div
-								className="ingestion-key-url-value"
-								onClick={(e): void => {
-									e.stopPropagation();
-									e.preventDefault();
 
-									const ingestionURL = globalConfig?.data?.ingestion_url;
+							{!isErrorGlobalConfig && (
+								<div
+									className="ingestion-key-url-value"
+									onClick={handleCopyIngestionURL}
+								>
+									{globalConfig?.data.ingestion_url}
+									<Copy className="copy-key-btn" size={12} />
+								</div>
+							)}
+							{isErrorGlobalConfig && (
+								<Tooltip
+									rootClassName="ingestion-url-error-tooltip"
+									arrow={false}
+									title={
+										<div className="ingestion-url-error-content">
+											<Typography.Text className="ingestion-url-error-code">
+												{globalConfigError?.getErrorCode()}
+											</Typography.Text>
 
-									if (ingestionURL) {
-										handleCopyKey(ingestionURL);
+											<Typography.Text className="ingestion-url-error-message">
+												{globalConfigError?.getErrorMessage()}
+											</Typography.Text>
+										</div>
 									}
-								}}
-							>
-								{globalConfig?.data.ingestion_url}
-								<Copy className="copy-key-btn" size={12} />
-							</div>
+									placement="topLeft"
+								>
+									<Button type="text" icon={<TriangleAlert size={14} />} />
+								</Tooltip>
+							)}
 						</div>
-					</div>
-				)}
-
-				{isErrorGlobalConfig && (
-					<div className="ingestion-url-error-container">
-						<Callout
-							type="warning"
-							size="small"
-							showIcon
-							message={globalConfigError?.getErrorCode()}
-							description={globalConfigError?.getErrorMessage()}
-							className="callout"
-						/>
 					</div>
 				)}
 

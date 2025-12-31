@@ -57,7 +57,6 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	const {
 		data: globalConfig,
 		isLoading: isLoadingGlobalConfig,
-		isFetching: isFetchingGlobalConfig,
 		isError: isErrorGlobalConfig,
 		error: globalConfigError,
 	} = useGetGlobalConfig(true);
@@ -110,9 +109,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 						</Typography.Text>
 
 						<div className="ingestion-key-details-section-key">
-							{isIngestionKeysLoading ||
-							isLoadingGlobalConfig ||
-							isFetchingGlobalConfig ? (
+							{isIngestionKeysLoading || isLoadingGlobalConfig ? (
 								<div className="skeleton-container">
 									<Skeleton.Input active className="skeleton-input" />
 									<Skeleton.Input active className="skeleton-input" />
@@ -121,7 +118,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 								</div>
 							) : (
 								<div className="ingestion-key-region-details-section">
-									{!isLoadingGlobalConfig && !isFetchingGlobalConfig && (
+									{!isLoadingGlobalConfig && (
 										<div className="ingestion-region-container">
 											<Typography.Text className="ingestion-region-label">
 												Ingestion URL
