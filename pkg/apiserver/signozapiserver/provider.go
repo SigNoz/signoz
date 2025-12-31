@@ -6,12 +6,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
+	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -30,6 +33,10 @@ type provider struct {
 	authDomainHandler authdomain.Handler
 	preferenceHandler preference.Handler
 	globalHandler     global.Handler
+	promoteHandler    promote.Handler
+	flaggerHandler    flagger.Handler
+	dashboardModule   dashboard.Module
+	dashboardHandler  dashboard.Handler
 }
 
 func NewFactory(
@@ -41,9 +48,13 @@ func NewFactory(
 	authDomainHandler authdomain.Handler,
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
+	promoteHandler promote.Handler,
+	flaggerHandler flagger.Handler,
+	dashboardModule dashboard.Module,
+	dashboardHandler dashboard.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler)
 	})
 }
 
@@ -59,6 +70,10 @@ func newProvider(
 	authDomainHandler authdomain.Handler,
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
+	promoteHandler promote.Handler,
+	flaggerHandler flagger.Handler,
+	dashboardModule dashboard.Module,
+	dashboardHandler dashboard.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -73,6 +88,10 @@ func newProvider(
 		authDomainHandler: authDomainHandler,
 		preferenceHandler: preferenceHandler,
 		globalHandler:     globalHandler,
+		promoteHandler:    promoteHandler,
+		flaggerHandler:    flaggerHandler,
+		dashboardModule:   dashboardModule,
+		dashboardHandler:  dashboardHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -113,6 +132,18 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addPromoteRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addFlaggerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addDashboardRoutes(router); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -120,5 +151,11 @@ func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
 		{Name: ctxtypes.AuthTypeAPIKey.StringValue(), Scopes: []string{role.String()}},
 		{Name: ctxtypes.AuthTypeTokenizer.StringValue(), Scopes: []string{role.String()}},
+	}
+}
+
+func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
+	return []handler.OpenAPISecurityScheme{
+		{Name: ctxtypes.AuthTypeAnonymous.StringValue(), Scopes: scopes},
 	}
 }

@@ -206,6 +206,201 @@ paths:
       summary: Create session by saml callback
       tags:
       - sessions
+  /api/v1/dashboards/{id}/public:
+    delete:
+      deprecated: false
+      description: This endpoints deletes the public sharing config and disables the
+        public sharing of a dashboard
+      operationId: DeletePublicDashboard
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete public dashboard
+      tags:
+      - dashboard
+    get:
+      deprecated: false
+      description: This endpoints returns public sharing config for a dashboard
+      operationId: GetPublicDashboard
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get public dashboard
+      tags:
+      - dashboard
+    post:
+      deprecated: false
+      description: This endpoints creates public sharing config and enables public
+        sharing of the dashboard
+      operationId: CreatePublicDashboard
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesPostablePublicDashboard'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                type: object
+          description: Created
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create public dashboard
+      tags:
+      - dashboard
+    put:
+      deprecated: false
+      description: This endpoints updates the public sharing config for a dashboard
+      operationId: UpdatePublicDashboard
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesUpdatablePublicDashboard'
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update public dashboard
+      tags:
+      - dashboard
   /api/v1/domains:
     get:
       deprecated: false
@@ -849,6 +1044,71 @@ paths:
       summary: Deprecated create session by email password
       tags:
       - sessions
+  /api/v1/logs/promote_paths:
+    get:
+      deprecated: false
+      description: This endpoints promotes and indexes paths
+      operationId: ListPromotedAndIndexedPaths
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/PromotetypesPromotePath'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Promote and index paths
+      tags:
+      - logs
+    post:
+      deprecated: false
+      description: This endpoints promotes and indexes paths
+      operationId: HandlePromoteAndIndexPaths
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/PromotetypesPromotePath'
+              nullable: true
+              type: array
+      responses:
+        "201":
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Promote and index paths
+      tags:
+      - logs
   /api/v1/org/preferences:
     get:
       deprecated: false
@@ -1221,6 +1481,107 @@ paths:
       summary: Update api key
       tags:
       - users
+  /api/v1/public/dashboards/{id}:
+    get:
+      deprecated: false
+      description: This endpoints returns the sanitized dashboard data for public
+        access
+      operationId: GetPublicDashboardData
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettablePublicDashboardData'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - anonymous:
+        - public-dashboard:read
+      summary: Get public dashboard data
+      tags:
+      - dashboard
+  /api/v1/public/dashboards/{id}/widgets/{idx}/query_range:
+    get:
+      deprecated: false
+      description: This endpoint return query range results for a widget of public
+        dashboard
+      operationId: GetPublicDashboardWidgetQueryRange
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: idx
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Querybuildertypesv5QueryRangeResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - anonymous:
+        - public-dashboard:read
+      summary: Get query range result
+      tags:
+      - dashboard
   /api/v1/resetPassword:
     post:
       deprecated: false
@@ -1661,6 +2022,51 @@ paths:
       summary: Update user preference
       tags:
       - preferences
+  /api/v2/features:
+    get:
+      deprecated: false
+      description: This endpoint returns the supported features and their details
+      operationId: GetFeatures
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/FeaturetypesGettableFeature'
+                    type: array
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get features
+      tags:
+      - features
   /api/v2/orgs/me:
     get:
       deprecated: false
@@ -2090,6 +2496,60 @@ components:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
       type: object
+    DashboardtypesDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        data:
+          $ref: '#/components/schemas/DashboardtypesStorableDashboardData'
+        id:
+          type: string
+        locked:
+          type: boolean
+        org_id:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      type: object
+    DashboardtypesGettablePublicDasbhboard:
+      properties:
+        defaultTimeRange:
+          type: string
+        publicPath:
+          type: string
+        timeRangeEnabled:
+          type: boolean
+      type: object
+    DashboardtypesGettablePublicDashboardData:
+      properties:
+        dashboard:
+          $ref: '#/components/schemas/DashboardtypesDashboard'
+        publicDashboard:
+          $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
+      type: object
+    DashboardtypesPostablePublicDashboard:
+      properties:
+        defaultTimeRange:
+          type: string
+        timeRangeEnabled:
+          type: boolean
+      type: object
+    DashboardtypesStorableDashboardData:
+      additionalProperties: {}
+      type: object
+    DashboardtypesUpdatablePublicDashboard:
+      properties:
+        defaultTimeRange:
+          type: string
+        timeRangeEnabled:
+          type: boolean
+      type: object
     ErrorsJSON:
       properties:
         code:
@@ -2107,6 +2567,24 @@ components:
       properties:
         message:
           type: string
+      type: object
+    FeaturetypesGettableFeature:
+      properties:
+        defaultVariant:
+          type: string
+        description:
+          type: string
+        kind:
+          type: string
+        name:
+          type: string
+        resolvedValue: {}
+        stage:
+          type: string
+        variants:
+          additionalProperties: {}
+          nullable: true
+          type: object
       type: object
     PreferencetypesPreference:
       properties:
@@ -2136,6 +2614,72 @@ components:
         value: {}
       type: object
     PreferencetypesValue:
+      type: object
+    PromotetypesPromotePath:
+      properties:
+        indexes:
+          items:
+            $ref: '#/components/schemas/PromotetypesWrappedIndex'
+          type: array
+        path:
+          type: string
+        promote:
+          type: boolean
+      type: object
+    PromotetypesWrappedIndex:
+      properties:
+        column_type:
+          type: string
+        granularity:
+          type: integer
+        type:
+          type: string
+      type: object
+    Querybuildertypesv5ExecStats:
+      properties:
+        bytesScanned:
+          minimum: 0
+          type: integer
+        durationMs:
+          minimum: 0
+          type: integer
+        rowsScanned:
+          minimum: 0
+          type: integer
+      type: object
+    Querybuildertypesv5QueryData:
+      properties:
+        results:
+          items: {}
+          nullable: true
+          type: array
+      type: object
+    Querybuildertypesv5QueryRangeResponse:
+      properties:
+        data:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryData'
+        meta:
+          $ref: '#/components/schemas/Querybuildertypesv5ExecStats'
+        type:
+          type: string
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      type: object
+    Querybuildertypesv5QueryWarnData:
+      properties:
+        message:
+          type: string
+        url:
+          type: string
+        warnings:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryWarnDataAdditional'
+          type: array
+      type: object
+    Querybuildertypesv5QueryWarnDataAdditional:
+      properties:
+        message:
+          type: string
       type: object
     RenderErrorResponse:
       properties:
@@ -2193,6 +2737,11 @@ components:
         external_url:
           type: string
         ingestion_url:
+          type: string
+      type: object
+    TypesIdentifiable:
+      properties:
+        id:
           type: string
       type: object
     TypesInvite:

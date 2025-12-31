@@ -5,16 +5,20 @@
 	&-virtuoso {
 		background: rgba(171, 189, 255, 0.04);
 	}
-	&-list-container .logs-loading-skeleton {
+	&-list-container {
 		height: 100%;
-		border: 1px solid var(--bg-slate-500);
-		border-top: none;
-		color: var(--bg-vanilla-400);
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 8px 0;
+
+		.logs-loading-skeleton {
+			height: 100%;
+			border: 1px solid var(--bg-slate-500);
+			border-top: none;
+			color: var(--bg-vanilla-400);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding: 8px 0;
+		}
 	}
 
 	&-empty-content {
