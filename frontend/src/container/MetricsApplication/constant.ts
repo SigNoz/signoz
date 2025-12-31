@@ -111,14 +111,17 @@ export const topOperationMetricsDownloadOptions: DownloadOptions = {
 	isDownloadEnabled: true,
 	fileName: 'top-operation',
 	columnLabels: {
-		operation: 'Operation',
+		operation: 'Name',
 		A: 'P50 (in ns)',
 		B: 'P90 (in ns)',
 		C: 'P99 (in ns)',
-		F: 'Number of Calls',
-		'Error Percentage': 'Error Rate (%)',
+		F: 'Number Of Calls',
+		F1: 'Error Rate (%)',
 	},
-} as const;
+	valueTransforms: {
+		F1: (value: string): string => (value === 'N/A' ? '0' : value),
+	},
+};
 
 export const SERVICE_CHART_ID = {
 	latency: 'SERVICE_OVERVIEW_LATENCY',

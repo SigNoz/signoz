@@ -36,8 +36,12 @@ export function QueryTable({
 	panelType,
 	...props
 }: QueryTableProps): JSX.Element {
-	const { isDownloadEnabled = false, fileName = '', columnLabels } =
-		downloadOption || {};
+	const {
+		isDownloadEnabled = false,
+		fileName = '',
+		columnLabels,
+		valueTransforms,
+	} = downloadOption || {};
 	const isQueryTypeBuilder = query.queryType === 'builder';
 
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
@@ -174,6 +178,7 @@ export function QueryTable({
 	const downloadableData = createDownloadableData(
 		filterTable ?? newDataSource,
 		columnLabels,
+		valueTransforms,
 	);
 
 	const handlePageChange = useCallback(

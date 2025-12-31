@@ -6,6 +6,7 @@ import { RowData } from 'lib/query/createTableColumnsFromQuery';
 export function createDownloadableData(
 	inputData: RowData[],
 	columnLabels?: Record<string, string>,
+	valueTransforms?: Record<string, (value: string) => string>,
 ): Record<string, string>[] {
 	if (!inputData || inputData.length === 0) {
 		return [];
@@ -29,18 +30,20 @@ export function createDownloadableData(
 			// Use custom label if provided, otherwise use the raw key
 			const formattedKey = columnLabels?.[key] ?? key;
 
-			// Handle null and undefined
+			// Convert value to string
+			let stringValue: string;
 			if (value === null || value === undefined) {
-				downloadableRow[formattedKey] = '';
-
-				// Handle objects/arrays by stringifying
+				stringValue = '';
 			} else if (typeof value === 'object') {
-				downloadableRow[formattedKey] = JSON.stringify(value);
-
-				// Else make sure it's a string
+				stringValue = JSON.stringify(value);
 			} else {
-				downloadableRow[formattedKey] = String(value);
+				stringValue = String(value);
 			}
+
+			// Apply value transform if provided for this column
+			downloadableRow[formattedKey] = valueTransforms?.[key]
+				? valueTransforms[key](stringValue)
+				: stringValue;
 		});
 
 		return downloadableRow;
