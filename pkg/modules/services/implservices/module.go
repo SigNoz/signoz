@@ -417,10 +417,11 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 	queries := []qbtypes.QueryEnvelope{
 		{Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:    "p99_latency",
-				Signal:  telemetrytypes.SignalMetrics,
-				Filter:  &qbtypes.Filter{Expression: filterExpr},
-				GroupBy: groupByService,
+				Name:         "p99_latency",
+				Signal:       telemetrytypes.SignalMetrics,
+				Filter:       &qbtypes.Filter{Expression: filterExpr},
+				GroupBy:      groupByService,
+				StepInterval: spanMetricsSingleBucketStep(),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
@@ -758,10 +759,11 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 	queries := []qbtypes.QueryEnvelope{
 		{Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:    "p50_latency",
-				Signal:  telemetrytypes.SignalMetrics,
-				Filter:  &qbtypes.Filter{Expression: filterExpr},
-				GroupBy: groupByOperation,
+				Name:         "p50_latency",
+				Signal:       telemetrytypes.SignalMetrics,
+				Filter:       &qbtypes.Filter{Expression: filterExpr},
+				GroupBy:      groupByOperation,
+				StepInterval: spanMetricsSingleBucketStep(),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
@@ -776,10 +778,11 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 		},
 		{Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:    "p95_latency",
-				Signal:  telemetrytypes.SignalMetrics,
-				Filter:  &qbtypes.Filter{Expression: filterExpr},
-				GroupBy: groupByOperation,
+				Name:         "p95_latency",
+				Signal:       telemetrytypes.SignalMetrics,
+				Filter:       &qbtypes.Filter{Expression: filterExpr},
+				GroupBy:      groupByOperation,
+				StepInterval: spanMetricsSingleBucketStep(),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
@@ -793,10 +796,11 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 		},
 		{Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:    "p99_latency",
-				Signal:  telemetrytypes.SignalMetrics,
-				Filter:  &qbtypes.Filter{Expression: filterExpr},
-				GroupBy: groupByOperation,
+				Name:         "p99_latency",
+				Signal:       telemetrytypes.SignalMetrics,
+				Filter:       &qbtypes.Filter{Expression: filterExpr},
+				GroupBy:      groupByOperation,
+				StepInterval: spanMetricsSingleBucketStep(),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
@@ -1032,10 +1036,11 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 	queries := []qbtypes.QueryEnvelope{
 		{Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:    "p50_latency",
-				Signal:  telemetrytypes.SignalMetrics,
-				Filter:  &qbtypes.Filter{Expression: filterExpr},
-				GroupBy: groupByOperation,
+				Name:         "p50_latency",
+				Signal:       telemetrytypes.SignalMetrics,
+				Filter:       &qbtypes.Filter{Expression: filterExpr},
+				GroupBy:      groupByOperation,
+				StepInterval: spanMetricsSingleBucketStep(),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
@@ -1049,10 +1054,11 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 		},
 		{Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:    "p95_latency",
-				Signal:  telemetrytypes.SignalMetrics,
-				Filter:  &qbtypes.Filter{Expression: filterExpr},
-				GroupBy: groupByOperation,
+				Name:         "p95_latency",
+				Signal:       telemetrytypes.SignalMetrics,
+				Filter:       &qbtypes.Filter{Expression: filterExpr},
+				GroupBy:      groupByOperation,
+				StepInterval: spanMetricsSingleBucketStep(),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
@@ -1066,10 +1072,11 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 		},
 		{Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:    "p99_latency",
-				Signal:  telemetrytypes.SignalMetrics,
-				Filter:  &qbtypes.Filter{Expression: filterExpr},
-				GroupBy: groupByOperation,
+				Name:         "p99_latency",
+				Signal:       telemetrytypes.SignalMetrics,
+				Filter:       &qbtypes.Filter{Expression: filterExpr},
+				GroupBy:      groupByOperation,
+				StepInterval: spanMetricsSingleBucketStep(),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",

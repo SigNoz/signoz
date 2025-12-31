@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -19,6 +20,12 @@ func getOrDefaultEnv(key string, fallback string) string {
 		return fallback
 	}
 	return v
+}
+
+// spanMetricsSingleBucketStep forces a single bucket for percentile aggregations
+// by making the step interval very large - currently 1 year
+func spanMetricsSingleBucketStep() qbtypes.Step {
+	return qbtypes.Step{Duration: 365 * 24 * time.Hour}
 }
 
 // validateTagFilterItems validates the tag filter items. This should be used before using
