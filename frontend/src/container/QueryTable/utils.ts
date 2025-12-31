@@ -5,6 +5,7 @@ import { RowData } from 'lib/query/createTableColumnsFromQuery';
  */
 export function createDownloadableData(
 	inputData: RowData[],
+	columnLabels?: Record<string, string>,
 ): Record<string, string>[] {
 	if (!inputData || inputData.length === 0) {
 		return [];
@@ -25,8 +26,8 @@ export function createDownloadableData(
 		allKeys.forEach((key) => {
 			const value = row[key];
 
-			// TODO : Possible change to format and normalize headers
-			const formattedKey = key;
+			// Use custom label if provided, otherwise use the raw key
+			const formattedKey = columnLabels?.[key] ?? key;
 
 			// Handle null and undefined
 			if (value === null || value === undefined) {

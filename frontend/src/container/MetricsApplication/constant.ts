@@ -110,6 +110,14 @@ export enum WidgetKeys {
 export const topOperationMetricsDownloadOptions: DownloadOptions = {
 	isDownloadEnabled: true,
 	fileName: 'top-operation',
+	columnLabels: {
+		operation: 'Operation',
+		A: 'P50 (in ns)',
+		B: 'P90 (in ns)',
+		C: 'P99 (in ns)',
+		F: 'Number of Calls',
+		'Error Percentage': 'Error Rate (%)',
+	},
 } as const;
 
 export const SERVICE_CHART_ID = {
