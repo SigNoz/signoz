@@ -2548,8 +2548,7 @@
 			"rds-logs"
 		],
 		"imgUrl": "/Logos/rds.svg",
-		"link": "/docs/aws-monitoring/rds-logs/",
-		"internalRedirect": true
+		"link": "/docs/aws-monitoring/rds-logs/"
 	},
 	{
 		"dataSource": "aws-lambda",
