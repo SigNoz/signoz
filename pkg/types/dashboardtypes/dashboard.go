@@ -320,7 +320,7 @@ func (lockUnlockDashboard *LockUnlockDashboard) UnmarshalJSON(src []byte) error 
 	return nil
 }
 
-func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime uint64, widgetIndex int64, logger *slog.Logger) (*querybuildertypesv5.QueryRangeRequest, error) {
+func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime, widgetIndex uint64, logger *slog.Logger) (*querybuildertypesv5.QueryRangeRequest, error) {
 	type dashboardData struct {
 		Widgets []struct {
 			PanelTypes string `json:"panelTypes"`
@@ -349,7 +349,7 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime uint64, widgetInde
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "invalid dashboard data")
 	}
 
-	if len(data.Widgets) < int(widgetIndex)+1 {
+	if widgetIndex < 0 || int(widgetIndex) >= len(data.Widgets) {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "widget with index %v doesn't exist", widgetIndex)
 	}
 
