@@ -302,12 +302,14 @@ function MultiIngestionSettings(): JSX.Element {
 		setSearchValue('');
 	};
 
+	const isGlobalConfigEnabled = !isEnterpriseSelfHostedUser;
+
 	const {
 		data: globalConfig,
 		isLoading: isLoadingGlobalConfig,
 		isError: isErrorGlobalConfig,
 		error: globalConfigError,
-	} = useGetGlobalConfig(!isEnterpriseSelfHostedUser);
+	} = useGetGlobalConfig(isGlobalConfigEnabled);
 
 	const {
 		mutate: createIngestionKey,
@@ -1426,7 +1428,7 @@ function MultiIngestionSettings(): JSX.Element {
 					</Typography.Text>
 				</header>
 
-				{!isLoadingGlobalConfig && (
+				{!isLoadingGlobalConfig && isGlobalConfigEnabled && (
 					<div className="ingestion-setup-details-links">
 						<div className="ingestion-key-url-container">
 							<div className="ingestion-key-url-label">Ingestion URL</div>
@@ -1440,6 +1442,7 @@ function MultiIngestionSettings(): JSX.Element {
 									<Copy className="copy-key-btn" size={12} />
 								</div>
 							)}
+
 							{isErrorGlobalConfig && (
 								<Tooltip
 									rootClassName="ingestion-url-error-tooltip"
