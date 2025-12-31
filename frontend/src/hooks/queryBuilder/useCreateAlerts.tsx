@@ -6,10 +6,8 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
-import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useMemo } from 'react';
@@ -20,11 +18,7 @@ import { IDashboardVariable, Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 
-const useCreateAlerts = (
-	widget?: Widgets,
-	caller?: string,
-	thresholds?: ThresholdProps[],
-): VoidFunction => {
+const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 	const queryRangeMutation = useMutation(getSubstituteVars);
 
 	const { selectedTime: globalSelectedInterval } = useSelector<
@@ -83,9 +77,7 @@ const useCreateAlerts = (
 					QueryParams.panelTypes
 				}=${widget.panelTypes}&version=${ENTITY_VERSION_V5}`;
 
-				history.push(url, {
-					thresholds,
-				});
+				window.open(url, '_blank', 'noreferrer');
 			},
 			onError: () => {
 				notifications.error({
