@@ -1,4 +1,4 @@
-import getGlobalConfig from 'api/globalConfig/globalConfig';
+import getGlobalConfig from 'api/globalConfig/getGlobalConfig';
 import { useQuery, UseQueryResult } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
