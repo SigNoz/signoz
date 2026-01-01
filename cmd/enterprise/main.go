@@ -4,14 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/cmd"
-	"github.com/SigNoz/signoz/ee/sqlschema/postgressqlschema"
-	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
-	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
-	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/sqlschema"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 )
 
 func main() {
@@ -24,22 +17,8 @@ func main() {
 	cmd.RegisterMetastore(
 		cmd.RootCmd,
 		logger,
-		func() factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]] {
-			factories := signoz.NewSQLStoreProviderFactories()
-			if err := factories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory())); err != nil {
-				panic(err)
-			}
-
-			return factories
-		},
-		func(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
-			factories := signoz.NewSQLSchemaProviderFactories(sqlstore)
-			if err := factories.Add(postgressqlschema.NewFactory(sqlstore)); err != nil {
-				panic(err)
-			}
-
-			return factories
-		},
+		sqlstoreProviderFactories,
+		sqlschemaProviderFactories,
 	)
 
 	cmd.Execute(logger)

@@ -4,11 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/cmd"
-	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
-	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/sqlschema"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
 )
 
 func main() {
@@ -21,12 +17,8 @@ func main() {
 	cmd.RegisterMetastore(
 		cmd.RootCmd,
 		logger,
-		func() factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]] {
-			return signoz.NewSQLStoreProviderFactories()
-		},
-		func(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
-			return signoz.NewSQLSchemaProviderFactories(sqlstore)
-		},
+		sqlstoreProviderFactories,
+		sqlschemaProviderFactories,
 	)
 
 	cmd.Execute(logger)
