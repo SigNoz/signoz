@@ -835,7 +835,7 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 		},
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("public_dashboard"),
-			ColumnNames: []sqlschema.ColumnName{"dashboard_id"},
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("dashboard_id")},
 		},
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("role"),
@@ -843,15 +843,23 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 		},
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("tuple"),
-			ColumnNames: []sqlschema.ColumnName{"ulid"},
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("ulid")},
 		},
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("auth_token"),
-			ColumnNames: []sqlschema.ColumnName{"access_token"},
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("access_token")},
 		},
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("auth_token"),
-			ColumnNames: []sqlschema.ColumnName{"refresh_token"},
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("refresh_token")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("apdex_setting"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("service_name"), sqlschema.ColumnName("org_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("cloud_integration"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("provider"), sqlschema.ColumnName("org_id")},
 		},
 	}
 
