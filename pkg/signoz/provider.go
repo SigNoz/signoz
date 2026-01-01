@@ -40,6 +40,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sharder/singlesharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlmigration/s100sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlschema/sqlitesqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -99,64 +100,9 @@ func NewSQLSchemaProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[
 func NewSQLMigrationProviderFactories(
 	sqlstore sqlstore.SQLStore,
 	sqlschema sqlschema.SQLSchema,
-	telemetryStore telemetrystore.TelemetryStore,
-	providerSettings factory.ProviderSettings,
 ) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
 	return factory.MustNewNamedMap(
-		sqlmigration.NewAddDataMigrationsFactory(),
-		sqlmigration.NewAddOrganizationFactory(),
-		sqlmigration.NewAddPreferencesFactory(),
-		sqlmigration.NewAddDashboardsFactory(),
-		sqlmigration.NewAddSavedViewsFactory(),
-		sqlmigration.NewAddAgentsFactory(),
-		sqlmigration.NewAddPipelinesFactory(),
-		sqlmigration.NewAddIntegrationsFactory(),
-		sqlmigration.NewAddLicensesFactory(),
-		sqlmigration.NewAddPatsFactory(),
-		sqlmigration.NewModifyDatetimeFactory(),
-		sqlmigration.NewModifyOrgDomainFactory(),
-		sqlmigration.NewUpdateOrganizationFactory(sqlstore),
-		sqlmigration.NewAddAlertmanagerFactory(sqlstore),
-		sqlmigration.NewUpdateDashboardAndSavedViewsFactory(sqlstore),
-		sqlmigration.NewUpdatePatAndOrgDomainsFactory(sqlstore),
-		sqlmigration.NewUpdatePipelines(sqlstore),
-		sqlmigration.NewDropLicensesSitesFactory(sqlstore),
-		sqlmigration.NewUpdateInvitesFactory(sqlstore),
-		sqlmigration.NewUpdatePatFactory(sqlstore),
-		sqlmigration.NewUpdateAlertmanagerFactory(sqlstore),
-		sqlmigration.NewUpdatePreferencesFactory(sqlstore),
-		sqlmigration.NewUpdateApdexTtlFactory(sqlstore),
-		sqlmigration.NewUpdateResetPasswordFactory(sqlstore),
-		sqlmigration.NewUpdateRulesFactory(sqlstore),
-		sqlmigration.NewAddVirtualFieldsFactory(),
-		sqlmigration.NewUpdateIntegrationsFactory(sqlstore),
-		sqlmigration.NewUpdateOrganizationsFactory(sqlstore),
-		sqlmigration.NewDropGroupsFactory(sqlstore),
-		sqlmigration.NewCreateQuickFiltersFactory(sqlstore),
-		sqlmigration.NewUpdateQuickFiltersFactory(sqlstore),
-		sqlmigration.NewAuthRefactorFactory(sqlstore),
-		sqlmigration.NewUpdateLicenseFactory(sqlstore),
-		sqlmigration.NewMigratePATToFactorAPIKey(sqlstore),
-		sqlmigration.NewUpdateApiMonitoringFiltersFactory(sqlstore),
-		sqlmigration.NewAddKeyOrganizationFactory(sqlstore),
-		sqlmigration.NewAddTraceFunnelsFactory(sqlstore),
-		sqlmigration.NewUpdateDashboardFactory(sqlstore),
-		sqlmigration.NewDropFeatureSetFactory(),
-		sqlmigration.NewDropDeprecatedTablesFactory(),
-		sqlmigration.NewUpdateAgentsFactory(sqlstore),
-		sqlmigration.NewUpdateUsersFactory(sqlstore, sqlschema),
-		sqlmigration.NewUpdateUserInviteFactory(sqlstore, sqlschema),
-		sqlmigration.NewUpdateOrgDomainFactory(sqlstore, sqlschema),
-		sqlmigration.NewAddFactorIndexesFactory(sqlstore, sqlschema),
-		sqlmigration.NewQueryBuilderV5MigrationFactory(sqlstore, telemetryStore),
-		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
-		sqlmigration.NewUpdateTTLSettingForCustomRetentionFactory(sqlstore, sqlschema),
-		sqlmigration.NewAddRoutePolicyFactory(sqlstore, sqlschema),
-		sqlmigration.NewAddAuthTokenFactory(sqlstore, sqlschema),
-		sqlmigration.NewAddAuthzFactory(sqlstore, sqlschema),
-		sqlmigration.NewAddPublicDashboardsFactory(sqlstore, sqlschema),
-		sqlmigration.NewAddRoleFactory(sqlstore, sqlschema),
-		sqlmigration.NewUpdateAuthzFactory(sqlstore, sqlschema),
+		s100sqlmigration.NewV100Factory(sqlstore, sqlschema),
 	)
 }
 

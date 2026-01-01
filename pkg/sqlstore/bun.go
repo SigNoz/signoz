@@ -19,6 +19,7 @@ type BunDB struct {
 
 func NewBunDB(settings factory.ScopedProviderSettings, sqldb *sql.DB, dialect schema.Dialect, hooks []SQLStoreHook, opts ...bun.DBOption) *BunDB {
 	db := bun.NewDB(sqldb, dialect, opts...)
+	bun.SetLogger(&bunLogger{settings.Logger()})
 
 	for _, hook := range hooks {
 		db.AddQueryHook(hook)
