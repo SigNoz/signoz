@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './CustomTimePicker.styles.scss';
 
-import { Input, Popover, Tooltip, Typography } from 'antd';
+import { Input, InputRef, Popover, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 import { isValidTimeFormat } from 'lib/getMinMax';
 import { defaultTo, isFunction, noop } from 'lodash-es';
 import debounce from 'lodash-es/debounce';
-import { CheckCircle, ChevronDown, Clock } from 'lucide-react';
+import { CheckCircle, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import {
 	ChangeEvent,
@@ -25,6 +25,7 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
@@ -100,7 +101,8 @@ function CustomTimePicker({
 		null,
 	);
 	const location = useLocation();
-	const [isInputFocused, setIsInputFocused] = useState(false);
+
+	const inputRef = useRef<InputRef>(null);
 
 	const [activeView, setActiveView] = useState<ViewType>(DEFAULT_VIEW);
 
@@ -122,6 +124,10 @@ function CustomTimePicker({
 	);
 
 	const [isOpenedFromFooter, setIsOpenedFromFooter] = useState(false);
+
+	console.log('selectedTime', selectedTime);
+	console.log('start time', minTime);
+	console.log('end time', maxTime);
 
 	const getSelectedTimeRangeLabel = (
 		selectedTime: string,
@@ -255,19 +261,48 @@ function CustomTimePicker({
 	const handleInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
 		const inputValue = event.target.value;
 
-		if (inputValue.length > 0) {
-			setOpen(false);
-		} else {
-			setOpen(true);
-		}
-
 		setInputValue(inputValue);
 
 		// Call the debounced function with the input value
-		debouncedHandleInputChange(inputValue);
+		// debouncedHandleInputChange(inputValue);
+	};
+
+	const handleInputPressEnter = (): void => {
+		console.log('Enter pressed, input value:', inputValue);
+
+		// parse the input value to get the start and end times
+		const [startTime, endTime] = inputValue.split(' - ');
+
+		// convert the start and end times to epoch milliseconds
+		const startTimeValue = dayjs(
+			startTime,
+			DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
+		).unix();
+		const endTimeValue = dayjs(
+			endTime,
+			DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
+		).unix();
+
+		console.log('startTimeValue', startTimeValue);
+		console.log('endTimeValue', endTimeValue);
+
+		if (startTimeValue && endTimeValue) {
+			onCustomDateHandler?.([
+				dayjs.unix(startTimeValue),
+				dayjs.unix(endTimeValue),
+			]);
+
+			setOpen(false);
+		} else {
+			onError(true);
+			setInputErrorMessage('Invalid time range');
+		}
 	};
 
 	const handleSelect = (label: string, value: string): void => {
+		console.log('handleSelect label', label);
+		console.log('handleSelect value', value);
+
 		if (label === 'Custom') {
 			setCustomDTPickerVisible?.(true);
 			return;
@@ -305,13 +340,29 @@ function CustomTimePicker({
 		</div>
 	);
 
-	const handleFocus = (): void => {
-		setIsInputFocused(true);
-		setActiveView('datetime');
+	const handleOpen = (e: React.SyntheticEvent): void => {
+		e.stopPropagation();
+		console.log('handleOpen called');
+		setOpen(true);
+
+		const startTime = dayjs(minTime / 1000_000).format(
+			DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
+		);
+		const endTime = dayjs(maxTime / 1000_000).format(
+			DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
+		);
+
+		console.log('startTime', startTime);
+		console.log('endTime', endTime);
+
+		setInputValue(`${startTime} - ${endTime}`);
 	};
 
-	const handleBlur = (): void => {
-		setIsInputFocused(false);
+	const handleClose = (e: React.MouseEvent): void => {
+		e.stopPropagation();
+		console.log('handleClose called');
+		setOpen(false);
+		setCustomDTPickerVisible?.(false);
 	};
 
 	// this is required as TopNav component wraps the components and we need to clear the state on path change
@@ -349,6 +400,45 @@ function CustomTimePicker({
 		return '';
 	};
 
+	// given the minTime and maxTime, return the label for the selected time, it should be in the format of Last X minutes / hours / days / weeks / months
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const getSelectedTimeLabel = useCallback((): string => {
+		if (showLiveLogs) {
+			return 'Live';
+		}
+
+		const minTimeValue = dayjs(minTime / 1000_000);
+		const maxTimeValue = dayjs(maxTime / 1000_000);
+
+		const diffInMonths = maxTimeValue.diff(minTimeValue, 'months');
+		const diffInWeeks = maxTimeValue.diff(minTimeValue, 'weeks');
+		const diffInDays = maxTimeValue.diff(minTimeValue, 'days');
+		const diffInHours = maxTimeValue.diff(minTimeValue, 'hours');
+		const diffInMinutes = maxTimeValue.diff(minTimeValue, 'minutes');
+
+		if (diffInMonths > 0) {
+			return `Last ${diffInMonths} ${diffInMonths === 1 ? 'month' : 'months'}`;
+		}
+
+		if (diffInWeeks > 0) {
+			return `Last ${diffInWeeks} ${diffInWeeks === 1 ? 'week' : 'weeks'}`;
+		}
+
+		if (diffInDays > 0) {
+			return `Last ${diffInDays} ${diffInDays === 1 ? 'day' : 'days'}`;
+		}
+
+		if (diffInHours > 0) {
+			return `Last ${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'}`;
+		}
+
+		if (diffInMinutes > 0) {
+			return `Last ${diffInMinutes} ${diffInMinutes === 1 ? 'minute' : 'minutes'}`;
+		}
+
+		return '';
+	}, [minTime, maxTime, showLiveLogs]);
+
 	const getInputPrefix = (): JSX.Element => {
 		if (showLiveLogs) {
 			return (
@@ -370,6 +460,27 @@ function CustomTimePicker({
 			</div>
 		);
 	};
+
+	useEffect(() => {
+		if (!open) {
+			const inputValue = getSelectedTimeLabel();
+			setInputValue(inputValue);
+		}
+	}, [open, getSelectedTimeLabel]);
+
+	// Focus and select input text when popover opens
+	useEffect(() => {
+		if (open && inputRef.current) {
+			// Use setTimeout to wait for React to update the DOM and make input editable
+			setTimeout(() => {
+				const inputElement = inputRef.current?.input;
+				if (inputElement) {
+					inputElement.focus();
+					inputElement.select();
+				}
+			}, 0);
+		}
+	}, [open]);
 
 	return (
 		<div className="custom-time-picker">
@@ -413,21 +524,25 @@ function CustomTimePicker({
 					}}
 				>
 					<Input
+						ref={inputRef}
 						className="timeSelection-input"
 						type="text"
 						status={inputValue && inputStatus === 'error' ? 'error' : ''}
-						placeholder={
-							isInputFocused
-								? 'Time Format (1m or 2h or 3d or 4w)'
-								: selectedTimePlaceholderValue
-						}
+						readOnly={!open}
+						placeholder={getSelectedTimeLabel()}
+						// placeholder={
+						// 	isInputFocused
+						// 		? 'Time Format (1m or 2h or 3d or 4w)'
+						// 		: selectedTimePlaceholderValue
+						// }
 						value={inputValue}
-						onFocus={handleFocus}
-						onClick={handleFocus}
-						onBlur={handleBlur}
+						onFocus={handleOpen}
+						onClick={handleOpen}
+						// onBlur={handleClose}
 						onChange={handleInputChange}
+						onPressEnter={handleInputPressEnter}
 						data-1p-ignore
-						prefix={getInputPrefix()}
+						// prefix={getInputPrefix()}
 						suffix={
 							<div className="time-input-suffix">
 								{!!isTimezoneOverridden && activeTimezoneOffset && (
@@ -435,14 +550,20 @@ function CustomTimePicker({
 										<span>{activeTimezoneOffset}</span>
 									</div>
 								)}
-								<ChevronDown
-									size={14}
-									className="cursor-pointer time-input-suffix-icon-badge"
-									onClick={(e): void => {
-										e.stopPropagation();
-										handleViewChange('datetime');
-									}}
-								/>
+
+								{open ? (
+									<ChevronUp
+										size={14}
+										className="cursor-pointer time-input-suffix-icon-badge"
+										onClick={handleClose}
+									/>
+								) : (
+									<ChevronDown
+										size={14}
+										className="cursor-pointer time-input-suffix-icon-badge"
+										onClick={handleOpen}
+									/>
+								)}
 							</div>
 						}
 					/>

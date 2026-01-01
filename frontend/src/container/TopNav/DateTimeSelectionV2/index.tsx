@@ -195,16 +195,6 @@ function DateTimeSelection({
 	};
 
 	useEffect(() => {
-		if (selectedTime === 'custom') {
-			setRefreshButtonHidden(true);
-			setCustomDTPickerVisible(true);
-		} else {
-			setRefreshButtonHidden(false);
-			setCustomDTPickerVisible(false);
-		}
-	}, [selectedTime]);
-
-	useEffect(() => {
 		if (isModalTimeSelection && modalSelectedInterval === 'custom') {
 			setCustomDTPickerVisible(true);
 		}
@@ -316,6 +306,10 @@ function DateTimeSelection({
 
 	const onSelectHandler = useCallback(
 		(value: Time | CustomTimeType): void => {
+			console.log('onSelectHandler called');
+			console.log('value', value);
+			console.log('--------------------------------');
+
 			if (isModalTimeSelection) {
 				if (value === 'custom') {
 					setCustomDTPickerVisible(true);
@@ -438,6 +432,10 @@ function DateTimeSelection({
 	};
 
 	const onValidCustomDateHandler = (dateTimeStr: CustomTimeType): void => {
+		console.log('onValidCustomDateHandler called');
+		console.log('dateTimeStr', dateTimeStr);
+		console.log('--------------------------------');
+
 		if (isModalTimeSelection) {
 			onTimeChange?.(dateTimeStr);
 			return;
