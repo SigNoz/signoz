@@ -98,6 +98,8 @@ func TestV100Migration(t *testing.T) {
 				`CREATE UNIQUE INDEX IF NOT EXISTS "uq_tuple_ulid" ON "tuple" ("ulid")`,
 				`CREATE UNIQUE INDEX IF NOT EXISTS "uq_auth_token_access_token" ON "auth_token" ("access_token")`,
 				`CREATE UNIQUE INDEX IF NOT EXISTS "uq_auth_token_refresh_token" ON "auth_token" ("refresh_token")`,
+				`CREATE UNIQUE INDEX IF NOT EXISTS "uq_apdex_setting_service_name_org_id" ON "apdex_setting" ("service_name", "org_id")`,
+				`CREATE UNIQUE INDEX IF NOT EXISTS "uq_cloud_integration_provider_org_id" ON "cloud_integration" ("provider", "org_id")`,
 			},
 		},
 	}
