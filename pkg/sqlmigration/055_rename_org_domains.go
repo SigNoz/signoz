@@ -29,6 +29,12 @@ func newRenameOrgDomains(_ context.Context, _ factory.ProviderSettings, _ Config
 }
 
 func (migration *renameOrgDomains) Up(ctx context.Context, db *bun.DB) error {
+	// check if the `auth_domain` table already exists
+	_, _, err := migration.sqlSchema.GetTable(ctx, sqlschema.TableName("auth_domain"))
+	if err == nil {
+		return nil
+	}
+	
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -37,12 +43,6 @@ func (migration *renameOrgDomains) Up(ctx context.Context, db *bun.DB) error {
 	defer func() {
 		_ = tx.Rollback()
 	}()
-
-	// check if the `auth_domain` table already exists
-	_, _, err = migration.sqlSchema.GetTable(ctx, sqlschema.TableName("auth_domain"))
-	if err == nil {
-		return nil
-	}
 
 	table, _, err := migration.sqlSchema.GetTable(ctx, sqlschema.TableName("org_domains"))
 	if err != nil {
