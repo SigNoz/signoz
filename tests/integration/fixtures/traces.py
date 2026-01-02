@@ -81,7 +81,7 @@ class TracesResourceOrAttributeKeys(ABC):
         self.is_column = is_column
 
     def np_arr(self) -> np.array:
-        return np.array([self.name, self.tag_type, self.datatype, self.is_column])
+        return np.array([self.name, self.tag_type, self.datatype, self.is_column], dtype=object)
 
 
 class TracesTagAttributes(ABC):
@@ -636,14 +636,23 @@ def insert_traces(
             )
 
         attribute_keys: List[TracesResourceOrAttributeKeys] = []
+        resource_keys: List[TracesResourceOrAttributeKeys] = []
         for trace in traces:
             attribute_keys.extend(trace.attribute_keys)
+            resource_keys.extend(trace.resource_keys)
 
         if len(attribute_keys) > 0:
             clickhouse.conn.insert(
                 database="signoz_traces",
                 table="distributed_span_attributes_keys",
                 data=[attribute_key.np_arr() for attribute_key in attribute_keys],
+            )
+
+        if len(resource_keys) > 0:
+            clickhouse.conn.insert(
+                database="signoz_traces",
+                table="distributed_span_attributes_keys",
+                data=[resource_key.np_arr() for resource_key in resource_keys],
             )
 
         # Insert main traces
