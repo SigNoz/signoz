@@ -161,6 +161,7 @@ export const getUplotHistogramChartOptions = ({
 				isHistogramGraphs: true,
 				isMergedSeries: mergeAllQueries,
 				isDarkMode,
+				colorMapping,
 			}),
 			onClickPlugin({
 				onClick: onClickHandler,
