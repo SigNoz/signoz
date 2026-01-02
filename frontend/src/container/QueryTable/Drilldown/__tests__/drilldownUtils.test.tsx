@@ -8,6 +8,7 @@ import {
 	getViewQuery,
 	isValidQueryName,
 } from '../drilldownUtils';
+import { METRIC_TO_LOGS_TRACES_MAPPINGS } from '../metricsCorrelationUtils';
 
 // Mock the transformMetricsToLogsTraces function since it's not exported
 // We'll test it indirectly through getViewQuery
@@ -117,6 +118,7 @@ describe('drilldownUtils', () => {
 					{
 						queryName: 'metrics_query',
 						dataSource: 'metrics' as any,
+						aggregations: [{ metricName: 'signoz_test_metric' }] as any,
 						groupBy: [],
 						expression: '',
 						disabled: false,
@@ -144,6 +146,16 @@ describe('drilldownUtils', () => {
 		];
 
 		it('should transform metrics query when drilling down to logs', () => {
+			const mappingsByAttr = Object.fromEntries(
+				METRIC_TO_LOGS_TRACES_MAPPINGS.map((m) => [m.attribute, m]),
+			) as Record<
+				string,
+				{ newAttribute: string; valueMappings: Record<string, string> }
+			>;
+			const spanKindMapping = mappingsByAttr['span.kind'];
+			const spanKindKey = spanKindMapping.newAttribute;
+			const spanKindServer = spanKindMapping.valueMappings.SPAN_KIND_SERVER;
+
 			const result = getViewQuery(
 				mockMetricsQuery,
 				mockFilters,
@@ -161,20 +173,30 @@ describe('drilldownUtils', () => {
 			// Verify transformations were applied
 			if (filterExpression) {
 				// Rule 2: operation → name
-				expect(filterExpression).toContain('name = "GET"');
-				expect(filterExpression).not.toContain('operation = "GET"');
+				expect(filterExpression).toContain(`name = 'GET'`);
+				expect(filterExpression).not.toContain(`operation = 'GET'`);
 
 				// Rule 3: span.kind → kind
-				expect(filterExpression).toContain('kind = 2');
-				expect(filterExpression).not.toContain('span.kind = SPAN_KIND_SERVER');
+				expect(filterExpression).toContain(`${spanKindKey} = '${spanKindServer}'`);
+				expect(filterExpression).not.toContain(`span.kind = SPAN_KIND_SERVER`);
 
 				// Rule 4: status.code → status_code_string with value mapping
-				expect(filterExpression).toContain('status_code_string = Ok');
-				expect(filterExpression).not.toContain('status.code = STATUS_CODE_OK');
+				expect(filterExpression).toContain(`status_code_string = 'Ok'`);
+				expect(filterExpression).not.toContain(`status.code = STATUS_CODE_OK`);
 			}
 		});
 
 		it('should transform metrics query when drilling down to traces', () => {
+			const mappingsByAttr = Object.fromEntries(
+				METRIC_TO_LOGS_TRACES_MAPPINGS.map((m) => [m.attribute, m]),
+			) as Record<
+				string,
+				{ newAttribute: string; valueMappings: Record<string, string> }
+			>;
+			const spanKindMapping = mappingsByAttr['span.kind'];
+			const spanKindKey = spanKindMapping.newAttribute;
+			const spanKindServer = spanKindMapping.valueMappings.SPAN_KIND_SERVER;
+
 			const result = getViewQuery(
 				mockMetricsQuery,
 				mockFilters,
@@ -192,44 +214,30 @@ describe('drilldownUtils', () => {
 			// Verify transformations were applied
 			if (filterExpression) {
 				// Rule 2: operation → name
-				expect(filterExpression).toContain('name = "GET"');
-				expect(filterExpression).not.toContain('operation = "GET"');
+				expect(filterExpression).toContain(`name = 'GET'`);
+				expect(filterExpression).not.toContain(`operation = 'GET'`);
 
 				// Rule 3: span.kind → kind
-				expect(filterExpression).toContain('kind = 2');
-				expect(filterExpression).not.toContain('span.kind = SPAN_KIND_SERVER');
+				expect(filterExpression).toContain(`${spanKindKey} = '${spanKindServer}'`);
+				expect(filterExpression).not.toContain(`span.kind = SPAN_KIND_SERVER`);
 
 				// Rule 4: status.code → status_code_string with value mapping
-				expect(filterExpression).toContain('status_code_string = Ok');
-				expect(filterExpression).not.toContain('status.code = STATUS_CODE_OK');
-			}
-		});
-
-		it('should NOT transform metrics query when drilling down to metrics', () => {
-			const result = getViewQuery(
-				mockMetricsQuery,
-				mockFilters,
-				'view_metrics',
-				'metrics_query',
-			);
-
-			expect(result).not.toBeNull();
-			expect(result?.builder.queryData).toHaveLength(1);
-
-			// Check that the filter expression was NOT transformed
-			const filterExpression = result?.builder.queryData[0]?.filter?.expression;
-			expect(filterExpression).toBeDefined();
-
-			// Verify NO transformations were applied
-			if (filterExpression) {
-				// Should still contain original metric format
-				expect(filterExpression).toContain('operation = "GET"');
-				expect(filterExpression).toContain('span.kind = SPAN_KIND_SERVER');
-				expect(filterExpression).toContain('status.code = STATUS_CODE_OK');
+				expect(filterExpression).toContain(`status_code_string = 'Ok'`);
+				expect(filterExpression).not.toContain(`status.code = STATUS_CODE_OK`);
 			}
 		});
 
 		it('should handle complex filter expressions with multiple transformations', () => {
+			const mappingsByAttr = Object.fromEntries(
+				METRIC_TO_LOGS_TRACES_MAPPINGS.map((m) => [m.attribute, m]),
+			) as Record<
+				string,
+				{ newAttribute: string; valueMappings: Record<string, string> }
+			>;
+			const spanKindMapping = mappingsByAttr['span.kind'];
+			const spanKindKey = spanKindMapping.newAttribute;
+			const spanKindClient = spanKindMapping.valueMappings.SPAN_KIND_CLIENT;
+
 			const complexQuery: Query = {
 				...mockMetricsQuery,
 				builder: {
@@ -258,10 +266,10 @@ describe('drilldownUtils', () => {
 
 			if (filterExpression) {
 				// All transformations should be applied
-				expect(filterExpression).toContain('name = "POST"');
-				expect(filterExpression).toContain('kind = 3');
-				expect(filterExpression).toContain('status_code_string = Error');
-				expect(filterExpression).toContain('http.status_code = 500');
+				expect(filterExpression).toContain(`name = 'POST'`);
+				expect(filterExpression).toContain(`${spanKindKey} = '${spanKindClient}'`);
+				expect(filterExpression).toContain(`status_code_string = 'Error'`);
+				expect(filterExpression).toContain(`http.status_code = 500`);
 			}
 		});
 
@@ -299,13 +307,12 @@ describe('drilldownUtils', () => {
 		});
 
 		it('should handle all status code value mappings correctly', () => {
-			const statusCodeTests = [
-				{ input: 'STATUS_CODE_UNSET', expected: 'Unset' },
-				{ input: 'STATUS_CODE_OK', expected: 'Ok' },
-				{ input: 'STATUS_CODE_ERROR', expected: 'Error' },
-			];
+			const mappingsByAttr = Object.fromEntries(
+				METRIC_TO_LOGS_TRACES_MAPPINGS.map((m) => [m.attribute, m]),
+			) as Record<string, { valueMappings: Record<string, string> }>;
+			const statusMap = mappingsByAttr['status.code'].valueMappings;
 
-			statusCodeTests.forEach(({ input, expected }) => {
+			Object.entries(statusMap).forEach(([input, expected]) => {
 				const testQuery: Query = {
 					...mockMetricsQuery,
 					builder: {
@@ -329,19 +336,18 @@ describe('drilldownUtils', () => {
 				);
 				const filterExpression = result?.builder.queryData[0]?.filter?.expression;
 
-				expect(filterExpression).toContain(`status_code_string = ${expected}`);
+				expect(filterExpression).toContain(`status_code_string = '${expected}'`);
 				expect(filterExpression).not.toContain(`status.code = ${input}`);
 			});
 		});
 
 		it('should handle quoted status code values (browser scenario)', () => {
-			const statusCodeTests = [
-				{ input: '"STATUS_CODE_UNSET"', expected: '"Unset"' },
-				{ input: '"STATUS_CODE_OK"', expected: '"Ok"' },
-				{ input: '"STATUS_CODE_ERROR"', expected: '"Error"' },
-			];
+			const mappingsByAttr = Object.fromEntries(
+				METRIC_TO_LOGS_TRACES_MAPPINGS.map((m) => [m.attribute, m]),
+			) as Record<string, { valueMappings: Record<string, string> }>;
+			const statusMap = mappingsByAttr['status.code'].valueMappings;
 
-			statusCodeTests.forEach(({ input, expected }) => {
+			Object.entries(statusMap).forEach(([input, expected]) => {
 				const testQuery: Query = {
 					...mockMetricsQuery,
 					builder: {
@@ -350,7 +356,7 @@ describe('drilldownUtils', () => {
 							{
 								...mockMetricsQuery.builder.queryData[0],
 								filter: {
-									expression: `status.code = ${input}`,
+									expression: `status.code = "${input}"`,
 								},
 							},
 						],
@@ -366,12 +372,22 @@ describe('drilldownUtils', () => {
 				const filterExpression = result?.builder.queryData[0]?.filter?.expression;
 
 				// Should preserve the quoting from the original expression
-				expect(filterExpression).toContain(`status_code_string = ${expected}`);
-				expect(filterExpression).not.toContain(`status.code = ${input}`);
+				expect(filterExpression).toContain(`status_code_string = '${expected}'`);
+				expect(filterExpression).not.toContain(`status.code = "${input}"`);
 			});
 		});
 
 		it('should preserve non-metric attributes during transformation', () => {
+			const mappingsByAttr = Object.fromEntries(
+				METRIC_TO_LOGS_TRACES_MAPPINGS.map((m) => [m.attribute, m]),
+			) as Record<
+				string,
+				{ newAttribute: string; valueMappings: Record<string, string> }
+			>;
+			const spanKindMapping = mappingsByAttr['span.kind'];
+			const spanKindKey = spanKindMapping.newAttribute;
+			const spanKindServer = spanKindMapping.valueMappings.SPAN_KIND_SERVER;
+
 			const mixedQuery: Query = {
 				...mockMetricsQuery,
 				builder: {
@@ -398,8 +414,8 @@ describe('drilldownUtils', () => {
 
 			if (filterExpression) {
 				// Transformed attributes
-				expect(filterExpression).toContain('name = "GET"');
-				expect(filterExpression).toContain('kind = 2');
+				expect(filterExpression).toContain(`name = 'GET'`);
+				expect(filterExpression).toContain(`${spanKindKey} = '${spanKindServer}'`);
 
 				// Preserved non-metric attributes
 				expect(filterExpression).toContain('service = "test-service"');
@@ -408,15 +424,17 @@ describe('drilldownUtils', () => {
 		});
 
 		it('should handle all span.kind value mappings correctly', () => {
-			const spanKindTests = [
-				{ input: 'SPAN_KIND_INTERNAL', expected: '1' },
-				{ input: 'SPAN_KIND_CONSUMER', expected: '5' },
-				{ input: 'SPAN_KIND_CLIENT', expected: '3' },
-				{ input: 'SPAN_KIND_PRODUCER', expected: '4' },
-				{ input: 'SPAN_KIND_SERVER', expected: '2' },
-			];
+			const mappingsByAttr = Object.fromEntries(
+				METRIC_TO_LOGS_TRACES_MAPPINGS.map((m) => [m.attribute, m]),
+			) as Record<
+				string,
+				{ newAttribute: string; valueMappings: Record<string, string> }
+			>;
+			const spanKindMapping = mappingsByAttr['span.kind'];
+			const spanKindKey = spanKindMapping.newAttribute;
+			const spanKindMap = spanKindMapping.valueMappings;
 
-			spanKindTests.forEach(({ input, expected }) => {
+			Object.entries(spanKindMap).forEach(([input, expected]) => {
 				const testQuery: Query = {
 					...mockMetricsQuery,
 					builder: {
@@ -440,8 +458,47 @@ describe('drilldownUtils', () => {
 				);
 				const filterExpression = result?.builder.queryData[0]?.filter?.expression;
 
-				expect(filterExpression).toContain(`kind = ${expected}`);
+				expect(filterExpression).toContain(`${spanKindKey} = '${expected}'`);
 				expect(filterExpression).not.toContain(`span.kind = ${input}`);
+			});
+		});
+
+		it('should not transform when the source query is not metrics (logs/traces sources)', () => {
+			(['logs', 'traces'] as const).forEach((source) => {
+				const nonMetricsQuery: Query = {
+					...mockMetricsQuery,
+					builder: {
+						...mockMetricsQuery.builder,
+						queryData: [
+							{
+								...mockMetricsQuery.builder.queryData[0],
+								dataSource: source as any,
+								filter: {
+									expression:
+										'operation = "GET" AND span.kind = SPAN_KIND_SERVER AND status.code = STATUS_CODE_OK',
+								},
+							},
+						],
+					},
+				};
+
+				const result = getViewQuery(
+					nonMetricsQuery,
+					mockFilters,
+					source === 'logs' ? 'view_logs' : 'view_traces',
+					'metrics_query',
+				);
+
+				const expr = result?.builder.queryData[0]?.filter?.expression || '';
+				// Should remain unchanged (no metric-to-logs/traces transformations)
+				expect(expr).toContain('operation = "GET"');
+				expect(expr).toContain('span.kind = SPAN_KIND_SERVER');
+				expect(expr).toContain('status.code = STATUS_CODE_OK');
+
+				// And should not contain transformed counterparts
+				expect(expr).not.toContain(`name = 'GET'`);
+				expect(expr).not.toContain(`kind = '2'`);
+				expect(expr).not.toContain(`status_code_string = 'Ok'`);
 			});
 		});
 	});
