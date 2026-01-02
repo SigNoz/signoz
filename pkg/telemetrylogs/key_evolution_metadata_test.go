@@ -215,3 +215,36 @@ func TestKeyEvolutionMetadata_Get_ClickHouseQueryError(t *testing.T) {
 
 	assert.Empty(t, result)
 }
+
+func TestKeyEvolutionMetadata_Get_NilFromClickHouse_IsCached(t *testing.T) {
+	ctx := context.Background()
+	orgId := valuer.GenerateUUID()
+	keyName := "nonexistent_key"
+
+	testCache := newTestCache(t)
+	telemetryStore := newTestTelemetryStore()
+
+	// Mock ClickHouse to return an error, which causes fetchFromClickHouse to return nil
+	telemetryStore.Mock().ExpectQuery(clickHouseQueryPattern).WithArgs(keyName).WillReturnError(assert.AnError)
+
+	kem := newKeyEvolutionMetadata(telemetryStore, testCache)
+
+	// First call - cache miss, fetch from ClickHouse returns nil
+	result := kem.Get(ctx, orgId, keyName)
+	assert.Empty(t, result)
+
+	// Verify that nil result was cached
+	var cachedData CachedKeyEvolutionMetadata
+	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
+	err := testCache.Get(ctx, orgId, cacheKey, &cachedData)
+	require.NoError(t, err)
+	assert.Nil(t, cachedData.Metadata)
+
+	// Second call - should hit cache and not query ClickHouse again
+	result2 := kem.Get(ctx, orgId, keyName)
+	assert.Empty(t, result2)
+
+	// Verify no additional queries were made (all expectations were consumed)
+	err = telemetryStore.Mock().ExpectationsWereMet()
+	require.NoError(t, err)
+}

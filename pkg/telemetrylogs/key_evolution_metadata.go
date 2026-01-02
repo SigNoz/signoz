@@ -150,12 +150,10 @@ func (k *KeyEvolutionMetadata) Get(ctx context.Context, orgId valuer.UUID, keyNa
 		// Cache miss - fetch from ClickHouse and try again
 		metadata := k.fetchFromClickHouse(ctx, keyName)
 
-		if metadata != nil {
-			cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
-			cachedData = &CachedKeyEvolutionMetadata{Metadata: metadata}
-			if err := k.cache.Set(ctx, orgId, cacheKey, cachedData, 24*time.Hour); err != nil {
-				k.logger.WarnContext(ctx, "Failed to set key evolution metadata in cache", "key", keyName, "error", err)
-			}
+		cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
+		cachedData = &CachedKeyEvolutionMetadata{Metadata: metadata}
+		if err := k.cache.Set(ctx, orgId, cacheKey, cachedData, 24*time.Hour); err != nil {
+			k.logger.WarnContext(ctx, "Failed to set key evolution metadata in cache", "key", keyName, "error", err)
 		}
 	}
 	return cachedData.Metadata
