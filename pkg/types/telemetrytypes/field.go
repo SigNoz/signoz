@@ -120,6 +120,10 @@ type TelemetryFieldValues struct {
 	RelatedValues []string  `json:"relatedValues,omitempty"`
 }
 
+func (t *TelemetryFieldValues) NumValues() int {
+	return len(t.StringValues) + len(t.BoolValues) + len(t.NumberValues) + len(t.RelatedValues)
+}
+
 type MetricContext struct {
 	MetricName string `json:"metricName"`
 }

@@ -1291,8 +1291,26 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 
 // getMetricFieldValues returns field values and whether the result is complete
 func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
-	if values, complete, handled, err := t.getIntrinsicMetricFieldValues(ctx, fieldValueSelector); handled {
-		return values, complete, err
+	limit := fieldValueSelector.Limit
+	if limit == 0 {
+		limit = 50
+	}
+
+	values, err := t.getIntrinsicMetricFieldValues(ctx, fieldValueSelector, limit)
+	if err != nil {
+		return nil, false, err
+	}
+
+	var remainingLimit int
+	if values == nil {
+		values = &telemetrytypes.TelemetryFieldValues{}
+		remainingLimit = limit
+	} else {
+		remainingLimit = limit - values.NumValues()
+	}
+
+	if remainingLimit == 0 {
+		return values, values.NumValues() < limit, nil
 	}
 
 	sb := sqlbuilder.
@@ -1330,13 +1348,8 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 			sb.Where(sb.ILike("attr_string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
 		}
 	}
-
-	limit := fieldValueSelector.Limit
-	if limit == 0 {
-		limit = 50
-	}
 	// query one extra to check if we hit the limit
-	sb.Limit(limit + 1)
+	sb.Limit(remainingLimit + 1)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
@@ -1346,12 +1359,10 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 	}
 	defer rows.Close()
 
-	values := &telemetrytypes.TelemetryFieldValues{}
 	rowCount := 0
 	for rows.Next() {
 		rowCount++
-		// reached the limit, we know there are more results
-		if rowCount > limit {
+		if rowCount > remainingLimit {
 			break
 		}
 
@@ -1361,35 +1372,34 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 		}
 		values.StringValues = append(values.StringValues, stringValue)
 	}
-
 	// hit the limit?
-	complete := rowCount <= limit
-
+	complete := values.NumValues() < limit // decision on total limit
 	return values, complete, nil
 }
 
-func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, bool, error) {
+// getIntrinsicMetricFieldValues returns values, isSearchComplete, error
+func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector, limit int) (*telemetrytypes.TelemetryFieldValues, error) {
 	key, ok := telemetrymetrics.IntrinsicMetricFieldDefinitions[fieldValueSelector.Name]
 	if !ok {
-		return nil, false, false, nil
+		return &telemetrytypes.TelemetryFieldValues{}, nil
 	}
 
 	if fieldValueSelector.Signal != telemetrytypes.SignalMetrics && fieldValueSelector.Signal != telemetrytypes.SignalUnspecified {
-		return nil, false, false, nil
+		return &telemetrytypes.TelemetryFieldValues{}, nil
 	}
 
-	// TODO(nikhilmantri0902, srikanthccv): Please verify if handled to be returned as true n the following case.
-	// if we return handled as true, there is no further query in the getMetricFieldsValue function.
+	// if the field context or data type does not match for the requested key (and is not unspecified as well),
+	// we should return false to enable searching in metadata table.
 	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified && fieldValueSelector.FieldContext != key.FieldContext {
-		return &telemetrytypes.TelemetryFieldValues{}, true, true, nil
+		return &telemetrytypes.TelemetryFieldValues{}, nil
 	}
 	if fieldValueSelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified && fieldValueSelector.FieldDataType != key.FieldDataType {
-		return &telemetrytypes.TelemetryFieldValues{}, true, true, nil
+		return &telemetrytypes.TelemetryFieldValues{}, nil
 	}
 
 	// no values are surfaced for intrinsic boolean fields.
 	if key.FieldDataType == telemetrytypes.FieldDataTypeBool {
-		return &telemetrytypes.TelemetryFieldValues{}, true, true, nil
+		return &telemetrytypes.TelemetryFieldValues{}, nil
 	}
 
 	sb := sqlbuilder.Select(fmt.Sprintf("DISTINCT %s", sqlbuilder.Escape(key.Name))).
@@ -1414,17 +1424,12 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 			sb.Where(sb.ILike(key.Name, "%"+escapeForLike(fieldValueSelector.Value)+"%"))
 		}
 	}
-
-	limit := fieldValueSelector.Limit
-	if limit == 0 {
-		limit = 50
-	}
 	sb.Limit(limit + 1)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, false, true, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 	}
 	defer rows.Close()
 
@@ -1438,13 +1443,11 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 
 		var str string
 		if err := rows.Scan(&str); err != nil {
-			return nil, false, true, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
+			return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMetricsKeys.Error())
 		}
 		values.StringValues = append(values.StringValues, str)
 	}
-
-	complete := rowCount <= limit
-	return values, complete, true, nil
+	return values, nil
 }
 
 func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
