@@ -481,19 +481,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		return resultVector, nil
 	}
 
-	// Filter out new series if newGroupEvalDelay is configured
-	seriesToProcess := queryResult.Series
-	if r.ShouldSkipNewGroups() {
-		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
-		// In case of error we log the error and continue with the original series
-		if filterErr != nil {
-			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
-		} else {
-			seriesToProcess = filteredSeries
-		}
-	}
-
-	for _, series := range seriesToProcess {
+	for _, series := range queryResult.Series {
 		if r.Condition() != nil && r.Condition().RequireMinPoints {
 			if len(series.Points) < r.ruleCondition.RequiredNumPoints {
 				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
