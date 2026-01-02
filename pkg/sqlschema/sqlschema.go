@@ -47,6 +47,9 @@ type SQLOperator interface {
 	// If the column is not nullable, the column is added with the input value, then the column is made non-nullable.
 	AddColumn(*Table, []*UniqueConstraint, *Column, any) [][]byte
 
+	// Returns a list of SQL statements to rename the column.
+	RenameColumn(*Table, []*UniqueConstraint, ColumnName, ColumnName) [][]byte
+
 	// Returns a list of SQL statements to drop a column from a table.
 	DropColumn(*Table, *Column) [][]byte
 
