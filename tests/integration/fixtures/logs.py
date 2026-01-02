@@ -34,8 +34,6 @@ class LogsResource(ABC):
                 self.labels,
                 self.fingerprint,
                 self.seen_at_ts_bucket_start,
-                np.uint64(10),
-                np.uint64(15),
             ]
         )
 
@@ -325,8 +323,6 @@ class Logs(ABC):
                 self.scope_name,
                 self.scope_version,
                 self.scope_string,
-                np.uint64(10),
-                np.uint64(15),
                 self.resources_string,
             ]
         )
@@ -355,6 +351,11 @@ def insert_logs(
                 database="signoz_logs",
                 table="distributed_logs_v2_resource",
                 data=[resource.np_arr() for resource in resources],
+                column_names=[
+                    "labels",
+                    "fingerprint",
+                    "seen_at_ts_bucket_start",
+                ],
             )
 
         tag_attributes: List[LogsTagAttributes] = []
@@ -394,6 +395,27 @@ def insert_logs(
             database="signoz_logs",
             table="distributed_logs_v2",
             data=[log.np_arr() for log in logs],
+            column_names=[
+                "ts_bucket_start",
+                "resource_fingerprint",
+                "timestamp",
+                "observed_timestamp",
+                "id",
+                "trace_id",
+                "span_id",
+                "trace_flags",
+                "severity_text",
+                "severity_number",
+                "body",
+                "attributes_string",
+                "attributes_number",
+                "attributes_bool",
+                "resources_string",
+                "scope_name",
+                "scope_version",
+                "scope_string",
+                "resource",
+            ],
         )
 
     yield _insert_logs
@@ -425,19 +447,19 @@ def ttl_legacy_logs_v2_table_setup(request, signoz: types.SigNoz):
 
     # Setup code
     result = signoz.telemetrystore.conn.query(
-        "RENAME TABLE signoz_logs.logs_v2 TO signoz_logs.logs_v2_backup;"
+        f"RENAME TABLE signoz_logs.logs_v2 TO signoz_logs.logs_v2_backup ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
     ).result_rows
     assert result is not None
     # Add cleanup to restore original table
     request.addfinalizer(
         lambda: signoz.telemetrystore.conn.query(
-            "RENAME TABLE signoz_logs.logs_v2_backup TO signoz_logs.logs_v2;"
+            f"RENAME TABLE signoz_logs.logs_v2_backup TO signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
         )
     )
 
     # Create new test tables
     result = signoz.telemetrystore.conn.query(
-        """CREATE TABLE signoz_logs.logs_v2
+        f"""CREATE TABLE signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
                                                 (
                                                     `id` String,
                                                     `timestamp` UInt64 CODEC(DoubleDelta, LZ4)
@@ -468,19 +490,19 @@ def ttl_legacy_logs_v2_resource_table_setup(request, signoz: types.SigNoz):
 
     # Setup code
     result = signoz.telemetrystore.conn.query(
-        "RENAME TABLE signoz_logs.logs_v2_resource TO signoz_logs.logs_v2_resource_backup;"
+        f"RENAME TABLE signoz_logs.logs_v2_resource TO signoz_logs.logs_v2_resource_backup ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'; "
     ).result_rows
     assert result is not None
     # Add cleanup to restore original table
     request.addfinalizer(
         lambda: signoz.telemetrystore.conn.query(
-            "RENAME TABLE signoz_logs.logs_v2_resource_backup TO signoz_logs.logs_v2_resource;"
+            f"RENAME TABLE signoz_logs.logs_v2_resource_backup TO signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'; "
         )
     )
 
     # Create new test tables
     result = signoz.telemetrystore.conn.query(
-        """CREATE TABLE signoz_logs.logs_v2_resource
+        f"""CREATE TABLE signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
                                                 (
                                                     `id` String,
                                                     `seen_at_ts_bucket_start` Int64 CODEC(Delta(8), ZSTD(1))
@@ -493,8 +515,51 @@ def ttl_legacy_logs_v2_resource_table_setup(request, signoz: types.SigNoz):
     # Add cleanup to drop test table
     request.addfinalizer(
         lambda: signoz.telemetrystore.conn.query(
-            "DROP TABLE IF EXISTS signoz_logs.logs_v2_resource;"
+            f"DROP TABLE IF EXISTS signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}';"
         )
     )
 
     yield  # Test runs here
+
+@pytest.fixture(name="remove_logs_ttl_settings", scope="function")
+def remove_logs_ttl_settings(
+    signoz: types.SigNoz,
+) -> None:
+    """
+    Remove TTL settings from the specified logs table.
+    This function alters the table to drop any existing TTL configurations
+    and resets the _retention_days default value to 0.
+    """
+    tables = [
+        "distributed_logs_v2",
+        "distributed_logs_v2_resource",
+        "logs_v2",
+        "logs_v2_resource",
+        "logs_attribute_keys",
+        "logs_resource_keys",
+        ]
+    for table in tables:
+
+        try: 
+            # Reset _retention_days and _retention_days_cold default values to 0 for tables that have these columns
+            if table in ["logs_v2", "logs_v2_resource", "distributed_logs_v2", "distributed_logs_v2_resource"]:
+                reset_retention_query = f"""
+                ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+                MODIFY COLUMN _retention_days UInt16 DEFAULT 0
+                """
+                signoz.telemetrystore.conn.query(reset_retention_query)
+                
+                reset_retention_cold_query = f"""
+                ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+                MODIFY COLUMN _retention_days_cold UInt16 DEFAULT 0
+                """
+                signoz.telemetrystore.conn.query(reset_retention_cold_query)
+            else:
+                alter_query = f"""
+                ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+                REMOVE TTL
+                """
+                signoz.telemetrystore.conn.query(alter_query)
+        except Exception as e:
+            print(f"Error removing TTL from table {table}: {e}")
+

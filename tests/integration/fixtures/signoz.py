@@ -97,7 +97,8 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
                         f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v1/health",
                         timeout=2,
                     )
-                    return response.status_code == HTTPStatus.OK
+                    if response.status_code == HTTPStatus.OK:
+                        return
                 except Exception:  # pylint: disable=broad-exception-caught
                     logger.info(
                         "Attempt %s at readiness check for SigNoz container %s failed, going to retry ...",
