@@ -11,7 +11,6 @@ import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
-// import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { ErrorV2 } from 'types/api';
@@ -63,7 +62,6 @@ function Login(): JSX.Element {
 		setIsLoadingSessionsContext,
 	] = useState<boolean>(false);
 	const [form] = Form.useForm<FormValues>();
-	// const { showErrorModal } = useErrorModal();
 	const [errorMessage, setErrorMessage] = useState<APIError>();
 
 	// setupCompleted information to route to signup page in case setup is incomplete
@@ -105,7 +103,6 @@ function Login(): JSX.Element {
 				setSessionsOrgId(sessionsContextResponse.data.orgs[0].id);
 			}
 		} catch (error) {
-			// showErrorModal(error as APIError);
 			setErrorMessage(error as APIError);
 		}
 		setIsLoadingSessionsContext(false);
@@ -209,7 +206,6 @@ function Login(): JSX.Element {
 				window.location.href = url;
 			}
 		} catch (error) {
-			// showErrorModal(error as APIError);
 			setErrorMessage(error as APIError);
 		} finally {
 			setIsSubmitting(false);
@@ -218,17 +214,6 @@ function Login(): JSX.Element {
 
 	useEffect(() => {
 		if (callbackAuthError) {
-			// showErrorModal(
-			// 	new APIError({
-			// 		httpStatusCode: 500,
-			// 		error: {
-			// 			code: callbackAuthErrorCode,
-			// 			message: callbackAuthErrorMessage,
-			// 			url: callbackAuthErrorURL,
-			// 			errors: parseErrors(callbackAuthErrorAdditional),
-			// 		},
-			// 	}),
-			// );
 			setErrorMessage(
 				new APIError({
 					httpStatusCode: 500,
@@ -247,23 +232,11 @@ function Login(): JSX.Element {
 		callbackAuthErrorCode,
 		callbackAuthErrorMessage,
 		callbackAuthErrorURL,
-		// showErrorModal,
 		setErrorMessage,
 	]);
 
 	useEffect(() => {
 		if (sessionsOrgWarning) {
-			// showErrorModal(
-			// 	new APIError({
-			// 		error: {
-			// 			code: sessionsOrgWarning.code,
-			// 			message: sessionsOrgWarning.message,
-			// 			url: sessionsOrgWarning.url,
-			// 			errors: sessionsOrgWarning.errors,
-			// 		},
-			// 		httpStatusCode: 400,
-			// 	}),
-			// );
 			setErrorMessage(
 				new APIError({
 					httpStatusCode: 400,
@@ -277,8 +250,6 @@ function Login(): JSX.Element {
 			);
 		}
 	}, [sessionsOrgWarning, setErrorMessage]);
-
-	console.log(errorMessage);
 
 	return (
 		<div className="login-form-container">

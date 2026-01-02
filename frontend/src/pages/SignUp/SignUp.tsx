@@ -13,7 +13,6 @@ import afterLogin from 'AppRoutes/utils';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight } from 'lucide-react';
-import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
@@ -40,7 +39,6 @@ function SignUp(): JSX.Element {
 		false,
 	);
 	const [formError, setFormError] = useState<APIError | null>();
-	console.log(formError);
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
@@ -105,7 +103,6 @@ function SignUp(): JSX.Element {
 	]);
 
 	const isSignUp = token === null;
-	const { showErrorModal } = useErrorModal();
 
 	const signUp = async (values: FormValues): Promise<void> => {
 		try {
@@ -125,7 +122,6 @@ function SignUp(): JSX.Element {
 
 			await afterLogin(token.data.accessToken, token.data.refreshToken);
 		} catch (error) {
-			showErrorModal(error as APIError);
 			setFormError(error as APIError);
 		}
 	};
@@ -201,8 +197,6 @@ function SignUp(): JSX.Element {
 			confirmPasswordError
 		);
 	};
-
-	console.log(confirmPasswordError);
 
 	return (
 		<AuthPageContainer>
