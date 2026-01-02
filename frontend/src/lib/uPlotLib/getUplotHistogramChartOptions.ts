@@ -93,12 +93,14 @@ const getHistogramSeries = ({
 			? ''
 			: getLabelName(metric, queryName || '', legend);
 
-        const color =
-	      colorMapping?.[label || ''] ||  
-	      generateColor(
-		    label || '',
-		    isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-	      );
+		const labelForColorMapping = legend || label;
+
+		const color =
+			colorMapping?.[labelForColorMapping || ''] ||
+			generateColor(
+				label || '',
+				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+			);
 
 		const pointSize = seriesList[i].values.length > 1 ? 5 : 10;
 		const showPoints = !(seriesList[i].values.length > 1);
