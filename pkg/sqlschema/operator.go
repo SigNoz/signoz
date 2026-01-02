@@ -82,42 +82,6 @@ func (operator *Operator) AddColumn(table *Table, uniqueConstraints []*UniqueCon
 	return sqls
 }
 
-func (operator *Operator) RenameColumn(table *Table, uniqueConstraints []*UniqueConstraint, oldColumnName ColumnName, newColumnName ColumnName) [][]byte {
-	index := operator.findColumnByName(table, oldColumnName)
-	// If the column does not exist, we do not need to rename it.
-	if index == -1 {
-		return [][]byte{}
-	}
-
-	column := table.Columns[index]
-	sqls := [][]byte{column.ToRenameSQL(operator.fmter, table.Name, newColumnName)}
-
-	column.Name = newColumnName
-	if table.PrimaryKeyConstraint != nil {
-		for i, colName := range table.PrimaryKeyConstraint.ColumnNames {
-			if colName == oldColumnName {
-				table.PrimaryKeyConstraint.ColumnNames[i] = newColumnName
-			}
-		}
-	}
-
-	for _, fk := range table.ForeignKeyConstraints {
-		if fk.ReferencingColumnName == oldColumnName {
-			fk.ReferencingColumnName = newColumnName
-		}
-	}
-
-	for _, uniq := range uniqueConstraints {
-		for i, colName := range uniq.ColumnNames {
-			if colName == oldColumnName {
-				uniq.ColumnNames[i] = newColumnName
-			}
-		}
-	}
-
-	return sqls
-}
-
 func (operator *Operator) DropColumn(table *Table, column *Column) [][]byte {
 	index := operator.findColumnByName(table, column.Name)
 	// If the column does not exist, we do not need to drop it.
