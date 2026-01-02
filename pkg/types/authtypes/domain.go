@@ -51,9 +51,9 @@ type StorableAuthDomain struct {
 	bun.BaseModel `bun:"table:auth_domain"`
 
 	types.Identifiable
-	Name  string      `bun:"name,type:text,notnull" json:"name"`
-	Data  string      `bun:"data,type:text,notnull" json:"-"`
-	OrgID valuer.UUID `bun:"org_id,type:text,notnull" json:"orgId"`
+	Name  string      `bun:"name" json:"name"`
+	Data  string      `bun:"data" json:"-"`
+	OrgID valuer.UUID `bun:"org_id" json:"orgId"`
 	types.TimeAuditable
 }
 
