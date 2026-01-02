@@ -300,7 +300,7 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		evolutions     []*telemetrytypes.KeyEvolutionMetadataKey
+		evolutions     []*telemetrytypes.KeyEvolutionMetadata
 		key            *telemetrytypes.TelemetryFieldKey
 		baseColumnExpr string
 		tsStartTime    time.Time
@@ -309,7 +309,7 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 	}{
 		{
 			name:           "No evolution",
-			evolutions:     []*telemetrytypes.KeyEvolutionMetadataKey{},
+			evolutions:     []*telemetrytypes.KeyEvolutionMetadata{},
 			key:            key,
 			baseColumnExpr: baseColumnExpr,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
@@ -317,8 +317,20 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 			expectedResult: "multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 		},
 		{
+			name:       "No evolution - JSON body",
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{},
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "body_v2.user.name",
+				FieldContext: telemetrytypes.FieldContextBody,
+			},
+			baseColumnExpr: "body_v2.`user.name` IS NOT NULL, body_v2.`user.name`::String",
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(body_v2.`user.name` IS NOT NULL, body_v2.`user.name`::String, NULL)",
+		},
+		{
 			name: "Single evolution before tsStartTime",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
 					BaseColumn:     "resources_string",
 					BaseColumnType: "Map(LowCardinality(String), String)",
@@ -331,11 +343,11 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 			baseColumnExpr: baseColumnExpr,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource.`service.name`::String IS NOT NULL, resource.`service.name`::String, NULL)",
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL)",
 		},
 		{
 			name: "Single evolution exactly at tsStartTime",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
 					BaseColumn:     "attributes_string",
 					BaseColumnType: "Map(LowCardinality(String), String)",
@@ -348,16 +360,17 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 			baseColumnExpr: baseColumnExpr,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(attributes.`service.name`::String IS NOT NULL, attributes.`service.name`::String, NULL)",
+			expectedResult: "multiIf(attributes.`service.name` IS NOT NULL, attributes.`service.name`::String, NULL)",
 		},
 		{
 			name: "Single evolution exactly at tsStartTime - JSON body",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
-					BaseColumn:     "body_v2.user.name",
-					BaseColumnType: "JSON_PATH",
-					NewColumn:      "body_promoted.user.name",
-					NewColumnType:  "JSON_PATH",
+					BaseColumn:     "body_v2",
+					BaseColumnType: "JSON(max_dynamic_paths=0)",
+					NewColumn:      "body_promoted",
+					NewColumnType:  "JSON()",
+					Path:           "user.name",
 					ReleaseTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 				},
 			},
@@ -365,14 +378,14 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 				Name:         "body_v2.user.name",
 				FieldContext: telemetrytypes.FieldContextBody,
 			},
-			baseColumnExpr: "body_v2.`user.name` IS NOT NULL, body_v2.`user.name`",
+			baseColumnExpr: "body_v2.`user.name` IS NOT NULL, body_v2.`user.name`::String",
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(body_promoted.user.name IS NOT NULL, body_promoted.user.name, NULL)",
+			expectedResult: "multiIf(body_promoted.`user.name` IS NOT NULL, body_promoted.`user.name`::String, NULL)",
 		},
 		{
 			name: "Single evolution after tsStartTime",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
 					BaseColumn:     "resources_string",
 					BaseColumnType: "Map(LowCardinality(String), String)",
@@ -385,16 +398,17 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 			baseColumnExpr: baseColumnExpr,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource.`service.name`::String IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 		},
 		{
 			name: "Single evolution after tsStartTime - JSON body",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
-					BaseColumn:     "body_v2.user.name",
-					BaseColumnType: "JSON_PATH",
-					NewColumn:      "body_promoted.user.name",
-					NewColumnType:  "JSON_PATH",
+					BaseColumn:     "body_v2",
+					BaseColumnType: "JSON(max_dynamic_paths=0)",
+					NewColumn:      "body_promoted",
+					NewColumnType:  "JSON()",
+					Path:           "user.name",
 					ReleaseTime:    time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
 				},
 			},
@@ -402,14 +416,14 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 				Name:         "body_v2.user.name",
 				FieldContext: telemetrytypes.FieldContextBody,
 			},
-			baseColumnExpr: "body_v2.`user.name` IS NOT NULL, body_v2.`user.name`",
+			baseColumnExpr: "body_v2.`user.name` IS NOT NULL, body_v2.`user.name`::String",
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(body_promoted.user.name IS NOT NULL, body_promoted.user.name, body_v2.`user.name` IS NOT NULL, body_v2.`user.name`, NULL)",
+			expectedResult: "multiIf(body_promoted.`user.name` IS NOT NULL, body_promoted.`user.name`::String, body_v2.`user.name` IS NOT NULL, body_v2.`user.name`::String, NULL)",
 		},
 		{
 			name: "Single evolution after tsEndTime - newest evolution should be included",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
 					BaseColumn:     "resources_string",
 					BaseColumnType: "Map(LowCardinality(String), String)",
@@ -426,7 +440,7 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 		},
 		{
 			name: "Single evolution after tsEndTime - newest evolution should be included - materialized",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
 					BaseColumn:     "resources_string",
 					BaseColumnType: "Map(LowCardinality(String), String)",
@@ -447,7 +461,7 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 		},
 		{
 			name: "Multiple evolutions before tsStartTime - only latest should be included",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
 					BaseColumn:     "resources_string",
 					BaseColumnType: "Map(LowCardinality(String), String)",
@@ -467,11 +481,11 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 			baseColumnExpr: baseColumnExpr,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource_v2.`service.name`::String IS NOT NULL, resource_v2.`service.name`::String, NULL)",
+			expectedResult: "multiIf(resource_v2.`service.name` IS NOT NULL, resource_v2.`service.name`::String, NULL)",
 		},
 		{
 			name: "Multiple evolutions after tsStartTime - all should be included",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
 					BaseColumn:     "resources_string",
 					BaseColumnType: "Map(LowCardinality(String), String)",
@@ -491,11 +505,36 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 			baseColumnExpr: baseColumnExpr,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource_v2.`service.name`::String IS NOT NULL, resource_v2.`service.name`::String, resource_v1.`service.name`::String IS NOT NULL, resource_v1.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedResult: "multiIf(resource_v2.`service.name` IS NOT NULL, resource_v2.`service.name`::String, resource_v1.`service.name` IS NOT NULL, resource_v1.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+		},
+		{
+			name: "Duplicate evolutions after tsStartTime - all should be included",
+			// Note: on production when this happens, we should go ahead and clean it up if required
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v1",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).Add(24 * time.Hour),
+				},
+				{
+					BaseColumn:     "resources_string",
+					BaseColumnType: "Map(LowCardinality(String), String)",
+					NewColumn:      "resource_v1",
+					NewColumnType:  "JSON(max_dynamic_paths=100)",
+					ReleaseTime:    time.Date(2024, 2, 3, 0, 0, 0, 0, time.UTC).Add(24 * time.Hour),
+				},
+			},
+			key:            key,
+			baseColumnExpr: baseColumnExpr,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource_v1.`service.name` IS NOT NULL, resource_v1.`service.name`::String, resource_v1.`service.name` IS NOT NULL, resource_v1.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 		},
 		{
 			name: "Mix of evolutions before and after tsStartTime",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
 					BaseColumn:     "resources_string",
 					BaseColumnType: "Map(LowCardinality(String), String)",
@@ -529,11 +568,11 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 			baseColumnExpr: baseColumnExpr,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource_v4.`service.name`::String IS NOT NULL, resource_v4.`service.name`::String, resource_v3.`service.name`::String IS NOT NULL, resource_v3.`service.name`::String, resource_v2.`service.name`::String IS NOT NULL, resource_v2.`service.name`::String, NULL)",
+			expectedResult: "multiIf(resource_v4.`service.name` IS NOT NULL, resource_v4.`service.name`::String, resource_v3.`service.name` IS NOT NULL, resource_v3.`service.name`::String, resource_v2.`service.name` IS NOT NULL, resource_v2.`service.name`::String, NULL)",
 		},
 		{
 			name: "Evolution exactly at tsEndTime - should not be included",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
 					BaseColumn:     "resources_string",
 					BaseColumnType: "Map(LowCardinality(String), String)",
@@ -551,7 +590,7 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 
 		{
 			name: "Evolution at tsStartTime and after tsStartTime",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
 					BaseColumn:     "resources_string",
 					BaseColumnType: "Map(LowCardinality(String), String)",
@@ -571,11 +610,11 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 			baseColumnExpr: baseColumnExpr,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource_v2.`service.name`::String IS NOT NULL, resource_v2.`service.name`::String, resource_v1.`service.name`::String IS NOT NULL, resource_v1.`service.name`::String, NULL)",
+			expectedResult: "multiIf(resource_v2.`service.name` IS NOT NULL, resource_v2.`service.name`::String, resource_v1.`service.name` IS NOT NULL, resource_v1.`service.name`::String, NULL)",
 		},
 		{
 			name: "Evolution before tsStartTime and at tsStartTime - latest before should be included",
-			evolutions: []*telemetrytypes.KeyEvolutionMetadataKey{
+			evolutions: []*telemetrytypes.KeyEvolutionMetadata{
 				{
 					BaseColumn:     "attributes_string",
 					BaseColumnType: "Map(LowCardinality(String), String)",
@@ -594,7 +633,7 @@ func TestBuildEvolutionMultiIfExpression(t *testing.T) {
 			key:            key,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(attributes_v2.`service.name`::String IS NOT NULL, attributes_v2.`service.name`::String, NULL)",
+			expectedResult: "multiIf(attributes_v2.`service.name` IS NOT NULL, attributes_v2.`service.name`::String, NULL)",
 		},
 	}
 

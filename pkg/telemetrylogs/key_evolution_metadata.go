@@ -28,12 +28,13 @@ const (
 	base_column_type = "base_column_type"
 	new_column       = "new_column"
 	new_column_type  = "new_column_type"
+	path             = "path"
 	release_time     = "release_time"
 )
 
 // CachedKeyEvolutionMetadata is a cacheable type for storing key evolution metadata
 type CachedKeyEvolutionMetadata struct {
-	Keys []*telemetrytypes.KeyEvolutionMetadataKey `json:"keys"`
+	Metadata []*telemetrytypes.KeyEvolutionMetadata `json:"metadata"`
 }
 
 var _ cachetypes.Cacheable = (*CachedKeyEvolutionMetadata)(nil)
@@ -64,7 +65,7 @@ func NewKeyEvolutionMetadata(telemetryStore telemetrystore.TelemetryStore, cache
 	}
 }
 
-func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID valuer.UUID, key string) []*telemetrytypes.KeyEvolutionMetadataKey {
+func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID valuer.UUID, key string) []*telemetrytypes.KeyEvolutionMetadata {
 	store := k.telemetryStore
 	logger := k.logger
 
@@ -78,6 +79,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID va
 		base_column_type,
 		new_column,
 		new_column_type,
+		path,
 		release_time,
 	)
 	sb.From(fmt.Sprintf("%s.%s", KeyEvolutionMetadataDBName, KeyEvolutionMetadataTableName))
@@ -94,7 +96,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID va
 	defer rows.Close()
 
 	// Group metadata by base_column
-	metadataByKey := make(map[string][]*telemetrytypes.KeyEvolutionMetadataKey)
+	metadataByKey := make(map[string][]*telemetrytypes.KeyEvolutionMetadata)
 
 	for rows.Next() {
 		var (
@@ -102,19 +104,21 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID va
 			baseColumnType string
 			newColumn      string
 			newColumnType  string
+			path           string
 			releaseTime    uint64
 		)
 
-		if err := rows.Scan(&baseColumn, &baseColumnType, &newColumn, &newColumnType, &releaseTime); err != nil {
+		if err := rows.Scan(&baseColumn, &baseColumnType, &newColumn, &newColumnType, &path, &releaseTime); err != nil {
 			logger.WarnContext(ctx, "Failed to scan key evolution metadata row", "error", err)
 			continue
 		}
 
-		key := &telemetrytypes.KeyEvolutionMetadataKey{
+		key := &telemetrytypes.KeyEvolutionMetadata{
 			BaseColumn:     baseColumn,
 			BaseColumnType: baseColumnType,
 			NewColumn:      newColumn,
 			NewColumnType:  newColumnType,
+			Path:           path,
 			ReleaseTime:    time.Unix(0, int64(releaseTime)),
 		}
 
@@ -132,7 +136,7 @@ func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID va
 
 // Get retrieves all metadata keys for the given key name and orgId from cache.
 // Returns an empty slice if the key is not found in cache.
-func (k *KeyEvolutionMetadata) Get(ctx context.Context, orgId valuer.UUID, keyName string) []*telemetrytypes.KeyEvolutionMetadataKey {
+func (k *KeyEvolutionMetadata) Get(ctx context.Context, orgId valuer.UUID, keyName string) []*telemetrytypes.KeyEvolutionMetadata {
 
 	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
 	cachedData := &CachedKeyEvolutionMetadata{}
@@ -148,11 +152,11 @@ func (k *KeyEvolutionMetadata) Get(ctx context.Context, orgId valuer.UUID, keyNa
 
 		if metadata != nil {
 			cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
-			cachedData = &CachedKeyEvolutionMetadata{Keys: metadata}
+			cachedData = &CachedKeyEvolutionMetadata{Metadata: metadata}
 			if err := k.cache.Set(ctx, orgId, cacheKey, cachedData, 24*time.Hour); err != nil {
 				k.logger.WarnContext(ctx, "Failed to set key evolution metadata in cache", "key", keyName, "error", err)
 			}
 		}
 	}
-	return cachedData.Keys
+	return cachedData.Metadata
 }

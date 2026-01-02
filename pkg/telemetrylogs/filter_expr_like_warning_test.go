@@ -6,12 +6,18 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
 // TestLikeAndILikeWithoutWildcards_Warns Tests that LIKE/ILIKE without wildcards add warnings and include docs URL
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
+	ctx := context.Background()
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: valuer.GenerateUUID().String(),
+	})
 	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)
@@ -36,7 +42,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 	for _, expr := range tests {
 		t.Run(expr, func(t *testing.T) {
-			clause, err := querybuilder.PrepareWhereClause(context.Background(), expr, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(ctx, expr, opts, 0, 0)
 			require.NoError(t, err)
 			require.NotNil(t, clause)
 
@@ -70,10 +76,14 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 		"service.name ILIKE '_demo'",
 		"service.name ILIKE '%demo%'",
 	}
+	ctx := context.Background()
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: valuer.GenerateUUID().String(),
+	})
 
 	for _, expr := range tests {
 		t.Run(expr, func(t *testing.T) {
-			clause, err := querybuilder.PrepareWhereClause(context.Background(), expr, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(ctx, expr, opts, 0, 0)
 			require.NoError(t, err)
 			require.NotNil(t, clause)
 

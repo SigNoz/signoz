@@ -106,29 +106,31 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func buildEvolutionMultiIfExpression(evolutions []*telemetrytypes.KeyEvolutionMetadataKey, key *telemetrytypes.TelemetryFieldKey, tsStartTime time.Time, tsEndTime time.Time, baseColExpr string) string {
+func buildEvolutionMultiIfExpression(evolutions []*telemetrytypes.KeyEvolutionMetadata, key *telemetrytypes.TelemetryFieldKey, tsStartTime time.Time, tsEndTime time.Time, baseColExpr string) string {
 	// Collect relevant evolutions for the time range [tsStart, tsEnd]
 	// Strategy:
 	// 1. Include only the latest evolution with releaseTime <= tsStartTime (for backward compatibility)
 	// 2. Include all evolutions with releaseTime > tsStartTime and <= tsEndTime (active during query range)
 	// 3. Order from newest to oldest so multiIf checks newest columns first
-	// 4. Add base column as final fallback
+	// 4. Add baseColExpr as final fallback if required
 
 	relevantEvolutions := []string{}
 	var latestBeforeStartColumn string
 	var singleEvolutionColumn string
 
 	// Helper function to build column expression from evolution
-	buildColumnExpr := func(evolution *telemetrytypes.KeyEvolutionMetadataKey) string {
-		switch evolution.NewColumnType {
+	buildColumnExpr := func(evolution *telemetrytypes.KeyEvolutionMetadata) string {
 		// TODO: instead of string comparison, we can parse the column type and then compare the types
-		case "JSON_PATH":
-			singleEvolutionColumn = fmt.Sprintf("%s IS NOT NULL, %s", evolution.NewColumn, evolution.NewColumn)
+		if strings.HasPrefix(evolution.NewColumnType, "JSON(") {
+			if evolution.Path != "" {
+				// TODO (Piyush): improve this
+				singleEvolutionColumn = fmt.Sprintf("%s.`%s` IS NOT NULL, %s.`%s`::String", evolution.NewColumn, evolution.Path, evolution.NewColumn, evolution.Path)
+				return singleEvolutionColumn
+			}
+
+			singleEvolutionColumn := fmt.Sprintf("%s.`%s` IS NOT NULL, %s.`%s`::String", evolution.NewColumn, key.Name, evolution.NewColumn, key.Name)
 			return singleEvolutionColumn
-		case "JSON(max_dynamic_paths=100)":
-			singleEvolutionColumn := fmt.Sprintf("%s.`%s`::String IS NOT NULL, %s.`%s`::String", evolution.NewColumn, key.Name, evolution.NewColumn, key.Name)
-			return singleEvolutionColumn
-		case "Map(LowCardinality(String), String)":
+		} else if evolution.NewColumnType == "Map(LowCardinality(String), String)" {
 			if key.Materialized {
 				oldKeyName := telemetrytypes.FieldKeyToMaterializedColumnName(key)
 				oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
@@ -207,6 +209,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 			if err != nil {
 				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid orgId %s", claims.OrgID)
 			}
+		} else {
+			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "no orgId found in context")
 		}
 
 		baseColExpr := ""

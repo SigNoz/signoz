@@ -4,9 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,7 +16,9 @@ import (
 
 func TestConditionFor(t *testing.T) {
 	ctx := context.Background()
-
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: valuer.GenerateUUID().String(),
+	})
 	testCases := []struct {
 		name          string
 		key           telemetrytypes.TelemetryFieldKey

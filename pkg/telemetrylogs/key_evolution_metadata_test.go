@@ -19,12 +19,13 @@ import (
 )
 
 var (
-	clickHouseQueryPattern = "SELECT.*base_column.*FROM.*distributed_key_evolution_metadata.*WHERE.*base_column.*=.*"
+	clickHouseQueryPattern = "SELECT.*base_column.*base_column_type.*new_column.*new_column_type.*path.*release_time.*FROM.*distributed_key_evolution_metadata.*WHERE.*base_column.*=.*"
 	clickHouseColumns      = []cmock.ColumnType{
 		{Name: base_column, Type: "String"},
 		{Name: base_column_type, Type: "String"},
 		{Name: new_column, Type: "String"},
 		{Name: new_column_type, Type: "String"},
+		{Name: path, Type: "String"},
 		{Name: release_time, Type: "UInt64"},
 	}
 )
@@ -54,7 +55,7 @@ func createMockRows(values [][]any) *cmock.Rows {
 	return cmock.NewRows(clickHouseColumns, values)
 }
 
-func assertMetadataEqual(t *testing.T, expected, actual *telemetrytypes.KeyEvolutionMetadataKey) {
+func assertMetadataEqual(t *testing.T, expected, actual *telemetrytypes.KeyEvolutionMetadata) {
 	t.Helper()
 	assert.Equal(t, expected.BaseColumn, actual.BaseColumn)
 	assert.Equal(t, expected.BaseColumnType, actual.BaseColumnType)
@@ -73,7 +74,7 @@ func TestKeyEvolutionMetadata_Get_CacheHit(t *testing.T) {
 	kem := newKeyEvolutionMetadata(telemetryStore, testCache)
 
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
-	expectedMetadata := []*telemetrytypes.KeyEvolutionMetadataKey{
+	expectedMetadata := []*telemetrytypes.KeyEvolutionMetadata{
 		{
 			BaseColumn:     "resources_string",
 			BaseColumnType: "Map(LowCardinality(String), String)",
@@ -84,7 +85,7 @@ func TestKeyEvolutionMetadata_Get_CacheHit(t *testing.T) {
 	}
 
 	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
-	cachedData := &CachedKeyEvolutionMetadata{Keys: expectedMetadata}
+	cachedData := &CachedKeyEvolutionMetadata{Metadata: expectedMetadata}
 	err := testCache.Set(ctx, orgId, cacheKey, cachedData, 24*time.Hour)
 	require.NoError(t, err)
 
@@ -109,6 +110,7 @@ func TestKeyEvolutionMetadata_Get_CacheMiss_FetchFromClickHouse(t *testing.T) {
 			"Map(LowCardinality(String), String)",
 			"resource",
 			"JSON(max_dynamic_paths=100)",
+			"",
 			uint64(releaseTime.UnixNano()),
 		},
 	}
@@ -131,8 +133,8 @@ func TestKeyEvolutionMetadata_Get_CacheMiss_FetchFromClickHouse(t *testing.T) {
 	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
 	err := testCache.Get(ctx, orgId, cacheKey, &cachedData)
 	require.NoError(t, err)
-	require.Len(t, cachedData.Keys, 1)
-	assert.Equal(t, result[0].BaseColumn, cachedData.Keys[0].BaseColumn)
+	require.Len(t, cachedData.Metadata, 1)
+	assert.Equal(t, result[0].BaseColumn, cachedData.Metadata[0].BaseColumn)
 }
 
 func TestKeyEvolutionMetadata_Get_MultipleMetadataEntries(t *testing.T) {
@@ -152,6 +154,7 @@ func TestKeyEvolutionMetadata_Get_MultipleMetadataEntries(t *testing.T) {
 			"Map(LowCardinality(String), String)",
 			"resource",
 			"JSON(max_dynamic_paths=100)",
+			"",
 			uint64(releaseTime1.UnixNano()),
 		},
 		{
@@ -159,6 +162,7 @@ func TestKeyEvolutionMetadata_Get_MultipleMetadataEntries(t *testing.T) {
 			"Map(LowCardinality(String), String)",
 			"resource_v2",
 			"JSON(max_dynamic_paths=100, max_dynamic_path_depth=10)",
+			"",
 			uint64(releaseTime2.UnixNano()),
 		},
 	}
