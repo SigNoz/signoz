@@ -40,6 +40,12 @@ func (migration *renameOrgDomains) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
+	// check if the `auth_domain` table already exists
+	_, _, err = migration.sqlSchema.GetTable(ctx, sqlschema.TableName("auth_domain"))
+	if err == nil {
+		return nil
+	}
+
 	table, _, err := migration.sqlSchema.GetTable(ctx, sqlschema.TableName("org_domains"))
 	if err != nil {
 		return err
