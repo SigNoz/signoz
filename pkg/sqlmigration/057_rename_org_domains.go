@@ -50,6 +50,13 @@ func newRenameOrgDomains(_ context.Context, _ factory.ProviderSettings, _ Config
 	}, nil
 }
 
+func (migration *renameOrgDomains) Register(migrations *migrate.Migrations) error {
+	if err := migrations.Register(migration.Up, migration.Down); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (migration *renameOrgDomains) Up(ctx context.Context, db *bun.DB) error {
 	// check if the `auth_domain` table already exists
 	_, _, err := migration.sqlSchema.GetTable(ctx, sqlschema.TableName("auth_domain"))
@@ -147,12 +154,5 @@ func (migration *renameOrgDomains) Up(ctx context.Context, db *bun.DB) error {
 }
 
 func (migration *renameOrgDomains) Down(_ context.Context, _ *bun.DB) error {
-	return nil
-}
-
-func (migration *renameOrgDomains) Register(migrations *migrate.Migrations) error {
-	if err := migrations.Register(migration.Up, migration.Down); err != nil {
-		return err
-	}
 	return nil
 }
