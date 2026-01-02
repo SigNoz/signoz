@@ -330,6 +330,14 @@ func TestGetMetricFieldValuesIntrinsicMetricName(t *testing.T) {
 		WithArgs(51).
 		WillReturnRows(valueRows)
 
+	metadataRows := cmock.NewRows([]cmock.ColumnType{
+		{Name: "attr_string_value", Type: "String"},
+	}, [][]any{})
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT DISTINCT attr_string_value FROM signoz_metrics.distributed_metadata WHERE attr_name = ? LIMIT ?")).
+		WithArgs("metric_name", 49).
+		WillReturnRows(metadataRows)
+
 	values, complete, err := metadata.(*telemetryMetaStore).getMetricFieldValues(context.Background(), &telemetrytypes.FieldValueSelector{
 		FieldKeySelector: &telemetrytypes.FieldKeySelector{
 			Signal:            telemetrytypes.SignalMetrics,
@@ -347,8 +355,17 @@ func TestGetMetricFieldValuesIntrinsicMetricName(t *testing.T) {
 
 func TestGetMetricFieldValuesIntrinsicBoolReturnsEmpty(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
 
 	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+
+	metadataRows := cmock.NewRows([]cmock.ColumnType{
+		{Name: "attr_string_value", Type: "String"},
+	}, [][]any{})
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT DISTINCT attr_string_value FROM signoz_metrics.distributed_metadata WHERE attr_name = ? AND attr_datatype = ? AND attr_string_value = ? LIMIT ?")).
+		WithArgs("is_monotonic", telemetrytypes.FieldDataTypeBool.TagDataType(), "true", 11).
+		WillReturnRows(metadataRows)
 
 	values, complete, err := metadata.(*telemetryMetaStore).getMetricFieldValues(context.Background(), &telemetrytypes.FieldValueSelector{
 		FieldKeySelector: &telemetrytypes.FieldKeySelector{
@@ -365,4 +382,5 @@ func TestGetMetricFieldValuesIntrinsicBoolReturnsEmpty(t *testing.T) {
 	assert.True(t, complete)
 	assert.Empty(t, values.StringValues)
 	assert.Empty(t, values.BoolValues)
+	require.NoError(t, mock.ExpectationsWereMet())
 }
