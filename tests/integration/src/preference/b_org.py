@@ -10,15 +10,15 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 logger = setup_logger(__name__)
 
 
-def test_get_user_preference(
+def test_get_org_preference(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL,  USER_ADMIN_PASSWORD)
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user/preferences"),
+        signoz.self.host_configs["8080"].get("/api/v1/org/preferences"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -27,17 +27,17 @@ def test_get_user_preference(
     assert response.json()["data"] is not None
 
 
-def test_get_set_user_preference_by_name(
+def test_get_set_org_preference_by_name(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL,  USER_ADMIN_PASSWORD)
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # preference does not exist
     response = requests.get(
         signoz.self.host_configs["8080"].get(
-            "/api/v1/user/preferences/somenonexistentpreference"
+            "/api/v1/org/preferences/somenonexistentpreference"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
@@ -46,10 +46,10 @@ def test_get_set_user_preference_by_name(
     # This should be NOT_FOUND
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    # play with welcome_checklist_do_later preference
+    # play with org_onboarding preference
     response = requests.put(
         signoz.self.host_configs["8080"].get(
-            "/api/v1/user/preferences/welcome_checklist_do_later"
+            "/api/v1/org/preferences/org_onboarding"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
         json={"value": True},
@@ -61,7 +61,7 @@ def test_get_set_user_preference_by_name(
     # get preference by name
     response = requests.get(
         signoz.self.host_configs["8080"].get(
-            "/api/v1/user/preferences/welcome_checklist_do_later"
+            "/api/v1/org/preferences/org_onboarding"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
