@@ -18,6 +18,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
 	"github.com/SigNoz/signoz/pkg/emailing/smtpemailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/flagger/configflagger"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
@@ -54,6 +56,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/tokenizer/opaquetokenizer"
 	"github.com/SigNoz/signoz/pkg/tokenizer/tokenizerstore/sqltokenizerstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
@@ -236,6 +239,9 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			implpreference.NewHandler(modules.Preference),
 			signozglobal.NewHandler(global),
 			implpromote.NewHandler(modules.Promote),
+			handlers.FlaggerHandler,
+			modules.Dashboard,
+			handlers.Dashboard,
 		),
 	)
 }
@@ -251,5 +257,11 @@ func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore
 func NewGlobalProviderFactories() factory.NamedMap[factory.ProviderFactory[global.Global, global.Config]] {
 	return factory.MustNewNamedMap(
 		signozglobal.NewFactory(),
+	)
+}
+
+func NewFlaggerProviderFactories(registry featuretypes.Registry) factory.NamedMap[factory.ProviderFactory[flagger.FlaggerProvider, flagger.Config]] {
+	return factory.MustNewNamedMap(
+		configflagger.NewFactory(registry),
 	)
 }

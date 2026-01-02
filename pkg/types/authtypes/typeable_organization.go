@@ -32,3 +32,7 @@ func (typeableOrganization *typeableOrganization) Name() Name {
 func (typeableOrganization *typeableOrganization) Prefix(_ valuer.UUID) string {
 	return typeableOrganization.Type().StringValue()
 }
+
+func (typeableOrganization *typeableOrganization) Scope(relation Relation) string {
+	return typeableOrganization.Name().String() + ":" + relation.StringValue()
+}

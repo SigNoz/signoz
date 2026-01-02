@@ -5,6 +5,11 @@ import {
 	OPERATORS,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { isApmMetric } from 'container/PanelWrapper/utils';
+import {
+	METRIC_TO_LOGS_TRACES_MAPPINGS,
+	replaceKeysAndValuesInExpression,
+} from 'container/QueryTable/Drilldown/metricsCorrelationUtils';
 import cloneDeep from 'lodash-es/cloneDeep';
 import {
 	BaseAutocompleteData,
@@ -15,6 +20,7 @@ import {
 	Query,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { MetricAggregation } from 'types/api/v5/queryRange';
 import { v4 as uuid } from 'uuid';
 
 export function getBaseMeta(
@@ -270,125 +276,6 @@ const VIEW_QUERY_MAP: Record<string, IBuilderQuery> = {
 	view_traces: initialQueryBuilderFormValuesMap.traces,
 };
 
-/**
- * TEMP LOGIC - TO BE REMOVED LATER
- * Transforms metric query filters to logs/traces format
- * Applies the following transformations:
- * - Rule 2: operation → name
- * - Rule 3: span.kind → kind
- * - Rule 4: status.code → status_code_string with value mapping
- * - Rule 5: http.status_code type conversion
- */
-const transformMetricsToLogsTraces = (
-	filterExpression: string | undefined,
-): string | undefined => {
-	if (!filterExpression) return filterExpression;
-
-	// ===========================================
-	// MAPPING OBJECTS - ALL TRANSFORMATIONS DEFINED HERE
-	// ===========================================
-	const METRIC_TO_LOGS_TRACES_MAPPINGS = {
-		// Rule 2: operation → name
-		attributeRenames: {
-			operation: 'name',
-		},
-
-		// Rule 3: span.kind → kind with value mapping
-		spanKindMapping: {
-			attribute: 'span.kind',
-			newAttribute: 'kind',
-			valueMappings: {
-				SPAN_KIND_INTERNAL: '1',
-				SPAN_KIND_SERVER: '2',
-				SPAN_KIND_CLIENT: '3',
-				SPAN_KIND_PRODUCER: '4',
-				SPAN_KIND_CONSUMER: '5',
-			},
-		},
-
-		// Rule 4: status.code → status_code_string with value mapping
-		statusCodeMapping: {
-			attribute: 'status.code',
-			newAttribute: 'status_code_string',
-			valueMappings: {
-				// From metrics format → To logs/traces format
-				STATUS_CODE_UNSET: 'Unset',
-				STATUS_CODE_OK: 'Ok',
-				STATUS_CODE_ERROR: 'Error',
-			},
-		},
-
-		// Rule 5: http.status_code type conversion
-		typeConversions: {
-			'http.status_code': 'number',
-		},
-	};
-	// ===========================================
-
-	let transformedExpression = filterExpression;
-
-	// Apply attribute renames
-	Object.entries(METRIC_TO_LOGS_TRACES_MAPPINGS.attributeRenames).forEach(
-		([oldAttr, newAttr]) => {
-			const regex = new RegExp(`\\b${oldAttr}\\b`, 'g');
-			transformedExpression = transformedExpression.replace(regex, newAttr);
-		},
-	);
-
-	// Apply span.kind → kind transformation
-	const { spanKindMapping } = METRIC_TO_LOGS_TRACES_MAPPINGS;
-	if (spanKindMapping) {
-		// Replace attribute name - use word boundaries to avoid partial matches
-		const attrRegex = new RegExp(
-			`\\b${spanKindMapping.attribute.replace(/\./g, '\\.')}\\b`,
-			'g',
-		);
-		transformedExpression = transformedExpression.replace(
-			attrRegex,
-			spanKindMapping.newAttribute,
-		);
-
-		// Replace values
-		Object.entries(spanKindMapping.valueMappings).forEach(
-			([oldValue, newValue]) => {
-				const valueRegex = new RegExp(`\\b${oldValue}\\b`, 'g');
-				transformedExpression = transformedExpression.replace(valueRegex, newValue);
-			},
-		);
-	}
-
-	// Apply status.code → status_code_string transformation
-	const { statusCodeMapping } = METRIC_TO_LOGS_TRACES_MAPPINGS;
-	if (statusCodeMapping) {
-		// Replace attribute name - use word boundaries to avoid partial matches
-		// This prevents http.status_code from being transformed
-		const attrRegex = new RegExp(
-			`\\b${statusCodeMapping.attribute.replace(/\./g, '\\.')}\\b`,
-			'g',
-		);
-		transformedExpression = transformedExpression.replace(
-			attrRegex,
-			statusCodeMapping.newAttribute,
-		);
-
-		// Replace values
-		Object.entries(statusCodeMapping.valueMappings).forEach(
-			([oldValue, newValue]) => {
-				const valueRegex = new RegExp(`\\b${oldValue}\\b`, 'g');
-				transformedExpression = transformedExpression.replace(
-					valueRegex,
-					`${newValue}`,
-				);
-			},
-		);
-	}
-
-	// Note: Type conversions (Rule 5) would need more complex parsing
-	// of the filter expression to implement properly
-
-	return transformedExpression;
-};
-
 export const getViewQuery = (
 	query: Query,
 	filtersToAdd: FilterData[],
@@ -448,9 +335,15 @@ export const getViewQuery = (
 		// TEMP LOGIC - TO BE REMOVED LATER
 		// ===========================================
 		// Apply metric-to-logs/traces transformations
-		if (key === 'view_logs' || key === 'view_traces') {
-			const transformedExpression = transformMetricsToLogsTraces(
-				newFilterExpression?.expression,
+		const specificQuery = getQueryData(query, queryName);
+		const isMetricQuery = specificQuery?.dataSource === 'metrics';
+		const metricName = (specificQuery?.aggregations?.[0] as MetricAggregation)
+			?.metricName;
+
+		if (isMetricQuery && isApmMetric(metricName || '')) {
+			const transformedExpression = replaceKeysAndValuesInExpression(
+				newFilterExpression?.expression || '',
+				METRIC_TO_LOGS_TRACES_MAPPINGS,
 			);
 			newQuery.builder.queryData[0].filter = {
 				expression: transformedExpression || '',
