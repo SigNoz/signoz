@@ -29,8 +29,6 @@ func newRenameOrgDomains(_ context.Context, _ factory.ProviderSettings, _ Config
 }
 
 func (migration *renameOrgDomains) Up(ctx context.Context, db *bun.DB) error {
-	// ? do we need to add any checks here for pg or sqlite?
-
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
