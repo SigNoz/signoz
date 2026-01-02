@@ -77,6 +77,7 @@ func (migration *renameOrgDomains) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
+	// drop table `org_domains`
 	orgDomainDropSQLs := migration.sqlSchema.Operator().DropTable(orgDomainTable)
 	for _, sql := range orgDomainDropSQLs {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
