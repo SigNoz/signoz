@@ -30,6 +30,11 @@ export const Container = styled(Card)<{
 			? `margin-bottom:0.3rem;`
 			: ``}
 	cursor: pointer;
+
+	&:not(:hover) .log-line-action-buttons {
+		display: none;
+	}
+
 	.ant-card-body {
 		padding: 0.3rem 0.6rem;
 

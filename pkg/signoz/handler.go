@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/licensing"
@@ -37,13 +38,14 @@ type Handlers struct {
 	Services        services.Handler
 	MetricsExplorer metricsexplorer.Handler
 	Global          global.Handler
+	FlaggerHandler  flagger.Handler
 }
 
-func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing, global global.Global) Handlers {
+func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing, global global.Global, flaggerService flagger.Flagger) Handlers {
 	return Handlers{
 		SavedView:       implsavedview.NewHandler(modules.SavedView),
 		Apdex:           implapdex.NewHandler(modules.Apdex),
-		Dashboard:       impldashboard.NewHandler(modules.Dashboard, providerSettings, querier, licensing),
+		Dashboard:       impldashboard.NewHandler(modules.Dashboard, providerSettings),
 		QuickFilter:     implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:     impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport:   implrawdataexport.NewHandler(modules.RawDataExport),
@@ -51,5 +53,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, que
 		MetricsExplorer: implmetricsexplorer.NewHandler(modules.MetricsExplorer),
 		SpanPercentile:  implspanpercentile.NewHandler(modules.SpanPercentile),
 		Global:          signozglobal.NewHandler(global),
+		FlaggerHandler:  flagger.NewHandler(flaggerService),
 	}
 }

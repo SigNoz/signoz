@@ -3,3 +3,13 @@
 		width: 220px;
 	}
 }
+
+.warning-state {
+	.ant-select-selector {
+		border-color: var(--bg-amber-400) !important;
+	}
+
+	.anticon {
+		color: var(--bg-amber-400) !important;
+	}
+}
