@@ -40,16 +40,16 @@ type UpdatablePreference struct {
 type StorableOrgPreference struct {
 	bun.BaseModel `bun:"table:org_preference"`
 	types.Identifiable
-	Name  Name        `bun:"preference_id,type:text,notnull"`
-	Value string      `bun:"preference_value,type:text,notnull"`
+	Name  Name        `bun:"name,type:text,notnull"`
+	Value string      `bun:"value,type:text,notnull"`
 	OrgID valuer.UUID `bun:"org_id,type:text,notnull"`
 }
 
 type StorableUserPreference struct {
 	bun.BaseModel `bun:"table:user_preference"`
 	types.Identifiable
-	Name   Name        `bun:"preference_id,type:text,notnull"`
-	Value  string      `bun:"preference_value,type:text,notnull"`
+	Name   Name        `bun:"name,type:text,notnull"`
+	Value  string      `bun:"value,type:text,notnull"`
 	UserID valuer.UUID `bun:"user_id,type:text,notnull"`
 }
 
