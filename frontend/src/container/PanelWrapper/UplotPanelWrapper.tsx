@@ -132,11 +132,20 @@ function UplotPanelWrapper({
 		[selectedGraph, widget?.panelTypes, widget?.stackedBarChart],
 	);
 
-	const chartData = getUPlotChartData(
-		queryResponse?.data?.payload,
-		widget.fillSpans,
-		stackedBarChart,
-		hiddenGraph,
+	const chartData = useMemo(
+		() =>
+			getUPlotChartData(
+				queryResponse?.data?.payload,
+				widget.fillSpans,
+				stackedBarChart,
+				hiddenGraph,
+			),
+		[
+			queryResponse?.data?.payload,
+			widget.fillSpans,
+			stackedBarChart,
+			hiddenGraph,
+		],
 	);
 
 	useEffect(() => {
@@ -293,7 +302,7 @@ function UplotPanelWrapper({
 			)}
 			{isFullViewMode && setGraphVisibility && !stackedBarChart && (
 				<GraphManager
-					data={getUPlotChartData(queryResponse?.data?.payload, widget.fillSpans)}
+					data={chartData}
 					name={widget.id}
 					options={options}
 					yAxisUnit={widget.yAxisUnit}

@@ -10,8 +10,8 @@ import (
 
 func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/logs/promote_paths", handler.New(provider.authZ.EditAccess(provider.promoteHandler.HandlePromoteAndIndexPaths), handler.OpenAPIDef{
-		ID:                  "PromotePaths",
-		Tags:                []string{"promoted_paths", "logs", "json_logs"},
+		ID:                  "HandlePromoteAndIndexPaths",
+		Tags:                []string{"logs"},
 		Summary:             "Promote and index paths",
 		Description:         "This endpoints promotes and indexes paths",
 		Request:             new([]*promotetypes.PromotePath),
@@ -25,8 +25,8 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/logs/promote_paths", handler.New(provider.authZ.ViewAccess(provider.promoteHandler.ListPromotedAndIndexedPaths), handler.OpenAPIDef{
-		ID:                  "PromotePaths",
-		Tags:                []string{"promoted_paths", "logs", "json_logs"},
+		ID:                  "ListPromotedAndIndexedPaths",
+		Tags:                []string{"logs"},
 		Summary:             "Promote and index paths",
 		Description:         "This endpoints promotes and indexes paths",
 		Request:             nil,
