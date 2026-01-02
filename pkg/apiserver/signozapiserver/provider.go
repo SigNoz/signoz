@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
@@ -34,6 +35,8 @@ type provider struct {
 	globalHandler     global.Handler
 	promoteHandler    promote.Handler
 	flaggerHandler    flagger.Handler
+	dashboardModule   dashboard.Module
+	dashboardHandler  dashboard.Handler
 }
 
 func NewFactory(
@@ -47,9 +50,11 @@ func NewFactory(
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
 	flaggerHandler flagger.Handler,
+	dashboardModule dashboard.Module,
+	dashboardHandler dashboard.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler)
 	})
 }
 
@@ -67,6 +72,8 @@ func newProvider(
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
 	flaggerHandler flagger.Handler,
+	dashboardModule dashboard.Module,
+	dashboardHandler dashboard.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -83,6 +90,8 @@ func newProvider(
 		globalHandler:     globalHandler,
 		promoteHandler:    promoteHandler,
 		flaggerHandler:    flaggerHandler,
+		dashboardModule:   dashboardModule,
+		dashboardHandler:  dashboardHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -131,6 +140,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addDashboardRoutes(router); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -138,5 +151,11 @@ func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
 		{Name: ctxtypes.AuthTypeAPIKey.StringValue(), Scopes: []string{role.String()}},
 		{Name: ctxtypes.AuthTypeTokenizer.StringValue(), Scopes: []string{role.String()}},
+	}
+}
+
+func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
+	return []handler.OpenAPISecurityScheme{
+		{Name: ctxtypes.AuthTypeAnonymous.StringValue(), Scopes: scopes},
 	}
 }
