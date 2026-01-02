@@ -521,10 +521,9 @@ def ttl_legacy_logs_v2_resource_table_setup(request, signoz: types.SigNoz):
 
     yield  # Test runs here
 
+
 @pytest.fixture(name="remove_logs_ttl_settings", scope="function")
-def remove_logs_ttl_settings(
-    signoz: types.SigNoz,
-) -> None:
+def remove_logs_ttl_settings(signoz: types.SigNoz):
     """
     Remove TTL settings from the specified logs table.
     This function alters the table to drop any existing TTL configurations
@@ -537,18 +536,23 @@ def remove_logs_ttl_settings(
         "logs_v2_resource",
         "logs_attribute_keys",
         "logs_resource_keys",
-        ]
+    ]
     for table in tables:
 
-        try: 
+        try:
             # Reset _retention_days and _retention_days_cold default values to 0 for tables that have these columns
-            if table in ["logs_v2", "logs_v2_resource", "distributed_logs_v2", "distributed_logs_v2_resource"]:
+            if table in [
+                "logs_v2",
+                "logs_v2_resource",
+                "distributed_logs_v2",
+                "distributed_logs_v2_resource",
+            ]:
                 reset_retention_query = f"""
                 ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
                 MODIFY COLUMN _retention_days UInt16 DEFAULT 0
                 """
                 signoz.telemetrystore.conn.query(reset_retention_query)
-                
+
                 reset_retention_cold_query = f"""
                 ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
                 MODIFY COLUMN _retention_days_cold UInt16 DEFAULT 0
@@ -560,6 +564,5 @@ def remove_logs_ttl_settings(
                 REMOVE TTL
                 """
                 signoz.telemetrystore.conn.query(alter_query)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Error removing TTL from table {table}: {e}")
-

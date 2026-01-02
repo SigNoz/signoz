@@ -726,10 +726,9 @@ def insert_traces(
         f"TRUNCATE TABLE signoz_traces.signoz_error_index_v2 ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
     )
 
+
 @pytest.fixture(name="remove_traces_ttl_and_storage_settings", scope="function")
-def remove_traces_ttl_and_storage_settings(
-    signoz: types.SigNoz,
-) -> None:
+def remove_traces_ttl_and_storage_settings(signoz: types.SigNoz):
     """
     Remove any custom TTL settings on traces tables to revert to default retention.
     Also resets storage policy to default by recreating tables if needed.
@@ -752,5 +751,5 @@ def remove_traces_ttl_and_storage_settings(
             signoz.telemetrystore.conn.query(
                 f"ALTER TABLE signoz_traces.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' RESET SETTING storage_policy;"
             )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"ttl and storage policy reset failed for {table}: {e}")
