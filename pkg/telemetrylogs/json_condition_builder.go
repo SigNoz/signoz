@@ -112,7 +112,7 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 		}
 
 		// if qb has a definitive value, we can skip adding a condition to
-		// check the existance of the path in the json column
+		// check the existence of the path in the json column
 		if value != emptyValue {
 			return cond, nil
 		}
@@ -278,6 +278,10 @@ type GroupByArrayJoinInfo struct {
 }
 
 // BuildGroupBy builds GroupBy information for body JSON fields using arrayConcat pattern
+//
+// BuildGroupBy was designed to be used for group by queries on body JSON fields existings inside arrays but
+// currently it is not used anywhere, considering this case suits more to Data Engineering instead of Observability space.
+// This code should be removed in future.
 func (c *conditionBuilder) BuildGroupBy(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*GroupByArrayJoinInfo, error) {
 	path := strings.TrimPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix)
 

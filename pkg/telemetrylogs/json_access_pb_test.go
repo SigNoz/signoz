@@ -4,10 +4,9 @@ import (
 	"context"
 	"testing"
 
-	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -807,88 +806,6 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
 // Test Data Setup
 // ============================================================================
 
-// mockMetadataStore is a test implementation of MetadataStore that uses a types map
-type mockMetadataStore struct {
-	types map[string][]telemetrytypes.JSONDataType
-}
-
-func (m *mockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
-	result := make(map[string][]*telemetrytypes.TelemetryFieldKey)
-	if fieldKeySelector != nil {
-		if types, ok := m.types[fieldKeySelector.Name]; ok {
-			keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(types))
-			for _, t := range types {
-				key := &telemetrytypes.TelemetryFieldKey{
-					Name:         fieldKeySelector.Name,
-					JSONDataType: &t,
-					Signal:       telemetrytypes.SignalLogs,
-				}
-				keys = append(keys, key)
-			}
-			result[fieldKeySelector.Name] = keys
-		}
-	}
-	return result, true, nil
-}
-
-func (m *mockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
-	result := make(map[string][]*telemetrytypes.TelemetryFieldKey)
-	for _, selector := range fieldKeySelectors {
-		if types, ok := m.types[selector.Name]; ok {
-			keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(types))
-			for _, t := range types {
-				key := &telemetrytypes.TelemetryFieldKey{
-					Name:         selector.Name,
-					JSONDataType: &t,
-					Signal:       telemetrytypes.SignalLogs,
-				}
-				keys = append(keys, key)
-			}
-			result[selector.Name] = keys
-		}
-	}
-	return result, true, nil
-}
-
-func (m *mockMetadataStore) GetKey(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
-	keys, _, err := m.GetKeys(ctx, fieldKeySelector)
-	if err != nil {
-		return nil, err
-	}
-	if fieldKeySelector != nil {
-		return keys[fieldKeySelector.Name], nil
-	}
-	return nil, nil
-}
-
-func (m *mockMetadataStore) GetRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
-	return nil, true, nil
-}
-
-func (m *mockMetadataStore) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
-	return &telemetrytypes.TelemetryFieldValues{}, true, nil
-}
-
-func (m *mockMetadataStore) FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error) {
-	return metrictypes.Unknown, nil
-}
-
-func (m *mockMetadataStore) FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
-	return make(map[string]metrictypes.Temporality), nil
-}
-
-func (m *mockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...string) (map[string][]schemamigrator.Index, error) {
-	return make(map[string][]schemamigrator.Index), nil
-}
-
-func (m *mockMetadataStore) ListPromotedPaths(ctx context.Context, paths ...string) (map[string]struct{}, error) {
-	return make(map[string]struct{}), nil
-}
-
-func (m *mockMetadataStore) PromotePaths(ctx context.Context, paths ...string) error {
-	return nil
-}
-
 // testTypeSet returns a map of path->types and a mock MetadataStore for testing
 // This represents the type information available in the test JSON structure
 func testTypeSet() (map[string][]telemetrytypes.JSONDataType, telemetrytypes.MetadataStore) {
@@ -950,5 +867,17 @@ func testTypeSet() (map[string][]telemetrytypes.JSONDataType, telemetrytypes.Met
 		"message": {telemetrytypes.String},
 	}
 
-	return types, &mockMetadataStore{types: types}
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	for path, dataTypes := range types {
+		for _, dataType := range dataTypes {
+			mockMetadataStore.SetKey(&telemetrytypes.TelemetryFieldKey{
+				Name:          path,
+				JSONDataType:  &dataType,
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextBody,
+				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[dataType],
+			})
+		}
+	}
+	return types, mockMetadataStore
 }

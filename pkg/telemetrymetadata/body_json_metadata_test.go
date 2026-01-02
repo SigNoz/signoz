@@ -92,9 +92,7 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			query, args, limit, err := buildGetBodyJSONPathsQuery(tc.fieldKeySelectors)
-			require.NoError(t, err, "Error building query: %v", err)
-
+			query, args, limit := buildGetBodyJSONPathsQuery(tc.fieldKeySelectors)
 			require.Equal(t, tc.expectedSQL, query)
 			require.Equal(t, tc.expectedArgs, args)
 			require.Equal(t, tc.expectedLimit, limit)

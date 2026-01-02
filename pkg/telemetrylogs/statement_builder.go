@@ -237,9 +237,6 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	// Collect array join info for body JSON fields
-	var arrayJoinClauses []string
-
 	// Select timestamp and id by default
 	sb.Select(LogsV2TimestampColumn)
 	sb.SelectMore(LogsV2IDColumn)
@@ -279,12 +276,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		}
 	}
 
-	// From table (inject ARRAY JOINs if collected)
-	fromBase := fmt.Sprintf("%s.%s", DBName, LogsV2TableName)
-	if len(arrayJoinClauses) > 0 {
-		fromBase = fromBase + " " + strings.Join(arrayJoinClauses, " ")
-	}
-	sb.From(fromBase)
+	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
 	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
@@ -358,9 +350,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 
 	var allGroupByArgs []any
 
-	// Collect array join info for body JSON fields
-	var arrayJoinClauses []string
-
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
@@ -391,11 +380,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	// Add FROM clause
-	fromBase := fmt.Sprintf("%s.%s", DBName, LogsV2TableName)
-	if len(arrayJoinClauses) > 0 {
-		fromBase = fromBase + " " + strings.Join(arrayJoinClauses, " ")
-	}
-	sb.From(fromBase)
+	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 
@@ -514,9 +499,6 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	var allGroupByArgs []any
 
-	// Collect array join info for body JSON fields
-	var arrayJoinClauses []string
-
 	for _, gb := range query.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
 		if err != nil {
@@ -548,12 +530,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		}
 	}
 
-	// From table (inject ARRAY JOINs if collected)
-	fromBase := fmt.Sprintf("%s.%s", DBName, LogsV2TableName)
-	if len(arrayJoinClauses) > 0 {
-		fromBase = fromBase + " " + strings.Join(arrayJoinClauses, " ")
-	}
-	sb.From(fromBase)
+	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
 	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)

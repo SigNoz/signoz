@@ -51,11 +51,7 @@ var (
 func (t *telemetryMetaStore) getBodyJSONPaths(ctx context.Context,
 	fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 
-	query, args, limit, err := buildGetBodyJSONPathsQuery(fieldKeySelectors)
-	if err != nil {
-		return nil, false, err
-	}
-
+	query, args, limit := buildGetBodyJSONPathsQuery(fieldKeySelectors)
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to extract body JSON keys")
@@ -78,7 +74,7 @@ func (t *telemetryMetaStore) getBodyJSONPaths(ctx context.Context,
 		for _, typ := range typesArray {
 			mapping, found := telemetrytypes.MappingStringToJSONDataType[typ]
 			if !found {
-				t.logger.Error("failed to map type string to JSON data type", slog.String("type", typ))
+				t.logger.ErrorContext(ctx, "failed to map type string to JSON data type", slog.String("type", typ))
 				continue
 			}
 			fieldKeys = append(fieldKeys, &telemetrytypes.TelemetryFieldKey{
@@ -115,9 +111,9 @@ func (t *telemetryMetaStore) getBodyJSONPaths(ctx context.Context,
 	return fieldKeys, rowCount <= limit, nil
 }
 
-func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySelector) (string, []any, int, error) {
+func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySelector) (string, []any, int) {
 	if len(fieldKeySelectors) == 0 {
-		return "", nil, defaultPathLimit, nil
+		return "", nil, defaultPathLimit
 	}
 	from := fmt.Sprintf("%s.%s", DBName, PathTypesTableName)
 
@@ -158,7 +154,7 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 	sb.Limit(limit)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return query, args, limit, nil
+	return query, args, limit
 }
 
 func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...string) (map[string][]telemetrytypes.JSONDataTypeIndex, error) {
@@ -171,7 +167,7 @@ func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...st
 		filteredPaths = append(filteredPaths, path)
 	}
 	if len(filteredPaths) == 0 {
-		return nil, nil
+		return make(map[string][]telemetrytypes.JSONDataTypeIndex), nil
 	}
 
 	// list indexes for the paths
@@ -191,7 +187,7 @@ func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...st
 
 			jsonDataType, found := telemetrytypes.MappingStringToJSONDataType[columnType]
 			if !found {
-				t.logger.Error("failed to map column type to JSON data type", slog.String("columnType", columnType))
+				t.logger.ErrorContext(ctx, "failed to map column type to JSON data type", slog.String("columnType", columnType))
 				continue
 			}
 
