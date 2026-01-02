@@ -1,7 +1,9 @@
 import './InviteTeamMembers.styles.scss';
 
+import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Select, Typography } from 'antd';
+import { Input } from '@signozhq/input';
+import { Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import { useNotifications } from 'hooks/useNotifications';
@@ -187,13 +189,15 @@ function InviteTeamMembers({
 
 	return (
 		<div className="questions-container">
-			<Typography.Title level={3} className="title">
-				Invite your team members
-			</Typography.Title>
-			<Typography.Paragraph className="sub-title">
-				The more your team uses SigNoz, the stronger your observability. Share
-				dashboards, collaborate on alerts, and troubleshoot faster together.
-			</Typography.Paragraph>
+			<div className="onboarding-header-section">
+				<div className="onboarding-header-icon">🧴</div>
+				<Typography.Title level={4} className="onboarding-header-title">
+					Invite your team
+				</Typography.Title>
+				<Typography.Paragraph className="onboarding-header-subtitle">
+					SigNoz is a lot more useful with collaborators on board.
+				</Typography.Paragraph>
+			</div>
 
 			<div className="questions-form-container">
 				<div className="questions-form invite-team-members-form">
@@ -274,33 +278,43 @@ function InviteTeamMembers({
 					)}
 				</div>
 
-				<div className="next-prev-container">
-					<Button type="default" className="next-button" onClick={onBack}>
-						<ArrowLeft size={14} />
+				<div className="onboarding-buttons-container">
+					<Button
+						variant="outlined"
+						color="secondary"
+						className="onboarding-back-button"
+						onClick={onBack}
+						disabled={isSendingInvites || isLoading}
+						prefixIcon={<ArrowLeft size={12} />}
+					>
 						Back
 					</Button>
-
 					<Button
-						type="primary"
-						className="next-button"
+						variant="solid"
+						color="primary"
+						className={`onboarding-next-button ${
+							isSendingInvites || isLoading ? 'disabled' : ''
+						}`}
 						onClick={handleNext}
-						loading={isSendingInvites || isLoading}
+						disabled={isSendingInvites || isLoading}
+						suffixIcon={
+							isSendingInvites || isLoading ? (
+								<Loader2 className="animate-spin" size={12} />
+							) : (
+								<ArrowRight size={12} />
+							)
+						}
 					>
 						Send Invites
-						<ArrowRight size={14} />
 					</Button>
-				</div>
-
-				<div className="do-later-container">
 					<Button
-						type="link"
-						className="do-later-button"
+						variant="ghost"
+						color="secondary"
+						className="onboarding-do-later-button"
 						onClick={handleDoLater}
-						disabled={isSendingInvites}
+						disabled={isSendingInvites || isLoading}
 					>
-						{isLoading && <Loader2 className="animate-spin" size={16} />}
-
-						<span>I&apos;ll do this later</span>
+						I&apos;ll do this later
 					</Button>
 				</div>
 			</div>

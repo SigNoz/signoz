@@ -7,9 +7,13 @@ import TrustBadgesFooter from './TrustBadgesFooter';
 
 interface AuthPageContainerProps {
 	children: ReactNode;
+	isOnboarding?: boolean;
 }
 
-function AuthPageContainer({ children }: AuthPageContainerProps): JSX.Element {
+function AuthPageContainer({
+	children,
+	isOnboarding = false,
+}: AuthPageContainerProps): JSX.Element {
 	return (
 		<div className="auth-page-wrapper">
 			<div className="auth-page-background">
@@ -20,11 +24,19 @@ function AuthPageContainer({ children }: AuthPageContainerProps): JSX.Element {
 			</div>
 			<div className="auth-page-layout">
 				<AuthHeader />
-				<main className="auth-page-content">{children}</main>
+				<main
+					className={`auth-page-content ${isOnboarding ? 'onboarding-flow' : ''}`}
+				>
+					{children}
+				</main>
 				<TrustBadgesFooter />
 			</div>
 		</div>
 	);
 }
+
+AuthPageContainer.defaultProps = {
+	isOnboarding: false,
+};
 
 export default AuthPageContainer;

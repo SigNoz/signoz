@@ -22,7 +22,6 @@ import {
 	SignozDetails,
 } from './AboutSigNozQuestions/AboutSigNozQuestions';
 import InviteTeamMembers from './InviteTeamMembers/InviteTeamMembers';
-import { OnboardingHeader } from './OnboardingHeader/OnboardingHeader';
 import OptimiseSignozNeeds, {
 	OptimiseSignozDetails,
 } from './OptimiseSignozNeeds/OptimiseSignozNeeds';
@@ -207,10 +206,6 @@ function OnboardingQuestionaire(): JSX.Element {
 
 	return (
 		<div className="onboarding-questionaire-container">
-			<div className="onboarding-questionaire-header">
-				<OnboardingHeader />
-			</div>
-
 			<div className="onboarding-questionaire-content">
 				{currentStep === 1 && (
 					<OrgQuestions

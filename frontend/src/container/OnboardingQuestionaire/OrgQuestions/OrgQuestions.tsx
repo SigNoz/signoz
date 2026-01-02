@@ -1,8 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import '../OnboardingQuestionaire.styles.scss';
 
+import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Typography } from 'antd';
+import { Input } from '@signozhq/input';
+import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import editOrg from 'api/organization/editOrg';
 import { useNotifications } from 'hooks/useNotifications';
@@ -46,7 +48,7 @@ function OrgQuestions({
 	orgDetails,
 	onNext,
 }: OrgQuestionsProps): JSX.Element {
-	const { user, updateOrg } = useAppContext();
+	const { updateOrg } = useAppContext();
 	const { notifications } = useNotifications();
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
@@ -183,13 +185,15 @@ function OrgQuestions({
 
 	return (
 		<div className="questions-container">
-			<Typography.Title level={3} className="title">
-				{user?.displayName ? `Welcome, ${user.displayName}!` : 'Welcome!'}
-			</Typography.Title>
-			<Typography.Paragraph className="sub-title">
-				We&apos;ll help you get the most out of SigNoz, whether you&apos;re new to
-				observability or a seasoned pro.
-			</Typography.Paragraph>
+			<div className="onboarding-header-section">
+				<div className="onboarding-header-icon">🎉</div>
+				<Typography.Title level={4} className="onboarding-header-title">
+					Welcome to SigNoz Cloud
+				</Typography.Title>
+				<Typography.Paragraph className="onboarding-header-subtitle">
+					Let&apos;s get you started
+				</Typography.Paragraph>
+			</div>
 
 			<div className="questions-form-container">
 				<div className="questions-form">
@@ -216,7 +220,8 @@ function OrgQuestions({
 							{Object.keys(observabilityTools).map((tool) => (
 								<Button
 									key={tool}
-									type="primary"
+									variant="solid"
+									color="primary"
 									className={`onboarding-questionaire-button ${
 										observabilityTool === tool ? 'active' : ''
 									}`}
@@ -248,7 +253,8 @@ function OrgQuestions({
 								/>
 							) : (
 								<Button
-									type="primary"
+									variant="solid"
+									color="primary"
 									className={`onboarding-questionaire-button ${
 										observabilityTool === 'Others' ? 'active' : ''
 									}`}
@@ -264,7 +270,8 @@ function OrgQuestions({
 						<div className="question">Do you already use OpenTelemetry?</div>
 						<div className="two-column-grid">
 							<Button
-								type="primary"
+								variant="solid"
+								color="primary"
 								name="usesObservability"
 								className={`onboarding-questionaire-button ${
 									usesOtel === true ? 'active' : ''
@@ -279,7 +286,8 @@ function OrgQuestions({
 								)}
 							</Button>
 							<Button
-								type="primary"
+								variant="solid"
+								color="primary"
 								className={`onboarding-questionaire-button ${
 									usesOtel === false ? 'active' : ''
 								}`}
@@ -296,21 +304,22 @@ function OrgQuestions({
 					</div>
 				</div>
 
-				<div className="next-prev-container">
-					<Button
-						type="primary"
-						className={`next-button ${isNextDisabled ? 'disabled' : ''}`}
-						onClick={handleOnNext}
-						disabled={isNextDisabled}
-					>
-						Next
-						{isLoading ? (
-							<Loader2 className="animate-spin" />
+				<Button
+					variant="solid"
+					color="primary"
+					className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
+					onClick={handleOnNext}
+					disabled={isNextDisabled}
+					suffixIcon={
+						isLoading ? (
+							<Loader2 className="animate-spin" size={12} />
 						) : (
-							<ArrowRight size={14} />
-						)}
-					</Button>
-				</div>
+							<ArrowRight size={12} />
+						)
+					}
+				>
+					Next
+				</Button>
 			</div>
 		</div>
 	);

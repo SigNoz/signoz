@@ -1,8 +1,11 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import '../OnboardingQuestionaire.styles.scss';
 
+import { Button } from '@signozhq/button';
+import { Checkbox } from '@signozhq/checkbox';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Checkbox, Input, Typography } from 'antd';
+import { Input } from '@signozhq/input';
+import { Typography } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 import logEvent from 'api/common/logEvent';
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
@@ -95,12 +98,15 @@ export function AboutSigNozQuestions({
 
 	return (
 		<div className="questions-container">
-			<Typography.Title level={3} className="title">
-				Tell Us About Your Interest in SigNoz
-			</Typography.Title>
-			<Typography.Paragraph className="sub-title">
-				We&apos;d love to know a little bit about you and your interest in SigNoz
-			</Typography.Paragraph>
+			<div className="onboarding-header-section">
+				<div className="onboarding-header-icon">🧴</div>
+				<Typography.Title level={4} className="onboarding-header-title">
+					Set up your workspace
+				</Typography.Title>
+				<Typography.Paragraph className="onboarding-header-subtitle">
+					Tailor SigNoz to suit your observability needs.
+				</Typography.Paragraph>
+			</div>
 
 			<div className="questions-form-container">
 				<div className="questions-form">
@@ -124,22 +130,22 @@ export function AboutSigNozQuestions({
 								<div key={option} className="checkbox-item">
 									<Checkbox
 										checked={interestInSignoz.includes(option)}
-										onChange={(e): void => handleInterestChange(option, e.target.checked)}
-									>
-										{interestedInOptions[option]}
-									</Checkbox>
+										onCheckedChange={(checked): void =>
+											handleInterestChange(option, checked)
+										}
+										labelName={interestedInOptions[option]}
+									/>
 								</div>
 							))}
 
 							<div className="checkbox-item">
 								<Checkbox
 									checked={interestInSignoz.includes('Others')}
-									onChange={(e): void =>
-										handleInterestChange('Others', e.target.checked)
+									onCheckedChange={(checked): void =>
+										handleInterestChange('Others', checked)
 									}
-								>
-									Others
-								</Checkbox>
+									labelName="Others"
+								/>
 								{interestInSignoz.includes('Others') && (
 									<Input
 										type="text"
@@ -162,20 +168,25 @@ export function AboutSigNozQuestions({
 					</div>
 				</div>
 
-				<div className="next-prev-container">
-					<Button type="default" className="next-button" onClick={handleOnBack}>
-						<ArrowLeft size={14} />
+				<div className="onboarding-buttons-container">
+					<Button
+						variant="outlined"
+						color="secondary"
+						className="onboarding-back-button"
+						onClick={handleOnBack}
+						prefixIcon={<ArrowLeft size={12} />}
+					>
 						Back
 					</Button>
-
 					<Button
-						type="primary"
-						className={`next-button ${isNextDisabled ? 'disabled' : ''}`}
+						variant="solid"
+						color="primary"
+						className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
 						onClick={handleOnNext}
 						disabled={isNextDisabled}
+						suffixIcon={<ArrowRight size={12} />}
 					>
 						Next
-						<ArrowRight size={14} />
 					</Button>
 				</div>
 			</div>
