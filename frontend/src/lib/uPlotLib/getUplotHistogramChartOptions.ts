@@ -37,6 +37,7 @@ type GetUplotHistogramChartOptionsProps = {
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	legendScrollPosition?: number;
 	setLegendScrollPosition?: (position: number) => void;
+	colorMapping?: Record<string, string>;
 };
 
 type GetHistogramSeriesProps = {
@@ -46,6 +47,7 @@ type GetHistogramSeriesProps = {
 	graphsVisibilityStates?: boolean[];
 	isMergedSeries?: boolean;
 	isDarkMode: boolean;
+	colorMapping?: Record<string, string>;
 };
 
 const { bars } = uPlot.paths;
@@ -68,6 +70,7 @@ const getHistogramSeries = ({
 	graphsVisibilityStates,
 	isMergedSeries,
 	isDarkMode,
+	colorMapping,
 }: GetHistogramSeriesProps): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
@@ -90,10 +93,12 @@ const getHistogramSeries = ({
 			? ''
 			: getLabelName(metric, queryName || '', legend);
 
-		const color = generateColor(
-			label,
-			isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-		);
+        const color =
+	      colorMapping?.[label || ''] ||  
+	      generateColor(
+		    label || '',
+		    isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+	      );
 
 		const pointSize = seriesList[i].values.length > 1 ? 5 : 10;
 		const showPoints = !(seriesList[i].values.length > 1);
@@ -133,6 +138,7 @@ export const getUplotHistogramChartOptions = ({
 	panelType,
 	legendScrollPosition,
 	setLegendScrollPosition,
+	colorMapping,
 }: GetUplotHistogramChartOptionsProps): uPlot.Options =>
 	({
 		id,
@@ -182,6 +188,7 @@ export const getUplotHistogramChartOptions = ({
 			graphsVisibilityStates,
 			isMergedSeries: mergeAllQueries,
 			isDarkMode,
+			colorMapping,
 		}),
 		hooks: {
 			ready: [
