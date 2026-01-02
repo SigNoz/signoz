@@ -1,7 +1,9 @@
 """
 Summary:
-This test file contains integration tests for Time-To-Live (TTL) and custom retention policies in SigNoz's query service.
-It verifies the correct behavior of TTL settings for traces, metrics, and logs, including support for cold storage, custom retention conditions, error handling for invalid configurations, and retrieval of TTL settings.
+This test file contains integration tests for Time-To-Live (TTL) and custom retention policies
+in SigNoz's query service. It verifies the correct behavior of TTL settings for traces, metrics,
+and logs, including support for cold storage, custom retention conditions, error handling for
+invalid configurations, and retrieval of TTL settings.
 """
 
 import time
@@ -18,36 +20,38 @@ from fixtures.logs import Logs
 
 logger = setup_logger(__name__)
 
-
+"""
+Helper functions to verify TTL and partition settings in Clickhouse tables.
+NOTE: These functions only works when last inserted data is in the latest partition.
+"""
 def verify_table_partition_expressions(
-    signoz: types.SigNoz, expected_partition_expressions_map: dict[str, str]
+    signoz: types.SigNoz, expected_partition_expressions_map: dict[str, tuple[int, int, int]]
 ):
     """
     Verify table partitions exist with data and have correct retention values.
 
     Args:
         signoz: SigNoz fixture providing access to telemetry store
-        expected_partition_expressions_map: Dictionary mapping table names to expected partition expressions
-                            Example: {"logs_v2": "('2025-12-30',10,15)", "logs_v2_resource": "('2025-12-30',10,15)"}
+        expected_partition_expressions_map: Dictionary mapping table names to expected count of partitions
+                            Example: {"logs_v2": (10, 15, 1), "logs_v2_resource": (10, 15, 1)}
     """
 
+    time.sleep(2)  # Wait for partitions to be created
     for table in expected_partition_expressions_map:
-        partition_query = f"SELECT partition FROM system.parts WHERE `table` = '{table}' AND active = 1 ORDER BY modification_time DESC LIMIT 1"
-        partition_result = signoz.telemetrystore.conn.query(partition_query).result_rows
-        assert (
-            len(partition_result) >= 1
-        ), f"No active partitions found in {table} table"
+        # Query to check if ANY row exists with the expected retention values
+        # This verifies that data was inserted into a partition with the correct TTL
+        retention, retention_cold, count = expected_partition_expressions_map[table]
 
-        partition = partition_result[0]
-        if isinstance(partition, tuple) and len(partition) > 0:
-            partition_str = partition[0]
-        else:
-            partition_str = partition
+        retention_query = (
+            f"SELECT COUNT(*) FROM {table} "
+            f"WHERE _retention_days = {retention} AND _retention_days_cold = {retention_cold}"
+        )
+        retention_result = signoz.telemetrystore.conn.query(retention_query).result_rows
 
-        if isinstance(partition_str, str):
-            assert expected_partition_expressions_map[table] in partition_str
-        else:
-            raise AssertionError(f"Unexpected partition format: {partition}")
+        assert retention_result[0][0] == count, (
+            f"No data found with retention values '{retention}, {retention_cold}' in table {table}. "
+            f"Expected at least one row with these retention settings."
+        )
 
 
 def verify_table_retention_expression(
@@ -72,9 +76,10 @@ def verify_table_retention_expression(
         assert all(" SETTINGS" in r[0] for r in result)
 
         ttl_part = result[0][0].split("TTL ")[1].split(" SETTINGS")[0]
-        assert (
-            table_expected_retention_expression_map[table] in ttl_part
-        ), f"Expected retention expression {table_expected_retention_expression_map[table]} not found in table {table} TTL part {ttl_part}"
+        assert table_expected_retention_expression_map[table] in ttl_part, (
+            f"Expected retention expression {table_expected_retention_expression_map[table]} "
+            f"not found in table {table} TTL part {ttl_part}"
+        )
 
 
 @pytest.fixture(name="ttl_test_suite_setup", scope="package", autouse=True)
@@ -189,7 +194,8 @@ def test_set_ttl_traces_with_cold_storage(
             "usage_explorer": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
             "dependency_graph_minutes_v2": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
             "trace_summary": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
-            # "span_attributes_keys": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME", # Span attributes keys table does not have cold storage configured
+            # "span_attributes_keys": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME",
+            # Span attributes keys table does not have cold storage configured
         },
     )
 
@@ -257,9 +263,9 @@ def test_set_ttl_metrics_with_cold_storage(
 
     payload = {
         "type": "metrics",
-        "duration": f"{91*24}h",  # 91 days in hours
+        "duration": f"{test_duration_hours}h",  # 91 days in hours
         "coldStorage": "cold",
-        "toColdDuration": f"{21*24}h",  # 21 days in hours
+        "toColdDuration": f"{test_cold_duration_hours}h",  # 21 days in hours
     }
 
     headers = {
@@ -298,13 +304,20 @@ def test_set_ttl_metrics_with_cold_storage(
     verify_table_retention_expression(
         signoz,
         {
-            "samples_v4": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",  # 21 days in seconds
-            "samples_v4_agg_5m": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",  # 21 days in seconds
-            "samples_v4_agg_30m": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",  # 21 days in seconds
-            "time_series_v4": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",  # 21 days in seconds
-            "time_series_v4_6hrs": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",  # 21 days in seconds
-            "time_series_v4_1day": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",  # 21 days in seconds
-            "time_series_v4_1week": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",  # 21 days in seconds
+            # 21 days in seconds
+            "samples_v4": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            # 21 days in seconds
+            "samples_v4_agg_5m": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            # 21 days in seconds
+            "samples_v4_agg_30m": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            # 21 days in seconds
+            "time_series_v4": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            # 21 days in seconds
+            "time_series_v4_6hrs": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            # 21 days in seconds
+            "time_series_v4_1day": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            # 21 days in seconds
+            "time_series_v4_1week": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
         },
     )
 
@@ -380,8 +393,8 @@ def test_set_custom_retention_ttl_basic(
     verify_table_partition_expressions(
         signoz,
         {
-            "logs_v2": f"{test_retention_days}",
-            "logs_v2_resource": f"{test_retention_days}",
+            "signoz_logs.logs_v2": (test_retention_days, 0, 1),
+            "signoz_logs.logs_v2_resource": (test_retention_days, 0, 1),
         },
     )
 
@@ -442,8 +455,8 @@ def test_set_custom_retention_ttl_basic_with_cold_storage(
     verify_table_partition_expressions(
         signoz,
         {
-            "logs_v2": f"{test_retention_days},{test_retention_days_cold}",
-            "logs_v2_resource": f"{test_retention_days},{test_retention_days_cold}",
+            "signoz_logs.logs_v2": (test_retention_days, test_retention_days_cold, 1),
+            "signoz_logs.logs_v2_resource": (test_retention_days, test_retention_days_cold, 1),
         },
     )
 
@@ -452,8 +465,10 @@ def test_set_custom_retention_ttl_basic_with_cold_storage(
         {
             "logs_v2": "toIntervalDay(_retention_days_cold) TO VOLUME 'cold'",
             "logs_v2_resource": "toIntervalDay(_retention_days_cold) TO VOLUME 'cold'",
-            "logs_attribute_keys": f"toIntervalDay({test_retention_days})",  # Cold storage retention is not applicable for attribute keys table
-            "logs_resource_keys": f"toIntervalDay({test_retention_days})",  # Cold storage retention is not applicable for resource keys table
+            # Cold storage retention is not applicable for attribute keys table
+            "logs_attribute_keys": f"toIntervalDay({test_retention_days})",
+            # Cold storage retention is not applicable for resource keys table
+            "logs_resource_keys": f"toIntervalDay({test_retention_days})",
         },
     )
 
@@ -500,18 +515,24 @@ def test_set_custom_retention_ttl_basic_fallback(
     verify_table_retention_expression(
         signoz,
         {
-            "logs_v2": f"toIntervalSecond({test_retention_days * 24 * 3600})",  # 101 days in seconds
-            "logs_v2_resource": f"toIntervalSecond({test_retention_days * 24 * 3600})",  # 101 days in seconds
-            "logs_attribute_keys": f"toIntervalSecond({test_retention_days * 24 * 3600})",  # Cold storage retention is not applicable for attribute keys table
-            "logs_resource_keys": f"toIntervalSecond({test_retention_days * 24 * 3600})",  # Cold storage retention is not applicable for resource keys table
+            # 101 days in seconds
+            "logs_v2": f"toIntervalSecond({test_retention_days * 24 * 3600})",
+            # 101 days in seconds
+            "logs_v2_resource": f"toIntervalSecond({test_retention_days * 24 * 3600})",
+            # Cold storage retention is not applicable for attribute keys table
+            "logs_attribute_keys": f"toIntervalSecond({test_retention_days * 24 * 3600})",
+            # Cold storage retention is not applicable for resource keys table
+            "logs_resource_keys": f"toIntervalSecond({test_retention_days * 24 * 3600})",
         },
     )
 
     verify_table_retention_expression(
         signoz,
         {
-            "logs_v2": f"toIntervalSecond({test_retention_days_cold * 24 * 3600}) TO VOLUME 'cold'",  # 17 days in seconds
-            "logs_v2_resource": f"toIntervalSecond({test_retention_days_cold * 24 * 3600}) TO VOLUME 'cold'",  # 17 days in seconds
+            # 17 days in seconds
+            "logs_v2": f"toIntervalSecond({test_retention_days_cold * 24 * 3600}) TO VOLUME 'cold'",
+            # 17 days in seconds
+            "logs_v2_resource": f"toIntervalSecond({test_retention_days_cold * 24 * 3600}) TO VOLUME 'cold'",
         },
     )
 
@@ -626,13 +647,10 @@ def test_set_custom_retention_ttl_with_conditions(
     verify_table_partition_expressions(
         signoz,
         {
-            "logs_v2": f"{test_retention_days_condition},{test_retention_days_cold}",
-            "logs_v2_resource": f"{test_retention_days_condition},{test_retention_days_cold}",
+            "signoz_logs.logs_v2": (test_retention_days_condition, test_retention_days_cold, 1),
+            "signoz_logs.logs_v2_resource": (test_retention_days_condition, test_retention_days_cold, 1),
         },
     )
-
-    # wait for some time before inserting new data
-    time.sleep(2)
 
     # insert some logs, these should go test_retention_days (30 days) partition
     logs = [
@@ -644,8 +662,8 @@ def test_set_custom_retention_ttl_with_conditions(
     verify_table_partition_expressions(
         signoz,
         {
-            "logs_v2": f"{test_retention_days},{test_retention_days_cold}",
-            "logs_v2_resource": f"{test_retention_days},{test_retention_days_cold}",
+            "signoz_logs.logs_v2": (test_retention_days, test_retention_days_cold, 1),
+            "signoz_logs.logs_v2_resource": (test_retention_days, test_retention_days_cold, 1),
         },
     )
 
@@ -654,8 +672,10 @@ def test_set_custom_retention_ttl_with_conditions(
         {
             "logs_v2": "toIntervalDay(_retention_days_cold) TO VOLUME 'cold'",
             "logs_v2_resource": "toIntervalDay(_retention_days_cold) TO VOLUME 'cold'",
-            "logs_attribute_keys": f"toIntervalDay({max(test_retention_days, test_retention_days_condition)})",  # Cold storage retention is not applicable for attribute keys table
-            "logs_resource_keys": f"toIntervalDay({max(test_retention_days, test_retention_days_condition)})",  # Cold storage retention is not applicable for resource keys table
+            # Cold storage retention is not applicable for attribute keys table
+            "logs_attribute_keys": f"toIntervalDay({max(test_retention_days, test_retention_days_condition)})",
+            # Cold storage retention is not applicable for resource keys table
+            "logs_resource_keys": f"toIntervalDay({max(test_retention_days, test_retention_days_condition)})",
         },
     )
 
@@ -881,10 +901,10 @@ def test_set_ttl_logs_success(
     verify_table_retention_expression(
         signoz,
         {
-            "logs_v2": f"toIntervalSecond({test_retention_days * 24*3600})",  # 150 days in seconds
-            "logs_v2_resource": f"toIntervalSecond({test_retention_days * 24*3600})",  # 150 days in seconds
-            "logs_attribute_keys": f"toIntervalSecond({test_retention_days * 24*3600})",  # 150 days in seconds
-            "logs_resource_keys": f"toIntervalSecond({test_retention_days * 24*3600})",  # 150 days in seconds
+            "logs_v2": f"toIntervalSecond({test_retention_days * 24 * 3600})",  # 150 days in seconds
+            "logs_v2_resource": f"toIntervalSecond({test_retention_days * 24 * 3600})",  # 150 days in seconds
+            "logs_attribute_keys": f"toIntervalSecond({test_retention_days * 24 * 3600})",  # 150 days in seconds
+            "logs_resource_keys": f"toIntervalSecond({test_retention_days * 24 * 3600})",  # 150 days in seconds
         },
     )
 

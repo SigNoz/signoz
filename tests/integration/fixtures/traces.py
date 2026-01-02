@@ -81,7 +81,9 @@ class TracesResourceOrAttributeKeys(ABC):
         self.is_column = is_column
 
     def np_arr(self) -> np.array:
-        return np.array([self.name, self.tag_type, self.datatype, self.is_column], dtype=object)
+        return np.array(
+            [self.name, self.tag_type, self.datatype, self.is_column], dtype=object
+        )
 
 
 class TracesTagAttributes(ABC):

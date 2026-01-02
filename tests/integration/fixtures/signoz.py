@@ -105,7 +105,7 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
                         attempt + 1,
                         container,
                     )
-                    time.sleep(2)
+                time.sleep(2)
             raise TimeoutError("timeout exceeded while waiting")
 
         try:

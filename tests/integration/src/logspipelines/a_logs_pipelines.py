@@ -8,11 +8,11 @@ and pipeline processing.
 from http import HTTPStatus
 from typing import Callable
 
-import pytest
 import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+
 
 def test_create_logs_pipeline_success(
     signoz: types.SigNoz,
@@ -49,12 +49,12 @@ def test_create_logs_pipeline_success(
                                 "dataType": "string",
                                 "type": "",
                                 "isColumn": True,
-                                "isJSON": False
+                                "isJSON": False,
                             },
                             "value": ".*",
-                            "op": "regex"
+                            "op": "regex",
                         }
-                    ]
+                    ],
                 },
                 "config": [
                     {
@@ -64,9 +64,9 @@ def test_create_logs_pipeline_success(
                         "parse_from": "body",
                         "parse_to": "attributes",
                         "regex": r"^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (?P<level>\w+) (?P<message>.*)$",
-                        "on_error": "send"
+                        "on_error": "send",
                     }
-                ]
+                ],
             }
         ]
     }
@@ -98,7 +98,9 @@ def test_create_logs_pipeline_success(
 
     # Verify version information
     assert "version" in response_data["data"]
-    assert response_data["data"]["version"] >= 1  # Version might be higher if other tests ran first
+    assert (
+        response_data["data"]["version"] >= 1
+    )  # Version might be higher if other tests ran first
 
 
 def test_list_logs_pipelines_success(
@@ -136,12 +138,12 @@ def test_list_logs_pipelines_success(
                                 "dataType": "string",
                                 "type": "",
                                 "isColumn": True,
-                                "isJSON": False
+                                "isJSON": False,
                             },
                             "value": ".*",
-                            "op": "regex"
+                            "op": "regex",
                         }
-                    ]
+                    ],
                 },
                 "config": [
                     {
@@ -150,9 +152,9 @@ def test_list_logs_pipelines_success(
                         "orderId": 1,
                         "parse_from": "body",
                         "parse_to": "attributes",
-                        "on_error": "send"
+                        "on_error": "send",
                     }
-                ]
+                ],
             }
         ]
     }
@@ -226,12 +228,12 @@ def test_list_logs_pipelines_by_version(
                                 "dataType": "string",
                                 "type": "",
                                 "isColumn": True,
-                                "isJSON": False
+                                "isJSON": False,
                             },
                             "value": ".*",
-                            "op": "regex"
+                            "op": "regex",
                         }
-                    ]
+                    ],
                 },
                 "config": [
                     {
@@ -240,9 +242,9 @@ def test_list_logs_pipelines_by_version(
                         "orderId": 1,
                         "parse_from": "body",
                         "parse_to": "attributes",
-                        "on_error": "send"
+                        "on_error": "send",
                     }
-                ]
+                ],
             }
         ]
     }
@@ -282,12 +284,12 @@ def test_list_logs_pipelines_by_version(
                                 "dataType": "string",
                                 "type": "",
                                 "isColumn": True,
-                                "isJSON": False
+                                "isJSON": False,
                             },
                             "value": ".*",
-                            "op": "regex"
+                            "op": "regex",
                         }
-                    ]
+                    ],
                 },
                 "config": [
                     {
@@ -296,9 +298,9 @@ def test_list_logs_pipelines_by_version(
                         "orderId": 1,
                         "parse_from": "body",
                         "parse_to": "attributes",
-                        "on_error": "send"
+                        "on_error": "send",
                     }
-                ]
+                ],
             }
         ]
     }
@@ -385,12 +387,12 @@ def test_preview_logs_pipelines_success(
                                 "dataType": "string",
                                 "type": "",
                                 "isColumn": True,
-                                "isJSON": False
+                                "isJSON": False,
                             },
                             "value": ".*",
-                            "op": "regex"
+                            "op": "regex",
                         }
-                    ]
+                    ],
                 },
                 "config": [
                     {
@@ -398,9 +400,9 @@ def test_preview_logs_pipelines_success(
                         "id": "json-parser-preview",
                         "parse_from": "body",
                         "parse_to": "attributes",
-                        "on_error": "send"
+                        "on_error": "send",
                     }
-                ]
+                ],
             }
         ],
         "logs": [
@@ -417,11 +419,9 @@ def test_preview_logs_pipelines_success(
                 "attributes_int": {},
                 "attributes_float": {},
                 "attributes_bool": {},
-                "resources_string": {
-                    "service.name": "test-service"
-                }
+                "resources_string": {"service.name": "test-service"},
             }
-        ]
+        ],
     }
 
     response = requests.post(
@@ -480,12 +480,12 @@ def test_create_multiple_pipelines_success(
                                 "dataType": "string",
                                 "type": "",
                                 "isColumn": True,
-                                "isJSON": False
+                                "isJSON": False,
                             },
                             "value": ".*",
-                            "op": "regex"
+                            "op": "regex",
                         }
-                    ]
+                    ],
                 },
                 "config": [
                     {
@@ -494,9 +494,9 @@ def test_create_multiple_pipelines_success(
                         "orderId": 1,
                         "parse_from": "body",
                         "parse_to": "attributes",
-                        "on_error": "send"
+                        "on_error": "send",
                     }
-                ]
+                ],
             },
             {
                 "id": "",
@@ -514,12 +514,12 @@ def test_create_multiple_pipelines_success(
                                 "dataType": "string",
                                 "type": "",
                                 "isColumn": True,
-                                "isJSON": False
+                                "isJSON": False,
                             },
                             "value": ".*",
-                            "op": "regex"
+                            "op": "regex",
                         }
-                    ]
+                    ],
                 },
                 "config": [
                     {
@@ -529,10 +529,10 @@ def test_create_multiple_pipelines_success(
                         "parse_from": "body",
                         "parse_to": "attributes",
                         "regex": r"^(?P<level>\w+): (?P<message>.*)$",
-                        "on_error": "send"
+                        "on_error": "send",
                     }
-                ]
-            }
+                ],
+            },
         ]
     }
 
@@ -596,12 +596,12 @@ def test_delete_all_pipelines_success(
                                 "dataType": "string",
                                 "type": "",
                                 "isColumn": True,
-                                "isJSON": False
+                                "isJSON": False,
                             },
                             "value": ".*",
-                            "op": "regex"
+                            "op": "regex",
                         }
-                    ]
+                    ],
                 },
                 "config": [
                     {
@@ -610,9 +610,9 @@ def test_delete_all_pipelines_success(
                         "orderId": 1,
                         "parse_from": "body",
                         "parse_to": "attributes",
-                        "on_error": "send"
+                        "on_error": "send",
                     }
-                ]
+                ],
             }
         ]
     }
@@ -631,9 +631,7 @@ def test_delete_all_pipelines_success(
     initial_version = create_response.json()["data"]["version"]
 
     # Delete all pipelines by sending empty array
-    delete_payload = {
-        "pipelines": []
-    }
+    delete_payload = {"pipelines": []}
 
     delete_response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/logs/pipelines"),
@@ -668,6 +666,9 @@ def test_delete_all_pipelines_success(
     assert "data" in list_data
     assert "pipelines" in list_data["data"]
     # Note: Integration pipelines might still be present, so we check user-created ones
-    user_pipelines = [p for p in list_data["data"]["pipelines"] if p.get("name") == "Pipeline to Delete"]
+    user_pipelines = [
+        p
+        for p in list_data["data"]["pipelines"]
+        if p.get("name") == "Pipeline to Delete"
+    ]
     assert len(user_pipelines) == 0
-

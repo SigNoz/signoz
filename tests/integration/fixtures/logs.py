@@ -114,7 +114,7 @@ class Logs(ABC):
 
     def __init__(
         self,
-        timestamp: datetime.datetime = datetime.datetime.now(),
+        timestamp: datetime.datetime = None, # type: ignore
         resources: dict[str, Any] = {},
         attributes: dict[str, Any] = {},
         body: str = "default body",
@@ -129,6 +129,9 @@ class Logs(ABC):
         self.tag_attributes = []
         self.attribute_keys = []
         self.resource_keys = []
+
+        if timestamp is None:
+            timestamp = datetime.datetime.now()
 
         # Convert timestamp to uint64 nanoseconds
         self.timestamp = np.uint64(int(timestamp.timestamp() * 1e9))
@@ -323,7 +326,7 @@ class Logs(ABC):
                 self.scope_name,
                 self.scope_version,
                 self.scope_string,
-                self.resources_string,
+                self.resource[0].labels,
             ]
         )
 
@@ -490,13 +493,13 @@ def ttl_legacy_logs_v2_resource_table_setup(request, signoz: types.SigNoz):
 
     # Setup code
     result = signoz.telemetrystore.conn.query(
-        f"RENAME TABLE signoz_logs.logs_v2_resource TO signoz_logs.logs_v2_resource_backup ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'; "
+        f"RENAME TABLE signoz_logs.logs_v2_resource TO signoz_logs.logs_v2_resource_backup ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
     ).result_rows
     assert result is not None
     # Add cleanup to restore original table
     request.addfinalizer(
         lambda: signoz.telemetrystore.conn.query(
-            f"RENAME TABLE signoz_logs.logs_v2_resource_backup TO signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'; "
+            f"RENAME TABLE signoz_logs.logs_v2_resource_backup TO signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
         )
     )
 
