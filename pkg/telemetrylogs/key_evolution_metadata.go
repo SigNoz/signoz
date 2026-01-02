@@ -65,7 +65,7 @@ func NewKeyEvolutionMetadata(telemetryStore telemetrystore.TelemetryStore, cache
 	}
 }
 
-func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, orgID valuer.UUID, key string) []*telemetrytypes.KeyEvolutionMetadata {
+func (k *KeyEvolutionMetadata) fetchFromClickHouse(ctx context.Context, key string) []*telemetrytypes.KeyEvolutionMetadata {
 	store := k.telemetryStore
 	logger := k.logger
 
@@ -148,7 +148,7 @@ func (k *KeyEvolutionMetadata) Get(ctx context.Context, orgId valuer.UUID, keyNa
 		}
 
 		// Cache miss - fetch from ClickHouse and try again
-		metadata := k.fetchFromClickHouse(ctx, orgId, keyName)
+		metadata := k.fetchFromClickHouse(ctx, keyName)
 
 		if metadata != nil {
 			cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName

@@ -220,7 +220,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
 		OrgID: orgId.String(),
 	})
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(mockKeyEvolutionMetadata(ctx, orgId, releaseTime))
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(mockKeyEvolutionMetadata(orgId, releaseTime))
 
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm)

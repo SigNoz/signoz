@@ -1,7 +1,6 @@
 package telemetrylogs
 
 import (
-	"context"
 	"strings"
 	"time"
 
@@ -956,7 +955,7 @@ func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryF
 }
 
 // mockKeyEvolutionMetadata builds a mock org-scoped key evolution metadata map for a column evolution.
-func mockKeyEvolutionMetadata(ctx context.Context, orgId valuer.UUID, releaseTime time.Time) map[string]map[string][]*telemetrytypes.KeyEvolutionMetadata {
+func mockKeyEvolutionMetadata(orgId valuer.UUID, releaseTime time.Time) map[string]map[string][]*telemetrytypes.KeyEvolutionMetadata {
 	metadata := make(map[string]map[string][]*telemetrytypes.KeyEvolutionMetadata)
 
 	// Make sure to initialize the inner map before assignment to prevent 'assignment to entry in nil map'
