@@ -93,10 +93,8 @@ const getHistogramSeries = ({
 			? ''
 			: getLabelName(metric, queryName || '', legend);
 
-		const labelForColorMapping = legend || label;
-
 		const color =
-			colorMapping?.[labelForColorMapping || ''] ||
+			colorMapping?.[label || ''] ||
 			generateColor(
 				label || '',
 				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
