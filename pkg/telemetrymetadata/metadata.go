@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -978,7 +979,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
 			FieldKeys:        keys,
-        }, 0, 0)
+		}, 0, 0)
 		if err == nil {
 			sb.AddWhereClause(whereClause.WhereClause)
 		} else {
@@ -1002,20 +1003,20 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 			// search on attributes
 			key.FieldContext = telemetrytypes.FieldContextAttribute
-            cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
 			if err == nil {
 				conds = append(conds, cond)
 			}
 
 			// search on resource
 			key.FieldContext = telemetrytypes.FieldContextResource
-            cond, err = t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err = t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
 			if err == nil {
 				conds = append(conds, cond)
 			}
 			key.FieldContext = origContext
 		} else {
-            cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
 			if err == nil {
 				conds = append(conds, cond)
 			}
@@ -1614,6 +1615,72 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Cont
 		}
 
 		result[metricName] = temporality
+	}
+
+	return result, nil
+}
+
+// GetFirstSeenFromMetricMetadata queries the metadata table to get the first_seen timestamp
+// for each metric-attribute-value combination.
+// Returns a map where key is `telemetrytypes.MetricMetadataLookupKey` and value is first_seen in milliseconds.
+func (t *telemetryMetaStore) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []telemetrytypes.MetricMetadataLookupKey) (map[telemetrytypes.MetricMetadataLookupKey]int64, error) {
+	// Chunk the lookup keys to avoid overly large queries (max 300 tuples per query)
+	const chunkSize = 300
+	result := make(map[telemetrytypes.MetricMetadataLookupKey]int64)
+
+	for i := 0; i < len(lookupKeys); i += chunkSize {
+		end := i + chunkSize
+		if end > len(lookupKeys) {
+			end = len(lookupKeys)
+		}
+		chunk := lookupKeys[i:end]
+
+		// Build the IN clause values - ClickHouse uses tuple syntax with placeholders
+		var valueStrings []string
+		var args []interface{}
+
+		for _, key := range chunk {
+			valueStrings = append(valueStrings, "(?, ?, ?)")
+			args = append(args, key.MetricName, key.AttributeName, key.AttributeValue)
+		}
+
+		query := fmt.Sprintf(`
+			SELECT 
+				m.metric_name,
+				m.attr_name,
+				m.attr_string_value,
+				min(m.last_reported_unix_milli) AS first_seen
+			FROM %s.%s AS m
+			WHERE (m.metric_name, m.attr_name, m.attr_string_value) IN (%s)
+			GROUP BY m.metric_name, m.attr_name, m.attr_string_value
+			ORDER BY first_seen`,
+			t.metricsDBName, t.metricsFieldsTblName, strings.Join(valueStrings, ", "))
+
+		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+		rows, err := t.telemetrystore.ClickhouseDB().Query(valueCtx, query, args...)
+		if err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to query metadata for first_seen")
+		}
+
+		for rows.Next() {
+			var metricName, attrName, attrValue string
+			var firstSeen uint64
+			if err := rows.Scan(&metricName, &attrName, &attrValue, &firstSeen); err != nil {
+				rows.Close()
+				return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan metadata first_seen result")
+			}
+			result[telemetrytypes.MetricMetadataLookupKey{
+				MetricName:     metricName,
+				AttributeName:  attrName,
+				AttributeValue: attrValue,
+			}] = int64(firstSeen)
+		}
+
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to iterate metadata first_seen results")
+		}
+		rows.Close()
 	}
 
 	return result, nil

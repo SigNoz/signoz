@@ -516,9 +516,3 @@ type LogsAggregateParams struct {
 	Function       string `json:"function"`
 	StepSeconds    int    `json:"step"`
 }
-
-type MetricMetadataLookupKey struct {
-	MetricName     string
-	AttributeName  string
-	AttributeValue string
-}

@@ -96,7 +96,6 @@ const (
 	signozLocalTableAttributesMetadata = "attributes_metadata"
 
 	signozUpdatedMetricsMetadataLocalTable = "updated_metadata"
-	signozMetricsMetadataLocalTable        = "metadata"
 	signozUpdatedMetricsMetadataTable      = "distributed_updated_metadata"
 	minTimespanForProgressiveSearch        = time.Hour
 	minTimespanForProgressiveSearchMargin  = time.Minute
@@ -6439,73 +6438,6 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 		}
 	}
 	return cachedMetadata, nil
-}
-
-// GetFirstSeenFromMetricMetadata queries the metadata table to get the first_seen timestamp
-// for each metric-attribute-value combination.
-// Returns a map where key is `model.MetricMetadataLookupKey` and value is first_seen in milliseconds.
-func (r *ClickHouseReader) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []model.MetricMetadataLookupKey) (map[model.MetricMetadataLookupKey]int64, error) {
-	// Chunk the lookup keys to avoid overly large queries (max 300 tuples per query)
-	const chunkSize = 300
-	result := make(map[model.MetricMetadataLookupKey]int64)
-
-	for i := 0; i < len(lookupKeys); i += chunkSize {
-		end := i + chunkSize
-		if end > len(lookupKeys) {
-			end = len(lookupKeys)
-		}
-		chunk := lookupKeys[i:end]
-
-		// Build the IN clause values - ClickHouse uses tuple syntax with placeholders
-		var valueStrings []string
-		var args []interface{}
-
-		for _, key := range chunk {
-			valueStrings = append(valueStrings, "(?, ?, ?)")
-			args = append(args, key.MetricName, key.AttributeName, key.AttributeValue)
-		}
-
-		query := fmt.Sprintf(`
-			SELECT 
-				m.metric_name,
-				m.attr_name,
-				m.attr_string_value,
-				min(m.last_reported_unix_milli) AS first_seen
-			FROM %s.%s AS m
-			WHERE (m.metric_name, m.attr_name, m.attr_string_value) IN (%s)
-			GROUP BY m.metric_name, m.attr_name, m.attr_string_value
-			ORDER BY first_seen`,
-			signozMetricDBName, signozMetricsMetadataLocalTable, strings.Join(valueStrings, ", "))
-
-		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-		rows, err := r.db.Query(valueCtx, query, args...)
-		if err != nil {
-			zap.L().Error("Error querying metadata for first_seen", zap.Error(err))
-			return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metadata for first_seen: %v", err)}
-		}
-
-		for rows.Next() {
-			var metricName, attrName, attrValue string
-			var firstSeen uint64
-			if err := rows.Scan(&metricName, &attrName, &attrValue, &firstSeen); err != nil {
-				rows.Close()
-				return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error scanning metadata first_seen result: %v", err)}
-			}
-			result[model.MetricMetadataLookupKey{
-				MetricName:     metricName,
-				AttributeName:  attrName,
-				AttributeValue: attrValue,
-			}] = int64(firstSeen)
-		}
-
-		if err := rows.Err(); err != nil {
-			rows.Close()
-			return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error iterating metadata first_seen results: %v", err)}
-		}
-		rows.Close()
-	}
-
-	return result, nil
 }
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams) (*[]model.SearchSpansResult, error) {

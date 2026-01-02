@@ -53,6 +53,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 			WithSendUnmatched(),
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
+			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {
@@ -74,6 +75,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 			WithSendUnmatched(),
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
+			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {

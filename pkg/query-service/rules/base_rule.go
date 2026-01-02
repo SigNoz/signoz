@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
@@ -89,6 +90,8 @@ type BaseRule struct {
 
 	sqlstore sqlstore.SQLStore
 
+	metadataStore telemetrytypes.MetadataStore
+
 	evaluation ruletypes.Evaluation
 
 	// newGroupEvalDelay is the grace period for new alert groups
@@ -132,6 +135,12 @@ func WithSQLStore(sqlstore sqlstore.SQLStore) RuleOption {
 func WithQueryParser(queryParser queryparser.QueryParser) RuleOption {
 	return func(r *BaseRule) {
 		r.queryParser = queryParser
+	}
+}
+
+func WithMetadataStore(metadataStore telemetrytypes.MetadataStore) RuleOption {
+	return func(r *BaseRule) {
+		r.metadataStore = metadataStore
 	}
 }
 
@@ -613,19 +622,19 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 	}
 
 	// Build lookup keys from series which will be used to query metadata from CH
-	lookupKeys := make([]model.MetricMetadataLookupKey, 0)
-	seriesIdxToLookupKeys := make(map[int][]model.MetricMetadataLookupKey) // series index -> lookup keys
+	lookupKeys := make([]telemetrytypes.MetricMetadataLookupKey, 0)
+	seriesIdxToLookupKeys := make(map[int][]telemetrytypes.MetricMetadataLookupKey) // series index -> lookup keys
 
 	for i := 0; i < len(series); i++ {
 		metricLabelMap := series[i].Labels
 
 		// Collect groupBy attribute-value pairs for this series
-		seriesKeys := make([]model.MetricMetadataLookupKey, 0)
+		seriesKeys := make([]telemetrytypes.MetricMetadataLookupKey, 0)
 
 		for _, metricName := range metricNames {
 			for _, groupByKey := range groupedFields {
 				if attrValue, ok := metricLabelMap[groupByKey]; ok {
-					lookupKey := model.MetricMetadataLookupKey{
+					lookupKey := telemetrytypes.MetricMetadataLookupKey{
 						MetricName:     metricName,
 						AttributeName:  groupByKey,
 						AttributeValue: attrValue,
@@ -649,8 +658,8 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 	}
 
 	// unique lookup keys
-	uniqueLookupKeysMap := make(map[model.MetricMetadataLookupKey]struct{})
-	uniqueLookupKeys := make([]model.MetricMetadataLookupKey, 0)
+	uniqueLookupKeysMap := make(map[telemetrytypes.MetricMetadataLookupKey]struct{})
+	uniqueLookupKeys := make([]telemetrytypes.MetricMetadataLookupKey, 0)
 	for _, key := range lookupKeys {
 		if _, ok := uniqueLookupKeysMap[key]; !ok {
 			uniqueLookupKeysMap[key] = struct{}{}
@@ -658,7 +667,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 		}
 	}
 	// Query metadata for first_seen timestamps
-	firstSeenMap, err := r.reader.GetFirstSeenFromMetricMetadata(ctx, uniqueLookupKeys)
+	firstSeenMap, err := r.metadataStore.GetFirstSeenFromMetricMetadata(ctx, uniqueLookupKeys)
 	if err != nil {
 		return nil, err
 	}
