@@ -41,13 +41,26 @@ def test_create_logs_pipeline_success(
                 "description": "Test pipeline for integration testing",
                 "enabled": True,
                 "filter": {
-                    "operator": "AND",
-                    "items": []
+                    "op": "AND",
+                    "items": [
+                        {
+                            "key": {
+                                "key": "body",
+                                "dataType": "string",
+                                "type": "",
+                                "isColumn": True,
+                                "isJSON": False
+                            },
+                            "value": ".*",
+                            "op": "regex"
+                        }
+                    ]
                 },
                 "config": [
                     {
                         "type": "regex_parser",
                         "id": "regex-parser-1",
+                        "orderId": 1,
                         "parse_from": "body",
                         "parse_to": "attributes",
                         "regex": r"^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (?P<level>\w+) (?P<message>.*)$",
@@ -70,10 +83,12 @@ def test_create_logs_pipeline_success(
 
     assert response.status_code == HTTPStatus.OK
     response_data = response.json()
-    assert "pipelines" in response_data
-    assert len(response_data["pipelines"]) == 1
+    assert response_data["status"] == "success"
+    assert "data" in response_data
+    assert "pipelines" in response_data["data"]
+    assert len(response_data["data"]["pipelines"]) == 1
 
-    pipeline = response_data["pipelines"][0]
+    pipeline = response_data["data"]["pipelines"][0]
     assert pipeline["name"] == "Test Pipeline"
     assert pipeline["alias"] == "test-pipeline"
     assert pipeline["enabled"] is True
@@ -82,8 +97,8 @@ def test_create_logs_pipeline_success(
     assert pipeline["config"][0]["type"] == "regex_parser"
 
     # Verify version information
-    assert "version" in response_data
-    assert response_data["version"] == 1
+    assert "version" in response_data["data"]
+    assert response_data["data"]["version"] >= 1  # Version might be higher if other tests ran first
 
 
 def test_list_logs_pipelines_success(
@@ -113,13 +128,26 @@ def test_list_logs_pipelines_success(
                 "description": "Pipeline for list testing",
                 "enabled": True,
                 "filter": {
-                    "operator": "AND",
-                    "items": []
+                    "op": "AND",
+                    "items": [
+                        {
+                            "key": {
+                                "key": "body",
+                                "dataType": "string",
+                                "type": "",
+                                "isColumn": True,
+                                "isJSON": False
+                            },
+                            "value": ".*",
+                            "op": "regex"
+                        }
+                    ]
                 },
                 "config": [
                     {
                         "type": "json_parser",
                         "id": "json-parser-1",
+                        "orderId": 1,
                         "parse_from": "body",
                         "parse_to": "attributes",
                         "on_error": "send"
@@ -143,7 +171,7 @@ def test_list_logs_pipelines_success(
 
     # List pipelines
     list_response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/logs/pipelines/-1"),
+        signoz.self.host_configs["8080"].get("/api/v1/logs/pipelines/latest"),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -152,11 +180,13 @@ def test_list_logs_pipelines_success(
 
     assert list_response.status_code == HTTPStatus.OK
     list_data = list_response.json()
-    assert "pipelines" in list_data
-    assert len(list_data["pipelines"]) >= 1
+    assert list_data["status"] == "success"
+    assert "data" in list_data
+    assert "pipelines" in list_data["data"]
+    assert len(list_data["data"]["pipelines"]) >= 1
 
     # Verify the created pipeline is in the list
-    pipeline_names = [p["name"] for p in list_data["pipelines"]]
+    pipeline_names = [p["name"] for p in list_data["data"]["pipelines"]]
     assert "List Test Pipeline" in pipeline_names
 
 
@@ -188,13 +218,26 @@ def test_list_logs_pipelines_by_version(
                 "description": "Version 1",
                 "enabled": True,
                 "filter": {
-                    "operator": "AND",
-                    "items": []
+                    "op": "AND",
+                    "items": [
+                        {
+                            "key": {
+                                "key": "body",
+                                "dataType": "string",
+                                "type": "",
+                                "isColumn": True,
+                                "isJSON": False
+                            },
+                            "value": ".*",
+                            "op": "regex"
+                        }
+                    ]
                 },
                 "config": [
                     {
                         "type": "json_parser",
                         "id": "json-parser-v1",
+                        "orderId": 1,
                         "parse_from": "body",
                         "parse_to": "attributes",
                         "on_error": "send"
@@ -216,7 +259,9 @@ def test_list_logs_pipelines_by_version(
 
     assert v1_response.status_code == HTTPStatus.OK
     v1_data = v1_response.json()
-    assert v1_data["version"] == 1
+    assert v1_data["status"] == "success"
+    v1_version = v1_data["data"]["version"]
+    assert v1_version >= 1  # Version might be higher if other tests ran first
 
     # Create version 2
     v2_payload = {
@@ -229,13 +274,26 @@ def test_list_logs_pipelines_by_version(
                 "description": "Version 2",
                 "enabled": True,
                 "filter": {
-                    "operator": "AND",
-                    "items": []
+                    "op": "AND",
+                    "items": [
+                        {
+                            "key": {
+                                "key": "body",
+                                "dataType": "string",
+                                "type": "",
+                                "isColumn": True,
+                                "isJSON": False
+                            },
+                            "value": ".*",
+                            "op": "regex"
+                        }
+                    ]
                 },
                 "config": [
                     {
                         "type": "json_parser",
                         "id": "json-parser-v2",
+                        "orderId": 1,
                         "parse_from": "body",
                         "parse_to": "attributes",
                         "on_error": "send"
@@ -257,11 +315,13 @@ def test_list_logs_pipelines_by_version(
 
     assert v2_response.status_code == HTTPStatus.OK
     v2_data = v2_response.json()
-    assert v2_data["version"] == 2
+    assert v2_data["status"] == "success"
+    v2_version = v2_data["data"]["version"]
+    assert v2_version == v1_version + 1
 
     # List by version 1
     v1_list_response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/logs/pipelines/1"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/logs/pipelines/{v1_version}"),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -270,13 +330,14 @@ def test_list_logs_pipelines_by_version(
 
     assert v1_list_response.status_code == HTTPStatus.OK
     v1_list_data = v1_list_response.json()
-    assert v1_list_data["version"] == 1
-    assert len(v1_list_data["pipelines"]) == 1
-    assert v1_list_data["pipelines"][0]["name"] == "Version Test Pipeline V1"
+    assert v1_list_data["status"] == "success"
+    assert v1_list_data["data"]["version"] == v1_version
+    assert len(v1_list_data["data"]["pipelines"]) == 1
+    assert v1_list_data["data"]["pipelines"][0]["name"] == "Version Test Pipeline V1"
 
     # List by version 2
     v2_list_response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/logs/pipelines/2"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/logs/pipelines/{v2_version}"),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -285,9 +346,10 @@ def test_list_logs_pipelines_by_version(
 
     assert v2_list_response.status_code == HTTPStatus.OK
     v2_list_data = v2_list_response.json()
-    assert v2_list_data["version"] == 2
-    assert len(v2_list_data["pipelines"]) == 1
-    assert v2_list_data["pipelines"][0]["name"] == "Version Test Pipeline V2"
+    assert v2_list_data["status"] == "success"
+    assert v2_list_data["data"]["version"] == v2_version
+    assert len(v2_list_data["data"]["pipelines"]) == 1
+    assert v2_list_data["data"]["pipelines"][0]["name"] == "Version Test Pipeline V2"
 
 
 def test_preview_logs_pipelines_success(
@@ -309,15 +371,26 @@ def test_preview_logs_pipelines_success(
     preview_payload = {
         "pipelines": [
             {
-                "id": "preview-pipeline-1",
                 "orderId": 1,
                 "name": "Preview Test Pipeline",
                 "alias": "preview-test",
                 "description": "Pipeline for preview testing",
                 "enabled": True,
                 "filter": {
-                    "operator": "AND",
-                    "items": []
+                    "op": "AND",
+                    "items": [
+                        {
+                            "key": {
+                                "key": "body",
+                                "dataType": "string",
+                                "type": "",
+                                "isColumn": True,
+                                "isJSON": False
+                            },
+                            "value": ".*",
+                            "op": "regex"
+                        }
+                    ]
                 },
                 "config": [
                     {
@@ -333,15 +406,20 @@ def test_preview_logs_pipelines_success(
         "logs": [
             {
                 "body": '{"level": "info", "message": "Test log message", "timestamp": "2024-01-01T00:00:00Z"}',
-                "timestamp": 1704067200000,
+                "timestamp": 1704067200000000000,  # nanoseconds, not milliseconds
+                "id": "",
+                "trace_id": "",
+                "span_id": "",
+                "trace_flags": 0,
+                "severity_text": "",
+                "severity_number": 0,
                 "attributes_string": {},
-                "attributes_number": {},
+                "attributes_int": {},
+                "attributes_float": {},
                 "attributes_bool": {},
                 "resources_string": {
                     "service.name": "test-service"
-                },
-                "resources_number": {},
-                "resources_bool": {}
+                }
             }
         ]
     }
@@ -358,11 +436,13 @@ def test_preview_logs_pipelines_success(
 
     assert response.status_code == HTTPStatus.OK
     response_data = response.json()
-    assert "logs" in response_data
-    assert len(response_data["logs"]) == 1
+    assert response_data["status"] == "success"
+    assert "data" in response_data
+    assert "logs" in response_data["data"]
+    assert len(response_data["data"]["logs"]) == 1
 
     # Verify the log was processed
-    processed_log = response_data["logs"][0]
+    processed_log = response_data["data"]["logs"][0]
     assert "attributes_string" in processed_log or "attributes" in processed_log
 
 
@@ -392,13 +472,26 @@ def test_create_multiple_pipelines_success(
                 "description": "First pipeline",
                 "enabled": True,
                 "filter": {
-                    "operator": "AND",
-                    "items": []
+                    "op": "AND",
+                    "items": [
+                        {
+                            "key": {
+                                "key": "body",
+                                "dataType": "string",
+                                "type": "",
+                                "isColumn": True,
+                                "isJSON": False
+                            },
+                            "value": ".*",
+                            "op": "regex"
+                        }
+                    ]
                 },
                 "config": [
                     {
                         "type": "json_parser",
                         "id": "json-parser-1",
+                        "orderId": 1,
                         "parse_from": "body",
                         "parse_to": "attributes",
                         "on_error": "send"
@@ -413,13 +506,26 @@ def test_create_multiple_pipelines_success(
                 "description": "Second pipeline",
                 "enabled": True,
                 "filter": {
-                    "operator": "AND",
-                    "items": []
+                    "op": "AND",
+                    "items": [
+                        {
+                            "key": {
+                                "key": "body",
+                                "dataType": "string",
+                                "type": "",
+                                "isColumn": True,
+                                "isJSON": False
+                            },
+                            "value": ".*",
+                            "op": "regex"
+                        }
+                    ]
                 },
                 "config": [
                     {
                         "type": "regex_parser",
                         "id": "regex-parser-2",
+                        "orderId": 1,
                         "parse_from": "body",
                         "parse_to": "attributes",
                         "regex": r"^(?P<level>\w+): (?P<message>.*)$",
@@ -442,14 +548,16 @@ def test_create_multiple_pipelines_success(
 
     assert response.status_code == HTTPStatus.OK
     response_data = response.json()
-    assert "pipelines" in response_data
-    assert len(response_data["pipelines"]) == 2
+    assert response_data["status"] == "success"
+    assert "data" in response_data
+    assert "pipelines" in response_data["data"]
+    assert len(response_data["data"]["pipelines"]) == 2
 
     # Verify order
-    assert response_data["pipelines"][0]["orderId"] == 1
-    assert response_data["pipelines"][0]["name"] == "First Pipeline"
-    assert response_data["pipelines"][1]["orderId"] == 2
-    assert response_data["pipelines"][1]["name"] == "Second Pipeline"
+    assert response_data["data"]["pipelines"][0]["orderId"] == 1
+    assert response_data["data"]["pipelines"][0]["name"] == "First Pipeline"
+    assert response_data["data"]["pipelines"][1]["orderId"] == 2
+    assert response_data["data"]["pipelines"][1]["name"] == "Second Pipeline"
 
 
 def test_delete_all_pipelines_success(
@@ -480,13 +588,26 @@ def test_delete_all_pipelines_success(
                 "description": "Pipeline to be deleted",
                 "enabled": True,
                 "filter": {
-                    "operator": "AND",
-                    "items": []
+                    "op": "AND",
+                    "items": [
+                        {
+                            "key": {
+                                "key": "body",
+                                "dataType": "string",
+                                "type": "",
+                                "isColumn": True,
+                                "isJSON": False
+                            },
+                            "value": ".*",
+                            "op": "regex"
+                        }
+                    ]
                 },
                 "config": [
                     {
                         "type": "json_parser",
                         "id": "json-parser-delete",
+                        "orderId": 1,
                         "parse_from": "body",
                         "parse_to": "attributes",
                         "on_error": "send"
@@ -507,7 +628,7 @@ def test_delete_all_pipelines_success(
     )
 
     assert create_response.status_code == HTTPStatus.OK
-    initial_version = create_response.json()["version"]
+    initial_version = create_response.json()["data"]["version"]
 
     # Delete all pipelines by sending empty array
     delete_payload = {
@@ -526,13 +647,15 @@ def test_delete_all_pipelines_success(
 
     assert delete_response.status_code == HTTPStatus.OK
     delete_data = delete_response.json()
-    assert "pipelines" in delete_data
-    assert len(delete_data["pipelines"]) == 0
-    assert delete_data["version"] == initial_version + 1
+    assert delete_data["status"] == "success"
+    assert "data" in delete_data
+    assert "pipelines" in delete_data["data"]
+    assert len(delete_data["data"]["pipelines"]) == 0
+    assert delete_data["data"]["version"] == initial_version + 1
 
     # Verify pipelines are deleted by listing
     list_response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/logs/pipelines/-1"),
+        signoz.self.host_configs["8080"].get("/api/v1/logs/pipelines/latest"),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -541,7 +664,10 @@ def test_delete_all_pipelines_success(
 
     assert list_response.status_code == HTTPStatus.OK
     list_data = list_response.json()
+    assert list_data["status"] == "success"
+    assert "data" in list_data
+    assert "pipelines" in list_data["data"]
     # Note: Integration pipelines might still be present, so we check user-created ones
-    user_pipelines = [p for p in list_data["pipelines"] if p.get("name") == "Pipeline to Delete"]
+    user_pipelines = [p for p in list_data["data"]["pipelines"] if p.get("name") == "Pipeline to Delete"]
     assert len(user_pipelines) == 0
 
