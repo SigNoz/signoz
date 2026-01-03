@@ -1,6 +1,7 @@
 import { Skeleton, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { AxiosError } from 'axios';
+import { DOCS_BASE_URL } from 'constants/app';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import { useNotifications } from 'hooks/useNotifications';
@@ -93,7 +94,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 						<span>
 							Find your ingestion URL and learn more about sending data to SigNoz{' '}
 							<a
-								href="https://signoz.io/docs/ingestion/signoz-cloud/overview/"
+								href={`${DOCS_BASE_URL}/docs/ingestion/signoz-cloud/overview/`}
 								target="_blank"
 								className="learn-more"
 								rel="noreferrer"
@@ -184,7 +185,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 						<span>
 							We support{' '}
 							<a
-								href="https://signoz.io/docs/ingestion/signoz-cloud/keys/"
+								href={`${DOCS_BASE_URL}/docs/ingestion/signoz-cloud/keys/`}
 								target="_blank"
 								className="learn-more"
 								rel="noreferrer"
