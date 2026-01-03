@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -290,14 +291,13 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete API keys")
 	}
 
-	// delete user
+	// delete user_preference
 	_, err = tx.NewDelete().
-		Model(new(types.User)).
-		Where("org_id = ?", orgID).
-		Where("id = ?", id).
+		Model(new(preferencetypes.StorableUserPreference)).
+		Where("user_id = ?", id).
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete user")
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete user preferences")
 	}
 
 	// delete tokens
@@ -307,6 +307,16 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 		Exec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete tokens")
+	}
+
+	// delete user
+	_, err = tx.NewDelete().
+		Model(new(types.User)).
+		Where("org_id = ?", orgID).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete user")
 	}
 
 	err = tx.Commit()
