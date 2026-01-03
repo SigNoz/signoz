@@ -129,8 +129,8 @@ class Metrics(ABC):
     value: float
     flags: int
     
-    time_series: MetricsTimeSeries
-    sample: MetricsSample
+    _time_series: MetricsTimeSeries
+    _sample: MetricsSample
 
     def __init__(
         self,
@@ -155,7 +155,7 @@ class Metrics(ABC):
         self.value = value
         self.flags = flags
         
-        self.time_series = MetricsTimeSeries(
+        self._time_series = MetricsTimeSeries(
             metric_name=metric_name,
             labels=labels,
             timestamp=timestamp,
@@ -169,9 +169,9 @@ class Metrics(ABC):
             scope_attrs=scope_attributes,
         )
         
-        self.sample = MetricsSample(
+        self._sample = MetricsSample(
             metric_name=metric_name,
-            fingerprint=self.time_series.fingerprint,
+            fingerprint=self._time_series.fingerprint,
             timestamp=timestamp,
             value=value,
             temporality=temporality,
@@ -193,9 +193,9 @@ def insert_metrics(
         """
         time_series_map: dict[int, MetricsTimeSeries] = {}
         for metric in metrics:
-            fp = int(metric.time_series.fingerprint)
+            fp = int(metric._time_series.fingerprint)
             if fp not in time_series_map:
-                time_series_map[fp] = metric.time_series
+                time_series_map[fp] = metric._time_series
 
         if len(time_series_map) > 0:
             clickhouse.conn.insert(
@@ -220,7 +220,7 @@ def insert_metrics(
                 data=[ts.to_row() for ts in time_series_map.values()],
             )
 
-        samples = [metric.sample for metric in metrics]
+        samples = [metric._sample for metric in metrics]
         if len(samples) > 0:
             clickhouse.conn.insert(
                 database="signoz_metrics",

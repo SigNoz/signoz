@@ -1,12 +1,17 @@
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
-from typing import Callable, List
+from typing import Callable, Dict, List
 
 import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
+from fixtures.timeseries_utils import (
+    assert_minutely_bucket_values,
+    find_named_result,
+    index_series_by_label,
+)
 
 
 def test_traces_list(
@@ -490,12 +495,13 @@ def test_traces_fill_gaps(
     assert len(series) >= 1
 
     values = series[0]["values"]
-    # With 5 minute range and 60s step, we expect ~5-6 data points
-    assert len(values) >= 5, f"Expected at least 5 values for gap filling, got {len(values)}"
-
-    # Verify gaps are filled with zeros
-    zero_count = sum(1 for v in values if v["value"] == 0)
-    assert zero_count >= 1, "Expected at least one zero-filled gap"
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+    assert_minutely_bucket_values(
+        values,
+        now,
+        expected_by_ts={ts_min_3: 1},
+        context="traces/fillGaps",
+    )
 
 
 def test_traces_fill_gaps_with_group_by(
@@ -587,10 +593,24 @@ def test_traces_fill_gaps_with_group_by(
     series = aggregations[0]["series"]
     assert len(series) == 2, "Expected 2 series for 2 service groups"
 
-    # Verify each series has gap-filled values
-    for s in series:
-        values = s["values"]
-        assert len(values) >= 5, f"Expected at least 5 gap-filled values, got {len(values)}"
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+
+    series_by_service = index_series_by_label(series, "service.name")
+    assert set(series_by_service.keys()) == {"service-a", "service-b"}
+
+    expectations: Dict[str, Dict[int, float]] = {
+        "service-a": {ts_min_3: 1},
+        "service-b": {ts_min_2: 1},
+    }
+
+    for service_name, s in series_by_service.items():
+        assert_minutely_bucket_values(
+            s["values"],
+            now,
+            expected_by_ts=expectations[service_name],
+            context=f"traces/fillGaps/{service_name}",
+        )
 
 
 def test_traces_fill_gaps_formula(
@@ -618,6 +638,19 @@ def test_traces_fill_gaps_formula(
             resources={"service.name": "test"},
             attributes={"http.method": "GET"},
         ),
+        Traces(
+            timestamp=now - timedelta(minutes=2),
+            duration=timedelta(seconds=1),
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            parent_span_id="",
+            name="another-test-span",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            status_message="",
+            resources={"service.name": "another-test"},
+            attributes={"http.method": "POST"},
+        ),
     ]
     insert_traces(traces)
 
@@ -644,6 +677,7 @@ def test_traces_fill_gaps_formula(
                             "signal": "traces",
                             "stepInterval": 60,
                             "disabled": True,
+                            "filter": {"expression": "service.name = 'test'"},
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -655,6 +689,7 @@ def test_traces_fill_gaps_formula(
                             "signal": "traces",
                             "stepInterval": 60,
                             "disabled": True,
+                            "filter": {"expression": "service.name = 'another-test'"},
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -677,11 +712,25 @@ def test_traces_fill_gaps_formula(
     assert response.json()["status"] == "success"
 
     results = response.json()["data"]["data"]["results"]
-    assert len(results) >= 1
+    assert len(results) == 1
 
-    # Find formula result and verify it has data
-    formula_result = next((r for r in results if r.get("name") == "F1"), results[0])
-    assert formula_result is not None
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+
+    f1 = find_named_result(results, "F1")
+    assert f1 is not None, "Expected formula result named F1"
+
+    aggregations = f1.get("aggregations") or []
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    assert len(series) >= 1
+
+    assert_minutely_bucket_values(
+        series[0]["values"],
+        now,
+        expected_by_ts={ts_min_3: 1, ts_min_2: 1},
+        context="traces/fillGaps/F1",
+    )
 
 
 def test_traces_fill_gaps_formula_with_group_by(
@@ -702,12 +751,25 @@ def test_traces_fill_gaps_formula_with_group_by(
             trace_id=TraceIdGenerator.trace_id(),
             span_id=TraceIdGenerator.span_id(),
             parent_span_id="",
-            name="test-span",
+            name="span-group1",
             kind=TracesKind.SPAN_KIND_SERVER,
             status_code=TracesStatusCode.STATUS_CODE_OK,
             status_message="",
             resources={"service.name": "group1"},
             attributes={"http.method": "GET"},
+        ),
+        Traces(
+            timestamp=now - timedelta(minutes=2),
+            duration=timedelta(seconds=1),
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            parent_span_id="",
+            name="span-group2",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            status_message="",
+            resources={"service.name": "group2"},
+            attributes={"http.method": "POST"},
         ),
     ]
     insert_traces(traces)
@@ -770,7 +832,34 @@ def test_traces_fill_gaps_formula_with_group_by(
     assert response.json()["status"] == "success"
 
     results = response.json()["data"]["data"]["results"]
-    assert len(results) >= 1
+    assert len(results) == 1
+
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+
+    f1 = find_named_result(results, "F1")
+    assert f1 is not None, "Expected formula result named F1"
+
+    aggregations = f1.get("aggregations") or []
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    assert len(series) == 2
+
+    series_by_service = index_series_by_label(series, "service.name")
+    assert set(series_by_service.keys()) == {"group1", "group2"}
+
+    expectations: Dict[str, Dict[int, float]] = {
+        "group1": {ts_min_3: 2},
+        "group2": {ts_min_2: 2},
+    }
+
+    for service_name, s in series_by_service.items():
+        assert_minutely_bucket_values(
+            s["values"],
+            now,
+            expected_by_ts=expectations[service_name],
+            context=f"traces/fillGaps/F1/{service_name}",
+        )
 
 
 def test_traces_fill_zero(
@@ -805,7 +894,6 @@ def test_traces_fill_zero(
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    step_ms = 60000
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -827,10 +915,7 @@ def test_traces_fill_zero(
                             "disabled": False,
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
-                            "functions": [{
-                                "name": "fillZero",
-                                "args": [{"value": start_ms}, {"value": end_ms}, {"value": step_ms}]
-                            }],
+                            "functions": [{"name": "fillZero"}],
                         },
                     }
                 ]
@@ -846,12 +931,18 @@ def test_traces_fill_zero(
     assert len(results) == 1
 
     aggregations = results[0].get("aggregations") or []
-    if len(aggregations) > 0:
-        series = aggregations[0]["series"]
-        assert len(series) >= 1
-        values = series[0]["values"]
-        # fillZero should produce values for the entire range
-        assert len(values) >= 5, f"Expected at least 5 values with fillZero, got {len(values)}"
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    assert len(series) >= 1
+    values = series[0]["values"]
+
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+    assert_minutely_bucket_values(
+        values,
+        now,
+        expected_by_ts={ts_min_3: 1},
+        context="traces/fillZero",
+    )
 
 
 def test_traces_fill_zero_with_group_by(
@@ -899,7 +990,6 @@ def test_traces_fill_zero_with_group_by(
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    step_ms = 60000
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -922,10 +1012,7 @@ def test_traces_fill_zero_with_group_by(
                             "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
-                            "functions": [{
-                                "name": "fillZero",
-                                "args": [{"value": start_ms}, {"value": end_ms}, {"value": step_ms}]
-                            }],
+                            "functions": [{"name": "fillZero"}],
                         },
                     }
                 ]
@@ -946,10 +1033,24 @@ def test_traces_fill_zero_with_group_by(
     series = aggregations[0]["series"]
     assert len(series) == 2, "Expected 2 series for 2 service groups"
 
-    # Verify each series has gap-filled values
-    for s in series:
-        values = s["values"]
-        assert len(values) >= 5, f"Expected at least 5 gap-filled values, got {len(values)}"
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+
+    series_by_service = index_series_by_label(series, "service.name")
+    assert set(series_by_service.keys()) == {"service-a", "service-b"}
+
+    expectations: Dict[str, Dict[int, float]] = {
+        "service-a": {ts_min_3: 1},
+        "service-b": {ts_min_2: 1},
+    }
+
+    for service_name, s in series_by_service.items():
+        assert_minutely_bucket_values(
+            s["values"],
+            now,
+            expected_by_ts=expectations[service_name],
+            context=f"traces/fillZero/{service_name}",
+        )
 
 
 def test_traces_fill_zero_formula(
@@ -977,6 +1078,19 @@ def test_traces_fill_zero_formula(
             resources={"service.name": "test"},
             attributes={"http.method": "GET"},
         ),
+        Traces(
+            timestamp=now - timedelta(minutes=2),
+            duration=timedelta(seconds=1),
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            parent_span_id="",
+            name="another-test-span",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            status_message="",
+            resources={"service.name": "another-test"},
+            attributes={"http.method": "POST"},
+        ),
     ]
     insert_traces(traces)
 
@@ -984,7 +1098,6 @@ def test_traces_fill_zero_formula(
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    step_ms = 60000
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -1004,6 +1117,7 @@ def test_traces_fill_zero_formula(
                             "signal": "traces",
                             "stepInterval": 60,
                             "disabled": True,
+                            "filter": {"expression": "service.name = 'test'"},
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1015,6 +1129,7 @@ def test_traces_fill_zero_formula(
                             "signal": "traces",
                             "stepInterval": 60,
                             "disabled": True,
+                            "filter": {"expression": "service.name = 'another-test'"},
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1025,10 +1140,7 @@ def test_traces_fill_zero_formula(
                             "name": "F1",
                             "expression": "A + B",
                             "disabled": False,
-                            "functions": [{
-                                "name": "fillZero",
-                                "args": [{"value": start_ms}, {"value": end_ms}, {"value": step_ms}]
-                            }],
+                            "functions": [{"name": "fillZero"}],
                         },
                     }
                 ]
@@ -1041,11 +1153,24 @@ def test_traces_fill_zero_formula(
     assert response.json()["status"] == "success"
 
     results = response.json()["data"]["data"]["results"]
-    assert len(results) >= 1
+    assert len(results) == 1
 
-    # Verify formula result exists
-    formula_result = next((r for r in results if r.get("name") == "F1"), results[0])
-    assert formula_result is not None
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+
+    f1 = find_named_result(results, "F1")
+    assert f1 is not None, "Expected formula result named F1"
+    aggregations = f1.get("aggregations") or []
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    assert len(series) >= 1
+
+    assert_minutely_bucket_values(
+        series[0]["values"],
+        now,
+        expected_by_ts={ts_min_3: 1, ts_min_2: 1},
+        context="traces/fillZero/F1",
+    )
 
 
 def test_traces_fill_zero_formula_with_group_by(
@@ -1066,12 +1191,25 @@ def test_traces_fill_zero_formula_with_group_by(
             trace_id=TraceIdGenerator.trace_id(),
             span_id=TraceIdGenerator.span_id(),
             parent_span_id="",
-            name="test-span",
+            name="span-group1",
             kind=TracesKind.SPAN_KIND_SERVER,
             status_code=TracesStatusCode.STATUS_CODE_OK,
             status_message="",
             resources={"service.name": "group1"},
             attributes={"http.method": "GET"},
+        ),
+        Traces(
+            timestamp=now - timedelta(minutes=2),
+            duration=timedelta(seconds=1),
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            parent_span_id="",
+            name="span-group2",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            status_message="",
+            resources={"service.name": "group2"},
+            attributes={"http.method": "POST"},
         ),
     ]
     insert_traces(traces)
@@ -1080,7 +1218,6 @@ def test_traces_fill_zero_formula_with_group_by(
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    step_ms = 60000
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -1123,10 +1260,7 @@ def test_traces_fill_zero_formula_with_group_by(
                             "name": "F1",
                             "expression": "A + B",
                             "disabled": False,
-                            "functions": [{
-                                "name": "fillZero",
-                                "args": [{"value": start_ms}, {"value": end_ms}, {"value": step_ms}]
-                            }],
+                            "functions": [{"name": "fillZero"}],
                         },
                     }
                 ]
@@ -1139,4 +1273,30 @@ def test_traces_fill_zero_formula_with_group_by(
     assert response.json()["status"] == "success"
 
     results = response.json()["data"]["data"]["results"]
-    assert len(results) >= 1
+    assert len(results) == 1
+
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+
+    f1 = find_named_result(results, "F1")
+    assert f1 is not None, "Expected formula result named F1"
+    aggregations = f1.get("aggregations") or []
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    assert len(series) == 2
+
+    series_by_service = index_series_by_label(series, "service.name")
+    assert set(series_by_service.keys()) == {"group1", "group2"}
+
+    expectations: Dict[str, Dict[int, float]] = {
+        "group1": {ts_min_3: 2},
+        "group2": {ts_min_2: 2},
+    }
+
+    for service_name, s in series_by_service.items():
+        assert_minutely_bucket_values(
+            s["values"],
+            now,
+            expected_by_ts=expectations[service_name],
+            context=f"traces/fillZero/F1/{service_name}",
+        )

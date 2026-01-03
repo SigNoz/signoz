@@ -440,7 +440,8 @@ func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
 					if timeAgg == metrictypes.TimeAggregationCount ||
 						timeAgg == metrictypes.TimeAggregationCountDistinct ||
 						timeAgg == metrictypes.TimeAggregationRate ||
-						timeAgg == metrictypes.TimeAggregationIncrease {
+						timeAgg == metrictypes.TimeAggregationIncrease ||
+						timeAgg == metrictypes.TimeAggregationSum {
 						canDefaultZero[spec.Name] = true
 					}
 				}

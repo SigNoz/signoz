@@ -1,12 +1,17 @@
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
-from typing import Callable, List
+from typing import Callable, Dict, List
 
 import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
+from fixtures.timeseries_utils import (
+    assert_minutely_bucket_values,
+    find_named_result,
+    index_series_by_label,
+)
 
 
 def test_metrics_fill_gaps(
@@ -65,7 +70,7 @@ def test_metrics_fill_gaps(
                             "aggregations": [{
                                 "metricName": metric_name,
                                 "temporality": "cumulative",
-                                "timeAggregation": "rate",
+                                "timeAggregation": "sum",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -91,12 +96,14 @@ def test_metrics_fill_gaps(
     assert len(series) >= 1
 
     values = series[0]["values"]
-    # With 5 minute range and 60s step, we expect ~5-6 data points
-    assert len(values) >= 5, f"Expected at least 5 values for gap filling, got {len(values)}"
-
-    # Verify gaps are filled with zeros (rate of cumulative metric with no data = 0)
-    zero_count = sum(1 for v in values if v["value"] == 0)
-    assert zero_count >= 1, "Expected at least one zero-filled gap"
+    ts_min_1 = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+    assert_minutely_bucket_values(
+        values,
+        now,
+        expected_by_ts={ts_min_3: 10.0, ts_min_1: 30.0},
+        context="metrics/fillGaps",
+    )
 
 
 def test_metrics_fill_gaps_with_group_by(
@@ -154,7 +161,7 @@ def test_metrics_fill_gaps_with_group_by(
                             "aggregations": [{
                                 "metricName": metric_name,
                                 "temporality": "cumulative",
-                                "timeAggregation": "rate",
+                                "timeAggregation": "sum",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -180,10 +187,24 @@ def test_metrics_fill_gaps_with_group_by(
     series = aggregations[0]["series"]
     assert len(series) >= 1, "Expected at least one series"
 
-    # Verify each series has gap-filled values
-    for s in series:
-        values = s["values"]
-        assert len(values) >= 5, f"Expected at least 5 gap-filled values, got {len(values)}"
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+
+    series_by_tag = index_series_by_label(series, "my_tag")
+    assert set(series_by_tag.keys()) == {"service-a", "service-b"}
+
+    expectations: Dict[str, Dict[int, float]] = {
+        "service-a": {ts_min_3: 10.0},
+        "service-b": {ts_min_2: 20.0},
+    }
+
+    for tag_value, s in series_by_tag.items():
+        assert_minutely_bucket_values(
+            s["values"],
+            now,
+            expected_by_ts=expectations[tag_value],
+            context=f"metrics/fillGaps/{tag_value}",
+        )
 
 
 def test_metrics_fill_gaps_formula(
@@ -211,7 +232,7 @@ def test_metrics_fill_gaps_formula(
         Metrics(
             metric_name=metric_name_b,
             labels={"service": "test"},
-            timestamp=now - timedelta(minutes=3),
+            timestamp=now - timedelta(minutes=2),
             value=10.0,
             temporality="Cumulative",
         ),
@@ -242,7 +263,7 @@ def test_metrics_fill_gaps_formula(
                             "aggregations": [{
                                 "metricName": metric_name_a,
                                 "temporality": "cumulative",
-                                "timeAggregation": "rate",
+                                "timeAggregation": "sum",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -257,7 +278,7 @@ def test_metrics_fill_gaps_formula(
                             "aggregations": [{
                                 "metricName": metric_name_b,
                                 "temporality": "cumulative",
-                                "timeAggregation": "rate",
+                                "timeAggregation": "sum",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -282,7 +303,25 @@ def test_metrics_fill_gaps_formula(
     assert response.json()["status"] == "success"
 
     results = response.json()["data"]["data"]["results"]
-    assert len(results) >= 1
+    assert len(results) == 1
+
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+
+    f1 = find_named_result(results, "F1")
+    assert f1 is not None, "Expected formula result named F1"
+
+    aggregations = f1.get("aggregations") or []
+    assert len(aggregations) == 1
+    series = aggregations[0].get("series") or []
+    assert len(series) >= 1, f"Expected at least one series for F1, got {aggregations[0]}"
+
+    assert_minutely_bucket_values(
+        series[0]["values"],
+        now,
+        expected_by_ts={ts_min_3: 100.0, ts_min_2: 10.0},
+        context="metrics/fillGaps/F1",
+    )
 
 
 def test_metrics_fill_gaps_formula_with_group_by(
@@ -313,6 +352,20 @@ def test_metrics_fill_gaps_formula_with_group_by(
             value=10.0,
             temporality="Cumulative",
         ),
+        Metrics(
+            metric_name=metric_name_a,
+            labels={"my_tag": "group2"},
+            timestamp=now - timedelta(minutes=2),
+            value=200.0,
+            temporality="Cumulative",
+        ),
+        Metrics(
+            metric_name=metric_name_b,
+            labels={"my_tag": "group2"},
+            timestamp=now - timedelta(minutes=2),
+            value=20.0,
+            temporality="Cumulative",
+        ),
     ]
     insert_metrics(metrics)
 
@@ -340,7 +393,7 @@ def test_metrics_fill_gaps_formula_with_group_by(
                             "aggregations": [{
                                 "metricName": metric_name_a,
                                 "temporality": "cumulative",
-                                "timeAggregation": "rate",
+                                "timeAggregation": "sum",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -356,7 +409,7 @@ def test_metrics_fill_gaps_formula_with_group_by(
                             "aggregations": [{
                                 "metricName": metric_name_b,
                                 "temporality": "cumulative",
-                                "timeAggregation": "rate",
+                                "timeAggregation": "sum",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -382,7 +435,33 @@ def test_metrics_fill_gaps_formula_with_group_by(
     assert response.json()["status"] == "success"
 
     results = response.json()["data"]["data"]["results"]
-    assert len(results) >= 1
+    assert len(results) == 1
+
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+
+    f1 = find_named_result(results, "F1")
+    assert f1 is not None, "Expected formula result named F1"
+    aggregations = f1.get("aggregations") or []
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    assert len(series) == 2
+
+    series_by_group = index_series_by_label(series, "my_tag")
+    assert set(series_by_group.keys()) == {"group1", "group2"}
+
+    expectations: Dict[str, Dict[int, float]] = {
+        "group1": {ts_min_3: 110.0},
+        "group2": {ts_min_2: 220.0},
+    }
+
+    for group, s in series_by_group.items():
+        assert_minutely_bucket_values(
+            s["values"],
+            now,
+            expected_by_ts=expectations[group],
+            context=f"metrics/fillGaps/F1/{group}",
+        )
 
 
 def test_metrics_fill_zero(
@@ -413,7 +492,6 @@ def test_metrics_fill_zero(
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    step_ms = 60000
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -434,19 +512,12 @@ def test_metrics_fill_zero(
                             "aggregations": [{
                                 "metricName": metric_name,
                                 "temporality": "cumulative",
-                                "timeAggregation": "rate",
+                                "timeAggregation": "sum",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
                             "disabled": False,
-                            "functions": [{
-                                "name": "fillZero",
-                                "args": [
-                                    {"value": start_ms},
-                                    {"value": end_ms},
-                                    {"value": step_ms}
-                                ]
-                            }],
+                            "functions": [{"name": "fillZero"}],
                         },
                     }
                 ]
@@ -462,12 +533,18 @@ def test_metrics_fill_zero(
     assert len(results) == 1
 
     aggregations = results[0].get("aggregations") or []
-    if len(aggregations) > 0:
-        series = aggregations[0]["series"]
-        assert len(series) >= 1
-        values = series[0]["values"]
-        # fillZero should produce values for the entire range
-        assert len(values) >= 5, f"Expected at least 5 values with fillZero, got {len(values)}"
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    assert len(series) >= 1
+    values = series[0]["values"]
+
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+    assert_minutely_bucket_values(
+        values,
+        now,
+        expected_by_ts={ts_min_3: 10.0},
+        context="metrics/fillZero",
+    )
 
 
 def test_metrics_fill_zero_with_group_by(
@@ -504,7 +581,6 @@ def test_metrics_fill_zero_with_group_by(
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    step_ms = 60000
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -525,20 +601,13 @@ def test_metrics_fill_zero_with_group_by(
                             "aggregations": [{
                                 "metricName": metric_name,
                                 "temporality": "cumulative",
-                                "timeAggregation": "rate",
+                                "timeAggregation": "sum",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
                             "disabled": False,
                             "groupBy": [{"name": "my_tag", "fieldDataType": "string", "fieldContext": "attribute"}],
-                            "functions": [{
-                                "name": "fillZero",
-                                "args": [
-                                    {"value": start_ms},
-                                    {"value": end_ms},
-                                    {"value": step_ms}
-                                ]
-                            }],
+                            "functions": [{"name": "fillZero"}],
                         },
                     }
                 ]
@@ -552,6 +621,30 @@ def test_metrics_fill_zero_with_group_by(
 
     results = response.json()["data"]["data"]["results"]
     assert len(results) >= 1
+
+    aggregations = results[0].get("aggregations") or []
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    assert len(series) == 2
+
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+
+    series_by_tag = index_series_by_label(series, "my_tag")
+    assert set(series_by_tag.keys()) == {"service-a", "service-b"}
+
+    expectations: Dict[str, Dict[int, float]] = {
+        "service-a": {ts_min_3: 10.0},
+        "service-b": {ts_min_2: 20.0},
+    }
+
+    for tag_value, s in series_by_tag.items():
+        assert_minutely_bucket_values(
+            s["values"],
+            now,
+            expected_by_ts=expectations[tag_value],
+            context=f"metrics/fillZero/{tag_value}",
+        )
 
 
 def test_metrics_fill_zero_formula(
@@ -578,7 +671,7 @@ def test_metrics_fill_zero_formula(
         Metrics(
             metric_name=metric_name_b,
             labels={"service": "test"},
-            timestamp=now - timedelta(minutes=3),
+            timestamp=now - timedelta(minutes=2),
             value=10.0,
             temporality="Cumulative",
         ),
@@ -589,7 +682,6 @@ def test_metrics_fill_zero_formula(
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    step_ms = 60000
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -610,7 +702,7 @@ def test_metrics_fill_zero_formula(
                             "aggregations": [{
                                 "metricName": metric_name_a,
                                 "temporality": "cumulative",
-                                "timeAggregation": "rate",
+                                "timeAggregation": "sum",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -625,7 +717,7 @@ def test_metrics_fill_zero_formula(
                             "aggregations": [{
                                 "metricName": metric_name_b,
                                 "temporality": "cumulative",
-                                "timeAggregation": "rate",
+                                "timeAggregation": "sum",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -638,14 +730,7 @@ def test_metrics_fill_zero_formula(
                             "name": "F1",
                             "expression": "A + B",
                             "disabled": False,
-                            "functions": [{
-                                "name": "fillZero",
-                                "args": [
-                                    {"value": start_ms},
-                                    {"value": end_ms},
-                                    {"value": step_ms}
-                                ]
-                            }],
+                            "functions": [{"name": "fillZero"}],
                         },
                     }
                 ]
@@ -658,11 +743,26 @@ def test_metrics_fill_zero_formula(
     assert response.json()["status"] == "success"
 
     results = response.json()["data"]["data"]["results"]
-    assert len(results) >= 1
+    assert len(results) == 1
 
-    # Verify formula result has values
-    formula_result = next((r for r in results if r.get("name") == "F1"), results[0])
-    assert formula_result is not None
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+
+    f1 = find_named_result(results, "F1")
+    assert f1 is not None, "Expected formula result named F1"
+    aggregations = f1.get("aggregations") or []
+    assert len(aggregations) == 1
+    series = aggregations[0].get("series") or []
+    assert len(series) >= 1, (
+        f"Expected at least one series for F1, got {aggregations[0]}"
+    )
+
+    assert_minutely_bucket_values(
+        series[0]["values"],
+        now,
+        expected_by_ts={ts_min_3: 100.0, ts_min_2: 10.0},
+        context="metrics/fillZero/F1",
+    )
 
 
 def test_metrics_fill_zero_formula_with_group_by(
@@ -693,6 +793,20 @@ def test_metrics_fill_zero_formula_with_group_by(
             value=10.0,
             temporality="Cumulative",
         ),
+        Metrics(
+            metric_name=metric_name_a,
+            labels={"my_tag": "group2"},
+            timestamp=now - timedelta(minutes=2),
+            value=200.0,
+            temporality="Cumulative",
+        ),
+        Metrics(
+            metric_name=metric_name_b,
+            labels={"my_tag": "group2"},
+            timestamp=now - timedelta(minutes=2),
+            value=20.0,
+            temporality="Cumulative",
+        ),
     ]
     insert_metrics(metrics)
 
@@ -700,7 +814,6 @@ def test_metrics_fill_zero_formula_with_group_by(
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    step_ms = 60000
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -721,7 +834,7 @@ def test_metrics_fill_zero_formula_with_group_by(
                             "aggregations": [{
                                 "metricName": metric_name_a,
                                 "temporality": "cumulative",
-                                "timeAggregation": "rate",
+                                "timeAggregation": "sum",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -737,7 +850,7 @@ def test_metrics_fill_zero_formula_with_group_by(
                             "aggregations": [{
                                 "metricName": metric_name_b,
                                 "temporality": "cumulative",
-                                "timeAggregation": "rate",
+                                "timeAggregation": "sum",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -751,14 +864,7 @@ def test_metrics_fill_zero_formula_with_group_by(
                             "name": "F1",
                             "expression": "A + B",
                             "disabled": False,
-                            "functions": [{
-                                "name": "fillZero",
-                                "args": [
-                                    {"value": start_ms},
-                                    {"value": end_ms},
-                                    {"value": step_ms}
-                                ]
-                            }],
+                            "functions": [{"name": "fillZero"}],
                         },
                     }
                 ]
@@ -771,4 +877,30 @@ def test_metrics_fill_zero_formula_with_group_by(
     assert response.json()["status"] == "success"
 
     results = response.json()["data"]["data"]["results"]
-    assert len(results) >= 1
+    assert len(results) == 1  # Only F1 (A and B are disabled)
+
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+
+    f1 = find_named_result(results, "F1")
+    assert f1 is not None, "Expected formula result named F1"
+    aggregations = f1.get("aggregations") or []
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    assert len(series) == 2
+
+    series_by_group = index_series_by_label(series, "my_tag")
+    assert set(series_by_group.keys()) == {"group1", "group2"}
+
+    expectations: Dict[str, Dict[int, float]] = {
+        "group1": {ts_min_3: 110.0},
+        "group2": {ts_min_2: 220.0},
+    }
+
+    for group, s in series_by_group.items():
+        assert_minutely_bucket_values(
+            s["values"],
+            now,
+            expected_by_ts=expectations[group],
+            context=f"metrics/fillZero/F1/{group}",
+        )
