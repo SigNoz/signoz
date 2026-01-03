@@ -121,7 +121,7 @@ type TelemetryFieldValues struct {
 }
 
 func (t *TelemetryFieldValues) NumValues() int {
-	return len(t.StringValues) + len(t.BoolValues) + len(t.NumberValues) + len(t.RelatedValues)
+	return len(t.StringValues) + len(t.BoolValues) + len(t.NumberValues)
 }
 
 type MetricContext struct {

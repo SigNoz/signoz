@@ -17,22 +17,22 @@ var IntrinsicMetricFieldDefinitions = map[string]telemetrytypes.TelemetryFieldKe
 		FieldContext:  telemetrytypes.FieldContextMetric,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},
-	"type": {
-		Name:          "type",
-		Signal:        telemetrytypes.SignalMetrics,
-		FieldContext:  telemetrytypes.FieldContextMetric,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-	},
-	"temporality": {
-		Name:          "temporality",
-		Signal:        telemetrytypes.SignalMetrics,
-		FieldContext:  telemetrytypes.FieldContextMetric,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-	},
-	"is_monotonic": {
-		Name:          "is_monotonic",
-		Signal:        telemetrytypes.SignalMetrics,
-		FieldContext:  telemetrytypes.FieldContextMetric,
-		FieldDataType: telemetrytypes.FieldDataTypeBool,
-	},
+	// "type": {
+	// 	Name:          "type",
+	// 	Signal:        telemetrytypes.SignalMetrics,
+	// 	FieldContext:  telemetrytypes.FieldContextMetric,
+	// 	FieldDataType: telemetrytypes.FieldDataTypeString,
+	// },
+	// "temporality": {
+	// 	Name:          "temporality",
+	// 	Signal:        telemetrytypes.SignalMetrics,
+	// 	FieldContext:  telemetrytypes.FieldContextMetric,
+	// 	FieldDataType: telemetrytypes.FieldDataTypeString,
+	// },
+	// "is_monotonic": {
+	// 	Name:          "is_monotonic",
+	// 	Signal:        telemetrytypes.SignalMetrics,
+	// 	FieldContext:  telemetrytypes.FieldContextMetric,
+	// 	FieldDataType: telemetrytypes.FieldDataTypeBool,
+	// },
 }

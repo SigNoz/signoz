@@ -1402,8 +1402,8 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 		return &telemetrytypes.TelemetryFieldValues{}, nil
 	}
 
-	sb := sqlbuilder.Select(fmt.Sprintf("DISTINCT %s", sqlbuilder.Escape(key.Name))).
-		From(t.metricsDBName + "." + telemetrymetrics.TimeseriesV4TableName)
+	sb := sqlbuilder.Select(sqlbuilder.Escape(key.Name)).
+		From(t.metricsDBName + "." + telemetrymetrics.TimeseriesV41weekTableName)
 
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricName != "" {
 		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
@@ -1424,6 +1424,7 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 			sb.Where(sb.ILike(key.Name, "%"+escapeForLike(fieldValueSelector.Value)+"%"))
 		}
 	}
+	sb.GroupBy(sqlbuilder.Escape(key.Name))
 	sb.Limit(limit + 1)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)

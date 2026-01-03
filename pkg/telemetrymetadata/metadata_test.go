@@ -324,7 +324,7 @@ func TestGetMetricFieldValuesIntrinsicMetricName(t *testing.T) {
 		{Name: "metric_name", Type: "String"},
 	}, [][]any{{"metric.a"}, {"metric.b"}})
 
-	query := `SELECT DISTINCT .*metric_name.*` + telemetrymetrics.TimeseriesV4TableName
+	query := `SELECT .*metric_name.*` + telemetrymetrics.TimeseriesV41weekTableName + `.*GROUP BY.*metric_name`
 
 	mock.ExpectQuery(query).
 		WithArgs(51).
