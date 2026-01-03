@@ -48,7 +48,7 @@ type UpdateableAuthDomain struct {
 }
 
 type StorableAuthDomain struct {
-	bun.BaseModel `bun:"table:org_domains"`
+	bun.BaseModel `bun:"table:auth_domain"`
 
 	types.Identifiable
 	Name  string      `bun:"name" json:"name"`
