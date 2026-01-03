@@ -160,7 +160,7 @@ describe('logsLoaderConfig', () => {
 		expect(result).toEqual({
 			columns: defaultLogsSelectedColumns,
 			formatting: {
-				maxLines: 2,
+				maxLines: 1,
 				format: 'table' as LogViewMode,
 				fontSize: 'small' as FontSize,
 				version: 1,
