@@ -2,7 +2,7 @@ import datetime
 import hashlib
 import json
 from abc import ABC
-from typing import Any, Callable, Generator, List
+from typing import Any, Callable, Generator, List, Optional
 
 import numpy as np
 import pytest
@@ -136,7 +136,7 @@ class Metrics(ABC):
         self,
         metric_name: str,
         labels: dict[str, str] = {},
-        timestamp: datetime.datetime = datetime.datetime.now(),
+        timestamp: Optional[datetime.datetime] = None,
         value: float = 0.0,
         temporality: str = "Unspecified",
         flags: int = 0,
@@ -148,6 +148,8 @@ class Metrics(ABC):
         resource_attributes: dict[str, str] = {},
         scope_attributes: dict[str, str] = {},
     ) -> None:
+        if timestamp is None:
+            timestamp = datetime.datetime.now()
         self.metric_name = metric_name
         self.labels = labels
         self.temporality = temporality
