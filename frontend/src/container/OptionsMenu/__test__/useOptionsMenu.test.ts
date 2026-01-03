@@ -37,7 +37,7 @@ describe('useOptionsMenu', () => {
 					columns: [],
 					formatting: {
 						format: 'raw',
-						maxLines: 2,
+						maxLines: 1,
 						fontSize: 'small',
 					},
 				},
@@ -49,7 +49,7 @@ describe('useOptionsMenu', () => {
 					columns: [],
 					formatting: {
 						format: 'raw',
-						maxLines: 2,
+						maxLines: 1,
 						fontSize: 'small',
 					},
 				},

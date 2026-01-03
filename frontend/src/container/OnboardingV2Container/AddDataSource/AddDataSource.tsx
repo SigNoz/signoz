@@ -14,6 +14,7 @@ import {
 } from 'antd';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { DOCS_BASE_URL } from 'constants/app';
 import ROUTES from 'constants/routes';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import history from 'lib/history';
@@ -143,7 +144,7 @@ function OnboardingAddDataSource(): JSX.Element {
 	] = useState<boolean>(false);
 
 	const [docsUrl, setDocsUrl] = useState<string>(
-		'https://signoz.io/docs/instrumentation/',
+		`${DOCS_BASE_URL}/docs/instrumentation/`,
 	);
 
 	const [selectedDataSource, setSelectedDataSource] = useState<Entity | null>(
@@ -188,7 +189,9 @@ function OnboardingAddDataSource(): JSX.Element {
 		}
 
 		// Step 1: Parse the URL
-		const urlObj = new URL(url);
+		const fullUrl = url.startsWith('/') ? `${DOCS_BASE_URL}${url}` : url;
+
+		const urlObj = new URL(fullUrl);
 
 		// Step 2: Update or add the 'source' parameter
 		urlObj.searchParams.set('source', 'onboarding');
