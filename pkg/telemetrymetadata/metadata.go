@@ -806,6 +806,10 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 		if selector.Signal != telemetrytypes.SignalMetrics && selector.Signal != telemetrytypes.SignalUnspecified {
 			continue
 		}
+		// If a metricName is provided, don’t surface intrinsic metric keys
+		if selector.MetricContext != nil && selector.MetricContext.MetricName != "" {
+			continue
+		}
 
 		for name, key := range telemetrymetrics.IntrinsicMetricFieldDefinitions {
 			if !selectorMatchesIntrinsicField(selector, key) {
