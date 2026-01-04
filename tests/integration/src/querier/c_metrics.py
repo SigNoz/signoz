@@ -834,7 +834,7 @@ def test_metrics_fill_zero_formula_with_group_by(
                             "aggregations": [{
                                 "metricName": metric_name_a,
                                 "temporality": "cumulative",
-                                "timeAggregation": "sum",
+                                "timeAggregation": "increase",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -850,7 +850,7 @@ def test_metrics_fill_zero_formula_with_group_by(
                             "aggregations": [{
                                 "metricName": metric_name_b,
                                 "temporality": "cumulative",
-                                "timeAggregation": "sum",
+                                "timeAggregation": "increase",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
