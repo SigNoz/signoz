@@ -139,7 +139,22 @@
 			font-weight: 400;
 			line-height: normal;
 			letter-spacing: 0.14px;
+
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			gap: 4px;
+			align-items: center;
+
+			.time-value {
+				font-size: 11px;
+				color: var(--bg-vanilla-400);
+				background-color: var(--bg-ink-200);
+				padding: 4px 6px;
+				border-radius: 3px;
+			}
 		}
+
 		.date-time-options-btn:hover {
 			&.ant-btn-text {
 				background-color: rgba(171, 189, 255, 0.04) !important;
@@ -245,6 +260,18 @@
 			display: flex;
 			flex-direction: column;
 			gap: 32px;
+
+			.input-error-message-container {
+				color: var(--bg-cherry-400);
+				display: flex;
+				align-items: center;
+				padding: 8px;
+				cursor: default;
+				font-size: 12px;
+				gap: 8px;
+				background-color: rgba(255, 219, 218, 0.1);
+				border-radius: 3px;
+			}
 		}
 
 		.recently-used-container {
@@ -335,6 +362,11 @@
 
 			.date-time-options-btn {
 				color: var(--bg-slate-400);
+
+				.time-value {
+					background-color: var(--bg-vanilla-300);
+					color: var(--bg-slate-400);
+				}
 			}
 
 			.active {

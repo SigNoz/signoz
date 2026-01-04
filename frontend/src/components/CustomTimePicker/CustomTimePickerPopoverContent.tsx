@@ -15,7 +15,7 @@ import {
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
-import { Clock, PenLine } from 'lucide-react';
+import { Clock, PenLine, TriangleAlertIcon } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
@@ -28,6 +28,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
 
+import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
 
 interface CustomTimePickerPopoverContentProps {
@@ -48,6 +49,8 @@ interface CustomTimePickerPopoverContentProps {
 	setIsOpenedFromFooter: Dispatch<SetStateAction<boolean>>;
 	onExitLiveLogs: () => void;
 	showRecentlyUsed: boolean;
+	customDateTimeInputStatus: CustomTimePickerInputStatus;
+	inputErrorMessage: string | null;
 }
 
 interface RecentlyUsedDateTimeRange {
@@ -74,6 +77,8 @@ function CustomTimePickerPopoverContent({
 	setIsOpenedFromFooter,
 	onExitLiveLogs,
 	showRecentlyUsed = true,
+	customDateTimeInputStatus = CustomTimePickerInputStatus.UNSET,
+	inputErrorMessage,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { pathname } = useLocation();
 
@@ -206,7 +211,11 @@ function CustomTimePickerPopoverContent({
 										: selectedTime === option.value && 'active',
 								)}
 							>
-								{option.label}
+								<span className="time-label">{option.label}</span>
+
+								{option.value !== 'custom' && option.value !== '1month' && (
+									<span className="time-value">{option.value}</span>
+								)}
 							</Button>
 						))}
 					</div>
@@ -225,6 +234,14 @@ function CustomTimePickerPopoverContent({
 						/>
 					) : (
 						<div className="time-selector-container">
+							{customDateTimeInputStatus === CustomTimePickerInputStatus.ERROR &&
+								inputErrorMessage && (
+									<div className="input-error-message-container">
+										<TriangleAlertIcon color={Color.BG_CHERRY_400} size={12} />
+										<span className="input-error-message-text">{inputErrorMessage}</span>
+									</div>
+								)}
+
 							<div className="relative-times-container">
 								<div className="time-heading">RELATIVE TIMES</div>
 								<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>

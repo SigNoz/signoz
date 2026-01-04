@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './CustomTimePicker.styles.scss';
 
-import { Input, InputRef, Popover, Tooltip, Typography } from 'antd';
+import { Input, InputRef, Popover, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -15,8 +15,7 @@ import {
 import dayjs from 'dayjs';
 import { isValidTimeFormat } from 'lib/getMinMax';
 import { defaultTo, isFunction, noop } from 'lodash-es';
-import debounce from 'lodash-es/debounce';
-import { CheckCircle, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import {
 	ChangeEvent,
@@ -39,6 +38,12 @@ import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
 const maxAllowedMinTimeInMonths = 6;
 type ViewType = 'datetime' | 'timezone';
 const DEFAULT_VIEW: ViewType = 'datetime';
+
+export enum CustomTimePickerInputStatus {
+	SUCCESS = 'success',
+	ERROR = 'error',
+	UNSET = '',
+}
 
 interface CustomTimePickerProps {
 	onSelect: (value: string) => void;
@@ -96,7 +101,9 @@ function CustomTimePicker({
 	);
 
 	const [inputValue, setInputValue] = useState('');
-	const [inputStatus, setInputStatus] = useState<'' | 'error' | 'success'>('');
+	const [inputStatus, setInputStatus] = useState<CustomTimePickerInputStatus>(
+		CustomTimePickerInputStatus.UNSET,
+	);
 	const [inputErrorMessage, setInputErrorMessage] = useState<string | null>(
 		null,
 	);
@@ -125,9 +132,37 @@ function CustomTimePicker({
 
 	const [isOpenedFromFooter, setIsOpenedFromFooter] = useState(false);
 
-	console.log('selectedTime', selectedTime);
-	console.log('start time', minTime);
-	console.log('end time', maxTime);
+	// function to get selected time in Last 1m, Last 2h, Last 3d, Last 4w format
+	// 1m, 2h, 3d, 4w -> Last 1 minute, Last 2 hours, Last 3 days, Last 4 weeks
+	const getSelectedTimeRangeLabelInRelativeFormat = (
+		selectedTime: string,
+	): string => {
+		if (selectedTime === 'custom') {
+			return selectedTime;
+		}
+
+		// Check if the format matches the relative time format (e.g., 1m, 2h, 3d, 4w)
+		const match = selectedTime.match(/^(\d+)([mhdw])$/);
+		if (!match) {
+			// If it doesn't match the format, return as is
+			return `Last ${selectedTime}`;
+		}
+
+		const value = parseInt(match[1], 10);
+		const unit = match[2];
+
+		// Map unit abbreviations to full words
+		const unitMap: Record<string, { singular: string; plural: string }> = {
+			m: { singular: 'minute', plural: 'minutes' },
+			h: { singular: 'hour', plural: 'hours' },
+			d: { singular: 'day', plural: 'days' },
+			w: { singular: 'week', plural: 'weeks' },
+		};
+
+		const unitLabel = value === 1 ? unitMap[unit].singular : unitMap[unit].plural;
+
+		return `Last ${value} ${unitLabel}`;
+	};
 
 	const getSelectedTimeRangeLabel = (
 		selectedTime: string,
@@ -171,7 +206,7 @@ function CustomTimePicker({
 		}
 
 		if (isValidTimeFormat(selectedTime)) {
-			return selectedTime;
+			return getSelectedTimeRangeLabelInRelativeFormat(selectedTime);
 		}
 
 		return '';
@@ -183,7 +218,9 @@ function CustomTimePicker({
 		} else {
 			const value = getSelectedTimeRangeLabel(selectedTime, selectedValue);
 			setSelectedTimePlaceholderValue(value);
+			setInputValue(value);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedTime, selectedValue, showLiveLogs]);
 
 	const hide = (): void => {
@@ -192,20 +229,40 @@ function CustomTimePicker({
 
 	const handleOpenChange = (newOpen: boolean): void => {
 		setOpen(newOpen);
+
 		if (!newOpen) {
 			setCustomDTPickerVisible?.(false);
 			setActiveView('datetime');
+
+			// set the input value to a relative format if the selected time is not custom
+			const inputValue = getSelectedTimeRangeLabel(selectedTime, selectedValue);
+			setInputValue(inputValue);
 		}
 	};
 
-	const debouncedHandleInputChange = debounce((inputValue): void => {
-		const isValidFormat = /^(\d+)([mhdw])$/.test(inputValue);
-		if (isValidFormat) {
-			setInputStatus('success');
+	const handleInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
+		const inputValue = event.target.value;
+
+		setInputValue(inputValue);
+
+		setInputStatus(CustomTimePickerInputStatus.UNSET);
+		onError(false);
+		setInputErrorMessage(null);
+
+		// Call the debounced function with the input value
+		// debouncedHandleInputChange(inputValue);
+	};
+
+	const handleInputPressEnter = (): void => {
+		// check if the entered time is in the format of 1m, 2h, 3d, 4w
+		const isTimeDurationShortHandFormat = /^(\d+)([mhdw])$/.test(inputValue);
+
+		if (isTimeDurationShortHandFormat) {
+			setInputStatus(CustomTimePickerInputStatus.SUCCESS);
 			onError(false);
 			setInputErrorMessage(null);
 
-			const match = inputValue.match(/^(\d+)([mhdw])$/);
+			const match = inputValue.match(/^(\d+)([mhdw])$/) as RegExpMatchArray;
 
 			const value = parseInt(match[1], 10);
 			const unit = match[2];
@@ -236,7 +293,7 @@ function CustomTimePicker({
 			}
 
 			if (minTime && (!minTime.isValid() || minTime < maxAllowedMinTime)) {
-				setInputStatus('error');
+				setInputStatus(CustomTimePickerInputStatus.ERROR);
 				onError(true);
 				setInputErrorMessage('Please enter time less than 6 months');
 				if (isFunction(onCustomTimeStatusUpdate)) {
@@ -248,27 +305,9 @@ function CustomTimePicker({
 					timeStr: inputValue,
 				});
 			}
-		} else {
-			setInputStatus('error');
-			onError(true);
-			setInputErrorMessage(null);
-			if (isFunction(onCustomTimeStatusUpdate)) {
-				onCustomTimeStatusUpdate(false);
-			}
+
+			return;
 		}
-	}, 300);
-
-	const handleInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
-		const inputValue = event.target.value;
-
-		setInputValue(inputValue);
-
-		// Call the debounced function with the input value
-		// debouncedHandleInputChange(inputValue);
-	};
-
-	const handleInputPressEnter = (): void => {
-		console.log('Enter pressed, input value:', inputValue);
 
 		// parse the input value to get the start and end times
 		const [startTime, endTime] = inputValue.split(' - ');
@@ -283,9 +322,6 @@ function CustomTimePicker({
 			DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
 		).unix();
 
-		console.log('startTimeValue', startTimeValue);
-		console.log('endTimeValue', endTimeValue);
-
 		if (startTimeValue && endTimeValue) {
 			onCustomDateHandler?.([
 				dayjs.unix(startTimeValue),
@@ -294,15 +330,13 @@ function CustomTimePicker({
 
 			setOpen(false);
 		} else {
+			setInputStatus(CustomTimePickerInputStatus.ERROR);
 			onError(true);
 			setInputErrorMessage('Invalid time range');
 		}
 	};
 
 	const handleSelect = (label: string, value: string): void => {
-		console.log('handleSelect label', label);
-		console.log('handleSelect value', value);
-
 		if (label === 'Custom') {
 			setCustomDTPickerVisible?.(true);
 			return;
@@ -310,7 +344,7 @@ function CustomTimePicker({
 
 		onSelect(value);
 		setSelectedTimePlaceholderValue(label);
-		setInputStatus('');
+		setInputStatus(CustomTimePickerInputStatus.UNSET);
 		onError(false);
 		setInputErrorMessage(null);
 		setInputValue('');
@@ -345,6 +379,11 @@ function CustomTimePicker({
 		console.log('handleOpen called');
 		setOpen(true);
 
+		// reset the input status and error message as we reset the time to previous correct value
+		setInputStatus(CustomTimePickerInputStatus.UNSET);
+		onError(false);
+		setInputErrorMessage(null);
+
 		const startTime = dayjs(minTime / 1000_000).format(
 			DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
 		);
@@ -363,11 +402,15 @@ function CustomTimePicker({
 		console.log('handleClose called');
 		setOpen(false);
 		setCustomDTPickerVisible?.(false);
+
+		// set the input value to a relative format if the selected time is not custom
+		const inputValue = getSelectedTimeRangeLabel(selectedTime, selectedValue);
+		setInputValue(inputValue);
 	};
 
 	// this is required as TopNav component wraps the components and we need to clear the state on path change
 	useEffect(() => {
-		setInputStatus('');
+		setInputStatus(CustomTimePickerInputStatus.UNSET);
 		onError(false);
 		setInputErrorMessage(null);
 		setInputValue('');
@@ -399,74 +442,6 @@ function CustomTimePicker({
 
 		return '';
 	};
-
-	// given the minTime and maxTime, return the label for the selected time, it should be in the format of Last X minutes / hours / days / weeks / months
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const getSelectedTimeLabel = useCallback((): string => {
-		if (showLiveLogs) {
-			return 'Live';
-		}
-
-		const minTimeValue = dayjs(minTime / 1000_000);
-		const maxTimeValue = dayjs(maxTime / 1000_000);
-
-		const diffInMonths = maxTimeValue.diff(minTimeValue, 'months');
-		const diffInWeeks = maxTimeValue.diff(minTimeValue, 'weeks');
-		const diffInDays = maxTimeValue.diff(minTimeValue, 'days');
-		const diffInHours = maxTimeValue.diff(minTimeValue, 'hours');
-		const diffInMinutes = maxTimeValue.diff(minTimeValue, 'minutes');
-
-		if (diffInMonths > 0) {
-			return `Last ${diffInMonths} ${diffInMonths === 1 ? 'month' : 'months'}`;
-		}
-
-		if (diffInWeeks > 0) {
-			return `Last ${diffInWeeks} ${diffInWeeks === 1 ? 'week' : 'weeks'}`;
-		}
-
-		if (diffInDays > 0) {
-			return `Last ${diffInDays} ${diffInDays === 1 ? 'day' : 'days'}`;
-		}
-
-		if (diffInHours > 0) {
-			return `Last ${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'}`;
-		}
-
-		if (diffInMinutes > 0) {
-			return `Last ${diffInMinutes} ${diffInMinutes === 1 ? 'minute' : 'minutes'}`;
-		}
-
-		return '';
-	}, [minTime, maxTime, showLiveLogs]);
-
-	const getInputPrefix = (): JSX.Element => {
-		if (showLiveLogs) {
-			return (
-				<div className="time-input-prefix">
-					<div className="live-dot-icon" />
-				</div>
-			);
-		}
-
-		return (
-			<div className="time-input-prefix">
-				{inputValue && inputStatus === 'success' ? (
-					<CheckCircle size={14} color="#51E7A8" />
-				) : (
-					<Tooltip title="Enter time in format (e.g., 1m, 2h, 3d, 4w)">
-						<Clock size={14} className="cursor-pointer" />
-					</Tooltip>
-				)}
-			</div>
-		);
-	};
-
-	useEffect(() => {
-		if (!open) {
-			const inputValue = getSelectedTimeLabel();
-			setInputValue(inputValue);
-		}
-	}, [open, getSelectedTimeLabel]);
 
 	// Focus and select input text when popover opens
 	useEffect(() => {
@@ -510,6 +485,8 @@ function CustomTimePicker({
 								setIsOpenedFromFooter={setIsOpenedFromFooter}
 								isOpenedFromFooter={isOpenedFromFooter}
 								showRecentlyUsed={showRecentlyUsed}
+								customDateTimeInputStatus={inputStatus}
+								inputErrorMessage={inputErrorMessage}
 							/>
 						) : (
 							content
@@ -525,11 +502,18 @@ function CustomTimePicker({
 				>
 					<Input
 						ref={inputRef}
-						className="timeSelection-input"
+						className={cx(
+							'timeSelection-input',
+							inputStatus === CustomTimePickerInputStatus.ERROR ? 'error' : '',
+						)}
 						type="text"
-						status={inputValue && inputStatus === 'error' ? 'error' : ''}
+						status={
+							inputValue && inputStatus === CustomTimePickerInputStatus.ERROR
+								? 'error'
+								: ''
+						}
 						readOnly={!open}
-						placeholder={getSelectedTimeLabel()}
+						placeholder={selectedTimePlaceholderValue}
 						// placeholder={
 						// 	isInputFocused
 						// 		? 'Time Format (1m or 2h or 3d or 4w)'
@@ -569,11 +553,6 @@ function CustomTimePicker({
 					/>
 				</Popover>
 			</Tooltip>
-			{inputStatus === 'error' && inputErrorMessage && (
-				<Typography.Title level={5} className="valid-format-error">
-					{inputErrorMessage}
-				</Typography.Title>
-			)}
 		</div>
 	);
 }

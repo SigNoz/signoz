@@ -47,11 +47,6 @@ const GetMinMax = (
 	dateTimeRange?: [number, number],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): GetMinMaxPayload => {
-	console.log('--------------------------------');
-	console.log('GetMinMax called');
-	console.log('dateTimeRange', dateTimeRange);
-	console.log('interval', interval);
-	console.log('--------------------------------');
 	let maxTime = new Date().getTime();
 	let minTime = 0;
 
