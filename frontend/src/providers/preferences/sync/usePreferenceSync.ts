@@ -58,7 +58,7 @@ export function usePreferenceSync({
 				updateExtraDataSelectColumns(parsedExtraData?.selectColumns) ||
 				defaultLogsSelectedColumns;
 			formatting = {
-				maxLines: parsedExtraData?.maxLines ?? 2,
+				maxLines: parsedExtraData?.maxLines ?? 1,
 				format: parsedExtraData?.format ?? 'table',
 				fontSize: parsedExtraData?.fontSize ?? 'small',
 				version: parsedExtraData?.version ?? 1,
