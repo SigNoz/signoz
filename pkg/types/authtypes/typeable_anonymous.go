@@ -35,3 +35,7 @@ func (typeableAnonymous *typeableAnonymous) Name() Name {
 func (typeableAnonymous *typeableAnonymous) Prefix(orgID valuer.UUID) string {
 	return typeableAnonymous.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + typeableAnonymous.Name().String()
 }
+
+func (typeableAnonymous *typeableAnonymous) Scope(relation Relation) string {
+	return typeableAnonymous.Name().String() + ":" + relation.StringValue()
+}

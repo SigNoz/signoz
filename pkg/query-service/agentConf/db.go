@@ -146,11 +146,21 @@ func (r *Repo) insertConfig(
 		c.Version = 1
 	}
 
+	// Track whether we've successfully finished the insert operation
+	success := false
+
 	defer func() {
-		if err != nil {
+		if !success {
 			// remove all the damage (invalid rows from db)
-			r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigVersion)).Where("id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
-			r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigElement)).Where("version_id = ?", c.ID).Exec(ctx)
+			// Delete elements first, then version (to respect potential foreign key constraints)
+			_, delErr := r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigElement)).Where("version_id = ?", c.ID).Exec(ctx)
+			if delErr != nil {
+				zap.L().Error("failed to delete config elements during cleanup", zap.Error(delErr), zap.String("version_id", c.ID.String()))
+			}
+			_, delErr = r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigVersion)).Where("id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
+			if delErr != nil {
+				zap.L().Error("failed to delete config version during cleanup", zap.Error(delErr), zap.String("version_id", c.ID.String()))
+			}
 		}
 	}()
 
@@ -181,6 +191,7 @@ func (r *Repo) insertConfig(
 		}
 	}
 
+	success = true
 	return nil
 }
 
