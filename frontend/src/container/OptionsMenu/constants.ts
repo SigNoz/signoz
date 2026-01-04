@@ -1,4 +1,5 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { FontSize, OptionsQuery } from './types';
 
@@ -6,9 +7,15 @@ export const URL_OPTIONS = 'options';
 
 export const defaultOptionsQuery: OptionsQuery = {
 	selectColumns: [],
-	maxLines: 2,
+	maxLines: 1,
 	format: 'raw',
 	fontSize: FontSize.SMALL,
+};
+
+export const EXCLUDED_COLUMNS: Record<DataSource, string[]> = {
+	[DataSource.TRACES]: ['body', 'isRoot', 'isEntryPoint'],
+	[DataSource.METRICS]: ['body'],
+	[DataSource.LOGS]: [],
 };
 
 export const defaultLogsSelectedColumns: TelemetryFieldKey[] = [

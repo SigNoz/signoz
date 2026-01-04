@@ -1,11 +1,16 @@
-from typing import Tuple
-import requests
 from http import HTTPStatus
+from typing import Callable, Tuple
+
 import requests
-from typing import Callable
+
 from fixtures import types
 
-def test_change_role(signoz: types.SigNoz, get_token: Callable[[str, str], str], get_tokens: Callable[[str, str], Tuple[str, str]]):
+
+def test_change_role(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    get_tokens: Callable[[str, str], Tuple[str, str]],
+):
     admin_token = get_token("admin@integration.test", "password123Z$")
 
     # Create a new user as VIEWER
@@ -34,7 +39,9 @@ def test_change_role(signoz: types.SigNoz, get_token: Callable[[str, str], str],
     assert response.status_code == HTTPStatus.CREATED
 
     # Make some API calls as new user
-    new_user_token, new_user_refresh_token = get_tokens("admin+rolechange@integration.test", "password123Z$")
+    new_user_token, new_user_refresh_token = get_tokens(
+        "admin+rolechange@integration.test", "password123Z$"
+    )
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user/me"),
@@ -54,7 +61,7 @@ def test_change_role(signoz: types.SigNoz, get_token: Callable[[str, str], str],
     )
 
     assert response.status_code == HTTPStatus.FORBIDDEN
-    
+
     # Change the new user's role - move to ADMIN
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/user/{new_user_id}"),
@@ -91,7 +98,10 @@ def test_change_role(signoz: types.SigNoz, get_token: Callable[[str, str], str],
 
     # Make some API call again which is protected
     rotate_response = response.json()["data"]
-    new_user_token, new_user_refresh_token = rotate_response["accessToken"], rotate_response["refreshToken"]
+    new_user_token, new_user_refresh_token = (
+        rotate_response["accessToken"],
+        rotate_response["refreshToken"],
+    )
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/org/preferences"),

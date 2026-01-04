@@ -24,8 +24,12 @@ describe('DeleteRoutingPolicy', () => {
 			screen.getByRole('dialog', { name: DELETE_BUTTON_TEXT }),
 		).toBeInTheDocument();
 		expect(
+			screen.getByText(/Are you sure you want to delete/i),
+		).toBeInTheDocument();
+		expect(screen.getByText(mockRoutingPolicy.name)).toBeInTheDocument();
+		expect(
 			screen.getByText(
-				`Are you sure you want to delete ${mockRoutingPolicy.name} routing policy? Deleting a routing policy is irreversible and cannot be undone.`,
+				/Deleting a routing policy is irreversible and cannot be undone\./i,
 			),
 		).toBeInTheDocument();
 		expect(

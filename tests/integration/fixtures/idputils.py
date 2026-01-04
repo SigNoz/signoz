@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Any, Callable, Dict
 from urllib.parse import urljoin
 from xml.etree import ElementTree
 
@@ -71,6 +71,9 @@ def create_saml_client(
                     "saml_signature_canonicalization_method": "http://www.w3.org/2001/10/xml-exc-c14n#",
                     "saml.onetimeuse.condition": "false",
                     "saml.server.signature.keyinfo.xmlSigKeyInfoKeyNameTransformer": "NONE",
+                    "saml_assertion_consumer_url_post": urljoin(
+                        f"{signoz.self.host_configs['8080'].base()}", callback_path
+                    ),
                 },
                 "authenticationFlowBindingOverrides": {},
                 "fullScopeAllowed": True,
@@ -119,6 +122,33 @@ def create_saml_client(
         )
 
     return _create_saml_client
+
+
+@pytest.fixture(name="update_saml_client_attributes", scope="function")
+def update_saml_client_attributes(
+    idp: types.TestContainerIDP,
+) -> Callable[[str, Dict[str, Any]], None]:
+    def _update_saml_client_attributes(
+        client_id: str, attributes: Dict[str, Any]
+    ) -> None:
+        client = KeycloakAdmin(
+            server_url=idp.container.host_configs["6060"].base(),
+            username=IDP_ROOT_USERNAME,
+            password=IDP_ROOT_PASSWORD,
+            realm_name="master",
+        )
+
+        kc_client_id = client.get_client_id(client_id=client_id)
+        print("kc_client_id: " + kc_client_id)
+
+        payload = client.get_client(client_id=kc_client_id)
+
+        for attr_key, attr_value in attributes.items():
+            payload["attributes"][attr_key] = attr_value
+
+        client.update_client(client_id=kc_client_id, payload=payload)
+
+    return _update_saml_client_attributes
 
 
 @pytest.fixture(name="create_oidc_client", scope="function")

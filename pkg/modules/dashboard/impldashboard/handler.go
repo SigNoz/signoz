@@ -11,10 +11,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
-	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/transition"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -25,12 +24,10 @@ import (
 type handler struct {
 	module           dashboard.Module
 	providerSettings factory.ProviderSettings
-	querier          querier.Querier
-	licensing        licensing.Licensing
 }
 
-func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing) dashboard.Handler {
-	return &handler{module: module, providerSettings: providerSettings, querier: querier, licensing: licensing}
+func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettings) dashboard.Handler {
+	return &handler{module: module, providerSettings: providerSettings}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
@@ -213,12 +210,6 @@ func (handler *handler) CreatePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
-	if err != nil {
-		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
-		return
-	}
-
 	id, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
@@ -244,7 +235,7 @@ func (handler *handler) CreatePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, nil)
+	render.Success(rw, http.StatusCreated, types.Identifiable{ID: publicDashboard.ID})
 }
 
 func (handler *handler) GetPublic(rw http.ResponseWriter, r *http.Request) {
@@ -254,12 +245,6 @@ func (handler *handler) GetPublic(rw http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(rw, err)
-		return
-	}
-
-	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
-	if err != nil {
-		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
 		return
 	}
 
@@ -325,7 +310,7 @@ func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *htt
 		return
 	}
 
-	widgetIndex, ok := mux.Vars(r)["index"]
+	widgetIndex, ok := mux.Vars(r)["idx"]
 	if !ok {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "widget index is missing from the path"))
 		return
@@ -343,7 +328,7 @@ func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *htt
 		return
 	}
 
-	widgetIdxInt, err := strconv.ParseInt(widgetIndex, 10, 64)
+	widgetIdx, err := strconv.ParseUint(widgetIndex, 10, 64)
 	if err != nil {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid widget index"))
 		return
@@ -376,13 +361,7 @@ func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *htt
 		endTime = uint64(time.Now().UnixMilli())
 	}
 
-	query, err := dashboard.GetWidgetQuery(startTime, endTime, widgetIdxInt, handler.providerSettings.Logger)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	queryRangeResults, err := handler.querier.QueryRange(ctx, dashboard.OrgID, query)
+	queryRangeResults, err := handler.module.GetPublicWidgetQueryRange(ctx, id, widgetIdx, startTime, endTime)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -398,12 +377,6 @@ func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(rw, err)
-		return
-	}
-
-	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
-	if err != nil {
-		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
 		return
 	}
 
@@ -432,7 +405,7 @@ func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	publicDashboard.Update(req.TimeRangeEnabled, req.DefaultTimeRange)
-	err = handler.module.UpdatePublic(ctx, publicDashboard)
+	err = handler.module.UpdatePublic(ctx, valuer.MustNewUUID(claims.OrgID), publicDashboard)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -448,12 +421,6 @@ func (handler *handler) DeletePublic(rw http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(rw, err)
-		return
-	}
-
-	_, err = handler.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
-	if err != nil {
-		render.Error(rw, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error()))
 		return
 	}
 

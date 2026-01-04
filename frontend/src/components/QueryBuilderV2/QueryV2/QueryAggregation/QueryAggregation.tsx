@@ -43,7 +43,10 @@ function QueryAggregationOptions({
 	};
 
 	return (
-		<div className="query-aggregation-container">
+		<div
+			className="query-aggregation-container"
+			data-testid="query-aggregation-container"
+		>
 			<div className="aggregation-container">
 				<QueryAggregationSelect
 					onChange={onChange}

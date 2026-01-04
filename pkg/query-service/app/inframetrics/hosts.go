@@ -520,7 +520,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 			if _, ok := hostAttrs[record.HostName]; ok {
 				record.Meta = hostAttrs[record.HostName]
 			}
-			if osType, ok := record.Meta["os_type"]; ok {
+			if osType, ok := record.Meta[GetDotMetrics("os_type")]; ok {
 				record.OS = osType
 			}
 			record.Active = activeHosts[record.HostName]

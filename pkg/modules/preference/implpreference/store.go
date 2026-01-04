@@ -25,7 +25,7 @@ func (store *store) GetByOrg(ctx context.Context, orgID valuer.UUID, name prefer
 		BunDB().
 		NewSelect().
 		Model(orgPreference).
-		Where("preference_id = ?", name).
+		Where("name = ?", name).
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
@@ -75,7 +75,7 @@ func (store *store) GetByUser(ctx context.Context, userID valuer.UUID, name pref
 		BunDB().
 		NewSelect().
 		Model(userPreference).
-		Where("preference_id = ?", name).
+		Where("name = ?", name).
 		Where("user_id = ?", userID).
 		Scan(ctx)
 	if err != nil {

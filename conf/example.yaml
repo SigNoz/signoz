@@ -3,6 +3,13 @@
 # Do not modify this file
 #
 
+##################### Global #####################
+global:
+  # the url under which the signoz apiserver is externally reachable.
+  external_url: <unset>
+  # the url where the SigNoz backend receives telemetry data (traces, metrics, logs) from instrumented applications.
+  ingestion_url: <unset>
+
 ##################### Version #####################
 version:
   banner:
@@ -47,10 +54,10 @@ cache:
   provider: memory
   # memory: Uses in-memory caching.
   memory:
-    # Time-to-live for cache entries in memory. Specify the duration in ns
-    ttl: 60000000000
-    # The interval at which the cache will be cleaned up
-    cleanup_interval: 1m
+    # Max items for the in-memory cache (10x the entries)
+    num_counters: 100000
+    # Total cost in bytes allocated bounded cache
+    max_cost: 67108864
   # redis: Uses Redis as the caching backend.
   redis:
     # The hostname or IP address of the Redis server.
@@ -271,3 +278,13 @@ tokenizer:
     token:
       # The maximum number of tokens a user can have. This limits the number of concurrent sessions a user can have.
       max_per_user: 5
+
+##################### Flagger #####################
+flagger:
+  # Config are the overrides for the feature flags which come directly from the config file.
+  config:
+    boolean:
+    string:
+    float:
+    integer:
+    object:

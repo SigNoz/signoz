@@ -27,6 +27,7 @@ import {
 	defaultLogsSelectedColumns,
 	defaultOptionsQuery,
 	defaultTraceSelectedColumns,
+	EXCLUDED_COLUMNS,
 	URL_OPTIONS,
 } from './constants';
 import {
@@ -267,8 +268,9 @@ const useOptionsMenu = ({
 
 	const optionsFromAttributeKeys = useMemo(() => {
 		const filteredAttributeKeys = searchedAttributeKeys.filter((item) => {
-			if (dataSource !== DataSource.LOGS) {
-				return item.name !== 'body';
+			const exclusions = EXCLUDED_COLUMNS[dataSource];
+			if (exclusions) {
+				return !exclusions.includes(item.name);
 			}
 			return true;
 		});

@@ -1,7 +1,7 @@
 import datetime
 import json
 from abc import ABC
-from typing import Any, Callable, Generator, List
+from typing import Any, Callable, Generator, List, Optional
 
 import numpy as np
 import pytest
@@ -116,7 +116,7 @@ class Logs(ABC):
 
     def __init__(
         self,
-        timestamp: datetime.datetime = datetime.datetime.now(),
+        timestamp: Optional[datetime.datetime] = None,
         resources: dict[str, Any] = {},
         attributes: dict[str, Any] = {},
         body: str = "default body",
@@ -128,6 +128,8 @@ class Logs(ABC):
         scope_version: str = "",
         scope_attributes: dict[str, str] = {},
     ) -> None:
+        if timestamp is None:
+            timestamp = datetime.datetime.now()
         self.tag_attributes = []
         self.attribute_keys = []
         self.resource_keys = []
@@ -429,7 +431,11 @@ def ttl_legacy_logs_v2_table_setup(request, signoz: types.SigNoz):
     ).result_rows
     assert result is not None
     # Add cleanup to restore original table
-    request.addfinalizer(lambda:  signoz.telemetrystore.conn.query("RENAME TABLE signoz_logs.logs_v2_backup TO signoz_logs.logs_v2;"))
+    request.addfinalizer(
+        lambda: signoz.telemetrystore.conn.query(
+            "RENAME TABLE signoz_logs.logs_v2_backup TO signoz_logs.logs_v2;"
+        )
+    )
 
     # Create new test tables
     result = signoz.telemetrystore.conn.query(
@@ -445,9 +451,14 @@ def ttl_legacy_logs_v2_table_setup(request, signoz: types.SigNoz):
 
     assert result is not None
     # Add cleanup to drop test table
-    request.addfinalizer(lambda:  signoz.telemetrystore.conn.query("DROP TABLE IF EXISTS signoz_logs.logs_v2;"))
+    request.addfinalizer(
+        lambda: signoz.telemetrystore.conn.query(
+            "DROP TABLE IF EXISTS signoz_logs.logs_v2;"
+        )
+    )
 
     yield  # Test runs here
+
 
 @pytest.fixture(name="ttl_legacy_logs_v2_resource_table_setup", scope="function")
 def ttl_legacy_logs_v2_resource_table_setup(request, signoz: types.SigNoz):
@@ -463,7 +474,11 @@ def ttl_legacy_logs_v2_resource_table_setup(request, signoz: types.SigNoz):
     ).result_rows
     assert result is not None
     # Add cleanup to restore original table
-    request.addfinalizer(lambda:  signoz.telemetrystore.conn.query("RENAME TABLE signoz_logs.logs_v2_resource_backup TO signoz_logs.logs_v2_resource;"))
+    request.addfinalizer(
+        lambda: signoz.telemetrystore.conn.query(
+            "RENAME TABLE signoz_logs.logs_v2_resource_backup TO signoz_logs.logs_v2_resource;"
+        )
+    )
 
     # Create new test tables
     result = signoz.telemetrystore.conn.query(
@@ -478,6 +493,10 @@ def ttl_legacy_logs_v2_resource_table_setup(request, signoz: types.SigNoz):
 
     assert result is not None
     # Add cleanup to drop test table
-    request.addfinalizer(lambda:  signoz.telemetrystore.conn.query("DROP TABLE IF EXISTS signoz_logs.logs_v2_resource;"))
+    request.addfinalizer(
+        lambda: signoz.telemetrystore.conn.query(
+            "DROP TABLE IF EXISTS signoz_logs.logs_v2_resource;"
+        )
+    )
 
     yield  # Test runs here

@@ -4,10 +4,7 @@ import './NewWidget.styles.scss';
 import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import {
-	PrecisionOption,
-	PrecisionOptionsEnum,
-} from 'components/Graph/yAxisConfig';
+import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { adjustQueryForV5 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
@@ -373,10 +370,6 @@ function NewWidget({
 	// this has been moved here from the left container
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		const updatedQuery = cloneDeep(stagedQuery || initialQueriesMap.metrics);
-		if (updatedQuery?.builder?.queryData?.[0]) {
-			updatedQuery.builder.queryData[0].pageSize = 10;
-		}
-
 		if (selectedWidget) {
 			if (selectedGraph === PANEL_TYPES.LIST) {
 				return {
@@ -422,16 +415,12 @@ function NewWidget({
 	useEffect(() => {
 		if (stagedQuery) {
 			setIsLoadingPanelData(false);
-			const updatedStagedQuery = cloneDeep(stagedQuery);
-			if (updatedStagedQuery?.builder?.queryData?.[0]) {
-				updatedStagedQuery.builder.queryData[0].pageSize = 10;
-			}
 			setRequestData((prev) => ({
 				...prev,
 				selectedTime: selectedTime.enum || prev.selectedTime,
 				globalSelectedInterval: customGlobalSelectedInterval,
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
-				query: updatedStagedQuery,
+				query: stagedQuery,
 				fillGaps: selectedWidget.fillSpans || false,
 				isLogScale: selectedWidget.isLogScale || false,
 				formatForWeb:
@@ -504,7 +493,7 @@ function NewWidget({
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								decimalPrecision:
-									selectedWidget?.decimalPrecision || PrecisionOptionsEnum.TWO,
+									selectedWidget?.decimalPrecision ?? PrecisionOptionsEnum.TWO,
 								panelTypes: graphType,
 								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,
@@ -535,7 +524,7 @@ function NewWidget({
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								decimalPrecision:
-									selectedWidget?.decimalPrecision || PrecisionOptionsEnum.TWO,
+									selectedWidget?.decimalPrecision ?? PrecisionOptionsEnum.TWO,
 								panelTypes: graphType,
 								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,

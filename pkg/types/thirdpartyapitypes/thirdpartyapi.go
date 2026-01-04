@@ -11,7 +11,7 @@ type ThirdPartyApiRequest struct {
 	ShowIp   bool                 `json:"show_ip,omitempty"`
 	Domain   string               `json:"domain,omitempty"`
 	Endpoint string               `json:"endpoint,omitempty"`
-	Filter   *qbtypes.Filter      `json:"filters,omitempty"`
+	Filter   *qbtypes.Filter      `json:"filter,omitempty"`
 	GroupBy  []qbtypes.GroupByKey `json:"groupBy,omitempty"`
 }
 
