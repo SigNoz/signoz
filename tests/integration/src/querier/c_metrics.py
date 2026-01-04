@@ -7,7 +7,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
-from fixtures.timeseries_utils import (
+from src.querier.timeseries_utils import (
     assert_minutely_bucket_values,
     find_named_result,
     index_series_by_label,
@@ -70,7 +70,7 @@ def test_metrics_fill_gaps(
                             "aggregations": [{
                                 "metricName": metric_name,
                                 "temporality": "cumulative",
-                                "timeAggregation": "sum",
+                                "timeAggregation": "increase",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -101,7 +101,7 @@ def test_metrics_fill_gaps(
     assert_minutely_bucket_values(
         values,
         now,
-        expected_by_ts={ts_min_3: 10.0, ts_min_1: 30.0},
+        expected_by_ts={ts_min_3: 10.0, ts_min_1: 20.0},
         context="metrics/fillGaps",
     )
 
@@ -161,7 +161,7 @@ def test_metrics_fill_gaps_with_group_by(
                             "aggregations": [{
                                 "metricName": metric_name,
                                 "temporality": "cumulative",
-                                "timeAggregation": "sum",
+                                "timeAggregation": "increase",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -263,7 +263,7 @@ def test_metrics_fill_gaps_formula(
                             "aggregations": [{
                                 "metricName": metric_name_a,
                                 "temporality": "cumulative",
-                                "timeAggregation": "sum",
+                                "timeAggregation": "increase",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -278,7 +278,7 @@ def test_metrics_fill_gaps_formula(
                             "aggregations": [{
                                 "metricName": metric_name_b,
                                 "temporality": "cumulative",
-                                "timeAggregation": "sum",
+                                "timeAggregation": "increase",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -393,7 +393,7 @@ def test_metrics_fill_gaps_formula_with_group_by(
                             "aggregations": [{
                                 "metricName": metric_name_a,
                                 "temporality": "cumulative",
-                                "timeAggregation": "sum",
+                                "timeAggregation": "increase",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -409,7 +409,7 @@ def test_metrics_fill_gaps_formula_with_group_by(
                             "aggregations": [{
                                 "metricName": metric_name_b,
                                 "temporality": "cumulative",
-                                "timeAggregation": "sum",
+                                "timeAggregation": "increase",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -512,7 +512,7 @@ def test_metrics_fill_zero(
                             "aggregations": [{
                                 "metricName": metric_name,
                                 "temporality": "cumulative",
-                                "timeAggregation": "sum",
+                                "timeAggregation": "increase",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -601,7 +601,7 @@ def test_metrics_fill_zero_with_group_by(
                             "aggregations": [{
                                 "metricName": metric_name,
                                 "temporality": "cumulative",
-                                "timeAggregation": "sum",
+                                "timeAggregation": "increase",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -702,7 +702,7 @@ def test_metrics_fill_zero_formula(
                             "aggregations": [{
                                 "metricName": metric_name_a,
                                 "temporality": "cumulative",
-                                "timeAggregation": "sum",
+                                "timeAggregation": "increase",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
@@ -717,7 +717,7 @@ def test_metrics_fill_zero_formula(
                             "aggregations": [{
                                 "metricName": metric_name_b,
                                 "temporality": "cumulative",
-                                "timeAggregation": "sum",
+                                "timeAggregation": "increase",
                                 "spaceAggregation": "sum"
                             }],
                             "stepInterval": 60,
