@@ -24,7 +24,7 @@ func (j JoinType) Validate() error {
 	case JoinTypeInner, JoinTypeLeft, JoinTypeRight, JoinTypeFull, JoinTypeCross:
 		return nil
 	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid join type: %s", j.StringValue())
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid join type: %s, supported values: inner, left, right, full, cross", j.StringValue())
 	}
 }
 

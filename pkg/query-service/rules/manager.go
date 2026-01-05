@@ -349,7 +349,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 		return err
 	}
 
-	err = m.queryParser.ValidateCompositeQuery(ctx, parsedRule.RuleCondition.CompositeQuery)
+	err = parsedRule.RuleCondition.CompositeQuery.Validate()
 	if err != nil {
 		return &model.ApiError{
 			Typ: model.ErrorBadData,
@@ -556,7 +556,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		return nil, err
 	}
 
-	err = m.queryParser.ValidateCompositeQuery(ctx, parsedRule.RuleCondition.CompositeQuery)
+	err = parsedRule.RuleCondition.CompositeQuery.Validate()
 	if err != nil {
 		return nil, err
 	}
@@ -947,7 +947,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 		return nil, err
 	}
 
-	err = m.queryParser.ValidateCompositeQuery(ctx, storedRule.RuleCondition.CompositeQuery)
+	err = storedRule.RuleCondition.CompositeQuery.Validate()
 	if err != nil {
 		return nil, &model.ApiError{
 			Typ: model.ErrorBadData,
@@ -1006,7 +1006,7 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 		return 0, model.BadRequest(err)
 	}
 
-	err = m.queryParser.ValidateCompositeQuery(ctx, parsedRule.RuleCondition.CompositeQuery)
+	err = parsedRule.RuleCondition.CompositeQuery.Validate()
 	if err != nil {
 		return 0, &model.ApiError{
 			Typ: model.ErrorBadData,

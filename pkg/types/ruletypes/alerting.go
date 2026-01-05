@@ -134,10 +134,6 @@ func (rc *RuleCondition) UnmarshalJSON(data []byte) error {
 	// Validate CompositeQuery - must be non-nil and pass validation
 	if rc.CompositeQuery == nil {
 		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite query is required"))
-	} else {
-		if err := rc.CompositeQuery.Validate(); err != nil {
-			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite query validation failed: %v", err))
-		}
 	}
 
 	// Validate AlertOnAbsent + AbsentFor - if AlertOnAbsent is true, AbsentFor must be > 0
@@ -147,7 +143,7 @@ func (rc *RuleCondition) UnmarshalJSON(data []byte) error {
 
 	// Validate Seasonality - must be one of the allowed values when provided
 	if !isValidSeasonality(rc.Seasonality) {
-		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid seasonality: %s", rc.Seasonality))
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid seasonality: %s, supported values: hourly, daily, weekly", rc.Seasonality))
 	}
 
 	// Validate SelectedQueryName - must match one of the query names from CompositeQuery

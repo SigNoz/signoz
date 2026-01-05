@@ -1,11 +1,8 @@
-package queryparser
+package v3
 
 import (
-	"context"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -13,12 +10,10 @@ import (
 )
 
 func TestValidateCompositeQuery(t *testing.T) {
-	ctx := context.Background()
-	queryParser := New(instrumentationtest.New().ToProviderSettings())
 
 	tests := []struct {
 		name           string
-		compositeQuery *v3.CompositeQuery
+		compositeQuery *CompositeQuery
 		wantErr        bool
 		errContains    string
 	}{
@@ -30,7 +25,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "empty queries array should return error",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{},
 			},
 			wantErr:     true,
@@ -38,7 +33,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "valid metric builder query should pass",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -58,7 +53,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "valid log builder query should pass",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -78,7 +73,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "valid trace builder query should pass",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -98,7 +93,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "valid PromQL query should pass",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypePromQL,
@@ -113,7 +108,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "valid ClickHouse query should pass",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeClickHouseSQL,
@@ -128,7 +123,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "valid formula query should pass",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeFormula,
@@ -143,7 +138,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "valid join query should pass",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeJoin,
@@ -161,7 +156,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "valid trace operator query should pass",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -200,7 +195,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "invalid metric builder query - missing aggregation should return error",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -217,7 +212,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "invalid PromQL query - empty query should return error",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypePromQL,
@@ -233,7 +228,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "invalid PromQL query - syntax error should return error",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypePromQL,
@@ -249,7 +244,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "invalid ClickHouse query - empty query should return error",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeClickHouseSQL,
@@ -265,7 +260,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "invalid ClickHouse query - syntax error should return error",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeClickHouseSQL,
@@ -281,7 +276,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "invalid formula query - empty expression should return error",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeFormula,
@@ -297,7 +292,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "invalid trace operator query - empty expression should return error",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeTraceOperator,
@@ -313,7 +308,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "all queries disabled should return error",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -343,7 +338,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "mixed disabled and enabled queries should pass",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -372,7 +367,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "multiple valid queries should pass",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -406,7 +401,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "invalid query in multiple queries should return error",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -434,7 +429,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		},
 		{
 			name: "unknown query type should return error",
-			compositeQuery: &v3.CompositeQuery{
+			compositeQuery: &CompositeQuery{
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryType{String: valuer.NewString("invalid_query_type")},
@@ -452,7 +447,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := queryParser.ValidateCompositeQuery(ctx, tt.compositeQuery)
+			err := tt.compositeQuery.Validate()
 			if tt.wantErr {
 				require.Error(t, err)
 				if tt.errContains != "" {

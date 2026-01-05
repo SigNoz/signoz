@@ -1,17 +1,31 @@
-package queryparser
+package v3
 
 import (
 	"bytes"
-	"text/template"
+	"fmt"
+	"html/template"
 	"time"
 
 	clickhouse "github.com/AfterShip/clickhouse-sql-parser/parser"
 	"github.com/SigNoz/signoz/pkg/errors"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/prometheus/prometheus/promql/parser"
 )
+
+type QueryParseError struct {
+	StartPosition *int
+	EndPosition   *int
+	ErrorMessage  string
+	Query         string
+}
+
+func (e *QueryParseError) Error() string {
+	if e.StartPosition != nil && e.EndPosition != nil {
+		return fmt.Sprintf("query parse error: %s at position %d:%d", e.ErrorMessage, *e.StartPosition, *e.EndPosition)
+	}
+	return fmt.Sprintf("query parse error: %s", e.ErrorMessage)
+}
 
 // validatePromQLQuery validates a PromQL query syntax using the Prometheus parser
 func validatePromQLQuery(query string) error {
@@ -77,7 +91,7 @@ func validateClickHouseQuery(query string) error {
 }
 
 // checkQueriesDisabled checks if all queries are disabled. Returns true if all queries are disabled, false otherwise.
-func checkQueriesDisabled(compositeQuery *v3.CompositeQuery) bool {
+func checkQueriesDisabled(compositeQuery *CompositeQuery) bool {
 	for _, envelope := range compositeQuery.Queries {
 		switch envelope.Type {
 		case qbtypes.QueryTypeBuilder, qbtypes.QueryTypeSubQuery:
