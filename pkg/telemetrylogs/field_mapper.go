@@ -143,14 +143,17 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			if querybuilder.BodyJSONQueryEnabled && (strings.Contains(key.Name, telemetrytypes.ArraySep) || strings.Contains(key.Name, telemetrytypes.ArrayAnyIndex)) {
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "FieldFor not supported for the Array Paths: %s", key.Name)
 			}
+			if key.JSONDataType == nil {
+				return "", qbtypes.ErrColumnNotFound
+			}
+
 			fieldExpr := BodyJSONColumnPrefix + fmt.Sprintf("`%s`", key.Name)
 			expr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldExpr, key.JSONDataType.StringValue())
 			if key.Materialized {
 				promotedFieldExpr := BodyPromotedColumnPrefix + fmt.Sprintf("`%s`", key.Name)
 				expr = fmt.Sprintf("coalesce(%s, %s)", expr, fmt.Sprintf("dynamicElement(%s, '%s')", promotedFieldExpr, key.JSONDataType.StringValue()))
 			}
-			// returning qbtypes.ErrColumnNotFound will trigger the fallback expr logic to include all the types from the keysmap
-			return expr, qbtypes.ErrColumnNotFound
+			return expr, nil
 		default:
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 		}

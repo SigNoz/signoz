@@ -174,8 +174,12 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 			if found && len(fieldKeys) > 0 {
 				k.FieldContext = fieldKeys[0].FieldContext
 				k.FieldDataType = fieldKeys[0].FieldDataType
-				k.Materialized = fieldKeys[0].Materialized
-				k.JSONDataType = fieldKeys[0].JSONDataType
+				// only attach the JSON data type if there is only one key for the field so incase there are multiple keys.
+				// it's handled by the fallback expr logic
+				if len(fieldKeys) == 1 {
+					k.JSONDataType = fieldKeys[0].JSONDataType
+					k.Materialized = fieldKeys[0].Materialized
+				}
 				k.Indexes = fieldKeys[0].Indexes
 
 				overallMatch = true // because we found a match

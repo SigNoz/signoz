@@ -36,16 +36,16 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if operator.IsStringSearchOperator() {
-		value = querybuilder.FormatValueForContains(value)
-	}
-
 	if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
 		cond, err := c.buildJSONCondition(ctx, key, operator, value, sb)
 		if err != nil {
 			return "", err
 		}
 		return cond, nil
+	}
+
+	if operator.IsStringSearchOperator() {
+		value = querybuilder.FormatValueForContains(value)
 	}
 
 	tblFieldName, err := c.fm.FieldFor(ctx, key)

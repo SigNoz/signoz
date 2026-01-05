@@ -55,10 +55,18 @@ func (c *conditionBuilder) emitPlannedCondition(plan *telemetrytypes.JSONAccessN
 
 // buildTerminalCondition creates the innermost condition
 func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
-	// Use the parent's alias + current field name for the full path
-	fieldPath := node.FieldPath()
-
 	if node.TerminalConfig.ElemType.IsArray {
+		conditions := []string{}
+		// if operator is a String search Operator, then we need to build one more String comparison condition along with the Strict match condition
+		if operator.IsStringSearchOperator() {
+			formattedValue := querybuilder.FormatValueForContains(value)
+			arrayCond, err := c.buildArrayMembershipCondition(node, operator, formattedValue, sb)
+			if err != nil {
+				return "", err
+			}
+			conditions = append(conditions, arrayCond)
+		}
+
 		// switch operator for array membership checks
 		switch operator {
 		case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorIn:
@@ -70,14 +78,29 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 		if err != nil {
 			return "", err
 		}
-		return arrayCond, nil
+		conditions = append(conditions, arrayCond)
+		// or the conditions together
+		return sb.Or(conditions...), nil
 	}
+
+	return c.buildPrimitiveTerminalCondition(node, operator, value, sb)
+}
+
+// buildPrimitiveTerminalCondition builds the condition if the terminal node is a primitive type
+// it handles the data type collisions and utilizes indexes for the condition if available
+func (c *conditionBuilder) buildPrimitiveTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+	fieldPath := node.FieldPath()
 	conditions := []string{}
+	var formattedValue any = value
+	if operator.IsStringSearchOperator() {
+		formattedValue = querybuilder.FormatValueForContains(value)
+	}
 
 	elemType := node.TerminalConfig.ElemType
 	fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, elemType.StringValue())
-	fieldExpr, value = querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, fieldExpr, operator)
+	fieldExpr, formattedValue = querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, formattedValue, fieldExpr, operator)
 
+	// utilize indexes for the condition if available
 	indexed := slices.ContainsFunc(node.TerminalConfig.Key.Indexes, func(index telemetrytypes.JSONDataTypeIndex) bool {
 		return index.Type == elemType && index.ColumnExpression == fieldPath
 	})
@@ -106,8 +129,8 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 			// do nothing
 		}
 
-		indexedExpr, value = querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, indexedExpr, operator)
-		cond, err := c.applyOperator(sb, indexedExpr, operator, value)
+		indexedExpr, indexedComparisonValue := querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, formattedValue, indexedExpr, operator)
+		cond, err := c.applyOperator(sb, indexedExpr, operator, indexedComparisonValue)
 		if err != nil {
 			return "", err
 		}
@@ -124,7 +147,7 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 		operator = qbtypes.FilterOperatorExists
 	}
 
-	cond, err := c.applyOperator(sb, fieldExpr, operator, value)
+	cond, err := c.applyOperator(sb, fieldExpr, operator, formattedValue)
 	if err != nil {
 		return "", err
 	}
@@ -132,15 +155,19 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 	if len(conditions) > 1 {
 		return sb.And(conditions...), nil
 	}
-	return cond, nil
+	return conditions[0], nil
 }
 
 // buildArrayMembershipCondition handles array membership checks
 func (c *conditionBuilder) buildArrayMembershipCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	arrayPath := node.FieldPath()
-
+	localKeyCopy := *node.TerminalConfig.Key
 	// create typed array out of a dynamic array
 	filteredDynamicExpr := func() string {
+		// Change the field data type from []dynamic to the value type
+		// since we've filtered the value type out of the dynamic array, we need to change the field data corresponding to the value type
+		localKeyCopy.FieldDataType = telemetrytypes.MappingJSONDataTypeToFieldDataType[telemetrytypes.ScalerTypeToArrayType[node.TerminalConfig.ValueType]]
+
 		baseArrayDynamicExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", arrayPath)
 		return fmt.Sprintf("arrayMap(x->dynamicElement(x, '%s'), arrayFilter(x->(dynamicType(x) = '%s'), %s))",
 			node.TerminalConfig.ValueType.StringValue(),
@@ -158,7 +185,7 @@ func (c *conditionBuilder) buildArrayMembershipCondition(node *telemetrytypes.JS
 		arrayExpr = typedArrayExpr()
 	}
 
-	fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, "x", operator)
+	fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(&localKeyCopy, value, "x", operator)
 	op, err := c.applyOperator(sb, fieldExpr, operator, value)
 	if err != nil {
 		return "", err
@@ -212,7 +239,7 @@ func (c *conditionBuilder) recurseArrayHops(current *telemetrytypes.JSONAccessNo
 	if len(branches) == 1 {
 		return branches[0], nil
 	}
-	return fmt.Sprintf("(%s)", strings.Join(branches, " OR ")), nil
+	return sb.Or(branches...), nil
 }
 
 func (c *conditionBuilder) applyOperator(sb *sqlbuilder.SelectBuilder, fieldExpr string, operator qbtypes.FilterOperator, value any) (string, error) {
