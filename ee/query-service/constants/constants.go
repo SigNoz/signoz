@@ -24,14 +24,8 @@ const DotMetricsEnabled = "DOT_METRICS_ENABLED"
 
 var IsDotMetricsEnabled = false
 
-// var IsPreferSpanMetrics = false
-
 func init() {
 	if GetOrDefaultEnv(DotMetricsEnabled, "true") == "true" {
 		IsDotMetricsEnabled = true
 	}
-
-	// if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
-	// 	IsPreferSpanMetrics = true
-	// }
 }
