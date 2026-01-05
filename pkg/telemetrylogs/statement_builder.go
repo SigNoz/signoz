@@ -191,7 +191,7 @@ func (b *logQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetry
 		// NOTE: if a user is highly opinionated and use attribute.body:number
 		// It will be defaulted to intrinsic field body as the actual attribute might be attribute.body:string
 
-		// We don't have a match, then it's doesn't exist in attribute or resource attribute
+		// We don't have a match, then it doesn't exist in attribute or resource attribute
 		// use the intrinsic/calculated field
 		if !match {
 			b.logger.InfoContext(ctx, "overriding the field context and data type", "key", key.Name)
