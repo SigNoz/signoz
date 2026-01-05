@@ -141,7 +141,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		case telemetrytypes.FieldContextBody:
 			if strings.Contains(key.Name, telemetrytypes.ArraySep) || strings.Contains(key.Name, telemetrytypes.ArrayAnyIndex) {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", key.Name)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "FieldFor not supported for the Array Paths: %s", key.Name)
 			}
 			fieldExpr := BodyJSONColumnPrefix + fmt.Sprintf("`%s`", key.Name)
 			expr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldExpr, key.JSONDataType.StringValue())
@@ -152,7 +152,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			// returning qbtypes.ErrColumnNotFound is a hack that will trigger the fallback expr logic to include all the types for the key
 			return expr, qbtypes.ErrColumnNotFound
 		default:
-			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
+			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
 	case schema.ColumnTypeEnumLowCardinality:
 		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {

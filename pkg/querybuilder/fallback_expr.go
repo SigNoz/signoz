@@ -219,36 +219,13 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
 			value = fmt.Sprintf("%t", v)
 		}
-	case telemetrytypes.FieldDataTypeFloat64,
-		telemetrytypes.FieldDataTypeArrayFloat64:
-		switch v := value.(type) {
-		case float32, float64:
-			tblFieldName = castFloatHack(tblFieldName)
-		case string:
-			// check if it's a number inside a string
-			isNumber := false
-			if _, err := strconv.ParseFloat(v, 64); err == nil {
-				isNumber = true
-			}
-
-			if !operator.IsComparisonOperator() || !isNumber {
-				// try to convert the number attribute to string
-				tblFieldName = castString(tblFieldName) // numeric col vs string literal
-			} else {
-				tblFieldName = castFloatHack(tblFieldName)
-			}
-		case []any:
-			if allFloats(v) {
-				tblFieldName = castFloatHack(tblFieldName)
-			} else if hasString(v) {
-				tblFieldName, value = castString(tblFieldName), toStrings(v)
-			}
-		}
 
 	case telemetrytypes.FieldDataTypeInt64,
 		telemetrytypes.FieldDataTypeArrayInt64,
 		telemetrytypes.FieldDataTypeNumber,
-		telemetrytypes.FieldDataTypeArrayNumber:
+		telemetrytypes.FieldDataTypeArrayNumber,
+		telemetrytypes.FieldDataTypeFloat64,
+		telemetrytypes.FieldDataTypeArrayFloat64:
 		switch v := value.(type) {
 		// why? ; CH returns an error for a simple check
 		// attributes_number['http.status_code'] = 200 but not for attributes_number['http.status_code'] >= 200
