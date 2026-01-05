@@ -8,11 +8,11 @@ and pipeline processing.
 from http import HTTPStatus
 from typing import Callable
 
-import pytest
 import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+
 
 def test_create_logs_pipeline_success(
     signoz: types.SigNoz,
