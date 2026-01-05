@@ -253,7 +253,7 @@ func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemet
 		}
 
 	} else {
-		// check if all the keys for the given field with matching context and data type
+		// check if all the keys for the given field have matching context and data type
 		matchingKeys := []*telemetrytypes.TelemetryFieldKey{}
 		for _, metadataKey := range keys[key.Name] {
 			// Only consider keys that match the context and data type (if specified)
