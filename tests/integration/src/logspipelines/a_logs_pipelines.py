@@ -670,4 +670,3 @@ def test_delete_all_pipelines_success(
     # Note: Integration pipelines might still be present, so we check user-created ones
     user_pipelines = [p for p in list_data["data"]["pipelines"] if p.get("name") == "Pipeline to Delete"]
     assert len(user_pipelines) == 0
-

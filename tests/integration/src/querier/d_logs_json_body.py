@@ -28,7 +28,7 @@ def test_logs_json_body_simple_searches(
     5. Search by body.code > 100 (comparison)
     """
     now = datetime.now(tz=timezone.utc)
-    
+
     # Log with simple JSON body
     log1_body = json.dumps({
         "message": "User logged in successfully",
@@ -37,7 +37,7 @@ def test_logs_json_body_simple_searches(
         "level": "info",
         "code": 100
     })
-    
+
     log2_body = json.dumps({
         "message": "User authentication failed",
         "status": 401,
@@ -45,7 +45,7 @@ def test_logs_json_body_simple_searches(
         "level": "error",
         "code": 401
     })
-    
+
     log3_body = json.dumps({
         "message": "Database connection established",
         "status": 200,
@@ -308,7 +308,7 @@ def test_logs_json_body_nested_keys(
     4. Search by body.response.status.code = 200
     """
     now = datetime.now(tz=timezone.utc)
-    
+
     log1_body = json.dumps({
         "user": {
             "name": "john_doe",
@@ -335,7 +335,7 @@ def test_logs_json_body_nested_keys(
             }
         }
     })
-    
+
     log2_body = json.dumps({
         "user": {
             "name": "jane_smith",
@@ -362,7 +362,7 @@ def test_logs_json_body_nested_keys(
             }
         }
     })
-    
+
     log3_body = json.dumps({
         "user": {
             "name": "john_doe",
@@ -603,7 +603,7 @@ def test_logs_json_body_array_membership(
     3. Search by has(body.flags[*], true) - boolean array
     """
     now = datetime.now(tz=timezone.utc)
-    
+
     log1_body = json.dumps({
         "tags": ["production", "api", "critical"],
         "ids": [100, 200, 300],
@@ -613,7 +613,7 @@ def test_logs_json_body_array_membership(
             {"name": "bob", "role": "user"}
         ]
     })
-    
+
     log2_body = json.dumps({
         "tags": ["staging", "api", "test"],
         "ids": [200, 400, 500],
@@ -623,7 +623,7 @@ def test_logs_json_body_array_membership(
             {"name": "david", "role": "admin"}
         ]
     })
-    
+
     log3_body = json.dumps({
         "tags": ["production", "web", "important"],
         "ids": [100, 600, 700],
@@ -807,7 +807,7 @@ def test_logs_json_body_listing(
     5. Count logs matching JSON body filters
     """
     now = datetime.now(tz=timezone.utc)
-    
+
     logs_data = [
         {
             "timestamp": now - timedelta(seconds=5),
