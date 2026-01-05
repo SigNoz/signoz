@@ -130,7 +130,7 @@ export const useHandleExplorerTabChange = (): {
 					...query.builder,
 					queryData: query.builder.queryData.map((item) => ({
 						...item,
-						groupBy: [...item.groupBy, existAutocompleteKey],
+						groupBy: [...(item.groupBy || []), existAutocompleteKey],
 					})),
 				},
 			};
