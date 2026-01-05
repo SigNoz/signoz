@@ -5440,5 +5440,64 @@
 			"monitoring"
 		],
 		"link": "/docs/userguide/envoy-metrics/"
+	},
+	{
+		"dataSource": "golang-metrics",
+		"label": "Golang Metrics",
+		"imgUrl": "/Logos/go.svg",
+		"tags": [
+			"apm/traces",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"go",
+			"go metrics",
+			"go monitoring",
+			"go observability",
+			"go opentelemetry",
+			"golang",
+			"golang metrics",
+			"golang monitoring",
+			"golang observability",
+			"golang opentelemetry",
+			"metrics",
+			"opentelemetry go",
+			"otel go",
+			"runtime metrics"
+		],
+		"id": "golang-metrics",
+		"link": "/docs/metrics-management/send-metrics/applications/golang/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				}
+			]
+		}
 	}
 ]
