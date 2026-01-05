@@ -106,10 +106,10 @@ export const useHandleExplorerTabChange = (): {
 				async () =>
 					getAggregateKeys({
 						searchText: fieldKey,
-						aggregateOperator: query.builder.queryData[0].aggregateOperator || '',
-						dataSource: query.builder.queryData[0].dataSource,
+						aggregateOperator: query?.builder?.queryData[0]?.aggregateOperator || '',
+						dataSource: query?.builder?.queryData[0]?.dataSource,
 						aggregateAttribute:
-							query.builder.queryData[0].aggregateAttribute?.key || '',
+							query?.builder?.queryData[0]?.aggregateAttribute?.key || '',
 					}),
 			);
 
