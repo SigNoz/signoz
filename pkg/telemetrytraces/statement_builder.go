@@ -208,12 +208,16 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 
 		if !overallMatch {
 			// check if all the key for the given field have been materialized, if so
-			// set the key to materialized
-			materilized := true
-			for _, key := range keys[k.Name] {
-				materilized = materilized && key.Materialized
+			// set the key to materialized and if there are no keys, set materialized to false
+			if len(keys) == 0 {
+				k.Materialized = false
+			} else {
+				materialized := true
+				for _, key := range keys[k.Name] {
+					materialized = materialized && key.Materialized
+				}
+				k.Materialized = materialized
 			}
-			k.Materialized = materilized
 		}
 	}
 
@@ -746,7 +750,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
 			Variables:          variables,
-        }, start, end)
+		}, start, end)
 
 		if err != nil {
 			return nil, err
