@@ -211,16 +211,13 @@ func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemet
 	if _, ok := IntrinsicFields[key.Name]; ok {
 		isIntrinsicOrCalculatedField = true
 		intrinsicOrCalculatedField = IntrinsicFields[key.Name]
-	}
-	if _, ok := CalculatedFields[key.Name]; ok {
+	} else if _, ok := CalculatedFields[key.Name]; ok {
 		isIntrinsicOrCalculatedField = true
 		intrinsicOrCalculatedField = CalculatedFields[key.Name]
-	}
-	if _, ok := IntrinsicFieldsDeprecated[key.Name]; ok {
+	} else if _, ok := IntrinsicFieldsDeprecated[key.Name]; ok {
 		isIntrinsicOrCalculatedField = true
 		intrinsicOrCalculatedField = IntrinsicFieldsDeprecated[key.Name]
-	}
-	if _, ok := CalculatedFieldsDeprecated[key.Name]; ok {
+	} else if _, ok := CalculatedFieldsDeprecated[key.Name]; ok {
 		isIntrinsicOrCalculatedField = true
 		intrinsicOrCalculatedField = CalculatedFieldsDeprecated[key.Name]
 	}
