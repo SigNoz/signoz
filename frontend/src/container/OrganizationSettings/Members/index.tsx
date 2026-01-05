@@ -119,7 +119,7 @@ function UserFunction({
 				notifications.success({
 					message: 'User details updated successfully',
 					description:
-						'The user details have been updated successfully. Please request the user to logout and login again to access the platform with updated privileges.',
+						'The user details have been updated successfully.',
 				});
 			} else {
 				notifications.success({
