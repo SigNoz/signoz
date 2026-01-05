@@ -207,17 +207,22 @@ func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemet
 
 	// First check if it matches with any intrinsic fields
 	var isIntrinsicOrCalculatedField bool
+	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
 	if _, ok := IntrinsicFields[key.Name]; ok {
 		isIntrinsicOrCalculatedField = true
+		intrinsicOrCalculatedField = IntrinsicFields[key.Name]
 	}
 	if _, ok := CalculatedFields[key.Name]; ok {
 		isIntrinsicOrCalculatedField = true
+		intrinsicOrCalculatedField = CalculatedFields[key.Name]
 	}
 	if _, ok := IntrinsicFieldsDeprecated[key.Name]; ok {
 		isIntrinsicOrCalculatedField = true
+		intrinsicOrCalculatedField = IntrinsicFieldsDeprecated[key.Name]
 	}
 	if _, ok := CalculatedFieldsDeprecated[key.Name]; ok {
 		isIntrinsicOrCalculatedField = true
+		intrinsicOrCalculatedField = CalculatedFieldsDeprecated[key.Name]
 	}
 
 	if isIntrinsicOrCalculatedField {
@@ -234,15 +239,15 @@ func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemet
 			}
 		}
 
-		// NOTE: if a user is highly opiniated and use attribute.duration_nano:string
+		// NOTE: if a user is highly opinionated and use attribute.duration_nano:string
 		// It will be defaulted to intrinsic field duration_nano as the actual attribute might be attribute.duration_nano:number
 
 		// We don't have a match, then it's doesn't exist in attribute or resource attribute
 		// use the intrinsic/calculated field
 		if !match {
 			b.logger.InfoContext(ctx, "overriding the field context and data type", "key", key.Name)
-			key.FieldContext = IntrinsicFields[key.Name].FieldContext
-			key.FieldDataType = IntrinsicFields[key.Name].FieldDataType
+			key.FieldContext = intrinsicOrCalculatedField.FieldContext
+			key.FieldDataType = intrinsicOrCalculatedField.FieldDataType
 		} else {
 			// Here we have a key which is an intrinsic field but also exists in the metadata with the same name
 			// cannot do anything, so just return
@@ -273,10 +278,10 @@ func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemet
 			materialized := true
 			fieldContextsSeen := map[telemetrytypes.FieldContext]bool{}
 			dataTypesSeen := map[telemetrytypes.FieldDataType]bool{}
-			for _, key := range matchingKeys {
-				materialized = materialized && key.Materialized
-				fieldContextsSeen[key.FieldContext] = true
-				dataTypesSeen[key.FieldDataType] = true
+			for _, matchingKey := range matchingKeys {
+				materialized = materialized && matchingKey.Materialized
+				fieldContextsSeen[matchingKey.FieldContext] = true
+				dataTypesSeen[matchingKey.FieldDataType] = true
 			}
 			key.Materialized = materialized
 

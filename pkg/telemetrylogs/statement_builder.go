@@ -188,7 +188,7 @@ func (b *logQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetry
 			}
 		}
 
-		// NOTE: if a user is highly opiniated and use attribute.body:number
+		// NOTE: if a user is highly opinionated and use attribute.body:number
 		// It will be defaulted to intrinsic field body as the actual attribute might be attribute.body:string
 
 		// We don't have a match, then it's doesn't exist in attribute or resource attribute
@@ -224,14 +224,13 @@ func (b *logQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetry
 			key.Materialized = matchingKeys[0].Materialized
 		} else {
 			// multiple matching keys, set materialized only if all the keys are materialized
-			// multiple matching keys, set materialized only if all the keys are materialized
 			materialized := true
 			fieldContextsSeen := map[telemetrytypes.FieldContext]bool{}
 			dataTypesSeen := map[telemetrytypes.FieldDataType]bool{}
-			for _, key := range matchingKeys {
-				materialized = materialized && key.Materialized
-				fieldContextsSeen[key.FieldContext] = true
-				dataTypesSeen[key.FieldDataType] = true
+			for _, matchingKey := range matchingKeys {
+				materialized = materialized && matchingKey.Materialized
+				fieldContextsSeen[matchingKey.FieldContext] = true
+				dataTypesSeen[matchingKey.FieldDataType] = true
 			}
 			key.Materialized = materialized
 

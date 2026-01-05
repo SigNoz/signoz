@@ -871,7 +871,7 @@ func TestAdjustKey(t *testing.T) {
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "duration_nano",
 				FieldContext:  telemetrytypes.FieldContextSpan,    // should be corrected
-				FieldDataType: telemetrytypes.FieldDataTypeNumber, // modifed
+				FieldDataType: telemetrytypes.FieldDataTypeNumber, // modified
 			},
 		},
 		{
