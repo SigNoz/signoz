@@ -205,7 +205,7 @@ func (b *logQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetry
 		}
 
 	} else {
-		// check if all the keys for the given field with matching context and data type
+		// check for all the keys for the given field with matching context and data type
 		matchingKeys := []*telemetrytypes.TelemetryFieldKey{}
 		for _, metadataKey := range keys[key.Name] {
 			// Only consider keys that match the context and data type (if specified)
