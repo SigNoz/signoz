@@ -647,12 +647,12 @@ func TestAdjustKey(t *testing.T) {
 		{
 			name: "intrinsic field with no metadata match - use intrinsic",
 			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "severity_number",
+				Name:          "severity_text",
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
 			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: IntrinsicFields["severity_number"],
+			expectedKey: IntrinsicFields["severity_text"],
 		},
 		{
 			name: "intrinsic field with metadata match - no override",

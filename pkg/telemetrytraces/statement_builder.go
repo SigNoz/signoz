@@ -229,7 +229,7 @@ func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemet
 			// Either field context is unspecified or matches
 			// and
 			// Either field data type is unspecified or matches
-			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || (mapKey.FieldContext == key.FieldContext)) &&
+			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || mapKey.FieldContext == key.FieldContext) &&
 				(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || mapKey.FieldDataType == key.FieldDataType) {
 				match = true
 				break
@@ -245,6 +245,7 @@ func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemet
 			b.logger.InfoContext(ctx, "overriding the field context and data type", "key", key.Name)
 			key.FieldContext = intrinsicOrCalculatedField.FieldContext
 			key.FieldDataType = intrinsicOrCalculatedField.FieldDataType
+			key.Materialized = intrinsicOrCalculatedField.Materialized
 		} else {
 			// Here we have a key which is an intrinsic field but also exists in the metadata with the same name
 			// cannot do anything, so just return
@@ -264,6 +265,7 @@ func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemet
 
 		if len(matchingKeys) == 0 {
 			// we do not have any matching keys, most likely user made a mistake, let QB handle it
+			// Set materialized to false explicitly to avoid QB looking for materialized column
 			key.Materialized = false
 		} else if len(matchingKeys) == 1 {
 			// only one matching key, use it

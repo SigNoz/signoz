@@ -181,7 +181,7 @@ func (b *logQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetry
 			// Either field context is unspecified or matches
 			// and
 			// Either field data type is unspecified or matches
-			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || (mapKey.FieldContext == key.FieldContext)) &&
+			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || mapKey.FieldContext == key.FieldContext) &&
 				(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || mapKey.FieldDataType == key.FieldDataType) {
 				match = true
 				break
@@ -197,6 +197,7 @@ func (b *logQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetry
 			b.logger.InfoContext(ctx, "overriding the field context and data type", "key", key.Name)
 			key.FieldContext = IntrinsicFields[key.Name].FieldContext
 			key.FieldDataType = IntrinsicFields[key.Name].FieldDataType
+			key.Materialized = IntrinsicFields[key.Name].Materialized
 		} else {
 			// Here we have a key which is an intrinsic field but also exists in the metadata with the same name
 			// cannot do anything, so just return
@@ -216,6 +217,7 @@ func (b *logQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetry
 
 		if len(matchingKeys) == 0 {
 			// we do not have any matching keys, most likely user made a mistake, let QB handle it
+			// Set materialized to false explicitly to avoid QB looking for materialized column
 			key.Materialized = false
 		} else if len(matchingKeys) == 1 {
 			// only one matching key, use it
