@@ -639,11 +639,10 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 
 func TestAdjustKey(t *testing.T) {
 	cases := []struct {
-		name          string
-		inputKey      telemetrytypes.TelemetryFieldKey
-		keysMap       map[string][]*telemetrytypes.TelemetryFieldKey
-		expectedKey   telemetrytypes.TelemetryFieldKey
-		expectNoMatch bool
+		name        string
+		inputKey    telemetrytypes.TelemetryFieldKey
+		keysMap     map[string][]*telemetrytypes.TelemetryFieldKey
+		expectedKey telemetrytypes.TelemetryFieldKey
 	}{
 		{
 			name: "intrinsic field with no metadata match - use intrinsic",
