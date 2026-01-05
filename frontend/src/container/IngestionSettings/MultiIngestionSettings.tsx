@@ -43,7 +43,6 @@ import dayjs from 'dayjs';
 import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, isNil, isUndefined } from 'lodash-es';
 import {
@@ -177,8 +176,6 @@ function MultiIngestionSettings(): JSX.Element {
 
 	const [totalIngestionKeys, setTotalIngestionKeys] = useState(0);
 
-	const { isEnterpriseSelfHostedUser } = useGetTenantLicense();
-
 	const history = useHistory();
 
 	const [
@@ -302,14 +299,12 @@ function MultiIngestionSettings(): JSX.Element {
 		setSearchValue('');
 	};
 
-	const isGlobalConfigEnabled = !isEnterpriseSelfHostedUser;
-
 	const {
 		data: globalConfig,
 		isLoading: isLoadingGlobalConfig,
 		isError: isErrorGlobalConfig,
 		error: globalConfigError,
-	} = useGetGlobalConfig(isGlobalConfigEnabled);
+	} = useGetGlobalConfig();
 
 	const {
 		mutate: createIngestionKey,
@@ -1428,7 +1423,7 @@ function MultiIngestionSettings(): JSX.Element {
 					</Typography.Text>
 				</header>
 
-				{!isLoadingGlobalConfig && isGlobalConfigEnabled && (
+				{!isLoadingGlobalConfig && (
 					<div className="ingestion-setup-details-links">
 						<div className="ingestion-key-url-container">
 							<div className="ingestion-key-url-label">Ingestion URL</div>

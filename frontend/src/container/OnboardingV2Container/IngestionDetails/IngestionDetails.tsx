@@ -59,7 +59,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 		isLoading: isLoadingGlobalConfig,
 		isError: isErrorGlobalConfig,
 		error: globalConfigError,
-	} = useGetGlobalConfig(true);
+	} = useGetGlobalConfig();
 
 	const handleCopyKey = (text: string): void => {
 		handleCopyToClipboard(text);
