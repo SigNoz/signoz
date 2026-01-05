@@ -118,8 +118,7 @@ function UserFunction({
 			if (role !== accessLevel) {
 				notifications.success({
 					message: 'User details updated successfully',
-					description:
-						'The user details have been updated successfully.',
+					description: 'The user details have been updated successfully.',
 				});
 			} else {
 				notifications.success({
