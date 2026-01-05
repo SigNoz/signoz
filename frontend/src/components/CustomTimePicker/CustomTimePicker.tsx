@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './CustomTimePicker.styles.scss';
@@ -13,7 +14,7 @@ import {
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
-import { isValidTimeFormat } from 'lib/getMinMax';
+import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import { defaultTo, isFunction, noop } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
@@ -31,6 +32,7 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getTimeDifference, validateEpochRange } from 'utils/epochUtils';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
@@ -205,7 +207,7 @@ function CustomTimePicker({
 			}
 		}
 
-		if (isValidTimeFormat(selectedTime)) {
+		if (isValidShortHandDateTimeFormat(selectedTime)) {
 			return getSelectedTimeRangeLabelInRelativeFormat(selectedTime);
 		}
 
@@ -215,6 +217,7 @@ function CustomTimePicker({
 	useEffect(() => {
 		if (showLiveLogs) {
 			setSelectedTimePlaceholderValue('Live');
+			setInputValue('Live');
 		} else {
 			const value = getSelectedTimeRangeLabel(selectedTime, selectedValue);
 			setSelectedTimePlaceholderValue(value);
@@ -227,12 +230,35 @@ function CustomTimePicker({
 		setOpen(false);
 	};
 
+	const getInputPrefix = (): JSX.Element => {
+		if (showLiveLogs) {
+			return (
+				<span className="time-input-prefix">
+					<span className="live-dot-icon" />
+				</span>
+			);
+		}
+
+		const timeDifference = getTimeDifference(
+			Number(minTime / 1000_000),
+			Number(maxTime / 1000_000),
+		);
+
+		return <span className="time-input-prefix">{timeDifference}</span>;
+	};
+
 	const handleOpenChange = (newOpen: boolean): void => {
 		setOpen(newOpen);
 
 		if (!newOpen) {
 			setCustomDTPickerVisible?.(false);
 			setActiveView('datetime');
+
+			if (showLiveLogs) {
+				setSelectedTimePlaceholderValue('Live');
+				setInputValue('Live');
+				return;
+			}
 
 			// set the input value to a relative format if the selected time is not custom
 			const inputValue = getSelectedTimeRangeLabel(selectedTime, selectedValue);
@@ -248,9 +274,6 @@ function CustomTimePicker({
 		setInputStatus(CustomTimePickerInputStatus.UNSET);
 		onError(false);
 		setInputErrorMessage(null);
-
-		// Call the debounced function with the input value
-		// debouncedHandleInputChange(inputValue);
 	};
 
 	const handleInputPressEnter = (): void => {
@@ -309,8 +332,22 @@ function CustomTimePicker({
 			return;
 		}
 
-		// parse the input value to get the start and end times
-		const [startTime, endTime] = inputValue.split(' - ');
+		// parse the input value to get the start and end time
+		const [startTime, endTime] = inputValue.split(/\s[-–]\s/);
+
+		// check if startTime and endTime are epoch format
+		const { isValid: isValidStartTime, range: epochRange } = validateEpochRange(
+			Number(startTime),
+			Number(endTime),
+		);
+
+		if (isValidStartTime && epochRange?.startTime && epochRange?.endTime) {
+			onCustomDateHandler?.([epochRange?.startTime, epochRange?.endTime]);
+
+			setOpen(false);
+
+			return;
+		}
 
 		// convert the start and end times to epoch milliseconds
 		const startTimeValue = dayjs(
@@ -376,9 +413,15 @@ function CustomTimePicker({
 
 	const handleOpen = (e: React.SyntheticEvent): void => {
 		e.stopPropagation();
-		console.log('handleOpen called');
-		setOpen(true);
 
+		if (showLiveLogs) {
+			setOpen(true);
+			setSelectedTimePlaceholderValue('Live');
+			setInputValue('Live');
+			return;
+		}
+
+		setOpen(true);
 		// reset the input status and error message as we reset the time to previous correct value
 		setInputStatus(CustomTimePickerInputStatus.UNSET);
 		onError(false);
@@ -391,17 +434,18 @@ function CustomTimePicker({
 			DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
 		);
 
-		console.log('startTime', startTime);
-		console.log('endTime', endTime);
-
 		setInputValue(`${startTime} - ${endTime}`);
 	};
 
 	const handleClose = (e: React.MouseEvent): void => {
 		e.stopPropagation();
-		console.log('handleClose called');
 		setOpen(false);
 		setCustomDTPickerVisible?.(false);
+
+		if (showLiveLogs) {
+			setInputValue('Live');
+			return;
+		}
 
 		// set the input value to a relative format if the selected time is not custom
 		const inputValue = getSelectedTimeRangeLabel(selectedTime, selectedValue);
@@ -512,7 +556,7 @@ function CustomTimePicker({
 								? 'error'
 								: ''
 						}
-						readOnly={!open}
+						readOnly={!open || showLiveLogs}
 						placeholder={selectedTimePlaceholderValue}
 						// placeholder={
 						// 	isInputFocused
@@ -526,7 +570,7 @@ function CustomTimePicker({
 						onChange={handleInputChange}
 						onPressEnter={handleInputPressEnter}
 						data-1p-ignore
-						// prefix={getInputPrefix()}
+						prefix={getInputPrefix()}
 						suffix={
 							<div className="time-input-suffix">
 								{!!isTimezoneOverridden && activeTimezoneOffset && (

@@ -199,8 +199,6 @@ function CustomTimePickerPopoverContent({
 								onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
 									e.stopPropagation();
 									e.preventDefault();
-									console.log('handleClick option.label', option.label);
-									console.log('handleClick option.value', option.value);
 									handleExitLiveLogs();
 									onSelectHandler(option.label, option.value);
 								}}

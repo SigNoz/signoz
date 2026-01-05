@@ -14,7 +14,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { isValidTimeFormat } from 'lib/getMinMax';
+import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import { cloneDeep, isObject } from 'lodash-es';
 import { Undo } from 'lucide-react';
@@ -306,10 +306,6 @@ function DateTimeSelection({
 
 	const onSelectHandler = useCallback(
 		(value: Time | CustomTimeType): void => {
-			console.log('onSelectHandler called');
-			console.log('value', value);
-			console.log('--------------------------------');
-
 			if (isModalTimeSelection) {
 				if (value === 'custom') {
 					setCustomDTPickerVisible(true);
@@ -432,10 +428,6 @@ function DateTimeSelection({
 	};
 
 	const onValidCustomDateHandler = (dateTimeStr: CustomTimeType): void => {
-		console.log('onValidCustomDateHandler called');
-		console.log('dateTimeStr', dateTimeStr);
-		console.log('--------------------------------');
-
 		if (isModalTimeSelection) {
 			onTimeChange?.(dateTimeStr);
 			return;
@@ -467,7 +459,10 @@ function DateTimeSelection({
 	): Time | CustomTimeType => {
 		// if the relativeTime param is present in the url give top most preference to the same
 		// if the relativeTime param is not valid then move to next preference
-		if (relativeTimeFromUrl != null && isValidTimeFormat(relativeTimeFromUrl)) {
+		if (
+			relativeTimeFromUrl != null &&
+			isValidShortHandDateTimeFormat(relativeTimeFromUrl)
+		) {
 			return relativeTimeFromUrl as Time;
 		}
 
@@ -542,7 +537,7 @@ function DateTimeSelection({
 
 		if (
 			relativeTimeFromUrl &&
-			isValidTimeFormat(relativeTimeFromUrl) &&
+			isValidShortHandDateTimeFormat(relativeTimeFromUrl) &&
 			relativeTimeFromUrl !== selectedTime
 		) {
 			handleRelativeTimeSync(relativeTimeFromUrl);
@@ -586,7 +581,7 @@ function DateTimeSelection({
 			!searchStartTime &&
 			!searchEndTime &&
 			relativeTimeFromUrl &&
-			isValidTimeFormat(relativeTimeFromUrl)
+			isValidShortHandDateTimeFormat(relativeTimeFromUrl)
 		) {
 			handleRelativeTimeSync(relativeTimeFromUrl);
 		}
@@ -690,6 +685,7 @@ function DateTimeSelection({
 					/>
 				</div>
 			)}
+
 			<Form
 				form={formSelector}
 				layout="inline"

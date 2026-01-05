@@ -37,7 +37,19 @@ export default function RightToolbarActions({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [onStageRunQuery, showLiveLogs]);
 
-	if (showLiveLogs) return <div />;
+	if (showLiveLogs)
+		return (
+			<div className="right-toolbar-actions-container">
+				<Button
+					type="primary"
+					className="run-query-btn periscope-btn primary"
+					disabled
+					icon={<Play size={14} />}
+				>
+					Run Query
+				</Button>
+			</div>
+		);
 
 	const handleCancelQuery = (): void => {
 		if (listQueryKeyRef?.current) {
@@ -57,7 +69,7 @@ export default function RightToolbarActions({
 					className="cancel-query-btn periscope-btn danger"
 					onClick={handleCancelQuery}
 				>
-					Cancel Query
+					Cancel
 				</Button>
 			) : (
 				<Button
