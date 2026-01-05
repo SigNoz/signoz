@@ -680,7 +680,7 @@ var OldToNewTraceFieldsMap = map[string]string{
 var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
 var IsDotMetricsEnabled = false
-var PreferSpanMetrics = false
+// var PreferSpanMetrics = false
 var MaxJSONFlatteningDepth = 1
 
 func init() {
@@ -689,9 +689,9 @@ func init() {
 	if GetOrDefaultEnv(DotMetricsEnabled, "true") == "true" {
 		IsDotMetricsEnabled = true
 	}
-	if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
-		PreferSpanMetrics = true
-	}
+	// if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
+	// 	PreferSpanMetrics = true
+	// }
 
 	// set max flattening depth
 	depth, err := strconv.Atoi(GetOrDefaultEnv(maxJSONFlatteningDepth, "1"))

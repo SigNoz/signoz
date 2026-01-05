@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
@@ -63,6 +64,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
@@ -2007,13 +2009,34 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if constants.PreferSpanMetrics {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+
+	useSpanMetrics, err := aH.Signoz.Flagger.Boolean(r.Context(), flagger.FeatureUseSpanMetrics.String(), evalCtx)
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	if useSpanMetrics {
 		for idx, feature := range featureSet {
 			if feature.Name == licensetypes.UseSpanMetrics {
 				featureSet[idx].Active = true
 			}
 		}
 	}
+
 	if constants.IsDotMetricsEnabled {
 		for idx, feature := range featureSet {
 			if feature.Name == licensetypes.DotMetricsEnabled {

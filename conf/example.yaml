@@ -284,6 +284,7 @@ flagger:
   # Config are the overrides for the feature flags which come directly from the config file.
   config:
     boolean:
+      use_span_metrics: true
     string:
     float:
     integer:
