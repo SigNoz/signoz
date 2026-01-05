@@ -9,13 +9,14 @@ import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useTimezone } from 'providers/Timezone';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { DataType } from '../TableView';
 import {
@@ -33,7 +34,6 @@ interface ITableViewActionsProps {
 	isListViewPanel: boolean;
 	isfilterInLoading: boolean;
 	isfilterOutLoading: boolean;
-	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
 	onClickHandler: (
 		operator: string,
 		fieldKey: string,
@@ -41,6 +41,7 @@ interface ITableViewActionsProps {
 		dataType: string | undefined,
 		logType: MetricsType | undefined,
 	) => () => void;
+	handleChangeSelectedView?: ChangeViewFunctionType;
 }
 
 // Memoized Tree Component
@@ -118,7 +119,7 @@ export default function TableViewActions(
 		isfilterInLoading,
 		isfilterOutLoading,
 		onClickHandler,
-		onGroupByAttribute,
+		handleChangeSelectedView,
 	} = props;
 
 	const { pathname } = useLocation();
@@ -144,6 +145,14 @@ export default function TableViewActions(
 	}, [record.field, record.value]);
 
 	const fieldFilterKey = filterKeyForField(fieldData.field);
+
+	const handleGroupByAttribute = useCallback((): Promise<void> | void => {
+		handleChangeSelectedView?.(
+			ExplorerViews.TIMESERIES,
+			undefined,
+			fieldFilterKey,
+		);
+	}, [handleChangeSelectedView, fieldFilterKey]);
 
 	// Memoize textToCopy computation
 	const textToCopy = useMemo(() => {
@@ -268,9 +277,7 @@ export default function TableViewActions(
 											className="group-by-clause"
 											type="text"
 											icon={<GroupByIcon />}
-											onClick={(): Promise<void> | void =>
-												onGroupByAttribute?.(fieldFilterKey)
-											}
+											onClick={handleGroupByAttribute}
 										>
 											Group By Attribute
 										</Button>
@@ -348,9 +355,7 @@ export default function TableViewActions(
 										className="group-by-clause"
 										type="text"
 										icon={<GroupByIcon />}
-										onClick={(): Promise<void> | void =>
-											onGroupByAttribute?.(fieldFilterKey)
-										}
+										onClick={handleGroupByAttribute}
 									>
 										Group By Attribute
 									</Button>
@@ -373,5 +378,5 @@ export default function TableViewActions(
 }
 
 TableViewActions.defaultProps = {
-	onGroupByAttribute: undefined,
+	handleChangeSelectedView: undefined,
 };

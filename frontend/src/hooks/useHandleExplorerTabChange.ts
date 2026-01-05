@@ -1,8 +1,16 @@
+import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { QueryParams } from 'constants/query';
-import { initialAutocompleteData, PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	initialAutocompleteData,
+	PANEL_TYPES,
+	QueryBuilderKeys,
+} from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
+import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { useCallback } from 'react';
+import { useQueryClient } from 'react-query';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -20,7 +28,8 @@ export const useHandleExplorerTabChange = (): {
 		type: string,
 		querySearchParameters?: ICurrentQueryData,
 		redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
-	) => void;
+		fieldKey?: string,
+	) => Promise<void>;
 } => {
 	const {
 		currentQuery,
@@ -29,6 +38,7 @@ export const useHandleExplorerTabChange = (): {
 		updateAllQueriesOperators,
 		updateQueriesData,
 	} = useQueryBuilder();
+	const queryClient = useQueryClient();
 
 	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 
@@ -59,10 +69,11 @@ export const useHandleExplorerTabChange = (): {
 	);
 
 	const handleExplorerTabChange = useCallback(
-		(
+		async (
 			type: string,
 			currentQueryData?: ICurrentQueryData,
 			redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
+			fieldKey?: string,
 		) => {
 			const newPanelType = type as PANEL_TYPES;
 
@@ -70,25 +81,70 @@ export const useHandleExplorerTabChange = (): {
 
 			const query = currentQueryData?.query || getUpdateQuery(newPanelType);
 
-			if (redirectToUrl) {
-				redirectWithQueryBuilderData(
-					query,
-					{
-						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.name || viewName,
-						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
-					},
-					redirectToUrl,
-				);
-			} else {
-				redirectWithQueryBuilderData(query, {
-					[QueryParams.panelTypes]: newPanelType,
-					[QueryParams.viewName]: currentQueryData?.name || viewName,
-					[QueryParams.viewKey]: currentQueryData?.id || viewKey,
-				});
+			const redirectParams = {
+				[QueryParams.panelTypes]: newPanelType,
+				[QueryParams.viewName]: currentQueryData?.name || viewName,
+				[QueryParams.viewKey]: currentQueryData?.id || viewKey,
+			};
+
+			const redirect = (nextQuery: Query): void => {
+				if (redirectToUrl) {
+					redirectWithQueryBuilderData(nextQuery, redirectParams, redirectToUrl);
+					return;
+				}
+
+				redirectWithQueryBuilderData(nextQuery, redirectParams);
+			};
+
+			if (!fieldKey) {
+				redirect(query);
+				return;
 			}
+
+			const keysAutocompleteResponse = await queryClient.fetchQuery(
+				[QueryBuilderKeys.GET_AGGREGATE_KEYS, fieldKey],
+				async () =>
+					getAggregateKeys({
+						searchText: fieldKey,
+						aggregateOperator: query.builder.queryData[0].aggregateOperator || '',
+						dataSource: query.builder.queryData[0].dataSource,
+						aggregateAttribute:
+							query.builder.queryData[0].aggregateAttribute?.key || '',
+					}),
+			);
+
+			const keysAutocomplete: BaseAutocompleteData[] =
+				keysAutocompleteResponse.payload?.attributeKeys || [];
+			// Extract dataType from the matched key in autocomplete results
+			const matchedKey = keysAutocomplete.find((key) => key.key === fieldKey);
+			const dataType = matchedKey?.dataType;
+
+			const existAutocompleteKey = chooseAutocompleteFromCustomValue(
+				keysAutocomplete,
+				fieldKey,
+				dataType,
+			);
+			const nextQuery: Query = {
+				...query,
+				builder: {
+					...query.builder,
+					queryData: query.builder.queryData.map((item) => ({
+						...item,
+						groupBy: [...item.groupBy, existAutocompleteKey],
+					})),
+				},
+			};
+
+			redirect(nextQuery);
 		},
-		[panelType, getUpdateQuery, redirectWithQueryBuilderData, viewName, viewKey],
+		[
+			panelType,
+			getUpdateQuery,
+			queryClient,
+			redirectWithQueryBuilderData,
+			viewName,
+			viewKey,
+		],
 	);
 
 	return { handleExplorerTabChange };
