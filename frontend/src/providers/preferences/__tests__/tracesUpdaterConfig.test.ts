@@ -113,7 +113,7 @@ describe('tracesUpdaterConfig', () => {
 		expect(mockSetSavedViewPreferences).toHaveBeenCalledWith({
 			columns: mockColumns,
 			formatting: {
-				maxLines: 2,
+				maxLines: 1,
 				format: 'table',
 				fontSize: 'small',
 				version: 1,

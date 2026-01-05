@@ -5,7 +5,7 @@ import secrets
 import uuid
 from abc import ABC
 from enum import Enum
-from typing import Any, Callable, Generator, List
+from typing import Any, Callable, Generator, List, Optional
 from urllib.parse import urlparse
 
 import numpy as np
@@ -256,7 +256,7 @@ class Traces(ABC):
 
     def __init__(
         self,
-        timestamp: datetime.datetime = datetime.datetime.now(),
+        timestamp: Optional[datetime.datetime] = None,
         duration: datetime.timedelta = datetime.timedelta(seconds=1),
         trace_id: str = "",
         span_id: str = "",
@@ -272,6 +272,8 @@ class Traces(ABC):
         trace_state: str = "",
         flags: np.uint32 = 0,
     ) -> None:
+        if timestamp is None:
+            timestamp = datetime.datetime.now()
         self.tag_attributes = []
         self.attribute_keys = []
         self.resource_keys = []
