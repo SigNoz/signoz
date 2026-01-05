@@ -28,7 +28,7 @@ func customTemplateOption() alertmanagertemplate.Option {
 // This is used to generate a link to the rule in the alertmanager.
 //
 // It checks for a ruleId label and generates a path to the rule.
-// If testAlert=true label is present, it routes to /alerts/test instead of /alerts.
+// If testAlert=true label is present, it adds isTestAlert=true query parameter to the URL.
 func FromGlobs(paths []string) (*alertmanagertemplate.Template, error) {
 	t, err := alertmanagertemplate.FromGlobs(paths, customTemplateOption())
 	if err != nil {
@@ -36,9 +36,8 @@ func FromGlobs(paths []string) (*alertmanagertemplate.Template, error) {
 	}
 
 	if err := t.Parse(bytes.NewReader([]byte(`
-	{{ define "__ruleIdPath" }}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}/edit?ruleId={{ .Value | urlescape }}{{- end -}}{{- end -}}{{- end }}
-	{{ define "__testRuleIdPath" }}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}?ruleId={{ .Value | urlescape }}{{- end -}}{{- end -}}{{- end }}
-	{{ define "__alertmanagerURL" }}{{- $isTestAlert := "" -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "testalert" -}}{{- if eq .Value "true" -}}{{- $isTestAlert = "true" -}}{{- end -}}{{- end -}}{{- end -}}{{- if $isTestAlert -}}{{ .ExternalURL }}/alerts/test{{ template "__testRuleIdPath" . }}{{- else -}}{{ .ExternalURL }}/alerts{{ template "__ruleIdPath" . }}{{- end -}}{{ end }}
+	{{ define "__ruleIdPath" }}{{- $isTestAlert := "" -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "testalert" -}}{{- if eq .Value "true" -}}{{- $isTestAlert = "true" -}}{{- end -}}{{- end -}}{{- end -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}{{- if ne .Value "" -}}/edit?ruleId={{ .Value | urlescape }}{{- if $isTestAlert -}}&isTestAlert=true{{- end -}}{{- end -}}{{- end -}}{{- end -}}{{- end }}
+	{{ define "__alertmanagerURL" }}{{ .ExternalURL }}/alerts{{ template "__ruleIdPath" . }}{{ end }}
 	{{ define "msteamsv2.default.titleLink" }}{{ template "__alertmanagerURL" . }}{{ end }}
 	`))); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error parsing alertmanager templates")

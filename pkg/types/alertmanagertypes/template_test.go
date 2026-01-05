@@ -136,7 +136,7 @@ func TestFromGlobs(t *testing.T) {
 					Timeout:   false,
 				},
 			},
-			expected: "http://localhost:8080/alerts/test",
+			expected: "http://localhost:8080/alerts",
 		},
 		{
 			name: "TestAlertWithRuleId",
@@ -152,7 +152,7 @@ func TestFromGlobs(t *testing.T) {
 					Timeout:   false,
 				},
 			},
-			expected: "http://localhost:8080/alerts/test?ruleId=01961575-461c-7668-875f-05d374062bfc",
+			expected: "http://localhost:8080/alerts/edit?ruleId=01961575-461c-7668-875f-05d374062bfc&isTestAlert=true",
 		},
 		{
 			name: "TestAlertWithRuleIdWithSpaces",
@@ -168,7 +168,22 @@ func TestFromGlobs(t *testing.T) {
 					Timeout:   false,
 				},
 			},
-			expected: "http://localhost:8080/alerts/test?ruleId=this%20is%20the%20rule%20id",
+			expected: "http://localhost:8080/alerts/edit?ruleId=this%20is%20the%20rule%20id&isTestAlert=true",
+		},
+		{
+			name: "AlertWithBlankRuleId",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{
+							"ruleId": "",
+						},
+					},
+					UpdatedAt: time.Now(),
+					Timeout:   false,
+				},
+			},
+			expected: "http://localhost:8080/alerts",
 		},
 	}
 
