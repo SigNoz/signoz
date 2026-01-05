@@ -333,10 +333,16 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 
 	if deprecatedFlags.PreferSpanMetrics {
 		logger.WarnContext(ctx, "[Deprecated] flag --prefer-span-metrics is deprecated and scheduled for removal. Please use SIGNOZ_FLAGGER_CONFIG_BOOLEAN_USE__SPAN__METRICS instead.")
+		// for backward compatibility
+		if config.Flagger.Config.Boolean == nil {
+			config.Flagger.Config.Boolean = make(map[string]bool)
+		}
+		config.Flagger.Config.Boolean[flagger.FeatureUseSpanMetrics.String()] = deprecatedFlags.PreferSpanMetrics
 	}
 
 	if os.Getenv("USE_SPAN_METRICS") != "" {
 		logger.WarnContext(ctx, "[Deprecated] env USE_SPAN_METRICS is deprecated and scheduled for removal. Please use SIGNOZ_FLAGGER_CONFIG_BOOLEAN_USE__SPAN__METRICS instead.")
+		// for backward compatibility
 		if config.Flagger.Config.Boolean == nil {
 			config.Flagger.Config.Boolean = make(map[string]bool)
 		}
