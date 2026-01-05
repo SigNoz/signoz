@@ -20,6 +20,7 @@ var (
 	ErrCodeInvalidTypeRelation              = errors.MustNewCode("role_invalid_type_relation")
 	ErrCodeRoleNotFound                     = errors.MustNewCode("role_not_found")
 	ErrCodeRoleFailedTransactionsFromString = errors.MustNewCode("role_failed_transactions_from_string")
+	ErrCodeRoleUnsupported                  = errors.MustNewCode("role_unsupported")
 )
 
 var (

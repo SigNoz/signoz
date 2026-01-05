@@ -12,9 +12,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/role"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/text/cases"
@@ -28,10 +30,11 @@ type Module struct {
 	settings  factory.ScopedProviderSettings
 	orgSetter organization.Setter
 	analytics analytics.Analytics
+	role      role.Module
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) root.Module {
+func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics, role role.Module) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -40,6 +43,7 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		settings:  settings,
 		orgSetter: orgSetter,
 		analytics: analytics,
+		role:      role,
 	}
 }
 
@@ -178,6 +182,16 @@ func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ..
 		return err
 	}
 
+	role, err := module.role.GetByOrgIDAndName(ctx, input.OrgID, input.Role.String())
+	if err != nil {
+		return err
+	}
+
+	err = module.role.Assign(ctx, role.ID, role.OrgID, authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
+	if err != nil {
+		return err
+	}
+
 	traitsOrProperties := types.NewTraitsFromUser(input)
 	module.analytics.IdentifyUser(ctx, input.OrgID.String(), input.ID.String(), traitsOrProperties)
 	module.analytics.TrackUser(ctx, input.OrgID.String(), input.ID.String(), "User Created", traitsOrProperties)
@@ -247,6 +261,30 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		}
 	}
 
+	if user.Role != existingUser.Role {
+		existingRole, err := m.role.GetByOrgIDAndName(ctx, orgID, existingUser.Role.String())
+		if err != nil {
+			return nil, err
+		}
+
+		updatedRole, err := m.role.GetByOrgIDAndName(ctx, orgID, user.Role.String())
+		if err != nil {
+			return nil, err
+		}
+
+		// revoke existing role from user
+		err = m.role.Revoke(ctx, existingRole.ID, orgID, authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
+		if err != nil {
+			return nil, err
+		}
+
+		// assign the updated role to the user
+		err = m.role.Assign(ctx, updatedRole.ID, orgID, authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if err := m.tokenizer.DeleteIdentity(ctx, valuer.MustNewUUID(id)); err != nil {
 		return nil, err
 	}
@@ -254,8 +292,8 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	return updatedUser, nil
 }
 
-func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
-	user, err := m.store.GetUser(ctx, valuer.MustNewUUID(id))
+func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
+	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
 	}
@@ -265,7 +303,7 @@ func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, d
 	}
 
 	// don't allow to delete the last admin user
-	adminUsers, err := m.store.GetUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
+	adminUsers, err := module.store.GetUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
 	if err != nil {
 		return err
 	}
@@ -274,11 +312,21 @@ func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, d
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot delete the last admin")
 	}
 
-	if err := m.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
+	if err := module.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
 		return err
 	}
 
-	m.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
+	role, err := module.role.GetByOrgIDAndName(ctx, orgID, user.Role.String())
+	if err != nil {
+		return err
+	}
+
+	err = module.role.Revoke(ctx, role.ID, role.OrgID, authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
+	if err != nil {
+		return err
+	}
+
+	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
 		"deleted_by": deletedBy,
 	})
 

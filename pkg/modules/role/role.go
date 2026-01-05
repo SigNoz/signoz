@@ -19,6 +19,9 @@ type Module interface {
 	// Gets the role
 	Get(context.Context, valuer.UUID, valuer.UUID) (*roletypes.Role, error)
 
+	// Gets the role by org_id and name
+	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*roletypes.Role, error)
+
 	// Gets the objects associated with the given role and relation.
 	GetObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation) ([]*authtypes.Object, error)
 
@@ -37,8 +40,11 @@ type Module interface {
 	// Deletes the role and tuples in authorization server.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
-	// Assigns role to the given subject.
+	// Assigns role to the subject.
 	Assign(context.Context, valuer.UUID, valuer.UUID, string) error
+
+	// Revokes role assignment from the subject
+	Revoke(context.Context, valuer.UUID, valuer.UUID, string) error
 
 	RegisterTypeable
 }
