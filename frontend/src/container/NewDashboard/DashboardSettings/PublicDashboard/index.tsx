@@ -86,7 +86,7 @@ function PublicDashboardSetting(): JSX.Element {
 		error: errorPublicDashboard,
 	} = useGetPublicDashboardMeta(
 		selectedDashboard?.id || '',
-		isPublicDashboardEnabled,
+		!!selectedDashboard?.id && isPublicDashboardEnabled,
 	);
 
 	const isPublicDashboard = !!publicDashboardData?.publicPath;
