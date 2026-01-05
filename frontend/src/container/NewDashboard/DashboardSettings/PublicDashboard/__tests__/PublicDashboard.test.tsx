@@ -108,15 +108,11 @@ describe('PublicDashboardSetting', () => {
 				).toBeInTheDocument();
 			});
 
-			await waitFor(() => {
-				expect(
-					screen.getByRole('checkbox', { name: /enable time range/i }),
-				).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByRole('checkbox', { name: /enable time range/i }),
+			).toBeInTheDocument();
 
-			await waitFor(() => {
-				expect(screen.getByText(/default time range/i)).toBeInTheDocument();
-			});
+			expect(await screen.findByText(/default time range/i)).toBeInTheDocument();
 
 			expect(screen.getByText(/Last 30 minutes/i)).toBeInTheDocument();
 
@@ -127,7 +123,7 @@ describe('PublicDashboardSetting', () => {
 			});
 
 			expect(
-				screen.getByRole('button', { name: /publish dashboard/i }),
+				await screen.findByRole('button', { name: /publish dashboard/i }),
 			).toBeInTheDocument();
 		});
 	});
@@ -152,11 +148,9 @@ describe('PublicDashboardSetting', () => {
 				).toBeInTheDocument();
 			});
 
-			await waitFor(() => {
-				expect(
-					screen.getByRole('checkbox', { name: /enable time range/i }),
-				).toBeChecked();
-			});
+			expect(
+				await screen.findByRole('checkbox', { name: /enable time range/i }),
+			).toBeChecked();
 
 			await waitFor(() => {
 				expect(screen.getByText(/default time range/i)).toBeInTheDocument();
@@ -168,17 +162,13 @@ describe('PublicDashboardSetting', () => {
 				expect(screen.getByText(/Public Dashboard URL/i)).toBeInTheDocument();
 			});
 
-			await waitFor(() => {
-				expect(
-					screen.getByRole('button', { name: /update published dashboard/i }),
-				).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByRole('button', { name: /update published dashboard/i }),
+			).toBeInTheDocument();
 
-			await waitFor(() => {
-				expect(
-					screen.getByRole('button', { name: /unpublish dashboard/i }),
-				).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByRole('button', { name: /unpublish dashboard/i }),
+			).toBeInTheDocument();
 		});
 	});
 
@@ -397,14 +387,12 @@ describe('PublicDashboardSetting', () => {
 
 			render(<PublicDashboardSetting />, {}, { role: USER_ROLES.VIEWER });
 
-			await waitFor(() => {
-				const publishButton = screen.getByRole('button', {
-					name: /publish dashboard/i,
-				});
-				expect(publishButton).toBeInTheDocument();
-				expect(publishButton).toBeDisabled();
-				expect(publishButton).toHaveAttribute('disabled');
+			const publishButton = await screen.findByRole('button', {
+				name: /publish dashboard/i,
 			});
+			expect(publishButton).toBeInTheDocument();
+			expect(publishButton).toBeDisabled();
+			expect(publishButton).toHaveAttribute('disabled');
 		});
 
 		describe('Published dashboard buttons for non-admin users', () => {
@@ -422,27 +410,23 @@ describe('PublicDashboardSetting', () => {
 			it('should disable "Unpublish dashboard" button for non-admin users', async () => {
 				render(<PublicDashboardSetting />, {}, { role: USER_ROLES.VIEWER });
 
-				await waitFor(() => {
-					const unpublishButton = screen.getByRole('button', {
-						name: /unpublish dashboard/i,
-					});
-					expect(unpublishButton).toBeInTheDocument();
-					expect(unpublishButton).toBeDisabled();
-					expect(unpublishButton).toHaveAttribute('disabled');
+				const unpublishButton = await screen.findByRole('button', {
+					name: /unpublish dashboard/i,
 				});
+				expect(unpublishButton).toBeInTheDocument();
+				expect(unpublishButton).toBeDisabled();
+				expect(unpublishButton).toHaveAttribute('disabled');
 			});
 
 			it('should disable "Update published dashboard" button for non-admin users', async () => {
 				render(<PublicDashboardSetting />, {}, { role: USER_ROLES.VIEWER });
 
-				await waitFor(() => {
-					const updateButton = screen.getByRole('button', {
-						name: /update published dashboard/i,
-					});
-					expect(updateButton).toBeInTheDocument();
-					expect(updateButton).toBeDisabled();
-					expect(updateButton).toHaveAttribute('disabled');
+				const updateButton = await screen.findByRole('button', {
+					name: /update published dashboard/i,
 				});
+				expect(updateButton).toBeInTheDocument();
+				expect(updateButton).toBeDisabled();
+				expect(updateButton).toHaveAttribute('disabled');
 			});
 		});
 	});

@@ -314,7 +314,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		isError: isErrorPublicDashboardData,
 	} = useGetPublicDashboardMeta(
 		selectedDashboard?.id || '',
-		isPublicDashboardEnabled,
+		!!selectedDashboard?.id && isPublicDashboardEnabled,
 	);
 
 	useEffect(() => {

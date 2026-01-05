@@ -15,6 +15,6 @@ export const useGetPublicDashboardMeta = (
 			console.error('Error getting public dashboard', error);
 		},
 		queryKey: [REACT_QUERY_KEY.GET_PUBLIC_DASHBOARD_META, id],
-		enabled: !!id && enabled,
+		enabled,
 		keepPreviousData: false,
 	});
