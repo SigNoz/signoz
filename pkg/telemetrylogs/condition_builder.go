@@ -36,22 +36,11 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	// For JSON columns, preserve the original value type (numeric, bool, etc.)
-	// Only format to string for non-JSON columns that need string formatting
-	isJSONColumn := column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled && key.FieldContext == telemetrytypes.FieldContextBody
-	if !isJSONColumn {
-		switch operator {
-		case qbtypes.FilterOperatorContains,
-			qbtypes.FilterOperatorNotContains,
-			qbtypes.FilterOperatorILike,
-			qbtypes.FilterOperatorNotILike,
-			qbtypes.FilterOperatorLike,
-			qbtypes.FilterOperatorNotLike:
-			value = querybuilder.FormatValueForContains(value)
-		}
+	if operator.IsStringSearchOperator() {
+		value = querybuilder.FormatValueForContains(value)
 	}
 
-	if isJSONColumn {
+	if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
 		cond, err := c.buildJSONCondition(ctx, key, operator, value, sb)
 		if err != nil {
 			return "", err

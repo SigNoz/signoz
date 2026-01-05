@@ -34,7 +34,7 @@ type TelemetryFieldKey struct {
 	FieldContext  FieldContext  `json:"fieldContext,omitempty"`
 	FieldDataType FieldDataType `json:"fieldDataType,omitempty"`
 
-	JSONDataType *JSONDataType       `json:"-,omitempty"`
+	JSONDataType *JSONDataType       `json:"-"`
 	Indexes      []JSONDataTypeIndex `json:"-"`
 	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
 }

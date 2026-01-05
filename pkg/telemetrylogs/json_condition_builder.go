@@ -106,6 +106,7 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 			// do nothing
 		}
 
+		indexedExpr, value = querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, indexedExpr, operator)
 		cond, err := c.applyOperator(sb, indexedExpr, operator, value)
 		if err != nil {
 			return "", err
