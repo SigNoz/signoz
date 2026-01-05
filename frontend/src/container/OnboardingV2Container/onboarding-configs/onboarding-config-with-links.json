@@ -2003,28 +2003,37 @@
 		"link": "/docs/logs-management/send-logs/aws-lambda-nodejs/"
 	},
 	{
-		"dataSource": "python-logs-auto-instrumentation",
-		"label": "Python logs",
+		"dataSource": "python-logs",
+		"label": "Python Logs",
 		"imgUrl": "/Logos/python.svg",
 		"tags": [
 			"logs"
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
-			"auto",
 			"auto collect python logs",
-			"instrumentation",
+			"collect python logs using sdk",
+			"docker python logs",
+			"kubernetes python logs",
 			"logging",
 			"logs",
 			"opentelemetry python logging",
 			"otel python logs",
+			"otel python sdk logs",
 			"python",
 			"python app logs",
+			"python application logs",
+			"python containers",
+			"python docker",
+			"python k8s",
 			"python log auto instrumentation",
+			"python logging opentelemetry",
 			"python logging sdk",
 			"python logs",
 			"python logs to signoz",
 			"python observability",
+			"python on kubernetes",
+			"python on windows",
 			"python structured logging",
 			"python-logs-auto-instrumentation"
 		],
@@ -2058,34 +2067,6 @@
 			"structured logging java"
 		],
 		"link": "/docs/userguide/collecting_application_logs_otel_sdk_java/"
-	},
-	{
-		"dataSource": "otel-python-sdk",
-		"label": "Python logs",
-		"imgUrl": "/Logos/python.svg",
-		"tags": [
-			"logs"
-		],
-		"module": "logs",
-		"relatedSearchKeywords": [
-			"collect python logs using sdk",
-			"python",
-			"python application logs",
-			"python logging opentelemetry",
-			"python logs",
-			"python logs to signoz",
-			"python observability",
-			"logging",
-			"logs",
-			"opentelemetry",
-			"otel",
-			"otel python sdk logs",
-			"otel logs python",
-			"otel-python-sdk",
-			"structured logging python"
-		],
-		"id": "otel-python-sdk",
-		"link": "/docs/userguide/collecting_application_logs_otel_sdk_python/"
 	},
 	{
 		"dataSource": "nodejs-logs",
@@ -5255,37 +5236,6 @@
 		"link": "/docs/userguide/otel-metrics-receivers/"
 	},
 	{
-		"dataSource": "llm-community-integrations",
-		"label": "LLM Community Integrations",
-		"imgUrl": "/Logos/llm-monitoring.svg",
-		"tags": [
-			"LLM Monitoring"
-		],
-		"module": "apm",
-		"relatedSearchKeywords": [
-			"apm",
-			"application performance monitoring",
-			"large language model observability",
-			"llm",
-			"llm community integrations",
-			"llm inference monitoring",
-			"llm latency metrics",
-			"llm monitoring",
-			"llm monitoring with signoz",
-			"llm performance tracking",
-			"llm response time tracing",
-			"llm-community-integrations",
-			"monitor openai",
-			"monitoring",
-			"observability",
-			"openai telemetry",
-			"otel llm integration",
-			"traces",
-			"tracing"
-		],
-		"link": "/docs/llm-community-integrations"
-	},
-	{
 		"dataSource": "semantic-kernel",
 		"label": "Semantic Kernel",
 		"imgUrl": "/Logos/dotnet.svg",
@@ -5315,6 +5265,127 @@
 			"tracing"
 		],
 		"link": "/docs/semantic-kernel-observability"
+	},
+	{
+		"dataSource": "inkeep",
+		"label": "Inkeep",
+		"imgUrl": "/Logos/inkeep.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"inkeep",
+			"inkeep monitoring",
+			"inkeep observability",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/inkeep-monitoring/"
+	},
+	{
+		"dataSource": "agno",
+		"label": "Agno",
+		"imgUrl": "/Logos/agno.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"agno",
+			"agno monitoring",
+			"agentic ai",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/agno-monitoring/"
+	},
+	{
+		"dataSource": "pipecat",
+		"label": "Pipecat",
+		"imgUrl": "/Logos/pipecat.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"pipecat",
+			"pipecat monitoring",
+			"real-time ai",
+			"voice ai",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/pipecat-monitoring/"
+	},
+	{
+		"dataSource": "livekit",
+		"label": "Livekit",
+		"imgUrl": "/Logos/livekit.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"livekit",
+			"livekit observability",
+			"real-time video",
+			"webrtc",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/livekit-observability/"
+	},
+	{
+		"dataSource": "temporal-llm",
+		"label": "Temporal LLM",
+		"imgUrl": "/Logos/temporal.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"temporal",
+			"temporal llm",
+			"temporal observability",
+			"workflow",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/temporal-observability/"
+	},
+	{
+		"dataSource": "grok",
+		"label": "Grok",
+		"imgUrl": "/Logos/grok.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"grok",
+			"grok monitoring",
+			"xai",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/grok-monitoring/"
 	},
 	{
 		"dataSource": "frontend-logs",
