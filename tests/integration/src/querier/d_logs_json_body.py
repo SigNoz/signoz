@@ -303,8 +303,8 @@ def test_logs_json_body_nested_keys(
 
     Tests:
     1. Search by body.user.name = "value"
-    2. Search by body.request.headers.content_type = "value"
-    3. Search by body.metadata.tags.environment = "value"
+    2. Search by body.request.secure = true (boolean)
+    3. Search by body.response.latency = 123.45 (floating point)
     4. Search by body.response.status.code = 200
     """
     now = datetime.now(tz=timezone.utc)
@@ -317,6 +317,7 @@ def test_logs_json_body_nested_keys(
         },
         "request": {
             "method": "GET",
+            "secure": True,
             "headers": {
                 "content_type": "application/json",
                 "authorization": "Bearer token123"
@@ -332,7 +333,8 @@ def test_logs_json_body_nested_keys(
             "status": {
                 "code": 200,
                 "message": "OK"
-            }
+            },
+            "latency": 123.45
         }
     })
 
@@ -344,6 +346,7 @@ def test_logs_json_body_nested_keys(
         },
         "request": {
             "method": "POST",
+            "secure": False,
             "headers": {
                 "content_type": "text/html",
                 "authorization": "Bearer token456"
@@ -359,7 +362,8 @@ def test_logs_json_body_nested_keys(
             "status": {
                 "code": 201,
                 "message": "Created"
-            }
+            },
+            "latency": 456.78
         }
     })
 
@@ -371,6 +375,7 @@ def test_logs_json_body_nested_keys(
         },
         "request": {
             "method": "PUT",
+            "secure": True,
             "headers": {
                 "content_type": "application/json",
                 "authorization": "Bearer token789"
@@ -386,7 +391,8 @@ def test_logs_json_body_nested_keys(
             "status": {
                 "code": 200,
                 "message": "OK"
-            }
+            },
+            "latency": 123.45
         }
     })
 
@@ -460,7 +466,7 @@ def test_logs_json_body_nested_keys(
     user_names = [json.loads(row["data"]["body"])["user"]["name"] for row in rows]
     assert all(name == "john_doe" for name in user_names)
 
-    # Test 2: Search by body.request.headers.content_type = "application/json"
+    # Test 2: Search by body.request.secure = true
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -480,7 +486,7 @@ def test_logs_json_body_nested_keys(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": 'body.request.headers.content_type = "application/json"'},
+                            "filter": {"expression": "body.request.secure = true"},
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
@@ -498,11 +504,11 @@ def test_logs_json_body_nested_keys(
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
     rows = results[0]["rows"]
-    assert len(rows) == 2  # log1 and log3 have content_type = "application/json"
-    content_types = [json.loads(row["data"]["body"])["request"]["headers"]["content_type"] for row in rows]
-    assert all(ct == "application/json" for ct in content_types)
+    assert len(rows) == 2  # log1 and log3 have secure = true
+    secure_values = [json.loads(row["data"]["body"])["request"]["secure"] for row in rows]
+    assert all(secure is True for secure in secure_values)
 
-    # Test 3: Search by body.metadata.tags.environment = "production"
+    # Test 3: Search by body.response.latency = 123.45
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -522,7 +528,7 @@ def test_logs_json_body_nested_keys(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": 'body.metadata.tags.environment = "production"'},
+                            "filter": {"expression": "body.response.latency = 123.45"},
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
@@ -540,9 +546,9 @@ def test_logs_json_body_nested_keys(
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
     rows = results[0]["rows"]
-    assert len(rows) == 2  # log1 and log3 have environment = "production"
-    environments = [json.loads(row["data"]["body"])["metadata"]["tags"]["environment"] for row in rows]
-    assert all(env == "production" for env in environments)
+    assert len(rows) == 2  # log1 and log3 have latency = 123.45
+    latencies = [json.loads(row["data"]["body"])["response"]["latency"] for row in rows]
+    assert all(lat == 123.45 for lat in latencies)
 
     # Test 4: Search by body.response.status.code = 200
     response = requests.post(
@@ -812,6 +818,7 @@ def test_logs_json_body_listing(
         {
             "timestamp": now - timedelta(seconds=5),
             "body": json.dumps({
+                "id": "log-1",
                 "service": "auth",
                 "action": "login",
                 "status": "success",
@@ -822,6 +829,7 @@ def test_logs_json_body_listing(
         {
             "timestamp": now - timedelta(seconds=4),
             "body": json.dumps({
+                "id": "log-2",
                 "service": "auth",
                 "action": "logout",
                 "status": "success",
@@ -832,6 +840,7 @@ def test_logs_json_body_listing(
         {
             "timestamp": now - timedelta(seconds=3),
             "body": json.dumps({
+                "id": "log-3",
                 "service": "payment",
                 "action": "charge",
                 "status": "success",
@@ -842,6 +851,7 @@ def test_logs_json_body_listing(
         {
             "timestamp": now - timedelta(seconds=2),
             "body": json.dumps({
+                "id": "log-4",
                 "service": "auth",
                 "action": "login",
                 "status": "failed",
@@ -852,6 +862,7 @@ def test_logs_json_body_listing(
         {
             "timestamp": now - timedelta(seconds=1),
             "body": json.dumps({
+                "id": "log-5",
                 "service": "payment",
                 "action": "refund",
                 "status": "success",
@@ -916,6 +927,7 @@ def test_logs_json_body_listing(
     assert len(rows) == 5  # All 5 logs should be returned
 
     # Test 2: List logs with pagination (limit=2, offset=0)
+    # Should return the 1st and 2nd logs (log-5 and log-4) when ordered by timestamp desc
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -953,8 +965,12 @@ def test_logs_json_body_listing(
     assert len(results) == 1
     rows = results[0]["rows"]
     assert len(rows) == 2  # Only 2 logs should be returned
+    # Verify we got the 1st and 2nd logs (log-5 and log-4) when ordered by timestamp desc
+    log_ids = [json.loads(row["data"]["body"])["id"] for row in rows]
+    assert set(log_ids) == {"log-5", "log-4"}
 
     # Test 3: List logs with pagination (limit=2, offset=2)
+    # Should return the 3rd and 4th logs (log-3 and log-2) when ordered by timestamp desc
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -991,7 +1007,10 @@ def test_logs_json_body_listing(
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
     rows = results[0]["rows"]
-    assert len(rows) == 2  # Next 2 logs should be returned
+    assert len(rows) == 2  # Should return exactly 2 logs
+    # Verify we got the 3rd and 4th logs (log-3 and log-2) when ordered by timestamp desc
+    log_ids = [json.loads(row["data"]["body"])["id"] for row in rows]
+    assert set(log_ids) == {"log-3", "log-2"}
 
     # Test 4: List logs with multiple filters combined (AND)
     response = requests.post(
