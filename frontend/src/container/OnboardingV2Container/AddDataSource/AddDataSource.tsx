@@ -219,39 +219,29 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleSelectDataSource = (dataSource: Entity): void => {
-		if (dataSource && dataSource.internalRedirect && dataSource.link) {
-			logEvent(
-				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
-				{
-					dataSource: dataSource.label,
-				},
-			);
-			history.push(dataSource.link);
+		setSelectedDataSource(dataSource);
+		setSelectedFramework(null);
+		setSelectedEnvironment(null);
+
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
+			{
+				dataSource: dataSource.label,
+			},
+		);
+
+		if (dataSource.question) {
+			setHasMoreQuestions(true);
+
+			setTimeout(() => {
+				handleScrollToStep(question2Ref);
+			}, 100);
 		} else {
-			setSelectedDataSource(dataSource);
-			setSelectedFramework(null);
-			setSelectedEnvironment(null);
+			setHasMoreQuestions(false);
 
-			logEvent(
-				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
-				{
-					dataSource: dataSource.label,
-				},
-			);
+			updateUrl(dataSource?.link || '', null);
 
-			if (dataSource.question) {
-				setHasMoreQuestions(true);
-
-				setTimeout(() => {
-					handleScrollToStep(question2Ref);
-				}, 100);
-			} else {
-				setHasMoreQuestions(false);
-
-				updateUrl(dataSource?.link || '', null);
-
-				setShowConfigureProduct(true);
-			}
+			setShowConfigureProduct(true);
 		}
 	};
 
@@ -263,12 +253,6 @@ function OnboardingAddDataSource(): JSX.Element {
 				framework: option.label,
 			},
 		);
-
-		// Handle internal redirect - navigate directly within the app
-		if (option.internalRedirect === true && option.link) {
-			history.push(option.link);
-			return;
-		}
 
 		setSelectedFramework(option);
 
@@ -303,15 +287,6 @@ function OnboardingAddDataSource(): JSX.Element {
 				environment: selectedEnvironment?.label,
 			},
 		);
-
-		// Handle internal redirect - navigate directly within the app
-		if (
-			selectedEnvironment.internalRedirect === true &&
-			selectedEnvironment.link
-		) {
-			history.push(selectedEnvironment.link);
-			return;
-		}
 
 		setSelectedEnvironment(selectedEnvironment);
 		setHasMoreQuestions(false);
@@ -987,7 +962,14 @@ function OnboardingAddDataSource(): JSX.Element {
 															},
 														);
 
-														handleUpdateCurrentStep(2);
+														const currentEntity =
+															selectedEnvironment || selectedFramework || selectedDataSource;
+
+														if (currentEntity?.internalRedirect && currentEntity?.link) {
+															history.push(currentEntity.link);
+														} else {
+															handleUpdateCurrentStep(2);
+														}
 													}}
 												>
 													Next: Configure your product
