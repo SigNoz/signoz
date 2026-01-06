@@ -490,10 +490,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 
 	innerQuery, innerArgs := baseSb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
 
-	interpolationEnabled, err := b.flagger.Boolean(ctx, flagger.FeatureInterpolationEnabled, featuretypes.NewFlaggerEvaluationContext(valuer.GenerateUUID()))
-	if err != nil {
-		return "", nil, err
-	}
+	interpolationEnabled := b.flagger.MustBoolean(ctx, flagger.FeatureInterpolationEnabled, featuretypes.NewFlaggerEvaluationContext(valuer.GenerateUUID()))
 
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
