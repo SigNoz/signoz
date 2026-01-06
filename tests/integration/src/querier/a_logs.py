@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
-from typing import Callable, Dict, List
+from typing import Callable, List
 
 import requests
 

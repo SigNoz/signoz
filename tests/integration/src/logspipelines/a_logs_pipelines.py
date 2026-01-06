@@ -8,11 +8,11 @@ and pipeline processing.
 from http import HTTPStatus
 from typing import Callable
 
-import pytest
 import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+
 
 def test_create_logs_pipeline_success(
     signoz: types.SigNoz,
@@ -670,4 +670,3 @@ def test_delete_all_pipelines_success(
     # Note: Integration pipelines might still be present, so we check user-created ones
     user_pipelines = [p for p in list_data["data"]["pipelines"] if p.get("name") == "Pipeline to Delete"]
     assert len(user_pipelines) == 0
-
