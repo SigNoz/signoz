@@ -213,10 +213,8 @@ def test_public_dashboard_widget_query_range(
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     public_path = response.json()["data"]["publicPath"]
-    public_dashboard_id = public_path.split("/public/dashboard/")[-1] 
+    public_dashboard_id = public_path.split("/public/dashboard/")[-1]
 
-    
-    
     resp = requests.get(
         signoz.self.host_configs["8080"].get(
         f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/0/query_range"
@@ -227,7 +225,7 @@ def test_public_dashboard_widget_query_range(
     assert resp.status_code == HTTPStatus.OK
     assert resp.json().get("status") == "success"
 
-    
+
     resp = requests.get(
         signoz.self.host_configs["8080"].get(
         f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/-1/query_range"
