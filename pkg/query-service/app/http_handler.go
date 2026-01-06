@@ -2015,19 +2015,10 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		aH.HandleError(w, err, http.StatusInternalServerError)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-
-	useSpanMetrics, err := aH.Signoz.Flagger.Boolean(r.Context(), flagger.FeatureUseSpanMetrics.String(), evalCtx)
-	if err != nil {
-		aH.HandleError(w, err, http.StatusInternalServerError)
-		return
-	}
+	useSpanMetrics := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureUseSpanMetrics, evalCtx)
 
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),

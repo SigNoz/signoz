@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
-	pkgError "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -27,11 +26,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, pkgError.Newf(pkgError.TypeInvalidInput, pkgError.CodeInvalidInput, "orgId is invalid"))
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	featureSet, err := ah.Signoz.Licensing.GetFeatureFlags(r.Context(), orgID)
 	if err != nil {
@@ -62,12 +57,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-
-	useSpanMetrics, err := ah.Signoz.Flagger.Boolean(ctx, flagger.FeatureUseSpanMetrics.String(), evalCtx)
-	if err != nil {
-		ah.HandleError(w, err, http.StatusInternalServerError)
-		return
-	}
+	useSpanMetrics := ah.Signoz.Flagger.MustBoolean(ctx, flagger.FeatureUseSpanMetrics, evalCtx)
 
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
