@@ -791,7 +791,7 @@ function FormAlertRules({
 
 	// Only fetch when creating a metrics-based alert
 	const fetchYAxisUnit =
-		!ruleId.length && alertType === AlertTypes.METRICS_BASED_ALERT;
+		isEmpty(ruleId) && alertType === AlertTypes.METRICS_BASED_ALERT;
 
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
 		alertDef.condition.selectedQueryName,
