@@ -60,6 +60,13 @@ func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 //     Direction: "asc" or "desc"
 //     Default: ["timestamp:desc", "id:desc"]
 //
+//   - composite_query (optional): Advanced query specification as JSON-encoded QueryEnvelope array
+//     When provided, this overrides filter, columns, order_by, and limit parameters
+//     Format: JSON array of QueryEnvelope objects
+//     Each QueryEnvelope must have a valid "type" field (e.g., "builder", "trace_operator")
+//     Supported types for traces: "builder", "trace_operator"
+//     Note: Limits in composite queries are validated and cannot exceed MAX_EXPORT_ROW_COUNT_LIMIT
+//
 // Response Headers:
 //   - Content-Type: "text/csv" or "application/x-ndjson"
 //   - Content-Encoding: "gzip" (handled by HTTP middleware)
@@ -86,6 +93,11 @@ func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 //	Export with filter and ordering:
 //	  GET /api/v1/export_raw_data?start=1693612800000000000&end=1693699199000000000
 //	      &filter=severity="error"&order_by=timestamp:desc&limit=1000
+//
+//	Export with composite query (advanced):
+//	  GET /api/v1/export_raw_data?source=traces&start=1693612800000000000&end=1693699199000000000
+//	      &composite_query={"type":"builder","spec":{"signal":"traces","name":"A","limit":1000}}
+//	      &composite_query={"type":"trace_operator","spec":{"name":"B","operator":"join","limit":500}}
 func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	source, err := getExportQuerySource(r.URL.Query())
 	if err != nil {
@@ -110,7 +122,161 @@ func (handler *handler) exportMetrics(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *handler) exportTraces(rw http.ResponseWriter, r *http.Request) {
-	render.Error(rw, errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "traces export is not yet supported"))
+	// Set up response headers
+	rw.Header().Set("Cache-Control", "no-cache")
+	rw.Header().Set("Vary", "Accept-Encoding") // Indicate that response varies based on Accept-Encoding
+	rw.Header().Set("Access-Control-Expose-Headers", "Content-Disposition, X-Response-Complete")
+	rw.Header().Set("Trailer", "X-Response-Complete")
+	rw.Header().Set("Transfer-Encoding", "chunked")
+
+	queryParams := r.URL.Query()
+
+	startTime, endTime, err := getExportQueryTimeRange(queryParams)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	format, err := getExportQueryFormat(queryParams)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	// Set appropriate content type and filename
+	filename := fmt.Sprintf("data_exported_%s.%s", time.Now().Format("2006-01-02_150405"), format)
+	rw.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+
+	queryRangeRequest := qbtypes.QueryRangeRequest{
+		Start:       startTime,
+		End:         endTime,
+		RequestType: qbtypes.RequestTypeRaw,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: []qbtypes.QueryEnvelope{},
+		},
+	}
+
+	compositeQueries := getCompositeQueriesFromQueryParams(queryParams)
+	if len(compositeQueries) == 0 {
+		// If no composite queries specified, add a default one
+
+		limit, err := getExportQueryLimit(queryParams)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		filterExpression := queryParams.Get("filter")
+
+		orderByExpression, err := getExportQueryOrderByTraces(queryParams)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		columns := getExportQueryColumns(queryParams)
+
+		spec := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal:       telemetrytypes.SignalTraces,
+			Name:         "raw",
+			SelectFields: columns,
+			Filter: &qbtypes.Filter{
+				Expression: filterExpression,
+			},
+			Limit: limit,
+			Order: orderByExpression,
+		}
+
+		compositeQueries = append(compositeQueries, qbtypes.QueryEnvelope{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: spec,
+		})
+	}
+	for i := range compositeQueries {
+		// Ensure each query envelope has the correct type
+		if compositeQueries[i].Type != (qbtypes.QueryType{}) {
+			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query %d has invalid or missing type", i))
+			return
+		}
+
+		limit := DefaultExportRowCountLimit
+
+		switch compositeQueries[i].Type {
+		case qbtypes.QueryTypeBuilder, qbtypes.QueryTypeTraceOperator:
+			switch spec := compositeQueries[i].Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				if spec.Limit == 0 {
+					spec.Limit = limit
+				} else if spec.Limit > MaxExportRowCountLimit {
+					render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query %d limit cannot be more than %d", i, MaxExportRowCountLimit))
+					return
+				}
+				compositeQueries[i].Spec = spec
+			case qbtypes.QueryBuilderTraceOperator:
+				if spec.Limit == 0 {
+					spec.Limit = limit
+				} else if spec.Limit > MaxExportRowCountLimit {
+					render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query %d limit cannot be more than %d", i, MaxExportRowCountLimit))
+					return
+				}
+				compositeQueries[i].Spec = spec
+
+			default:
+				render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query %d has invalid spec type for builder query", i))
+				return
+			}
+
+		default:
+			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query %d has unsupported type: %s", i, compositeQueries[i].Type.String()))
+			return
+		}
+
+	}
+
+	queryRangeRequest.CompositeQuery.Queries = compositeQueries
+
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is invalid"))
+		return
+	}
+
+	// This will signal Export module to stop sending data
+	doneChan := make(chan any)
+	defer close(doneChan)
+	rowChan, errChan := handler.module.ExportRawData(r.Context(), orgID, &queryRangeRequest, doneChan)
+
+	var isComplete bool
+
+	switch format {
+	case "csv", "":
+		rw.Header().Set("Content-Type", "text/csv")
+		csvWriter := csv.NewWriter(rw)
+		isComplete, err = handler.exportRawDataCSV(rowChan, errChan, csvWriter)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+		csvWriter.Flush()
+	case "jsonl":
+		rw.Header().Set("Content-Type", "application/x-ndjson")
+		isComplete, err = handler.exportRawDataJSONL(rowChan, errChan, rw)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+	default:
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid format: must be csv or jsonl"))
+		return
+	}
+
+	rw.Header().Set("X-Response-Complete", strconv.FormatBool(isComplete))
 }
 
 func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
@@ -206,7 +372,7 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 	case "csv", "":
 		rw.Header().Set("Content-Type", "text/csv")
 		csvWriter := csv.NewWriter(rw)
-		isComplete, err = handler.exportLogsCSV(rowChan, errChan, csvWriter)
+		isComplete, err = handler.exportRawDataCSV(rowChan, errChan, csvWriter)
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -214,7 +380,7 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 		csvWriter.Flush()
 	case "jsonl":
 		rw.Header().Set("Content-Type", "application/x-ndjson")
-		isComplete, err = handler.exportLogsJSONL(rowChan, errChan, rw)
+		isComplete, err = handler.exportRawDataJSONL(rowChan, errChan, rw)
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -227,7 +393,8 @@ func (handler *handler) exportLogs(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("X-Response-Complete", strconv.FormatBool(isComplete))
 }
 
-func (handler *handler) exportLogsCSV(rowChan <-chan *qbtypes.RawRow, errChan <-chan error, csvWriter *csv.Writer) (bool, error) {
+// exportRawDataCSV is a generic CSV export function that works with any raw data (logs, traces, etc.)
+func (handler *handler) exportRawDataCSV(rowChan <-chan *qbtypes.RawRow, errChan <-chan error, csvWriter *csv.Writer) (bool, error) {
 	var header []string
 
 	headerToIndexMapping := make(map[string]int, len(header))
@@ -268,8 +435,8 @@ func (handler *handler) exportLogsCSV(rowChan <-chan *qbtypes.RawRow, errChan <-
 	}
 }
 
-func (handler *handler) exportLogsJSONL(rowChan <-chan *qbtypes.RawRow, errChan <-chan error, writer io.Writer) (bool, error) {
-
+// exportRawDataJSONL is a generic JSONL export function that works with any raw data (logs, traces, etc.)
+func (handler *handler) exportRawDataJSONL(rowChan <-chan *qbtypes.RawRow, errChan <-chan error, writer io.Writer) (bool, error) {
 	totalBytes := uint64(0)
 	for {
 		select {
@@ -306,7 +473,7 @@ func getExportQuerySource(queryParams url.Values) (string, error) {
 	case "metrics":
 		return "metrics", errors.NewInvalidInputf(errors.CodeInvalidInput, "metrics export not yet supported")
 	case "traces":
-		return "traces", errors.NewInvalidInputf(errors.CodeInvalidInput, "traces export not yet supported")
+		return "traces", nil
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid source: must be logs, metrics or traces")
 	}
@@ -513,4 +680,89 @@ func getExportQueryOrderBy(queryParams url.Values) ([]qbtypes.OrderBy, error) {
 		})
 	}
 	return orderBy, nil
+}
+
+// getExportQueryOrderByTraces parses the "order_by" query parameters for traces and returns a slice of OrderBy structs.
+// Each "order_by" parameter should be in the format "column:direction"
+// Each "column" should be a valid telemetry field key in the format "context.field:type" or "context.field" or "field"
+func getExportQueryOrderByTraces(queryParams url.Values) ([]qbtypes.OrderBy, error) {
+	orderByParam := queryParams.Get("order_by")
+
+	orderByParam = strings.TrimSpace(orderByParam)
+	if orderByParam == "" {
+		// Default sorting for traces: timestamp desc, span_id desc
+		return []qbtypes.OrderBy{
+			{
+				Key: qbtypes.OrderByKey{
+					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+						Name: "timestamp",
+					},
+				},
+				Direction: qbtypes.OrderDirectionDesc,
+			},
+			{
+				Key: qbtypes.OrderByKey{
+					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+						Name: "span_id",
+					},
+				},
+				Direction: qbtypes.OrderDirectionDesc,
+			},
+		}, nil
+	}
+
+	parts := strings.Split(orderByParam, ":")
+	if len(parts) != 2 && len(parts) != 3 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order_by format: %s, should be <column>:<direction>", orderByParam)
+	}
+
+	column := strings.Join(parts[:len(parts)-1], ":")
+	direction := parts[len(parts)-1]
+
+	orderDirection, ok := qbtypes.OrderDirectionMap[direction]
+	if !ok {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order_by direction: %s, should be one of %s, %s", direction, qbtypes.OrderDirectionAsc, qbtypes.OrderDirectionDesc)
+	}
+
+	orderByKey := telemetrytypes.GetFieldKeyFromKeyText(column)
+
+	orderBy := []qbtypes.OrderBy{
+		{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: orderByKey,
+			},
+			Direction: orderDirection,
+		},
+	}
+
+	// If we are ordering by the timestamp column, also order by the span_id column
+	if orderByKey.Name == "timestamp" {
+		orderBy = append(orderBy, qbtypes.OrderBy{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: "span_id",
+				},
+			},
+			Direction: orderDirection,
+		})
+	}
+	return orderBy, nil
+}
+
+func getCompositeQueriesFromQueryParams(queryParams url.Values) []qbtypes.QueryEnvelope {
+	// Check if composite_query parameter exists in query params
+	compositeQueryParams := queryParams["composite_query"]
+
+	// Try to unmarshal the composite_query JSON parameter
+	var queries []qbtypes.QueryEnvelope
+	for _, compositeQueryParam := range compositeQueryParams {
+		var query qbtypes.QueryEnvelope
+		if err := json.Unmarshal([]byte(compositeQueryParam), &query); err != nil {
+			// If unmarshaling fails, return empty slice (will fall back to default query)
+			return nil
+		}
+		queries = append(queries, query)
+	}
+
+	return queries
 }

@@ -607,6 +607,29 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+  /api/v1/export_raw_data:
+    get:
+      deprecated: false
+      description: This endpoints promotes and indexes paths
+      operationId: HandlePromoteAndIndexPaths
+      responses:
+        "201":
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Promote and index paths
+      tags:
+      - logs
   /api/v1/getResetPasswordToken/{id}:
     get:
       deprecated: false
