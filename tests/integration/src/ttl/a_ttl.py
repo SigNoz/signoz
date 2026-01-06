@@ -24,8 +24,11 @@ logger = setup_logger(__name__)
 Helper functions to verify TTL and partition settings in Clickhouse tables.
 NOTE: These functions only works when last inserted data is in the latest partition.
 """
+
+
 def verify_table_partition_expressions(
-    signoz: types.SigNoz, expected_partition_expressions_map: dict[str, tuple[int, int, int]]
+    signoz: types.SigNoz,
+    expected_partition_expressions_map: dict[str, tuple[int, int, int]],
 ):
     """
     Verify table partitions exist with data and have correct retention values.
@@ -52,6 +55,19 @@ def verify_table_partition_expressions(
             f"No data found with retention values '{retention}, {retention_cold}' in table {table}. "
             f"Expected at least one row with these retention settings."
         )
+
+        partition_query = (
+            "SELECT rows FROM system.parts "
+            f"WHERE `table` = '{table.split('.')[-1]}' AND active = 1 AND partition LIKE '%{retention},{retention_cold}%' "
+            "ORDER BY partition ASC"
+        )
+
+        partition_result = signoz.telemetrystore.conn.query(partition_query).result_rows
+        assert (
+            len(partition_result) >= 1
+        ), f"No active partitions found for table {table}"
+
+        assert partition_result[0][0] >= count
 
 
 def verify_table_retention_expression(
@@ -456,7 +472,11 @@ def test_set_custom_retention_ttl_basic_with_cold_storage(
         signoz,
         {
             "signoz_logs.logs_v2": (test_retention_days, test_retention_days_cold, 1),
-            "signoz_logs.logs_v2_resource": (test_retention_days, test_retention_days_cold, 1),
+            "signoz_logs.logs_v2_resource": (
+                test_retention_days,
+                test_retention_days_cold,
+                1,
+            ),
         },
     )
 
@@ -647,8 +667,16 @@ def test_set_custom_retention_ttl_with_conditions(
     verify_table_partition_expressions(
         signoz,
         {
-            "signoz_logs.logs_v2": (test_retention_days_condition, test_retention_days_cold, 1),
-            "signoz_logs.logs_v2_resource": (test_retention_days_condition, test_retention_days_cold, 1),
+            "signoz_logs.logs_v2": (
+                test_retention_days_condition,
+                test_retention_days_cold,
+                1,
+            ),
+            "signoz_logs.logs_v2_resource": (
+                test_retention_days_condition,
+                test_retention_days_cold,
+                1,
+            ),
         },
     )
 
@@ -663,7 +691,11 @@ def test_set_custom_retention_ttl_with_conditions(
         signoz,
         {
             "signoz_logs.logs_v2": (test_retention_days, test_retention_days_cold, 1),
-            "signoz_logs.logs_v2_resource": (test_retention_days, test_retention_days_cold, 1),
+            "signoz_logs.logs_v2_resource": (
+                test_retention_days,
+                test_retention_days_cold,
+                1,
+            ),
         },
     )
 

@@ -29,7 +29,7 @@ def test_create_logs_pipeline_success(
     3. Verify the response contains version information
     4. Verify the pipeline is returned in the response
     """
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     pipeline_payload = {
         "pipelines": [
@@ -117,7 +117,7 @@ def test_list_logs_pipelines_success(
     2. List all pipelines and verify the created pipeline is present
     3. Verify the response structure
     """
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create a pipeline first
     create_payload = {
@@ -207,7 +207,7 @@ def test_list_logs_pipelines_by_version(
     3. List pipelines by version 1 and verify it returns the original
     4. List pipelines by version 2 and verify it returns the updated version
     """
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create version 1
     v1_payload = {
@@ -368,7 +368,7 @@ def test_preview_logs_pipelines_success(
     2. Verify the preview processes logs correctly
     3. Verify the response contains processed logs
     """
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     preview_payload = {
         "pipelines": [
@@ -460,7 +460,7 @@ def test_create_multiple_pipelines_success(
     2. Verify all pipelines are created
     3. Verify pipelines are ordered correctly
     """
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     multi_pipeline_payload = {
         "pipelines": [
@@ -575,7 +575,7 @@ def test_delete_all_pipelines_success(
     3. Verify pipelines are deleted
     4. Verify new version is created
     """
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create a pipeline first
     create_payload = {

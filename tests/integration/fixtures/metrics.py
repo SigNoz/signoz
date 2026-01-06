@@ -2,15 +2,17 @@ import datetime
 import hashlib
 import json
 from abc import ABC
+from typing import Any, Callable, Generator, List, Optional
+
 import numpy as np
 import pytest
-from typing import Any, Callable, Generator, List, Optional
 
 from fixtures import types
 
 
 class MetricsTimeSeries(ABC):
     """Represents a row in the time_series_v4 table."""
+
     env: str
     temporality: str
     metric_name: str
@@ -53,7 +55,7 @@ class MetricsTimeSeries(ABC):
         self.resource_attrs = resource_attrs
         self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
         self.__normalized = False
-        
+
         # Calculate fingerprint from metric_name + labels
         fingerprint_str = metric_name + self.labels
         self.fingerprint = np.uint64(
@@ -81,6 +83,7 @@ class MetricsTimeSeries(ABC):
 
 class MetricsSample(ABC):
     """Represents a row in the samples_v4 table."""
+
     env: str
     temporality: str
     metric_name: str
@@ -121,15 +124,22 @@ class MetricsSample(ABC):
 
 class Metrics(ABC):
     """High-level metric representation. Produces both time series and sample entries."""
+
     metric_name: str
     labels: dict[str, str]
     temporality: str
     timestamp: datetime.datetime
     value: float
     flags: int
-    
-    _time_series: MetricsTimeSeries
-    _sample: MetricsSample
+
+    @property
+    def time_series(self) -> MetricsTimeSeries:
+        return self._time_series
+
+    @property
+    def sample(self) -> MetricsSample:
+        return self._sample
+
 
     def __init__(
         self,
@@ -155,7 +165,7 @@ class Metrics(ABC):
         self.timestamp = timestamp
         self.value = value
         self.flags = flags
-        
+
         self._time_series = MetricsTimeSeries(
             metric_name=metric_name,
             labels=labels,
@@ -169,7 +179,7 @@ class Metrics(ABC):
             resource_attrs=resource_attributes,
             scope_attrs=scope_attributes,
         )
-        
+
         self._sample = MetricsSample(
             metric_name=metric_name,
             fingerprint=self._time_series.fingerprint,
@@ -194,9 +204,9 @@ def insert_metrics(
         """
         time_series_map: dict[int, MetricsTimeSeries] = {}
         for metric in metrics:
-            fp = int(metric._time_series.fingerprint)
+            fp = int(metric.time_series.fingerprint)
             if fp not in time_series_map:
-                time_series_map[fp] = metric._time_series
+                time_series_map[fp] = metric.time_series
 
         if len(time_series_map) > 0:
             clickhouse.conn.insert(
@@ -221,7 +231,7 @@ def insert_metrics(
                 data=[ts.to_row() for ts in time_series_map.values()],
             )
 
-        samples = [metric._sample for metric in metrics]
+        samples = [metric.sample for metric in metrics]
         if len(samples) > 0:
             clickhouse.conn.insert(
                 database="signoz_metrics",
