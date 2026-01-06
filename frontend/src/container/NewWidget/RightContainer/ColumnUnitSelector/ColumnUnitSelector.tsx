@@ -72,22 +72,25 @@ export function ColumnUnitSelector(
 	return (
 		<section className="column-unit-selector">
 			<Typography.Text className="heading">Column Units</Typography.Text>
-			{aggregationQueries.map(({ value, label }) => (
-				<YAxisUnitSelectorV2
-					value={columnUnits[value] || ''}
-					onSelect={(unitValue: string): void =>
-						handleColumnUnitSelect(value, unitValue)
-					}
-					fieldLabel={label}
-					key={value}
-					onClear={(): void => {
-						handleColumnUnitSelect(value, '');
-					}}
-					selectedQueryName={value}
-					// Show warning if the widget is being created
-					showWarning={isNewDashboard}
-				/>
-			))}
+			{aggregationQueries.map(({ value, label }) => {
+				const baseQueryName = value.split('.')[0];
+				return (
+					<YAxisUnitSelectorV2
+						value={columnUnits[value] || ''}
+						onSelect={(unitValue: string): void =>
+							handleColumnUnitSelect(value, unitValue)
+						}
+						fieldLabel={label}
+						key={value}
+						onClear={(): void => {
+							handleColumnUnitSelect(value, '');
+						}}
+						selectedQueryName={baseQueryName}
+						// Show warning if the widget is being created
+						showWarning={isNewDashboard}
+					/>
+				);
+			})}
 		</section>
 	);
 }
