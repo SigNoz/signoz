@@ -24,7 +24,7 @@ type JSONAccessPlanBuilder struct {
 }
 
 // buildPlan recursively builds the path plan tree
-func (pb *JSONAccessPlanBuilder) buildPlan(ctx context.Context, index int, parent *telemetrytypes.JSONAccessNode, isDynArrChild bool) (*telemetrytypes.JSONAccessNode, error) {
+func (pb *JSONAccessPlanBuilder) buildPlan(index int, parent *telemetrytypes.JSONAccessNode, isDynArrChild bool) (*telemetrytypes.JSONAccessNode, error) {
 	if index >= len(pb.parts) {
 		return nil, errors.NewInvalidInputf(CodePlanIndexOutOfBounds, "index is out of bounds")
 	}
@@ -80,13 +80,13 @@ func (pb *JSONAccessPlanBuilder) buildPlan(ctx context.Context, index int, paren
 	} else {
 		var err error
 		if hasJSON {
-			node.Branches[telemetrytypes.BranchJSON], err = pb.buildPlan(ctx, index+1, node, false)
+			node.Branches[telemetrytypes.BranchJSON], err = pb.buildPlan(index+1, node, false)
 			if err != nil {
 				return nil, err
 			}
 		}
 		if hasDynamic {
-			node.Branches[telemetrytypes.BranchDynamic], err = pb.buildPlan(ctx, index+1, node, true)
+			node.Branches[telemetrytypes.BranchDynamic], err = pb.buildPlan(index+1, node, true)
 			if err != nil {
 				return nil, err
 			}
@@ -151,7 +151,7 @@ func PlanJSON(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, op qbt
 	}
 	plans := telemetrytypes.JSONAccessPlan{}
 
-	node, err := pb.buildPlan(ctx, 0,
+	node, err := pb.buildPlan(0,
 		telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn,
 			32, 0),
 		false,
@@ -164,7 +164,7 @@ func PlanJSON(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, op qbt
 	// TODO: PlanJSON requires the Start and End of the Query to select correct column between promoted and body_json using
 	// creation time in distributed_promoted_paths
 	if pb.isPromoted {
-		node, err := pb.buildPlan(ctx, 0,
+		node, err := pb.buildPlan(0,
 			telemetrytypes.NewRootJSONAccessNode(LogsV2BodyPromotedColumn,
 				32, 1024),
 			true,
