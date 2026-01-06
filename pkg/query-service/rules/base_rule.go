@@ -580,43 +580,67 @@ func (r *BaseRule) isFilterNewSeriesSupported() bool {
 }
 
 // extractMetricAndGroupBys extracts metric names and groupBy keys from the rule's query.
+// Returns a map where key is the metric name and value is the list of groupBy keys associated with it.
 // TODO: implement caching for query parsing results to avoid re-parsing the query + cache invalidation
-func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) ([]string, []string, error) {
-	var metricNames []string
-	var groupedFields []string
+func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) (map[string][]string, error) {
+	metricToGroupedFields := make(map[string][]string)
 
 	// check to avoid processing the query for Logs and Traces
 	// as excluding new series is not supported for Logs and Traces for now
 	if !r.isFilterNewSeriesSupported() {
-		return metricNames, groupedFields, nil
+		return metricToGroupedFields, nil
 	}
 
 	results, err := r.queryParser.AnalyzeQueryEnvelopes(ctx, r.ruleCondition.CompositeQuery.Queries)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
+
+	// temp map to avoid duplicates group by fields for the same metric
+	// map[metricName]map[groupKey]struct{}
+	tempMap := make(map[string]map[string]struct{})
 
 	// Aggregate results from all queries
 	for _, result := range results {
-		metricNames = append(metricNames, result.MetricNames...)
+		if len(result.MetricNames) == 0 {
+			continue
+		}
+		// Collect unique groupBy columns for this query result
+		uniqueGroups := make(map[string]struct{})
 		for _, col := range result.GroupByColumns {
-			groupedFields = append(groupedFields, col.OriginField)
+			uniqueGroups[col.OriginField] = struct{}{}
+		}
+		// walk through the metric names and group by fields for this query result and add them to the temp map
+		for _, metricName := range result.MetricNames {
+			if _, ok := tempMap[metricName]; !ok {
+				tempMap[metricName] = make(map[string]struct{})
+			}
+			for groupKey := range uniqueGroups {
+				tempMap[metricName][groupKey] = struct{}{}
+			}
 		}
 	}
 
-	return metricNames, groupedFields, nil
+	// Convert to final map
+	for metricName, groups := range tempMap {
+		for groupKey := range groups {
+			metricToGroupedFields[metricName] = append(metricToGroupedFields[metricName], groupKey)
+		}
+	}
+
+	return metricToGroupedFields, nil
 }
 
 // FilterNewSeries filters out items that are too new based on metadata first_seen timestamps.
 // Returns the filtered series (old ones) excluding new series that are still within the grace period.
 func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*v3.Series) ([]*v3.Series, error) {
 	// Extract metric names and groupBy keys
-	metricNames, groupedFields, err := r.extractMetricAndGroupBys(ctx)
+	metricToGroupedFields, err := r.extractMetricAndGroupBys(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(metricNames) == 0 || len(groupedFields) == 0 {
+	if len(metricToGroupedFields) == 0 {
 		// No metrics or groupBy keys, nothing to filter (non-ideal case, return all series)
 		return series, nil
 	}
@@ -631,7 +655,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 		// Collect groupBy attribute-value pairs for this series
 		seriesKeys := make([]telemetrytypes.MetricMetadataLookupKey, 0)
 
-		for _, metricName := range metricNames {
+		for metricName, groupedFields := range metricToGroupedFields {
 			for _, groupByKey := range groupedFields {
 				if attrValue, ok := metricLabelMap[groupByKey]; ok {
 					lookupKey := telemetrytypes.MetricMetadataLookupKey{
