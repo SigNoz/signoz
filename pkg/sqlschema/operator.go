@@ -25,8 +25,9 @@ func (operator *Operator) CreateTable(table *Table) [][]byte {
 }
 
 func (operator *Operator) RenameTable(table *Table, newName TableName) [][]byte {
+	sqls := [][]byte{table.ToRenameSQL(operator.fmter, newName)}
 	table.Name = newName
-	return [][]byte{table.ToRenameSQL(operator.fmter, newName)}
+	return sqls
 }
 
 func (operator *Operator) RecreateTable(table *Table, uniqueConstraints []*UniqueConstraint) [][]byte {
