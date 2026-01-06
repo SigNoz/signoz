@@ -6,6 +6,8 @@ import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import logEvent from 'api/common/logEvent';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
+import YAxisUnitSelector from 'components/YAxisUnitSelector';
+import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -14,9 +16,9 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
-import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -481,7 +483,7 @@ function FormAlertRules({
 					chQueries: mapQueryDataToApi(currentQuery.clickhouse_sql, 'name').data,
 					queryType: currentQuery.queryType,
 					panelType: panelType || initQuery.panelType,
-					unit: currentQuery.unit,
+					unit: yAxisUnit || currentQuery.unit,
 				}),
 			},
 		};
@@ -500,6 +502,7 @@ function FormAlertRules({
 		alertType,
 		initQuery,
 		panelType,
+		yAxisUnit,
 	]);
 
 	const saveRule = useCallback(async () => {
@@ -786,6 +789,25 @@ function FormAlertRules({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
 			?.active || false;
 
+	// Only fetch when creating a metrics-based alert
+	const fetchYAxisUnit =
+		!ruleId.length && alertType === AlertTypes.METRICS_BASED_ALERT;
+
+	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
+		alertDef.condition.selectedQueryName,
+		{
+			enabled: fetchYAxisUnit,
+		},
+	);
+
+	// Every time a new metric is selected, set the y-axis unit to its unit value if present
+	// Only for metrics-based alerts in create mode
+	useEffect(() => {
+		if (fetchYAxisUnit && initialYAxisUnit) {
+			setYAxisUnit(initialYAxisUnit || '');
+		}
+	}, [initialYAxisUnit, fetchYAxisUnit]);
+
 	return (
 		<>
 			{Element}
@@ -841,9 +863,12 @@ function FormAlertRules({
 					</div>
 
 					<StepContainer>
-						<BuilderUnitsFilter
+						<YAxisUnitSelector
+							value={yAxisUnit}
+							initialValue={initialYAxisUnit}
 							onChange={onUnitChangeHandler}
-							yAxisUnit={yAxisUnit}
+							source={YAxisSource.ALERTS}
+							loading={isLoading}
 						/>
 					</StepContainer>
 

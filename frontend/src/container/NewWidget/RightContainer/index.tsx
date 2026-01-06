@@ -71,7 +71,7 @@ import LegendColors from './LegendColors/LegendColors';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
-import YAxisUnitSelector from './YAxisUnitSelector';
+import YAxisUnitSelectorV2 from './YAxisUnitSelectorV2';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -88,6 +88,7 @@ interface VariableOption {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function RightContainer({
+	isNewDashboard,
 	description,
 	setDescription,
 	setTitle,
@@ -348,11 +349,12 @@ function RightContainer({
 					<ColumnUnitSelector
 						columnUnits={columnUnits}
 						setColumnUnits={setColumnUnits}
+						isNewDashboard={isNewDashboard}
 					/>
 				)}
 
 				{allowYAxisUnit && (
-					<YAxisUnitSelector
+					<YAxisUnitSelectorV2
 						onSelect={setYAxisUnit}
 						value={yAxisUnit || ''}
 						fieldLabel={
@@ -361,6 +363,8 @@ function RightContainer({
 								? 'Unit'
 								: 'Y Axis Unit'
 						}
+						// Only show warning if the widget is being created
+						showWarning={isNewDashboard}
 					/>
 				)}
 
@@ -612,6 +616,7 @@ export interface RightContainerProps {
 	contextLinks: ContextLinksData;
 	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
 	enableDrillDown?: boolean;
+	isNewDashboard: boolean;
 }
 
 RightContainer.defaultProps = {
