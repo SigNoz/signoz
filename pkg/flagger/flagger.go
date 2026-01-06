@@ -18,18 +18,37 @@ type FlaggerProvider interface {
 
 // This is the consumer facing interface for the Flagger service.
 type Flagger interface {
+	// Returns value for the flag of kind boolean otherwise returns error
 	Boolean(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (bool, error)
+
+	// Returns value for the flag of kind string otherwise returns error
 	String(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (string, error)
+
+	// Returns value for the flag of kind float otherwise returns error
 	Float(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (float64, error)
+
+	// Returns value for the flag of kind int otherwise returns error
 	Int(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (int64, error)
+
+	// Returns value for the flag of kind object otherwise returns error
 	Object(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (any, error)
 
+	// Returns value for the flag of kind boolean otherwise returns empty (default) value
 	BooleanOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) bool
+
+	// Returns value for the flag of kind string otherwise returns empty (default) value
 	StringOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) string
+
+	// Returns value for the flag of kind float otherwise returns empty (default) value
 	FloatOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) float64
+
+	// Returns value for the flag of kind int otherwise returns empty (default) value
 	IntOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) int64
+
+	// Returns value for the flag of kind object otherwise returns empty (default) value
 	ObjectOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) any
 
+	// Returns all the features in the registry
 	List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.GettableFeature, error)
 }
 

@@ -233,7 +233,7 @@ func TestStatementBuilder(t *testing.T) {
 		}
 	}
 
-	flagger, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry(), nil)
+	flagger, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry())
 	if err != nil {
 		t.Fatalf("failed to create flagger: %v", err)
 	}

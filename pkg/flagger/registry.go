@@ -21,7 +21,7 @@ func MustNewRegistry() featuretypes.Registry {
 		&featuretypes.Feature{
 			Name:           FeatureInterpolationEnabled,
 			Kind:           featuretypes.KindBoolean,
-			Stage:          featuretypes.StageStable,
+			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether to enable interpolation",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
@@ -29,7 +29,7 @@ func MustNewRegistry() featuretypes.Registry {
 		&featuretypes.Feature{
 			Name:           FeatureKafkaSpanEval,
 			Kind:           featuretypes.KindBoolean,
-			Stage:          featuretypes.StageStable,
+			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether to enable kafka span eval",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
