@@ -12,7 +12,6 @@ import {
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
-import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import { githubLight } from '@uiw/codemirror-theme-github';
@@ -558,15 +557,7 @@ function QuerySearch({
 		const lastPos = lastPosRef.current;
 
 		if (newPos.line !== lastPos.line || newPos.ch !== lastPos.ch) {
-			setCursorPos((lastPos) => {
-				if (newPos.ch !== lastPos.ch && newPos.ch === 0) {
-					Sentry.captureEvent({
-						message: `Cursor jumped to start of line from ${lastPos.ch} to ${newPos.ch}`,
-						level: 'warning',
-					});
-				}
-				return newPos;
-			});
+			setCursorPos(newPos);
 			lastPosRef.current = newPos;
 
 			if (doc) {
