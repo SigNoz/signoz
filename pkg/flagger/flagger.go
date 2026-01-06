@@ -280,7 +280,7 @@ func (f *flagger) MustInt(ctx context.Context, flag featuretypes.Name, evalCtx f
 }
 
 func (f *flagger) MustObject(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) any {
-	defaultValue := any(nil)
+	defaultValue := struct{}{}
 	value, err := f.Object(ctx, flag, evalCtx)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", "error", err, "flag", flag)
