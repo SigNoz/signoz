@@ -325,7 +325,7 @@ class Logs(ABC):
                 self.scope_name,
                 self.scope_version,
                 self.scope_string,
-                self.resource[0].labels,
+                self.resources_string,
             ]
         )
 
@@ -475,7 +475,7 @@ def ttl_legacy_logs_v2_table_setup(request, signoz: types.SigNoz):
     # Add cleanup to drop test table
     request.addfinalizer(
         lambda: signoz.telemetrystore.conn.query(
-            "DROP TABLE IF EXISTS signoz_logs.logs_v2;"
+            f"DROP TABLE IF EXISTS signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
         )
     )
 

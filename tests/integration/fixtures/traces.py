@@ -100,7 +100,7 @@ class TracesTagAttributes(ABC):
         tag_key: str,
         tag_type: str,
         tag_data_type: str,
-        string_value: str,
+        string_value: Optional[str],
         number_value: np.float64,
     ) -> None:
         self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
