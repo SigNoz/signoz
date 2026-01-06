@@ -338,6 +338,12 @@ func (e *ClickHouseFilterExtractor) stripTableAlias(name string) string {
 		return strings.Trim(name, "`")
 	}
 
+	// Handling for function calls like "UPPER(JSONExtractString(labels, 'region'))"
+	// the stripTableAlias function should return these as is
+	if strings.Contains(name, "(") && strings.Contains(name, ")") {
+		return name
+	}
+
 	// split the name by dot and return the last part
 	parts := strings.Split(name, ".")
 	if len(parts) > 1 {
