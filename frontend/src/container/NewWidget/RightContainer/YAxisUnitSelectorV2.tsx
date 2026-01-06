@@ -29,7 +29,8 @@ function YAxisUnitSelectorV2({
 		if (initialYAxisUnit && showWarning) {
 			onSelect(initialYAxisUnit);
 		}
-	}, [initialYAxisUnit, showWarning, onSelect]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [initialYAxisUnit, showWarning]);
 
 	return (
 		<div className="y-axis-unit-selector-v2">
