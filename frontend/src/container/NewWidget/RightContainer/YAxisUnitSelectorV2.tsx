@@ -11,12 +11,14 @@ function YAxisUnitSelectorV2({
 	fieldLabel,
 	showWarning,
 	selectedQueryName,
+	onClear,
 }: {
 	value: string;
 	onSelect: OnSelectType;
 	fieldLabel: string;
 	showWarning: boolean;
 	selectedQueryName?: string;
+	onClear?: () => void;
 }): JSX.Element {
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
 		selectedQueryName,
@@ -41,6 +43,7 @@ function YAxisUnitSelectorV2({
 				initialValue={initialYAxisUnit}
 				source={YAxisSource.DASHBOARDS}
 				loading={isLoading}
+				onClear={onClear}
 			/>
 		</div>
 	);
@@ -48,6 +51,7 @@ function YAxisUnitSelectorV2({
 
 YAxisUnitSelectorV2.defaultProps = {
 	selectedQueryName: undefined,
+	onClear: undefined,
 };
 
 export default YAxisUnitSelectorV2;

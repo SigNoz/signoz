@@ -80,7 +80,10 @@ export function ColumnUnitSelector(
 					}
 					fieldLabel={label}
 					key={value}
-					selectedQueryName={label}
+					onClear={(): void => {
+						handleColumnUnitSelect(value, '');
+					}}
+					selectedQueryName={value}
 					// Show warning if the widget is being created
 					showWarning={isNewDashboard}
 				/>
