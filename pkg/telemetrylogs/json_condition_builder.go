@@ -57,23 +57,28 @@ func (c *conditionBuilder) emitPlannedCondition(plan *telemetrytypes.JSONAccessN
 func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if node.TerminalConfig.ElemType.IsArray {
 		conditions := []string{}
-		// if operator is a String search Operator, then we need to build one more String comparison condition along with the Strict match condition
-		if operator.IsStringSearchOperator() {
-			formattedValue := querybuilder.FormatValueForContains(value)
-			arrayCond, err := c.buildArrayMembershipCondition(node, operator, formattedValue, sb)
-			if err != nil {
-				return "", err
+		// if the value type is not an array
+		// TODO(piyush): Confirm the Query built for Array case and add testcases for it later
+		if !node.TerminalConfig.ValueType.IsArray {
+			// if operator is a String search Operator, then we need to build one more String comparison condition along with the Strict match condition
+			if operator.IsStringSearchOperator() {
+				formattedValue := querybuilder.FormatValueForContains(value)
+				arrayCond, err := c.buildArrayMembershipCondition(node, operator, formattedValue, sb)
+				if err != nil {
+					return "", err
+				}
+				conditions = append(conditions, arrayCond)
 			}
-			conditions = append(conditions, arrayCond)
+
+			// switch operator for array membership checks
+			switch operator {
+			case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorIn:
+				operator = qbtypes.FilterOperatorEqual
+			case qbtypes.FilterOperatorNotContains, qbtypes.FilterOperatorNotIn:
+				operator = qbtypes.FilterOperatorNotEqual
+			}
 		}
 
-		// switch operator for array membership checks
-		switch operator {
-		case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorIn:
-			operator = qbtypes.FilterOperatorEqual
-		case qbtypes.FilterOperatorNotContains, qbtypes.FilterOperatorNotIn:
-			operator = qbtypes.FilterOperatorNotEqual
-		}
 		arrayCond, err := c.buildArrayMembershipCondition(node, operator, value, sb)
 		if err != nil {
 			return "", err

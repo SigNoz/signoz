@@ -405,13 +405,6 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 							val = v
 						}
 					}
-				case string:
-					if x != "" {
-						var v any
-						if err := sonic.Unmarshal([]byte(x), &v); err == nil {
-							val = v
-						}
-					}
 				default:
 					// already a structured type (map[string]any, []any, etc.)
 				}
