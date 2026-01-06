@@ -1,7 +1,7 @@
 import datetime
 import json
 from abc import ABC
-from typing import Any, Callable, Generator, List
+from typing import Any, Callable, Generator, List, Optional
 
 import numpy as np
 import pytest
@@ -116,7 +116,7 @@ class Logs(ABC):
 
     def __init__(
         self,
-        timestamp: datetime.datetime = datetime.datetime.now(),
+        timestamp: Optional[datetime.datetime] = None,
         resources: dict[str, Any] = {},
         attributes: dict[str, Any] = {},
         body: str = "default body",
@@ -128,6 +128,8 @@ class Logs(ABC):
         scope_version: str = "",
         scope_attributes: dict[str, str] = {},
     ) -> None:
+        if timestamp is None:
+            timestamp = datetime.datetime.now()
         self.tag_attributes = []
         self.attribute_keys = []
         self.resource_keys = []
