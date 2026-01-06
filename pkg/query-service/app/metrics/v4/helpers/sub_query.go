@@ -64,9 +64,9 @@ func whichTSTableToUse(start, end int64, mq *v3.BuilderQuery) (int64, int64, str
 		start = start - (start % (time.Hour.Milliseconds() * 24))
 		tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
 	} else {
-		// continue to use the 1 day table
-		start = start - (start % (time.Hour.Milliseconds() * 24))
-		tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
+		// adjust the start time to nearest 1 week
+		start = start - (start % (time.Hour.Milliseconds() * 24 * 7))
+		tableName = constants.SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME
 	}
 
 	return start, end, tableName
