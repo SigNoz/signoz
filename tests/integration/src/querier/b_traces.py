@@ -143,7 +143,7 @@ def test_traces_list(
         ]
     )
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Query all traces for the past 5 minutes
     response = requests.post(
@@ -449,7 +449,7 @@ def test_traces_fill_gaps(
     ]
     insert_traces(traces)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -545,7 +545,7 @@ def test_traces_fill_gaps_with_group_by(
     ]
     insert_traces(traces)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -569,7 +569,11 @@ def test_traces_fill_gaps_with_group_by(
                             "stepInterval": 60,
                             "disabled": False,
                             "groupBy": [
-                                {"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
                             ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
@@ -654,7 +658,7 @@ def test_traces_fill_gaps_formula(
     ]
     insert_traces(traces)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -701,7 +705,7 @@ def test_traces_fill_gaps_formula(
                             "expression": "A + B",
                             "disabled": False,
                         },
-                    }
+                    },
                 ]
             },
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
@@ -774,7 +778,7 @@ def test_traces_fill_gaps_formula_with_group_by(
     ]
     insert_traces(traces)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -797,7 +801,13 @@ def test_traces_fill_gaps_formula_with_group_by(
                             "signal": "traces",
                             "stepInterval": 60,
                             "disabled": True,
-                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "groupBy": [
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -809,7 +819,13 @@ def test_traces_fill_gaps_formula_with_group_by(
                             "signal": "traces",
                             "stepInterval": 60,
                             "disabled": True,
-                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "groupBy": [
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -821,7 +837,7 @@ def test_traces_fill_gaps_formula_with_group_by(
                             "expression": "A + B",
                             "disabled": False,
                         },
-                    }
+                    },
                 ]
             },
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
@@ -890,7 +906,7 @@ def test_traces_fill_zero(
     ]
     insert_traces(traces)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -986,7 +1002,7 @@ def test_traces_fill_zero_with_group_by(
     ]
     insert_traces(traces)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1009,7 +1025,13 @@ def test_traces_fill_zero_with_group_by(
                             "signal": "traces",
                             "stepInterval": 60,
                             "disabled": False,
-                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "groupBy": [
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                             "functions": [{"name": "fillZero"}],
@@ -1094,7 +1116,7 @@ def test_traces_fill_zero_formula(
     ]
     insert_traces(traces)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1142,7 +1164,7 @@ def test_traces_fill_zero_formula(
                             "disabled": False,
                             "functions": [{"name": "fillZero"}],
                         },
-                    }
+                    },
                 ]
             },
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
@@ -1214,7 +1236,7 @@ def test_traces_fill_zero_formula_with_group_by(
     ]
     insert_traces(traces)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1237,7 +1259,13 @@ def test_traces_fill_zero_formula_with_group_by(
                             "signal": "traces",
                             "stepInterval": 60,
                             "disabled": True,
-                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "groupBy": [
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1249,7 +1277,13 @@ def test_traces_fill_zero_formula_with_group_by(
                             "signal": "traces",
                             "stepInterval": 60,
                             "disabled": True,
-                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "groupBy": [
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1262,7 +1296,7 @@ def test_traces_fill_zero_formula_with_group_by(
                             "disabled": False,
                             "functions": [{"name": "fillZero"}],
                         },
-                    }
+                    },
                 ]
             },
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
