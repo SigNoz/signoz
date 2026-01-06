@@ -800,10 +800,10 @@ function FormAlertRules({
 		},
 	);
 
-	// Every time a new metric is selected, set the y-axis unit to its unit value if present
+	// Every time a new metric is selected, set the y-axis unit to its unit
 	// Only for metrics-based alerts in create mode
 	useEffect(() => {
-		if (fetchYAxisUnit && initialYAxisUnit) {
+		if (fetchYAxisUnit) {
 			setYAxisUnit(initialYAxisUnit || '');
 		}
 	}, [initialYAxisUnit, fetchYAxisUnit]);
