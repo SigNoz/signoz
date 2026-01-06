@@ -16,14 +16,13 @@ type provider struct {
 	ruleStore ruletypes.RuleStore
 }
 
-func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[ruler.Ruler, ruler.Config] {
+func NewFactory(sqlstore sqlstore.SQLStore, queryParser queryparser.QueryParser) factory.ProviderFactory[ruler.Ruler, ruler.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, settings factory.ProviderSettings, config ruler.Config) (ruler.Ruler, error) {
-		return New(ctx, settings, config, sqlstore)
+		return New(ctx, settings, config, sqlstore, queryParser)
 	})
 }
 
-func New(ctx context.Context, settings factory.ProviderSettings, config ruler.Config, sqlstore sqlstore.SQLStore) (ruler.Ruler, error) {
-	queryParser := queryparser.New(settings)
+func New(ctx context.Context, settings factory.ProviderSettings, config ruler.Config, sqlstore sqlstore.SQLStore, queryParser queryparser.QueryParser) (ruler.Ruler, error) {
 	return &provider{ruleStore: sqlrulestore.NewRuleStore(sqlstore, queryParser, settings)}, nil
 }
 
