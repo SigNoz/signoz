@@ -1,7 +1,6 @@
 package licensetypes
 
 import (
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -41,13 +40,6 @@ var BasicPlan = []*Feature{
 		Route:      "",
 	},
 	{
-		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	{
 		Name:       Gateway,
 		Active:     false,
 		Usage:      0,
@@ -81,13 +73,6 @@ var EnterprisePlan = []*Feature{
 	{
 		Name:       SSO,
 		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	{
-		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
-		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -137,13 +122,6 @@ var EnterprisePlan = []*Feature{
 }
 
 var DefaultFeatureSet = []*Feature{
-	{
-		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
 	{
 		Name:       DotMetricsEnabled,
 		Active:     false,

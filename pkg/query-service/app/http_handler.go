@@ -2029,13 +2029,13 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if useSpanMetrics {
-		for idx, feature := range featureSet {
-			if feature.Name == valuer.NewString(flagger.FeatureUseSpanMetrics.String()) {
-				featureSet[idx].Active = true
-			}
-		}
-	}
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
+		Active:     useSpanMetrics,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
 
 	if constants.IsDotMetricsEnabled {
 		for idx, feature := range featureSet {
