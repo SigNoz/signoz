@@ -627,7 +627,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 											) : (
 												<Typography.Text
 													className="value-string"
-													ellipsis={{ tooltip: { placement: 'right' } }}
+													ellipsis={{ tooltip: { placement: 'top' } }}
 												>
 													{String(value)}
 												</Typography.Text>
