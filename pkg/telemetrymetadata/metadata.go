@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -1620,44 +1619,58 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Cont
 	return result, nil
 }
 
+// chunkSizeFirstSeenMetricMetadata limits the number of tuples per SQL query to avoid hitting the max_query_size limit.
+//
+// Calculation Logic:
+//
+//  1. The Ceiling: 250 KB (256,000 bytes). A conservative safety limit set just below the common DB max_query_size (262KB)
+//     to guarantee the database does not reject the query.
+//     Reference: https://clickhouse.com/docs/operations/settings/settings#max_query_size
+//
+//  2. Unit Cost: ~150 bytes per tuple. The estimated "weight" of a single lookup key, summing MetricName (40B),
+//     AttrName (30B), AttrValue (64B), and SQL syntax overhead (16B).
+//
+//  3. Theoretical Max: ~1,706 tuples. The absolute maximum capacity if all keys adhere to the average size (256,000 / 150).
+//
+//  4. Final Limit: 1600. Rounds down to provide a ~6% safety buffer, accounting for data outliers
+//     (unusually long attribute values) and multi-byte character expansion.
+const chunkSizeFirstSeenMetricMetadata = 1600
+
 // GetFirstSeenFromMetricMetadata queries the metadata table to get the first_seen timestamp
 // for each metric-attribute-value combination.
 // Returns a map where key is `telemetrytypes.MetricMetadataLookupKey` and value is first_seen in milliseconds.
 func (t *telemetryMetaStore) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []telemetrytypes.MetricMetadataLookupKey) (map[telemetrytypes.MetricMetadataLookupKey]int64, error) {
-	// Chunk the lookup keys to avoid overly large queries (max 300 tuples per query)
-	const chunkSize = 300
 	result := make(map[telemetrytypes.MetricMetadataLookupKey]int64)
 
-	for i := 0; i < len(lookupKeys); i += chunkSize {
-		end := i + chunkSize
+	for i := 0; i < len(lookupKeys); i += chunkSizeFirstSeenMetricMetadata {
+		end := i + chunkSizeFirstSeenMetricMetadata
 		if end > len(lookupKeys) {
 			end = len(lookupKeys)
 		}
 		chunk := lookupKeys[i:end]
 
-		// Build the IN clause values - ClickHouse uses tuple syntax with placeholders
-		var valueStrings []string
-		var args []interface{}
+		sb := sqlbuilder.Select(
+			"metric_name",
+			"attr_name",
+			"attr_string_value",
+			"min(last_reported_unix_milli) AS first_seen",
+		).From(t.metricsDBName + "." + t.metricsFieldsTblName)
 
+		var tuplePlaceholders []string
 		for _, key := range chunk {
-			valueStrings = append(valueStrings, "(?, ?, ?)")
-			args = append(args, key.MetricName, key.AttributeName, key.AttributeValue)
+			p1 := sb.Var(key.MetricName)
+			p2 := sb.Var(key.AttributeName)
+			p3 := sb.Var(key.AttributeValue)
+			// here we're adding the placeholders to the tuplePlaceholders slice (e.g. ($1, $2, $3))
+			tuplePlaceholders = append(tuplePlaceholders, fmt.Sprintf("(%s, %s, %s)", p1, p2, p3))
 		}
+		sb.Where(fmt.Sprintf("(metric_name, attr_name, attr_string_value) IN (%s)", strings.Join(tuplePlaceholders, ", ")))
+		sb.GroupBy("metric_name", "attr_name", "attr_string_value")
+		sb.OrderBy("first_seen")
 
-		query := fmt.Sprintf(`
-			SELECT 
-				m.metric_name,
-				m.attr_name,
-				m.attr_string_value,
-				min(m.last_reported_unix_milli) AS first_seen
-			FROM %s.%s AS m
-			WHERE (m.metric_name, m.attr_name, m.attr_string_value) IN (%s)
-			GROUP BY m.metric_name, m.attr_name, m.attr_string_value
-			ORDER BY first_seen`,
-			t.metricsDBName, t.metricsFieldsTblName, strings.Join(valueStrings, ", "))
+		query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-		rows, err := t.telemetrystore.ClickhouseDB().Query(valueCtx, query, args...)
+		rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 		if err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to query metadata for first_seen")
 		}
