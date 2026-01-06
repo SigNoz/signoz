@@ -144,7 +144,7 @@ services:
       retries: 3
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:nikhil-dev-1
+    image: signoz/signoz-otel-collector:nikhil-dev-3
     container_name: signoz-otel-collector
     command:
       - --config=/etc/otel-collector-config.yaml
