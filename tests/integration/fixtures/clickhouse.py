@@ -79,6 +79,41 @@ def clickhouse(
                 <path>/clickhouse/task_queue/ddl</path>
                 <profile>default</profile>
             </distributed_ddl>
+
+            <storage_configuration>
+                <disks>
+                    <default>
+                        <keep_free_space_bytes>1024</keep_free_space_bytes>
+                    </default>
+                    <cold>
+                        <type>local</type>
+                        <path>/var/lib/clickhouse/cold/</path>
+                        <keep_free_space_bytes>1024</keep_free_space_bytes>
+                    </cold>
+                </disks>
+                <policies>
+                    <default>
+                        <volumes>
+                            <default>
+                                <disk>default</disk>
+                            </default>
+                            <cold>
+                                <disk>cold</disk>
+                            </cold>
+                        </volumes>
+                    </default>
+                    <tiered>
+                        <volumes>
+                            <default>
+                                <disk>default</disk>
+                            </default>
+                            <cold>
+                                <disk>cold</disk>
+                            </cold>
+                        </volumes>
+                    </tiered>
+                </policies>
+            </storage_configuration>
         </clickhouse>
         """
 

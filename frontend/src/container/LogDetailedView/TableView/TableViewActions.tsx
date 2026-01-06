@@ -219,7 +219,7 @@ export default function TableViewActions(
 				/>
 				{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
 					<span className="action-btn">
-						<Tooltip title="Filter for value">
+						<Tooltip title="Filter for value" mouseLeaveDelay={0}>
 							<Button
 								className="filter-btn periscope-btn"
 								icon={
@@ -238,7 +238,7 @@ export default function TableViewActions(
 								)}
 							/>
 						</Tooltip>
-						<Tooltip title="Filter out value">
+						<Tooltip title="Filter out value" mouseLeaveDelay={0}>
 							<Button
 								className="filter-btn periscope-btn"
 								icon={
@@ -299,7 +299,7 @@ export default function TableViewActions(
 			</CopyClipboardHOC>
 			{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
 				<span className="action-btn">
-					<Tooltip title="Filter for value">
+					<Tooltip title="Filter for value" mouseLeaveDelay={0}>
 						<Button
 							className="filter-btn periscope-btn"
 							icon={
@@ -318,7 +318,7 @@ export default function TableViewActions(
 							)}
 						/>
 					</Tooltip>
-					<Tooltip title="Filter out value">
+					<Tooltip title="Filter out value" mouseLeaveDelay={0}>
 						<Button
 							className="filter-btn periscope-btn"
 							icon={

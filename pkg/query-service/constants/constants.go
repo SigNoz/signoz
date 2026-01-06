@@ -40,11 +40,6 @@ const NormalizedMetricsMapQueryThreads = 10
 var NormalizedMetricsMapRegex = regexp.MustCompile(`[^a-zA-Z0-9]`)
 var NormalizedMetricsMapQuantileRegex = regexp.MustCompile(`(?i)([._-]?quantile.*)$`)
 
-// TODO(srikanthccv): remove after backfilling is done
-func UseMetricsPreAggregation() bool {
-	return GetOrDefaultEnv("USE_METRICS_PRE_AGGREGATION", "true") == "true"
-}
-
 var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
 
 func GetEvalDelay() time.Duration {
