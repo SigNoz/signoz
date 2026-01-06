@@ -2644,7 +2644,10 @@ func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2694,7 +2697,10 @@ func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2745,7 +2751,10 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-topic-throughput")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-topic-throughput", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2796,7 +2805,10 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer_partition_latency")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer_partition_latency", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2961,7 +2973,10 @@ func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *htt
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-throughput-details")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-throughput-details", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3012,7 +3027,10 @@ func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *ht
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-overview")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-overview", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3063,7 +3081,10 @@ func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *htt
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-details")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-details", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3117,7 +3138,10 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)

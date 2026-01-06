@@ -170,6 +170,7 @@ func TestStatementBuilder(t *testing.T) {
 		mockMetadataStore,
 		fm,
 		cb,
+		nil,
 	)
 
 	for _, c := range cases {
