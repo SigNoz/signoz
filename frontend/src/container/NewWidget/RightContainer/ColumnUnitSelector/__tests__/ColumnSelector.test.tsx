@@ -98,7 +98,12 @@ describe('Column unit selector panel unit test', () => {
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 		const { getByText } = render(
 			<QueryBuilderProvider>
-				<ColumnUnitSelector columnUnits={{}} setColumnUnits={(): void => {}} />,
+				<ColumnUnitSelector
+					columnUnits={{}}
+					setColumnUnits={(): void => {}}
+					isNewDashboard={false}
+				/>
+				,
 			</QueryBuilderProvider>,
 		);
 
