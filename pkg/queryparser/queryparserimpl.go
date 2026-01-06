@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/queryparser/queryfilterextractor"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
@@ -40,10 +39,10 @@ func (p *queryParserImpl) AnalyzeQueryFilter(ctx context.Context, queryType qbty
 	return extractor.Extract(query)
 }
 
-func (p *queryParserImpl) AnalyzeCompositeQuery(ctx context.Context, compositeQuery *v3.CompositeQuery) ([]*queryfilterextractor.FilterResult, error) {
-	results := make([]*queryfilterextractor.FilterResult, 0, len(compositeQuery.Queries))
+func (p *queryParserImpl) AnalyzeQueryEnvelopes(ctx context.Context, queries []qbtypes.QueryEnvelope) ([]*queryfilterextractor.FilterResult, error) {
+	results := make([]*queryfilterextractor.FilterResult, 0, len(queries))
 
-	for _, query := range compositeQuery.Queries {
+	for _, query := range queries {
 		result := &queryfilterextractor.FilterResult{
 			MetricNames:    []string{},
 			GroupByColumns: []queryfilterextractor.ColumnInfo{},

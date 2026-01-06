@@ -591,7 +591,7 @@ func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) ([]string, []st
 		return metricNames, groupedFields, nil
 	}
 
-	results, err := r.queryParser.AnalyzeCompositeQuery(ctx, r.ruleCondition.CompositeQuery)
+	results, err := r.queryParser.AnalyzeQueryEnvelopes(ctx, r.ruleCondition.CompositeQuery.Queries)
 	if err != nil {
 		return nil, nil, err
 	}

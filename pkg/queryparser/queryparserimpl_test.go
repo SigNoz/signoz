@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/queryparser/queryfilterextractor"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/stretchr/testify/require"
 )
 
@@ -95,10 +95,10 @@ func TestBaseRule_ExtractMetricAndGroupBys(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cq := mustCompositeQuery(t, tt.payload)
-			results, err := queryParser.AnalyzeCompositeQuery(ctx, cq)
+			queryEnvelopes := mustCompositeQueryEnvelope(t, tt.payload)
+			results, err := queryParser.AnalyzeQueryEnvelopes(ctx, queryEnvelopes)
 			require.NoError(t, err)
-			require.Len(t, results, len(cq.Queries), "number of results should match number of queries")
+			require.Len(t, results, len(queryEnvelopes), "number of results should match number of queries")
 			for _, result := range results {
 				require.ElementsMatch(t, tt.wantMetrics, result.MetricNames)
 				require.ElementsMatch(t, tt.wantGroupBy, result.GroupByColumns)
@@ -107,9 +107,9 @@ func TestBaseRule_ExtractMetricAndGroupBys(t *testing.T) {
 	}
 }
 
-func mustCompositeQuery(t *testing.T, payload string) *v3.CompositeQuery {
+func mustCompositeQueryEnvelope(t *testing.T, payload string) []qbtypes.QueryEnvelope {
 	t.Helper()
-	var compositeQuery v3.CompositeQuery
-	require.NoError(t, json.Unmarshal([]byte(payload), &compositeQuery))
-	return &compositeQuery
+	var queryEnvelopes []qbtypes.QueryEnvelope
+	require.NoError(t, json.Unmarshal([]byte(payload), &queryEnvelopes))
+	return queryEnvelopes
 }

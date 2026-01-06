@@ -736,7 +736,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			queryParser := queryparser.New(settings)
 
 			// Use query parser to extract metric names and groupBy fields
-			analyzeResults, err := queryParser.AnalyzeCompositeQuery(context.Background(), tt.compositeQuery)
+			analyzeResults, err := queryParser.AnalyzeQueryEnvelopes(context.Background(), tt.compositeQuery.Queries)
 			require.NoError(t, err)
 
 			// Aggregate results from all queries
