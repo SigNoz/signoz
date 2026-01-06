@@ -13,7 +13,6 @@ type QueryParser interface {
 	// AnalyzeQueryFilter extracts filter conditions from a given query string.
 	AnalyzeQueryFilter(ctx context.Context, queryType querybuildertypesv5.QueryType, query string) (*queryfilterextractor.FilterResult, error)
 	// AnalyzeQueryEnvelopes extracts filter conditions from a list of query envelopes.
-	// Returns an array of FilterResult, where each element corresponds to the filter result
-	// for the query at the same index in queries.
-	AnalyzeQueryEnvelopes(ctx context.Context, queries []qbtypes.QueryEnvelope) ([]*queryfilterextractor.FilterResult, error)
+	// Returns a map of query name to FilterResult.
+	AnalyzeQueryEnvelopes(ctx context.Context, queries []qbtypes.QueryEnvelope) (map[string]*queryfilterextractor.FilterResult, error)
 }

@@ -39,19 +39,21 @@ func (p *queryParserImpl) AnalyzeQueryFilter(ctx context.Context, queryType qbty
 	return extractor.Extract(query)
 }
 
-func (p *queryParserImpl) AnalyzeQueryEnvelopes(ctx context.Context, queries []qbtypes.QueryEnvelope) ([]*queryfilterextractor.FilterResult, error) {
-	results := make([]*queryfilterextractor.FilterResult, 0, len(queries))
+func (p *queryParserImpl) AnalyzeQueryEnvelopes(ctx context.Context, queries []qbtypes.QueryEnvelope) (map[string]*queryfilterextractor.FilterResult, error) {
+	results := make(map[string]*queryfilterextractor.FilterResult)
 
 	for _, query := range queries {
 		result := &queryfilterextractor.FilterResult{
 			MetricNames:    []string{},
 			GroupByColumns: []queryfilterextractor.ColumnInfo{},
 		}
+		var queryName string
 
 		switch query.Type {
 		case qbtypes.QueryTypeBuilder:
 			switch spec := query.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				queryName = spec.Name
 				// extract group by fields
 				for _, groupBy := range spec.GroupBy {
 					if groupBy.Name != "" {
@@ -67,17 +69,16 @@ func (p *queryParserImpl) AnalyzeQueryEnvelopes(ctx context.Context, queries []q
 			default:
 				// TODO(abhishekhugetech): add support for Traces and Logs Aggregation types
 				p.settings.Logger.WarnContext(ctx, "unsupported QueryBuilderQuery type: %T", spec)
-				// Add empty result for this query
-				results = append(results, result)
+				// Skip result for this query
 				continue
 			}
 		case qbtypes.QueryTypePromQL:
 			spec, ok := query.Spec.(qbtypes.PromQuery)
 			if !ok || spec.Query == "" {
-				// Add empty result for this query
-				results = append(results, result)
+				// Skip result for this query
 				continue
 			}
+			queryName = spec.Name
 			res, err := p.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, spec.Query)
 			if err != nil {
 				return nil, err
@@ -87,10 +88,10 @@ func (p *queryParserImpl) AnalyzeQueryEnvelopes(ctx context.Context, queries []q
 		case qbtypes.QueryTypeClickHouseSQL:
 			spec, ok := query.Spec.(qbtypes.ClickHouseQuery)
 			if !ok || spec.Query == "" {
-				// Add empty result for this query
-				results = append(results, result)
+				// Skip result for this query
 				continue
 			}
+			queryName = spec.Name
 			res, err := p.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, spec.Query)
 			if err != nil {
 				return nil, err
@@ -101,7 +102,9 @@ func (p *queryParserImpl) AnalyzeQueryEnvelopes(ctx context.Context, queries []q
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported query type: %s", query.Type)
 		}
 
-		results = append(results, result)
+		if queryName != "" {
+			results[queryName] = result
+		}
 	}
 
 	return results, nil
