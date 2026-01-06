@@ -3123,7 +3123,7 @@ export const getAllEndpointsWidgetData = (
 	return widget;
 };
 
-const keysToRemove = ['http.url', 'url.full', 'B', 'C', 'F1'];
+const keysToRemove = ['http.url', 'url.full', 'A', 'B', 'C', 'F1'];
 
 export const getGroupByFiltersFromGroupByValues = (
 	rowData: any,
