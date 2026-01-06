@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -44,6 +45,7 @@ type provider struct {
 	gatewayHandler         gateway.Handler
 	fieldsHandler          fields.Handler
 	authzHandler           authz.Handler
+	rawDataExportHandler   rawdataexport.Handler
 }
 
 func NewFactory(
@@ -63,6 +65,7 @@ func NewFactory(
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
+	rawDataExportHandler rawdataexport.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -85,6 +88,7 @@ func NewFactory(
 			gatewayHandler,
 			fieldsHandler,
 			authzHandler,
+			rawDataExportHandler,
 		)
 	})
 }
@@ -109,6 +113,7 @@ func newProvider(
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
+	rawDataExportHandler rawdataexport.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -131,6 +136,7 @@ func newProvider(
 		gatewayHandler:         gatewayHandler,
 		fieldsHandler:          fieldsHandler,
 		authzHandler:           authzHandler,
+		rawDataExportHandler:   rawDataExportHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -196,6 +202,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addFieldsRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRawDataExportRoutes(router); err != nil {
 		return err
 	}
 

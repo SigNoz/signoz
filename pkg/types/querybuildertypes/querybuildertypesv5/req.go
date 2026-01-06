@@ -2,6 +2,8 @@ package querybuildertypesv5
 
 import (
 	"encoding/json"
+	"maps"
+	"reflect"
 	"strings"
 
 	"github.com/SigNoz/govaluate"
@@ -566,4 +568,73 @@ func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
 	}
 
 	return canDefaultZero
+}
+
+func (r *QueryRangeRequest) Copy() QueryRangeRequest {
+	c := QueryRangeRequest{
+		SchemaVersion:  r.SchemaVersion,
+		Start:          r.Start,
+		End:            r.End,
+		RequestType:    r.RequestType,
+		NoCache:        r.NoCache,
+		FormatOptions:  r.FormatOptions,
+		Variables:      make(map[string]VariableItem),
+		CompositeQuery: CompositeQuery{},
+	}
+
+	maps.Copy(c.Variables, r.Variables)
+
+	c.CompositeQuery.Queries = make([]QueryEnvelope, len(r.CompositeQuery.Queries))
+	for i, q := range r.CompositeQuery.Queries {
+		if q.Spec != nil {
+			switch spec := q.Spec.(type) {
+			case QueryBuilderQuery[TraceAggregation]:
+				c.CompositeQuery.Queries[i] = QueryEnvelope{
+					Type: q.Type,
+					Spec: spec.Copy(),
+				}
+			case QueryBuilderQuery[LogAggregation]:
+				c.CompositeQuery.Queries[i] = QueryEnvelope{
+					Type: q.Type,
+					Spec: spec.Copy(),
+				}
+			case QueryBuilderQuery[MetricAggregation]:
+				c.CompositeQuery.Queries[i] = QueryEnvelope{
+					Type: q.Type,
+					Spec: spec.Copy(),
+				}
+			case QueryBuilderFormula:
+				c.CompositeQuery.Queries[i] = QueryEnvelope{
+					Type: q.Type,
+					Spec: spec.Copy(),
+				}
+			case QueryBuilderJoin:
+				c.CompositeQuery.Queries[i] = QueryEnvelope{
+					Type: q.Type,
+					Spec: spec.Copy(),
+				}
+			case QueryBuilderTraceOperator:
+				c.CompositeQuery.Queries[i] = QueryEnvelope{
+					Type: q.Type,
+					Spec: spec.Copy(),
+				}
+			default:
+				// Check if spec implements a Copy method
+				specValue := reflect.ValueOf(q.Spec)
+				copyMethod := specValue.MethodByName("Copy")
+				if copyMethod.IsValid() && copyMethod.Type().NumIn() == 0 && copyMethod.Type().NumOut() == 1 {
+					// Call Copy method and use the result
+					result := copyMethod.Call(nil)
+					c.CompositeQuery.Queries[i] = QueryEnvelope{
+						Type: q.Type,
+						Spec: result[0].Interface(),
+					}
+				} else {
+					// Fallback to shallow copy
+					c.CompositeQuery.Queries[i] = q
+				}
+			}
+		}
+	}
+	return c
 }

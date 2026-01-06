@@ -871,7 +871,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	// 1. either user meant key ( this is already handled above in fieldKeysForName )
 	// 2. or user meant `attribute.key` we look up in the map for all possible field keys with name 'attribute.key'
 
-	// Note:
+	// Note: 
 	// If user only wants to search `attribute.key`, then they have to use `attribute.attribute.key`
 	// If user only wants to search `key`, then they have to use `key`
 	// If user wants to search both, they can use `attribute.key` and we will resolve the ambiguity

@@ -37,10 +37,10 @@ func TestGetExportQuerySource(t *testing.T) {
 			expectedError:  true,
 		},
 		{
-			name:           "traces source - not supported",
+			name:           "traces source - supported",
 			queryParams:    url.Values{"source": {"traces"}},
 			expectedSource: "traces",
-			expectedError:  true,
+			expectedError:  false,
 		},
 		{
 			name:           "invalid source",
@@ -318,7 +318,7 @@ func TestGetExportQueryColumns(t *testing.T) {
 	}
 }
 
-func TestGetExportQueryOrderBy(t *testing.T) {
+func TestGetExportQueryOrderByLogs(t *testing.T) {
 	tests := []struct {
 		name          string
 		queryParams   url.Values
@@ -505,7 +505,7 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			order, err := getExportQueryOrderBy(tt.queryParams)
+			order, err := getExportQueryOrderByLogs(tt.queryParams)
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {
@@ -561,3 +561,267 @@ func TestConstructCSVRecordFromQueryResponse(t *testing.T) {
 	assert.Equal(t, "INFO", record[2])
 	assert.Equal(t, "test-id", record[3])
 }
+
+func TestGetExportQueryOrderByTraces(t *testing.T) {
+	tests := []struct {
+		name          string
+		queryParams   url.Values
+		expectedOrder []qbtypes.OrderBy
+		expectedError bool
+	}{
+		{
+			name:        "no order specified - should use default (timestamp:desc, span_id:desc)",
+			queryParams: url.Values{},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "timestamp",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeNumber,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "span_id",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "order by timestamp asc - should also add span_id asc",
+			queryParams: url.Values{
+				"order_by": {"timestamp:asc"},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "timestamp",
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "span_id",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "order by timestamp desc - should also add span_id desc",
+			queryParams: url.Values{
+				"order_by": {"timestamp:desc"},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "timestamp",
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "span_id",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "order by non-timestamp field - should not add span_id",
+			queryParams: url.Values{
+				"order_by": {"duration:desc"},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "duration",
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "order by attribute with type",
+			queryParams: url.Values{
+				"order_by": {"attribute.http.status_code:number:asc"},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "http.status_code",
+							FieldContext:  telemetrytypes.FieldContextAttribute,
+							FieldDataType: telemetrytypes.FieldDataTypeNumber,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "order by resource with type",
+			queryParams: url.Values{
+				"order_by": {"resource.service.name:string:desc"},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "service.name",
+							FieldContext:  telemetrytypes.FieldContextResource,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "order by attribute without type (dot notation)",
+			queryParams: url.Values{
+				"order_by": {"attribute.http.method:asc"},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionAsc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:         "http.method",
+							FieldContext: telemetrytypes.FieldContextAttribute,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "invalid format - missing direction",
+			queryParams: url.Values{
+				"order_by": {"timestamp"},
+			},
+			expectedOrder: nil,
+			expectedError: true,
+		},
+		{
+			name: "invalid direction",
+			queryParams: url.Values{
+				"order_by": {"timestamp:invalid"},
+			},
+			expectedOrder: nil,
+			expectedError: true,
+		},
+		{
+			name: "empty order_by value - should use default",
+			queryParams: url.Values{
+				"order_by": {""},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "timestamp",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeNumber,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "span_id",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "whitespace only order_by value - should use default",
+			queryParams: url.Values{
+				"order_by": {"   "},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "timestamp",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeNumber,
+						},
+					},
+				},
+				{
+					Direction: qbtypes.OrderDirectionDesc,
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "span_id",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
+						},
+					},
+				},
+			},
+			expectedError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			order, err := getExportQueryOrderByTraces(tt.queryParams)
+			if tt.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, len(tt.expectedOrder), len(order))
+				for i, expectedOrd := range tt.expectedOrder {
+					assert.Equal(t, expectedOrd, order[i])
+				}
+			}
+		})
+	}
+}
+
+// TestGetCompositeQueriesFromQueryParams was removed - composite queries are now
+// supported via POST with ExportRawDataQueryParams in the request body.
