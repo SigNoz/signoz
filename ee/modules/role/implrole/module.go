@@ -145,12 +145,17 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 	return nil
 }
 
-func (module *module) Assign(ctx context.Context, id valuer.UUID, orgID valuer.UUID, subject string) error {
+func (module *module) Assign(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
+	role, err := module.GetByOrgIDAndName(ctx, orgID, name)
+	if err != nil {
+		return err
+	}
+
 	tuples, err := authtypes.TypeableRole.Tuples(
 		subject,
 		authtypes.RelationAssignee,
 		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, id.StringValue()),
+			authtypes.MustNewSelector(authtypes.TypeRole, role.ID.StringValue()),
 		},
 		orgID,
 	)
@@ -160,9 +165,38 @@ func (module *module) Assign(ctx context.Context, id valuer.UUID, orgID valuer.U
 	return module.authz.Write(ctx, tuples, nil)
 }
 
-// Revoke implements [role.Module].
-func (module *module) Revoke(context.Context, valuer.UUID, valuer.UUID, string) error {
-	panic("unimplemented")
+func (module *module) Revoke(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
+	role, err := module.GetByOrgIDAndName(ctx, orgID, name)
+	if err != nil {
+		return err
+	}
+
+	tuples, err := authtypes.TypeableRole.Tuples(
+		subject,
+		authtypes.RelationAssignee,
+		[]authtypes.Selector{
+			authtypes.MustNewSelector(authtypes.TypeRole, role.ID.StringValue()),
+		},
+		orgID,
+	)
+	if err != nil {
+		return err
+	}
+	return module.authz.Write(ctx, nil, tuples)
+}
+
+func (module *module) UpdateAssignment(ctx context.Context, orgID valuer.UUID, existingRoleName string, updatedRolename string, subject string) error {
+	err := module.Revoke(ctx, orgID, existingRoleName, subject)
+	if err != nil {
+		return err
+	}
+
+	err = module.Assign(ctx, orgID, updatedRolename, subject)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // todo[vikrant]: delete all the tuples as well here, on delete of role.

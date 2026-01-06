@@ -33,8 +33,22 @@ var (
 )
 
 var (
-	AnonymousUserRoleName        = "signoz-anonymous"
-	AnonymousUserRoleDescription = "Role assigned to anonymous users for access to public resources."
+	SigNozAnonymousRoleName        = "signoz-anonymous"
+	SigNozAnonymousRoleDescription = "Role assigned to anonymous users for access to public resources."
+	SigNozAdminRoleName            = "signoz-admin"
+	SigNozAdminRoleDescription     = ""
+	SigNozEditorRoleName           = "signoz-editor"
+	SigNozEditorRoleDescription    = ""
+	SigNozViewerRoleName           = "signoz-viewer"
+	SigNozViewerRoleDescription    = ""
+)
+
+var (
+	ExistingRoleToSigNozManagedRoleMap = map[types.Role]string{
+		types.RoleAdmin:  SigNozAdminRoleName,
+		types.RoleEditor: SigNozEditorRoleName,
+		types.RoleViewer: SigNozViewerRoleName,
+	}
 )
 
 var (
@@ -246,4 +260,13 @@ func GetDeletionTuples(id valuer.UUID, orgID valuer.UUID, relation authtypes.Rel
 	}
 
 	return tuples, nil
+}
+
+func MustGetSigNozManagedRoleFromExistingRole(role types.Role) string {
+	managedRole, ok := ExistingRoleToSigNozManagedRoleMap[role]
+	if !ok {
+		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid role: %s", role.String()))
+	}
+
+	return managedRole
 }

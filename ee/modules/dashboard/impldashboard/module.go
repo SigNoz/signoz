@@ -59,16 +59,17 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 		return errors.Newf(errors.TypeAlreadyExists, dashboardtypes.ErrCodePublicDashboardAlreadyExists, "dashboard with id %s is already public", storablePublicDashboard.DashboardID)
 	}
 
-	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.AnonymousUserRoleName, roletypes.AnonymousUserRoleDescription, roletypes.RoleTypeManaged.StringValue(), orgID))
+	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged.StringValue(), orgID))
 	if err != nil {
 		return err
 	}
 
-	err = module.role.Assign(ctx, role.ID, orgID, authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.StringValue(), orgID, nil))
+	err = module.role.Assign(ctx, orgID, roletypes.SigNozAnonymousRoleName, authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.StringValue(), orgID, nil))
 	if err != nil {
 		return err
 	}
 
+	// TODO[vikrant]: think more about how can we avoid this
 	additionObject := authtypes.MustNewObject(
 		authtypes.Resource{
 			Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
@@ -193,7 +194,7 @@ func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashb
 		return err
 	}
 
-	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.AnonymousUserRoleName, roletypes.AnonymousUserRoleDescription, roletypes.RoleTypeManaged.StringValue(), orgID))
+	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged.StringValue(), orgID))
 	if err != nil {
 		return err
 	}

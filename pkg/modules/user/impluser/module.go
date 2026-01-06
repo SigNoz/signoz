@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
+	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -166,6 +167,12 @@ func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID)
 func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
+	// since assign is idempotant multiple calls to assign won't cause issues in case of retries.
+	err := module.role.Assign(ctx, input.OrgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(input.Role), authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
+	if err != nil {
+		return err
+	}
+
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if err := module.store.CreateUser(ctx, input); err != nil {
 			return err
@@ -179,16 +186,6 @@ func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ..
 
 		return nil
 	}); err != nil {
-		return err
-	}
-
-	role, err := module.role.GetByOrgIDAndName(ctx, input.OrgID, input.Role.String())
-	if err != nil {
-		return err
-	}
-
-	err = module.role.Assign(ctx, role.ID, role.OrgID, authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
-	if err != nil {
 		return err
 	}
 
@@ -236,8 +233,19 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		}
 	}
 
-	user.UpdatedAt = time.Now()
+	if user.Role != existingUser.Role {
+		err = m.role.UpdateAssignment(ctx,
+			orgID,
+			roletypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role),
+			roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role),
+			authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil),
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
 
+	user.UpdatedAt = time.Now()
 	updatedUser, err := m.store.UpdateUser(ctx, orgID, id, user)
 	if err != nil {
 		return nil, err
@@ -258,30 +266,6 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 			"NewRole":        cases.Title(language.English).String(strings.ToLower(updatedUser.Role.String())),
 		}); err != nil {
 			m.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
-		}
-	}
-
-	if user.Role != existingUser.Role {
-		existingRole, err := m.role.GetByOrgIDAndName(ctx, orgID, existingUser.Role.String())
-		if err != nil {
-			return nil, err
-		}
-
-		updatedRole, err := m.role.GetByOrgIDAndName(ctx, orgID, user.Role.String())
-		if err != nil {
-			return nil, err
-		}
-
-		// revoke existing role from user
-		err = m.role.Revoke(ctx, existingRole.ID, orgID, authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
-		if err != nil {
-			return nil, err
-		}
-
-		// assign the updated role to the user
-		err = m.role.Assign(ctx, updatedRole.ID, orgID, authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
-		if err != nil {
-			return nil, err
 		}
 	}
 
@@ -312,17 +296,13 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot delete the last admin")
 	}
 
+	// since revoke is idempotant multiple calls to revoke won't cause issues in case of retries
+	err = module.role.Revoke(ctx, orgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role), authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
+	if err != nil {
+		return err
+	}
+
 	if err := module.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
-		return err
-	}
-
-	role, err := module.role.GetByOrgIDAndName(ctx, orgID, user.Role.String())
-	if err != nil {
-		return err
-	}
-
-	err = module.role.Revoke(ctx, role.ID, role.OrgID, authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
-	if err != nil {
 		return err
 	}
 
