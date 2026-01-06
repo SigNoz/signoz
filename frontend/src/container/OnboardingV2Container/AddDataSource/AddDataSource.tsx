@@ -21,13 +21,7 @@ import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
 import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
@@ -125,11 +119,32 @@ const ONBOARDING_V3_ANALYTICS_EVENTS_MAP = {
 	DATA_SOURCE_SEARCHED: 'Searched',
 };
 
+const groupDataSourcesByTags = (
+	dataSources: Entity[],
+): { [tag: string]: Entity[] } => {
+	const groupedDataSources: { [tag: string]: Entity[] } = {};
+
+	dataSources.forEach((dataSource) => {
+		dataSource.tags.forEach((tag) => {
+			if (!groupedDataSources[tag]) {
+				groupedDataSources[tag] = [];
+			}
+			groupedDataSources[tag].push(dataSource);
+		});
+	});
+
+	return groupedDataSources;
+};
+
+const allGroupedDataSources = groupDataSourcesByTags(
+	onboardingConfigWithLinks as Entity[],
+);
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function OnboardingAddDataSource(): JSX.Element {
 	const [groupedDataSources, setGroupedDataSources] = useState<{
 		[tag: string]: Entity[];
-	}>({});
+	}>(allGroupedDataSources);
 
 	const { org } = useAppContext();
 
@@ -302,41 +317,13 @@ function OnboardingAddDataSource(): JSX.Element {
 		setShowConfigureProduct(true);
 	};
 
-	const groupDataSourcesByTags = (
-		dataSources: Entity[],
-	): { [tag: string]: Entity[] } => {
-		const groupedDataSources: { [tag: string]: Entity[] } = {};
-
-		dataSources.forEach((dataSource) => {
-			dataSource.tags.forEach((tag) => {
-				if (!groupedDataSources[tag]) {
-					groupedDataSources[tag] = [];
-				}
-				groupedDataSources[tag].push(dataSource);
-			});
-		});
-
-		return groupedDataSources;
-	};
-
-	const allGroupedDataSources = useMemo(
-		() => groupDataSourcesByTags(onboardingConfigWithLinks as Entity[]),
-		[],
-	);
-
-	useEffect(() => {
-		setGroupedDataSources(allGroupedDataSources);
-	}, [allGroupedDataSources]);
-
 	const debouncedUpdate = useDebouncedFn((query) => {
 		setSearchQuery(query as string);
 
 		setDataSourceRequestSubmitted(false);
 
 		if (query === '') {
-			setGroupedDataSources(
-				groupDataSourcesByTags(onboardingConfigWithLinks as Entity[]),
-			);
+			setGroupedDataSources(allGroupedDataSources);
 			return;
 		}
 
