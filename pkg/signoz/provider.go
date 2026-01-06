@@ -246,6 +246,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.FlaggerHandler,
 			modules.Dashboard,
 			handlers.Dashboard,
+			handlers.MetricsExplorer,
 		),
 	)
 }
