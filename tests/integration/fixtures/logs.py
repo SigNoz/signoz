@@ -132,9 +132,6 @@ class Logs(ABC):
         self.attribute_keys = []
         self.resource_keys = []
 
-        if timestamp is None:
-            timestamp = datetime.datetime.now()
-
         # Convert timestamp to uint64 nanoseconds
         self.timestamp = np.uint64(int(timestamp.timestamp() * 1e9))
         self.observed_timestamp = self.timestamp
