@@ -54,7 +54,7 @@ class MetricsTimeSeries(ABC):
         self.resource_attrs = resource_attrs
         self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
         self.__normalized = False
-        
+
         # Calculate fingerprint from metric_name + labels
         fingerprint_str = metric_name + self.labels
         self.fingerprint = np.uint64(
@@ -128,7 +128,7 @@ class Metrics(ABC):
     timestamp: datetime.datetime
     value: float
     flags: int
-    
+
     _time_series: MetricsTimeSeries
     _sample: MetricsSample
 
@@ -156,7 +156,7 @@ class Metrics(ABC):
         self.timestamp = timestamp
         self.value = value
         self.flags = flags
-        
+
         self._time_series = MetricsTimeSeries(
             metric_name=metric_name,
             labels=labels,
@@ -170,7 +170,7 @@ class Metrics(ABC):
             resource_attrs=resource_attributes,
             scope_attrs=scope_attributes,
         )
-        
+
         self._sample = MetricsSample(
             metric_name=metric_name,
             fingerprint=self._time_series.fingerprint,
@@ -195,9 +195,9 @@ def insert_metrics(
         """
         time_series_map: dict[int, MetricsTimeSeries] = {}
         for metric in metrics:
-            fp = int(metric._time_series.fingerprint)
+            fp = int(metric._time_series.fingerprint)  # pylint: disable=protected-access
             if fp not in time_series_map:
-                time_series_map[fp] = metric._time_series
+                time_series_map[fp] = metric._time_series  # pylint: disable=protected-access
 
         if len(time_series_map) > 0:
             clickhouse.conn.insert(
@@ -222,7 +222,7 @@ def insert_metrics(
                 data=[ts.to_row() for ts in time_series_map.values()],
             )
 
-        samples = [metric._sample for metric in metrics]
+        samples = [metric._sample for metric in metrics]  # pylint: disable=protected-access
         if len(samples) > 0:
             clickhouse.conn.insert(
                 database="signoz_metrics",
