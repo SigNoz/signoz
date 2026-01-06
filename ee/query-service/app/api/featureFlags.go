@@ -57,7 +57,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	useSpanMetrics := ah.Signoz.Flagger.MustBoolean(ctx, flagger.FeatureUseSpanMetrics, evalCtx)
+	useSpanMetrics := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseSpanMetrics, evalCtx)
 
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),

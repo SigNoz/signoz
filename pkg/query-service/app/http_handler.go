@@ -2018,7 +2018,7 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	useSpanMetrics := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureUseSpanMetrics, evalCtx)
+	useSpanMetrics := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureUseSpanMetrics, evalCtx)
 
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
@@ -2645,7 +2645,7 @@ func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer", kafkaSpanEval)
 	if err != nil {
@@ -2698,7 +2698,7 @@ func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer", kafkaSpanEval)
 	if err != nil {
@@ -2752,7 +2752,7 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-topic-throughput", kafkaSpanEval)
 	if err != nil {
@@ -2806,7 +2806,7 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer_partition_latency", kafkaSpanEval)
 	if err != nil {
@@ -2974,7 +2974,7 @@ func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *htt
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-throughput-details", kafkaSpanEval)
 	if err != nil {
@@ -3028,7 +3028,7 @@ func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *ht
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-overview", kafkaSpanEval)
 	if err != nil {
@@ -3082,7 +3082,7 @@ func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *htt
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-details", kafkaSpanEval)
 	if err != nil {
@@ -3139,7 +3139,7 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	kafkaSpanEval := aH.Signoz.Flagger.MustBoolean(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval", kafkaSpanEval)
 	if err != nil {

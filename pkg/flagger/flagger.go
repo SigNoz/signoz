@@ -24,11 +24,11 @@ type Flagger interface {
 	Int(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (int64, error)
 	Object(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (any, error)
 
-	MustBoolean(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) bool
-	MustString(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) string
-	MustFloat(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) float64
-	MustInt(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) int64
-	MustObject(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) any
+	BooleanOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) bool
+	StringOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) string
+	FloatOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) float64
+	IntOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) int64
+	ObjectOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) any
 
 	List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.GettableFeature, error)
 }
@@ -239,7 +239,7 @@ func (f *flagger) Object(ctx context.Context, flag featuretypes.Name, evalCtx fe
 	return defaultValue, nil
 }
 
-func (f *flagger) MustBoolean(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) bool {
+func (f *flagger) BooleanOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) bool {
 	defaultValue := false
 	value, err := f.Boolean(ctx, flag, evalCtx)
 	if err != nil {
@@ -249,7 +249,7 @@ func (f *flagger) MustBoolean(ctx context.Context, flag featuretypes.Name, evalC
 	return value
 }
 
-func (f *flagger) MustString(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) string {
+func (f *flagger) StringOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) string {
 	defaultValue := ""
 	value, err := f.String(ctx, flag, evalCtx)
 	if err != nil {
@@ -259,7 +259,7 @@ func (f *flagger) MustString(ctx context.Context, flag featuretypes.Name, evalCt
 	return value
 }
 
-func (f *flagger) MustFloat(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) float64 {
+func (f *flagger) FloatOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) float64 {
 	defaultValue := 0.0
 	value, err := f.Float(ctx, flag, evalCtx)
 	if err != nil {
@@ -269,7 +269,7 @@ func (f *flagger) MustFloat(ctx context.Context, flag featuretypes.Name, evalCtx
 	return value
 }
 
-func (f *flagger) MustInt(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) int64 {
+func (f *flagger) IntOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) int64 {
 	defaultValue := int64(0)
 	value, err := f.Int(ctx, flag, evalCtx)
 	if err != nil {
@@ -279,7 +279,7 @@ func (f *flagger) MustInt(ctx context.Context, flag featuretypes.Name, evalCtx f
 	return value
 }
 
-func (f *flagger) MustObject(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) any {
+func (f *flagger) ObjectOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) any {
 	defaultValue := struct{}{}
 	value, err := f.Object(ctx, flag, evalCtx)
 	if err != nil {

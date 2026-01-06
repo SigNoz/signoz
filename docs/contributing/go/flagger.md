@@ -99,16 +99,16 @@ func DoSomething(ctx context.Context, flagger flagger.Flagger) error {
 }
 ```
 
-### Must variants
+### Empty variants 
 
-For cases where you want to use a default value on error (and log the error), use the `Must*` methods:
+For cases where you want to use a default value on error (and log the error), use the `*OrEmpty` methods:
 
 ```go
 func DoSomething(ctx context.Context, flagger flagger.Flagger) {
     evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
     
     // Returns false on error and logs the error
-    if flagger.MustBoolean(ctx, flagger.FeatureMyNewFeature, evalCtx) {
+    if flagger.BooleanOrEmpty(ctx, flagger.FeatureMyNewFeature, evalCtx) {
         // Feature is enabled
     }
 }
@@ -116,7 +116,7 @@ func DoSomething(ctx context.Context, flagger flagger.Flagger) {
 
 ### Available evaluation methods
 
-| Method | Return Type | Must Variant Default |
+| Method | Return Type | Empty Variant Default |
 |--------|-------------|---------------------|
 | `Boolean()` | `(bool, error)` | `false` |
 | `String()` | `(string, error)` | `""` |
@@ -213,7 +213,7 @@ flagger, err := flagger.New(
 
 - Always define feature flags in the registry (`pkg/flagger/registry.go`) before using them
 - Use descriptive feature names that clearly indicate what the flag controls
-- Prefer `Must*` methods for non-critical features to avoid error handling overhead
+- Prefer `*OrEmpty` methods for non-critical features to avoid error handling overhead
 - Export feature name variables (e.g., `FeatureMyNewFeature`) for type-safe usage across packages
 - Consider the feature's lifecycle stage (`Alpha`, `Beta`, `Stable`) when defining it
 - Providers are evaluated in order; the first non-default value wins

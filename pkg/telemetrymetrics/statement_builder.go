@@ -491,7 +491,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	innerQuery, innerArgs := baseSb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
 
 	// ! TODO (balanikaran) Get OrgID via function parameter instead of valuer.GenerateUUID()
-	interpolationEnabled := b.flagger.MustBoolean(ctx, flagger.FeatureInterpolationEnabled, featuretypes.NewFlaggerEvaluationContext(valuer.GenerateUUID()))
+	interpolationEnabled := b.flagger.BooleanOrEmpty(ctx, flagger.FeatureInterpolationEnabled, featuretypes.NewFlaggerEvaluationContext(valuer.GenerateUUID()))
 
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
