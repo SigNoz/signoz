@@ -608,7 +608,7 @@ func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) (map[string][]s
 		// Collect unique groupBy columns for this query result
 		uniqueGroups := make(map[string]struct{})
 		for _, col := range result.GroupByColumns {
-			uniqueGroups[col.OriginField] = struct{}{}
+			uniqueGroups[col.GroupName()] = struct{}{}
 		}
 		// walk through the metric names and group by fields for this query result and add them to the temp map
 		for _, metricName := range result.MetricNames {
