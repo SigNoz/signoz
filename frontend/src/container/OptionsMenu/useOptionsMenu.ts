@@ -36,7 +36,7 @@ import {
 	OptionsMenuConfig,
 	OptionsQuery,
 } from './types';
-import { getOptionsFromKeys } from './utils';
+import { buildAttributeKey, getOptionsFromKeys } from './utils';
 
 interface UseOptionsMenuProps {
 	storageKey?: string;
@@ -262,7 +262,7 @@ const useOptionsMenu = ({
 	}, [dataSource, initialOptions, initialSelectedColumns]);
 
 	const selectedColumnKeys = useMemo(
-		() => preferences?.columns?.map(({ name }) => name) || [],
+		() => preferences?.columns.map(buildAttributeKey) || [],
 		[preferences?.columns],
 	);
 
@@ -292,7 +292,7 @@ const useOptionsMenu = ({
 				const column = [
 					...searchedAttributeKeys,
 					...(preferences?.columns || []),
-				].find(({ name }) => name === key);
+				].find((k) => buildAttributeKey(k) === key);
 
 				if (!column) return acc;
 				return [...acc, column];
@@ -321,7 +321,7 @@ const useOptionsMenu = ({
 	const handleRemoveSelectedColumn = useCallback(
 		(columnKey: string) => {
 			const newSelectedColumns = preferences?.columns?.filter(
-				({ name }) => name !== columnKey,
+				(k) => buildAttributeKey(k) !== columnKey,
 			);
 
 			if (!newSelectedColumns?.length && dataSource !== DataSource.LOGS) {

@@ -1,5 +1,6 @@
 import { SearchOutlined } from '@ant-design/icons';
 import { Input, Spin, Typography } from 'antd';
+import { buildAttributeKey } from 'container/OptionsMenu/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTranslation } from 'react-i18next';
 
@@ -42,10 +43,12 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 				</SearchIconWrapper>
 			</Input.Group>
 
-			{config.value?.map(({ name }) => (
-				<AddColumnItem direction="horizontal" key={name}>
-					<Typography>{name}</Typography>
-					<DeleteOutlinedIcon onClick={(): void => config.onRemove(name)} />
+			{config.value?.map((k) => (
+				<AddColumnItem direction="horizontal" key={buildAttributeKey(k)}>
+					<Typography>{k.name}</Typography>
+					<DeleteOutlinedIcon
+						onClick={(): void => config.onRemove(buildAttributeKey(k))}
+					/>
 				</AddColumnItem>
 			))}
 		</AddColumnWrapper>
