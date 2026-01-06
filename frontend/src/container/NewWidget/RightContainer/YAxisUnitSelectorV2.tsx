@@ -26,8 +26,8 @@ function YAxisUnitSelectorV2({
 	);
 
 	useEffect(() => {
-		if (initialYAxisUnit && showWarning) {
-			onSelect(initialYAxisUnit);
+		if (showWarning) {
+			onSelect(initialYAxisUnit || '');
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [initialYAxisUnit, showWarning]);

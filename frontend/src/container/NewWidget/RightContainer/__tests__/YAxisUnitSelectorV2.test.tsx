@@ -60,7 +60,7 @@ describe('YAxisUnitSelectorV2', () => {
 		expect(onSelect).not.toHaveBeenCalled();
 	});
 
-	it('should not call onSelect when yAxisUnit is undefined even if showWarning is true', () => {
+	it('should call onSelect when yAxisUnit is undefined even if showWarning is true', () => {
 		mockUseGetYAxisUnit.mockReturnValueOnce({
 			yAxisUnit: undefined,
 			isLoading: false,
@@ -74,6 +74,6 @@ describe('YAxisUnitSelectorV2', () => {
 				showWarning
 			/>,
 		);
-		expect(onSelect).not.toHaveBeenCalled();
+		expect(onSelect).toHaveBeenCalledWith('');
 	});
 });
