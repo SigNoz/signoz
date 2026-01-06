@@ -21,7 +21,13 @@ import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
 import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
@@ -313,13 +319,14 @@ function OnboardingAddDataSource(): JSX.Element {
 		return groupedDataSources;
 	};
 
-	useEffect(() => {
-		const groupedDataSources = groupDataSourcesByTags(
-			onboardingConfigWithLinks as Entity[],
-		);
+	const allGroupedDataSources = useMemo(
+		() => groupDataSourcesByTags(onboardingConfigWithLinks as Entity[]),
+		[],
+	);
 
-		setGroupedDataSources(groupedDataSources);
-	}, []);
+	useEffect(() => {
+		setGroupedDataSources(allGroupedDataSources);
+	}, [allGroupedDataSources]);
 
 	const debouncedUpdate = useDebouncedFn((query) => {
 		setSearchQuery(query as string);
@@ -365,31 +372,35 @@ function OnboardingAddDataSource(): JSX.Element {
 		},
 		[debouncedUpdate],
 	);
+
 	const handleFilterByCategory = (category: string): void => {
 		setSelectedDataSource(null);
 		setSelectedFramework(null);
 		setSelectedEnvironment(null);
 
-		if (category === 'All') {
-			setGroupedDataSources(
-				groupDataSourcesByTags(onboardingConfigWithLinks as Entity[]),
-			);
+		setSelectedCategory(category);
 
-			setSelectedCategory('All');
+		if (category === 'All') {
+			setGroupedDataSources(allGroupedDataSources);
 			return;
 		}
 
-		const filteredDataSources = onboardingConfigWithLinks.filter(
-			(dataSource) =>
-				dataSource.tags.includes(category) ||
-				dataSource.tags.some((tag) => tag.toLowerCase().includes(category)),
-		);
-
-		setSelectedCategory(category);
-
-		setGroupedDataSources(
-			groupDataSourcesByTags(filteredDataSources as Entity[]),
-		);
+		if (allGroupedDataSources[category]) {
+			setGroupedDataSources({
+				[category]: allGroupedDataSources[category],
+			});
+		} else {
+			// Fallback if somehow the category key doesn't strictly match or relies on partial match
+			// This preserves the old behavior as a fallback, though sidebar clicks should be exact matches
+			const filteredDataSources = onboardingConfigWithLinks.filter(
+				(dataSource) =>
+					dataSource.tags.includes(category) ||
+					dataSource.tags.some((tag) => tag.toLowerCase().includes(category)),
+			);
+			setGroupedDataSources(
+				groupDataSourcesByTags(filteredDataSources as Entity[]),
+			);
+		}
 	};
 
 	useEffect(() => {
@@ -783,7 +794,7 @@ function OnboardingAddDataSource(): JSX.Element {
 														</Typography.Text>
 													</div>
 
-													{Object.keys(groupedDataSources).map((tag) => (
+													{Object.keys(allGroupedDataSources).map((tag) => (
 														<div
 															key={tag}
 															className="onboarding-data-source-category-item"
@@ -808,7 +819,7 @@ function OnboardingAddDataSource(): JSX.Element {
 															<div className="line-divider" />
 
 															<Typography.Text className="onboarding-filters-item-count">
-																{groupedDataSources[tag].length}
+																{allGroupedDataSources[tag].length}
 															</Typography.Text>
 														</div>
 													))}
