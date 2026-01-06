@@ -2031,7 +2031,7 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 	if useSpanMetrics {
 		for idx, feature := range featureSet {
-			if feature.Name == licensetypes.UseSpanMetrics {
+			if feature.Name == valuer.NewString(flagger.FeatureUseSpanMetrics.String()) {
 				featureSet[idx].Active = true
 			}
 		}

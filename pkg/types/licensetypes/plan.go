@@ -1,15 +1,18 @@
 package licensetypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import (
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
 
 var (
 	// Feature Key
-	SSO               = valuer.NewString("sso")
-	Onboarding        = valuer.NewString("onboarding")
-	ChatSupport       = valuer.NewString("chat_support")
-	Gateway           = valuer.NewString("gateway")
-	PremiumSupport    = valuer.NewString("premium_support")
-	UseSpanMetrics    = valuer.NewString("use_span_metrics")
+	SSO            = valuer.NewString("sso")
+	Onboarding     = valuer.NewString("onboarding")
+	ChatSupport    = valuer.NewString("chat_support")
+	Gateway        = valuer.NewString("gateway")
+	PremiumSupport = valuer.NewString("premium_support")
+
 	AnomalyDetection  = valuer.NewString("anomaly_detection")
 	DotMetricsEnabled = valuer.NewString("dot_metrics_enabled")
 
@@ -38,7 +41,7 @@ var BasicPlan = []*Feature{
 		Route:      "",
 	},
 	{
-		Name:       UseSpanMetrics,
+		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
@@ -83,7 +86,7 @@ var EnterprisePlan = []*Feature{
 		Route:      "",
 	},
 	{
-		Name:       UseSpanMetrics,
+		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
@@ -135,7 +138,7 @@ var EnterprisePlan = []*Feature{
 
 var DefaultFeatureSet = []*Feature{
 	{
-		Name:       UseSpanMetrics,
+		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
