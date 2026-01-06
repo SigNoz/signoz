@@ -47,7 +47,7 @@ func (e *PromQLFilterExtractor) Extract(query string) (*FilterResult, error) {
 		result.GroupByColumns = append(result.GroupByColumns, ColumnInfo{Name: groupKey, OriginExpr: groupKey, OriginField: groupKey})
 	}
 
-	// Sort the metric names and group by columns to return deterministic results
+	// Sort the metric names and group by columns to return deterministic results which helps in tests as well
 	sort.Strings(result.MetricNames)
 	sort.Slice(result.GroupByColumns, func(i, j int) bool {
 		return result.GroupByColumns[i].Name < result.GroupByColumns[j].Name
