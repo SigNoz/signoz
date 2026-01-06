@@ -116,7 +116,7 @@ func (c *Controller) GenerateConnectionUrl(ctx context.Context, orgId string, cl
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
 
-	agentVersion := "v0.0.7"
+	agentVersion := "v0.0.8"
 	if req.AgentConfig.Version != "" {
 		agentVersion = req.AgentConfig.Version
 	}
@@ -135,7 +135,7 @@ func (c *Controller) GenerateConnectionUrl(ctx context.Context, orgId string, cl
 		"param_IngestionKey":                  req.AgentConfig.IngestionKey,
 		"stackName":                           "signoz-integration",
 		"templateURL": fmt.Sprintf(
-			"https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json",
+			"https://cloud-integration-testing.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json",
 			agentVersion,
 		),
 	} {
