@@ -51,6 +51,15 @@ interface Option {
 	label: string;
 	link?: string;
 	entityID?: string;
+	internalRedirect?: boolean;
+	question?: {
+		desc: string;
+		options: Option[];
+		entityID?: string;
+		helpText?: string;
+		helpLink?: string;
+		helpLinkText?: string;
+	};
 }
 
 interface Entity {
@@ -63,6 +72,9 @@ interface Entity {
 		desc: string;
 		options: Option[];
 		entityID: string;
+		helpText?: string;
+		helpLink?: string;
+		helpLinkText?: string;
 		question?: {
 			desc: string;
 			options: Option[];
@@ -244,8 +256,6 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleSelectFramework = (option: any): void => {
-		setSelectedFramework(option);
-
 		logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.FRAMEWORK_SELECTED}`,
 			{
@@ -253,6 +263,14 @@ function OnboardingAddDataSource(): JSX.Element {
 				framework: option.label,
 			},
 		);
+
+		// Handle internal redirect - navigate directly within the app
+		if (option.internalRedirect === true && option.link) {
+			history.push(option.link);
+			return;
+		}
+
+		setSelectedFramework(option);
 
 		if (option.question) {
 			setHasMoreQuestions(true);
@@ -277,9 +295,6 @@ function OnboardingAddDataSource(): JSX.Element {
 		selectedEnvironment: any,
 		baseURL?: string,
 	): void => {
-		setSelectedEnvironment(selectedEnvironment);
-		setHasMoreQuestions(false);
-
 		logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.ENVIRONMENT_SELECTED}`,
 			{
@@ -288,6 +303,18 @@ function OnboardingAddDataSource(): JSX.Element {
 				environment: selectedEnvironment?.label,
 			},
 		);
+
+		// Handle internal redirect - navigate directly within the app
+		if (
+			selectedEnvironment.internalRedirect === true &&
+			selectedEnvironment.link
+		) {
+			history.push(selectedEnvironment.link);
+			return;
+		}
+
+		setSelectedEnvironment(selectedEnvironment);
+		setHasMoreQuestions(false);
 
 		updateUrl(baseURL || docsUrl, selectedEnvironment?.key);
 
@@ -831,6 +858,22 @@ function OnboardingAddDataSource(): JSX.Element {
 																>
 																	{selectedDataSource?.question?.desc}
 																</Typography.Title>
+																{selectedDataSource?.question?.helpText && (
+																	<Typography.Text className="question-help-text">
+																		{selectedDataSource?.question?.helpText}
+																		{selectedDataSource?.question?.helpLink && (
+																			<a
+																				href={`${DOCS_BASE_URL}${selectedDataSource?.question?.helpLink}`}
+																				target="_blank"
+																				rel="noopener noreferrer"
+																				className="question-help-link"
+																			>
+																				{selectedDataSource?.question?.helpLinkText ||
+																					'Learn more →'}
+																			</a>
+																		)}
+																	</Typography.Text>
+																)}
 															</div>
 
 															<div className="onboarding-data-source-options">
@@ -885,6 +928,22 @@ function OnboardingAddDataSource(): JSX.Element {
 																>
 																	{selectedFramework?.question?.desc}
 																</Typography.Title>
+																{selectedFramework?.question?.helpText && (
+																	<Typography.Text className="question-help-text">
+																		{selectedFramework?.question?.helpText}
+																		{selectedFramework?.question?.helpLink && (
+																			<a
+																				href={`${DOCS_BASE_URL}${selectedFramework?.question?.helpLink}`}
+																				target="_blank"
+																				rel="noopener noreferrer"
+																				className="question-help-link"
+																			>
+																				{selectedFramework?.question?.helpLinkText ||
+																					'Learn more →'}
+																			</a>
+																		)}
+																	</Typography.Text>
+																)}
 															</div>
 
 															<div className="onboarding-data-source-options">
@@ -895,7 +954,9 @@ function OnboardingAddDataSource(): JSX.Element {
 																			selectedEnvironment?.label === option.label ? 'selected' : ''
 																		}`}
 																		type="primary"
-																		onClick={(): void => handleSelectEnvironment(option)}
+																		onClick={(): void =>
+																			handleSelectEnvironment(option, option.link)
+																		}
 																	>
 																		<img
 																			src={option.imgUrl || '/Logos/signoz-brand-logo-new.svg'}
