@@ -140,7 +140,6 @@ class Metrics(ABC):
     def sample(self) -> MetricsSample:
         return self._sample
 
-
     def __init__(
         self,
         metric_name: str,
