@@ -171,60 +171,15 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 	// This is sent as "tag", when it's not, this was earlier managed with
 	// `isColumn`, which we don't have in v5 (because it's not a user concern whether it's mat col or not)
 	// Such requests as-is look for attributes, the following code exists to handle them
-	checkMatch := func(k *telemetrytypes.TelemetryFieldKey) {
-		var overallMatch bool
 
-		findMatch := func(staticKeys map[string]telemetrytypes.TelemetryFieldKey) bool {
-			// for a given key `k`, iterate over the metadata keys `keys`
-			// and see if there is any exact match
-			match := false
-			for _, mapKey := range keys[k.Name] {
-				if mapKey.FieldContext == k.FieldContext && mapKey.FieldDataType == k.FieldDataType {
-					match = true
-				}
-			}
-			// we don't have exact match, then it's doesn't exist in attribute or resource attribute
-			// use the intrinsic/calculated field
-			if !match {
-				b.logger.InfoContext(ctx, "overriding the field context and data type", "key", k.Name)
-				k.FieldContext = staticKeys[k.Name].FieldContext
-				k.FieldDataType = staticKeys[k.Name].FieldDataType
-			}
-			return match
-		}
-
-		if _, ok := IntrinsicFields[k.Name]; ok {
-			overallMatch = overallMatch || findMatch(IntrinsicFields)
-		}
-		if _, ok := CalculatedFields[k.Name]; ok {
-			overallMatch = overallMatch || findMatch(CalculatedFields)
-		}
-		if _, ok := IntrinsicFieldsDeprecated[k.Name]; ok {
-			overallMatch = overallMatch || findMatch(IntrinsicFieldsDeprecated)
-		}
-		if _, ok := CalculatedFieldsDeprecated[k.Name]; ok {
-			overallMatch = overallMatch || findMatch(CalculatedFieldsDeprecated)
-		}
-
-		if !overallMatch {
-			// check if all the key for the given field have been materialized, if so
-			// set the key to materialized
-			materilized := true
-			for _, key := range keys[k.Name] {
-				materilized = materilized && key.Materialized
-			}
-			k.Materialized = materilized
-		}
+	for idx := range query.SelectFields {
+		b.adjustKey(ctx, &query.SelectFields[idx], keys)
 	}
-
 	for idx := range query.GroupBy {
-		checkMatch(&query.GroupBy[idx].TelemetryFieldKey)
+		b.adjustKey(ctx, &query.GroupBy[idx].TelemetryFieldKey, keys)
 	}
 	for idx := range query.Order {
-		checkMatch(&query.Order[idx].Key.TelemetryFieldKey)
-	}
-	for idx := range query.SelectFields {
-		checkMatch(&query.SelectFields[idx])
+		b.adjustKey(ctx, &query.Order[idx].Key.TelemetryFieldKey, keys)
 	}
 
 	// add deprecated fields only during statement building
@@ -244,6 +199,100 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
 		} else {
 			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
+		}
+	}
+}
+
+func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) {
+
+	// First check if it matches with any intrinsic fields
+	var isIntrinsicOrCalculatedField bool
+	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
+	if _, ok := IntrinsicFields[key.Name]; ok {
+		isIntrinsicOrCalculatedField = true
+		intrinsicOrCalculatedField = IntrinsicFields[key.Name]
+	} else if _, ok := CalculatedFields[key.Name]; ok {
+		isIntrinsicOrCalculatedField = true
+		intrinsicOrCalculatedField = CalculatedFields[key.Name]
+	} else if _, ok := IntrinsicFieldsDeprecated[key.Name]; ok {
+		isIntrinsicOrCalculatedField = true
+		intrinsicOrCalculatedField = IntrinsicFieldsDeprecated[key.Name]
+	} else if _, ok := CalculatedFieldsDeprecated[key.Name]; ok {
+		isIntrinsicOrCalculatedField = true
+		intrinsicOrCalculatedField = CalculatedFieldsDeprecated[key.Name]
+	}
+
+	if isIntrinsicOrCalculatedField {
+		// Check if it also matches with any of the metadata keys
+		match := false
+		for _, mapKey := range keys[key.Name] {
+			// Either field context is unspecified or matches
+			// and
+			// Either field data type is unspecified or matches
+			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || mapKey.FieldContext == key.FieldContext) &&
+				(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || mapKey.FieldDataType == key.FieldDataType) {
+				match = true
+				break
+			}
+		}
+
+		// NOTE: if a user is highly opinionated and use attribute.duration_nano:string
+		// It will be defaulted to intrinsic field duration_nano as the actual attribute might be attribute.duration_nano:number
+
+		// We don't have a match, then it doesn't exist in attribute or resource attribute
+		// use the intrinsic/calculated field
+		if !match {
+			b.logger.InfoContext(ctx, "overriding the field context and data type", "key", key.Name)
+			key.FieldContext = intrinsicOrCalculatedField.FieldContext
+			key.FieldDataType = intrinsicOrCalculatedField.FieldDataType
+			key.Materialized = intrinsicOrCalculatedField.Materialized
+		} else {
+			// Here we have a key which is an intrinsic field but also exists in the metadata with the same name
+			// cannot do anything, so just return
+			return
+		}
+
+	} else {
+		// check if all the keys for the given field have matching context and data type
+		matchingKeys := []*telemetrytypes.TelemetryFieldKey{}
+		for _, metadataKey := range keys[key.Name] {
+			// Only consider keys that match the context and data type (if specified)
+			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || key.FieldContext == metadataKey.FieldContext) &&
+				(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || key.FieldDataType == metadataKey.FieldDataType) {
+				matchingKeys = append(matchingKeys, metadataKey)
+			}
+		}
+
+		if len(matchingKeys) == 0 {
+			// we do not have any matching keys, most likely user made a mistake, let QB handle it
+			// Set materialized to false explicitly to avoid QB looking for materialized column
+			key.Materialized = false
+		} else if len(matchingKeys) == 1 {
+			// only one matching key, use it
+			key.FieldContext = matchingKeys[0].FieldContext
+			key.FieldDataType = matchingKeys[0].FieldDataType
+			key.Materialized = matchingKeys[0].Materialized
+		} else {
+			// multiple matching keys, set materialized only if all the keys are materialized
+			materialized := true
+			fieldContextsSeen := map[telemetrytypes.FieldContext]bool{}
+			dataTypesSeen := map[telemetrytypes.FieldDataType]bool{}
+			for _, matchingKey := range matchingKeys {
+				materialized = materialized && matchingKey.Materialized
+				fieldContextsSeen[matchingKey.FieldContext] = true
+				dataTypesSeen[matchingKey.FieldDataType] = true
+			}
+			key.Materialized = materialized
+
+			if len(fieldContextsSeen) == 1 {
+				// all matching keys have same field context, use it
+				key.FieldContext = matchingKeys[0].FieldContext
+			}
+
+			if len(dataTypesSeen) == 1 {
+				// all matching keys have same data type, use it
+				key.FieldDataType = matchingKeys[0].FieldDataType
+			}
 		}
 	}
 }
@@ -746,7 +795,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
 			Variables:          variables,
-        }, start, end)
+		}, start, end)
 
 		if err != nil {
 			return nil, err
