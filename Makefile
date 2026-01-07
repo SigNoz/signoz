@@ -72,6 +72,12 @@ devenv-up: devenv-clickhouse devenv-signoz-otel-collector ## Start both clickhou
 	@echo "   - ClickHouse: http://localhost:8123"
 	@echo "   - Signoz OTel Collector: grpc://localhost:4317, http://localhost:4318"
 
+.PHONY: devenv-clickhouse-clean
+devenv-clickhouse-clean: ## Clean all ClickHouse data from filesystem
+	@echo "Removing ClickHouse data..."
+	@rm -rf .devenv/docker/clickhouse/fs/tmp/*
+	@echo "ClickHouse data cleaned!"
+
 ##############################################################
 # go commands
 ##############################################################
@@ -204,6 +210,23 @@ py-lint: ## Run lint for integration tests
 	@cd tests/integration && poetry run autoflake .
 	@cd tests/integration && poetry run pylint .
 
+.PHONY: py-test-setup
+py-test-setup: ## Runs integration tests
+	@cd tests/integration && poetry run pytest --basetemp=./tmp/ -vv --reuse --capture=no src/bootstrap/setup.py::test_setup
+
+.PHONY: py-test-teardown
+py-test-teardown: ## Runs integration tests with teardown
+	@cd tests/integration && poetry run pytest --basetemp=./tmp/ -vv --teardown --capture=no  src/bootstrap/setup.py::test_teardown 
+
 .PHONY: py-test
 py-test: ## Runs integration tests
 	@cd tests/integration && poetry run pytest --basetemp=./tmp/ -vv --capture=no src/
+
+.PHONY: py-clean
+py-clean: ## Clear all pycache and pytest cache from tests directory recursively
+	@echo ">> cleaning python cache files from tests directory"
+	@find tests -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	@find tests -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
+	@find tests -type f -name "*.pyc" -delete 2>/dev/null || true
+	@find tests -type f -name "*.pyo" -delete 2>/dev/null || true
+	@echo ">> python cache cleaned"

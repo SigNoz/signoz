@@ -11,7 +11,7 @@ from wiremock.client import (
 )
 
 from fixtures import types
-from fixtures.auth import add_license
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -25,7 +25,7 @@ def test_generate_connection_params(
 ) -> None:
     """Test to generate connection parameters for AWS SigNoz cloud integration."""
     # Get authentication token for admin user
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     add_license(signoz, make_http_mocks, get_token)
 
@@ -146,16 +146,16 @@ def test_generate_connection_params(
     data = response_data["data"]
 
     # ingestion_key is created by the mocked gateway and should match
-    assert data["ingestion_key"] == "test-ingestion-key-123456", (
-        "ingestion_key should match the mocked ingestion key"
-    )
+    assert (
+        data["ingestion_key"] == "test-ingestion-key-123456"
+    ), "ingestion_key should match the mocked ingestion key"
 
     # ingestion_url should be https://ingest.test.signoz.cloud based on the mocked deployment DNS
-    assert data["ingestion_url"] == "https://ingest.test.signoz.cloud", (
-        "ingestion_url should be https://ingest.test.signoz.cloud"
-    )
+    assert (
+        data["ingestion_url"] == "https://ingest.test.signoz.cloud"
+    ), "ingestion_url should be https://ingest.test.signoz.cloud"
 
     # signoz_api_url should be https://test-deployment.test.signoz.cloud based on the mocked deployment name and DNS
-    assert data["signoz_api_url"] == "https://test-deployment.test.signoz.cloud", (
-        "signoz_api_url should be https://test-deployment.test.signoz.cloud"
-    )
+    assert (
+        data["signoz_api_url"] == "https://test-deployment.test.signoz.cloud"
+    ), "signoz_api_url should be https://test-deployment.test.signoz.cloud"

@@ -11,6 +11,7 @@ import (
 )
 
 var (
+	ErrCodePublicDashboardUnsupported   = errors.MustNewCode("public_dashboard_unsupported")
 	ErrCodePublicDashboardInvalidInput  = errors.MustNewCode("public_dashboard_invalid_input")
 	ErrCodePublicDashboardNotFound      = errors.MustNewCode("public_dashboard_not_found")
 	ErrCodePublicDashboardAlreadyExists = errors.MustNewCode("public_dashboard_already_exists")
@@ -128,78 +129,59 @@ func NewPublicDashboardDataFromDashboard(dashboard *Dashboard, publicDashboard *
 	}
 
 	for idx, widget := range data.Widgets {
-		switch widget.Query.QueryType {
-		case "builder":
-			widget.Query.ClickhouseSQL = []map[string]any{}
-			widget.Query.PromQL = []map[string]any{}
-
-			updatedQueryData := []map[string]any{}
-			for _, queryData := range widget.Query.Builder.QueryData {
-				updatedQueryMap := map[string]any{}
-				updatedQueryMap["aggregations"] = queryData["aggregations"]
-				updatedQueryMap["legend"] = queryData["legend"]
-				updatedQueryMap["queryName"] = queryData["queryName"]
-				updatedQueryMap["expression"] = queryData["expression"]
-				updatedQueryData = append(updatedQueryData, updatedQueryMap)
-			}
-			widget.Query.Builder.QueryData = updatedQueryData
-
-			updatedQueryFormulas := []map[string]any{}
-			for _, queryFormula := range widget.Query.Builder.QueryFormulas {
-				updatedQueryFormulaMap := map[string]any{}
-				updatedQueryFormulaMap["legend"] = queryFormula["legend"]
-				updatedQueryFormulaMap["queryName"] = queryFormula["queryName"]
-				updatedQueryFormulaMap["expression"] = queryFormula["expression"]
-				updatedQueryFormulas = append(updatedQueryFormulas, updatedQueryFormulaMap)
-			}
-			widget.Query.Builder.QueryFormulas = updatedQueryFormulas
-
-			updatedQueryTraceOperator := []map[string]any{}
-			for _, queryTraceOperator := range widget.Query.Builder.QueryTraceOperator {
-				updatedQueryTraceOperatorMap := map[string]any{}
-				updatedQueryTraceOperatorMap["aggregations"] = queryTraceOperator["aggregations"]
-				updatedQueryTraceOperatorMap["legend"] = queryTraceOperator["legend"]
-				updatedQueryTraceOperatorMap["queryName"] = queryTraceOperator["queryName"]
-				updatedQueryTraceOperatorMap["expression"] = queryTraceOperator["expression"]
-				updatedQueryTraceOperator = append(updatedQueryTraceOperator, updatedQueryTraceOperatorMap)
-			}
-			widget.Query.Builder.QueryTraceOperator = updatedQueryTraceOperator
-
-		case "clickhouse_sql":
-			widget.Query.Builder = struct {
-				QueryData          []map[string]any `json:"queryData"`
-				QueryFormulas      []map[string]any `json:"queryFormulas"`
-				QueryTraceOperator []map[string]any `json:"queryTraceOperator"`
-			}{}
-			widget.Query.PromQL = []map[string]any{}
-
-			updatedClickhouseSQLQuery := []map[string]any{}
-			for _, clickhouseSQLQuery := range widget.Query.ClickhouseSQL {
-				updatedClickhouseSQLQueryMap := make(map[string]any)
-				updatedClickhouseSQLQueryMap["legend"] = clickhouseSQLQuery["legend"]
-				updatedClickhouseSQLQueryMap["name"] = clickhouseSQLQuery["name"]
-				updatedClickhouseSQLQuery = append(updatedClickhouseSQLQuery, updatedClickhouseSQLQueryMap)
-			}
-			widget.Query.ClickhouseSQL = updatedClickhouseSQLQuery
-		case "promql":
-			widget.Query.Builder = struct {
-				QueryData          []map[string]any `json:"queryData"`
-				QueryFormulas      []map[string]any `json:"queryFormulas"`
-				QueryTraceOperator []map[string]any `json:"queryTraceOperator"`
-			}{}
-			widget.Query.ClickhouseSQL = []map[string]any{}
-
-			updatedPromQLQuery := []map[string]any{}
-			for _, promQLQuery := range widget.Query.PromQL {
-				updatedPromQLQueryMap := make(map[string]any)
-				updatedPromQLQueryMap["legend"] = promQLQuery["legend"]
-				updatedPromQLQueryMap["name"] = promQLQuery["name"]
-				updatedPromQLQuery = append(updatedPromQLQuery, updatedPromQLQueryMap)
-			}
-			widget.Query.PromQL = updatedPromQLQuery
-		default:
-			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "invalid query type: %s", widget.Query.QueryType)
+		updatedQueryData := []map[string]any{}
+		for _, queryData := range widget.Query.Builder.QueryData {
+			updatedQueryMap := map[string]any{}
+			updatedQueryMap["aggregations"] = queryData["aggregations"]
+			updatedQueryMap["legend"] = queryData["legend"]
+			updatedQueryMap["queryName"] = queryData["queryName"]
+			updatedQueryMap["expression"] = queryData["expression"]
+			updatedQueryMap["groupBy"] = queryData["groupBy"]
+			updatedQueryMap["dataSource"] = queryData["dataSource"]
+			updatedQueryData = append(updatedQueryData, updatedQueryMap)
 		}
+		widget.Query.Builder.QueryData = updatedQueryData
+
+		updatedQueryFormulas := []map[string]any{}
+		for _, queryFormula := range widget.Query.Builder.QueryFormulas {
+			updatedQueryFormulaMap := map[string]any{}
+			updatedQueryFormulaMap["legend"] = queryFormula["legend"]
+			updatedQueryFormulaMap["queryName"] = queryFormula["queryName"]
+			updatedQueryFormulaMap["expression"] = queryFormula["expression"]
+			updatedQueryFormulas = append(updatedQueryFormulas, updatedQueryFormulaMap)
+		}
+		widget.Query.Builder.QueryFormulas = updatedQueryFormulas
+
+		updatedQueryTraceOperator := []map[string]any{}
+		for _, queryTraceOperator := range widget.Query.Builder.QueryTraceOperator {
+			updatedQueryTraceOperatorMap := map[string]any{}
+			updatedQueryTraceOperatorMap["aggregations"] = queryTraceOperator["aggregations"]
+			updatedQueryTraceOperatorMap["legend"] = queryTraceOperator["legend"]
+			updatedQueryTraceOperatorMap["queryName"] = queryTraceOperator["queryName"]
+			updatedQueryTraceOperatorMap["expression"] = queryTraceOperator["expression"]
+			updatedQueryTraceOperatorMap["groupBy"] = queryTraceOperator["groupBy"]
+			updatedQueryTraceOperatorMap["dataSource"] = queryTraceOperator["dataSource"]
+			updatedQueryTraceOperator = append(updatedQueryTraceOperator, updatedQueryTraceOperatorMap)
+		}
+		widget.Query.Builder.QueryTraceOperator = updatedQueryTraceOperator
+
+		updatedClickhouseSQLQuery := []map[string]any{}
+		for _, clickhouseSQLQuery := range widget.Query.ClickhouseSQL {
+			updatedClickhouseSQLQueryMap := make(map[string]any)
+			updatedClickhouseSQLQueryMap["legend"] = clickhouseSQLQuery["legend"]
+			updatedClickhouseSQLQueryMap["name"] = clickhouseSQLQuery["name"]
+			updatedClickhouseSQLQuery = append(updatedClickhouseSQLQuery, updatedClickhouseSQLQueryMap)
+		}
+		widget.Query.ClickhouseSQL = updatedClickhouseSQLQuery
+
+		updatedPromQLQuery := []map[string]any{}
+		for _, promQLQuery := range widget.Query.PromQL {
+			updatedPromQLQueryMap := make(map[string]any)
+			updatedPromQLQueryMap["legend"] = promQLQuery["legend"]
+			updatedPromQLQueryMap["name"] = promQLQuery["name"]
+			updatedPromQLQuery = append(updatedPromQLQuery, updatedPromQLQueryMap)
+		}
+		widget.Query.PromQL = updatedPromQLQuery
 
 		if widgets, ok := dashboard.Data["widgets"].([]any); ok {
 			if widgetMap, ok := widgets[idx].(map[string]any); ok {

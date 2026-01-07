@@ -1,6 +1,8 @@
+import { UniversalYAxisUnit } from '../types';
 import {
 	getUniversalNameFromMetricUnit,
 	mapMetricUnitToUniversalUnit,
+	mergeCategories,
 } from '../utils';
 
 describe('YAxisUnitSelector utils', () => {
@@ -34,6 +36,45 @@ describe('YAxisUnitSelector utils', () => {
 		it('handles case variations', () => {
 			expect(getUniversalNameFromMetricUnit('bytes')).toBe('Bytes (B)');
 			expect(getUniversalNameFromMetricUnit('s')).toBe('Seconds (s)');
+		});
+	});
+
+	describe('mergeCategories', () => {
+		it('merges categories correctly', () => {
+			const categories1 = [
+				{
+					name: 'Data',
+					units: [
+						{ name: 'bytes', id: UniversalYAxisUnit.BYTES },
+						{ name: 'kilobytes', id: UniversalYAxisUnit.KILOBYTES },
+					],
+				},
+			];
+			const categories2 = [
+				{
+					name: 'Data',
+					units: [{ name: 'bits', id: UniversalYAxisUnit.BITS }],
+				},
+				{
+					name: 'Time',
+					units: [{ name: 'seconds', id: UniversalYAxisUnit.SECONDS }],
+				},
+			];
+			const mergedCategories = mergeCategories(categories1, categories2);
+			expect(mergedCategories).toEqual([
+				{
+					name: 'Data',
+					units: [
+						{ name: 'bytes', id: UniversalYAxisUnit.BYTES },
+						{ name: 'kilobytes', id: UniversalYAxisUnit.KILOBYTES },
+						{ name: 'bits', id: UniversalYAxisUnit.BITS },
+					],
+				},
+				{
+					name: 'Time',
+					units: [{ name: 'seconds', id: UniversalYAxisUnit.SECONDS }],
+				},
+			]);
 		});
 	});
 });

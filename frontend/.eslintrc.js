@@ -1,5 +1,5 @@
 module.exports = {
-	ignorePatterns: ['src/parser/*.ts'],
+	ignorePatterns: ['src/parser/*.ts', 'scripts/update-registry.js'],
 	env: {
 		browser: true,
 		es2021: true,
@@ -120,5 +120,6 @@ module.exports = {
 				usePrettierrc: true,
 			},
 		],
+		'react/jsx-props-no-spreading': 'off',
 	},
 };

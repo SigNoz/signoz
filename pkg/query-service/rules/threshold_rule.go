@@ -166,7 +166,7 @@ func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*v
 
 			q.SetShiftByFromFunc()
 
-			if q.DataSource == v3.DataSourceMetrics && constants.UseMetricsPreAggregation() {
+			if q.DataSource == v3.DataSourceMetrics {
 				// if the time range is greater than 1 day, and less than 1 week set the step interval to be multiple of 5 minutes
 				// if the time range is greater than 1 week, set the step interval to be multiple of 30 mins
 				if end-start >= 24*time.Hour.Milliseconds() && end-start < 7*24*time.Hour.Milliseconds() {
@@ -404,9 +404,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		if hasLogsQuery {
 			// check if any enrichment is required for logs if yes then enrich them
 			if logsv3.EnrichmentRequired(params) {
-				logsFields, err := r.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(params.CompositeQuery))
-				if err != nil {
-					return nil, err
+				logsFields, apiErr := r.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(params.CompositeQuery))
+				if apiErr != nil {
+					return nil, apiErr.ToError()
 				}
 				logsKeys := model.GetLogFieldsV3(ctx, params, logsFields)
 				r.logsKeys = logsKeys

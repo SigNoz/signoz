@@ -1,14 +1,52 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 
 import TableViewActions from '../TableViewActions';
+import useAsyncJSONProcessing from '../useAsyncJSONProcessing';
+
+// Mock data for tests
+let mockCopyToClipboard: jest.Mock;
+let mockNotificationsSuccess: jest.Mock;
 
 // Mock the components and hooks
 jest.mock('components/Logs/CopyClipboardHOC', () => ({
 	__esModule: true,
-	default: ({ children }: { children: React.ReactNode }): JSX.Element => (
-		<div className="CopyClipboardHOC">{children}</div>
+	default: ({
+		children,
+		textToCopy,
+		entityKey,
+	}: {
+		children: React.ReactNode;
+		textToCopy: string;
+		entityKey: string;
+	}): JSX.Element => (
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events
+		<div
+			className="CopyClipboardHOC"
+			data-testid={`copy-clipboard-${entityKey}`}
+			data-text-to-copy={textToCopy}
+			onClick={(): void => {
+				if (mockCopyToClipboard) {
+					mockCopyToClipboard(textToCopy);
+				}
+				if (mockNotificationsSuccess) {
+					mockNotificationsSuccess({
+						message: `${entityKey} copied to clipboard`,
+						key: `${entityKey} copied to clipboard`,
+					});
+				}
+			}}
+			role="button"
+			tabIndex={0}
+		>
+			{children}
+		</div>
 	),
+}));
+
+jest.mock('../useAsyncJSONProcessing', () => ({
+	__esModule: true,
+	default: jest.fn(),
 }));
 
 jest.mock('providers/Timezone', () => ({
@@ -52,6 +90,19 @@ describe('TableViewActions', () => {
 		onClickHandler: jest.fn(),
 		onGroupByAttribute: jest.fn(),
 	};
+
+	beforeEach(() => {
+		mockCopyToClipboard = jest.fn();
+		mockNotificationsSuccess = jest.fn();
+
+		// Default mock for useAsyncJSONProcessing
+		const mockUseAsyncJSONProcessing = jest.mocked(useAsyncJSONProcessing);
+		mockUseAsyncJSONProcessing.mockReturnValue({
+			isLoading: false,
+			treeData: null,
+			error: null,
+		});
+	});
 
 	it('should render without crashing', () => {
 		render(
@@ -126,5 +177,61 @@ describe('TableViewActions', () => {
 		expect(
 			container.querySelector(ACTION_BUTTON_TEST_ID),
 		).not.toBeInTheDocument();
+	});
+
+	it('should copy non-JSON body text without quotes when user clicks on body', () => {
+		// Setup: body field with surrounding quotes
+		const bodyValueWithQuotes =
+			'"FeatureFlag \'kafkaQueueProblems\' is enabled, sleeping 1 second"';
+		const expectedCopiedText =
+			"FeatureFlag 'kafkaQueueProblems' is enabled, sleeping 1 second";
+
+		const bodyProps = {
+			fieldData: {
+				field: 'body',
+				value: bodyValueWithQuotes,
+			},
+			record: {
+				key: 'body-key',
+				field: 'body',
+				value: bodyValueWithQuotes,
+			},
+			isListViewPanel: false,
+			isfilterInLoading: false,
+			isfilterOutLoading: false,
+			onClickHandler: jest.fn(),
+			onGroupByAttribute: jest.fn(),
+		};
+
+		// Render component with body field
+		render(
+			<TableViewActions
+				fieldData={bodyProps.fieldData}
+				record={bodyProps.record}
+				isListViewPanel={bodyProps.isListViewPanel}
+				isfilterInLoading={bodyProps.isfilterInLoading}
+				isfilterOutLoading={bodyProps.isfilterOutLoading}
+				onClickHandler={bodyProps.onClickHandler}
+				onGroupByAttribute={bodyProps.onGroupByAttribute}
+			/>,
+		);
+
+		// Find the clickable copy area for body
+		const copyArea = screen.getByTestId('copy-clipboard-body');
+
+		// Verify it has the correct text to copy (without quotes)
+		expect(copyArea).toHaveAttribute('data-text-to-copy', expectedCopiedText);
+
+		// Action: User clicks on body content
+		fireEvent.click(copyArea);
+
+		// Assert: Text was copied without surrounding quotes
+		expect(mockCopyToClipboard).toHaveBeenCalledWith(expectedCopiedText);
+
+		// Assert: Success notification shown
+		expect(mockNotificationsSuccess).toHaveBeenCalledWith({
+			message: 'body copied to clipboard',
+			key: 'body copied to clipboard',
+		});
 	});
 });

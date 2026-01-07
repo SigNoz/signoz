@@ -26,7 +26,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { CircleX, X } from 'lucide-react';
+import { CircleX, SquareArrowOutUpRight, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
@@ -35,6 +35,7 @@ import { SuccessResponse, Warning } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { buildAbsolutePath } from 'utils/app';
 
 import { errorTooltipPosition } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
@@ -47,7 +48,6 @@ interface IWidgetHeaderProps {
 	onView: VoidFunction;
 	onDelete?: VoidFunction;
 	onClone?: VoidFunction;
-	parentHover: boolean;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps, unknown> & {
 			warning?: Warning;
@@ -68,7 +68,6 @@ function WidgetHeader({
 	onView,
 	onDelete,
 	onClone,
-	parentHover,
 	queryResponse,
 	threshold,
 	headerMenuList,
@@ -87,7 +86,10 @@ function WidgetHeader({
 			QueryParams.compositeQuery,
 			encodeURIComponent(JSON.stringify(widget.query)),
 		);
-		const generatedUrl = `${window.location.pathname}/new?${urlQuery}`;
+		const generatedUrl = buildAbsolutePath({
+			relativePath: 'new',
+			urlQueryString: urlQuery.toString(),
+		});
 		safeNavigate(generatedUrl);
 	}, [safeNavigate, urlQuery, widget.id, widget.panelTypes, widget.query]);
 
@@ -183,7 +185,18 @@ function WidgetHeader({
 			{
 				key: MenuItemKeys.CreateAlerts,
 				icon: <AlertOutlined />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
+				label: (
+					<span
+						style={{
+							display: 'flex',
+							alignItems: 'baseline',
+							justifyContent: 'space-between',
+						}}
+					>
+						{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts]}
+						<SquareArrowOutUpRight size={10} />
+					</span>
+				),
 				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
 				disabled: false,
 			},
@@ -240,6 +253,7 @@ function WidgetHeader({
 							onClick={(e): void => {
 								e.stopPropagation();
 								e.preventDefault();
+								setSearchTerm('');
 								setShowGlobalSearch(false);
 							}}
 							className="search-header-icons"
@@ -304,14 +318,17 @@ function WidgetHeader({
 								data-testid="widget-header-search"
 							/>
 						)}
-						<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
-							<MoreOutlined
-								data-testid="widget-header-options"
-								className={`widget-header-more-options ${
-									parentHover ? 'widget-header-hover' : ''
-								} ${globalSearchAvailable ? 'widget-header-more-options-visible' : ''}`}
-							/>
-						</Dropdown>
+
+						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
+							<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
+								<MoreOutlined
+									data-testid="widget-header-options"
+									className={`widget-header-more-options ${
+										globalSearchAvailable ? 'widget-header-more-options-visible' : ''
+									}`}
+								/>
+							</Dropdown>
+						)}
 					</div>
 				</>
 			)}

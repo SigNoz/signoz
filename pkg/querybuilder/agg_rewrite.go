@@ -20,7 +20,6 @@ type aggExprRewriter struct {
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
-	jsonBodyPrefix   string
 	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
 }
 
@@ -31,7 +30,6 @@ func NewAggExprRewriter(
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *aggExprRewriter {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querybuilder/agg_rewrite")
@@ -41,7 +39,6 @@ func NewAggExprRewriter(
 		fullTextColumn:   fullTextColumn,
 		fieldMapper:      fieldMapper,
 		conditionBuilder: conditionBuilder,
-		jsonBodyPrefix:   jsonBodyPrefix,
 		jsonKeyToKey:     jsonKeyToKey,
 	}
 }
@@ -81,7 +78,6 @@ func (r *aggExprRewriter) Rewrite(
 		r.fullTextColumn,
 		r.fieldMapper,
 		r.conditionBuilder,
-		r.jsonBodyPrefix,
 		r.jsonKeyToKey,
 	)
 	// Rewrite the first select item (our expression)
@@ -129,7 +125,6 @@ type exprVisitor struct {
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
-	jsonBodyPrefix   string
 	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
 	Modified         bool
 	chArgs           []any
@@ -142,7 +137,6 @@ func newExprVisitor(
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *exprVisitor {
 	return &exprVisitor{
@@ -151,7 +145,6 @@ func newExprVisitor(
 		fullTextColumn:   fullTextColumn,
 		fieldMapper:      fieldMapper,
 		conditionBuilder: conditionBuilder,
-		jsonBodyPrefix:   jsonBodyPrefix,
 		jsonKeyToKey:     jsonKeyToKey,
 	}
 }
@@ -190,7 +183,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	if aggFunc.FuncCombinator {
 		// Map the predicate (last argument)
 		origPred := args[len(args)-1].String()
-        whereClause, err := PrepareWhereClause(
+		whereClause, err := PrepareWhereClause(
 			origPred,
 			FilterExprVisitorOpts{
 				Logger:           v.logger,
@@ -198,9 +191,8 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 				FieldMapper:      v.fieldMapper,
 				ConditionBuilder: v.conditionBuilder,
 				FullTextColumn:   v.fullTextColumn,
-				JsonBodyPrefix:   v.jsonBodyPrefix,
 				JsonKeyToKey:     v.jsonKeyToKey,
-            }, 0, 0,
+			}, 0, 0,
 		)
 		if err != nil {
 			return err
@@ -220,7 +212,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i := 0; i < len(args)-1; i++ {
 			origVal := args[i].String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
-			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonBodyPrefix, v.jsonKeyToKey)
+			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
@@ -238,7 +230,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i, arg := range args {
 			orig := arg.String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
-			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonBodyPrefix, v.jsonKeyToKey)
+			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey)
 			if err != nil {
 				return err
 			}

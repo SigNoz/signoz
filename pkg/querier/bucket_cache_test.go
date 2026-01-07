@@ -26,8 +26,8 @@ func createTestCache(t *testing.T) cache.Cache {
 	config := cache.Config{
 		Provider: "memory",
 		Memory: cache.Memory{
-			TTL:             time.Hour * 168,
-			CleanupInterval: 10 * time.Minute,
+			NumCounters: 10 * 1000,
+			MaxCost:     1 << 26,
 		},
 	}
 	memCache, err := cachetest.New(config)

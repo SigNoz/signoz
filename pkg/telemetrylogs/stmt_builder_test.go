@@ -32,7 +32,6 @@ func resourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.LogAggregation
 		cb,
 		mockMetadataStore,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 }
@@ -172,14 +171,36 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
+		{
+			name:        "Time series with materialised column using or with regex operator",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "materialized.key.name REGEXP 'redis.*' OR materialized.key.name = 'memcached'",
+				},
+				Limit: 10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (true OR true) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((match(`attribute_string_materialized$$key$$name`, ?) AND `attribute_string_materialized$$key$$name_exists` = ?) OR (`attribute_string_materialized$$key$$name` = ? AND `attribute_string_materialized$$key$$name_exists` = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "redis.*", true, "memcached", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -191,7 +212,6 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -265,14 +285,42 @@ func TestStatementBuilderListQuery(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name:        "list query with mat col using or and regex operator",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{
+					Expression: "materialized.key.name REGEXP 'redis.*' OR materialized.key.name = 'memcached'",
+				},
+				Limit: 10,
+				Order: []qbtypes.OrderBy{
+					{
+						Key: qbtypes.OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name:          "materialized.key.name",
+								FieldContext:  telemetrytypes.FieldContextAttribute,
+								FieldDataType: telemetrytypes.FieldDataTypeString,
+							},
+						},
+						Direction: qbtypes.OrderDirectionDesc,
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (true OR true) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((match(`attribute_string_materialized$$key$$name`, ?) AND `attribute_string_materialized$$key$$name_exists` = ?) OR (`attribute_string_materialized$$key$$name` = ? AND `attribute_string_materialized$$key$$name_exists` = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY `attribute_string_materialized$$key$$name` AS `materialized.key.name` desc LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "redis.*", true, "memcached", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -284,7 +332,6 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -377,11 +424,11 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -393,9 +440,10 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
+
+	//
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -441,7 +489,8 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 				GroupBy: []qbtypes.GroupByKey{
 					{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "body.status",
+							Name:         "status",
+							FieldContext: telemetrytypes.FieldContextBody,
 						},
 					},
 				},
@@ -451,11 +500,11 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -467,7 +516,6 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -547,11 +595,11 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -563,7 +611,6 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
