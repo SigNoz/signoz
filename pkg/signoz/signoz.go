@@ -149,6 +149,20 @@ func New(
 		return nil, err
 	}
 
+	// Initialize flagger from the available flagger provider factories
+	flaggerRegistry := flagger.MustNewRegistry()
+	flaggerProviderFactories := NewFlaggerProviderFactories(flaggerRegistry)
+	flagger, err := flagger.New(
+		ctx,
+		providerSettings,
+		config.Flagger,
+		flaggerRegistry,
+		flaggerProviderFactories.GetInOrder()...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize web from the available web provider factories
 	web, err := factory.NewProviderFromNamedMap(
 		ctx,
@@ -202,7 +216,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Querier,
-		NewQuerierProviderFactories(telemetrystore, prometheus, cache),
+		NewQuerierProviderFactories(telemetrystore, prometheus, cache, flagger),
 		config.Querier.Provider(),
 	)
 	if err != nil {
@@ -357,20 +371,6 @@ func New(
 		config.Global,
 		NewGlobalProviderFactories(),
 		"signoz",
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Initialize flagger from the available flagger provider factories
-	flaggerRegistry := flagger.MustNewRegistry()
-	flaggerProviderFactories := NewFlaggerProviderFactories(flaggerRegistry)
-	flagger, err := flagger.New(
-		ctx,
-		providerSettings,
-		config.Flagger,
-		flaggerRegistry,
-		flaggerProviderFactories.GetInOrder()...,
 	)
 	if err != nil {
 		return nil, err
