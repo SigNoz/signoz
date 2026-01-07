@@ -311,12 +311,15 @@ func New(
 		return nil, err
 	}
 
+	// Initialize query parser
+	queryParser := queryparser.New(providerSettings)
+
 	// Initialize ruler from the available ruler provider factories
 	ruler, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.Ruler,
-		NewRulerProviderFactories(sqlstore),
+		NewRulerProviderFactories(sqlstore, queryParser),
 		"signoz",
 	)
 	if err != nil {
@@ -332,9 +335,6 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-
-	// Initialize query parser
-	queryParser := queryparser.New(providerSettings)
 
 	// Initialize authns
 	store := sqlauthnstore.NewStore(sqlstore)

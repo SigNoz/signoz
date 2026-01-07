@@ -11,7 +11,7 @@ import (
 // TestLikeAndILikeWithoutWildcards_Warns Tests that LIKE/ILIKE without wildcards add warnings and include docs URL
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, nil)
 
 	keys := buildCompleteFieldKeyMap()
 
@@ -33,7 +33,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 	for _, expr := range tests {
 		t.Run(expr, func(t *testing.T) {
-            clause, err := querybuilder.PrepareWhereClause(expr, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(expr, opts, 0, 0)
 			require.NoError(t, err)
 			require.NotNil(t, clause)
 
@@ -47,7 +47,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 // TestLikeAndILikeWithWildcards_NoWarn Tests that LIKE/ILIKE with wildcards do not add warnings
 func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, nil)
 
 	keys := buildCompleteFieldKeyMap()
 
@@ -69,7 +69,7 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 
 	for _, expr := range tests {
 		t.Run(expr, func(t *testing.T) {
-            clause, err := querybuilder.PrepareWhereClause(expr, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(expr, opts, 0, 0)
 			require.NoError(t, err)
 			require.NotNil(t, clause)
 
