@@ -78,10 +78,7 @@ function LogsExplorer(): JSX.Element {
 	const [warning, setWarning] = useState<Warning | undefined>(undefined);
 
 	const handleChangeSelectedView = useCallback(
-		async (
-			view: ExplorerViews,
-			querySearchParameters?: ICurrentQueryData,
-		): Promise<void> => {
+		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
 			const nextPanelType = defaultTo(
 				explorerViewToPanelType[view],
 				PANEL_TYPES.LIST,

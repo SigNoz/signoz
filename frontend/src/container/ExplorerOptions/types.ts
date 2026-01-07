@@ -44,5 +44,4 @@ export type PreservedViewsInLocalStorage = Partial<
 export type ChangeViewFunctionType = (
 	view: ExplorerViews,
 	querySearchParameters?: ICurrentQueryData,
-	fieldKey?: string,
-) => Promise<void> | void;
+) => void;

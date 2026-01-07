@@ -1,5 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
+import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 
 import TableViewActions from '../TableViewActions';
@@ -86,6 +88,9 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
+jest.mock('hooks/queryBuilder/useQueryBuilder');
+jest.mock('hooks/queryBuilder/useGetSearchQueryParam');
+
 describe('TableViewActions', () => {
 	const TEST_VALUE = 'test value';
 	const TEST_FIELD = 'test-field';
@@ -120,6 +125,24 @@ describe('TableViewActions', () => {
 			treeData: null,
 			error: null,
 		});
+
+		// Default mock for useQueryBuilder
+		jest.mocked(useQueryBuilder).mockReturnValue({
+			stagedQuery: null,
+			updateQueriesData: jest.fn((query, type, callback) => {
+				const updatedBuilder = {
+					...query.builder,
+					[type]: query.builder[type].map(callback),
+				};
+				return {
+					...query,
+					builder: updatedBuilder,
+				};
+			}),
+		} as any);
+
+		// Default mock for useGetSearchQueryParam
+		jest.mocked(useGetSearchQueryParam).mockReturnValue(null);
 	});
 
 	it('should render without crashing', () => {
@@ -180,6 +203,55 @@ describe('TableViewActions', () => {
 	});
 
 	it('should call handleChangeSelectedView when clicking group by', () => {
+		const mockStagedQuery = {
+			id: 'test-query-id',
+			queryType: 'queryBuilder',
+			builder: {
+				queryData: [
+					{
+						queryName: 'A',
+						dataSource: 'logs',
+						aggregateOperator: 'count',
+						functions: [],
+						filter: {},
+						groupBy: [],
+						expression: '',
+						disabled: false,
+						having: [],
+						limit: null,
+						stepInterval: null,
+						orderBy: [],
+						legend: '',
+					},
+				],
+				queryFormulas: [],
+				queryTraceOperator: [],
+			},
+			promql: [],
+			clickhouse_sql: [],
+		};
+
+		const mockUpdateQueriesData = jest.fn((query, type, callback) => {
+			const section = query.builder?.[type];
+			if (!Array.isArray(section)) {
+				return query;
+			}
+			return {
+				...query,
+				builder: {
+					...query.builder,
+					[type]: section.map(callback),
+				},
+			};
+		});
+
+		jest.mocked(useQueryBuilder).mockReturnValue({
+			stagedQuery: mockStagedQuery,
+			updateQueriesData: mockUpdateQueriesData,
+		} as any);
+
+		jest.mocked(useGetSearchQueryParam).mockReturnValue(null);
+
 		render(
 			<TableViewActions
 				fieldData={defaultProps.fieldData}
@@ -196,8 +268,24 @@ describe('TableViewActions', () => {
 
 		expect(defaultProps.handleChangeSelectedView).toHaveBeenCalledWith(
 			ExplorerViews.TIMESERIES,
-			undefined,
-			TEST_FIELD,
+			expect.objectContaining({
+				name: '',
+				id: 'test-query-id',
+				query: expect.objectContaining({
+					builder: expect.objectContaining({
+						queryData: expect.arrayContaining([
+							expect.objectContaining({
+								groupBy: expect.arrayContaining([
+									expect.objectContaining({
+										key: TEST_FIELD,
+										type: '',
+									}),
+								]),
+							}),
+						]),
+					}),
+				}),
+			}),
 		);
 	});
 
