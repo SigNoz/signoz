@@ -31,7 +31,7 @@ func (module *module) Create(ctx context.Context, role *roletypes.Role) error {
 }
 
 func (module *module) GetOrCreate(ctx context.Context, role *roletypes.Role) (*roletypes.Role, error) {
-	existingRole, err := module.store.GetByNameAndOrgID(ctx, role.Name, role.OrgID)
+	existingRole, err := module.store.GetByOrgIDAndName(ctx, role.Name, role.OrgID)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
@@ -103,9 +103,13 @@ func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valu
 	return objects, nil
 }
 
-// GetByOrgIDAndName implements [role.Module].
-func (module *module) GetByOrgIDAndName(context.Context, valuer.UUID, string) (*roletypes.Role, error) {
-	panic("unimplemented")
+func (module *module) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*roletypes.Role, error) {
+	storableRole, err := module.store.GetByOrgIDAndName(ctx, name, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return roletypes.NewRoleFromStorableRole(storableRole), nil
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.Role, error) {
