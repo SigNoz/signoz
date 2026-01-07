@@ -10,10 +10,12 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
@@ -24,13 +26,15 @@ import (
 type module struct {
 	Querier        querier.Querier
 	TelemetryStore telemetrystore.TelemetryStore
+	Flagger        flagger.Flagger
 }
 
 // NewModule constructs the services module with the provided querier dependency.
-func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Module {
+func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore, flagger flagger.Flagger) services.Module {
 	return &module{
 		Querier:        q,
 		TelemetryStore: ts,
+		Flagger:        flagger,
 	}
 }
 
@@ -82,8 +86,9 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 		err           error
 		queryRangeReq *qbtypes.QueryRangeRequest
 	)
-	// Prefer span metrics path when enabled via flag or explicit override
-	// TODO(nikhilmantri0902): the following constant should be read from the en variable in this module itself.
+
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgUUID)
+	useSpanMetrics := m.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseSpanMetrics, evalCtx)
 	if useSpanMetrics {
 		queryRangeReq, startMs, endMs, err = m.buildSpanMetricsQueryRangeRequest(req)
 		if err != nil {
@@ -135,7 +140,9 @@ func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req 
 		qr  *qbtypes.QueryRangeRequest
 		err error
 	)
-	// Prefer span metrics path when enabled via flag
+
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgUUID)
+	useSpanMetrics := m.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseSpanMetrics, evalCtx)
 	if useSpanMetrics {
 		qr, err = m.buildSpanMetricsTopOpsQueryRangeRequest(req)
 		if err != nil {
@@ -177,7 +184,9 @@ func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUI
 		qr  *qbtypes.QueryRangeRequest
 		err error
 	)
-	// Prefer span metrics path when enabled via flag
+
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgUUID)
+	useSpanMetrics := m.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseSpanMetrics, evalCtx)
 	if useSpanMetrics {
 		qr, err = m.buildSpanMetricsEntryPointOpsQueryRangeRequest(req)
 		if err != nil {

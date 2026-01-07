@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
@@ -85,6 +86,7 @@ func NewModules(
 	queryParser queryparser.QueryParser,
 	config Config,
 	dashboard dashboard.Module,
+	flagger flagger.Flagger,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -107,7 +109,7 @@ func NewModules(
 		AuthDomain:      implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs),
 		Session:         implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
 		SpanPercentile:  implspanpercentile.NewModule(querier, providerSettings),
-		Services:        implservices.NewModule(querier, telemetryStore),
+		Services:        implservices.NewModule(querier, telemetryStore, flagger),
 		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
 		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
 	}
