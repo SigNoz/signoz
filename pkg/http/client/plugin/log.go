@@ -31,7 +31,13 @@ func (plugin *reqResLog) OnRequestStart(request *http.Request) {
 		string(semconv.ServerAddressKey), host,
 		string(semconv.ServerPortKey), port,
 		string(semconv.HTTPRequestSizeKey), request.ContentLength,
-		"http.request.headers", request.Header,
+	}
+
+	// only include all the headers if we are at debug level
+	if plugin.logger.Handler().Enabled(request.Context(), slog.LevelDebug) {
+		fields = append(fields, "http.request.headers", request.Header)
+	} else {
+		fields = append(fields, "http.request.headers", redactSensitiveHeaders(request.Header))
 	}
 
 	plugin.logger.InfoContext(request.Context(), "::SENT-REQUEST::", fields...)
@@ -74,4 +80,30 @@ func (plugin *reqResLog) OnError(request *http.Request, err error) {
 	}
 
 	plugin.logger.ErrorContext(request.Context(), "::UNABLE-TO-SEND-REQUEST::", fields...)
+}
+
+func redactSensitiveHeaders(headers http.Header) http.Header {
+	// maintained list of headers to redact
+	sensitiveHeaders := map[string]bool{
+		"Authorization":          true,
+		"Cookie":                 true,
+		"X-Api-Key":              true,
+		"X-Api-Secret":           true,
+		"X-Api-Token":            true,
+		"X-Api-Username":         true,
+		"X-Api-Password":         true,
+		"X-Signoz-Cloud-Api-Key": true,
+	}
+
+	safeHeaders := make(http.Header)
+
+	for header, value := range headers {
+		if sensitiveHeaders[header] {
+			safeHeaders[header] = []string{"REDACTED"}
+		} else {
+			safeHeaders[header] = value
+		}
+	}
+
+	return safeHeaders
 }
