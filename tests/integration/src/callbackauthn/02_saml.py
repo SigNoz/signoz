@@ -671,10 +671,10 @@ def test_cleanup_saml_domain(
         # 204 No Content or 200 OK are both valid
         assert response.status_code in [HTTPStatus.OK, HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND]
 
-    # also remove the saml client from the idp
-    response = requests.delete(
-        idp.container.host_configs["6060"].get(f"/realms/master/clients/{domain['id']}"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
+        # also remove the saml client from the idp
+        response = requests.delete(
+            idp.container.host_configs["6060"].get(f"/realms/master/clients/{domain['id']}"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=2,
+        )
     assert response.status_code in [HTTPStatus.OK, HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND]
