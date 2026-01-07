@@ -145,4 +145,111 @@ var (
 	    }
 	  ]
 	`
+
+	builderQueryWithFormula = `
+	[
+	    {
+	      "type":"builder_query",
+	      "spec":{
+	        "name":"A",
+	        "signal":"metrics",
+	        "stepInterval":null,
+	        "disabled":false,
+	        "groupBy":[],
+	        "aggregations":[
+	          {"metricName":"cpu_usage","timeAggregation":"avg","spaceAggregation":"sum"}
+	        ]
+	      }
+	    },
+	    {
+	      "type":"builder_query",
+	      "spec":{
+	        "name":"B",
+	        "signal":"metrics",
+	        "stepInterval":null,
+	        "disabled":false,
+	        "groupBy":[],
+	        "aggregations":[
+	          {"metricName":"mem_usage","timeAggregation":"avg","spaceAggregation":"sum"}
+	        ]
+	      }
+	    },
+	    {
+	      "type":"builder_formula",
+	      "spec":{
+	        "name":"F1",
+	        "expression":"A + B"
+	      }
+	    }
+	  ]
+	`
+
+	builderQueryWithFormulaAndGroupBy = `
+	[
+	    {
+	      "type":"builder_query",
+	      "spec":{
+	        "name":"A",
+	        "signal":"metrics",
+	        "stepInterval":null,
+	        "disabled":false,
+	        "groupBy":[
+	          {"name":"host","fieldDataType":"","fieldContext":""},
+			  {"name":"region","fieldDataType":"","fieldContext":""}
+	        ],
+	        "aggregations":[
+	          {"metricName":"cpu","timeAggregation":"avg","spaceAggregation":"sum"}
+	        ]
+	      }
+	    },
+	    {
+	      "type":"builder_query",
+	      "spec":{
+	        "name":"B",
+	        "signal":"metrics",
+	        "stepInterval":null,
+	        "disabled":false,
+	        "groupBy":[
+	          {"name":"host","fieldDataType":"","fieldContext":""},
+			  {"name":"instance","fieldDataType":"","fieldContext":""}
+	        ],
+	        "aggregations":[
+	          {"metricName":"mem","timeAggregation":"avg","spaceAggregation":"sum"}
+	        ]
+	      }
+	    },
+	    {
+	      "type":"builder_formula",
+	      "spec":{
+	        "name":"F1",
+	        "expression":"A + B"
+	      }
+	    }
+	  ]
+	`
+
+	builderQueryWithFormulaSameQuery = `
+	[
+	    {
+	      "type":"builder_query",
+	      "spec":{
+	        "name":"A",
+	        "signal":"metrics",
+	        "stepInterval":null,
+	        "disabled":false,
+	        "groupBy":[],
+	        "aggregations":[
+	          {"metricName":"disk_used","timeAggregation":"sum","spaceAggregation":"sum"}
+	        ]
+	      }
+	    },
+	    {
+	      "type":"builder_formula",
+	      "spec":{
+	        "name":"F1",
+	        "expression":"A + A"
+	      }
+	    }
+	  ]
+	`
 )

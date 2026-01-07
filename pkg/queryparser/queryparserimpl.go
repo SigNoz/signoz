@@ -2,8 +2,10 @@ package queryparser
 
 import (
 	"context"
-	"fmt"
 
+	"strings"
+
+	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/queryparser/queryfilterextractor"
@@ -43,6 +45,10 @@ func (p *queryParserImpl) AnalyzeQueryFilter(ctx context.Context, queryType qbty
 func (p *queryParserImpl) AnalyzeQueryEnvelopes(ctx context.Context, queries []qbtypes.QueryEnvelope) (map[string]*queryfilterextractor.FilterResult, error) {
 	results := make(map[string]*queryfilterextractor.FilterResult)
 
+	// formulaQueries store the formula queries in the order they are defined
+	formulaQueries := make(map[string]qbtypes.QueryBuilderFormula)
+
+	// First pass: Process non-formula queries
 	for _, query := range queries {
 		result := &queryfilterextractor.FilterResult{
 			MetricNames:    []string{},
@@ -69,7 +75,7 @@ func (p *queryParserImpl) AnalyzeQueryEnvelopes(ctx context.Context, queries []q
 				}
 			default:
 				// TODO(abhishekhugetech): add support for Traces and Logs Aggregation types
-				p.settings.Logger.WarnContext(ctx, fmt.Sprintf("unsupported QueryBuilderQuery type: %T", spec))
+				p.settings.Logger.WarnContext(ctx, "unsupported QueryBuilderQuery type: ", spec)
 				// Skip result for this query
 				continue
 			}
@@ -99,6 +105,13 @@ func (p *queryParserImpl) AnalyzeQueryEnvelopes(ctx context.Context, queries []q
 			}
 			result.MetricNames = append(result.MetricNames, res.MetricNames...)
 			result.GroupByColumns = append(result.GroupByColumns, res.GroupByColumns...)
+		case qbtypes.QueryTypeFormula:
+			spec, ok := query.Spec.(qbtypes.QueryBuilderFormula)
+			if !ok {
+				// Skip result for this query
+				continue
+			}
+			formulaQueries[spec.Name] = spec
 		default:
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported query type: %s", query.Type)
 		}
@@ -106,6 +119,49 @@ func (p *queryParserImpl) AnalyzeQueryEnvelopes(ctx context.Context, queries []q
 		if queryName != "" {
 			results[queryName] = result
 		}
+	}
+
+	// Second pass: Process formula queries
+	for _, query := range formulaQueries {
+		result := &queryfilterextractor.FilterResult{
+			MetricNames:    []string{},
+			GroupByColumns: []queryfilterextractor.ColumnInfo{},
+		}
+
+		// Parse the expression to find used queries
+		expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, qbtypes.EvalFuncs())
+		if err != nil {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse formula expression %s: %v", query.Name, err)
+		}
+
+		uniqueMetricNames := make(map[string]bool)
+		uniqueGroupByColumns := make(map[string]bool)
+
+		vars := expression.Vars()
+		for _, v := range vars {
+			// variables can be "A" or "A.0" or "A.alias" as per pkg/types/querybuildertypes/querybuildertypesv5/formula.go
+			parts := strings.Split(v, ".")
+			if len(parts) > 0 {
+				refQueryName := parts[0]
+				if refResult, exists := results[refQueryName]; exists {
+					for _, metricName := range refResult.MetricNames {
+						if !uniqueMetricNames[metricName] {
+							uniqueMetricNames[metricName] = true
+							result.MetricNames = append(result.MetricNames, metricName)
+						}
+					}
+					for _, groupByColumn := range refResult.GroupByColumns {
+						if !uniqueGroupByColumns[groupByColumn.Name] {
+							uniqueGroupByColumns[groupByColumn.Name] = true
+							result.GroupByColumns = append(result.GroupByColumns, groupByColumn)
+						}
+					}
+				}
+			}
+		}
+
+		// Add the formula query filter result to the results map
+		results[query.Name] = result
 	}
 
 	return results, nil
