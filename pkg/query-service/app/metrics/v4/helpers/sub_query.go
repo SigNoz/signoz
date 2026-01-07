@@ -64,15 +64,9 @@ func whichTSTableToUse(start, end int64, mq *v3.BuilderQuery) (int64, int64, str
 		start = start - (start % (time.Hour.Milliseconds() * 24))
 		tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
 	} else {
-		if constants.UseMetricsPreAggregation() {
-			// adjust the start time to nearest 1 week
-			start = start - (start % (time.Hour.Milliseconds() * 24 * 7))
-			tableName = constants.SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME
-		} else {
-			// continue to use the 1 day table
-			start = start - (start % (time.Hour.Milliseconds() * 24))
-			tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
-		}
+		// adjust the start time to nearest 1 week
+		start = start - (start % (time.Hour.Milliseconds() * 24 * 7))
+		tableName = constants.SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME
 	}
 
 	return start, end, tableName
@@ -97,11 +91,6 @@ func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
 	// we don't have any aggregated table for sketches (yet)
 	if mq.AggregateAttribute.Type == v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
 		return constants.SIGNOZ_EXP_HISTOGRAM_TABLENAME
-	}
-
-	// continue to use the old table if pre-aggregation is disabled
-	if !constants.UseMetricsPreAggregation() {
-		return constants.SIGNOZ_SAMPLES_V4_TABLENAME
 	}
 
 	// if the time aggregation is count_distinct, we need to use the distributed_samples_v4 table

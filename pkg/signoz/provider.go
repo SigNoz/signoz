@@ -159,6 +159,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewUpdateAuthzFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateUserPreferenceFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateOrgPreferenceFactory(sqlstore, sqlschema),
+		sqlmigration.NewRenameOrgDomainsFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -223,9 +224,9 @@ func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetrySt
 	)
 }
 
-func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
+func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache, flagger flagger.Flagger) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
 	return factory.MustNewNamedMap(
-		signozquerier.NewFactory(telemetryStore, prometheus, cache),
+		signozquerier.NewFactory(telemetryStore, prometheus, cache, flagger),
 	)
 }
 
