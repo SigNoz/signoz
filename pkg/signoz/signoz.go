@@ -88,7 +88,8 @@ func New(
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
 	authzCallback func(context.Context, sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config],
-	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, role.Module, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
+	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, role.Module, role.Grant, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
+	roleModuleCallback func(sqlstore.SQLStore, authz.AuthZ, []role.RegisterTypeable) role.Module,
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -377,9 +378,11 @@ func New(
 	}
 
 	// Initialize all modules
-	roleModule := implrole.NewModule(implrole.NewStore(sqlstore), authz, nil)
-	dashboardModule := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, roleModule, queryParser, querier, licensing)
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboardModule)
+	roleModule := roleModuleCallback(sqlstore, authz, nil)
+	// todo[vikrant]: make this singleton
+	grant := implrole.NewGrant(implrole.NewStore(sqlstore), authz)
+	dashboardModule := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, roleModule, grant, queryParser, querier, licensing)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboardModule, roleModule)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger)

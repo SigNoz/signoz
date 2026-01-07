@@ -48,7 +48,7 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return role, nil
 }
 
-func (store *store) GetByNameAndOrgID(ctx context.Context, name string, orgID valuer.UUID) (*roletypes.StorableRole, error) {
+func (store *store) GetByOrgIDAndName(ctx context.Context, name string, orgID valuer.UUID) (*roletypes.StorableRole, error) {
 	role := new(roletypes.StorableRole)
 	err := store.
 		sqlstore.

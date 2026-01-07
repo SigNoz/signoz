@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -20,14 +21,15 @@ type AuthZ struct {
 	logger       *slog.Logger
 	orgGetter    organization.Getter
 	authzService authz.AuthZ
+	role         role.Module
 }
 
-func NewAuthZ(logger *slog.Logger, orgGetter organization.Getter, authzService authz.AuthZ) *AuthZ {
+func NewAuthZ(logger *slog.Logger, orgGetter organization.Getter, authzService authz.AuthZ, role role.Module) *AuthZ {
 	if logger == nil {
 		panic("cannot build authz middleware, logger is empty")
 	}
 
-	return &AuthZ{logger: logger, orgGetter: orgGetter, authzService: authzService}
+	return &AuthZ{logger: logger, orgGetter: orgGetter, authzService: authzService, role: role}
 }
 
 func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
@@ -38,7 +40,20 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if err := claims.IsViewer(); err != nil {
+		orgId, err := valuer.NewUUID(claims.OrgID)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		role, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-viewer")
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, authtypes.RelationAssignee, authtypes.RelationAssignee, authtypes.TypeableRole, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String())})
+		if err != nil {
 			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
 			render.Error(rw, err)
 			return
@@ -56,7 +71,20 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if err := claims.IsEditor(); err != nil {
+		orgId, err := valuer.NewUUID(claims.OrgID)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		role, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-editor")
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, authtypes.RelationAssignee, authtypes.RelationAssignee, authtypes.TypeableRole, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String())})
+		if err != nil {
 			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
 			render.Error(rw, err)
 			return
@@ -74,7 +102,20 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if err := claims.IsAdmin(); err != nil {
+		orgId, err := valuer.NewUUID(claims.OrgID)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		role, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-admin")
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, authtypes.RelationAssignee, authtypes.RelationAssignee, authtypes.TypeableRole, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String())})
+		if err != nil {
 			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
 			render.Error(rw, err)
 			return

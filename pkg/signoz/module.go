@@ -25,6 +25,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/services"
@@ -66,6 +68,8 @@ type Modules struct {
 	SpanPercentile  spanpercentile.Module
 	MetricsExplorer metricsexplorer.Module
 	Promote         promote.Module
+	Role            role.Module
+	Grant           role.Grant
 }
 
 func NewModules(
@@ -85,10 +89,12 @@ func NewModules(
 	queryParser queryparser.QueryParser,
 	config Config,
 	dashboard dashboard.Module,
+	role role.Module,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
-	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics)
+	grant := implrole.NewGrant(implrole.NewStore(sqlstore), authz)
+	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics, grant)
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 
@@ -110,5 +116,6 @@ func NewModules(
 		Services:        implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
 		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
+		Role:            role,
 	}
 }
