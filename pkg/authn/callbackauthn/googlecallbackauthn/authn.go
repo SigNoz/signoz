@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -23,12 +24,15 @@ const (
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
 type AuthN struct {
-	store authtypes.AuthNStore
+	store    authtypes.AuthNStore
+	settings factory.ScopedProviderSettings
 }
 
-func New(ctx context.Context, store authtypes.AuthNStore) (*AuthN, error) {
+func New(ctx context.Context, store authtypes.AuthNStore, providerSettings factory.ProviderSettings) (*AuthN, error) {
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/authn/callbackauthn/googlecallbackauthn")
 	return &AuthN{
-		store: store,
+		store:    store,
+		settings: settings,
 	}, nil
 }
 
@@ -57,16 +61,19 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	if err := query.Get("error"); err != "" {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: error while authenticating").WithAdditional(query.Get("error_description"))
+		a.settings.Logger().ErrorContext(ctx, "google: error while authenticating", "error", err, "error_description", query.Get("error_description"))
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: error while authenticating")
 	}
 
 	state, err := authtypes.NewStateFromString(query.Get("state"))
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeInvalidState, "google: invalid state").WithAdditional(err.Error())
+		a.settings.Logger().ErrorContext(ctx, "google: invalid state", "error", err)
+		return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeInvalidState, "google: invalid state")
 	}
 
 	authDomain, err := a.store.GetAuthDomainFromID(ctx, state.DomainID)
 	if err != nil {
+		a.settings.Logger().ErrorContext(ctx, "google: could not get auth domain", "error", err)
 		return nil, err
 	}
 
@@ -75,10 +82,12 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	if err != nil {
 		var retrieveError *oauth2.RetrieveError
 		if errors.As(err, &retrieveError) {
-			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to get token").WithAdditional(retrieveError.ErrorDescription).WithAdditional(string(retrieveError.Body))
+			a.settings.Logger().ErrorContext(ctx, "google: failed to get token", "error", err, "error_description", retrieveError.ErrorDescription, "body", string(retrieveError.Body))
+			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to get token")
 		}
 
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: failed to get token").WithAdditional(err.Error())
+		a.settings.Logger().ErrorContext(ctx, "google: failed to get token", "error", err)
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: failed to get token")
 	}
 
 	rawIDToken, ok := token.Extra("id_token").(string)
@@ -89,7 +98,8 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	verifier := oidcProvider.Verifier(&oidc.Config{ClientID: authDomain.AuthDomainConfig().Google.ClientID})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to verify token").WithAdditional(err.Error())
+		a.settings.Logger().ErrorContext(ctx, "google: failed to verify token", "error", err)
+		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to verify token")
 	}
 
 	var claims struct {
@@ -100,11 +110,13 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	if err := idToken.Claims(&claims); err != nil {
-		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: missing or invalid claims").WithAdditional(err.Error())
+		a.settings.Logger().ErrorContext(ctx, "google: missing or invalid claims", "error", err)
+		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: missing or invalid claims")
 	}
 
 	if claims.HostedDomain != authDomain.StorableAuthDomain().Name {
-		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: unexpected hd claim %s", claims.HostedDomain)
+		a.settings.Logger().ErrorContext(ctx, "google: unexpected hd claim", "expected", authDomain.StorableAuthDomain().Name, "actual", claims.HostedDomain)
+		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: unexpected hosted domain claim")
 	}
 
 	email, err := valuer.NewEmail(claims.Email)
@@ -165,16 +177,17 @@ func (a *AuthN) fetchGoogleWorkspaceGroups(ctx context.Context, userEmail string
 
 	adminService, err := admin.NewService(ctx, option.WithHTTPClient(jwtConfig.Client(ctx)))
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to create directory service").WithAdditional(err.Error())
+		a.settings.Logger().ErrorContext(ctx, "google: unable to create directory service", "error", err)
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to create directory service")
 	}
 
 	checkedGroups := make(map[string]struct{})
 
-	return a.getGroups(adminService, userEmail, config.FetchTransitiveGroupMembership, checkedGroups)
+	return a.getGroups(ctx, adminService, userEmail, config.FetchTransitiveGroupMembership, checkedGroups)
 }
 
 // Recursive method
-func (a *AuthN) getGroups(adminService *admin.Service, userEmail string, fetchTransitive bool, checkedGroups map[string]struct{}) ([]string, error) {
+func (a *AuthN) getGroups(ctx context.Context, adminService *admin.Service, userEmail string, fetchTransitive bool, checkedGroups map[string]struct{}) ([]string, error) {
 	var userGroups []string
 	var pageToken string
 
@@ -186,7 +199,8 @@ func (a *AuthN) getGroups(adminService *admin.Service, userEmail string, fetchTr
 
 		groupList, err := call.Do()
 		if err != nil {
-			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to list groups").WithAdditional(err.Error())
+			a.settings.Logger().ErrorContext(ctx, "google: unable to list groups", "error", err)
+			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to list groups")
 		}
 
 		for _, group := range groupList.Groups {
@@ -198,9 +212,10 @@ func (a *AuthN) getGroups(adminService *admin.Service, userEmail string, fetchTr
 			userGroups = append(userGroups, group.Email)
 
 			if fetchTransitive {
-				transitiveGroups, err := a.getGroups(adminService, group.Email, fetchTransitive, checkedGroups)
+				transitiveGroups, err := a.getGroups(ctx, adminService, group.Email, fetchTransitive, checkedGroups)
 				if err != nil {
-					return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to list transitive groups").WithAdditional(err.Error())
+					a.settings.Logger().ErrorContext(ctx, "google: unable to list transitive groups", "error", err)
+					return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to list transitive groups")
 				}
 				userGroups = append(userGroups, transitiveGroups...)
 			}
