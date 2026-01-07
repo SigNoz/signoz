@@ -523,7 +523,7 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 		return []*servicetypesv1.ResponseItem{}, []string{}
 	}
 
-	periodSeconds := float64((endMs - startMs) / 1000)
+	periodSeconds := float64(endMs-startMs) / 1000.0
 
 	// locate service.name column and aggregation columns by queryName
 	serviceNameRespIndex := -1
