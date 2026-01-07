@@ -264,6 +264,7 @@
 			.input-error-message-container {
 				color: var(--bg-cherry-400);
 				display: flex;
+				flex-direction: column;
 				align-items: center;
 				padding: 8px;
 				cursor: default;
@@ -271,6 +272,30 @@
 				gap: 8px;
 				background-color: rgba(255, 219, 218, 0.1);
 				border-radius: 3px;
+
+				.input-error-message-title {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+					width: 100%;
+				}
+
+				.input-error-message-description {
+					font-size: 12px;
+					width: 100%;
+
+					white-space: pre-wrap;
+					word-break: break-word;
+					word-wrap: break-word;
+					overflow-wrap: break-word;
+					hyphens: auto;
+					text-align: left;
+					text-wrap: balance;
+					text-justify: inter-word;
+					text-indent: 0;
+					text-align-last: auto;
+					line-height: normal;
+				}
 			}
 		}
 

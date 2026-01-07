@@ -27,6 +27,7 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
+import { TimeRangeValidationResult } from 'utils/timeUtils';
 
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
@@ -50,7 +51,7 @@ interface CustomTimePickerPopoverContentProps {
 	onExitLiveLogs: () => void;
 	showRecentlyUsed: boolean;
 	customDateTimeInputStatus: CustomTimePickerInputStatus;
-	inputErrorMessage: string | null;
+	inputErrorDetails: TimeRangeValidationResult['errorDetails'] | null;
 }
 
 interface RecentlyUsedDateTimeRange {
@@ -78,7 +79,7 @@ function CustomTimePickerPopoverContent({
 	onExitLiveLogs,
 	showRecentlyUsed = true,
 	customDateTimeInputStatus = CustomTimePickerInputStatus.UNSET,
-	inputErrorMessage,
+	inputErrorDetails,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { pathname } = useLocation();
 
@@ -233,10 +234,20 @@ function CustomTimePickerPopoverContent({
 					) : (
 						<div className="time-selector-container">
 							{customDateTimeInputStatus === CustomTimePickerInputStatus.ERROR &&
-								inputErrorMessage && (
+								inputErrorDetails && (
 									<div className="input-error-message-container">
-										<TriangleAlertIcon color={Color.BG_CHERRY_400} size={12} />
-										<span className="input-error-message-text">{inputErrorMessage}</span>
+										<div className="input-error-message-title">
+											<TriangleAlertIcon color={Color.BG_CHERRY_400} size={16} />
+											<span className="input-error-message-text">
+												{inputErrorDetails.message}
+											</span>
+										</div>
+
+										{inputErrorDetails.description && (
+											<p className="input-error-message-description">
+												{inputErrorDetails.description}
+											</p>
+										)}
 									</div>
 								)}
 

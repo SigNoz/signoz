@@ -183,12 +183,15 @@
 	font-size: 11px;
 	color: var(--bg-vanilla-400);
 	background-color: var(--bg-ink-200);
-}
 
-.time-input-prefix {
+	&.is-live {
+		background-color: transparent;
+		color: var(--bg-forest-500);
+	}
+
 	.live-dot-icon {
-		width: 6px;
-		height: 6px;
+		width: 8px;
+		height: 8px;
 		border-radius: 50%;
 		background-color: var(--bg-forest-500);
 		animation: ripple 1s infinite;
@@ -202,7 +205,7 @@
 	0% {
 		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
 	}
-	70% {
+	60% {
 		box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
 	}
 	100% {

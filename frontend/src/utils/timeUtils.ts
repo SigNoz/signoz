@@ -170,3 +170,100 @@ export const getDaysUntilExpiry = (expiresAt: string): number => {
 	if (!date.isValid()) return 0;
 	return date.diff(dayjs(), 'day');
 };
+
+/**
+ * Validation result for a time range.
+ */
+export interface TimeRangeValidationResult {
+	isValid: boolean;
+	errorDetails?: {
+		message: string;
+		code: string;
+		description: string;
+	};
+	startTimeMs?: number;
+	endTimeMs?: number;
+}
+
+/**
+ * Validates a start and end datetime string.
+ *
+ * Validation rules:
+ * 1. Both start and end must be valid date-time values
+ * 2. End time must be after start time
+ * 3. End time must not be in the future
+ *
+ * Assumptions:
+ * - Input values follow the provided date-time format
+ * - All comparisons are performed in epoch milliseconds
+ *
+ * @param startTime - Start datetime string
+ * @param endTime - End datetime string
+ * @param format - Expected date-time format (e.g. DD/MM/YYYY HH:mm:ss)
+ * @returns Validation result with parsed epoch milliseconds
+ */
+export const validateTimeRange = (
+	startTime: string,
+	endTime: string,
+	format: string,
+): TimeRangeValidationResult => {
+	const start = dayjs(startTime, format, true);
+	const end = dayjs(endTime, format, true);
+	const now = dayjs();
+
+	// Invalid format or parsing failure
+	if (!start.isValid() || !end.isValid()) {
+		return {
+			isValid: false,
+			errorDetails: {
+				message: 'Invalid date/time format',
+				code: 'INVALID_DATE_TIME_FORMAT',
+				description: `
+Please enter a valid date/time format.
+
+Examples:
+
+Date Time Range:
+${now.subtract(1, 'hour').format(format)} - ${now.format(format)}
+
+Time Duration Shortcuts:
+15m, 2h, 2d, 2w
+
+`,
+			},
+		};
+	}
+
+	const startTimeMs = start.valueOf();
+	const endTimeMs = end.valueOf();
+
+	// End must be after start
+	if (endTimeMs <= startTimeMs) {
+		return {
+			isValid: false,
+			errorDetails: {
+				message: 'End time must be after start time',
+				code: 'END_TIME_MUST_BE_AFTER_START_TIME',
+				description: 'Please enter a valid end time that is after the start time',
+			},
+		};
+	}
+
+	// End must not be in the future
+	if (end.isAfter(now)) {
+		return {
+			isValid: false,
+			errorDetails: {
+				message: 'End time cannot be in the future',
+				code: 'END_TIME_CANNOT_BE_IN_THE_FUTURE',
+				description: 'Please enter a valid end time that is not in the future',
+			},
+		};
+	}
+
+	return {
+		isValid: true,
+		startTimeMs,
+		endTimeMs,
+	};
+};
