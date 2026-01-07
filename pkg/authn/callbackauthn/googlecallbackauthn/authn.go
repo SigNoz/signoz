@@ -21,10 +21,6 @@ const (
 	redirectPath string = "/api/v1/complete/google"
 )
 
-var (
-	scopes []string = []string{"email", "profile"}
-)
-
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
 type AuthN struct {
@@ -146,7 +142,7 @@ func (a *AuthN) oauth2Config(siteURL *url.URL, authDomain *authtypes.AuthDomain,
 		ClientID:     authDomain.AuthDomainConfig().Google.ClientID,
 		ClientSecret: authDomain.AuthDomainConfig().Google.ClientSecret,
 		Endpoint:     provider.Endpoint(),
-		Scopes:       scopes,
+		Scopes:       authDomain.AuthDomainConfig().Google.Scopes,
 		RedirectURL: (&url.URL{
 			Scheme: siteURL.Scheme,
 			Host:   siteURL.Host,
