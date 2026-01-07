@@ -483,7 +483,7 @@ function FormAlertRules({
 					chQueries: mapQueryDataToApi(currentQuery.clickhouse_sql, 'name').data,
 					queryType: currentQuery.queryType,
 					panelType: panelType || initQuery.panelType,
-					unit: yAxisUnit || currentQuery.unit,
+					unit: yAxisUnit,
 				}),
 			},
 		};
@@ -789,9 +789,11 @@ function FormAlertRules({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
 			?.active || false;
 
-	// Only fetch when creating a metrics-based alert
-	const fetchYAxisUnit =
-		isEmpty(ruleId) && alertType === AlertTypes.METRICS_BASED_ALERT;
+	// Only fetch when creating a new metrics-based alert rule
+	const fetchYAxisUnit = useMemo(
+		() => isNewRule && alertType === AlertTypes.METRICS_BASED_ALERT,
+		[isNewRule, alertType],
+	);
 
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
 		alertDef.condition.selectedQueryName,

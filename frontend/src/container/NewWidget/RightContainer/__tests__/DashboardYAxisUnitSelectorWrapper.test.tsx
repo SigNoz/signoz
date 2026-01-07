@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import * as getYAxisUnitHooks from 'hooks/useGetYAxisUnit';
 
-import YAxisUnitSelectorV2 from '../YAxisUnitSelectorV2';
+import DashboardYAxisUnitSelectorWrapper from '../DashboardYAxisUnitSelectorWrapper';
 
 describe('YAxisUnitSelectorV2', () => {
 	const mockUseGetYAxisUnit = jest.spyOn(getYAxisUnitHooks, 'default');
@@ -19,7 +19,7 @@ describe('YAxisUnitSelectorV2', () => {
 
 	it('should render the selector with correct label and value', () => {
 		render(
-			<YAxisUnitSelectorV2
+			<DashboardYAxisUnitSelectorWrapper
 				value={UniversalYAxisUnit.BYTES}
 				onSelect={onSelect}
 				fieldLabel="Bytes label"
@@ -38,7 +38,7 @@ describe('YAxisUnitSelectorV2', () => {
 			isError: false,
 		});
 		render(
-			<YAxisUnitSelectorV2
+			<DashboardYAxisUnitSelectorWrapper
 				value={UniversalYAxisUnit.BYTES}
 				onSelect={onSelect}
 				fieldLabel="Bytes label"
@@ -50,7 +50,7 @@ describe('YAxisUnitSelectorV2', () => {
 
 	it('should not call onSelect when showWarning is false', () => {
 		render(
-			<YAxisUnitSelectorV2
+			<DashboardYAxisUnitSelectorWrapper
 				value={UniversalYAxisUnit.BYTES}
 				onSelect={onSelect}
 				fieldLabel="Bytes label"
@@ -67,7 +67,7 @@ describe('YAxisUnitSelectorV2', () => {
 			isError: false,
 		});
 		render(
-			<YAxisUnitSelectorV2
+			<DashboardYAxisUnitSelectorWrapper
 				value={UniversalYAxisUnit.BYTES}
 				onSelect={onSelect}
 				fieldLabel="Bytes label"

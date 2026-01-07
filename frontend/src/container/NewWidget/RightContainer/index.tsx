@@ -67,11 +67,11 @@ import {
 	panelTypeVsYAxisUnit,
 } from './constants';
 import ContextLinks from './ContextLinks';
+import DashboardYAxisUnitSelectorWrapper from './DashboardYAxisUnitSelectorWrapper';
 import LegendColors from './LegendColors/LegendColors';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
-import YAxisUnitSelectorV2 from './YAxisUnitSelectorV2';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -88,7 +88,6 @@ interface VariableOption {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function RightContainer({
-	isNewDashboard,
 	description,
 	setDescription,
 	setTitle,
@@ -130,6 +129,7 @@ function RightContainer({
 	contextLinks,
 	setContextLinks,
 	enableDrillDown = false,
+	isNewDashboard,
 }: RightContainerProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 	const [inputValue, setInputValue] = useState(title);
@@ -354,7 +354,7 @@ function RightContainer({
 				)}
 
 				{allowYAxisUnit && (
-					<YAxisUnitSelectorV2
+					<DashboardYAxisUnitSelectorWrapper
 						onSelect={setYAxisUnit}
 						value={yAxisUnit || ''}
 						fieldLabel={

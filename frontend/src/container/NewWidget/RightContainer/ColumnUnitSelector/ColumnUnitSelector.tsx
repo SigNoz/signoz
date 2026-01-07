@@ -7,7 +7,7 @@ import { isEmpty } from 'lodash-es';
 import { Dispatch, SetStateAction, useCallback, useEffect } from 'react';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
 
-import YAxisUnitSelectorV2 from '../YAxisUnitSelectorV2';
+import YAxisUnitSelectorV2 from '../DashboardYAxisUnitSelectorWrapper';
 
 interface ColumnUnitSelectorProps {
 	columnUnits: ColumnUnit;

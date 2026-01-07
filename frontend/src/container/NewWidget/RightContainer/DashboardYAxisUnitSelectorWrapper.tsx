@@ -5,7 +5,11 @@ import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
 import { Dispatch, SetStateAction, useEffect } from 'react';
 
 type OnSelectType = Dispatch<SetStateAction<string>> | ((val: string) => void);
-function YAxisUnitSelectorV2({
+
+/**
+ * Wrapper component for the y-axis unit selector for dashboards.
+ */
+function DashboardYAxisUnitSelectorWrapper({
 	value,
 	onSelect,
 	fieldLabel,
@@ -49,9 +53,9 @@ function YAxisUnitSelectorV2({
 	);
 }
 
-YAxisUnitSelectorV2.defaultProps = {
+DashboardYAxisUnitSelectorWrapper.defaultProps = {
 	selectedQueryName: undefined,
 	onClear: undefined,
 };
 
-export default YAxisUnitSelectorV2;
+export default DashboardYAxisUnitSelectorWrapper;
