@@ -106,11 +106,12 @@ function SignUp(): JSX.Element {
 
 	const signUp = async (values: FormValues): Promise<void> => {
 		try {
-			const { organizationName, password, email } = values;
+			const { organizationName, password, email, firstName } = values;
 			const user = await signUpApi({
 				email,
 				orgDisplayName: organizationName,
 				password,
+				name: firstName,
 				token: params.get('token') || undefined,
 			});
 
@@ -142,10 +143,6 @@ function SignUp(): JSX.Element {
 			await afterLogin(token.data.accessToken, token.data.refreshToken);
 		} catch (error) {
 			setFormError(error as APIError);
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
 		}
 	};
 
@@ -314,6 +311,7 @@ function SignUp(): JSX.Element {
 						<Button
 							variant="solid"
 							color="primary"
+							type="submit"
 							onClick={handleSubmit}
 							data-attr="signup"
 							disabled={isValidForm()}

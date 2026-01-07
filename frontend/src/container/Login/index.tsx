@@ -91,6 +91,7 @@ function Login(): JSX.Element {
 	const onNextHandler = async (): Promise<void> => {
 		const email = form.getFieldValue('email');
 		setIsLoadingSessionsContext(true);
+		setErrorMessage(undefined);
 
 		try {
 			const sessionsContextResponse = await get({
@@ -182,6 +183,7 @@ function Login(): JSX.Element {
 
 	const onSubmitHandler: () => Promise<void> = async () => {
 		setIsSubmitting(true);
+		setErrorMessage(undefined);
 
 		try {
 			if (isPasswordAuthN) {

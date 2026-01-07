@@ -1,6 +1,7 @@
 import './TrustBadgesFooter.styles.scss';
 
 import { ArrowUpRight } from 'lucide-react';
+import React from 'react';
 
 interface TrustBadge {
 	icon?: string;
@@ -32,8 +33,8 @@ function TrustBadgesFooter(): JSX.Element {
 		<footer className="trust-badges-footer">
 			<div className="trust-badges-footer-content">
 				{trustBadges.map((badge, index) => (
-					<>
-						<div key={badge.text} className="trust-footer-item">
+					<React.Fragment key={badge.text}>
+						<div className="trust-footer-item">
 							{badge.icon && (
 								<img
 									loading="lazy"
@@ -57,12 +58,9 @@ function TrustBadgesFooter(): JSX.Element {
 							)}
 						</div>
 						{index < trustBadges.length - 1 && (
-							<div
-								key={`separator-${badge.text}`}
-								className="trust-footer-separator"
-							/>
+							<div className="trust-footer-separator" />
 						)}
-					</>
+					</React.Fragment>
 				))}
 			</div>
 		</footer>

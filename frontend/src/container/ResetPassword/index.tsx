@@ -47,6 +47,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	const handleFormSubmit: () => Promise<void> = async () => {
 		try {
 			setLoading(true);
+			setErrorMessage(null);
 			const { password } = form.getFieldsValue();
 
 			await resetPasswordApi({
@@ -201,6 +202,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 						<Button
 							variant="solid"
 							color="primary"
+							type="submit"
 							onClick={handleSubmit}
 							data-attr="reset-password"
 							disabled={!isValidPassword || loading}

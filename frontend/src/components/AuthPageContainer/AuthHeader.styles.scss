@@ -47,7 +47,7 @@
 	border-radius: 2px;
 	cursor: pointer;
 	transition: opacity 0.2s ease;
-	
+
 	span {
 		font-family: var(--font-family-inter, Inter, sans-serif);
 		font-size: 11px;
@@ -56,12 +56,12 @@
 		color: var(--text-neutral-dark-100, #adb4c2);
 		text-align: center;
 	}
-	
+
 	svg {
 		flex-shrink: 0;
 		color: var(--text-neutral-dark-100, #adb4c2);
 	}
-	
+
 	&:hover {
 		opacity: 0.8;
 	}
@@ -71,14 +71,13 @@
 	.auth-header-logo-text {
 		color: var(--text-neutral-light-100, #62636c);
 	}
-	
+
 	.auth-header-help-button {
 		background: var(--bg-vanilla-200, #f5f5f5);
-		
+
 		span,
 		svg {
 			color: var(--text-neutral-light-200, #80828d);
 		}
 	}
 }
-
