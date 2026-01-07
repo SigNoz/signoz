@@ -152,8 +152,6 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", err
 	}
 
-	module.settings.Logger().InfoContext(ctx, "$$$$$$$$$$$$$$ callback values %%%%%%%%%%%%%%", "values", values)
-
 	callbackIdentity, err := callbackAuthN.HandleCallback(ctx, values)
 	if err != nil {
 		module.settings.Logger().ErrorContext(ctx, "failed to handle callback", "error", err, "authn_provider", authNProvider)
@@ -166,16 +164,6 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	}
 
 	roleMapping := authDomain.AuthDomainConfig().RoleMapping
-
-	// DEBUG: Add this line to print the callback identity
-	module.settings.Logger().InfoContext(ctx, "$$$$$$$$$$$$$$$$ DEBUG callback identity ###############",
-		"email", callbackIdentity.Email,
-		"name", callbackIdentity.Name,
-		"groups", callbackIdentity.Groups,
-		"role", callbackIdentity.Role,
-		"orgID", callbackIdentity.OrgID,
-	)
-
 	role := resolveRole(callbackIdentity, roleMapping)
 
 	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, role, callbackIdentity.OrgID)
