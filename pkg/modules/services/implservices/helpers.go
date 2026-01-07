@@ -2,8 +2,6 @@ package implservices
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"strings"
 	"time"
 
@@ -11,16 +9,6 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 )
-
-func getOrDefaultEnv(key string, fallback string) string {
-	log.Println("key", key, "fallback", fallback)
-
-	v := os.Getenv(key)
-	if len(v) == 0 {
-		return fallback
-	}
-	return v
-}
 
 // spanMetricsSingleBucketStep forces a single bucket for percentile aggregations
 // by making the step interval very large - currently 1 year
