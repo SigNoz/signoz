@@ -2067,6 +2067,431 @@ paths:
       summary: Get features
       tags:
       - features
+  /api/v2/metric/alerts:
+    get:
+      deprecated: false
+      description: This endpoint returns associated alerts for a specified metric
+      operationId: GetMetricAlerts
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricAlertsResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric alerts
+      tags:
+      - metrics
+  /api/v2/metric/dashboards:
+    get:
+      deprecated: false
+      description: This endpoint returns associated dashboards for a specified metric
+      operationId: GetMetricDashboards
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardsResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric dashboards
+      tags:
+      - metrics
+  /api/v2/metric/highlights:
+    get:
+      deprecated: false
+      description: This endpoint returns highlights like number of datapoints, totaltimeseries,
+        active time series, last received time for a specified metric
+      operationId: GetMetricHighlights
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricHighlightsResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric highlights
+      tags:
+      - metrics
+  /api/v2/metrics/{metric_name}/metadata:
+    post:
+      deprecated: false
+      description: This endpoint helps to update metadata information like metric
+        description, unit, type, temporality, monotonicity for a specified metric
+      operationId: UpdateMetricMetadata
+      parameters:
+      - in: path
+        name: metric_name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsexplorertypesUpdateMetricMetadataRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Update metric metadata
+      tags:
+      - metrics
+  /api/v2/metrics/attributes:
+    post:
+      deprecated: false
+      description: This endpoint returns attribute keys and their unique values for
+        a specified metric
+      operationId: GetMetricAttributes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsexplorertypesMetricAttributesRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricAttributesResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric attributes
+      tags:
+      - metrics
+  /api/v2/metrics/metadata:
+    get:
+      deprecated: false
+      description: This endpoint returns metadata information like metric description,
+        unit, type, temporality, monotonicity for a specified metric
+      operationId: GetMetricMetadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricMetadata'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric metadata
+      tags:
+      - metrics
+  /api/v2/metrics/stats:
+    post:
+      deprecated: false
+      description: This endpoint provides list of metrics with their number of samples
+        and timeseries for the given time range
+      operationId: GetMetricsStats
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsexplorertypesStatsRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesStatsResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metrics statistics
+      tags:
+      - metrics
+  /api/v2/metrics/treemap:
+    post:
+      deprecated: false
+      description: This endpoint returns a treemap visualization showing the proportional
+        distribution of metrics by sample count or time series count
+      operationId: GetMetricsTreemap
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsexplorertypesTreemapRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesTreemapResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metrics treemap
+      tags:
+      - metrics
   /api/v2/orgs/me:
     get:
       deprecated: false
@@ -2586,6 +3011,202 @@ components:
           nullable: true
           type: object
       type: object
+    MetricsexplorertypesMetricAlert:
+      properties:
+        alertId:
+          type: string
+        alertName:
+          type: string
+      type: object
+    MetricsexplorertypesMetricAlertsResponse:
+      properties:
+        alerts:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesMetricAlert'
+          nullable: true
+          type: array
+      type: object
+    MetricsexplorertypesMetricAttribute:
+      properties:
+        key:
+          type: string
+        valueCount:
+          minimum: 0
+          type: integer
+        values:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
+    MetricsexplorertypesMetricAttributesRequest:
+      properties:
+        end:
+          nullable: true
+          type: integer
+        metricName:
+          type: string
+        start:
+          nullable: true
+          type: integer
+      type: object
+    MetricsexplorertypesMetricAttributesResponse:
+      properties:
+        attributes:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesMetricAttribute'
+          nullable: true
+          type: array
+        totalKeys:
+          format: int64
+          type: integer
+      type: object
+    MetricsexplorertypesMetricDashboard:
+      properties:
+        dashboardId:
+          type: string
+        dashboardName:
+          type: string
+        widgetId:
+          type: string
+        widgetName:
+          type: string
+      type: object
+    MetricsexplorertypesMetricDashboardsResponse:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesMetricDashboard'
+          nullable: true
+          type: array
+      type: object
+    MetricsexplorertypesMetricHighlightsResponse:
+      properties:
+        activeTimeSeries:
+          minimum: 0
+          type: integer
+        dataPoints:
+          minimum: 0
+          type: integer
+        lastReceived:
+          minimum: 0
+          type: integer
+        totalTimeSeries:
+          minimum: 0
+          type: integer
+      type: object
+    MetricsexplorertypesMetricMetadata:
+      properties:
+        description:
+          type: string
+        isMonotonic:
+          type: boolean
+        temporality:
+          type: string
+        type:
+          type: string
+        unit:
+          type: string
+      type: object
+    MetricsexplorertypesStat:
+      properties:
+        description:
+          type: string
+        metricName:
+          type: string
+        samples:
+          minimum: 0
+          type: integer
+        timeseries:
+          minimum: 0
+          type: integer
+        type:
+          type: string
+        unit:
+          type: string
+      type: object
+    MetricsexplorertypesStatsRequest:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      type: object
+    MetricsexplorertypesStatsResponse:
+      properties:
+        metrics:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesStat'
+          nullable: true
+          type: array
+        total:
+          minimum: 0
+          type: integer
+      type: object
+    MetricsexplorertypesTreemapEntry:
+      properties:
+        metricName:
+          type: string
+        percentage:
+          format: double
+          type: number
+        totalValue:
+          minimum: 0
+          type: integer
+      type: object
+    MetricsexplorertypesTreemapRequest:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        limit:
+          type: integer
+        mode:
+          type: string
+        start:
+          format: int64
+          type: integer
+      type: object
+    MetricsexplorertypesTreemapResponse:
+      properties:
+        samples:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesTreemapEntry'
+          nullable: true
+          type: array
+        timeseries:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesTreemapEntry'
+          nullable: true
+          type: array
+      type: object
+    MetricsexplorertypesUpdateMetricMetadataRequest:
+      properties:
+        description:
+          type: string
+        isMonotonic:
+          type: boolean
+        metricName:
+          type: string
+        temporality:
+          type: string
+        type:
+          type: string
+        unit:
+          type: string
+      type: object
     PreferencetypesPreference:
       properties:
         allowedScopes:
@@ -2647,6 +3268,35 @@ components:
           minimum: 0
           type: integer
       type: object
+    Querybuildertypesv5Filter:
+      properties:
+        expression:
+          type: string
+      type: object
+    Querybuildertypesv5OrderBy:
+      properties:
+        direction:
+          type: string
+        key:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderByKey'
+      type: object
+    Querybuildertypesv5OrderByKey:
+      properties:
+        '-':
+          $ref: '#/components/schemas/TelemetrytypesJSONDataType'
+        description:
+          type: string
+        fieldContext:
+          type: string
+        fieldDataType:
+          type: string
+        name:
+          type: string
+        signal:
+          type: string
+        unit:
+          type: string
+      type: object
     Querybuildertypesv5QueryData:
       properties:
         results:
@@ -2687,6 +3337,8 @@ components:
           $ref: '#/components/schemas/ErrorsJSON'
         status:
           type: string
+      type: object
+    TelemetrytypesJSONDataType:
       type: object
     TypesChangePasswordRequest:
       properties:
