@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
-	"fmt"
 	"net/url"
 	"strings"
 
@@ -87,14 +86,6 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 
 		return nil, err
 	}
-
-	// DEBUG: Print all assertion values to see what's being received
-	fmt.Printf("\n=== DEBUG: All assertion values ===\n")
-	for key, attr := range assertionInfo.Values {
-		fmt.Printf("  Key: %q, Name: %q, FriendlyName: %q, Values: %v\n",
-			key, attr.Name, attr.FriendlyName, attr.Values)
-	}
-	fmt.Printf("=================================\n\n")
 
 	if assertionInfo.WarningInfo.InvalidTime {
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "saml: expired saml response")
