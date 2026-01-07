@@ -291,7 +291,8 @@ Options can be simple (direct link) or nested (with another question):
 1. Add your data source object to the JSON array
 2. Ensure the logo exists in `public/Logos/`
 3. Test the flow locally with `yarn dev`
-4. Verify:
+4. Validation:
+   - Navigate to the [onboarding page](http://localhost:3301/get-started-with-signoz-cloud) on your local machine
    - Data source appears in the list
    - Search keywords work correctly
    - All links redirect to the correct pages
