@@ -171,9 +171,6 @@ export const getDaysUntilExpiry = (expiresAt: string): number => {
 	return date.diff(dayjs(), 'day');
 };
 
-/**
- * Validation result for a time range.
- */
 export interface TimeRangeValidationResult {
 	isValid: boolean;
 	errorDetails?: {
@@ -237,7 +234,7 @@ Time Duration Shortcuts:
 	const startTimeMs = start.valueOf();
 	const endTimeMs = end.valueOf();
 
-	// End must be after start
+	// EndTime must be after startTime
 	if (endTimeMs <= startTimeMs) {
 		return {
 			isValid: false,
@@ -249,7 +246,7 @@ Time Duration Shortcuts:
 		};
 	}
 
-	// End must not be in the future
+	// EndTime must not be in the future
 	if (end.isAfter(now)) {
 		return {
 			isValid: false,

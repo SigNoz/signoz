@@ -277,12 +277,9 @@ function CustomTimePicker({
 
 	const handleInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
 		const inputValue = event.target.value;
-
 		setInputValue(inputValue);
 
-		setInputStatus(CustomTimePickerInputStatus.UNSET);
-		onError(false);
-		setInputErrorDetails(null);
+		resetErrorStatus();
 	};
 
 	const handleInputPressEnter = (): void => {
