@@ -3,12 +3,11 @@ import '../OnboardingQuestionaire.styles.scss';
 
 import { Button } from '@signozhq/button';
 import { Checkbox } from '@signozhq/checkbox';
-import { Color } from '@signozhq/design-tokens';
 import { Input } from '@signozhq/input';
 import { Typography } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export interface SignozDetails {
@@ -145,13 +144,6 @@ export function AboutSigNozQuestions({
 										placeholder="Please specify your interest"
 										value={otherInterestInSignoz}
 										autoFocus
-										addonAfter={
-											otherInterestInSignoz !== '' ? (
-												<CheckCircle size={12} color={Color.BG_FOREST_500} />
-											) : (
-												''
-											)
-										}
 										onChange={(e): void => setOtherInterestInSignoz(e.target.value)}
 									/>
 								)}
