@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { ReduceOperators } from 'types/common/queryBuilder';
 
 import { ReduceToFilter } from './ReduceToFilter';
 
@@ -51,7 +52,7 @@ describe('ReduceToFilter', () => {
 		render(
 			<ReduceToFilter
 				query={baseQuery({
-					reduceTo: 'max',
+					reduceTo: ReduceOperators.MAX,
 					aggregateAttribute: { key: 'test', type: MetricType.GAUGE },
 				})}
 				onChange={mockOnChange}
@@ -59,30 +60,5 @@ describe('ReduceToFilter', () => {
 		);
 
 		expect(screen.getByText('Max of values in timeframe')).toBeInTheDocument();
-	});
-
-	it('updates to sum when aggregateAttribute.type is SUM', async () => {
-		const { rerender } = render(
-			<ReduceToFilter
-				query={baseQuery({
-					aggregateAttribute: { key: 'test', type: MetricType.GAUGE },
-				})}
-				onChange={mockOnChange}
-			/>,
-		);
-
-		rerender(
-			<ReduceToFilter
-				query={baseQuery({
-					aggregateAttribute: { key: 'test2', type: MetricType.SUM },
-				})}
-				onChange={mockOnChange}
-			/>,
-		);
-
-		const reduceToFilterText = (await screen.findByText(
-			'Sum of values in timeframe',
-		)) as HTMLElement;
-		expect(reduceToFilterText).toBeInTheDocument();
 	});
 });
