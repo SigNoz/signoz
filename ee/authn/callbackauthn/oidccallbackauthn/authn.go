@@ -2,7 +2,6 @@ package oidccallbackauthn
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/authn"
@@ -122,13 +121,6 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 			return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "oidc: email is not verified")
 		}
 	}
-
-	// DEBUG: Print all assertion values to see what's being received
-	fmt.Printf("\n=== DEBUG: All assertion values ===\n")
-	for key, attr := range claims {
-		fmt.Printf("  Key: %q, Value: %v\n", key, attr)
-	}
-	fmt.Printf("=================================\n\n")
 
 	name := ""
 	if nameClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Name; nameClaim != "" {
