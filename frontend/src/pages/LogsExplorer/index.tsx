@@ -81,26 +81,20 @@ function LogsExplorer(): JSX.Element {
 		async (
 			view: ExplorerViews,
 			querySearchParameters?: ICurrentQueryData,
-			fieldKey?: string,
 		): Promise<void> => {
 			const nextPanelType = defaultTo(
 				explorerViewToPanelType[view],
 				PANEL_TYPES.LIST,
 			);
 
+			handleSetConfig(nextPanelType, DataSource.LOGS);
+			setSelectedView(view);
+
 			if (view !== ExplorerViews.LIST) {
 				setShowLiveLogs(false);
 			}
 
-			await handleExplorerTabChange(
-				nextPanelType,
-				querySearchParameters,
-				undefined,
-				fieldKey || '',
-			);
-
-			handleSetConfig(nextPanelType, DataSource.LOGS);
-			setSelectedView(view);
+			handleExplorerTabChange(nextPanelType, querySearchParameters);
 		},
 		[handleSetConfig, handleExplorerTabChange, setSelectedView],
 	);

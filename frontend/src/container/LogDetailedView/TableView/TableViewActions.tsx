@@ -7,16 +7,25 @@ import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { QueryParams } from 'constants/query';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
+import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
 import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useTimezone } from 'providers/Timezone';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import {
+	AutocompleteType,
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { DataType } from '../TableView';
 import {
@@ -123,6 +132,8 @@ export default function TableViewActions(
 	} = props;
 
 	const { pathname } = useLocation();
+	const { stagedQuery, updateQueriesData } = useQueryBuilder();
+	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const { dataType, logType: fieldType } = getFieldAttributes(record.field);
 
 	// there is no option for where clause in old logs explorer and live logs page
@@ -146,13 +157,37 @@ export default function TableViewActions(
 
 	const fieldFilterKey = filterKeyForField(fieldData.field);
 
-	const handleGroupByAttribute = useCallback((): Promise<void> | void => {
-		handleChangeSelectedView?.(
-			ExplorerViews.TIMESERIES,
-			undefined,
-			fieldFilterKey,
-		);
-	}, [handleChangeSelectedView, fieldFilterKey]);
+	const handleGroupByAttribute = useCallback((): void => {
+		if (!stagedQuery) return;
+
+		const updatedQuery = updateQueriesData(stagedQuery, 'queryData', (item) => {
+			const newGroupByItem: BaseAutocompleteData = {
+				key: fieldFilterKey,
+				type: (fieldType || '') as AutocompleteType | string | null,
+				dataType: dataType as DataTypes | undefined,
+			};
+
+			const updatedGroupBy = [...(item.groupBy || []), newGroupByItem];
+
+			return { ...item, groupBy: updatedGroupBy };
+		});
+
+		const queryData: ICurrentQueryData = {
+			name: viewName,
+			id: updatedQuery.id,
+			query: updatedQuery,
+		};
+
+		handleChangeSelectedView?.(ExplorerViews.TIMESERIES, queryData);
+	}, [
+		stagedQuery,
+		updateQueriesData,
+		fieldFilterKey,
+		fieldType,
+		dataType,
+		handleChangeSelectedView,
+		viewName,
+	]);
 
 	// Memoize textToCopy computation
 	const textToCopy = useMemo(() => {
