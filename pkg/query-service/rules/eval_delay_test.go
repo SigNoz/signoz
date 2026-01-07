@@ -1359,6 +1359,150 @@ func TestCalculateEvalDelay(t *testing.T) {
 			},
 			expectedDelay: defaultDelay,
 		},
+		{
+			name: "Safe: Metric Query - Min(Time) + Min(Space) + Below",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsBelow,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+									Aggregations: []qbtypes.MetricAggregation{
+										{
+											TimeAggregation:  metrictypes.TimeAggregationMin,
+											SpaceAggregation: metrictypes.SpaceAggregationMin,
+										},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsBelow,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Unsafe: Metric Query - Min(Time) + Sum(Space) + Below",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsBelow,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+									Aggregations: []qbtypes.MetricAggregation{
+										{
+											TimeAggregation:  metrictypes.TimeAggregationMin,
+											SpaceAggregation: metrictypes.SpaceAggregationSum,
+										},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsBelow,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
+		{
+			name: "Safe: Metric Query - Count(Time) + Sum(Space) + Above",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+									Aggregations: []qbtypes.MetricAggregation{
+										{
+											TimeAggregation:  metrictypes.TimeAggregationCount,
+											SpaceAggregation: metrictypes.SpaceAggregationSum,
+										},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: 0,
+		},
+		{
+			name: "Unsafe: Metric Query - Count(Time) + Avg(Space) + Above",
+			rule: &ruletypes.PostableRule{
+				RuleCondition: &ruletypes.RuleCondition{
+					MatchType: ruletypes.AtleastOnce,
+					CompareOp: ruletypes.ValueIsAbove,
+					CompositeQuery: &v3.CompositeQuery{
+						Queries: []qbtypes.QueryEnvelope{
+							{
+								Type: qbtypes.QueryTypeBuilder,
+								Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+									Aggregations: []qbtypes.MetricAggregation{
+										{
+											TimeAggregation:  metrictypes.TimeAggregationCount,
+											SpaceAggregation: metrictypes.SpaceAggregationAvg,
+										},
+									},
+								},
+							},
+						},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{
+							{
+								Name:        "test-threshold",
+								TargetValue: &targetValue,
+								MatchType:   ruletypes.AtleastOnce,
+								CompareOp:   ruletypes.ValueIsAbove,
+							},
+						},
+					},
+				},
+			},
+			expectedDelay: defaultDelay,
+		},
 	}
 
 	for _, tt := range tests {

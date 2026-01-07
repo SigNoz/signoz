@@ -9,6 +9,46 @@ import (
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
+// Monotonicity describes the direction of value change as more data is processed
+type Monotonicity int
+
+const (
+	MonotonicityNone       Monotonicity = iota
+	MonotonicityIncreasing              // Value only goes up or stays same
+	MonotonicityDecreasing              // Value only goes down or stays same
+)
+
+// Aggregation holds both time and space aggregation
+type Aggregation struct {
+	Time  metrictypes.TimeAggregation
+	Space metrictypes.SpaceAggregation
+}
+
+// SafeAggregations maps an aggregation pair to its monotonic behavior
+var SafeAggregations = map[Aggregation]Monotonicity{
+	// --- Min Aggregation ---
+	{Time: metrictypes.TimeAggregationMin, Space: metrictypes.SpaceAggregationMin}:         MonotonicityDecreasing,
+	{Time: metrictypes.TimeAggregationMin, Space: metrictypes.SpaceAggregationUnspecified}: MonotonicityDecreasing, // Logs/Trace
+
+	// --- Max Aggregation ---
+	{Time: metrictypes.TimeAggregationMax, Space: metrictypes.SpaceAggregationMax}:         MonotonicityIncreasing,
+	{Time: metrictypes.TimeAggregationMax, Space: metrictypes.SpaceAggregationSum}:         MonotonicityIncreasing,
+	{Time: metrictypes.TimeAggregationMax, Space: metrictypes.SpaceAggregationUnspecified}: MonotonicityIncreasing, // Logs/Trace
+
+	// --- Increase Aggregation ---
+	{Time: metrictypes.TimeAggregationIncrease, Space: metrictypes.SpaceAggregationMax}:         MonotonicityIncreasing,
+	{Time: metrictypes.TimeAggregationIncrease, Space: metrictypes.SpaceAggregationSum}:         MonotonicityIncreasing,
+	{Time: metrictypes.TimeAggregationIncrease, Space: metrictypes.SpaceAggregationUnspecified}: MonotonicityIncreasing, // Logs/Trace
+
+	// --- Count Aggregation ---
+	{Time: metrictypes.TimeAggregationCount, Space: metrictypes.SpaceAggregationSum}:         MonotonicityIncreasing,
+	{Time: metrictypes.TimeAggregationCount, Space: metrictypes.SpaceAggregationUnspecified}: MonotonicityIncreasing, // Logs/Trace
+
+	// --- Count Distinct Aggregation ---
+	{Time: metrictypes.TimeAggregationCountDistinct, Space: metrictypes.SpaceAggregationSum}:         MonotonicityIncreasing,
+	{Time: metrictypes.TimeAggregationCountDistinct, Space: metrictypes.SpaceAggregationUnspecified}: MonotonicityIncreasing, // Logs/Trace
+}
+
 // CalculateEvalDelay determines if the default evaluation delay can be removed (set to 0)
 // based on the rule's match type, compare operator, and aggregation type.
 // If the combination ensures that new data will not invalidate the alert condition
@@ -132,51 +172,61 @@ func aggregationExpressionToTimeAggregation(expression string) metrictypes.TimeA
 	}
 }
 
-// extractTimeAggFromQuerySpec extracts the time aggregation from the query spec of the QueryEnvelope
-func extractTimeAggFromQuerySpec(spec any) []metrictypes.TimeAggregation {
-	timeAggs := []metrictypes.TimeAggregation{}
+// extractAggregationsFromQuerySpec extracts the aggregation (time and space) from the query spec
+func extractAggregationsFromQuerySpec(spec any) []Aggregation {
+	aggs := []Aggregation{}
 
 	// Extract the time aggregation from the query spec
 	// based on different types of query spec
 	switch spec := spec.(type) {
 	case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 		for _, agg := range spec.Aggregations {
-			timeAggs = append(timeAggs, agg.TimeAggregation)
+			aggs = append(aggs, Aggregation{
+				Time:  agg.TimeAggregation,
+				Space: agg.SpaceAggregation,
+			})
 		}
 	// the log and trace aggregations don't store the time aggregation directly but expression for the aggregation
 	// so we need to convert the expression to the corresponding time aggregation
+	// logs and traces don't support space aggregation in the same way, so we assume Unspecified
 	case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
 		for _, agg := range spec.Aggregations {
-			timeAggs = append(timeAggs, aggregationExpressionToTimeAggregation(agg.Expression))
+			aggs = append(aggs, Aggregation{
+				Time:  aggregationExpressionToTimeAggregation(agg.Expression),
+				Space: metrictypes.SpaceAggregationUnspecified,
+			})
 		}
 	case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
 		for _, agg := range spec.Aggregations {
-			timeAggs = append(timeAggs, aggregationExpressionToTimeAggregation(agg.Expression))
+			aggs = append(aggs, Aggregation{
+				Time:  aggregationExpressionToTimeAggregation(agg.Expression),
+				Space: metrictypes.SpaceAggregationUnspecified,
+			})
 		}
 	}
-	return timeAggs
+	return aggs
 }
 
 // isQuerySafe determines if a single query is safe to remove the eval delay.
 // A query is safe only if it's a Builder query (with MetricAggregation, LogAggregation, or TraceAggregation type)
-// and all its aggregations are safe.
+// and all its aggregations are safe (checked against SafeCombinations map).
 func isQuerySafe(query qbtypes.QueryEnvelope, matchType ruletypes.MatchType, compareOp ruletypes.CompareOp) bool {
 	// We only handle Builder Queries for now
 	if query.Type != qbtypes.QueryTypeBuilder {
 		return false
 	}
 
-	// extract time aggregations from the query spec
-	timeAggs := extractTimeAggFromQuerySpec(query.Spec)
+	// extract aggregations from the query spec
+	aggs := extractAggregationsFromQuerySpec(query.Spec)
 
 	// A query must have at least one aggregation
-	if len(timeAggs) == 0 {
+	if len(aggs) == 0 {
 		return false
 	}
 
 	// All aggregations in the query must be safe
-	for _, timeAgg := range timeAggs {
-		if !isAggregationSafe(timeAgg, matchType, compareOp) {
+	for _, agg := range aggs {
+		if !isAggregationSafe(agg, matchType, compareOp) {
 			return false
 		}
 	}
@@ -185,39 +235,25 @@ func isQuerySafe(query qbtypes.QueryEnvelope, matchType ruletypes.MatchType, com
 }
 
 // isAggregationSafe checks if the aggregation is safe to remove the eval delay
-func isAggregationSafe(timeAgg metrictypes.TimeAggregation, matchType ruletypes.MatchType, compareOp ruletypes.CompareOp) bool {
-	switch timeAgg {
-	case metrictypes.TimeAggregationMin:
-		// Group: Min, MinIf
-		// Value can only go down or remain same.
-
+func isAggregationSafe(agg Aggregation, matchType ruletypes.MatchType, compareOp ruletypes.CompareOp) bool {
+	// Get Monotonicity
+	monotonicity, ok := SafeAggregations[agg]
+	if !ok {
+		return false
+	}
+	switch monotonicity {
+	case MonotonicityDecreasing:
 		if matchType == ruletypes.AtleastOnce || matchType == ruletypes.AllTheTimes {
 			if compareOp == ruletypes.ValueIsBelow || compareOp == ruletypes.ValueBelowOrEq {
 				return true
 			}
 		}
-
-	case metrictypes.TimeAggregationMax:
-		// Group: Max, MaxIf
-		// Value can only go up or remain same.
-
-		if matchType == ruletypes.AtleastOnce || matchType == ruletypes.AllTheTimes {
+	case MonotonicityIncreasing:
+		if matchType == ruletypes.AtleastOnce || matchType == ruletypes.AllTheTimes || matchType == ruletypes.InTotal {
 			if compareOp == ruletypes.ValueIsAbove || compareOp == ruletypes.ValueAboveOrEq {
 				return true
 			}
 		}
-
-	case metrictypes.TimeAggregationCount, metrictypes.TimeAggregationCountDistinct:
-		// Group: Count
-		// Value can only go up or remain same.
-
-		if matchType == ruletypes.AtleastOnce || matchType == ruletypes.AllTheTimes {
-			if compareOp == ruletypes.ValueIsAbove || compareOp == ruletypes.ValueAboveOrEq {
-				return true
-			}
-		}
-
-		// Other aggregations (Sum, Avg, Rate, etc.) are not safe.
 	}
 
 	return false
