@@ -4,8 +4,8 @@ from typing import Callable
 import requests
 
 from fixtures import types
-from fixtures.logger import setup_logger
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -15,7 +15,7 @@ def test_get_user_preference(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL,  USER_ADMIN_PASSWORD)
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user/preferences"),
@@ -32,7 +32,7 @@ def test_get_set_user_preference_by_name(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL,  USER_ADMIN_PASSWORD)
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # preference does not exist
     response = requests.get(

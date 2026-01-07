@@ -577,6 +577,38 @@
 		margin-bottom: 24px;
 	}
 
+	.question-help-text {
+		display: block;
+		margin-top: 8px;
+		color: var(--text-vanilla-400);
+		font-family: Inter;
+		font-size: 13px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 22px;
+
+		.lightMode & {
+			color: var(--text-ink-300);
+		}
+	}
+
+	.question-help-link {
+		margin-left: 4px;
+		color: var(--bg-robin-400);
+		text-decoration: none;
+		font-weight: 500;
+		transition: color 0.2s ease;
+
+		&:hover {
+			color: var(--bg-robin-500);
+			text-decoration: underline;
+		}
+
+		.lightMode & {
+			color: var(--bg-robin-500);
+		}
+	}
+
 	.onboarding-question {
 		color: var(--text-vanilla-100);
 		font-family: Inter;
