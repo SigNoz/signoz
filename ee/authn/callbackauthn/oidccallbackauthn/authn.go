@@ -20,10 +20,6 @@ const (
 	redirectPath string = "/api/v1/complete/oidc"
 )
 
-var (
-	scopes []string = []string{"email", "profile", oidc.ScopeOpenID}
-)
-
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
 type AuthN struct {
@@ -143,7 +139,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 
 	var groups []string
 	if groupsClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Groups; groupsClaim != "" {
-		if g, ok := claims[groupsClaim].([]interface{}); ok {
+		if g, ok := claims[groupsClaim].([]any); ok {
 			for _, group := range g {
 				if gs, ok := group.(string); ok {
 					groups = append(groups, gs)
@@ -182,7 +178,7 @@ func (a *AuthN) oidcProviderAndoauth2Config(ctx context.Context, siteURL *url.UR
 		ClientID:     authDomain.AuthDomainConfig().OIDC.ClientID,
 		ClientSecret: authDomain.AuthDomainConfig().OIDC.ClientSecret,
 		Endpoint:     oidcProvider.Endpoint(),
-		Scopes:       scopes,
+		Scopes:       authDomain.AuthDomainConfig().OIDC.Scopes,
 		RedirectURL: (&url.URL{
 			Scheme: siteURL.Scheme,
 			Host:   siteURL.Host,

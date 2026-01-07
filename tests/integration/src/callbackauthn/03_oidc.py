@@ -75,7 +75,7 @@ def test_oidc_authn(
     signoz: SigNoz,
     idp: TestContainerIDP,  # pylint: disable=unused-argument
     driver: webdriver.Chrome,
-    create_user_idp: Callable[[str, str, bool], None],
+    create_user_idp: Callable[[str, str, bool, str, str], None],
     idp_login: Callable[[str, str], None],
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
@@ -485,6 +485,80 @@ def test_oidc_role_mapping_case_insensitive(
 
     assert found_user is not None
     assert found_user["role"] == "EDITOR"
+
+
+def test_oidc_name_mapping(
+    signoz: SigNoz,
+    idp: TestContainerIDP,
+    driver: webdriver.Chrome,
+    create_user_idp: Callable[[str, str, bool, str, str], None],
+    idp_login: Callable[[str, str], None],
+    get_token: Callable[[str, str], str],
+    get_session_context: Callable[[str], dict],
+) -> None:
+    """Test that user's display name is mapped from IDP name claim."""
+    email = "named-user@oidc.integration.test"
+    
+    # Create user with explicit first/last name
+    create_user_idp(
+        email, 
+        "password123", 
+        True,
+        first_name="John",
+        last_name="Doe"
+    )
+
+    _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    
+    assert response.status_code == HTTPStatus.OK
+    users = response.json()["data"]
+    found_user = next((u for u in users if u["email"] == email), None)
+    
+    assert found_user is not None
+    # Keycloak concatenates firstName + lastName into "name" claim
+    assert found_user["displayName"] == "John Doe"
+    assert found_user["role"] == "VIEWER"  # Default role
+
+
+def test_oidc_empty_name_uses_fallback(
+    signoz: SigNoz,
+    idp: TestContainerIDP,
+    driver: webdriver.Chrome,
+    create_user_idp: Callable[[str, str, bool, str, str], None],
+    idp_login: Callable[[str, str], None],
+    get_token: Callable[[str, str], str],
+    get_session_context: Callable[[str], dict],
+) -> None:
+    """Test that user without name in IDP still gets created (may have empty displayName)."""
+    email = "no-name@oidc.integration.test"
+    
+    # Create user without first/last name
+    create_user_idp(email, "password123", True)
+
+    _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    
+    assert response.status_code == HTTPStatus.OK
+    users = response.json()["data"]
+    found_user = next((u for u in users if u["email"] == email), None)
+    
+    # User should still be created even with empty name
+    assert found_user is not None
+    assert found_user["role"] == "VIEWER"
+    # Note: displayName may be empty - this is a known limitation
 
 
 # def test_oidc_role_mapping_update_on_subsequent_login(
