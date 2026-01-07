@@ -45,7 +45,6 @@ func (module *module) GetObjects(ctx context.Context, orgID valuer.UUID, id valu
 	return nil, errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-// GetByOrgIDAndName implements [role.Module].
 func (module *module) GetByOrgIDAndName(context.Context, valuer.UUID, string) (*roletypes.Role, error) {
 	panic("unimplemented")
 }
@@ -62,64 +61,14 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (module *module) Assign(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
-	role, err := module.GetByOrgIDAndName(ctx, orgID, name)
-	if err != nil {
-		return err
-	}
-
-	tuples, err := authtypes.TypeableRole.Tuples(
-		subject,
-		authtypes.RelationAssignee,
-		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, role.ID.StringValue()),
-		},
-		orgID,
-	)
-	if err != nil {
-		return err
-	}
-	return module.authz.Write(ctx, tuples, nil)
-}
-
-func (module *module) Revoke(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
-	role, err := module.GetByOrgIDAndName(ctx, orgID, name)
-	if err != nil {
-		return err
-	}
-
-	tuples, err := authtypes.TypeableRole.Tuples(
-		subject,
-		authtypes.RelationAssignee,
-		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, role.ID.StringValue()),
-		},
-		orgID,
-	)
-	if err != nil {
-		return err
-	}
-	return module.authz.Write(ctx, nil, tuples)
-}
-
-func (module *module) UpdateAssignment(ctx context.Context, orgID valuer.UUID, existingRoleName string, updatedRolename string, subject string) error {
-	err := module.Revoke(ctx, orgID, existingRoleName, subject)
-	if err != nil {
-		return err
-	}
-
-	err = module.Assign(ctx, orgID, updatedRolename, subject)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
 func (module *module) MustGetTypeables() []authtypes.Typeable {
 	return nil
+}
+
+func (module *module) SetManagedRoles(context.Context, valuer.UUID) error {
+	panic("unimplemented")
 }

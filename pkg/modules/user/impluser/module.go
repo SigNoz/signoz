@@ -31,11 +31,11 @@ type Module struct {
 	settings  factory.ScopedProviderSettings
 	orgSetter organization.Setter
 	analytics analytics.Analytics
-	role      role.Module
+	grant     role.Grant
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics, role role.Module) root.Module {
+func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics, grant role.Grant) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -44,7 +44,7 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		settings:  settings,
 		orgSetter: orgSetter,
 		analytics: analytics,
-		role:      role,
+		grant:     grant,
 	}
 }
 
@@ -168,7 +168,7 @@ func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ..
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
 	// since assign is idempotant multiple calls to assign won't cause issues in case of retries.
-	err := module.role.Assign(ctx, input.OrgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(input.Role), authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
+	err := module.grant.Grant(ctx, input.OrgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(input.Role), authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
 	if err != nil {
 		return err
 	}
@@ -234,7 +234,7 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	}
 
 	if user.Role != existingUser.Role {
-		err = m.role.UpdateAssignment(ctx,
+		err = m.grant.ModifyGrant(ctx,
 			orgID,
 			roletypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role),
 			roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role),
@@ -297,7 +297,7 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 	}
 
 	// since revoke is idempotant multiple calls to revoke won't cause issues in case of retries
-	err = module.role.Revoke(ctx, orgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role), authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
+	err = module.grant.Revoke(ctx, orgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role), authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
 	if err != nil {
 		return err
 	}

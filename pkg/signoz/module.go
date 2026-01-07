@@ -26,6 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/services"
@@ -68,6 +69,7 @@ type Modules struct {
 	MetricsExplorer metricsexplorer.Module
 	Promote         promote.Module
 	Role            role.Module
+	Grant           role.Grant
 }
 
 func NewModules(
@@ -91,7 +93,8 @@ func NewModules(
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
-	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics, role)
+	grant := implrole.NewGrant(implrole.NewStore(sqlstore), authz)
+	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics, grant)
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 

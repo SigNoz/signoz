@@ -112,7 +112,7 @@ func NewRoleFromStorableRole(storableRole *StorableRole) *Role {
 	}
 }
 
-func NewRole(name, description string, roleType string, orgID valuer.UUID) *Role {
+func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID) *Role {
 	return &Role{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -123,7 +123,7 @@ func NewRole(name, description string, roleType string, orgID valuer.UUID) *Role
 		},
 		Name:        name,
 		Description: description,
-		Type:        roleType,
+		Type:        roleType.StringValue(),
 		OrgID:       orgID,
 	}
 }

@@ -27,11 +27,12 @@ type module struct {
 	store              dashboardtypes.Store
 	settings           factory.ScopedProviderSettings
 	role               role.Module
+	grant              role.Grant
 	querier            querier.Querier
 	licensing          licensing.Licensing
 }
 
-func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
+func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module, grant role.Grant, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard")
 	pkgDashboardModule := pkgimpldashboard.NewModule(store, settings, analytics, orgGetter, queryParser)
 
@@ -40,6 +41,7 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 		store:              store,
 		settings:           scopedProviderSettings,
 		role:               role,
+		grant:              grant,
 		querier:            querier,
 		licensing:          licensing,
 	}
@@ -59,17 +61,16 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 		return errors.Newf(errors.TypeAlreadyExists, dashboardtypes.ErrCodePublicDashboardAlreadyExists, "dashboard with id %s is already public", storablePublicDashboard.DashboardID)
 	}
 
-	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged.StringValue(), orgID))
+	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
 	if err != nil {
 		return err
 	}
 
-	err = module.role.Assign(ctx, orgID, roletypes.SigNozAnonymousRoleName, authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.StringValue(), orgID, nil))
+	err = module.grant.Grant(ctx, orgID, roletypes.SigNozAnonymousRoleName, authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.StringValue(), orgID, nil))
 	if err != nil {
 		return err
 	}
 
-	// TODO[vikrant]: think more about how can we avoid this
 	additionObject := authtypes.MustNewObject(
 		authtypes.Resource{
 			Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
@@ -194,7 +195,7 @@ func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashb
 		return err
 	}
 
-	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged.StringValue(), orgID))
+	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
 	if err != nil {
 		return err
 	}

@@ -207,3 +207,39 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 func (module *module) MustGetTypeables() []authtypes.Typeable {
 	return []authtypes.Typeable{authtypes.TypeableRole, roletypes.TypeableResourcesRoles}
 }
+
+func (module *module) SetManagedRoles(ctx context.Context, orgID valuer.UUID) error {
+	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		signozAdminRole := roletypes.NewRole(roletypes.SigNozAdminRoleName, roletypes.SigNozAdminRoleDescription, roletypes.RoleTypeManaged, orgID)
+		err := module.store.Create(ctx, roletypes.NewStorableRoleFromRole(signozAdminRole))
+		if err != nil {
+			return err
+		}
+
+		signozEditorRole := roletypes.NewRole(roletypes.SigNozAdminRoleName, roletypes.SigNozAdminRoleDescription, roletypes.RoleTypeManaged, orgID)
+		err = module.store.Create(ctx, roletypes.NewStorableRoleFromRole(signozEditorRole))
+		if err != nil {
+			return err
+		}
+
+		signozViewerRole := roletypes.NewRole(roletypes.SigNozAdminRoleName, roletypes.SigNozAdminRoleDescription, roletypes.RoleTypeManaged, orgID)
+		err = module.store.Create(ctx, roletypes.NewStorableRoleFromRole(signozViewerRole))
+		if err != nil {
+			return err
+		}
+
+		signozAnonymousRole := roletypes.NewRole(roletypes.SigNozAdminRoleName, roletypes.SigNozAdminRoleDescription, roletypes.RoleTypeManaged, orgID)
+		err = module.store.Create(ctx, roletypes.NewStorableRoleFromRole(signozAnonymousRole))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

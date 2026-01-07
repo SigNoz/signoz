@@ -119,8 +119,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(ctx context.Context, sqlstore sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx))
 		},
-		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
-			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, role, queryParser, querier, licensing)
+		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module, grant role.Grant, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
+			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, role, grant, queryParser, querier, licensing)
 		},
 		func(store sqlstore.SQLStore, authz authz.AuthZ, registry []role.RegisterTypeable) role.Module {
 			return implrole.NewModule(pkgimplrole.NewStore(store), authz, registry)
