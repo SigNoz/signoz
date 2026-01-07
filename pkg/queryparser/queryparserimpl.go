@@ -2,6 +2,7 @@ package queryparser
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -57,7 +58,7 @@ func (p *queryParserImpl) AnalyzeQueryEnvelopes(ctx context.Context, queries []q
 				// extract group by fields
 				for _, groupBy := range spec.GroupBy {
 					if groupBy.Name != "" {
-						result.GroupByColumns = append(result.GroupByColumns, queryfilterextractor.ColumnInfo{Name: groupBy.Name, OriginExpr: groupBy.Name, OriginField: groupBy.Name})
+						result.GroupByColumns = append(result.GroupByColumns, queryfilterextractor.ColumnInfo{Name: groupBy.Name, OriginExpr: groupBy.Name, OriginField: groupBy.Name, Alias: groupBy.Name})
 					}
 				}
 				// extract metric names
@@ -68,7 +69,7 @@ func (p *queryParserImpl) AnalyzeQueryEnvelopes(ctx context.Context, queries []q
 				}
 			default:
 				// TODO(abhishekhugetech): add support for Traces and Logs Aggregation types
-				p.settings.Logger.WarnContext(ctx, "unsupported QueryBuilderQuery type: %T", spec)
+				p.settings.Logger.WarnContext(ctx, fmt.Sprintf("unsupported QueryBuilderQuery type: %T", spec))
 				// Skip result for this query
 				continue
 			}

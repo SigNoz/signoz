@@ -735,6 +735,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 		// Check if first_seen + delay has passed
 		if maxFirstSeen+newGroupEvalDelayMs > evalTimeMs {
 			// Still within grace period, skip this series
+			r.logger.InfoContext(ctx, "Skipping new series", "rule_name", r.Name(), "series_idx", i, "max_first_seen", maxFirstSeen, "eval_time_ms", evalTimeMs, "delay_ms", newGroupEvalDelayMs, "labels", series[i].Labels)
 			continue
 		}
 

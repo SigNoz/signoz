@@ -1653,7 +1653,7 @@ func (t *telemetryMetaStore) GetFirstSeenFromMetricMetadata(ctx context.Context,
 			"metric_name",
 			"attr_name",
 			"attr_string_value",
-			"min(last_reported_unix_milli) AS first_seen",
+			"min(first_reported_unix_milli) AS first_seen",
 		).From(t.metricsDBName + "." + t.metricsFieldsTblName)
 
 		var tuplePlaceholders []string
