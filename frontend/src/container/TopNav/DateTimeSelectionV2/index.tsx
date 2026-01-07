@@ -398,6 +398,7 @@ function DateTimeSelection({
 				const startTime = startTimeMoment;
 				const endTime = endTimeMoment;
 				setCustomDTPickerVisible(false);
+				setRefreshButtonHidden(true);
 
 				updateTimeInterval('custom', [
 					startTime.toDate().getTime(),
