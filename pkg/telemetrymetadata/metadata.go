@@ -1656,15 +1656,16 @@ func (t *telemetryMetaStore) GetFirstSeenFromMetricMetadata(ctx context.Context,
 			"min(first_reported_unix_milli) AS first_seen",
 		).From(t.metricsDBName + "." + t.metricsFieldsTblName)
 
-		var tuplePlaceholders []string
+		lookupItems := make([]interface{}, 0, len(chunk))
 		for _, key := range chunk {
-			p1 := sb.Var(key.MetricName)
-			p2 := sb.Var(key.AttributeName)
-			p3 := sb.Var(key.AttributeValue)
-			// here we're adding the placeholders to the tuplePlaceholders slice (e.g. ($1, $2, $3))
-			tuplePlaceholders = append(tuplePlaceholders, fmt.Sprintf("(%s, %s, %s)", p1, p2, p3))
+			lookupItems = append(lookupItems, sqlbuilder.Tuple(key.MetricName, key.AttributeName, key.AttributeValue))
 		}
-		sb.Where(fmt.Sprintf("(metric_name, attr_name, attr_string_value) IN (%s)", strings.Join(tuplePlaceholders, ", ")))
+		sb.Where(
+			sb.In(
+				sqlbuilder.TupleNames("metric_name", "attr_name", "attr_string_value"),
+				lookupItems...,
+			),
+		)
 		sb.GroupBy("metric_name", "attr_name", "attr_string_value")
 		sb.OrderBy("first_seen")
 
