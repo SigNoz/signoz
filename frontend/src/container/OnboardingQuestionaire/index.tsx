@@ -56,7 +56,7 @@ const INITIAL_OPTIMISE_SIGNOZ_DETAILS: OptimiseSignozDetails = {
 	services: 0,
 };
 
-const BACK_BUTTON_EVENT_NAME = 'Org Onboarding: Back Button Clicked';
+// const BACK_BUTTON_EVENT_NAME = 'Org Onboarding: Back Button Clicked';
 const NEXT_BUTTON_EVENT_NAME = 'Org Onboarding: Next Button Clicked';
 const ONBOARDING_COMPLETE_EVENT_NAME = 'Org Onboarding: Complete';
 
@@ -227,13 +227,6 @@ function OnboardingQuestionaire(): JSX.Element {
 					<AboutSigNozQuestions
 						signozDetails={signozDetails}
 						setSignozDetails={setSignozDetails}
-						onBack={(): void => {
-							logEvent(BACK_BUTTON_EVENT_NAME, {
-								currentPageID: 2,
-								prevPageID: 1,
-							});
-							setCurrentStep(1);
-						}}
 						onNext={(): void => {
 							logEvent(NEXT_BUTTON_EVENT_NAME, {
 								currentPageID: 2,
@@ -250,13 +243,6 @@ function OnboardingQuestionaire(): JSX.Element {
 						isUpdatingProfile={isUpdatingProfile}
 						optimiseSignozDetails={optimiseSignozDetails}
 						setOptimiseSignozDetails={setOptimiseSignozDetails}
-						onBack={(): void => {
-							logEvent(BACK_BUTTON_EVENT_NAME, {
-								currentPageID: 3,
-								prevPageID: 2,
-							});
-							setCurrentStep(2);
-						}}
 						onNext={handleUpdateProfile}
 						onWillDoLater={handleUpdateProfile}
 					/>
@@ -267,13 +253,6 @@ function OnboardingQuestionaire(): JSX.Element {
 						isLoading={updatingOrgOnboardingStatus}
 						teamMembers={teamMembers}
 						setTeamMembers={setTeamMembers}
-						onBack={(): void => {
-							logEvent(BACK_BUTTON_EVENT_NAME, {
-								currentPageID: 4,
-								prevPageID: 3,
-							});
-							setCurrentStep(3);
-						}}
 						onNext={handleOnboardingComplete}
 					/>
 				)}

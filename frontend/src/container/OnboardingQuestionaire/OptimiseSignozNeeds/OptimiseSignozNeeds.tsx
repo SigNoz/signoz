@@ -1,7 +1,7 @@
 import { Button } from '@signozhq/button';
 import { Slider, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { ArrowLeft, ArrowRight, Loader2, Minus } from 'lucide-react';
+import { ArrowRight, Loader2, Minus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export interface OptimiseSignozDetails {
@@ -48,7 +48,6 @@ interface OptimiseSignozNeedsProps {
 	optimiseSignozDetails: OptimiseSignozDetails;
 	setOptimiseSignozDetails: (details: OptimiseSignozDetails) => void;
 	onNext: () => void;
-	onBack: () => void;
 	onWillDoLater: () => void;
 	isUpdatingProfile: boolean;
 	isNextDisabled: boolean;
@@ -83,7 +82,6 @@ function OptimiseSignozNeeds({
 	optimiseSignozDetails,
 	setOptimiseSignozDetails,
 	onNext,
-	onBack,
 	onWillDoLater,
 	isNextDisabled,
 }: OptimiseSignozNeedsProps): JSX.Element {
@@ -130,10 +128,6 @@ function OptimiseSignozNeeds({
 		});
 
 		onNext();
-	};
-
-	const handleOnBack = (): void => {
-		onBack();
 	};
 
 	const handleWillDoLater = (): void => {
@@ -191,7 +185,9 @@ function OptimiseSignozNeeds({
 	return (
 		<div className="questions-container">
 			<div className="onboarding-header-section">
-				<div className="onboarding-header-icon">🧴</div>
+				<div className="onboarding-header-icon">
+					<img src="/svgs/barber-pool.svg" alt="SigNoz" width="32" height="32" />
+				</div>
 				<Typography.Title level={4} className="onboarding-header-title">
 					Set up your workspace
 				</Typography.Title>
@@ -209,7 +205,7 @@ function OptimiseSignozNeeds({
 					</div>
 
 					<div className="form-group">
-						<label className="question" htmlFor="organisationName">
+						<label className="question-slider" htmlFor="organisationName">
 							Logs / Day
 						</label>
 						<div className="slider-container">
@@ -236,7 +232,7 @@ function OptimiseSignozNeeds({
 					</div>
 
 					<div className="form-group">
-						<label className="question" htmlFor="organisationName">
+						<label className="question-slider" htmlFor="organisationName">
 							Metrics <Minus size={14} /> Number of Hosts
 						</label>
 						<div className="slider-container">
@@ -263,7 +259,7 @@ function OptimiseSignozNeeds({
 					</div>
 
 					<div className="form-group">
-						<label className="question" htmlFor="organisationName">
+						<label className="question-slider" htmlFor="organisationName">
 							Number of services
 						</label>
 						<div className="slider-container">
@@ -291,16 +287,6 @@ function OptimiseSignozNeeds({
 				</div>
 
 				<div className="onboarding-buttons-container">
-					<Button
-						variant="outlined"
-						color="secondary"
-						className="onboarding-back-button"
-						onClick={handleOnBack}
-						disabled={isUpdatingProfile}
-						prefixIcon={<ArrowLeft size={12} />}
-					>
-						Back
-					</Button>
 					<Button
 						variant="solid"
 						color="primary"

@@ -1,30 +1,280 @@
-.team-member-container {
+.invite-team-members-table {
+	width: 100%;
+	min-height: 0;
+	max-height: 315px;
 	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.invite-team-members-table-header {
+	display: grid;
+	grid-template-columns: 1fr 150px 40px;
+	gap: 12px;
 	align-items: center;
+	padding-top: 12px;
+	flex-shrink: 0;
+	height: auto;
 
-	.team-member-role-select {
-		width: 20%;
+	.table-header-cell {
+		color: var(--semantic-secondary-foreground, #adb4c2);
+		font-family: Inter, sans-serif;
+		font-size: 13px;
+		font-weight: 400;
+		line-height: 20px;
+		letter-spacing: -0.065px;
+	}
 
-		.ant-select-selector {
-			border: 1px solid #1d212d;
-			border-top-left-radius: 0px;
-			border-bottom-left-radius: 0px;
+	.action-header {
+		// Empty header for action column
+	}
+}
+
+.invite-team-members-container {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	width: 100%;
+	flex: 0 1 auto;
+	min-height: 0;
+	max-height: calc(
+		315px - 60px
+	); // 315px total - header (~32px) - button (~28px) - gaps (24px)
+	overflow-y: auto;
+	overflow-x: hidden;
+
+	&::-webkit-scrollbar {
+		width: 0.1rem;
+	}
+
+	&::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: rgb(136, 136, 136);
+		border-radius: 0.625rem;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+}
+
+.team-member-row {
+	display: grid;
+	grid-template-columns: 1fr 150px 40px;
+	gap: 12px;
+	align-items: flex-start;
+}
+
+.team-member-cell {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+
+	&.email-cell {
+		// Email input cell
+	}
+
+	&.role-cell {
+		// Role select cell
+	}
+
+	&.action-cell {
+		display: flex;
+		align-items: flex-start;
+		justify-content: center;
+		padding-top: 1px;
+	}
+}
+
+.team-member-email-input {
+	width: 100%;
+	height: 32px !important;
+	margin: 1px;
+
+	input {
+		height: 32px !important;
+		border-radius: 2px;
+		background: var(--levels-l3-background, #23262e);
+		border: 1px solid var(--levels-l3-border, #2c303a);
+		color: var(--levels-l1-foreground, #eceef2);
+		font-family: Inter, sans-serif;
+		font-size: 13px;
+		font-weight: 400;
+		line-height: 20px;
+		letter-spacing: -0.065px;
+		padding: 6px 8px;
+		box-sizing: border-box;
+
+		&::placeholder {
+			color: var(--levels-l3-foreground, #747b8b);
+			opacity: 1;
+		}
+
+		&:focus-visible {
+			outline: none;
+			border-color: var(--semantic-primary-background, #4e74f8);
+		}
+	}
+}
+
+.team-member-role-select {
+	width: 100%;
+	margin: 1px;
+
+	.ant-select-selector {
+		height: 32px !important;
+		border-radius: 2px !important;
+		background: var(--levels-l3-background, #23262e) !important;
+		border: 1px solid var(--levels-l3-border, #2c303a) !important;
+		color: var(--levels-l1-foreground, #eceef2) !important;
+		font-family: Inter, sans-serif !important;
+		font-size: 13px !important;
+		font-weight: 400 !important;
+		line-height: 20px !important;
+		letter-spacing: -0.065px !important;
+		padding: 0 8px !important;
+		box-sizing: border-box !important;
+
+		.ant-select-selection-placeholder {
+			color: var(--levels-l3-foreground, #747b8b) !important;
+		}
+
+		.ant-select-selection-item {
+			color: var(--levels-l1-foreground, #eceef2) !important;
+			line-height: 30px !important;
 		}
 	}
 
-	.team-member-email-input {
-		width: 80%;
-		background-color: #121317;
-		border-top-right-radius: 0px;
-		border-bottom-right-radius: 0px;
+	.ant-select-arrow {
+		color: var(--levels-l3-foreground, #747b8b) !important;
+	}
 
-		.ant-input,
-		.ant-input-group-addon {
-			background-color: #121317 !important;
-			border-right: 0px;
-			border-top-right-radius: 0px;
-			border-bottom-right-radius: 0px;
+	&.ant-select-focused .ant-select-selector {
+		border-color: var(--semantic-primary-background, #4e74f8) !important;
+	}
+
+	&:hover .ant-select-selector {
+		border-color: var(--semantic-primary-background, #4e74f8) !important;
+	}
+}
+
+.remove-team-member-button {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 32px !important;
+	height: 32px !important;
+	min-width: 32px !important;
+	border: none !important;
+	border-radius: 2px !important;
+	background: transparent !important;
+	color: var(--bg-cherry-500, #f56565) !important;
+	cursor: pointer;
+	padding: 0 !important;
+	transition: background-color 0.2s, opacity 0.2s;
+	box-shadow: none !important;
+
+	svg {
+		color: var(--bg-cherry-500, #f56565) !important;
+	}
+
+	&:hover {
+		background: rgba(245, 101, 101, 0.1) !important;
+		opacity: 0.9;
+		color: var(--bg-cherry-500, #f56565) !important;
+
+		svg {
+			color: var(--bg-cherry-500, #f56565) !important;
 		}
+	}
+
+	&:active {
+		opacity: 0.7;
+		background: rgba(245, 101, 101, 0.15) !important;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--semantic-primary-background, #4e74f8);
+		outline-offset: 2px;
+	}
+}
+
+.email-error-message {
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 16px;
+	margin-top: 4px;
+}
+
+.invite-team-members-add-another-member-container {
+	width: 100%;
+	display: flex !important;
+	justify-content: flex-start !important;
+	align-items: center;
+	margin-top: 0;
+	padding-top: 4px;
+	flex-shrink: 0;
+	height: auto;
+}
+
+.add-another-member-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	border-radius: 2px;
+	border: 1px dashed var(--semantic-secondary-border, #23262e) !important;
+	background: transparent !important;
+	color: var(--semantic-secondary-foreground, #adb4c2);
+	font-family: Inter, sans-serif;
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 1;
+	letter-spacing: -0.065px;
+	height: 24px !important;
+	padding: 0 12px;
+	transition: all 0.2s;
+	cursor: pointer;
+
+	// Ensure icon is visible
+	svg,
+	[class*='icon'] {
+		color: var(--semantic-secondary-foreground, #adb4c2) !important;
+		display: inline-block !important;
+		opacity: 1 !important;
+	}
+
+	button,
+	& {
+		border: 1px dashed var(--semantic-secondary-border, #23262e) !important;
+		background: transparent !important;
+	}
+
+	&:hover {
+		border-color: var(--semantic-primary-background, #4e74f8) !important;
+		border-style: dashed !important;
+		color: var(--levels-l1-foreground, #eceef2);
+		background: rgba(78, 116, 248, 0.1) !important;
+
+		svg,
+		[class*='icon'] {
+			color: var(--levels-l1-foreground, #eceef2) !important;
+		}
+
+		button,
+		& {
+			border-color: var(--semantic-primary-background, #4e74f8) !important;
+			border-style: dashed !important;
+			background: rgba(78, 116, 248, 0.1) !important;
+		}
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--semantic-primary-background, #4e74f8);
+		outline-offset: 2px;
 	}
 }
 
@@ -85,19 +335,96 @@
 }
 
 .lightMode {
-	.team-member-container {
-		.team-member-role-select {
-			.ant-select-selector {
-				border: 1px solid var(--bg-vanilla-300);
+	.invite-team-members-table-header {
+		.table-header-cell {
+			color: var(--semantic-secondary-foreground, #747b8b);
+		}
+	}
+
+	.team-member-email-input {
+		input {
+			background: var(--levels-l3-background, #ffffff);
+			border: 1px solid var(--levels-l3-border, #e9e9e9);
+			color: var(--levels-l1-foreground, #1a1d26);
+
+			&::placeholder {
+				color: var(--levels-l3-foreground, #747b8b);
+			}
+
+			&:focus-visible {
+				border-color: var(--semantic-primary-background, #4e74f8);
+			}
+		}
+	}
+
+	.team-member-role-select {
+		.ant-select-selector {
+			background: var(--levels-l3-background, #ffffff) !important;
+			border: 1px solid var(--levels-l3-border, #e9e9e9) !important;
+			color: var(--levels-l1-foreground, #1a1d26) !important;
+
+			.ant-select-selection-placeholder {
+				color: var(--levels-l3-foreground, #747b8b) !important;
+			}
+
+			.ant-select-selection-item {
+				color: var(--levels-l1-foreground, #1a1d26) !important;
 			}
 		}
 
-		.team-member-email-input {
-			background-color: var(--bg-vanilla-100);
+		.ant-select-arrow {
+			color: var(--levels-l3-foreground, #747b8b) !important;
+		}
 
-			.ant-input,
-			.ant-input-group-addon {
-				background-color: var(--bg-vanilla-100) !important;
+		&.ant-select-focused .ant-select-selector {
+			border-color: var(--semantic-primary-background, #4e74f8) !important;
+		}
+
+		&:hover .ant-select-selector {
+			border-color: var(--semantic-primary-background, #4e74f8) !important;
+		}
+	}
+
+	.remove-team-member-button {
+		border: none !important;
+		background: transparent !important;
+		color: var(--bg-cherry-500, #f56565) !important;
+
+		svg {
+			color: var(--bg-cherry-500, #f56565) !important;
+		}
+
+		&:hover {
+			background: rgba(245, 101, 101, 0.1) !important;
+			color: var(--bg-cherry-500, #f56565) !important;
+
+			svg {
+				color: var(--bg-cherry-500, #f56565) !important;
+			}
+		}
+	}
+
+	.add-another-member-button {
+		border: 1px dashed var(--semantic-secondary-border, #e9e9e9) !important;
+		background: transparent !important;
+		color: var(--semantic-secondary-foreground, #747b8b);
+
+		svg,
+		[class*='icon'] {
+			color: var(--semantic-secondary-foreground, #747b8b) !important;
+			display: inline-block !important;
+			opacity: 1 !important;
+		}
+
+		&:hover {
+			border-color: var(--semantic-primary-background, #4e74f8) !important;
+			border-style: dashed !important;
+			color: var(--levels-l1-foreground, #1a1d26);
+			background: rgba(78, 116, 248, 0.1) !important;
+
+			svg,
+			[class*='icon'] {
+				color: var(--levels-l1-foreground, #1a1d26) !important;
 			}
 		}
 	}

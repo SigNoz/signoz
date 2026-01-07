@@ -1,6 +1,7 @@
 import './InviteTeamMembers.styles.scss';
 
 import { Button } from '@signozhq/button';
+import { Callout } from '@signozhq/callout';
 import { Color } from '@signozhq/design-tokens';
 import { Input } from '@signozhq/input';
 import { Select, Typography } from 'antd';
@@ -8,15 +9,7 @@ import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
-import {
-	ArrowLeft,
-	ArrowRight,
-	CheckCircle,
-	Loader2,
-	Plus,
-	TriangleAlert,
-	X,
-} from 'lucide-react';
+import { ArrowRight, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import APIError from 'types/api/error';
@@ -35,7 +28,6 @@ interface InviteTeamMembersProps {
 	teamMembers: TeamMember[] | null;
 	setTeamMembers: (teamMembers: TeamMember[]) => void;
 	onNext: () => void;
-	onBack: () => void;
 }
 
 function InviteTeamMembers({
@@ -43,7 +35,6 @@ function InviteTeamMembers({
 	teamMembers,
 	setTeamMembers,
 	onNext,
-	onBack,
 }: InviteTeamMembersProps): JSX.Element {
 	const [teamMembersToInvite, setTeamMembersToInvite] = useState<
 		TeamMember[] | null
@@ -52,6 +43,7 @@ function InviteTeamMembers({
 		{},
 	);
 	const [hasInvalidEmails, setHasInvalidEmails] = useState<boolean>(false);
+	const [inviteError, setInviteError] = useState<APIError | null>(null);
 	const { notifications } = useNotifications();
 
 	const defaultTeamMember: TeamMember = {
@@ -98,7 +90,9 @@ function InviteTeamMembers({
 				isValid = false;
 				setHasInvalidEmails(true);
 			}
-			updatedValidity[member.id!] = emailValid;
+			if (member.id) {
+				updatedValidity[member.id] = emailValid;
+			}
 		});
 
 		setEmailValidity(updatedValidity);
@@ -128,10 +122,7 @@ function InviteTeamMembers({
 				logEvent('Org Onboarding: Invite Team Members Failed', {
 					teamMembers: teamMembersToInvite,
 				});
-				notifications.error({
-					message: error.getErrorCode(),
-					description: error.getErrorMessage(),
-				});
+				setInviteError(error);
 			},
 		},
 	);
@@ -140,6 +131,7 @@ function InviteTeamMembers({
 		if (validateAllUsers()) {
 			setTeamMembers(teamMembersToInvite || []);
 			setHasInvalidEmails(false);
+			setInviteError(null);
 			sendInvites({
 				invites: teamMembersToInvite || [],
 			});
@@ -163,10 +155,17 @@ function InviteTeamMembers({
 		const updatedMembers = cloneDeep(teamMembersToInvite || []);
 
 		const memberToUpdate = updatedMembers.find((m) => m.id === member.id);
-		if (memberToUpdate) {
+		if (memberToUpdate && member.id) {
 			memberToUpdate.email = value;
 			setTeamMembersToInvite(updatedMembers);
-			debouncedValidateEmail(value, member.id!);
+			debouncedValidateEmail(value, member.id);
+			// Clear errors when user starts typing
+			if (hasInvalidEmails) {
+				setHasInvalidEmails(false);
+			}
+			if (inviteError) {
+				setInviteError(null);
+			}
 		}
 	};
 
@@ -190,7 +189,9 @@ function InviteTeamMembers({
 	return (
 		<div className="questions-container">
 			<div className="onboarding-header-section">
-				<div className="onboarding-header-icon">🧴</div>
+				<div className="onboarding-header-icon">
+					<img src="/svgs/barber-pool.svg" alt="SigNoz" width="32" height="32" />
+				</div>
 				<Typography.Title level={4} className="onboarding-header-title">
 					Invite your team
 				</Typography.Title>
@@ -203,92 +204,106 @@ function InviteTeamMembers({
 				<div className="questions-form invite-team-members-form">
 					<div className="form-group">
 						<div className="question-label">
-							Collaborate with your team
-							<div className="question-sub-label">
-								Invite your team to the SigNoz workspace
+							Invite your team to the SigNoz workspace
+						</div>
+
+						<div className="invite-team-members-table">
+							<div className="invite-team-members-table-header">
+								<div className="table-header-cell email-header">Email address</div>
+								<div className="table-header-cell role-header">Roles</div>
+								<div className="table-header-cell action-header" />
+							</div>
+
+							<div className="invite-team-members-container">
+								{teamMembersToInvite?.map((member) => (
+									<div className="team-member-row" key={member.id}>
+										<div className="team-member-cell email-cell">
+											<Input
+												placeholder="e.g. john@signoz.io"
+												value={member.email}
+												type="email"
+												required
+												autoComplete="off"
+												className="team-member-email-input"
+												onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+													handleEmailChange(e, member)
+												}
+											/>
+											{member.id &&
+												emailValidity[member.id] === false &&
+												member.email.trim() !== '' && (
+													<Typography.Text
+														className="email-error-message"
+														style={{ color: Color.BG_CHERRY_500 }}
+													>
+														Invalid email address
+													</Typography.Text>
+												)}
+										</div>
+										<div className="team-member-cell role-cell">
+											<Select
+												value={member.role}
+												onChange={(value): void => handleRoleChange(value, member)}
+												className="team-member-role-select"
+												placeholder="Select roles"
+											>
+												<Select.Option value="VIEWER">Viewer</Select.Option>
+												<Select.Option value="EDITOR">Editor</Select.Option>
+												<Select.Option value="ADMIN">Admin</Select.Option>
+											</Select>
+										</div>
+										<div className="team-member-cell action-cell">
+											{teamMembersToInvite && teamMembersToInvite.length > 1 && (
+												<Button
+													variant="ghost"
+													color="secondary"
+													className="remove-team-member-button"
+													onClick={(): void => handleRemoveTeamMember(member.id)}
+													aria-label="Remove team member"
+												>
+													<Trash2 size={14} />
+												</Button>
+											)}
+										</div>
+									</div>
+								))}
+							</div>
+
+							<div className="invite-team-members-add-another-member-container">
+								<Button
+									variant="dashed"
+									color="secondary"
+									className="add-another-member-button"
+									prefixIcon={<Plus size={14} />}
+									onClick={handleAddTeamMember}
+								>
+									Add another
+								</Button>
 							</div>
 						</div>
-
-						<div className="invite-team-members-container">
-							{teamMembersToInvite?.map((member) => (
-								<div className="team-member-container" key={member.id}>
-									<Input
-										placeholder="your-teammate@org.com"
-										value={member.email}
-										type="email"
-										required
-										autoFocus
-										autoComplete="off"
-										className="team-member-email-input"
-										onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-											handleEmailChange(e, member)
-										}
-										addonAfter={
-											// eslint-disable-next-line no-nested-ternary
-											emailValidity[member.id!] === undefined ? null : emailValidity[
-													member.id!
-											  ] ? (
-												<CheckCircle size={14} color={Color.BG_FOREST_500} />
-											) : (
-												<TriangleAlert size={14} color={Color.BG_SIENNA_500} />
-											)
-										}
-									/>
-									<Select
-										defaultValue={member.role}
-										onChange={(value): void => handleRoleChange(value, member)}
-										className="team-member-role-select"
-									>
-										<Select.Option value="VIEWER">Viewer</Select.Option>
-										<Select.Option value="EDITOR">Editor</Select.Option>
-										<Select.Option value="ADMIN">Admin</Select.Option>
-									</Select>
-
-									{teamMembersToInvite?.length > 1 && (
-										<Button
-											type="primary"
-											className="remove-team-member-button"
-											icon={<X size={14} />}
-											onClick={(): void => handleRemoveTeamMember(member.id)}
-										/>
-									)}
-								</div>
-							))}
-						</div>
-
-						<div className="invite-team-members-add-another-member-container">
-							<Button
-								type="primary"
-								className="add-another-member-button"
-								icon={<Plus size={14} />}
-								onClick={handleAddTeamMember}
-							>
-								Member
-							</Button>
-						</div>
 					</div>
-
-					{hasInvalidEmails && (
-						<div className="error-message-container">
-							<Typography.Text className="error-message" type="danger">
-								<TriangleAlert size={14} /> Please enter valid emails for all team
-								members
-							</Typography.Text>
-						</div>
-					)}
 				</div>
 
+				{hasInvalidEmails && (
+					<Callout
+						type="error"
+						size="small"
+						showIcon
+						description="Please enter valid emails for all team members"
+					/>
+				)}
+
+				{inviteError && !hasInvalidEmails && (
+					<Callout
+						type="error"
+						size="small"
+						showIcon
+						message={inviteError.getErrorCode() || undefined}
+						description={inviteError.getErrorMessage() || 'Something went wrong'}
+					/>
+				)}
+
 				<div className="onboarding-buttons-container">
-					<Button
-						variant="outlined"
-						color="secondary"
-						className="onboarding-back-button"
-						onClick={onBack}
-						disabled={isSendingInvites || isLoading}
-						prefixIcon={<ArrowLeft size={12} />}
-					>
-						Back
-					</Button>
 					<Button
 						variant="solid"
 						color="primary"
@@ -305,7 +320,7 @@ function InviteTeamMembers({
 							)
 						}
 					>
-						Send Invites
+						Complete
 					</Button>
 					<Button
 						variant="ghost"

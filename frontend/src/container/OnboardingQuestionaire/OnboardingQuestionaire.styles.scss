@@ -61,7 +61,7 @@
 				line-height: 20px;
 				letter-spacing: -0.065px;
 				color: var(--semantic-secondary-foreground, #adb4c2);
-				max-width: 317px;
+				max-width: 528px;
 				margin: 0 !important;
 				text-align: center;
 			}
@@ -199,19 +199,14 @@
 		}
 
 		.question-label {
-			color: var(--bg-vanilla-100);
+			color: var(--levels-l1-foreground, #eceef2);
+			font-variant-numeric: slashed-zero;
+			font-family: Inter;
 			font-size: 13px;
 			font-style: normal;
-			font-weight: 500;
-			line-height: 20px;
-		}
-
-		.question-sub-label {
-			color: var(--bg-vanilla-400);
-			font-size: 11px;
-			font-style: normal;
-			font-weight: 400;
-			line-height: 16px;
+			font-weight: 600;
+			line-height: 100%;
+			letter-spacing: -0.065px;
 		}
 
 		.onboarding-buttons-container {
@@ -343,15 +338,31 @@
 		.question {
 			font-family: Inter, sans-serif;
 			color: var(--levels-l1-foreground, #eceef2);
+			font-variant-numeric: slashed-zero;
 			font-size: 13px;
 			font-style: normal;
 			font-weight: 600;
-			line-height: 1;
+			line-height: 100%;
 			letter-spacing: -0.065px;
 
 			display: flex;
 			align-items: center;
 			gap: 8px;
+		}
+
+		.question-slider {
+			color: var(--levels-l1-foreground, #eceef2);
+			font-variant-numeric: slashed-zero;
+			font-family: Inter;
+			font-size: 13px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 100%;
+			letter-spacing: -0.065px;
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			white-space: nowrap;
 		}
 
 		input[type='text'] {
@@ -422,6 +433,87 @@
 			display: grid;
 			grid-template-columns: 1fr 1fr; /* Two equal columns */
 			gap: 10px;
+		}
+
+		.observability-tools-checkbox-container {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0 12px;
+			width: 528px;
+			align-items: flex-start;
+
+			.observability-tool-checkbox-item {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				height: 32px;
+				width: calc((528px - 12px) / 2);
+				min-width: 258px;
+				flex: 0 0 calc((528px - 12px) / 2);
+				padding: 0;
+				box-sizing: border-box;
+				cursor: pointer;
+
+				&.checkbox-item {
+					width: calc((528px - 12px) / 2) !important;
+					flex-direction: row;
+				}
+
+				&:hover {
+					opacity: 0.8;
+				}
+			}
+
+			.observability-tool-other-input {
+				width: 100%;
+				margin-top: 12px;
+			}
+		}
+
+		.opentelemetry-radio-container {
+			width: 528px;
+
+			.opentelemetry-radio-group {
+				width: 100%;
+
+				.opentelemetry-radio-items-wrapper {
+					display: flex;
+					flex-direction: row;
+					flex-wrap: nowrap;
+					gap: 12px;
+					width: 100%;
+				}
+
+				.opentelemetry-radio-item {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+					height: 32px;
+					width: calc((528px - 12px) / 2);
+					min-width: 258px;
+					flex: 0 0 calc((528px - 12px) / 2);
+					color: var(--levels-l1-foreground, #eceef2);
+					font-family: Inter, sans-serif;
+					font-size: 13px;
+					font-weight: 400;
+					line-height: 1;
+					letter-spacing: -0.065px;
+					box-sizing: border-box;
+
+					.ant-radio {
+						.ant-radio-inner {
+							width: 16px;
+							height: 16px;
+							border-color: var(--levels-l3-border, #2c303a);
+						}
+
+						&.ant-radio-checked .ant-radio-inner {
+							border-color: var(--semantic-primary-background, #4e74f8);
+							background-color: var(--semantic-primary-background, #4e74f8);
+						}
+					}
+				}
+			}
 		}
 
 		.checkbox-grid {
@@ -550,7 +642,6 @@
 			min-width: 258px;
 		}
 
-
 		.arrow {
 			font-size: 18px;
 			color: var(--bg-vanilla-100);
@@ -569,7 +660,7 @@
 		display: flex;
 		justify-content: flex-end;
 		align-items: center;
-		margin-top: 12px;
+		margin-top: 12px !important;
 	}
 }
 
@@ -683,10 +774,6 @@
 
 			.question-label {
 				color: var(--bg-slate-300);
-			}
-
-			.question-sub-label {
-				color: var(--bg-slate-400);
 			}
 
 			.question {
