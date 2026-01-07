@@ -2,7 +2,6 @@ package implsession
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"slices"
 	"strings"
@@ -242,13 +241,6 @@ func getProvider[T authn.AuthN](authNProvider authtypes.AuthNProvider, authNs ma
 }
 
 func resolveRole(callbackIdentity *authtypes.CallbackIdentity, roleMapping *authtypes.RoleMapping) types.Role {
-
-	// DEBUG: Print all assertion values to see what's being received
-	fmt.Printf("\n=== DEBUG: callback identity values ===\n")
-	fmt.Printf("callbackIdentity.Name - %s", callbackIdentity.Name)
-	fmt.Printf("callbackIdentity.Role - %s", callbackIdentity.Role)
-	fmt.Printf("=================================\n\n")
-
 	if roleMapping == nil {
 		return types.RoleViewer
 	}
