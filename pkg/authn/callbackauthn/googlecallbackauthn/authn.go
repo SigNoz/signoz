@@ -3,7 +3,6 @@ package googlecallbackauthn
 import (
 	"context"
 	"net/url"
-	"strings"
 
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -219,12 +218,12 @@ func (a *AuthN) getGroups(adminService *admin.Service, userEmail string, fetchTr
 func filterGroups(userGroups, allowedGroups []string) []string {
 	allowed := make(map[string]struct{}, len(allowedGroups))
 	for _, g := range allowedGroups {
-		allowed[strings.ToLower(g)] = struct{}{} // just to make o(1) searches
+		allowed[g] = struct{}{} // just to make o(1) searches
 	}
 
 	var filtered []string
 	for _, g := range userGroups {
-		if _, ok := allowed[strings.ToLower(g)]; ok {
+		if _, ok := allowed[g]; ok {
 			filtered = append(filtered, g)
 		}
 	}
