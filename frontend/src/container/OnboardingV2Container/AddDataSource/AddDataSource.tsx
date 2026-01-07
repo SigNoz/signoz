@@ -119,11 +119,32 @@ const ONBOARDING_V3_ANALYTICS_EVENTS_MAP = {
 	DATA_SOURCE_SEARCHED: 'Searched',
 };
 
+const groupDataSourcesByTags = (
+	dataSources: Entity[],
+): { [tag: string]: Entity[] } => {
+	const groupedDataSources: { [tag: string]: Entity[] } = {};
+
+	dataSources.forEach((dataSource) => {
+		dataSource.tags.forEach((tag) => {
+			if (!groupedDataSources[tag]) {
+				groupedDataSources[tag] = [];
+			}
+			groupedDataSources[tag].push(dataSource);
+		});
+	});
+
+	return groupedDataSources;
+};
+
+const allGroupedDataSources = groupDataSourcesByTags(
+	onboardingConfigWithLinks as Entity[],
+);
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function OnboardingAddDataSource(): JSX.Element {
 	const [groupedDataSources, setGroupedDataSources] = useState<{
 		[tag: string]: Entity[];
-	}>({});
+	}>(allGroupedDataSources);
 
 	const { org } = useAppContext();
 
@@ -219,39 +240,29 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleSelectDataSource = (dataSource: Entity): void => {
-		if (dataSource && dataSource.internalRedirect && dataSource.link) {
-			logEvent(
-				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
-				{
-					dataSource: dataSource.label,
-				},
-			);
-			history.push(dataSource.link);
+		setSelectedDataSource(dataSource);
+		setSelectedFramework(null);
+		setSelectedEnvironment(null);
+
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
+			{
+				dataSource: dataSource.label,
+			},
+		);
+
+		if (dataSource.question) {
+			setHasMoreQuestions(true);
+
+			setTimeout(() => {
+				handleScrollToStep(question2Ref);
+			}, 100);
 		} else {
-			setSelectedDataSource(dataSource);
-			setSelectedFramework(null);
-			setSelectedEnvironment(null);
+			setHasMoreQuestions(false);
 
-			logEvent(
-				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
-				{
-					dataSource: dataSource.label,
-				},
-			);
+			updateUrl(dataSource?.link || '', null);
 
-			if (dataSource.question) {
-				setHasMoreQuestions(true);
-
-				setTimeout(() => {
-					handleScrollToStep(question2Ref);
-				}, 100);
-			} else {
-				setHasMoreQuestions(false);
-
-				updateUrl(dataSource?.link || '', null);
-
-				setShowConfigureProduct(true);
-			}
+			setShowConfigureProduct(true);
 		}
 	};
 
@@ -263,12 +274,6 @@ function OnboardingAddDataSource(): JSX.Element {
 				framework: option.label,
 			},
 		);
-
-		// Handle internal redirect - navigate directly within the app
-		if (option.internalRedirect === true && option.link) {
-			history.push(option.link);
-			return;
-		}
 
 		setSelectedFramework(option);
 
@@ -304,15 +309,6 @@ function OnboardingAddDataSource(): JSX.Element {
 			},
 		);
 
-		// Handle internal redirect - navigate directly within the app
-		if (
-			selectedEnvironment.internalRedirect === true &&
-			selectedEnvironment.link
-		) {
-			history.push(selectedEnvironment.link);
-			return;
-		}
-
 		setSelectedEnvironment(selectedEnvironment);
 		setHasMoreQuestions(false);
 
@@ -321,40 +317,13 @@ function OnboardingAddDataSource(): JSX.Element {
 		setShowConfigureProduct(true);
 	};
 
-	const groupDataSourcesByTags = (
-		dataSources: Entity[],
-	): { [tag: string]: Entity[] } => {
-		const groupedDataSources: { [tag: string]: Entity[] } = {};
-
-		dataSources.forEach((dataSource) => {
-			dataSource.tags.forEach((tag) => {
-				if (!groupedDataSources[tag]) {
-					groupedDataSources[tag] = [];
-				}
-				groupedDataSources[tag].push(dataSource);
-			});
-		});
-
-		return groupedDataSources;
-	};
-
-	useEffect(() => {
-		const groupedDataSources = groupDataSourcesByTags(
-			onboardingConfigWithLinks as Entity[],
-		);
-
-		setGroupedDataSources(groupedDataSources);
-	}, []);
-
 	const debouncedUpdate = useDebouncedFn((query) => {
 		setSearchQuery(query as string);
 
 		setDataSourceRequestSubmitted(false);
 
 		if (query === '') {
-			setGroupedDataSources(
-				groupDataSourcesByTags(onboardingConfigWithLinks as Entity[]),
-			);
+			setGroupedDataSources(allGroupedDataSources);
 			return;
 		}
 
@@ -390,31 +359,35 @@ function OnboardingAddDataSource(): JSX.Element {
 		},
 		[debouncedUpdate],
 	);
+
 	const handleFilterByCategory = (category: string): void => {
 		setSelectedDataSource(null);
 		setSelectedFramework(null);
 		setSelectedEnvironment(null);
 
-		if (category === 'All') {
-			setGroupedDataSources(
-				groupDataSourcesByTags(onboardingConfigWithLinks as Entity[]),
-			);
+		setSelectedCategory(category);
 
-			setSelectedCategory('All');
+		if (category === 'All') {
+			setGroupedDataSources(allGroupedDataSources);
 			return;
 		}
 
-		const filteredDataSources = onboardingConfigWithLinks.filter(
-			(dataSource) =>
-				dataSource.tags.includes(category) ||
-				dataSource.tags.some((tag) => tag.toLowerCase().includes(category)),
-		);
-
-		setSelectedCategory(category);
-
-		setGroupedDataSources(
-			groupDataSourcesByTags(filteredDataSources as Entity[]),
-		);
+		if (allGroupedDataSources[category]) {
+			setGroupedDataSources({
+				[category]: allGroupedDataSources[category],
+			});
+		} else {
+			// Fallback if somehow the category key doesn't strictly match or relies on partial match
+			// This preserves the old behavior as a fallback, though sidebar clicks should be exact matches
+			const filteredDataSources = onboardingConfigWithLinks.filter(
+				(dataSource) =>
+					dataSource.tags.includes(category) ||
+					dataSource.tags.some((tag) => tag.toLowerCase().includes(category)),
+			);
+			setGroupedDataSources(
+				groupDataSourcesByTags(filteredDataSources as Entity[]),
+			);
+		}
 	};
 
 	useEffect(() => {
@@ -808,7 +781,7 @@ function OnboardingAddDataSource(): JSX.Element {
 														</Typography.Text>
 													</div>
 
-													{Object.keys(groupedDataSources).map((tag) => (
+													{Object.keys(allGroupedDataSources).map((tag) => (
 														<div
 															key={tag}
 															className="onboarding-data-source-category-item"
@@ -833,7 +806,7 @@ function OnboardingAddDataSource(): JSX.Element {
 															<div className="line-divider" />
 
 															<Typography.Text className="onboarding-filters-item-count">
-																{groupedDataSources[tag].length}
+																{allGroupedDataSources[tag].length}
 															</Typography.Text>
 														</div>
 													))}
@@ -987,7 +960,14 @@ function OnboardingAddDataSource(): JSX.Element {
 															},
 														);
 
-														handleUpdateCurrentStep(2);
+														const currentEntity =
+															selectedEnvironment || selectedFramework || selectedDataSource;
+
+														if (currentEntity?.internalRedirect && currentEntity?.link) {
+															history.push(currentEntity.link);
+														} else {
+															handleUpdateCurrentStep(2);
+														}
 													}}
 												>
 													Next: Configure your product

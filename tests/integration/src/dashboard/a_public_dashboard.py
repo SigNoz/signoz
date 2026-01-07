@@ -134,43 +134,29 @@ def test_public_dashboard_widget_query_range(
                                 "dataSource": "metrics",
                                 "disabled": False,
                                 "expression": "A",
-                                "filter": {
-                                    "expression": ""
-                                },
+                                "filter": {"expression": ""},
                                 "functions": [],
                                 "groupBy": [],
-                                "having": {
-                                    "expression": ""
-                                },
+                                "having": {"expression": ""},
                                 "legend": "",
                                 "limit": 10,
                                 "orderBy": [],
                                 "queryName": "A",
                                 "source": "",
-                                "stepInterval": 10
+                                "stepInterval": 10,
                             }
                         ],
                         "queryFormulas": [],
-                        "queryTraceOperator": []
+                        "queryTraceOperator": [],
                     },
                     "clickhouse_sql": [
-                        {
-                            "disabled": False,
-                            "legend": "",
-                            "name": "A",
-                            "query": ""
-                        }
+                        {"disabled": False, "legend": "", "name": "A", "query": ""}
                     ],
                     "id": "80f12506-ef72-4013-8282-2713c8114c9e",
                     "promql": [
-                        {
-                            "disabled": False,
-                            "legend": "",
-                            "name": "A",
-                            "query": ""
-                        }
+                        {"disabled": False, "legend": "", "name": "A", "query": ""}
                     ],
-                    "queryType": "builder"
+                    "queryType": "builder",
                 },
             }
         ],
@@ -184,7 +170,6 @@ def test_public_dashboard_widget_query_range(
     assert create_response.status_code == HTTPStatus.CREATED
     data = create_response.json()["data"]
     dashboard_id = data["id"]
-
 
     # create public dashboard
     response = requests.post(
@@ -217,7 +202,7 @@ def test_public_dashboard_widget_query_range(
 
     resp = requests.get(
         signoz.self.host_configs["8080"].get(
-        f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/0/query_range"
+            f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/0/query_range"
         ),
         timeout=2,
     )
@@ -225,10 +210,9 @@ def test_public_dashboard_widget_query_range(
     assert resp.status_code == HTTPStatus.OK
     assert resp.json().get("status") == "success"
 
-
     resp = requests.get(
         signoz.self.host_configs["8080"].get(
-        f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/-1/query_range"
+            f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/-1/query_range"
         ),
         timeout=2,
     )
@@ -236,7 +220,7 @@ def test_public_dashboard_widget_query_range(
 
     resp = requests.get(
         signoz.self.host_configs["8080"].get(
-        f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/1/query_range"
+            f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/1/query_range"
         ),
         timeout=2,
     )

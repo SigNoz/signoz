@@ -12,6 +12,7 @@ from fixtures import types
 
 class MetricsTimeSeries(ABC):
     """Represents a row in the time_series_v4 table."""
+
     env: str
     temporality: str
     metric_name: str
@@ -82,6 +83,7 @@ class MetricsTimeSeries(ABC):
 
 class MetricsSample(ABC):
     """Represents a row in the samples_v4 table."""
+
     env: str
     temporality: str
     metric_name: str
@@ -122,6 +124,7 @@ class MetricsSample(ABC):
 
 class Metrics(ABC):
     """High-level metric representation. Produces both time series and sample entries."""
+
     metric_name: str
     labels: dict[str, str]
     temporality: str
@@ -129,8 +132,13 @@ class Metrics(ABC):
     value: float
     flags: int
 
-    _time_series: MetricsTimeSeries
-    _sample: MetricsSample
+    @property
+    def time_series(self) -> MetricsTimeSeries:
+        return self._time_series
+
+    @property
+    def sample(self) -> MetricsSample:
+        return self._sample
 
     def __init__(
         self,
@@ -195,9 +203,9 @@ def insert_metrics(
         """
         time_series_map: dict[int, MetricsTimeSeries] = {}
         for metric in metrics:
-            fp = int(metric._time_series.fingerprint)  # pylint: disable=protected-access
+            fp = int(metric.time_series.fingerprint)
             if fp not in time_series_map:
-                time_series_map[fp] = metric._time_series  # pylint: disable=protected-access
+                time_series_map[fp] = metric.time_series
 
         if len(time_series_map) > 0:
             clickhouse.conn.insert(
@@ -222,7 +230,7 @@ def insert_metrics(
                 data=[ts.to_row() for ts in time_series_map.values()],
             )
 
-        samples = [metric._sample for metric in metrics]  # pylint: disable=protected-access
+        samples = [metric.sample for metric in metrics]
         if len(samples) > 0:
             clickhouse.conn.insert(
                 database="signoz_metrics",
@@ -248,3 +256,31 @@ def insert_metrics(
     clickhouse.conn.query(
         f"TRUNCATE TABLE signoz_metrics.samples_v4 ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
     )
+
+
+@pytest.fixture(name="remove_metrics_ttl_and_storage_settings", scope="function")
+def remove_metrics_ttl_and_storage_settings(signoz: types.SigNoz):
+    """
+    Remove any custom TTL settings on metrics tables to revert to default retention.
+    Also resets storage policy to default by recreating tables if needed.
+    """
+    tables = [
+        "samples_v4",
+        "samples_v4_agg_5m",
+        "samples_v4_agg_30m",
+        "time_series_v4",
+        "time_series_v4_6hrs",
+        "time_series_v4_1day",
+        "time_series_v4_1week",
+    ]
+
+    for table in tables:
+        try:
+            signoz.telemetrystore.conn.query(
+                f"ALTER TABLE signoz_metrics.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' REMOVE TTL"
+            )
+            signoz.telemetrystore.conn.query(
+                f"ALTER TABLE signoz_metrics.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' RESET SETTING storage_policy;"
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            print(f"ttl and storage policy reset failed for {table}: {e}")
