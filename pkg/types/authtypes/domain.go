@@ -181,6 +181,12 @@ func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid authn provider %q", temp.AuthNProvider.StringValue())
 	}
 
+	if temp.RoleMapping != nil {
+		if err := temp.RoleMapping.Validate(); err != nil {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid role mapping: %s", err)
+		}
+	}
+
 	*typ = AuthDomainConfig(temp)
 	return nil
 
