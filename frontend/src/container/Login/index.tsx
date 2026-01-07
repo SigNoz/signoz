@@ -38,6 +38,7 @@ type FormValues = {
 	url: string;
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function Login(): JSX.Element {
 	const urlQueryParams = useUrlQuery();
 	// override for callbackAuthN in case of some misconfiguration
@@ -338,7 +339,7 @@ function Login(): JSX.Element {
 						size="small"
 						showIcon
 						className="login-error-callout"
-						description={errorMessage.getErrorMessage()}
+						description={errorMessage?.getErrorMessage() || 'Something went wrong'}
 					/>
 				)}
 

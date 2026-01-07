@@ -302,8 +302,8 @@ function SignUp(): JSX.Element {
 							size="small"
 							showIcon
 							className="signup-error-callout"
-							message={formError.getErrorCode() || undefined}
-							description={formError.getErrorMessage() || 'Something went wrong'}
+							message={formError?.getErrorCode() || undefined}
+							description={formError?.getErrorMessage() || 'Something went wrong'}
 						/>
 					)}
 

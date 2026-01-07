@@ -193,8 +193,8 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							size="small"
 							showIcon
 							className="reset-password-error-callout"
-							message={errorMessage.getErrorCode() || undefined}
-							description={errorMessage.getErrorMessage() || 'Something went wrong'}
+							message={errorMessage?.getErrorCode() || undefined}
+							description={errorMessage?.getErrorMessage() || 'Something went wrong'}
 						/>
 					)}
 
