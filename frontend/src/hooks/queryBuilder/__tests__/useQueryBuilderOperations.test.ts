@@ -193,6 +193,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 							metricName: 'new_sum_metric',
 							temporality: '',
 							spaceAggregation: MetricAggregateOperator.SUM,
+							reduceTo: ReduceOperators.SUM,
 						},
 					],
 				}),
@@ -212,6 +213,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 						metricName: 'original_sum_metric',
 						temporality: '',
 						spaceAggregation: MetricAggregateOperator.SUM,
+						reduceTo: ReduceOperators.SUM,
 					},
 				],
 			};
@@ -244,6 +246,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 							metricName: 'new_sum_metric',
 							temporality: '',
 							spaceAggregation: MetricAggregateOperator.SUM,
+							reduceTo: ReduceOperators.SUM,
 						},
 					],
 				}),
@@ -265,6 +268,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 						metricName: 'original_gauge',
 						temporality: '',
 						spaceAggregation: '',
+						reduceTo: ReduceOperators.AVG,
 					},
 				],
 			};
@@ -295,6 +299,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 						metricName: '',
 						temporality: '',
 						spaceAggregation: MetricAggregateOperator.SUM,
+						reduceTo: ReduceOperators.AVG,
 					},
 				],
 			};
@@ -320,6 +325,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 							metricName: 'new_gauge',
 							temporality: '',
 							spaceAggregation: MetricAggregateOperator.AVG,
+							reduceTo: ReduceOperators.AVG,
 						},
 					],
 				}),
