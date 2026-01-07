@@ -54,6 +54,8 @@ func (r *aggExprRewriter) Rewrite(
 	expr string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	startNs uint64,
+	endNs uint64,
 ) (string, []any, error) {
 
 	wrapped := fmt.Sprintf("SELECT %s", expr)
@@ -83,6 +85,8 @@ func (r *aggExprRewriter) Rewrite(
 		r.conditionBuilder,
 		r.jsonBodyPrefix,
 		r.jsonKeyToKey,
+		startNs,
+		endNs,
 	)
 	// Rewrite the first select item (our expression)
 	if err := sel.SelectItems[0].Accept(visitor); err != nil {
@@ -101,12 +105,14 @@ func (r *aggExprRewriter) RewriteMulti(
 	exprs []string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	startNs uint64,
+	endNs uint64,
 ) ([]string, [][]any, error) {
 	out := make([]string, len(exprs))
 	var errs []error
 	var chArgsList [][]any
 	for i, e := range exprs {
-		w, chArgs, err := r.Rewrite(ctx, e, rateInterval, keys)
+		w, chArgs, err := r.Rewrite(ctx, e, rateInterval, keys, startNs, endNs)
 		if err != nil {
 			errs = append(errs, err)
 			out[i] = e
@@ -134,6 +140,8 @@ type exprVisitor struct {
 	Modified         bool
 	chArgs           []any
 	isRate           bool
+	startNs          uint64
+	endNs            uint64
 }
 
 func newExprVisitor(
@@ -144,6 +152,8 @@ func newExprVisitor(
 	conditionBuilder qbtypes.ConditionBuilder,
 	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+	startNs uint64,
+	endNs uint64,
 ) *exprVisitor {
 	return &exprVisitor{
 		logger:           logger,
@@ -153,6 +163,8 @@ func newExprVisitor(
 		conditionBuilder: conditionBuilder,
 		jsonBodyPrefix:   jsonBodyPrefix,
 		jsonKeyToKey:     jsonKeyToKey,
+		startNs:          startNs,
+		endNs:            endNs,
 	}
 }
 
@@ -190,7 +202,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	if aggFunc.FuncCombinator {
 		// Map the predicate (last argument)
 		origPred := args[len(args)-1].String()
-        whereClause, err := PrepareWhereClause(
+		whereClause, err := PrepareWhereClause(
 			origPred,
 			FilterExprVisitorOpts{
 				Logger:           v.logger,
@@ -199,7 +211,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 				ConditionBuilder: v.conditionBuilder,
 				FullTextColumn:   v.fullTextColumn,
 				JsonKeyToKey:     v.jsonKeyToKey,
-            }, 0, 0,
+			}, v.startNs, v.endNs,
 		)
 		if err != nil {
 			return err
