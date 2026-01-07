@@ -6,7 +6,11 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	ReduceOperators,
+} from 'types/common/queryBuilder';
 
 import { useQueryBuilder } from '../useQueryBuilder';
 import { useQueryOperations } from '../useQueryBuilderOperations';
@@ -54,7 +58,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 		stepInterval: 60,
 		expression: '',
 		disabled: false,
-		reduceTo: 'avg',
+		reduceTo: ReduceOperators.AVG,
 		legend: '',
 	};
 

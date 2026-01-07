@@ -8,7 +8,7 @@ import { Provider } from 'react-redux';
 import store from 'store';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import {
 	MENUITEM_KEYS_VS_LABELS,
@@ -68,7 +68,7 @@ const mockProps: WidgetGraphComponentProps = {
 						limit: null,
 						orderBy: [],
 						queryName: 'A',
-						reduceTo: 'last',
+						reduceTo: ReduceOperators.LAST,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'count_distinct',
