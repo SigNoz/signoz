@@ -44,7 +44,7 @@ type Channel struct {
 // It can return nil if the receiver is the default receiver.
 func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, error) {
 	if receiver.Name == DefaultReceiverName {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "channel %s cannot be created as it is the default receiver", receiver.Name)
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "cannot use %s name as a channel name", receiver.Name)
 	}
 
 	// Initialize channel with common fields
