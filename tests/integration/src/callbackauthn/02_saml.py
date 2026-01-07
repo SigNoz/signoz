@@ -659,4 +659,5 @@ def test_cleanup_saml_domain(
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=2,
         )
-    assert response.status_code in [HTTPStatus.OK, HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND]
+        
+        assert response.status_code in [HTTPStatus.OK, HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND]
