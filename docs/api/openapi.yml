@@ -2742,6 +2742,8 @@ components:
           $ref: '#/components/schemas/AuthtypesGoogleConfig'
         oidcConfig:
           $ref: '#/components/schemas/AuthtypesOIDCConfig'
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
         samlConfig:
           $ref: '#/components/schemas/AuthtypesSamlConfig'
         ssoEnabled:
@@ -2779,6 +2781,12 @@ components:
       properties:
         email:
           type: string
+        groups:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
       type: object
     AuthtypesDeprecatedGettableLogin:
       properties:
@@ -2811,6 +2819,8 @@ components:
           $ref: '#/components/schemas/AuthtypesOIDCConfig'
         orgId:
           type: string
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
         samlConfig:
           $ref: '#/components/schemas/AuthtypesSamlConfig'
         ssoEnabled:
@@ -2834,11 +2844,32 @@ components:
       type: object
     AuthtypesGoogleConfig:
       properties:
+        adminEmail:
+          additionalProperties:
+            type: string
+          type: object
+        allowedGroups:
+          items:
+            type: string
+          type: array
         clientId:
           type: string
         clientSecret:
           type: string
+        fetchGroups:
+          type: boolean
+        fetchTransitiveGroupMembership:
+          type: boolean
+        insecureSkipEmailVerified:
+          type: boolean
         redirectURI:
+          type: string
+        scopes:
+          items:
+            type: string
+          nullable: true
+          type: array
+        serviceAccountJson:
           type: string
       type: object
     AuthtypesOIDCConfig:
@@ -2857,6 +2888,11 @@ components:
           type: string
         issuerAlias:
           type: string
+        scopes:
+          items:
+            type: string
+          nullable: true
+          type: array
       type: object
     AuthtypesOrgSessionContext:
       properties:
@@ -2895,10 +2931,33 @@ components:
         refreshToken:
           type: string
       type: object
+    AuthtypesRoleMapping:
+      properties:
+        defaultRole:
+          type: string
+        groupMappings:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        useRoleAttribute:
+          type: boolean
+      type: object
+    AuthtypesSamlAttributeMapping:
+      properties:
+        groups:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+      type: object
     AuthtypesSamlConfig:
       properties:
         insecureSkipAuthNRequestsSigned:
           type: boolean
+        samlAttributeMapping:
+          $ref: '#/components/schemas/AuthtypesSamlAttributeMapping'
         samlCert:
           type: string
         samlEntity:
