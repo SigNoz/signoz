@@ -119,6 +119,13 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: unexpected hosted domain claim")
 	}
 
+	if !authDomain.AuthDomainConfig().Google.InsecureSkipEmailVerified {
+		if !claims.EmailVerified {
+			a.settings.Logger().ErrorContext(ctx, "google: email is not verified", "email", claims.Email)
+			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: email is not verified")
+		}
+	}
+
 	email, err := valuer.NewEmail(claims.Email)
 	if err != nil {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "google: failed to parse email").WithAdditional(err.Error())
@@ -128,7 +135,8 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	if authDomain.AuthDomainConfig().Google.FetchGroups {
 		groups, err = a.fetchGoogleWorkspaceGroups(ctx, claims.Email, authDomain.AuthDomainConfig().Google)
 		if err != nil {
-			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: could not fetch groups").WithAdditional(err.Error())
+			a.settings.Logger().ErrorContext(ctx, "google: could not fetch groups", "error", err)
+			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: could not fetch groups")
 		}
 
 		if len(authDomain.AuthDomainConfig().Google.AllowedGroups) > 0 {
@@ -170,7 +178,8 @@ func (a *AuthN) fetchGoogleWorkspaceGroups(ctx context.Context, userEmail string
 
 	jwtConfig, err := google.JWTConfigFromJSON([]byte(config.ServiceAccountJSON), admin.AdminDirectoryGroupReadonlyScope)
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid service account credentials").WithAdditional(err.Error())
+		a.settings.Logger().ErrorContext(ctx, "google: invalid service account credentials", "error", err)
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid service account credentials")
 	}
 
 	jwtConfig.Subject = adminEmail

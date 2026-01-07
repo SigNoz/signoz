@@ -42,6 +42,9 @@ type GoogleConfig struct {
 
 	// Scopes for oauth2.Config. Defaults to "email profile"
 	Scopes []string `json:"scopes"`
+
+	// Whether to skip email verification. Defaults to "false"
+	InsecureSkipEmailVerified bool `json:"insecureSkipEmailVerified"`
 }
 
 func (config *GoogleConfig) UnmarshalJSON(data []byte) error {
