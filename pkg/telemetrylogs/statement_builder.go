@@ -168,7 +168,7 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 			overallMatch = overallMatch || findMatch(IntrinsicFields)
 		}
 
-		if strings.Contains(k.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
+		if strings.HasPrefix(k.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
 			k.Name = strings.TrimPrefix(k.Name, telemetrytypes.BodyJSONStringSearchPrefix)
 			fieldKeys, found := keys[k.Name]
 			if found && len(fieldKeys) > 0 {
