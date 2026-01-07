@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"go.uber.org/zap"         //nolint:depguard
 	"go.uber.org/zap/zapcore" //nolint:depguard
 )
@@ -70,7 +70,7 @@ type filteringCore struct {
 // Current filters:
 //   - context.Canceled: These are expected errors from cancelled operations,
 //     and create noise in logs.
-func (c *filteringCore) filter(ent zapcore.Entry, fields []zapcore.Field) bool {
+func (c *filteringCore) filter(fields []zapcore.Field) bool {
 	for _, field := range fields {
 		if field.Type == zapcore.ErrorType {
 			if loggedErr, ok := field.Interface.(error); ok {
@@ -97,7 +97,7 @@ func (c *filteringCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapc
 // Write implements zapcore.Core.Write.
 // It filters log entries based on their fields before delegating to the wrapped core.
 func (c *filteringCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
-	if !c.filter(ent, fields) {
+	if !c.filter(fields) {
 		return nil
 	}
 	return c.Core.Write(ent, fields)
