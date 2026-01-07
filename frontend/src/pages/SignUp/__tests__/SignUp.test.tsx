@@ -111,6 +111,38 @@ describe('SignUp Component - Regular Signup', () => {
 			expect(submitButton).toBeDisabled();
 		});
 
+		it('disables submit button for partially filled fields', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(<SignUp />, undefined, { initialRoute: '/signup' });
+
+			const emailInput = screen.getByLabelText(/email address/i);
+			const passwordInput = screen.getByPlaceholderText(/enter new password/i);
+			const confirmPasswordInput = screen.getByPlaceholderText(
+				/confirm your new password/i,
+			);
+			const submitButton = screen.getByRole('button', {
+				name: /access my workspace/i,
+			});
+
+			// Missing email
+			await user.type(passwordInput, 'password123');
+			await user.type(confirmPasswordInput, 'password123');
+			expect(submitButton).toBeDisabled();
+
+			// Missing password
+			await user.clear(passwordInput);
+			await user.clear(confirmPasswordInput);
+			await user.type(emailInput, 'test@signoz.io');
+			await user.type(confirmPasswordInput, 'password123');
+			expect(submitButton).toBeDisabled();
+
+			// Missing confirm password
+			await user.clear(confirmPasswordInput);
+			await user.type(passwordInput, 'password123');
+			expect(submitButton).toBeDisabled();
+		});
+
 		it('shows error when passwords do not match', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
@@ -442,9 +474,16 @@ describe('SignUp Component - Accept Invite', () => {
 				initialRoute: '/signup?token=invalid-token',
 			});
 
-			// Error should be shown via notification, component should still render
+			// Verify form is still accessible and fields are enabled
 			await waitFor(() => {
-				expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+				const emailInput = screen.getByLabelText(/email address/i);
+				const nameInput = screen.getByLabelText(/^name$/i);
+
+				expect(emailInput).toBeInTheDocument();
+				expect(nameInput).toBeInTheDocument();
+				// Fields should be enabled since invite details failed to load
+				expect(emailInput).not.toBeDisabled();
+				expect(nameInput).not.toBeDisabled();
 			});
 		});
 
