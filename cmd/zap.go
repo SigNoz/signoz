@@ -84,6 +84,12 @@ func (c *filteringCore) filter(fields []zapcore.Field) bool {
 	return true
 }
 
+// With implements zapcore.Core.With
+// It returns a new copy with the added context.
+func (c *filteringCore) With(fields []zapcore.Field) zapcore.Core {
+	return &filteringCore{c.Core.With(fields)}
+}
+
 // Check implements zapcore.Core.Check.
 // It adds this core to the CheckedEntry if the log level is enabled,
 // ensuring that Write will be called for this entry.
