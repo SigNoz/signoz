@@ -111,7 +111,7 @@ function SignUp(): JSX.Element {
 				email,
 				orgDisplayName: organizationName,
 				password,
-				name: firstName,
+				name: firstName || undefined,
 				token: params.get('token') || undefined,
 			});
 
@@ -152,6 +152,7 @@ function SignUp(): JSX.Element {
 			try {
 				const values = form.getFieldsValue();
 				setLoading(true);
+				setFormError(null);
 
 				if (isSignUp) {
 					await signUp(values);
@@ -188,7 +189,6 @@ function SignUp(): JSX.Element {
 		return (
 			loading ||
 			!values.email ||
-			!values.firstName ||
 			!values.password ||
 			!values.confirmPassword ||
 			confirmPasswordError
@@ -312,7 +312,6 @@ function SignUp(): JSX.Element {
 							variant="solid"
 							color="primary"
 							type="submit"
-							onClick={handleSubmit}
 							data-attr="signup"
 							disabled={isValidForm()}
 							className="signup-submit-button"

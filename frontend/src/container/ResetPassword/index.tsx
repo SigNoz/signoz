@@ -203,7 +203,6 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							variant="solid"
 							color="primary"
 							type="submit"
-							onClick={handleSubmit}
 							data-attr="reset-password"
 							disabled={!isValidPassword || loading}
 							className="reset-password-submit-button"
