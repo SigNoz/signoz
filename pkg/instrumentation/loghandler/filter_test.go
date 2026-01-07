@@ -18,7 +18,7 @@ func TestFilter_ContextCanceled(t *testing.T) {
 		wrappers: []Wrapper{NewFilter()},
 	})
 
-	logger.Warn("ignore_message", "error", context.Canceled)
+	logger.WarnContext(context.Background(), "ignore_message", "error", context.Canceled)
 
 	// Buffer should be empty since the log should be filtered out
 	assert.Empty(t, buf.Bytes(), "context.Canceled error should be filtered out")
@@ -32,7 +32,7 @@ func TestFilter_OtherErrors(t *testing.T) {
 	})
 
 	// Log with different error - should NOT be filtered
-	logger.Warn("log_message", "error", context.DeadlineExceeded)
+	logger.WarnContext(context.Background(), "log_message", "error", context.DeadlineExceeded)
 
 	// Buffer should contain the log entry
 	require.NotEmpty(t, buf.Bytes(), "other errors should be logged")
@@ -54,7 +54,7 @@ func TestFilter_NoError(t *testing.T) {
 	})
 
 	// Log without error - should be logged normally
-	logger.Info("normal_message", "key", "value")
+	logger.InfoContext(context.Background(), "normal_message", "key", "value")
 
 	// Buffer should contain the log entry
 	require.NotEmpty(t, buf.Bytes(), "logs without errors should be logged")
