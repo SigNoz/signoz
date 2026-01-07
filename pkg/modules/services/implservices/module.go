@@ -328,7 +328,7 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 		}
 	}
 
-	periodSeconds := float64((endMs - startMs) / 1000)
+	periodSeconds := float64(endMs-startMs) / 1000.0
 
 	out := make([]*servicetypesv1.ResponseItem, 0, len(sd.Data))
 	serviceNames := make([]string, 0, len(sd.Data))
@@ -941,7 +941,7 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 			// Map values based on queryName
 			switch queryName {
 			case "p50_latency":
-				a.p50 = toFloat(row, aggIdx) * math.Pow(10, 6) // convert seconds to nanoseconds
+				a.p50 = toFloat(row, aggIdx) * math.Pow(10, 6) // convert milliseconds to nanoseconds
 			case "p95_latency":
 				a.p95 = toFloat(row, aggIdx) * math.Pow(10, 6)
 			case "p99_latency":
