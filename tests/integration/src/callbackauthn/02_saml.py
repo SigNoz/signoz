@@ -103,7 +103,7 @@ def test_saml_authn(
     signoz: SigNoz,
     idp: TestContainerIDP,  # pylint: disable=unused-argument
     driver: webdriver.Chrome,
-    create_user_idp: Callable[[str, str], None],
+    create_user_idp: Callable[[str, str, bool, str, str], None],
     idp_login: Callable[[str, str], None],
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
@@ -151,7 +151,7 @@ def test_idp_initiated_saml_authn(
     signoz: SigNoz,
     idp: TestContainerIDP,  # pylint: disable=unused-argument
     driver: webdriver.Chrome,
-    create_user_idp: Callable[[str, str], None],
+    create_user_idp: Callable[[str, str, bool, str, str], None],
     idp_login: Callable[[str, str], None],
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
@@ -261,9 +261,9 @@ def test_saml_update_domain_with_group_mappings(
                     "samlIdp": settings["singleSignOnServiceLocation"],
                     "samlCert": settings["certificate"],
                     "samlAttributeMapping": {
-                        "name": "displayName",
+                        "name": "givenName",
                         "groups": "groups",
-                        "role": "role",
+                        "role": "signoz_role",
                     },
                 },
                 "roleMapping": {
@@ -556,6 +556,53 @@ def test_saml_role_mapping_case_insensitive(
     assert found_user["role"] == "ADMIN"
 
 
+def test_saml_name_mapping(
+    signoz: SigNoz,
+    idp: TestContainerIDP,
+    driver: webdriver.Chrome,
+    create_user_idp: Callable[[str, str, bool, str, str], None],
+    idp_login: Callable[[str, str], None],
+    get_token: Callable[[str, str], str],
+    get_session_context: Callable[[str], str],
+) -> None:
+    """Test that user's display name is mapped from SAML displayName attribute."""
+    email = "named-user@saml.integration.test"
+    
+    create_user_idp(email, "password", True, "Jane", "Smith")
+    
+    _perform_saml_login(signoz, driver, get_session_context, idp_login, email, "password")
+    
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    found_user = _get_user_by_email(signoz, admin_token, email)
+    
+    assert found_user is not None
+    assert found_user["displayName"] == "Jane" # We are only mapping the first name here
+    assert found_user["role"] == "VIEWER"
+
+
+def test_saml_empty_name_fallback(
+    signoz: SigNoz,
+    idp: TestContainerIDP,
+    driver: webdriver.Chrome,
+    create_user_idp: Callable[[str, str, bool, str, str], None],
+    idp_login: Callable[[str, str], None],
+    get_token: Callable[[str, str], str],
+    get_session_context: Callable[[str], str],
+) -> None:
+    """Test that user without displayName in IDP still gets created."""
+    email = "no-name@saml.integration.test"
+    
+    create_user_idp(email, "password", True)
+    
+    _perform_saml_login(signoz, driver, get_session_context, idp_login, email, "password")
+    
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    found_user = _get_user_by_email(signoz, admin_token, email)
+    
+    assert found_user is not None
+    assert found_user["role"] == "VIEWER"
+
+
 # def test_saml_role_mapping_update_on_subsequent_login(
 #     signoz: SigNoz,
 #     idp: TestContainerIDP,  # pylint: disable=unused-argument
@@ -608,6 +655,7 @@ def test_saml_role_mapping_case_insensitive(
 #!########################################################################
 def test_cleanup_saml_domain(
     signoz: SigNoz,
+    idp: TestContainerIDP,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """Cleanup: Remove the SAML domain after tests complete."""

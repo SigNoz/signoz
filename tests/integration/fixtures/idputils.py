@@ -148,6 +148,18 @@ def create_saml_client(
                             "attribute.name": "signoz_role",
                         },
                     },
+                    {
+                        "name": "displayName",
+                        "protocol": "saml",
+                        "protocolMapper": "saml-user-property-mapper",
+                        "consentRequired": False,
+                        "config": {
+                            "attribute.nameformat": "Basic",
+                            "user.attribute": "firstName",
+                            "friendly.name": "displayName",
+                            "attribute.name": "displayName",
+                        },
+                    },
                 ],
                 "defaultClientScopes": ["saml_organization", "role_list"],
                 "optionalClientScopes": [],
@@ -327,7 +339,7 @@ def get_oidc_settings(idp: types.TestContainerIDP) -> dict:
 
 
 @pytest.fixture(name="create_user_idp", scope="function")
-def create_user_idp(idp: types.TestContainerIDP) -> Callable[[str, str, bool], None]:
+def create_user_idp(idp: types.TestContainerIDP) -> Callable[[str, str, bool, str, str], None]:
     client = KeycloakAdmin(
         server_url=idp.container.host_configs["6060"].base(),
         username=IDP_ROOT_USERNAME,
@@ -337,17 +349,20 @@ def create_user_idp(idp: types.TestContainerIDP) -> Callable[[str, str, bool], N
 
     created_users = []
 
-    def _create_user_idp(email: str, password: str, verified: bool = True) -> None:
-        user_id = client.create_user(
-            exist_ok=False,
-            payload={
-                "username": email,
-                "email": email,
-                "enabled": True,
-                "emailVerified": verified,
-            },
-        )
+    def _create_user_idp(email: str, password: str, verified: bool = True, first_name: str = "", last_name: str = "") -> None:
+        payload = {
+            "username": email,
+            "email": email,
+            "enabled": True,
+            "emailVerified": verified,
+        }
 
+        if first_name:
+            payload["firstName"] = first_name
+        if last_name:
+            payload["lastName"] = last_name
+
+        user_id = client.create_user(exist_ok=False, payload=payload)
         client.set_user_password(user_id, password, temporary=False)
         created_users.append(user_id)
 
@@ -451,7 +466,6 @@ def create_user_idp_with_groups(
 
     for user_id in created_users:
         try:
-            break
             client.delete_user(user_id)
         except Exception:
             pass
@@ -526,7 +540,6 @@ def create_user_idp_with_role(
 
     for user_id in created_users:
         try:
-            break
             client.delete_user(user_id)
         except Exception:
             pass

@@ -39,6 +39,9 @@ type GoogleConfig struct {
 	// Optional list of allowed groups
 	// If this is present, only users belonging to one of these groups will be allowed to login
 	AllowedGroups []string `json:"allowedGroups,omitempty"`
+
+	// Scopes for oauth2.Config. Defaults to "email profile"
+	Scopes []string `json:"scopes"`
 }
 
 func (config *GoogleConfig) UnmarshalJSON(data []byte) error {
@@ -61,10 +64,14 @@ func (config *GoogleConfig) UnmarshalJSON(data []byte) error {
 		if len(temp.DomainToAdminEmail) == 0 {
 			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "domainToAdminEmail is required if fetchGroups is true")
 		}
-		
+
 		if temp.ServiceAccountJSON == "" {
 			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "serviceAccountJSON is required if fetchGroups is true")
 		}
+	}
+
+	if len(temp.Scopes) == 0 {
+		temp.Scopes = []string{"email", "profile"}
 	}
 
 	*config = GoogleConfig(temp)
