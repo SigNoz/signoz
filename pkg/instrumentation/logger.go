@@ -11,7 +11,6 @@ import (
 type zapToSlogConverter struct{}
 
 func NewLogger(config Config, wrappers ...loghandler.Wrapper) *slog.Logger {
-	// Prepend the error filter wrapper to filter out context.Canceled errors
 	wrappers = append([]loghandler.Wrapper{loghandler.NewFilter()}, wrappers...)
 
 	logger := slog.New(

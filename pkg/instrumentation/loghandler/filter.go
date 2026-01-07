@@ -19,14 +19,13 @@ func NewFilter() Wrapper {
 // It returns a LogHandler that filters log records based on a custom logic
 func (f *filter) Wrap(next LogHandler) LogHandler {
 	return LogHandlerFunc(func(ctx context.Context, record slog.Record) error {
-		// Check if the record contains a context.Canceled error
 		dropEntry := false
 		record.Attrs(func(attr slog.Attr) bool {
 			if shouldDropEntry(attr) {
 				dropEntry = true
-				return false
+				return false // stop iteration
 			}
-			return true // Continue iteration
+			return true
 		})
 
 		// Skip logging this entry
