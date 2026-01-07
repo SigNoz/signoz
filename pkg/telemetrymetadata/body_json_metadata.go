@@ -186,7 +186,7 @@ func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...st
 
 			jsonDataType, found := telemetrytypes.MappingStringToJSONDataType[columnType]
 			if !found {
-				t.logger.ErrorContext(ctx, "failed to map column type to JSON data type", "columnType", columnType, "columnExpr", columnExpr)
+				t.logger.ErrorContext(ctx, "failed to map column type to JSON data type", "column_type", columnType, "column_expr", columnExpr)
 				continue
 			}
 
