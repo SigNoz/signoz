@@ -146,7 +146,7 @@ describe('Login Component', () => {
 			).toBeInTheDocument();
 			expect(getByTestId('email')).toBeInTheDocument();
 			expect(getByTestId('initiate_login')).toBeInTheDocument();
-			expect(getByPlaceholderText('name@yourcompany.com')).toBeInTheDocument();
+			expect(getByPlaceholderText('e.g. john@signoz.io')).toBeInTheDocument();
 		});
 
 		it('shows loading state when version data is being fetched', () => {
@@ -354,7 +354,7 @@ describe('Login Component', () => {
 
 			await waitFor(() => {
 				expect(
-					screen.getByRole('button', { name: /login with callback/i }),
+					screen.getByRole('button', { name: /sign in with sso/i }),
 				).toBeInTheDocument();
 			});
 		});
@@ -599,7 +599,7 @@ describe('Login Component', () => {
 			});
 
 			await waitFor(() => {
-				expect(getByText('AUTH_ERROR')).toBeInTheDocument();
+				expect(getByText('Authentication failed')).toBeInTheDocument();
 			});
 		});
 
@@ -611,7 +611,7 @@ describe('Login Component', () => {
 
 			await waitFor(() => {
 				expect(queryByText('invalid-json')).not.toBeInTheDocument();
-				expect(getByText('AUTH_ERROR')).toBeInTheDocument();
+				expect(getByText('Authentication failed')).toBeInTheDocument();
 			});
 		});
 	});
@@ -744,7 +744,7 @@ describe('Login Component', () => {
 			await user.click(nextButton);
 
 			await waitFor(() => {
-				// Should show "Login" button for password auth
+				// Should show "Sign in with Password" button for password auth
 				expect(screen.getByTestId('password_authn_submit')).toBeInTheDocument();
 				expect(screen.queryByTestId('initiate_login')).not.toBeInTheDocument();
 			});
