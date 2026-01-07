@@ -101,7 +101,7 @@ func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, e
 
 	// If we were unable to find the channel type, return an error
 	if channel.Type == "" {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "channel %s cannot have an empty type", receiver.Name)
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "channel '%s' must have at least one notification configuration (e.g., email_configs, webhook_configs, slack_configs)", receiver.Name)
 	}
 
 	return &channel, nil
