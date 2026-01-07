@@ -9,6 +9,7 @@ import { rest, server } from 'mocks-server/server';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCopyToClipboard } from 'react-use';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { USER_ROLES } from 'types/roles';
 
 import PublicDashboardSetting from '../index';
 
@@ -107,15 +108,11 @@ describe('PublicDashboardSetting', () => {
 				).toBeInTheDocument();
 			});
 
-			await waitFor(() => {
-				expect(
-					screen.getByRole('checkbox', { name: /enable time range/i }),
-				).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByRole('checkbox', { name: /enable time range/i }),
+			).toBeInTheDocument();
 
-			await waitFor(() => {
-				expect(screen.getByText(/default time range/i)).toBeInTheDocument();
-			});
+			expect(await screen.findByText(/default time range/i)).toBeInTheDocument();
 
 			expect(screen.getByText(/Last 30 minutes/i)).toBeInTheDocument();
 
@@ -126,7 +123,7 @@ describe('PublicDashboardSetting', () => {
 			});
 
 			expect(
-				screen.getByRole('button', { name: /publish dashboard/i }),
+				await screen.findByRole('button', { name: /publish dashboard/i }),
 			).toBeInTheDocument();
 		});
 	});
@@ -151,11 +148,9 @@ describe('PublicDashboardSetting', () => {
 				).toBeInTheDocument();
 			});
 
-			await waitFor(() => {
-				expect(
-					screen.getByRole('checkbox', { name: /enable time range/i }),
-				).toBeChecked();
-			});
+			expect(
+				await screen.findByRole('checkbox', { name: /enable time range/i }),
+			).toBeChecked();
 
 			await waitFor(() => {
 				expect(screen.getByText(/default time range/i)).toBeInTheDocument();
@@ -167,17 +162,13 @@ describe('PublicDashboardSetting', () => {
 				expect(screen.getByText(/Public Dashboard URL/i)).toBeInTheDocument();
 			});
 
-			await waitFor(() => {
-				expect(
-					screen.getByRole('button', { name: /update published dashboard/i }),
-				).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByRole('button', { name: /update published dashboard/i }),
+			).toBeInTheDocument();
 
-			await waitFor(() => {
-				expect(
-					screen.getByRole('button', { name: /unpublish dashboard/i }),
-				).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByRole('button', { name: /unpublish dashboard/i }),
+			).toBeInTheDocument();
 		});
 	});
 
@@ -376,6 +367,66 @@ describe('PublicDashboardSetting', () => {
 				expect(mockToast.success).toHaveBeenCalledWith(
 					'Dashboard unpublished successfully',
 				);
+			});
+		});
+	});
+
+	describe('Non-admin user permissions', () => {
+		it('should disable "Publish dashboard" button for non-admin users', async () => {
+			server.use(
+				rest.get(
+					`*/api/v1/dashboards/${MOCK_DASHBOARD_ID}/public`,
+					// eslint-disable-next-line sonarjs/no-identical-functions
+					(_req, res, ctx) =>
+						res(
+							ctx.status(StatusCodes.NOT_FOUND),
+							ctx.json(unpublishedPublicDashboardMeta),
+						),
+				),
+			);
+
+			render(<PublicDashboardSetting />, {}, { role: USER_ROLES.VIEWER });
+
+			const publishButton = await screen.findByRole('button', {
+				name: /publish dashboard/i,
+			});
+			expect(publishButton).toBeInTheDocument();
+			expect(publishButton).toBeDisabled();
+			expect(publishButton).toHaveAttribute('disabled');
+		});
+
+		describe('Published dashboard buttons for non-admin users', () => {
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			beforeEach(() => {
+				server.use(
+					rest.get(
+						`*/api/v1/dashboards/${MOCK_DASHBOARD_ID}/public`,
+						(_req, res, ctx) =>
+							res(ctx.status(StatusCodes.OK), ctx.json(publishedPublicDashboardMeta)),
+					),
+				);
+			});
+
+			it('should disable "Unpublish dashboard" button for non-admin users', async () => {
+				render(<PublicDashboardSetting />, {}, { role: USER_ROLES.VIEWER });
+
+				const unpublishButton = await screen.findByRole('button', {
+					name: /unpublish dashboard/i,
+				});
+				expect(unpublishButton).toBeInTheDocument();
+				expect(unpublishButton).toBeDisabled();
+				expect(unpublishButton).toHaveAttribute('disabled');
+			});
+
+			it('should disable "Update published dashboard" button for non-admin users', async () => {
+				render(<PublicDashboardSetting />, {}, { role: USER_ROLES.VIEWER });
+
+				const updateButton = await screen.findByRole('button', {
+					name: /update published dashboard/i,
+				});
+				expect(updateButton).toBeInTheDocument();
+				expect(updateButton).toBeDisabled();
+				expect(updateButton).toHaveAttribute('disabled');
 			});
 		});
 	});

@@ -51,6 +51,15 @@ interface Option {
 	label: string;
 	link?: string;
 	entityID?: string;
+	internalRedirect?: boolean;
+	question?: {
+		desc: string;
+		options: Option[];
+		entityID?: string;
+		helpText?: string;
+		helpLink?: string;
+		helpLinkText?: string;
+	};
 }
 
 interface Entity {
@@ -63,6 +72,9 @@ interface Entity {
 		desc: string;
 		options: Option[];
 		entityID: string;
+		helpText?: string;
+		helpLink?: string;
+		helpLinkText?: string;
 		question?: {
 			desc: string;
 			options: Option[];
@@ -107,11 +119,32 @@ const ONBOARDING_V3_ANALYTICS_EVENTS_MAP = {
 	DATA_SOURCE_SEARCHED: 'Searched',
 };
 
+const groupDataSourcesByTags = (
+	dataSources: Entity[],
+): { [tag: string]: Entity[] } => {
+	const groupedDataSources: { [tag: string]: Entity[] } = {};
+
+	dataSources.forEach((dataSource) => {
+		dataSource.tags.forEach((tag) => {
+			if (!groupedDataSources[tag]) {
+				groupedDataSources[tag] = [];
+			}
+			groupedDataSources[tag].push(dataSource);
+		});
+	});
+
+	return groupedDataSources;
+};
+
+const allGroupedDataSources = groupDataSourcesByTags(
+	onboardingConfigWithLinks as Entity[],
+);
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function OnboardingAddDataSource(): JSX.Element {
 	const [groupedDataSources, setGroupedDataSources] = useState<{
 		[tag: string]: Entity[];
-	}>({});
+	}>(allGroupedDataSources);
 
 	const { org } = useAppContext();
 
@@ -207,45 +240,33 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleSelectDataSource = (dataSource: Entity): void => {
-		if (dataSource && dataSource.internalRedirect && dataSource.link) {
-			logEvent(
-				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
-				{
-					dataSource: dataSource.label,
-				},
-			);
-			history.push(dataSource.link);
+		setSelectedDataSource(dataSource);
+		setSelectedFramework(null);
+		setSelectedEnvironment(null);
+
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
+			{
+				dataSource: dataSource.label,
+			},
+		);
+
+		if (dataSource.question) {
+			setHasMoreQuestions(true);
+
+			setTimeout(() => {
+				handleScrollToStep(question2Ref);
+			}, 100);
 		} else {
-			setSelectedDataSource(dataSource);
-			setSelectedFramework(null);
-			setSelectedEnvironment(null);
+			setHasMoreQuestions(false);
 
-			logEvent(
-				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
-				{
-					dataSource: dataSource.label,
-				},
-			);
+			updateUrl(dataSource?.link || '', null);
 
-			if (dataSource.question) {
-				setHasMoreQuestions(true);
-
-				setTimeout(() => {
-					handleScrollToStep(question2Ref);
-				}, 100);
-			} else {
-				setHasMoreQuestions(false);
-
-				updateUrl(dataSource?.link || '', null);
-
-				setShowConfigureProduct(true);
-			}
+			setShowConfigureProduct(true);
 		}
 	};
 
 	const handleSelectFramework = (option: any): void => {
-		setSelectedFramework(option);
-
 		logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.FRAMEWORK_SELECTED}`,
 			{
@@ -253,6 +274,8 @@ function OnboardingAddDataSource(): JSX.Element {
 				framework: option.label,
 			},
 		);
+
+		setSelectedFramework(option);
 
 		if (option.question) {
 			setHasMoreQuestions(true);
@@ -277,9 +300,6 @@ function OnboardingAddDataSource(): JSX.Element {
 		selectedEnvironment: any,
 		baseURL?: string,
 	): void => {
-		setSelectedEnvironment(selectedEnvironment);
-		setHasMoreQuestions(false);
-
 		logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.ENVIRONMENT_SELECTED}`,
 			{
@@ -289,35 +309,13 @@ function OnboardingAddDataSource(): JSX.Element {
 			},
 		);
 
+		setSelectedEnvironment(selectedEnvironment);
+		setHasMoreQuestions(false);
+
 		updateUrl(baseURL || docsUrl, selectedEnvironment?.key);
 
 		setShowConfigureProduct(true);
 	};
-
-	const groupDataSourcesByTags = (
-		dataSources: Entity[],
-	): { [tag: string]: Entity[] } => {
-		const groupedDataSources: { [tag: string]: Entity[] } = {};
-
-		dataSources.forEach((dataSource) => {
-			dataSource.tags.forEach((tag) => {
-				if (!groupedDataSources[tag]) {
-					groupedDataSources[tag] = [];
-				}
-				groupedDataSources[tag].push(dataSource);
-			});
-		});
-
-		return groupedDataSources;
-	};
-
-	useEffect(() => {
-		const groupedDataSources = groupDataSourcesByTags(
-			onboardingConfigWithLinks as Entity[],
-		);
-
-		setGroupedDataSources(groupedDataSources);
-	}, []);
 
 	const debouncedUpdate = useDebouncedFn((query) => {
 		setSearchQuery(query as string);
@@ -325,9 +323,7 @@ function OnboardingAddDataSource(): JSX.Element {
 		setDataSourceRequestSubmitted(false);
 
 		if (query === '') {
-			setGroupedDataSources(
-				groupDataSourcesByTags(onboardingConfigWithLinks as Entity[]),
-			);
+			setGroupedDataSources(allGroupedDataSources);
 			return;
 		}
 
@@ -363,31 +359,35 @@ function OnboardingAddDataSource(): JSX.Element {
 		},
 		[debouncedUpdate],
 	);
+
 	const handleFilterByCategory = (category: string): void => {
 		setSelectedDataSource(null);
 		setSelectedFramework(null);
 		setSelectedEnvironment(null);
 
-		if (category === 'All') {
-			setGroupedDataSources(
-				groupDataSourcesByTags(onboardingConfigWithLinks as Entity[]),
-			);
+		setSelectedCategory(category);
 
-			setSelectedCategory('All');
+		if (category === 'All') {
+			setGroupedDataSources(allGroupedDataSources);
 			return;
 		}
 
-		const filteredDataSources = onboardingConfigWithLinks.filter(
-			(dataSource) =>
-				dataSource.tags.includes(category) ||
-				dataSource.tags.some((tag) => tag.toLowerCase().includes(category)),
-		);
-
-		setSelectedCategory(category);
-
-		setGroupedDataSources(
-			groupDataSourcesByTags(filteredDataSources as Entity[]),
-		);
+		if (allGroupedDataSources[category]) {
+			setGroupedDataSources({
+				[category]: allGroupedDataSources[category],
+			});
+		} else {
+			// Fallback if somehow the category key doesn't strictly match or relies on partial match
+			// This preserves the old behavior as a fallback, though sidebar clicks should be exact matches
+			const filteredDataSources = onboardingConfigWithLinks.filter(
+				(dataSource) =>
+					dataSource.tags.includes(category) ||
+					dataSource.tags.some((tag) => tag.toLowerCase().includes(category)),
+			);
+			setGroupedDataSources(
+				groupDataSourcesByTags(filteredDataSources as Entity[]),
+			);
+		}
 	};
 
 	useEffect(() => {
@@ -781,7 +781,7 @@ function OnboardingAddDataSource(): JSX.Element {
 														</Typography.Text>
 													</div>
 
-													{Object.keys(groupedDataSources).map((tag) => (
+													{Object.keys(allGroupedDataSources).map((tag) => (
 														<div
 															key={tag}
 															className="onboarding-data-source-category-item"
@@ -806,7 +806,7 @@ function OnboardingAddDataSource(): JSX.Element {
 															<div className="line-divider" />
 
 															<Typography.Text className="onboarding-filters-item-count">
-																{groupedDataSources[tag].length}
+																{allGroupedDataSources[tag].length}
 															</Typography.Text>
 														</div>
 													))}
@@ -831,6 +831,22 @@ function OnboardingAddDataSource(): JSX.Element {
 																>
 																	{selectedDataSource?.question?.desc}
 																</Typography.Title>
+																{selectedDataSource?.question?.helpText && (
+																	<Typography.Text className="question-help-text">
+																		{selectedDataSource?.question?.helpText}
+																		{selectedDataSource?.question?.helpLink && (
+																			<a
+																				href={`${DOCS_BASE_URL}${selectedDataSource?.question?.helpLink}`}
+																				target="_blank"
+																				rel="noopener noreferrer"
+																				className="question-help-link"
+																			>
+																				{selectedDataSource?.question?.helpLinkText ||
+																					'Learn more →'}
+																			</a>
+																		)}
+																	</Typography.Text>
+																)}
 															</div>
 
 															<div className="onboarding-data-source-options">
@@ -885,6 +901,22 @@ function OnboardingAddDataSource(): JSX.Element {
 																>
 																	{selectedFramework?.question?.desc}
 																</Typography.Title>
+																{selectedFramework?.question?.helpText && (
+																	<Typography.Text className="question-help-text">
+																		{selectedFramework?.question?.helpText}
+																		{selectedFramework?.question?.helpLink && (
+																			<a
+																				href={`${DOCS_BASE_URL}${selectedFramework?.question?.helpLink}`}
+																				target="_blank"
+																				rel="noopener noreferrer"
+																				className="question-help-link"
+																			>
+																				{selectedFramework?.question?.helpLinkText ||
+																					'Learn more →'}
+																			</a>
+																		)}
+																	</Typography.Text>
+																)}
 															</div>
 
 															<div className="onboarding-data-source-options">
@@ -895,7 +927,9 @@ function OnboardingAddDataSource(): JSX.Element {
 																			selectedEnvironment?.label === option.label ? 'selected' : ''
 																		}`}
 																		type="primary"
-																		onClick={(): void => handleSelectEnvironment(option)}
+																		onClick={(): void =>
+																			handleSelectEnvironment(option, option.link)
+																		}
 																	>
 																		<img
 																			src={option.imgUrl || '/Logos/signoz-brand-logo-new.svg'}
@@ -926,7 +960,14 @@ function OnboardingAddDataSource(): JSX.Element {
 															},
 														);
 
-														handleUpdateCurrentStep(2);
+														const currentEntity =
+															selectedEnvironment || selectedFramework || selectedDataSource;
+
+														if (currentEntity?.internalRedirect && currentEntity?.link) {
+															history.push(currentEntity.link);
+														} else {
+															handleUpdateCurrentStep(2);
+														}
 													}}
 												>
 													Next: Configure your product

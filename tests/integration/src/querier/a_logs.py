@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
-from typing import Callable, Dict, List
+from typing import Callable, List
 
 import requests
 
@@ -81,7 +81,7 @@ def test_logs_list(
         ]
     )
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Query Logs for the last 10 seconds and check if the logs are returned in the correct order
     response = requests.post(
@@ -501,7 +501,7 @@ def test_logs_time_series_count(
         )
     insert_logs(logs)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # count() of all logs for the last 5 minutes
     response = requests.post(
@@ -1013,7 +1013,7 @@ def test_datatype_collision(
 
     insert_logs(logs)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # count() of all logs for the where severity_number > '7'
     response = requests.post(
@@ -1368,7 +1368,7 @@ def test_logs_fill_gaps(
     ]
     insert_logs(logs)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1454,7 +1454,7 @@ def test_logs_fill_gaps_with_group_by(
     ]
     insert_logs(logs)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1478,7 +1478,11 @@ def test_logs_fill_gaps_with_group_by(
                             "stepInterval": 60,
                             "disabled": False,
                             "groupBy": [
-                                {"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
                             ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
@@ -1510,8 +1514,8 @@ def test_logs_fill_gaps_with_group_by(
 
     # service-a has one log at minute -3, service-b at minute -2
     expectations = {
-        "service-a": {ts_min_3: 1},
-        "service-b": {ts_min_2: 1},
+        "service-a": {ts_min_3: 1.0},
+        "service-b": {ts_min_2: 1.0},
     }
 
     for service_name, s in series_by_service.items():
@@ -1551,7 +1555,7 @@ def test_logs_fill_gaps_formula(
     ]
     insert_logs(logs)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1586,9 +1590,7 @@ def test_logs_fill_gaps_formula(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": True,
-                            "filter": {
-                                "expression": "service.name = 'another-test'"
-                            },
+                            "filter": {"expression": "service.name = 'another-test'"},
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1600,7 +1602,7 @@ def test_logs_fill_gaps_formula(
                             "expression": "A + B",
                             "disabled": False,
                         },
-                    }
+                    },
                 ]
             },
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
@@ -1660,7 +1662,7 @@ def test_logs_fill_gaps_formula_with_group_by(
     ]
     insert_logs(logs)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1683,7 +1685,13 @@ def test_logs_fill_gaps_formula_with_group_by(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": True,
-                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "groupBy": [
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1695,7 +1703,13 @@ def test_logs_fill_gaps_formula_with_group_by(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": True,
-                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "groupBy": [
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1707,7 +1721,7 @@ def test_logs_fill_gaps_formula_with_group_by(
                             "expression": "A + B",
                             "disabled": False,
                         },
-                    }
+                    },
                 ]
             },
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
@@ -1735,8 +1749,8 @@ def test_logs_fill_gaps_formula_with_group_by(
     assert set(series_by_service.keys()) == {"group1", "group2"}
 
     expectations = {
-        "group1": {ts_min_3: 2},
-        "group2": {ts_min_2: 2},
+        "group1": {ts_min_3: 2.0},
+        "group2": {ts_min_2: 2.0},
     }
 
     for service_name, s in series_by_service.items():
@@ -1769,7 +1783,7 @@ def test_logs_fill_zero(
     ]
     insert_logs(logs)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1852,7 +1866,7 @@ def test_logs_fill_zero_with_group_by(
     ]
     insert_logs(logs)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1875,7 +1889,13 @@ def test_logs_fill_zero_with_group_by(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": False,
-                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "groupBy": [
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                             "functions": [{"name": "fillZero"}],
@@ -1905,8 +1925,8 @@ def test_logs_fill_zero_with_group_by(
 
     assert set(series_by_service.keys()) == {"service-a", "service-b"}
     expectations = {
-        "service-a": {ts_min_3: 1},
-        "service-b": {ts_min_2: 1},
+        "service-a": {ts_min_3: 1.0},
+        "service-b": {ts_min_2: 1.0},
     }
 
     for service_name, s in series_by_service.items():
@@ -1946,7 +1966,7 @@ def test_logs_fill_zero_formula(
     ]
     insert_logs(logs)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1994,7 +2014,7 @@ def test_logs_fill_zero_formula(
                             "disabled": False,
                             "functions": [{"name": "fillZero"}],
                         },
-                    }
+                    },
                 ]
             },
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
@@ -2054,7 +2074,7 @@ def test_logs_fill_zero_formula_with_group_by(
     ]
     insert_logs(logs)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -2077,7 +2097,13 @@ def test_logs_fill_zero_formula_with_group_by(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": True,
-                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "groupBy": [
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -2089,7 +2115,13 @@ def test_logs_fill_zero_formula_with_group_by(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": True,
-                            "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                            "groupBy": [
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -2102,7 +2134,7 @@ def test_logs_fill_zero_formula_with_group_by(
                             "disabled": False,
                             "functions": [{"name": "fillZero"}],
                         },
-                    }
+                    },
                 ]
             },
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
@@ -2130,8 +2162,8 @@ def test_logs_fill_zero_formula_with_group_by(
     assert set(series_by_service.keys()) == {"group1", "group2"}
 
     expectations = {
-        "group1": {ts_min_3: 2},
-        "group2": {ts_min_2: 2},
+        "group1": {ts_min_3: 2.0},
+        "group2": {ts_min_2: 2.0},
     }
 
     for service_name, s in series_by_service.items():
