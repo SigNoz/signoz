@@ -8,12 +8,16 @@ import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
 import updatePublicDashboardAPI from 'api/dashboard/public/updatePublicDashboard';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Copy, ExternalLink, Globe, Info, Loader2, Trash } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';
+import APIError from 'types/api/error';
+import { USER_ROLES } from 'types/roles';
 
 export const TIME_RANGE_PRESETS_OPTIONS = [
 	{
@@ -42,6 +46,12 @@ export const TIME_RANGE_PRESETS_OPTIONS = [
 	},
 ];
 
+const showErrorNotification = (error: APIError): void => {
+	toast.error(error.getErrorCode(), {
+		description: error.getErrorMessage(),
+	});
+};
+
 function PublicDashboardSetting(): JSX.Element {
 	const [publicDashboardData, setPublicDashboardData] = useState<
 		PublicDashboardMetaProps | undefined
@@ -51,6 +61,14 @@ function PublicDashboardSetting(): JSX.Element {
 	const [, setCopyPublicDashboardURL] = useCopyToClipboard();
 
 	const { selectedDashboard } = useDashboard();
+
+	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
+
+	const isPublicDashboardEnabled = isCloudUser || isEnterpriseSelfHostedUser;
+
+	const { user } = useAppContext();
+
+	const isAdmin = user?.role === USER_ROLES.ADMIN;
 
 	const handleDefaultTimeRange = useCallback((value: string): void => {
 		setDefaultTimeRange(value);
@@ -66,9 +84,12 @@ function PublicDashboardSetting(): JSX.Element {
 		isFetching: isFetchingPublicDashboard,
 		refetch: refetchPublicDashboard,
 		error: errorPublicDashboard,
-	} = useGetPublicDashboardMeta(selectedDashboard?.id || '');
+	} = useGetPublicDashboardMeta(
+		selectedDashboard?.id || '',
+		!!selectedDashboard?.id && isPublicDashboardEnabled,
+	);
 
-	const isPublicDashboardEnabled = !!publicDashboardData?.publicPath;
+	const isPublicDashboard = !!publicDashboardData?.publicPath;
 
 	useEffect(() => {
 		if (publicDashboardResponse?.data) {
@@ -102,8 +123,8 @@ function PublicDashboardSetting(): JSX.Element {
 		onSuccess: () => {
 			toast.success('Public dashboard created successfully');
 		},
-		onError: () => {
-			toast.error('Failed to create public dashboard');
+		onError: (error: APIError) => {
+			showErrorNotification(error);
 		},
 	});
 
@@ -115,8 +136,8 @@ function PublicDashboardSetting(): JSX.Element {
 		onSuccess: () => {
 			toast.success('Public dashboard updated successfully');
 		},
-		onError: () => {
-			toast.error('Failed to update public dashboard');
+		onError: (error: APIError) => {
+			showErrorNotification(error);
 		},
 	});
 
@@ -128,8 +149,8 @@ function PublicDashboardSetting(): JSX.Element {
 		onSuccess: () => {
 			toast.success('Dashboard unpublished successfully');
 		},
-		onError: () => {
-			toast.error('Failed to unpublish dashboard');
+		onError: (error: APIError) => {
+			showErrorNotification(error);
 		},
 	});
 
@@ -210,7 +231,7 @@ function PublicDashboardSetting(): JSX.Element {
 					level={5}
 					className="public-dashboard-setting-content-title"
 				>
-					{isPublicDashboardEnabled
+					{isPublicDashboard
 						? 'This dashboard is publicly accessible. Anyone with the link can view it.'
 						: 'This dashboard is private. Publish it to make it accessible to anyone with the link.'}
 				</Typography.Title>
@@ -240,7 +261,7 @@ function PublicDashboardSetting(): JSX.Element {
 					/>
 				</div>
 
-				{isPublicDashboardEnabled && (
+				{isPublicDashboard && (
 					<div className="public-dashboard-url">
 						<div className="url-label-container">
 							<Typography.Text className="url-label">
@@ -281,11 +302,11 @@ function PublicDashboardSetting(): JSX.Element {
 				</div>
 
 				<div className="public-dashboard-setting-actions">
-					{!isPublicDashboardEnabled ? (
+					{!isPublicDashboard ? (
 						<Button
 							type="primary"
 							className="create-public-dashboard-btn periscope-btn primary"
-							disabled={isLoading}
+							disabled={isLoading || !isAdmin}
 							onClick={handleCreatePublicDashboard}
 							loading={
 								isLoadingCreatePublicDashboard ||
@@ -309,7 +330,7 @@ function PublicDashboardSetting(): JSX.Element {
 							<Button
 								type="default"
 								className="periscope-btn secondary"
-								disabled={isLoading}
+								disabled={isLoading || !isAdmin}
 								onClick={handleRevokePublicDashboardAccess}
 								loading={isLoadingRevokePublicDashboardAccess}
 								icon={<Trash size={14} />}
@@ -320,7 +341,7 @@ function PublicDashboardSetting(): JSX.Element {
 							<Button
 								type="primary"
 								className="create-public-dashboard-btn periscope-btn primary"
-								disabled={isLoading}
+								disabled={isLoading || !isAdmin}
 								onClick={handleUpdatePublicDashboard}
 								loading={isLoadingUpdatePublicDashboard}
 								icon={<Globe size={14} />}
