@@ -349,24 +349,6 @@ def test_saml_role_mapping_multiple_groups_highest_wins(
     email = f"multi-group-user-{uuid.uuid4().hex[:8]}@saml.integration.test"
     create_user_idp_with_groups(email, "password", True, ["signoz-viewers", "signoz-editors"])
 
-    # DEBUG: Verify user has both groups in Keycloak
-    from keycloak import KeycloakAdmin
-    kc = KeycloakAdmin(
-        server_url=idp.container.host_configs["6060"].base(),
-        username="admin",
-        password="password",
-        realm_name="master",
-    )
-    user_id = kc.get_user_id(email)
-    groups = kc.get_user_groups(user_id)
-    print(f"\n=== DEBUG: User groups in Keycloak: {[g['name'] for g in groups]} ===\n")
-
-    # DEBUG: Check if domain has role mappings configured
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    domain = _get_saml_domain(signoz, admin_token)
-    print(f"\n=== DEBUG: Domain role mapping config: {domain.get('roleMapping')} ===\n")
-    print(f"domain: {domain}")
-
     _perform_saml_login(signoz, driver, get_session_context, idp_login, email, "password")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
