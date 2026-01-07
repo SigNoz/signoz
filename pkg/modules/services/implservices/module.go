@@ -511,10 +511,8 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 	return &reqV5, startMs, endMs, nil
 }
 
-// TODO(nikhilmantri0902): add test cases for the functions in this PR
 // mapSpanMetricsRespToServices merges span-metrics scalar results keyed by service.name using queryName for aggregation mapping.
 func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, startMs, endMs uint64) ([]*servicetypesv1.ResponseItem, []string) {
-	// TODO(nikhilmantri0902, in case of nil response, should we return nil directly from here for both values)
 	if resp == nil || len(resp.Data.Results) == 0 {
 		return []*servicetypesv1.ResponseItem{}, []string{}
 	}
@@ -778,8 +776,7 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 						Temporality:      metrictypes.Delta,
 						TimeAggregation:  metrictypes.TimeAggregationRate,
 						SpaceAggregation: metrictypes.SpaceAggregationPercentile50,
-						// TODO(nikhilmantri0902): is taking average over timestamps, representative of the p99 over all the values? Can some better reduce function be applied?
-						ReduceTo: qbtypes.ReduceToAvg,
+						ReduceTo:         qbtypes.ReduceToAvg,
 					},
 				},
 			},
