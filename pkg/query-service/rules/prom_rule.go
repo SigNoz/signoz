@@ -155,10 +155,6 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 
 	var resultVector ruletypes.Vector
 	for _, series := range matrixToProcess {
-		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
-			ActiveAlerts:  r.ActiveAlertsLabelFP(),
-			SendUnmatched: r.ShouldSendUnmatched(),
-		})
 		if r.Condition() != nil && r.Condition().RequireMinPoints {
 			if len(series.Points) < r.Condition().RequiredNumPoints {
 				r.logger.InfoContext(
@@ -168,6 +164,10 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 				continue
 			}
 		}
+		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+			SendUnmatched: r.ShouldSendUnmatched(),
+		})
 		if err != nil {
 			return nil, err
 		}
