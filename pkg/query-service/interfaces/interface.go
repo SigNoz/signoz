@@ -81,7 +81,6 @@ type Reader interface {
 	CheckClickHouse(ctx context.Context) error
 
 	GetMetricMetadata(context.Context, valuer.UUID, string, string) (*v3.MetricMetadataResponse, error)
-	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []model.MetricMetadataLookupKey) (map[model.MetricMetadataLookupKey]int64, error)
 
 	AddRuleStateHistory(ctx context.Context, ruleStateHistory []model.RuleStateHistory) error
 	GetOverallStateTransitions(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) ([]model.ReleStateItem, error)

@@ -2,10 +2,7 @@ package queryparser
 
 var (
 	builderQueryWithGrouping = `
-	{
-	  "queryType":"builder",
-	  "panelType":"graph",
-	  "queries":[
+	[
 	    {
 	      "type":"builder_query",
 	      "spec":{
@@ -25,14 +22,10 @@ var (
 	      }
 	    }
 	  ]
-	}
 	`
 
 	builderQuerySingleGrouping = `
-	{
-	  "queryType":"builder",
-	  "panelType":"graph",
-	  "queries":[
+	[
 	    {
 	      "type":"builder_query",
 	      "spec":{
@@ -49,14 +42,10 @@ var (
 	      }
 	    }
 	  ]
-	}
 	`
 
 	builderQueryNoGrouping = `
-	{
-	  "queryType":"builder",
-	  "panelType":"graph",
-	  "queries":[
+	[
 	    {
 	      "type":"builder_query",
 	      "spec":{
@@ -71,12 +60,10 @@ var (
 	      }
 	    }
 	  ]
-	}
 	`
 
 	promQueryWithGrouping = `
-	{
-	  "queries":[
+	[
 	    {
 	      "type":"promql",
 	      "spec":{
@@ -87,15 +74,11 @@ var (
 	        "stats":false
 	      }
 	    }
-	  ],
-	  "panelType":"graph",
-	  "queryType":"promql"
-	}
+	  ]
 	`
 
 	promQuerySingleGrouping = `
-	{
-	  "queries":[
+	[
 	    {
 	      "type":"promql",
 	      "spec":{
@@ -106,15 +89,11 @@ var (
 	        "stats":false
 	      }
 	    }
-	  ],
-	  "panelType":"graph",
-	  "queryType":"promql"
-	}
+	  ]
 	`
 
 	promQueryNoGrouping = `
-	{
-	  "queries":[
+	[
 	    {
 	      "type":"promql",
 	      "spec":{
@@ -125,17 +104,11 @@ var (
 	        "stats":false
 	      }
 	    }
-	  ],
-	  "panelType":"graph",
-	  "queryType":"promql"
-	}
+	  ]
 	`
 
 	clickHouseQueryWithGrouping = `
-{
-  "queryType":"clickhouse_sql",
-  "panelType":"graph",
-  "queries":[
+[
     {
       "type":"clickhouse_sql",
       "spec":{
@@ -145,14 +118,10 @@ var (
       }
     }
   ]
-}
 `
 
 	clickHouseQuerySingleGrouping = `
-{
-  "queryType":"clickhouse_sql",
-  "panelType":"graph",
-  "queries":[
+[
     {
       "type":"clickhouse_sql",
       "spec":{
@@ -162,14 +131,10 @@ var (
       }
     }
   ]
-}
 `
 
 	clickHouseQueryNoGrouping = `
-	{
-	  "queryType":"clickhouse_sql",
-	  "panelType":"graph",
-	  "queries":[
+	[
 	    {
 	      "type":"clickhouse_sql",
 	      "spec":{
@@ -179,6 +144,112 @@ var (
 	      }
 	    }
 	  ]
-	}
+	`
+
+	builderQueryWithFormula = `
+	[
+	    {
+	      "type":"builder_query",
+	      "spec":{
+	        "name":"A",
+	        "signal":"metrics",
+	        "stepInterval":null,
+	        "disabled":false,
+	        "groupBy":[],
+	        "aggregations":[
+	          {"metricName":"cpu_usage","timeAggregation":"avg","spaceAggregation":"sum"}
+	        ]
+	      }
+	    },
+	    {
+	      "type":"builder_query",
+	      "spec":{
+	        "name":"B",
+	        "signal":"metrics",
+	        "stepInterval":null,
+	        "disabled":false,
+	        "groupBy":[],
+	        "aggregations":[
+	          {"metricName":"mem_usage","timeAggregation":"avg","spaceAggregation":"sum"}
+	        ]
+	      }
+	    },
+	    {
+	      "type":"builder_formula",
+	      "spec":{
+	        "name":"F1",
+	        "expression":"A + B"
+	      }
+	    }
+	  ]
+	`
+
+	builderQueryWithFormulaAndGroupBy = `
+	[
+	    {
+	      "type":"builder_query",
+	      "spec":{
+	        "name":"A",
+	        "signal":"metrics",
+	        "stepInterval":null,
+	        "disabled":false,
+	        "groupBy":[
+	          {"name":"host","fieldDataType":"","fieldContext":""},
+			  {"name":"region","fieldDataType":"","fieldContext":""}
+	        ],
+	        "aggregations":[
+	          {"metricName":"cpu","timeAggregation":"avg","spaceAggregation":"sum"}
+	        ]
+	      }
+	    },
+	    {
+	      "type":"builder_query",
+	      "spec":{
+	        "name":"B",
+	        "signal":"metrics",
+	        "stepInterval":null,
+	        "disabled":false,
+	        "groupBy":[
+	          {"name":"host","fieldDataType":"","fieldContext":""},
+			  {"name":"instance","fieldDataType":"","fieldContext":""}
+	        ],
+	        "aggregations":[
+	          {"metricName":"mem","timeAggregation":"avg","spaceAggregation":"sum"}
+	        ]
+	      }
+	    },
+	    {
+	      "type":"builder_formula",
+	      "spec":{
+	        "name":"F1",
+	        "expression":"A + B"
+	      }
+	    }
+	  ]
+	`
+
+	builderQueryWithFormulaSameQuery = `
+	[
+	    {
+	      "type":"builder_query",
+	      "spec":{
+	        "name":"A",
+	        "signal":"metrics",
+	        "stepInterval":null,
+	        "disabled":false,
+	        "groupBy":[],
+	        "aggregations":[
+	          {"metricName":"disk_used","timeAggregation":"sum","spaceAggregation":"sum"}
+	        ]
+	      }
+	    },
+	    {
+	      "type":"builder_formula",
+	      "spec":{
+	        "name":"F1",
+	        "expression":"A + A"
+	      }
+	    }
+	  ]
 	`
 )

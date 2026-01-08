@@ -43,6 +43,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
+
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -95,7 +96,6 @@ const (
 	signozLocalTableAttributesMetadata = "attributes_metadata"
 
 	signozUpdatedMetricsMetadataLocalTable = "updated_metadata"
-	signozMetricsMetadataLocalTable        = "metadata"
 	signozUpdatedMetricsMetadataTable      = "distributed_updated_metadata"
 	minTimespanForProgressiveSearch        = time.Hour
 	minTimespanForProgressiveSearchMargin  = time.Minute
@@ -934,6 +934,8 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				events = append(events, eventMap)
 			}
 
+			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())
+
 			jsonItem := model.Span{
 				SpanID:           item.SpanID,
 				TraceID:          item.TraceID,
@@ -949,10 +951,10 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				Events:           events,
 				TagMap:           item.Attributes_string,
 				Children:         make([]*model.Span, 0),
+				TimeUnixNano:     startTimeUnixNano, // Store nanoseconds temporarily
 			}
 
 			// metadata calculation
-			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())
 			if startTime == 0 || startTimeUnixNano < startTime {
 				startTime = startTimeUnixNano
 			}
@@ -967,12 +969,9 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				totalErrorSpans = totalErrorSpans + 1
 			}
 
-			// convert start timestamp to millis because right now frontend is expecting it in millis
-			jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)
-
 			// collect the intervals for service for execution time calculation
 			serviceNameIntervalMap[jsonItem.ServiceName] =
-				append(serviceNameIntervalMap[jsonItem.ServiceName], tracedetail.Interval{StartTime: jsonItem.TimeUnixNano, Duration: jsonItem.DurationNano / 1000000, Service: jsonItem.ServiceName})
+				append(serviceNameIntervalMap[jsonItem.ServiceName], tracedetail.Interval{StartTime: jsonItem.TimeUnixNano, Duration: jsonItem.DurationNano, Service: jsonItem.ServiceName})
 
 			// append to the span node map
 			spanIdToSpanNodeMap[jsonItem.SpanID] = &jsonItem
@@ -1049,6 +1048,15 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	processingPostCache := time.Now()
 	selectedSpans, uncollapsedSpans, rootServiceName, rootServiceEntryPoint := tracedetail.GetSelectedSpans(req.UncollapsedSpans, req.SelectedSpanID, traceRoots, spanIdToSpanNodeMap, req.IsSelectedSpanIDUnCollapsed)
 	zap.L().Info("getWaterfallSpansForTraceWithMetadata: processing post cache", zap.Duration("duration", time.Since(processingPostCache)), zap.String("traceID", traceID))
+
+	// convert start timestamp to millis because right now frontend is expecting it in millis
+	for _, span := range selectedSpans {
+		span.TimeUnixNano = span.TimeUnixNano / 1000000
+	}
+
+	for serviceName, totalDuration := range serviceNameToTotalDurationMap {
+		serviceNameToTotalDurationMap[serviceName] = totalDuration / 1000000
+	}
 
 	response.Spans = selectedSpans
 	response.UncollapsedSpans = uncollapsedSpans
@@ -6438,73 +6446,6 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 		}
 	}
 	return cachedMetadata, nil
-}
-
-// GetFirstSeenFromMetricMetadata queries the metadata table to get the first_seen timestamp
-// for each metric-attribute-value combination.
-// Returns a map where key is `model.MetricMetadataLookupKey` and value is first_seen in milliseconds.
-func (r *ClickHouseReader) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []model.MetricMetadataLookupKey) (map[model.MetricMetadataLookupKey]int64, error) {
-	// Chunk the lookup keys to avoid overly large queries (max 300 tuples per query)
-	const chunkSize = 300
-	result := make(map[model.MetricMetadataLookupKey]int64)
-
-	for i := 0; i < len(lookupKeys); i += chunkSize {
-		end := i + chunkSize
-		if end > len(lookupKeys) {
-			end = len(lookupKeys)
-		}
-		chunk := lookupKeys[i:end]
-
-		// Build the IN clause values - ClickHouse uses tuple syntax with placeholders
-		var valueStrings []string
-		var args []interface{}
-
-		for _, key := range chunk {
-			valueStrings = append(valueStrings, "(?, ?, ?)")
-			args = append(args, key.MetricName, key.AttributeName, key.AttributeValue)
-		}
-
-		query := fmt.Sprintf(`
-			SELECT 
-				m.metric_name,
-				m.attr_name,
-				m.attr_string_value,
-				min(m.last_reported_unix_milli) AS first_seen
-			FROM %s.%s AS m
-			WHERE (m.metric_name, m.attr_name, m.attr_string_value) IN (%s)
-			GROUP BY m.metric_name, m.attr_name, m.attr_string_value
-			ORDER BY first_seen`,
-			signozMetricDBName, signozMetricsMetadataLocalTable, strings.Join(valueStrings, ", "))
-
-		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-		rows, err := r.db.Query(valueCtx, query, args...)
-		if err != nil {
-			zap.L().Error("Error querying metadata for first_seen", zap.Error(err))
-			return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metadata for first_seen: %v", err)}
-		}
-
-		for rows.Next() {
-			var metricName, attrName, attrValue string
-			var firstSeen uint64
-			if err := rows.Scan(&metricName, &attrName, &attrValue, &firstSeen); err != nil {
-				rows.Close()
-				return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error scanning metadata first_seen result: %v", err)}
-			}
-			result[model.MetricMetadataLookupKey{
-				MetricName:     metricName,
-				AttributeName:  attrName,
-				AttributeValue: attrValue,
-			}] = int64(firstSeen)
-		}
-
-		if err := rows.Err(); err != nil {
-			rows.Close()
-			return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error iterating metadata first_seen results: %v", err)}
-		}
-		rows.Close()
-	}
-
-	return result, nil
 }
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams) (*[]model.SearchSpansResult, error) {

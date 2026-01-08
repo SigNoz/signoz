@@ -88,7 +88,7 @@ func (e *ClickHouseFilterExtractor) Extract(query string) (*FilterResult, error)
 		result.GroupByColumns = append(result.GroupByColumns, colInfo)
 	}
 
-	// Sort the metric names and group by columns to return deterministic results
+	// Sort the metric names and group by columns to return deterministic results which helps in tests as well
 	sort.Strings(result.MetricNames)
 	sort.Slice(result.GroupByColumns, func(i, j int) bool {
 		return result.GroupByColumns[i].Name < result.GroupByColumns[j].Name
@@ -336,6 +336,12 @@ func (e *ClickHouseFilterExtractor) stripTableAlias(name string) string {
 	// Handling for backticks which are native to ClickHouse and used for literal names.
 	if strings.HasPrefix(name, "`") && strings.HasSuffix(name, "`") {
 		return strings.Trim(name, "`")
+	}
+
+	// Handling for function calls like "UPPER(JSONExtractString(labels, 'region'))"
+	// the stripTableAlias function should return these as is
+	if strings.Contains(name, "(") && strings.Contains(name, ")") {
+		return name
 	}
 
 	// split the name by dot and return the last part

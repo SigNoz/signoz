@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
@@ -63,6 +64,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
@@ -555,6 +557,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/settings/ttl", am.AdminAccess(aH.setCustomRetentionTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v2/settings/ttl", am.ViewAccess(aH.getCustomRetentionTTL)).Methods(http.MethodGet)
+
 	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.Signoz.Handlers.Apdex.Set)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.Signoz.Handlers.Apdex.Get)).Methods(http.MethodGet)
 
@@ -623,15 +626,6 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.Au
 	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
 		am.ViewAccess(ah.UpdateMetricsMetadata)).
 		Methods(http.MethodPost)
-	// v2 endpoints
-	router.HandleFunc("/api/v2/metrics/stats", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetStats)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/metrics/treemap", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetTreemap)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/metrics/attributes", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricAttributes)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/metrics/metadata", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricMetadata)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/metrics/{metric_name}/metadata", am.EditAccess(ah.Signoz.Handlers.MetricsExplorer.UpdateMetricMetadata)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/metric/highlights", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricHighlights)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/metric/alerts", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricAlerts)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/metric/dashboards", am.ViewAccess(ah.Signoz.Handlers.MetricsExplorer.GetMetricDashboards)).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -2014,13 +2008,25 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if constants.PreferSpanMetrics {
-		for idx, feature := range featureSet {
-			if feature.Name == licensetypes.UseSpanMetrics {
-				featureSet[idx].Active = true
-			}
-		}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
 	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	useSpanMetrics := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureUseSpanMetrics, evalCtx)
+
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
+		Active:     useSpanMetrics,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
 	if constants.IsDotMetricsEnabled {
 		for idx, feature := range featureSet {
 			if feature.Name == licensetypes.DotMetricsEnabled {
@@ -2637,7 +2643,10 @@ func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2687,7 +2696,10 @@ func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2738,7 +2750,10 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-topic-throughput")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-topic-throughput", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2789,7 +2804,10 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer_partition_latency")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer_partition_latency", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2954,7 +2972,10 @@ func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *htt
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-throughput-details")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-throughput-details", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3005,7 +3026,10 @@ func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *ht
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-overview")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-overview", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3056,7 +3080,10 @@ func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *htt
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-details")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-details", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3110,7 +3137,10 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)

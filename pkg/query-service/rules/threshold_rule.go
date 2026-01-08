@@ -166,7 +166,7 @@ func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*v
 
 			q.SetShiftByFromFunc()
 
-			if q.DataSource == v3.DataSourceMetrics && constants.UseMetricsPreAggregation() {
+			if q.DataSource == v3.DataSourceMetrics {
 				// if the time range is greater than 1 day, and less than 1 week set the step interval to be multiple of 5 minutes
 				// if the time range is greater than 1 week, set the step interval to be multiple of 30 mins
 				if end-start >= 24*time.Hour.Milliseconds() && end-start < 7*24*time.Hour.Milliseconds() {
@@ -378,42 +378,6 @@ func (r *ThresholdRule) GetSelectedQuery() string {
 	return r.ruleCondition.GetSelectedQueryName()
 }
 
-// filterNewSeries filters out new series based on the first_seen timestamp.
-func (r *ThresholdRule) filterNewSeries(ctx context.Context, ts time.Time, series []*v3.Series) ([]*v3.Series, error) {
-	// Convert []*v3.Series to []v3.Series for filtering
-	v3Series := make([]v3.Series, 0, len(series))
-	for _, s := range series {
-		v3Series = append(v3Series, *s)
-	}
-
-	// Get indexes to skip
-	skipIndexes, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, v3Series)
-	if filterErr != nil {
-		r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
-		return nil, filterErr
-	}
-
-	// if no series are skipped, return the original series
-	if len(skipIndexes) == 0 {
-		return series, nil
-	}
-
-	// Create a map of skip indexes for efficient lookup
-	skippedIdxMap := make(map[int]struct{}, len(skipIndexes))
-	for _, idx := range skipIndexes {
-		skippedIdxMap[idx] = struct{}{}
-	}
-
-	// Filter out skipped series
-	oldSeries := make([]*v3.Series, 0, len(series)-len(skipIndexes))
-	for i, s := range series {
-		if _, shouldSkip := skippedIdxMap[i]; !shouldSkip {
-			oldSeries = append(oldSeries, s)
-		}
-	}
-	return oldSeries, nil
-}
-
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
 
 	params, err := r.prepareQueryRange(ctx, ts)
@@ -517,18 +481,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		return resultVector, nil
 	}
 
-	// Filter out new series if newGroupEvalDelay is configured
-	seriesToProcess := queryResult.Series
-	if r.ShouldSkipNewGroups() {
-		filteredSeries, filterErr := r.filterNewSeries(ctx, ts, seriesToProcess)
-		if filterErr != nil {
-			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
-			return nil, filterErr
-		}
-		seriesToProcess = filteredSeries
-	}
-
-	for _, series := range seriesToProcess {
+	for _, series := range queryResult.Series {
 		if r.Condition() != nil && r.Condition().RequireMinPoints {
 			if len(series.Points) < r.ruleCondition.RequiredNumPoints {
 				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
@@ -610,13 +563,15 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	// Filter out new series if newGroupEvalDelay is configured
 	seriesToProcess := queryResult.Series
 	if r.ShouldSkipNewGroups() {
-		filteredSeries, filterErr := r.filterNewSeries(ctx, ts, seriesToProcess)
+		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
+		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
-			return nil, filterErr
+		} else {
+			seriesToProcess = filteredSeries
 		}
-		seriesToProcess = filteredSeries
 	}
+
 	for _, series := range seriesToProcess {
 		if r.Condition() != nil && r.Condition().RequireMinPoints {
 			if len(series.Points) < r.Condition().RequiredNumPoints {

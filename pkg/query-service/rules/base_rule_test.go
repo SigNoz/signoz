@@ -2,7 +2,6 @@ package rules
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -14,8 +13,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
@@ -23,9 +22,8 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/SigNoz/signoz/pkg/valuer"
-
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 )
 
 func TestBaseRule_RequireMinPoints(t *testing.T) {
@@ -101,17 +99,37 @@ func TestBaseRule_RequireMinPoints(t *testing.T) {
 	}
 }
 
-// createTestSeries creates a v3.Series with the given labels and optional points
+// createTestSeries creates a *v3.Series with the given labels and optional points
 // so we don't exactly need the points in the series because the labels are used to determine if the series is new or old
 // we use the labels to create a lookup key for the series and then check the first_seen timestamp for the series in the metadata table
-func createTestSeries(labels map[string]string, points []v3.Point) v3.Series {
+func createTestSeries(labels map[string]string, points []v3.Point) *v3.Series {
 	if points == nil {
 		points = []v3.Point{}
 	}
-	return v3.Series{
+	return &v3.Series{
 		Labels: labels,
 		Points: points,
 	}
+}
+
+// seriesEqual compares two v3.Series by their labels
+// Returns true if the series have the same labels (order doesn't matter)
+func seriesEqual(s1, s2 *v3.Series) bool {
+	if s1 == nil && s2 == nil {
+		return true
+	}
+	if s1 == nil || s2 == nil {
+		return false
+	}
+	if len(s1.Labels) != len(s2.Labels) {
+		return false
+	}
+	for k, v := range s1.Labels {
+		if s2.Labels[k] != v {
+			return false
+		}
+	}
+	return true
 }
 
 // calculateFirstSeen calculates first_seen timestamp based on evalTime, delay, and isOld flag
@@ -131,13 +149,13 @@ func calculateFirstSeen(evalTime time.Time, delay time.Duration, isOld bool) int
 // delay: newGroupEvalDelay
 // isOld: whether the series is old (true) or new (false)
 // attributeValues: values for each groupBy field in order
-func createFirstSeenMap(metricName string, groupByFields []string, evalTime time.Time, delay time.Duration, isOld bool, attributeValues ...string) map[model.MetricMetadataLookupKey]int64 {
-	result := make(map[model.MetricMetadataLookupKey]int64)
+func createFirstSeenMap(metricName string, groupByFields []string, evalTime time.Time, delay time.Duration, isOld bool, attributeValues ...string) map[telemetrytypes.MetricMetadataLookupKey]int64 {
+	result := make(map[telemetrytypes.MetricMetadataLookupKey]int64)
 	firstSeen := calculateFirstSeen(evalTime, delay, isOld)
 
 	for i, field := range groupByFields {
 		if i < len(attributeValues) {
-			key := model.MetricMetadataLookupKey{
+			key := telemetrytypes.MetricMetadataLookupKey{
 				MetricName:     metricName,
 				AttributeName:  field,
 				AttributeValue: attributeValues[i],
@@ -153,8 +171,8 @@ func createFirstSeenMap(metricName string, groupByFields []string, evalTime time
 // When the same key exists in multiple maps, it keeps the lowest value
 // which simulatest the behavior of the ClickHouse query
 // finding the minimum first_seen timestamp across all groupBy attributes for a single series
-func mergeFirstSeenMaps(maps ...map[model.MetricMetadataLookupKey]int64) map[model.MetricMetadataLookupKey]int64 {
-	result := make(map[model.MetricMetadataLookupKey]int64)
+func mergeFirstSeenMaps(maps ...map[telemetrytypes.MetricMetadataLookupKey]int64) map[telemetrytypes.MetricMetadataLookupKey]int64 {
+	result := make(map[telemetrytypes.MetricMetadataLookupKey]int64)
 	for _, m := range maps {
 		for k, v := range m {
 			if existingValue, exists := result[k]; exists {
@@ -200,67 +218,16 @@ func createPostableRule(compositeQuery *v3.CompositeQuery) ruletypes.PostableRul
 	}
 }
 
-// setupMetadataQueryMock sets up the ClickHouse mock for GetFirstSeenFromMetricMetadata query
-func setupMetadataQueryMock(telemetryStore *telemetrystoretest.Provider, metricNames []string, groupedFields []string, series []v3.Series, firstSeenMap map[model.MetricMetadataLookupKey]int64) {
-	if len(firstSeenMap) == 0 || len(series) == 0 {
-		return
-	}
-
-	// Build args from series the same way we build lookup keys in FilterNewSeries
-	var args []any
-	uniqueArgsMap := make(map[string]struct{})
-	for _, s := range series {
-		labelMap := s.Labels
-		for _, metricName := range metricNames {
-			for _, groupByKey := range groupedFields {
-				if attrValue, ok := labelMap[groupByKey]; ok {
-					argKey := fmt.Sprintf("%s,%s,%s", metricName, groupByKey, attrValue)
-					if _, ok := uniqueArgsMap[argKey]; ok {
-						continue
-					}
-					uniqueArgsMap[argKey] = struct{}{}
-					args = append(args, metricName, groupByKey, attrValue)
-				}
-			}
-		}
-	}
-
-	// Build the query pattern - it uses IN clause with tuples
-	// We'll match any query that contains the metadata table pattern
-	metadataCols := []cmock.ColumnType{
-		{Name: "metric_name", Type: "String"},
-		{Name: "attr_name", Type: "String"},
-		{Name: "attr_string_value", Type: "String"},
-		{Name: "first_seen", Type: "UInt64"},
-	}
-
-	var values [][]interface{}
-	for key, firstSeen := range firstSeenMap {
-		values = append(values, []interface{}{
-			key.MetricName,
-			key.AttributeName,
-			key.AttributeValue,
-			uint64(firstSeen),
-		})
-	}
-
-	rows := cmock.NewRows(metadataCols, values)
-	telemetryStore.Mock().
-		ExpectQuery("SELECT any").
-		WithArgs(args...).
-		WillReturnRows(rows)
-}
-
 // filterNewSeriesTestCase represents a test case for FilterNewSeries
 type filterNewSeriesTestCase struct {
-	name                string
-	compositeQuery      *v3.CompositeQuery
-	series              []v3.Series
-	firstSeenMap        map[model.MetricMetadataLookupKey]int64
-	newGroupEvalDelay   *time.Duration
-	evalTime            time.Time
-	expectedSkipIndexes []int
-	expectError         bool
+	name              string
+	compositeQuery    *v3.CompositeQuery
+	series            []*v3.Series
+	firstSeenMap      map[telemetrytypes.MetricMetadataLookupKey]int64
+	newGroupEvalDelay *time.Duration
+	evalTime          time.Time
+	expectedFiltered  []*v3.Series // series that should be in the final filtered result (old enough)
+	expectError       bool
 }
 
 func TestBaseRule_FilterNewSeries(t *testing.T) {
@@ -298,7 +265,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-new", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-missing", "env": "stage"}, nil),
@@ -306,11 +273,14 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			firstSeenMap: mergeFirstSeenMaps(
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old", "prod"),
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, false, "svc-new", "prod"),
-				// svc-missing has no metadata, so it will be skipped
+				// svc-missing has no metadata, so it will be included
 			),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{1}, // svc-missing should be skipped as we can't decide if it is new or old series
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc-missing", "env": "stage"}, nil),
+			}, // svc-old and svc-missing should be included; svc-new is filtered out
 		},
 		{
 			name: "all new series - PromQL query",
@@ -329,7 +299,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-new1", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-new2", "env": "stage"}, nil),
 			},
@@ -337,9 +307,9 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, false, "svc-new1", "prod"),
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, false, "svc-new2", "stage"),
 			),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{0, 1}, // all should be skipped
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered:  []*v3.Series{}, // all should be filtered out (new series)
 		},
 		{
 			name: "all old series - ClickHouse query",
@@ -356,7 +326,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-old1", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-old2", "env": "stage"}, nil),
 			},
@@ -364,9 +334,12 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old1", "prod"),
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old2", "stage"),
 			),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // none should be skipped
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc-old1", "env": "prod"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc-old2", "env": "stage"}, nil),
+			}, // all should be included (old series)
 		},
 		{
 			name: "no grouping in query - Builder",
@@ -391,13 +364,15 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
-			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // early return, no filtering
+			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
+			}, // early return, no filtering - all series included
 		},
 		{
 			name: "no metric names - Builder",
@@ -419,13 +394,15 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
-			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // early return, no filtering
+			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
+			}, // early return, no filtering - all series included
 		},
 		{
 			name: "series with no matching labels - Builder",
@@ -453,13 +430,15 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"status": "200"}, nil), // no service_name or env
 			},
-			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // series included as we can't decide if it's new or old
+			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"status": "200"}, nil),
+			}, // series included as we can't decide if it's new or old
 		},
 		{
 			name: "series with missing metadata - PromQL",
@@ -478,15 +457,18 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-no-metadata", "env": "prod"}, nil),
 			},
 			firstSeenMap: createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old", "prod"),
 			// svc-no-metadata has no entry in firstSeenMap
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // svc-no-metadata should not be skipped as we can't decide if it is new or old series
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc-no-metadata", "env": "prod"}, nil),
+			}, // both should be included - svc-old is old, svc-no-metadata can't be decided
 		},
 		{
 			name: "series with partial metadata - ClickHouse",
@@ -503,17 +485,19 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-partial", "env": "prod"}, nil),
 			},
 			// Only provide metadata for service_name, not env
-			firstSeenMap: map[model.MetricMetadataLookupKey]int64{
+			firstSeenMap: map[telemetrytypes.MetricMetadataLookupKey]int64{
 				{MetricName: "request_total", AttributeName: "service_name", AttributeValue: "svc-partial"}: calculateFirstSeen(defaultEvalTime, defaultDelay, true),
 				// env metadata is missing
 			},
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // has some metadata, uses max first_seen which is old
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc-partial", "env": "prod"}, nil),
+			}, // has some metadata, uses max first_seen which is old
 		},
 		{
 			name: "empty series array - Builder",
@@ -541,11 +525,11 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series:              []v3.Series{},
-			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{},
+			series:            []*v3.Series{},
+			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered:  []*v3.Series{},
 		},
 		{
 			name: "zero delay - Builder",
@@ -573,13 +557,15 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
-			firstSeenMap:        createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
-			newGroupEvalDelay:   func() *time.Duration { d := time.Duration(0); return &d }(), // zero delay
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // with zero delay, all series pass
+			firstSeenMap:      createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
+			newGroupEvalDelay: func() *time.Duration { d := time.Duration(0); return &d }(), // zero delay
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
+			}, // with zero delay, all series pass
 		},
 		{
 			name: "multiple metrics with same groupBy keys - Builder",
@@ -612,16 +598,18 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap: mergeFirstSeenMaps(
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
 				createFirstSeenMap("error_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
 			),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{},
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
+			},
 		},
 		{
 			name: "series with multiple groupBy attributes where one is new and one is old - Builder",
@@ -649,7 +637,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			// service_name is old, env is new - should use max (new)
@@ -657,9 +645,9 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createFirstSeenMap("request_total", []string{"service_name"}, defaultEvalTime, defaultDelay, true, "svc1"),
 				createFirstSeenMap("request_total", []string{"env"}, defaultEvalTime, defaultDelay, false, "prod"),
 			),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{0}, // max first_seen is new, so should skip
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered:  []*v3.Series{}, // max first_seen is new, so should be filtered out
 		},
 		{
 			name: "Logs query - should skip filtering and return empty skip indexes",
@@ -684,14 +672,17 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			},
-			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // Logs queries should return early, no filtering
+			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
+			}, // Logs queries should return early, no filtering - all included
 		},
 		{
 			name: "Traces query - should skip filtering and return empty skip indexes",
@@ -716,14 +707,17 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []v3.Series{
+			series: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			},
-			firstSeenMap:        make(map[model.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay:   &defaultDelay,
-			evalTime:            defaultEvalTime,
-			expectedSkipIndexes: []int{}, // Traces queries should return early, no filtering
+			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
+			newGroupEvalDelay: &defaultDelay,
+			evalTime:          defaultEvalTime,
+			expectedFiltered: []*v3.Series{
+				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
+				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
+			}, // Traces queries should return early, no filtering - all included
 		},
 	}
 
@@ -735,21 +729,28 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			// Setup telemetry store mock
 			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
+			// Setup mock metadata store
+			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+
 			// Create query parser
 			queryParser := queryparser.New(settings)
 
 			// Use query parser to extract metric names and groupBy fields
-			analyzeResult, err := queryParser.AnalyzeCompositeQuery(context.Background(), tt.compositeQuery)
+			analyzeResults, err := queryParser.AnalyzeQueryEnvelopes(context.Background(), tt.compositeQuery.Queries)
 			require.NoError(t, err)
 
-			metricNames := analyzeResult.MetricNames
+			// Aggregate results from all queries
+			metricNames := []string{}
 			groupedFields := []string{}
-			for _, col := range analyzeResult.GroupByColumns {
-				groupedFields = append(groupedFields, col.OriginField)
+			for _, result := range analyzeResults {
+				metricNames = append(metricNames, result.MetricNames...)
+				for _, col := range result.GroupByColumns {
+					groupedFields = append(groupedFields, col.OriginField)
+				}
 			}
 
 			// Setup metadata query mock
-			setupMetadataQueryMock(telemetryStore, metricNames, groupedFields, tt.series, tt.firstSeenMap)
+			mockMetadataStore.SetFirstSeenFromMetricMetadata(tt.firstSeenMap)
 
 			// Create reader with mocked telemetry store
 			readerCache, err := cachetest.New(
@@ -786,10 +787,10 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			}
 
 			// Create BaseRule using NewBaseRule
-			rule, err := NewBaseRule("test-rule", valuer.GenerateUUID(), &postableRule, reader, WithQueryParser(queryParser), WithLogger(logger))
+			rule, err := NewBaseRule("test-rule", valuer.GenerateUUID(), &postableRule, reader, WithQueryParser(queryParser), WithLogger(logger), WithMetadataStore(mockMetadataStore))
 			require.NoError(t, err)
 
-			skipIndexes, err := rule.FilterNewSeries(context.Background(), tt.evalTime, tt.series)
+			filteredSeries, err := rule.FilterNewSeries(context.Background(), tt.evalTime, tt.series)
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -797,7 +798,42 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.ElementsMatch(t, tt.expectedSkipIndexes, skipIndexes, "skip indexes should match")
+
+			// Build a map to count occurrences of each unique label combination in expected series
+			expectedCounts := make(map[string]int)
+			for _, expected := range tt.expectedFiltered {
+				key := labelsKey(expected.Labels)
+				expectedCounts[key]++
+			}
+
+			// Build a map to count occurrences of each unique label combination in filtered series
+			actualCounts := make(map[string]int)
+			for _, filtered := range filteredSeries {
+				key := labelsKey(filtered.Labels)
+				actualCounts[key]++
+			}
+
+			// Verify counts match for all expected label combinations
+			for key, expectedCount := range expectedCounts {
+				actualCount := actualCounts[key]
+				require.Equal(t, expectedCount, actualCount, "series with labels %s should appear %d times, but found %d times", key, expectedCount, actualCount)
+			}
+
+			// Verify no unexpected series were found (all actual series should be in expected)
+			require.Equal(t, len(tt.expectedFiltered), len(filteredSeries), "filtered series count should match expected")
+			for key := range actualCounts {
+				_, exists := expectedCounts[key]
+				require.True(t, exists, "unexpected series found with labels: %s", key)
+			}
 		})
 	}
+}
+
+// labelsKey creates a deterministic string key from a labels map
+// This is used to group series by their unique label combinations
+func labelsKey(lbls map[string]string) string {
+	if len(lbls) == 0 {
+		return ""
+	}
+	return labels.FromMap(lbls).String()
 }

@@ -31,6 +31,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -85,6 +86,7 @@ func prepareTaskName(ruleId interface{}) string {
 // ManagerOptions bundles options for the Manager.
 type ManagerOptions struct {
 	TelemetryStore telemetrystore.TelemetryStore
+	MetadataStore  telemetrytypes.MetadataStore
 	Prometheus     prometheus.Prometheus
 
 	Context     context.Context
@@ -171,6 +173,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			WithEvalDelay(opts.ManagerOpts.EvalDelay),
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
+			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {
@@ -194,6 +197,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			opts.ManagerOpts.Prometheus,
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
+			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {

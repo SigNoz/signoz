@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
 	"github.com/gorilla/handlers"
 
@@ -104,6 +105,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.Alertmanager,
 		signoz.SQLStore,
 		signoz.TelemetryStore,
+		signoz.TelemetryMetadataStore,
 		signoz.Prometheus,
 		signoz.Modules.OrgGetter,
 		signoz.Querier,
@@ -337,6 +339,7 @@ func makeRulesManager(
 	alertmanager alertmanager.Alertmanager,
 	sqlstore sqlstore.SQLStore,
 	telemetryStore telemetrystore.TelemetryStore,
+	metadataStore telemetrytypes.MetadataStore,
 	prometheus prometheus.Prometheus,
 	orgGetter organization.Getter,
 	querier querier.Querier,
@@ -348,6 +351,7 @@ func makeRulesManager(
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
 		TelemetryStore:   telemetryStore,
+		MetadataStore:    metadataStore,
 		Prometheus:       prometheus,
 		Context:          context.Background(),
 		Logger:           zap.L(),

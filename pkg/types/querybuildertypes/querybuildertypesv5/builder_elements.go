@@ -145,6 +145,20 @@ func (f FilterOperator) IsComparisonOperator() bool {
 	return false
 }
 
+func (f FilterOperator) IsStringSearchOperator() bool {
+	switch f {
+	case FilterOperatorContains,
+		FilterOperatorNotContains,
+		FilterOperatorILike,
+		FilterOperatorNotILike,
+		FilterOperatorLike,
+		FilterOperatorNotLike:
+		return true
+	default:
+		return false
+	}
+}
+
 type OrderDirection struct {
 	valuer.String
 }

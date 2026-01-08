@@ -169,6 +169,10 @@
 					.ant-select-selector {
 						border: 1px solid var(--bg-vanilla-300) !important;
 						background: var(--bg-vanilla-100) !important;
+
+						.ant-select-selection-item {
+							color: var(--text-ink-400);
+						}
 					}
 				}
 			}

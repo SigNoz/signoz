@@ -421,11 +421,16 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										...currentFilter,
 										value: currentFilter.value.filter((val) => val !== value),
 									};
-
 									if (newFilter.value.length === 0) {
 										query.filters.items = query.filters.items.filter(
 											(item) => !isEqual(item.key?.key, filter.attributeKey.key),
 										);
+										if (query.filter?.expression) {
+											query.filter.expression = removeKeysFromExpression(
+												query.filter.expression,
+												[filter.attributeKey.key],
+											);
+										}
 									} else {
 										query.filters.items = query.filters.items.map((item) => {
 											if (isEqual(item.key?.key, filter.attributeKey.key)) {
@@ -435,6 +440,16 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										});
 									}
 								} else {
+									const newFilter = {
+										...currentFilter,
+										value: currentFilter.value === value ? null : currentFilter.value,
+									};
+									if (newFilter.value === null && query.filter?.expression) {
+										query.filter.expression = removeKeysFromExpression(
+											query.filter.expression,
+											[filter.attributeKey.key],
+										);
+									}
 									query.filters.items = query.filters.items.filter(
 										(item) => !isEqual(item.key?.key, filter.attributeKey.key),
 									);
@@ -612,7 +627,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 											) : (
 												<Typography.Text
 													className="value-string"
-													ellipsis={{ tooltip: { placement: 'right' } }}
+													ellipsis={{ tooltip: { placement: 'top' } }}
 												>
 													{String(value)}
 												</Typography.Text>

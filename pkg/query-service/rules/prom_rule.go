@@ -119,40 +119,13 @@ func (r *PromRule) getPqlQuery() (string, error) {
 	return "", fmt.Errorf("invalid promql rule query")
 }
 
-// filterNewSeries filters out new series based on the first_seen timestamp.
-func (r *PromRule) filterNewSeries(ctx context.Context, ts time.Time, res promql.Matrix) (promql.Matrix, error) {
-	// Convert promql.Matrix to []v3.Series
-	v3Series := make([]v3.Series, 0, len(res))
+func (r *PromRule) matrixToV3Series(res promql.Matrix) []*v3.Series {
+	v3Series := make([]*v3.Series, 0, len(res))
 	for _, series := range res {
-		v3Series = append(v3Series, toCommonSeries(series))
+		commonSeries := toCommonSeries(series)
+		v3Series = append(v3Series, &commonSeries)
 	}
-
-	// Get indexes to skip
-	skipIndexes, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, v3Series)
-	if filterErr != nil {
-		r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
-		return nil, filterErr
-	}
-
-	// if no series are skipped, return the original matrix
-	if len(skipIndexes) == 0 {
-		return res, nil
-	}
-
-	// Create a map of skip indexes for efficient lookup
-	skippedIdxMap := make(map[int]struct{}, len(skipIndexes))
-	for _, idx := range skipIndexes {
-		skippedIdxMap[idx] = struct{}{}
-	}
-
-	// Filter out skipped series from promql.Matrix
-	filteredMatrix := make(promql.Matrix, 0, len(res)-len(skipIndexes))
-	for i, series := range res {
-		if _, shouldSkip := skippedIdxMap[i]; !shouldSkip {
-			filteredMatrix = append(filteredMatrix, series)
-		}
-	}
-	return filteredMatrix, nil
+	return v3Series
 }
 
 func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
@@ -171,20 +144,21 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 		return nil, err
 	}
 
-	matrixToProcess := res
+	matrixToProcess := r.matrixToV3Series(res)
 	// Filter out new series if newGroupEvalDelay is configured
 	if r.ShouldSkipNewGroups() {
-		filteredSeries, filterErr := r.filterNewSeries(ctx, ts, matrixToProcess)
+		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, matrixToProcess)
+		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
-			return nil, filterErr
+		} else {
+			matrixToProcess = filteredSeries
 		}
-		matrixToProcess = filteredSeries
 	}
 
 	var resultVector ruletypes.Vector
 	for _, series := range matrixToProcess {
-		resultSeries, err := r.Threshold.Eval(toCommonSeries(series), r.Unit(), ruletypes.EvalData{
+		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts: r.ActiveAlertsLabelFP(),
 		})
 		if err != nil {

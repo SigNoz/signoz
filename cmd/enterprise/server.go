@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/ee/authz/openfgaschema"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
+	"github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
 	"github.com/SigNoz/signoz/ee/sqlschema/postgressqlschema"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
@@ -22,7 +23,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -110,6 +116,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		},
 		func(ctx context.Context, sqlstore sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx))
+		},
+		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
+			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, role, queryParser, querier, licensing)
 		},
 	)
 	if err != nil {
