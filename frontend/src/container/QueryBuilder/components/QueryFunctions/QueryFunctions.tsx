@@ -12,6 +12,7 @@ import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
 import { normalizeFunctionName } from 'utils/functionNameNormalizer';
 
 import Function from './Function';
+import FunctionsSearchModal from './FunctionsSearchModal';
 import { toFloat64 } from './utils';
 
 const defaultMetricFunctionStruct: QueryFunction = {
@@ -93,6 +94,11 @@ export default function QueryFunctions({
 		})),
 	);
 
+	const [
+		isFunctionsSearchModalOpen,
+		setIsFunctionsSearchModalOpen,
+	] = useState<boolean>(false);
+
 	const isDarkMode = useIsDarkMode();
 
 	const hasAnomalyFunction = functions.some((func) => func.name === 'anomaly');
@@ -124,7 +130,6 @@ export default function QueryFunctions({
 		}
 
 		setFunctions(functionsCopy);
-
 		onChange(functionsCopy);
 	};
 
@@ -192,16 +197,31 @@ export default function QueryFunctions({
 
 			<div className="query-functions-list">
 				{functions.map((func, index) => (
-					<Function
-						query={query}
-						funcData={func}
-						index={index}
-						// eslint-disable-next-line react/no-array-index-key
-						key={index}
-						handleUpdateFunctionArgs={handleUpdateFunctionArgs}
-						handleUpdateFunctionName={handleUpdateFunctionName}
-						handleDeleteFunction={handleDeleteFunction}
-					/>
+					<>
+						<Function
+							query={query}
+							funcData={func}
+							index={index}
+							// eslint-disable-next-line react/no-array-index-key
+							key={index}
+							handleOpenFunctionsSearchModal={(): void =>
+								setIsFunctionsSearchModalOpen(!isFunctionsSearchModalOpen)
+							}
+							handleUpdateFunctionArgs={handleUpdateFunctionArgs}
+							handleUpdateFunctionName={handleUpdateFunctionName}
+							handleDeleteFunction={handleDeleteFunction}
+						/>
+						{isFunctionsSearchModalOpen && (
+							<FunctionsSearchModal
+								funcData={func}
+								index={index}
+								onSelectFunction={handleUpdateFunctionName}
+								query={query}
+								isOpen={isFunctionsSearchModalOpen}
+								onClose={(): void => setIsFunctionsSearchModalOpen(false)}
+							/>
+						)}
+					</>
 				))}
 			</div>
 

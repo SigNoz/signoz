@@ -152,7 +152,7 @@ export default function QBEntityOptions({
 									<QueryFunctions
 										query={query}
 										queryFunctions={query.functions || []}
-										key={query.functions?.toString()}
+										key={query.queryName?.toString()}
 										onChange={onQueryFunctionsUpdates}
 										maxFunctions={isLogsDataSource ? 1 : 3}
 									/>
