@@ -21,7 +21,6 @@ import (
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogs(t *testing.T) {
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
-	// releaseTimeNano := uint64(releaseTime.UnixNano())
 	ctx := context.Background()
 	orgId := valuer.GenerateUUID()
 	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{

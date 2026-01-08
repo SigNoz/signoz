@@ -10,9 +10,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -706,7 +708,15 @@ func buildTestTelemetryMetadataStore(promotedPaths ...string) *telemetrytypestes
 }
 
 func buildJSONTestStatementBuilder(_ *testing.T, promotedPaths ...string) *logQueryStatementBuilder {
-	fm := NewFieldMapper()
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	// releaseTimeNano := uint64(releaseTime.UnixNano())
+	ctx := context.Background()
+	orgId := valuer.GenerateUUID()
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: orgId.String(),
+	})
+	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(mockKeyEvolutionMetadata(orgId, releaseTime))
+	fm := NewFieldMapper(storeWithMetadata)
 	mockMetadataStore := buildTestTelemetryMetadataStore(promotedPaths...)
 	cb := NewConditionBuilder(fm, mockMetadataStore)
 
