@@ -278,6 +278,9 @@ func (provider *provider) getOrSetIdentity(ctx context.Context, orgID, userID va
 }
 
 func (provider *provider) listLastObservedAtDesc(orgID valuer.UUID) []map[valuer.UUID]time.Time {
+	provider.lastObservedAtMtx.RLock()
+	defer provider.lastObservedAtMtx.RUnlock()
+
 	var userIDToLastObservedAt []map[valuer.UUID]time.Time
 
 	cachedLastObservedAts, ok := provider.lastObservedAtCache.Get(orgID.String())
