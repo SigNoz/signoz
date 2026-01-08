@@ -47,10 +47,17 @@ func NewStatsFromRules(rules []*Rule) map[string]any {
 	return stats
 }
 
+// RuleAlert represents an alert associated with a rule, used when filtering by metric name
+type RuleAlert struct {
+	AlertName string
+	AlertID   string
+}
+
 type RuleStore interface {
 	CreateRule(context.Context, *Rule, func(context.Context, valuer.UUID) error) (valuer.UUID, error)
 	EditRule(context.Context, *Rule, func(context.Context) error) error
 	DeleteRule(context.Context, valuer.UUID, func(context.Context) error) error
 	GetStoredRules(context.Context, string) ([]*Rule, error)
 	GetStoredRule(context.Context, valuer.UUID) (*Rule, error)
+	GetStoredRulesByMetricName(context.Context, string, string) ([]RuleAlert, error)
 }

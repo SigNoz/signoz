@@ -1,7 +1,9 @@
 """
 Summary:
-This test file contains integration tests for Time-To-Live (TTL) and custom retention policies in SigNoz's query service.
-It verifies the correct behavior of TTL settings for traces, metrics, and logs, including support for cold storage, custom retention conditions, error handling for invalid configurations, and retrieval of TTL settings.
+This test file contains integration tests for Time-To-Live (TTL) and custom retention policies
+in SigNoz's query service. It verifies the correct behavior of TTL settings for traces, metrics,
+and logs, including support for cold storage, custom retention conditions, error handling for
+invalid configurations, and retrieval of TTL settings.
 """
 
 import time
@@ -18,6 +20,83 @@ from fixtures.logs import Logs
 
 logger = setup_logger(__name__)
 
+"""
+Helper functions to verify TTL and partition settings in Clickhouse tables.
+NOTE: These functions only works when last inserted data is in the latest partition.
+"""
+
+
+def verify_table_partition_expressions(
+    signoz: types.SigNoz,
+    expected_partition_expressions_map: dict[str, tuple[int, int, int]],
+):
+    """
+    Verify table partitions exist with data and have correct retention values.
+
+    Args:
+        signoz: SigNoz fixture providing access to telemetry store
+        expected_partition_expressions_map: Dictionary mapping table names to expected count of partitions
+                            Example: {"logs_v2": (10, 15, 1), "logs_v2_resource": (10, 15, 1)}
+    """
+
+    time.sleep(2)  # Wait for partitions to be created
+    for table in expected_partition_expressions_map:
+        # Query to check if ANY row exists with the expected retention values
+        # This verifies that data was inserted into a partition with the correct TTL
+        retention, retention_cold, count = expected_partition_expressions_map[table]
+
+        retention_query = (
+            f"SELECT COUNT(*) FROM {table} "
+            f"WHERE _retention_days = {retention} AND _retention_days_cold = {retention_cold}"
+        )
+        retention_result = signoz.telemetrystore.conn.query(retention_query).result_rows
+
+        assert retention_result[0][0] == count, (
+            f"No data found with retention values '{retention}, {retention_cold}' in table {table}. "
+            f"Expected at least one row with these retention settings."
+        )
+
+        partition_query = (
+            "SELECT rows FROM system.parts "
+            f"WHERE `table` = '{table.split('.')[-1]}' AND active = 1 AND partition LIKE '%{retention},{retention_cold}%' "
+            "ORDER BY partition ASC"
+        )
+
+        partition_result = signoz.telemetrystore.conn.query(partition_query).result_rows
+        assert (
+            len(partition_result) >= 1
+        ), f"No active partitions found for table {table}"
+
+        assert partition_result[0][0] >= count
+
+
+def verify_table_retention_expression(
+    signoz: types.SigNoz, table_expected_retention_expression_map: dict[str, str]
+):
+    """
+    Verify table partitions exist with data and have correct retention values.
+
+    Args:
+        signoz: SigNoz fixture providing access to telemetry store
+        table_expected_retention_expression_map: Dictionary mapping table names to expected retention expressions
+            Example: {"logs_v2": "created_at + INTERVAL 100 DAY", "logs_v2_resource": "created_at + INTERVAL 100 DAY"}
+    """
+
+    for table in table_expected_retention_expression_map:
+        query = f"SELECT engine_full FROM system.tables WHERE table = '{table}'"
+        result = signoz.telemetrystore.conn.query(query).result_rows
+        assert len(result) == 1, f"Table {table} not found in system.tables"
+
+        assert all("TTL" in r[0] for r in result)
+
+        assert all(" SETTINGS" in r[0] for r in result)
+
+        ttl_part = result[0][0].split("TTL ")[1].split(" SETTINGS")[0]
+        assert table_expected_retention_expression_map[table] in ttl_part, (
+            f"Expected retention expression {table_expected_retention_expression_map[table]} "
+            f"not found in table {table} TTL part {ttl_part}"
+        )
+
 
 @pytest.fixture(name="ttl_test_suite_setup", scope="package", autouse=True)
 def ttl_test_suite_setup(create_user_admin):  # pylint: disable=unused-argument
@@ -28,12 +107,17 @@ def ttl_test_suite_setup(create_user_admin):  # pylint: disable=unused-argument
 
 
 def test_set_ttl_traces_success(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    remove_traces_ttl_and_storage_settings,  # pylint: disable=unused-argument
 ):
     """Test setting TTL for traces with new ttlConfig structure."""
+
+    test_duration_hours = 3601  # 3601 hours
+
     payload = {
         "type": "traces",
-        "duration": "3600h",
+        "duration": f"{test_duration_hours}h",  # Don't choose a round number to avoid matching any residual test data
     }
 
     headers = {
@@ -52,44 +136,38 @@ def test_set_ttl_traces_success(
     assert "message" in response_data
     assert "successfully set up" in response_data["message"].lower()
 
-    # Verify TTL settings in Clickhouse
     # Allow some time for the TTL to be applied
     time.sleep(2)
 
-    # Check TTL settings on relevant tables
-    tables_to_check = [
-        "signoz_index_v3",
-        "traces_v3_resource",
-        "signoz_error_index_v2",
-        "usage_explorer",
-        "dependency_graph_minutes_v2",
-        "trace_summary",
-        "span_attributes_keys",
-    ]
-
-    # Query to get table engine info which includes TTL
-    table_list = ", ".join(f"'{table}'" for table in tables_to_check)
-    query = f"SELECT engine_full FROM system.tables WHERE table in [{table_list}]"
-
-    result = signoz.telemetrystore.conn.query(query).result_rows
-
-    # Verify TTL exists in all table definitions
-    assert all("TTL" in r[0] for r in result)
-
-    assert all(" SETTINGS" in r[0] for r in result)
-
-    ttl_parts = [r[0].split("TTL ")[1].split(" SETTINGS")[0] for r in result]
-    # All TTLs should include toIntervalSecond(12960000) which is 3600h
-    assert all("toIntervalSecond(12960000)" in ttl_part for ttl_part in ttl_parts)
+    verify_table_retention_expression(
+        signoz,
+        {
+            "signoz_index_v3": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
+            "traces_v3_resource": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
+            "signoz_error_index_v2": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
+            "usage_explorer": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
+            "dependency_graph_minutes_v2": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
+            "trace_summary": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
+            "span_attributes_keys": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
+        },
+    )
 
 
-def test_set_ttl_traces_with_cold_storage(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
+def test_set_ttl_traces_with_cold_storage(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    remove_traces_ttl_and_storage_settings,  # pylint: disable=unused-argument
+):
     """Test setting TTL for traces with cold storage configuration."""
+
+    test_duration_hours = 91 * 24  # 91 days in hours
+    test_cold_duration_hours = 32 * 24  # 32 days in hours
+
     payload = {
         "type": "traces",
-        "duration": f"{90*24}h",  # 90 days in hours
-        "coldStorageVolume": "cold_storage_vol",
-        "toColdStorageDuration": f"{30*24}h",  # 30 days in hours
+        "duration": f"{test_duration_hours}h",  # 91 days in hours
+        "coldStorage": "cold",
+        "toColdDuration": f"{test_cold_duration_hours}h",  # 32 days in hours
     }
 
     headers = {
@@ -108,16 +186,50 @@ def test_set_ttl_traces_with_cold_storage(signoz: types.SigNoz, get_token: Calla
     assert "message" in response_data
     assert "successfully set up" in response_data["message"].lower()
 
+    time.sleep(2)
+
+    verify_table_retention_expression(
+        signoz,
+        {
+            "signoz_index_v3": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
+            "traces_v3_resource": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
+            "signoz_error_index_v2": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
+            "usage_explorer": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
+            "dependency_graph_minutes_v2": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
+            "trace_summary": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
+            "span_attributes_keys": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
+        },
+    )
+
+    verify_table_retention_expression(
+        signoz,
+        {
+            "signoz_index_v3": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
+            "traces_v3_resource": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
+            "signoz_error_index_v2": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
+            "usage_explorer": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
+            "dependency_graph_minutes_v2": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
+            "trace_summary": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
+            # "span_attributes_keys": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME",
+            # Span attributes keys table does not have cold storage configured
+        },
+    )
+
 
 def test_set_ttl_metrics_success(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    remove_metrics_ttl_and_storage_settings,  # pylint: disable=unused-argument
 ):
     """Test setting TTL for metrics using the new setTTLMetrics method."""
+
+    test_duration_hours = 92 * 24  # 92 days in hours
+
     payload = {
         "type": "metrics",
-        "duration": f"{90*24}h",  # 90 days in hours
-        "coldStorageVolume": "",
-        "toColdStorageDuration": 0,
+        "duration": f"{test_duration_hours}h",  # 92 days in hours
+        "coldStorage": "",
+        "toColdDuration": 0,
     }
 
     headers = {
@@ -141,42 +253,35 @@ def test_set_ttl_metrics_success(
     time.sleep(2)
 
     # Check TTL settings on relevant metrics tables
-    tables_to_check = [
-        "samples_v4",
-        "samples_v4_agg_5m",
-        "samples_v4_agg_30m",
-        "time_series_v4",
-        "time_series_v4_6hrs",
-        "time_series_v4_1day",
-        "time_series_v4_1week",
-    ]
-
-    # Query to get table engine info which includes TTL
-    table_list = "', '".join(tables_to_check)
-    query = f"SELECT engine_full FROM system.tables WHERE table in ['{table_list}']"
-
-    result = signoz.telemetrystore.conn.query(query).result_rows
-
-    # Verify TTL exists in all table definitions
-    assert all("TTL" in r[0] for r in result)
-
-    assert all(" SETTINGS" in r[0] for r in result)
-
-    ttl_parts = [r[0].split("TTL ")[1].split(" SETTINGS")[0] for r in result]
-
-    # All TTLs should include toIntervalSecond(7776000) which is 90*24h
-    assert all("toIntervalSecond(7776000)" in ttl_part for ttl_part in ttl_parts)
+    verify_table_retention_expression(
+        signoz,
+        {
+            "samples_v4": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+            "samples_v4_agg_5m": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+            "samples_v4_agg_30m": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+            "time_series_v4": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+            "time_series_v4_6hrs": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+            "time_series_v4_1day": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+            "time_series_v4_1week": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+        },
+    )
 
 
 def test_set_ttl_metrics_with_cold_storage(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    remove_metrics_ttl_and_storage_settings,  # pylint: disable=unused-argument
 ):
     """Test setting TTL for metrics with cold storage configuration."""
+
+    test_duration_hours = 91 * 24  # 91 days in hours
+    test_cold_duration_hours = 21 * 24  # 21 days in hours
+
     payload = {
         "type": "metrics",
-        "duration": f"{90*24}h",  # 90 days in hours
-        "coldStorageVolume": "metrics_cold_vol",
-        "toColdStorageDuration": f"{20*24}h",  # 20 days in hours
+        "duration": f"{test_duration_hours}h",  # 91 days in hours
+        "coldStorage": "cold",
+        "toColdDuration": f"{test_cold_duration_hours}h",  # 21 days in hours
     }
 
     headers = {
@@ -195,6 +300,43 @@ def test_set_ttl_metrics_with_cold_storage(
     assert "message" in response_data
     assert "successfully set up" in response_data["message"].lower()
 
+    time.sleep(2)
+
+    # Check TTL settings on relevant metrics tables
+    verify_table_retention_expression(
+        signoz,
+        {
+            "samples_v4": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+            "samples_v4_agg_5m": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+            "samples_v4_agg_30m": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+            "time_series_v4": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+            "time_series_v4_6hrs": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+            "time_series_v4_1day": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+            "time_series_v4_1week": f"toIntervalSecond({test_duration_hours * 3600})",  # 92 days in seconds
+        },
+    )
+
+    # Check cold storage settings on relevant metrics tables
+    verify_table_retention_expression(
+        signoz,
+        {
+            # 21 days in seconds
+            "samples_v4": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            # 21 days in seconds
+            "samples_v4_agg_5m": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            # 21 days in seconds
+            "samples_v4_agg_30m": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            # 21 days in seconds
+            "time_series_v4": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            # 21 days in seconds
+            "time_series_v4_6hrs": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            # 21 days in seconds
+            "time_series_v4_1day": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            # 21 days in seconds
+            "time_series_v4_1week": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+        },
+    )
+
 
 def test_set_ttl_invalid_type(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
@@ -203,8 +345,8 @@ def test_set_ttl_invalid_type(
     payload = {
         "type": "invalid_type",
         "duration": f"{90*24}h",
-        "coldStorageVolume": "",
-        "toColdStorageDuration": 0,
+        "coldStorage": "",
+        "toColdDuration": 0,
     }
 
     headers = {
@@ -222,12 +364,18 @@ def test_set_ttl_invalid_type(
 
 
 def test_set_custom_retention_ttl_basic(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    insert_logs,
+    remove_logs_ttl_settings,  # pylint: disable=unused-argument
 ):
     """Test setting custom retention TTL with basic configuration."""
+
+    test_retention_days = 103  # 103 days
+
     payload = {
         "type": "logs",
-        "defaultTTLDays": 100,
+        "defaultTTLDays": test_retention_days,
         "ttlConditions": [],
         "coldStorageVolume": "",
         "coldStorageDurationDays": 0,
@@ -248,85 +396,119 @@ def test_set_custom_retention_ttl_basic(
     response_data = response.json()
     assert "message" in response_data
 
-    # Verify TTL settings in Clickhouse
-    # Allow some time for the TTL to be applied
-    time.sleep(2)
-
-    # Check TTL settings on relevant tables
-    tables_to_check = [
-        "logs_v2",
-        "logs_v2_resource",
+    logs = [
+        Logs(
+            body="test",
+            resources={"service_name": "test-service"},
+            severity_text="INFO",
+        ),
     ]
+    insert_logs(logs)
 
-    # Query to get table engine info which includes TTL
-    table_list = "', '".join(tables_to_check)
-    query = f"SELECT engine_full FROM system.tables WHERE table in ['{table_list}']"
-    result = signoz.telemetrystore.conn.query(query).result_rows
+    # Verify partitions for logs tables
+    verify_table_partition_expressions(
+        signoz,
+        {
+            "signoz_logs.logs_v2": (test_retention_days, 0, 1),
+            "signoz_logs.logs_v2_resource": (test_retention_days, 0, 1),
+        },
+    )
 
-    # Verify TTL exists in all table definitions
-    assert all("TTL" in r[0] for r in result)
+    # Verify retention settings for logs tables
+    verify_table_retention_expression(
+        signoz,
+        {
+            "logs_attribute_keys": f"toIntervalDay({test_retention_days})",
+            "logs_resource_keys": f"toIntervalDay({test_retention_days})",
+        },
+    )
 
-    assert all(" SETTINGS" in r[0] for r in result)
 
-    ttl_parts = [r[0].split("TTL ")[1].split(" SETTINGS")[0] for r in result]
+def test_set_custom_retention_ttl_basic_with_cold_storage(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    insert_logs,
+    remove_logs_ttl_settings,  # pylint: disable=unused-argument
+):
+    """Test setting custom retention TTL with basic configuration."""
 
-    # Also verify the TTL parts contain retention_days
-    assert all("_retention_days" in ttl_part for ttl_part in ttl_parts)
+    test_retention_days = 104  # 104 days
+    test_retention_days_cold = 27  # 27 days
 
-    # Query to describe tables and check retention_days column
-    for table in tables_to_check:
-        describe_query = f"DESCRIBE TABLE signoz_logs.{table}"
-        describe_result = signoz.telemetrystore.conn.query(describe_query).result_rows
+    payload = {
+        "type": "logs",
+        "defaultTTLDays": test_retention_days,
+        "ttlConditions": [],
+        "coldStorageVolume": "cold",
+        "coldStorageDurationDays": test_retention_days_cold,
+    }
 
-        # Find the _retention_days column
-        retention_col = next(
-            (row for row in describe_result if row[0] == "_retention_days"), None
-        )
-        assert (
-            retention_col is not None
-        ), f"_retention_days column not found in table {table}"
-        assert (
-            retention_col[1] == "UInt16"
-        ), f"Expected _retention_days to be UInt16 in table {table}, but got {retention_col[1]}"
-        assert (
-            retention_col[3] == "100"
-        ), f"Expected default value of _retention_days to be 100 in table {table}, but got {retention_col[3]}"
+    headers = {
+        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+    }
 
-    tables_to_check = [
-        "logs_attribute_keys",
-        "logs_resource_keys"
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
+        json=payload,
+        headers=headers,
+        timeout=30,
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    response_data = response.json()
+    assert "message" in response_data
+
+    logs = [
+        Logs(
+            body="test",
+            resources={"service_name": "test-service"},
+            severity_text="INFO",
+        ),
     ]
+    insert_logs(logs)
 
-    # Query to get table engine info which includes TTL
-    table_list = "', '".join(tables_to_check)
-    query = f"SELECT engine_full FROM system.tables WHERE table in ['{table_list}']"
-    result = signoz.telemetrystore.conn.query(query).result_rows
+    # Verify partitions and retention for logs tables
+    verify_table_partition_expressions(
+        signoz,
+        {
+            "signoz_logs.logs_v2": (test_retention_days, test_retention_days_cold, 1),
+            "signoz_logs.logs_v2_resource": (
+                test_retention_days,
+                test_retention_days_cold,
+                1,
+            ),
+        },
+    )
 
-    # Verify TTL exists in all table definitions
-    assert all("TTL" in r[0] for r in result)
-
-    assert all(" SETTINGS" in r[0] for r in result)
-
-    ttl_parts = [r[0].split("TTL ")[1].split(" SETTINGS")[0] for r in result]
-
-    # Also verify the TTL parts contain retention_days
-    assert all("toIntervalDay(100)" in ttl_part for ttl_part in ttl_parts)
+    verify_table_retention_expression(
+        signoz,
+        {
+            "logs_v2": "toIntervalDay(_retention_days_cold) TO VOLUME 'cold'",
+            "logs_v2_resource": "toIntervalDay(_retention_days_cold) TO VOLUME 'cold'",
+            # Cold storage retention is not applicable for attribute keys table
+            "logs_attribute_keys": f"toIntervalDay({test_retention_days})",
+            # Cold storage retention is not applicable for resource keys table
+            "logs_resource_keys": f"toIntervalDay({test_retention_days})",
+        },
+    )
 
 
 def test_set_custom_retention_ttl_basic_fallback(
     signoz: types.SigNoz,
     get_token,
-    ttl_legacy_logs_v2_table_setup, # pylint: disable=unused-argument
-    ttl_legacy_logs_v2_resource_table_setup, # pylint: disable=unused-argument
+    ttl_legacy_logs_v2_table_setup,  # pylint: disable=unused-argument
+    ttl_legacy_logs_v2_resource_table_setup,  # pylint: disable=unused-argument,
 ):
     """Test setting TTL for logs using the new setTTLLogs method."""
 
+    test_retention_days = 101  # 101 days
+    test_retention_days_cold = 17  # 17 days
     payload = {
         "type": "logs",
-        "defaultTTLDays": 100,
+        "defaultTTLDays": test_retention_days,
         "ttlConditions": [],
-        "coldStorageVolume": "",
-        "coldStorageDurationDays": 0,
+        "coldStorageVolume": "cold",
+        "coldStorageDurationDays": test_retention_days_cold,
     }
 
     headers = {
@@ -350,37 +532,44 @@ def test_set_custom_retention_ttl_basic_fallback(
     time.sleep(2)
 
     # Check TTL settings on relevant logs tables
-    tables_to_check = [
-        "logs_v2",
-        "logs_v2_resource",
-        "logs_attribute_keys",
-        "logs_resource_keys"
-    ]
+    verify_table_retention_expression(
+        signoz,
+        {
+            # 101 days in seconds
+            "logs_v2": f"toIntervalSecond({test_retention_days * 24 * 3600})",
+            # 101 days in seconds
+            "logs_v2_resource": f"toIntervalSecond({test_retention_days * 24 * 3600})",
+            # Cold storage retention is not applicable for attribute keys table
+            "logs_attribute_keys": f"toIntervalSecond({test_retention_days * 24 * 3600})",
+            # Cold storage retention is not applicable for resource keys table
+            "logs_resource_keys": f"toIntervalSecond({test_retention_days * 24 * 3600})",
+        },
+    )
 
-    # Query to get table engine info which includes TTL
-    table_list = "', '".join(tables_to_check)
-    query = f"SELECT engine_full FROM system.tables WHERE table in ['{table_list}']"
-
-    result = signoz.telemetrystore.conn.query(query).result_rows
-
-    # Verify TTL exists in all table definitions
-    assert all("TTL" in r[0] for r in result)
-
-    assert all(" SETTINGS" in r[0] for r in result)
-
-    ttl_parts = [r[0].split("TTL ")[1].split(" SETTINGS")[0] for r in result]
-
-    # All TTLs should include toIntervalSecond(8640000) which is 100 days
-    assert all("toIntervalSecond(8640000)" in ttl_part for ttl_part in ttl_parts)
+    verify_table_retention_expression(
+        signoz,
+        {
+            # 17 days in seconds
+            "logs_v2": f"toIntervalSecond({test_retention_days_cold * 24 * 3600}) TO VOLUME 'cold'",
+            # 17 days in seconds
+            "logs_v2_resource": f"toIntervalSecond({test_retention_days_cold * 24 * 3600}) TO VOLUME 'cold'",
+        },
+    )
 
 
-def test_set_custom_retention_ttl_basic_101_times(signoz: types.SigNoz, get_token):
+def test_set_custom_retention_ttl_basic_101_times(
+    signoz: types.SigNoz,
+    get_token,
+    remove_logs_ttl_settings,  # pylint: disable=unused-argument
+):
     """Test setting custom retention TTL with basic configuration to trigger housekeeping."""
+
+    test_retention_days = 113  # 113 days
 
     for _ in range(101):
         payload = {
             "type": "logs",
-            "defaultTTLDays": 100,
+            "defaultTTLDays": test_retention_days,
             "ttlConditions": [],
             "coldStorageVolume": "",
             "coldStorageDurationDays": 0,
@@ -401,65 +590,41 @@ def test_set_custom_retention_ttl_basic_101_times(signoz: types.SigNoz, get_toke
         response_data = response.json()
         assert "message" in response_data
 
-    # Check TTL settings on relevant tables
-    tables_to_check = [
-        "logs_v2",
-        "logs_v2_resource",
-    ]
-
-    # Query to get table engine info which includes TTL
-    table_list = "', '".join(tables_to_check)
-    query = f"SELECT engine_full FROM system.tables WHERE table in ['{table_list}']"
-    result = signoz.telemetrystore.conn.query(query).result_rows
-
-    # Verify TTL exists in all table definitions
-    assert all("TTL" in r[0] for r in result)
-
-    assert all(" SETTINGS" in r[0] for r in result)
-
-    ttl_parts = [r[0].split("TTL ")[1].split(" SETTINGS")[0] for r in result]
-
-    # Also verify the TTL parts contain retention_days
-    assert all("_retention_days" in ttl_part for ttl_part in ttl_parts)
-
-    # Query to describe tables and check retention_days column
-    for table in tables_to_check:
-        describe_query = f"DESCRIBE TABLE signoz_logs.{table}"
-        describe_result = signoz.telemetrystore.conn.query(describe_query).result_rows
-
-        # Find the _retention_days column
-        retention_col = next(
-            (row for row in describe_result if row[0] == "_retention_days"), None
-        )
-        assert (
-            retention_col is not None
-        ), f"_retention_days column not found in table {table}"
-        assert (
-            retention_col[1] == "UInt16"
-        ), f"Expected _retention_days to be UInt16 in table {table}, but got {retention_col[1]}"
-        assert (
-            retention_col[3] == "100"
-        ), f"Expected default value of _retention_days to be 100 in table {table}, but got {retention_col[3]}"
+    # Verify retention settings for logs tables
+    verify_table_retention_expression(
+        signoz,
+        {
+            "logs_attribute_keys": f"toIntervalDay({test_retention_days})",
+            "logs_resource_keys": f"toIntervalDay({test_retention_days})",
+        },
+    )
 
 
 def test_set_custom_retention_ttl_with_conditions(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str], insert_logs
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    insert_logs,
+    remove_logs_ttl_settings,  # pylint: disable=unused-argument
 ):
     """Test setting custom retention TTL with filter conditions."""
 
+    test_retention_days = 30  # 30 days
+    test_retention_days_condition = 60  # 60 days
+    test_retention_days_cold = 5  # 5 days
+
     payload = {
         "type": "logs",
-        "defaultTTLDays": 30,
+        "defaultTTLDays": test_retention_days,
         "ttlConditions": [
             {
                 "conditions": [
                     {"key": "service_name", "values": ["frontend", "backend"]}
                 ],
-                "ttlDays": 60,
+                "ttlDays": test_retention_days_condition,
             }
         ],
-        "coldStorageVolume": "",
-        "coldStorageDurationDays": 0,
+        "coldStorageVolume": "cold",
+        "coldStorageDurationDays": test_retention_days_cold,
     }
 
     headers = {
@@ -492,9 +657,66 @@ def test_set_custom_retention_ttl_with_conditions(
     response_data = response.json()
     assert "message" in response_data
 
+    # insert some logs, these should go test_retention_days_condition (60 days) partition
+    logs = [
+        Logs(resources={"service_name": "frontend"}, severity_text="ERROR"),
+    ]
+    insert_logs(logs)
 
-def test_set_custom_retention_ttl_with_cold_storage(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str], insert_logs
+    # Verify partitions and retention for logs tables
+    verify_table_partition_expressions(
+        signoz,
+        {
+            "signoz_logs.logs_v2": (
+                test_retention_days_condition,
+                test_retention_days_cold,
+                1,
+            ),
+            "signoz_logs.logs_v2_resource": (
+                test_retention_days_condition,
+                test_retention_days_cold,
+                1,
+            ),
+        },
+    )
+
+    # insert some logs, these should go test_retention_days (30 days) partition
+    logs = [
+        Logs(resources={"service_name": "others"}, severity_text="ERROR"),
+    ]
+    insert_logs(logs)
+
+    # Verify partitions and retention for logs tables
+    verify_table_partition_expressions(
+        signoz,
+        {
+            "signoz_logs.logs_v2": (test_retention_days, test_retention_days_cold, 1),
+            "signoz_logs.logs_v2_resource": (
+                test_retention_days,
+                test_retention_days_cold,
+                1,
+            ),
+        },
+    )
+
+    verify_table_retention_expression(
+        signoz,
+        {
+            "logs_v2": "toIntervalDay(_retention_days_cold) TO VOLUME 'cold'",
+            "logs_v2_resource": "toIntervalDay(_retention_days_cold) TO VOLUME 'cold'",
+            # Cold storage retention is not applicable for attribute keys table
+            "logs_attribute_keys": f"toIntervalDay({max(test_retention_days, test_retention_days_condition)})",
+            # Cold storage retention is not applicable for resource keys table
+            "logs_resource_keys": f"toIntervalDay({max(test_retention_days, test_retention_days_condition)})",
+        },
+    )
+
+
+def test_set_custom_retention_ttl_with_invalid_cold_storage(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    insert_logs,
+    remove_logs_ttl_settings,  # pylint: disable=unused-argument
 ):
     """Test setting custom retention TTL with cold storage configuration."""
     payload = {
@@ -531,7 +753,7 @@ def test_set_custom_retention_ttl_with_cold_storage(
     response_data = response.json()
     assert "error" in response_data
     assert "message" in response_data["error"]
-    assert "Unknown storage policy `tiered`" in response_data["error"]["message"]
+    assert "No such volume `logs_cold_storage`" in response_data["error"]["message"]
 
 
 def test_set_custom_retention_ttl_duplicate_conditions(
@@ -678,14 +900,15 @@ def test_get_custom_retention_ttl(
 def test_set_ttl_logs_success(
     signoz: types.SigNoz,
     get_token,
-    ttl_legacy_logs_v2_table_setup,# pylint: disable=unused-argument
-    ttl_legacy_logs_v2_resource_table_setup,# pylint: disable=unused-argument
+    ttl_legacy_logs_v2_table_setup,  # pylint: disable=unused-argument
+    ttl_legacy_logs_v2_resource_table_setup,  # pylint: disable=unused-argument
 ):
     """Test setting TTL for logs using the new setTTLLogs method."""
 
+    test_retention_days = 150  # 150 days
     payload = {
         "type": "logs",
-        "duration": "3600h",
+        "duration": f"{test_retention_days * 24}h",
     }
 
     headers = {
@@ -704,31 +927,18 @@ def test_set_ttl_logs_success(
     assert "message" in response_data
     assert "successfully set up" in response_data["message"].lower()
 
+    time.sleep(2)
+
     # Verify TTL settings in Clickhouse
-    # Allow some time for the TTL to be applied
-    time.sleep(5)
-
-    # Check TTL settings on relevant logs tables
-    tables_to_check = [
-        "logs_v2",
-        "logs_v2_resource",
-    ]
-
-    # Query to get table engine info which includes TTL
-    table_list = "', '".join(tables_to_check)
-    query = f"SELECT engine_full FROM system.tables WHERE table in ['{table_list}']"
-
-    result = signoz.telemetrystore.conn.query(query).result_rows
-
-    # Verify TTL exists in all table definitions
-    assert all("TTL" in r[0] for r in result)
-
-    assert all(" SETTINGS" in r[0] for r in result)
-
-    ttl_parts = [r[0].split("TTL ")[1].split(" SETTINGS")[0] for r in result]
-
-    # All TTLs should include toIntervalSecond(12960000) which is 3600h
-    assert all("toIntervalSecond(12960000)" in ttl_part for ttl_part in ttl_parts)
+    verify_table_retention_expression(
+        signoz,
+        {
+            "logs_v2": f"toIntervalSecond({test_retention_days * 24 * 3600})",  # 150 days in seconds
+            "logs_v2_resource": f"toIntervalSecond({test_retention_days * 24 * 3600})",  # 150 days in seconds
+            "logs_attribute_keys": f"toIntervalSecond({test_retention_days * 24 * 3600})",  # 150 days in seconds
+            "logs_resource_keys": f"toIntervalSecond({test_retention_days * 24 * 3600})",  # 150 days in seconds
+        },
+    )
 
 
 def test_get_ttl_traces_success(
@@ -736,9 +946,11 @@ def test_get_ttl_traces_success(
 ):
     """Test getting TTL for traces."""
     # First set a TTL configuration for traces
+
+    test_retention_days = 33  # 33 days
     set_payload = {
         "type": "traces",
-        "duration": "720h",  # 30 days in hours
+        "duration": f"{test_retention_days * 24}h",  # 33 days in hours
     }
 
     headers = {
@@ -773,7 +985,7 @@ def test_get_ttl_traces_success(
     assert "traces_ttl_duration_hrs" in response_data
     assert "traces_move_ttl_duration_hrs" in response_data
     assert (
-        response_data["traces_ttl_duration_hrs"] == 720
+        response_data["traces_ttl_duration_hrs"] == test_retention_days * 24
     )  # Note: response is in hours as integer
     assert (
         response_data["traces_move_ttl_duration_hrs"] == -1
@@ -781,7 +993,10 @@ def test_get_ttl_traces_success(
 
 
 def test_large_ttl_conditions_list(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str], insert_logs
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    insert_logs,
+    remove_logs_ttl_settings,  # pylint: disable=unused-argument
 ):
     """Test custom retention TTL with many conditions."""
     # Create a list of many TTL conditions to test performance and limits

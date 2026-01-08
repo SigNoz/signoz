@@ -40,8 +40,8 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 					SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
 				},
 			},
-			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (path LIKE ?) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
-			expectedArgs:  []any{"user", 100},
+			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (LOWER(path) LIKE LOWER(?)) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
+			expectedArgs:  []any{"%user%", 100},
 			expectedLimit: 100,
 		},
 		{
@@ -72,8 +72,8 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 					SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
 				},
 			},
-			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (path LIKE ? OR path LIKE ?) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
-			expectedArgs:  []any{"user", "admin", defaultPathLimit},
+			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (LOWER(path) LIKE LOWER(?) OR LOWER(path) LIKE LOWER(?)) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
+			expectedArgs:  []any{"%user%", "%admin%", defaultPathLimit},
 			expectedLimit: defaultPathLimit,
 		},
 		{
@@ -84,17 +84,15 @@ func TestBuildGetBodyJSONPathsQuery(t *testing.T) {
 					SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
 				},
 			},
-			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (path LIKE ?) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
-			expectedArgs:  []any{"test", defaultPathLimit},
+			expectedSQL:   "SELECT path, groupArray(DISTINCT type) AS types, max(last_seen) AS last_seen FROM signoz_metadata.distributed_json_path_types WHERE (LOWER(path) LIKE LOWER(?)) GROUP BY path ORDER BY last_seen DESC LIMIT ?",
+			expectedArgs:  []any{"%test%", defaultPathLimit},
 			expectedLimit: defaultPathLimit,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			query, args, limit, err := buildGetBodyJSONPathsQuery(tc.fieldKeySelectors)
-			require.NoError(t, err, "Error building query: %v", err)
-
+			query, args, limit := buildGetBodyJSONPathsQuery(tc.fieldKeySelectors)
 			require.Equal(t, tc.expectedSQL, query)
 			require.Equal(t, tc.expectedArgs, args)
 			require.Equal(t, tc.expectedLimit, limit)
