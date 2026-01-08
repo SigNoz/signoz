@@ -55,7 +55,7 @@ func (store *state) Set(ctx context.Context, orgID string, storeableState *alert
 		Set("silences = EXCLUDED.silences").
 		Set("nflog = EXCLUDED.nflog").
 		Set("updated_at = EXCLUDED.updated_at").
-		Where("org_id = ?", orgID).
+		Where("alertmanager_state.org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
 		return err

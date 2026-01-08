@@ -28,7 +28,7 @@ var (
 )
 
 type StoreableState struct {
-	bun.BaseModel `bun:"table:alertmanager_state"`
+	bun.BaseModel `bun:"table:alertmanager_state,alias:alertmanager_state"`
 
 	types.Identifiable
 	types.TimeAuditable
