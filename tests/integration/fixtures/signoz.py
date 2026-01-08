@@ -65,6 +65,7 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
                 "SIGNOZ_INSTRUMENTATION_LOGS_LEVEL": "debug",
                 "SIGNOZ_PROMETHEUS_ACTIVE__QUERY__TRACKER_ENABLED": False,
                 "SIGNOZ_GATEWAY_URL": gateway.container_configs["8080"].base(),
+                "SIGNOZ_TOKENIZER_JWT_SECRET": "secret",
             }
             | sqlstore.env
             | clickhouse.env
