@@ -137,8 +137,8 @@ function CustomTimePicker({
 	const getSelectedTimeRangeLabelInRelativeFormat = (
 		selectedTime: string,
 	): string => {
-		if (selectedTime === 'custom') {
-			return selectedTime;
+		if (!selectedTime || selectedTime === 'custom') {
+			return selectedTime || '';
 		}
 
 		// Check if the format matches the relative time format (e.g., 1m, 2h, 3d, 4w)
@@ -168,6 +168,10 @@ function CustomTimePicker({
 		selectedTime: string,
 		selectedTimeValue: string,
 	): string => {
+		if (!selectedTime) {
+			return '';
+		}
+
 		if (selectedTime === 'custom') {
 			// TODO: if the user preference is 12 hour format, then convert the date range string to 12-hour format (pick this up while working on 12/24 hour preference feature)
 			// // Convert the date range string to 12-hour format
