@@ -302,3 +302,12 @@ export const PublicDashboardPage = Loadable(
 			/* webpackChunkName: "Public Dashboard Page" */ 'pages/PublicDashboard'
 		),
 );
+
+export const MessagingQueues = Loadable(
+	() =>
+		import(/* webpackChunkName: "MessagingQueues" */ 'pages/MessagingQueues'),
+);
+
+export const MeterExplorer = Loadable(
+	() => import(/* webpackChunkName: "MeterExplorer" */ 'pages/MeterExplorer'),
+);

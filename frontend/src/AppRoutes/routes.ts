@@ -1,6 +1,4 @@
 import ROUTES from 'constants/routes';
-import MessagingQueues from 'pages/MessagingQueues';
-import MeterExplorer from 'pages/MeterExplorer';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -26,6 +24,8 @@ import {
 	LogsExplorer,
 	LogsIndexToFields,
 	LogsSaveViews,
+	MessagingQueues,
+	MeterExplorer,
 	MetricsExplorer,
 	NewDashboardPage,
 	OldLogsExplorer,
