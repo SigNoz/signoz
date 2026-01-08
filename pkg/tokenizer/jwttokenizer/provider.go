@@ -164,14 +164,16 @@ func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken str
 		return nil
 	}
 
+	// Lock the last observed at cache to avoid race conditions.
+	// Ristretto is returning the same map on concurrent calls.
+	provider.lastObservedAtMtx.Lock()
+	defer provider.lastObservedAtMtx.Unlock()
 	cachedLastObservedAts, ok := provider.lastObservedAtCache.Get(claims.OrgID)
 	if !ok {
 		cachedLastObservedAts = make(map[valuer.UUID]time.Time)
 	}
 
-	provider.lastObservedAtMtx.Lock()
 	cachedLastObservedAts[valuer.MustNewUUID(claims.UserID)] = lastObservedAt
-	provider.lastObservedAtMtx.Unlock()
 
 	if ok := provider.lastObservedAtCache.Set(claims.OrgID, cachedLastObservedAts, 1); !ok {
 		provider.settings.Logger().ErrorContext(ctx, "error caching last observed at timestamp", "user_id", claims.UserID)
