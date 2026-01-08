@@ -10,6 +10,7 @@ import (
 	alertmanagermock "github.com/SigNoz/signoz/pkg/alertmanager/mocks"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
@@ -111,8 +112,13 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 		options,
 	)
 
+	flagger, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry())
+	if err != nil {
+		t.Fatalf("failed to create flagger: %v", err)
+	}
+
 	// Create mock querierV5 with test values
-	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, readerCache)
+	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, readerCache, flagger)
 	mockQuerier, err := providerFactory.New(context.Background(), providerSettings, querier.Config{})
 	require.NoError(t, err)
 
