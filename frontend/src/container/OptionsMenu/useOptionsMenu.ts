@@ -262,7 +262,7 @@ const useOptionsMenu = ({
 	}, [dataSource, initialOptions, initialSelectedColumns]);
 
 	const selectedColumnKeys = useMemo(
-		() => preferences?.columns.map(buildAttributeKey) || [],
+		() => preferences?.columns?.map(buildAttributeKey) || [],
 		[preferences?.columns],
 	);
 
