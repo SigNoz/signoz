@@ -150,8 +150,6 @@ function CustomTimePickerPopoverContent({
 		}
 	}, [isLogsExplorerPage, onExitLiveLogs]);
 
-	console.log('selected date range', selectedTime);
-
 	useEffect(() => {
 		if (!customDateTimeVisible) {
 			const customTimeRanges = getCustomTimeRanges();

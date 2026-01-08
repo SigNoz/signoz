@@ -52,9 +52,6 @@ export function validateEpochRange(
 	const startTime = dayjs.unix(startSeconds);
 	const endTime = dayjs.unix(endSeconds);
 
-	console.log('startTime', startTime);
-	console.log('endTime', endTime);
-
 	if (!startTime.isValid()) {
 		return { isValid: false, error: 'Invalid startTime epoch', range: null };
 	}
