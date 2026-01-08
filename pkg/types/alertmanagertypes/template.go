@@ -15,8 +15,11 @@ import (
 func customTemplateOption() alertmanagertemplate.Option {
 	return func(text *tmpltext.Template, html *tmplhtml.Template) {
 		funcs := tmpltext.FuncMap{
-			"urlescape": func(value string) string {
-				return url.PathEscape(value)
+			// urlescape escapes the string for use in a URL query parameter.
+			// It returns tmplhtml.HTML to prevent the template engine from escaping the already escaped string.
+			// url.QueryEscape escapes spaces as "+", and html/template escapes "+" as "&#43;" if tmplhtml.HTML is not used.
+			"urlescape": func(value string) tmplhtml.HTML {
+				return tmplhtml.HTML(url.QueryEscape(value))
 			},
 		}
 		text.Funcs(funcs)

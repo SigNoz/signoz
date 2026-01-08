@@ -155,20 +155,20 @@ func TestFromGlobs(t *testing.T) {
 			expected: "http://localhost:8080/alerts/edit?ruleId=01961575-461c-7668-875f-05d374062bfc&isTestAlert=true",
 		},
 		{
-			name: "TestAlertWithRuleIdWithSpaces",
+			name: "TestAlertWithRuleIdWithSpacesAndSymbol",
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
 						Labels: model.LabelSet{
 							"testalert": "true",
-							"ruleId":    "this is the rule id",
+							"ruleId":    "Prom + Alert & Rule",
 						},
 					},
 					UpdatedAt: time.Now(),
 					Timeout:   false,
 				},
 			},
-			expected: "http://localhost:8080/alerts/edit?ruleId=this%20is%20the%20rule%20id&isTestAlert=true",
+			expected: "http://localhost:8080/alerts/edit?ruleId=Prom+%2B+Alert+%26+Rule&isTestAlert=true",
 		},
 		{
 			name: "AlertWithBlankRuleId",
