@@ -158,9 +158,6 @@ func (provider *provider) DeleteIdentity(ctx context.Context, userID valuer.UUID
 }
 
 func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken string, lastObservedAt time.Time) error {
-	provider.lastObservedAtMtx.Lock()
-	defer provider.lastObservedAtMtx.Unlock()
-
 	claims, err := provider.getClaimsFromToken(accessToken)
 	if err != nil {
 		provider.settings.Logger().ErrorContext(ctx, "failed to set last observed at", "error", err)
@@ -172,7 +169,9 @@ func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken str
 		cachedLastObservedAts = make(map[valuer.UUID]time.Time)
 	}
 
+	provider.lastObservedAtMtx.Lock()
 	cachedLastObservedAts[valuer.MustNewUUID(claims.UserID)] = lastObservedAt
+	provider.lastObservedAtMtx.Unlock()
 
 	if ok := provider.lastObservedAtCache.Set(claims.OrgID, cachedLastObservedAts, 1); !ok {
 		provider.settings.Logger().ErrorContext(ctx, "error caching last observed at timestamp", "user_id", claims.UserID)
@@ -278,9 +277,6 @@ func (provider *provider) getOrSetIdentity(ctx context.Context, orgID, userID va
 }
 
 func (provider *provider) listLastObservedAtDesc(orgID valuer.UUID) []map[valuer.UUID]time.Time {
-	provider.lastObservedAtMtx.RLock()
-	defer provider.lastObservedAtMtx.RUnlock()
-
 	var userIDToLastObservedAt []map[valuer.UUID]time.Time
 
 	cachedLastObservedAts, ok := provider.lastObservedAtCache.Get(orgID.String())
