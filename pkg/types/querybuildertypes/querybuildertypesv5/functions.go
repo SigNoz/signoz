@@ -376,7 +376,7 @@ func funcFillZero(result *TimeSeries, start, end, step int64) *TimeSeries {
 		return result
 	}
 
-	alignedStart := start - (start % (step * 1000))
+	alignedStart := start - (start % step)
 	alignedEnd := end
 
 	existingValues := make(map[int64]*TimeSeriesValue)
@@ -386,7 +386,7 @@ func funcFillZero(result *TimeSeries, start, end, step int64) *TimeSeries {
 
 	filledValues := make([]*TimeSeriesValue, 0)
 
-	for ts := alignedStart; ts <= alignedEnd; ts += step * 1000 {
+	for ts := alignedStart; ts <= alignedEnd; ts += step {
 		if val, exists := existingValues[ts]; exists {
 			filledValues = append(filledValues, val)
 		} else {

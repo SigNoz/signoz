@@ -7,7 +7,9 @@ import (
 	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -31,6 +33,11 @@ var (
 		"severity_text":      {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
 		"severity_number":    {Name: "severity_number", Type: schema.ColumnTypeUInt8},
 		"body":               {Name: "body", Type: schema.ColumnTypeString},
+		LogsV2BodyJSONColumn: {Name: LogsV2BodyJSONColumn, Type: schema.JSONColumnType{
+			MaxDynamicTypes: utils.ToPointer(uint(32)),
+			MaxDynamicPaths: utils.ToPointer(uint(0)),
+		}},
+		LogsV2BodyPromotedColumn: {Name: LogsV2BodyPromotedColumn, Type: schema.JSONColumnType{}},
 		"attributes_string": {Name: "attributes_string", Type: schema.MapColumnType{
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
@@ -89,13 +96,23 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 			return logsV2Columns["attributes_bool"], nil
 		}
 	case telemetrytypes.FieldContextBody:
-		// body context fields are stored in the body column
+		// Body context is for JSON body fields
+		// Use body_json if feature flag is enabled
+		if querybuilder.BodyJSONQueryEnabled {
+			return logsV2Columns[LogsV2BodyJSONColumn], nil
+		}
+		// Fall back to legacy body column
 		return logsV2Columns["body"], nil
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
 		col, ok := logsV2Columns[key.Name]
 		if !ok {
-			// check if the key has body JSON search (backward compatibility)
-			if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+			// check if the key has body JSON search
+			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
+				// Use body_json if feature flag is enabled and we have a body condition builder
+				if querybuilder.BodyJSONQueryEnabled {
+					return logsV2Columns[LogsV2BodyJSONColumn], nil
+				}
+				// Fall back to legacy body column
 				return logsV2Columns["body"], nil
 			}
 			return nil, qbtypes.ErrColumnNotFound
@@ -193,42 +210,61 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 
 	switch column.Type.GetType() {
 	case schema.ColumnTypeEnumJSON:
-		// json is only supported for resource context as of now
-		if key.FieldContext != telemetrytypes.FieldContextResource {
-			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
-		}
-
-		baseColumn := logsV2Columns["resources_string"]
-		tsStartTime := time.Unix(0, int64(tsStart))
-		tsEndTime := time.Unix(0, int64(tsEnd))
-
-		// Extract orgId from context
-		var orgID valuer.UUID
-		if claims, err := authtypes.ClaimsFromContext(ctx); err == nil {
-			orgID, err = valuer.NewUUID(claims.OrgID)
-			if err != nil {
-				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid orgId %s", claims.OrgID)
+		switch key.FieldContext {
+		case telemetrytypes.FieldContextResource:
+			// json is only supported for resource context as of now
+			if key.FieldContext != telemetrytypes.FieldContextResource {
+				return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
-		} else {
-			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "no orgId found in context")
+
+			baseColumn := logsV2Columns["resources_string"]
+			tsStartTime := time.Unix(0, int64(tsStart))
+			tsEndTime := time.Unix(0, int64(tsEnd))
+
+			// Extract orgId from context
+			var orgID valuer.UUID
+			if claims, err := authtypes.ClaimsFromContext(ctx); err == nil {
+				orgID, err = valuer.NewUUID(claims.OrgID)
+				if err != nil {
+					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid orgId %s", claims.OrgID)
+				}
+			} else {
+				return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "no orgId found in context")
+			}
+			baseColExpr := ""
+			// Fallback when no evolutions exist
+			if key.Materialized {
+				oldKeyName := telemetrytypes.FieldKeyToMaterializedColumnName(key)
+				oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+				baseColExpr = fmt.Sprintf("%s==true, %s", oldKeyNameExists, oldKeyName)
+			} else {
+				attrVal := fmt.Sprintf("%s['%s']", baseColumn.Name, key.Name)
+				baseColExpr = fmt.Sprintf("mapContains(%s, '%s'), %s", baseColumn.Name, key.Name, attrVal)
+			}
+
+			// get all evolution for the column
+			evolutions := m.evolutionMetadataStore.Get(ctx, orgID, baseColumn.Name)
+
+			data := buildEvolutionMultiIfExpression(evolutions, key, tsStartTime, tsEndTime, baseColExpr)
+			return data, nil
+		case telemetrytypes.FieldContextBody:
+			if querybuilder.BodyJSONQueryEnabled && (strings.Contains(key.Name, telemetrytypes.ArraySep) || strings.Contains(key.Name, telemetrytypes.ArrayAnyIndex)) {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "FieldFor not supported for the Array Paths: %s", key.Name)
+			}
+			if key.JSONDataType == nil {
+				return "", qbtypes.ErrColumnNotFound
+			}
+
+			fieldExpr := BodyJSONColumnPrefix + fmt.Sprintf("`%s`", key.Name)
+			expr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldExpr, key.JSONDataType.StringValue())
+			if key.Materialized {
+				promotedFieldExpr := BodyPromotedColumnPrefix + fmt.Sprintf("`%s`", key.Name)
+				expr = fmt.Sprintf("coalesce(%s, %s)", expr, fmt.Sprintf("dynamicElement(%s, '%s')", promotedFieldExpr, key.JSONDataType.StringValue()))
+			}
+			return expr, nil
+		default:
+			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
-
-		baseColExpr := ""
-		// Fallback when no evolutions exist
-		if key.Materialized {
-			oldKeyName := telemetrytypes.FieldKeyToMaterializedColumnName(key)
-			oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
-			baseColExpr = fmt.Sprintf("%s==true, %s", oldKeyNameExists, oldKeyName)
-		} else {
-			attrVal := fmt.Sprintf("%s['%s']", baseColumn.Name, key.Name)
-			baseColExpr = fmt.Sprintf("mapContains(%s, '%s'), %s", baseColumn.Name, key.Name, attrVal)
-		}
-
-		// get all evolution for the column
-		evolutions := m.evolutionMetadataStore.Get(ctx, orgID, baseColumn.Name)
-
-		data := buildEvolutionMultiIfExpression(evolutions, key, tsStartTime, tsEndTime, baseColExpr)
-		return data, nil
 
 	case schema.ColumnTypeEnumLowCardinality:
 		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {

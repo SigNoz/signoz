@@ -20,7 +20,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 	})
 	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, nil)
 
 	keys := buildCompleteFieldKeyMap()
 
@@ -57,7 +57,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, nil)
 
 	keys := buildCompleteFieldKeyMap()
 

@@ -29,7 +29,7 @@ func TestFilterExprLogs(t *testing.T) {
 	})
 	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(mockKeyEvolutionMetadata(orgId, releaseTime))
 	fm := NewFieldMapper(storeWithMetadata)
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, nil)
 
 	// Define a comprehensive set of field keys to support all test cases
 	keys := buildCompleteFieldKeyMap()
@@ -2437,7 +2437,7 @@ func TestFilterExprLogs(t *testing.T) {
 func TestFilterExprLogsConflictNegation(t *testing.T) {
 	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, nil)
 
 	// Define a comprehensive set of field keys to support all test cases
 	keys := buildCompleteFieldKeyMap()

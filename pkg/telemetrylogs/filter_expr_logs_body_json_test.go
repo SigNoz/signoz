@@ -17,8 +17,7 @@ import (
 func TestFilterExprLogsBodyJSON(t *testing.T) {
 	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
 	fm := NewFieldMapper(storeWithMetadata)
-	cb := NewConditionBuilder(fm)
-
+	cb := NewConditionBuilder(fm, telemetrytypestest.NewMockMetadataStore())
 	// Define a comprehensive set of field keys to support all test cases
 	keys := buildCompleteFieldKeyMap()
 

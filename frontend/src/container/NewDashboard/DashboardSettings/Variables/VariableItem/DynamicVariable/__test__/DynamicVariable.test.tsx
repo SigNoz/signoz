@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable sonarjs/no-duplicate-string */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useGetFieldKeys } from 'hooks/dynamicVariables/useGetFieldKeys';

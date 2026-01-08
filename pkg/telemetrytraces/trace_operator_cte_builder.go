@@ -555,7 +555,6 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 			b.stmtBuilder.cb,
 			keys,
 			telemetrytypes.FieldDataTypeString,
-			"",
 			nil,
 		)
 		if err != nil {
@@ -669,7 +668,6 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 			b.stmtBuilder.cb,
 			keys,
 			telemetrytypes.FieldDataTypeString,
-			"",
 			nil,
 		)
 		if err != nil {
@@ -813,7 +811,6 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 			b.stmtBuilder.cb,
 			keys,
 			telemetrytypes.FieldDataTypeString,
-			"",
 			nil,
 		)
 		if err != nil {

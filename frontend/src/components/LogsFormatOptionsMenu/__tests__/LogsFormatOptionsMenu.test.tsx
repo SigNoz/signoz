@@ -10,7 +10,7 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 		preferences: {
 			columns: [],
 			formatting: {
-				maxLines: 2,
+				maxLines: 1,
 				format: 'table',
 				fontSize: 'small',
 				version: 1,
@@ -51,7 +51,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 				selectedOptionFormat="table"
 				config={{
 					format: { value: 'table', onChange: formatOnChange },
-					maxLines: { value: 2, onChange: maxLinesOnChange },
+					maxLines: { value: 1, onChange: maxLinesOnChange },
 					fontSize: { value: FontSize.SMALL, onChange: fontSizeOnChange },
 					addColumn: {
 						isFetching: false,
