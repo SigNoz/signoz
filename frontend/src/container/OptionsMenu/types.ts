@@ -31,12 +31,11 @@ export type OptionsMenuConfig = {
 	};
 	maxLines?: Pick<InputNumberProps, 'value' | 'onChange'>;
 	fontSize?: FontSizeProps;
-	addColumn?: Pick<
-		SelectProps,
-		'options' | 'onSelect' | 'onFocus' | 'onSearch' | 'onBlur'
-	> & {
+	addColumn?: Pick<SelectProps, 'options' | 'onSelect' | 'onSearch'> & {
 		isFetching: boolean;
 		value: TelemetryFieldKey[];
 		onRemove: (key: string) => void;
+		onFocus?: () => void;
+		onBlur?: () => void;
 	};
 };

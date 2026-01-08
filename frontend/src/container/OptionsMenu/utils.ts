@@ -28,3 +28,15 @@ export const parseAttributeKey = (
 	const [name = '', fieldContext = '', fieldDataType = ''] = key.split('::');
 	return { name, fieldContext, fieldDataType };
 };
+
+export const getOptionLabelCounts = (
+	options: Array<{ key: string }>,
+): Record<string, number> => {
+	const labelCounts: Record<string, number> = {};
+	(options || []).forEach(({ key }) => {
+		const { name } = parseAttributeKey(key || '');
+		if (!name) return;
+		labelCounts[name] = (labelCounts[name] || 0) + 1;
+	});
+	return labelCounts;
+};

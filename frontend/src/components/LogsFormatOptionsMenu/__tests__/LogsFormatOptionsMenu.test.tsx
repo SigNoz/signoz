@@ -1,5 +1,6 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import { FontSize } from 'container/OptionsMenu/types';
-import { fireEvent, render, waitFor } from 'tests/test-utils';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import LogsFormatOptionsMenu from '../LogsFormatOptionsMenu';
 
@@ -56,7 +57,16 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 					addColumn: {
 						isFetching: false,
 						value: [],
-						options: [],
+						options: [
+							{
+								label: 'http.status_code_attribute',
+								value: 'http.status_code_attribute::dataType_string::context_attribute',
+							},
+							{
+								label: 'http.status_code_attribute',
+								value: 'http.status_code_attribute::dataType_number::context_resource',
+							},
+						],
 						onFocus: jest.fn(),
 						onBlur: jest.fn(),
 						onSearch: jest.fn(),
@@ -153,5 +163,23 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		await waitFor(() => {
 			expect(fontSizeOnChange).toHaveBeenCalledWith(FontSize.MEDIUM);
 		});
+	});
+
+	it('renders FieldVariantBadges for duplicate-name attribute options', async () => {
+		setup();
+
+		// Open the "columns" section and then the add-new-column container by clicking plus
+		// The popover is already open from setup()
+		const plusInColumns = document.querySelector(
+			'.selected-item-content-container .title svg',
+		) as SVGElement;
+		fireEvent.click(plusInColumns);
+
+		const items = screen.getAllByText('http.status_code_attribute', {
+			exact: true,
+		});
+		expect(items).toHaveLength(2);
+		expect(screen.getByText('context_attribute')).toBeInTheDocument();
+		expect(screen.getByText('context_resource')).toBeInTheDocument();
 	});
 });
