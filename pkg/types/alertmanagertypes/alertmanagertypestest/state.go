@@ -21,9 +21,9 @@ func NewStateStore() *StateStore {
 	}
 }
 
-func (s *StateStore) Set(ctx context.Context, orgID string, storeableState *alertmanagertypes.StoreableState) error {
+func (s *StateStore) Set(ctx context.Context, storeableState *alertmanagertypes.StoreableState) error {
 	s.mtx.Lock()
-	s.states[orgID] = storeableState
+	s.states[storeableState.OrgID] = storeableState
 	s.mtx.Unlock()
 	return nil
 }
