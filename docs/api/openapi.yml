@@ -3267,6 +3267,11 @@ components:
         rowsScanned:
           minimum: 0
           type: integer
+        stepIntervals:
+          additionalProperties:
+            minimum: 0
+            type: integer
+          type: object
       type: object
     Querybuildertypesv5Filter:
       properties:
@@ -3282,8 +3287,6 @@ components:
       type: object
     Querybuildertypesv5OrderByKey:
       properties:
-        '-':
-          $ref: '#/components/schemas/TelemetrytypesJSONDataType'
         description:
           type: string
         fieldContext:
@@ -3337,8 +3340,6 @@ components:
           $ref: '#/components/schemas/ErrorsJSON'
         status:
           type: string
-      type: object
-    TelemetrytypesJSONDataType:
       type: object
     TypesChangePasswordRequest:
       properties:
