@@ -191,7 +191,7 @@ func NewPreference(name Name, scope Scope, available map[Name]Preference) (*Pref
 		ValueType:     preference.ValueType,
 		DefaultValue:  preference.DefaultValue,
 		AllowedScopes: preference.AllowedScopes,
-		Value:         preference.DefaultValue,
+		Value:         preference.Value,
 	}, nil
 }
 
