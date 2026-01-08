@@ -3,6 +3,8 @@ package tracefunnel
 import (
 	"fmt"
 	"strings"
+
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 // BuildFunnelValidationQuery builds a validation query for n-step funnels
@@ -27,7 +29,7 @@ func BuildFunnelValidationQuery(
 	// Add contains_error and step definitions
 	for i, step := range steps {
 		withParts = append(withParts, fmt.Sprintf("%d AS contains_error_t%d", step.ContainsError, i+1))
-		withParts = append(withParts, fmt.Sprintf("('%s','%s') AS step%d", step.ServiceName, step.SpanName, i+1))
+		withParts = append(withParts, fmt.Sprintf("('%s','%s') AS step%d", utils.QuoteEscapedString(step.ServiceName), utils.QuoteEscapedString(step.SpanName), i+1))
 	}
 
 	// Build SELECT fields for each step time
@@ -97,8 +99,8 @@ func BuildFunnelOverviewQuery(
 	// Add contains_error, latency_pointer and step definitions
 	for i, step := range steps {
 		withParts = append(withParts, fmt.Sprintf("%d AS contains_error_t%d", step.ContainsError, i+1))
-		withParts = append(withParts, fmt.Sprintf("'%s' AS latency_pointer_t%d", step.LatencyPointer, i+1))
-		withParts = append(withParts, fmt.Sprintf("('%s','%s') AS step%d", step.ServiceName, step.SpanName, i+1))
+		withParts = append(withParts, fmt.Sprintf("'%s' AS latency_pointer_t%d", utils.QuoteEscapedString(step.LatencyPointer), i+1))
+		withParts = append(withParts, fmt.Sprintf("('%s','%s') AS step%d", utils.QuoteEscapedString(step.ServiceName), utils.QuoteEscapedString(step.SpanName), i+1))
 	}
 
 	// Build funnel CTE select fields
@@ -238,7 +240,7 @@ func BuildFunnelCountQuery(
 	// Add contains_error and step definitions
 	for i, step := range steps {
 		withParts = append(withParts, fmt.Sprintf("%d AS contains_error_t%d", step.ContainsError, i+1))
-		withParts = append(withParts, fmt.Sprintf("('%s','%s') AS step%d", step.ServiceName, step.SpanName, i+1))
+		withParts = append(withParts, fmt.Sprintf("('%s','%s') AS step%d", utils.QuoteEscapedString(step.ServiceName), utils.QuoteEscapedString(step.SpanName), i+1))
 	}
 
 	// Build funnel subquery select fields
@@ -350,7 +352,7 @@ func BuildFunnelStepOverviewQuery(
 	// Add contains_error and step definitions for all steps
 	for i, step := range steps {
 		withParts = append(withParts, fmt.Sprintf("%d AS contains_error_t%d", step.ContainsError, i+1))
-		withParts = append(withParts, fmt.Sprintf("('%s','%s') AS step%d", step.ServiceName, step.SpanName, i+1))
+		withParts = append(withParts, fmt.Sprintf("('%s','%s') AS step%d", utils.QuoteEscapedString(step.ServiceName), utils.QuoteEscapedString(step.SpanName), i+1))
 	}
 
 	// Build funnel CTE select fields
@@ -525,10 +527,10 @@ LIMIT 5;
 		containsErrorT2,
 		startTs,
 		endTs,
-		serviceNameT1,
-		spanNameT1,
-		serviceNameT2,
-		spanNameT2,
+		utils.QuoteEscapedString(serviceNameT1),
+		utils.QuoteEscapedString(spanNameT1),
+		utils.QuoteEscapedString(serviceNameT2),
+		utils.QuoteEscapedString(spanNameT2),
 		clauseStep1,
 		clauseStep2,
 		t1TimeExpr,
@@ -605,10 +607,10 @@ LIMIT 5;
 		containsErrorT2,
 		startTs,
 		endTs,
-		serviceNameT1,
-		spanNameT1,
-		serviceNameT2,
-		spanNameT2,
+		utils.QuoteEscapedString(serviceNameT1),
+		utils.QuoteEscapedString(spanNameT1),
+		utils.QuoteEscapedString(serviceNameT2),
+		utils.QuoteEscapedString(spanNameT2),
 		clauseStep1,
 		clauseStep2,
 		t1TimeExpr,
