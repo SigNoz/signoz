@@ -118,7 +118,7 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 def test_version(signoz: types.SigNoz) -> None:
-    response = requests.get(signoz.self.host_config.get("/api/v1/version"), timeout=2)
+    response = requests.get(signoz.self.host_configs["8080"].get("/api/v1/version"), timeout=2)
     logger.info(response)
 ```
 
