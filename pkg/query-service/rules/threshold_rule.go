@@ -482,11 +482,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 	}
 
 	for _, series := range queryResult.Series {
-		if r.Condition() != nil && r.Condition().RequireMinPoints {
-			if len(series.Points) < r.ruleCondition.RequiredNumPoints {
-				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
-				continue
-			}
+		if !r.ruleCondition.ShouldEval(series) {
+			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+			continue
 		}
 		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
@@ -574,11 +572,9 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	}
 
 	for _, series := range seriesToProcess {
-		if r.Condition() != nil && r.Condition().RequireMinPoints {
-			if len(series.Points) < r.Condition().RequiredNumPoints {
-				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
-				continue
-			}
+		if !r.ruleCondition.ShouldEval(series) {
+			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+			continue
 		}
 		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
