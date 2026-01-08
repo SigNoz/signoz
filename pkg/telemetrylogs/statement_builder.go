@@ -607,7 +607,8 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression
-		preparedWhereClause, err = querybuilder.PrepareWhereClause(ctx, query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Context:            ctx,
 			Logger:             b.logger,
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,

@@ -219,10 +219,9 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
 		OrgID: orgId.String(),
 	})
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(mockKeyEvolutionMetadata(orgId, releaseTime))
 
-	fm := NewFieldMapper(storeWithMetadata)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	fm := NewFieldMapper(mockMetadataStore)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	cb := NewConditionBuilder(fm, mockMetadataStore)
 
@@ -341,9 +340,8 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
-	fm := NewFieldMapper(storeWithMetadata)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	fm := NewFieldMapper(mockMetadataStore)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	cb := NewConditionBuilder(fm, mockMetadataStore)
 
@@ -450,9 +448,8 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
-	fm := NewFieldMapper(storeWithMetadata)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	fm := NewFieldMapper(mockMetadataStore)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	cb := NewConditionBuilder(fm, mockMetadataStore)
 
@@ -527,9 +524,8 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
-	fm := NewFieldMapper(storeWithMetadata)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	fm := NewFieldMapper(mockMetadataStore)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	cb := NewConditionBuilder(fm, mockMetadataStore)
 
@@ -623,9 +619,8 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
-	fm := NewFieldMapper(storeWithMetadata)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	fm := NewFieldMapper(mockMetadataStore)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
 	cb := NewConditionBuilder(fm, mockMetadataStore)
 

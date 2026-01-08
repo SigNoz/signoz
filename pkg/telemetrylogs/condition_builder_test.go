@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
@@ -377,8 +376,7 @@ func TestConditionFor(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
-	fm := NewFieldMapper(storeWithMetadata)
+	fm := NewFieldMapper(nil)
 	mockMetadataStore := buildTestTelemetryMetadataStore()
 	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
@@ -432,8 +430,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
-	fm := NewFieldMapper(storeWithMetadata)
+	fm := NewFieldMapper(nil)
 	mockMetadataStore := buildTestTelemetryMetadataStore()
 	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
@@ -693,8 +690,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		},
 	}
 
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
-	fm := NewFieldMapper(storeWithMetadata)
+	fm := NewFieldMapper(nil)
 	mockMetadataStore := buildTestTelemetryMetadataStore()
 	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 

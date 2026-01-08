@@ -4,7 +4,10 @@ import (
 	"context"
 	"regexp"
 	"testing"
+	"time"
 
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -14,15 +17,30 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) telemetrytypes.MetadataStore {
+func newTestCache(t *testing.T) cache.Cache {
+	t.Helper()
+	testCache, err := cachetest.New(cache.Config{
+		Provider: "memory",
+		Memory: cache.Memory{
+			NumCounters: 10 * 1000,
+			MaxCost:     1 << 26,
+		},
+	})
+	require.NoError(t, err)
+	return testCache
+}
+
+func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore, cache cache.Cache) telemetrytypes.MetadataStore {
 	return NewTelemetryMetaStore(
 		instrumentationtest.New().ToProviderSettings(),
 		store,
+		cache,
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,
 		telemetrytraces.SpanAttributesKeysTblName,
@@ -38,6 +56,7 @@ func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) te
 		telemetrylogs.LogResourceKeysTblName,
 		DBName,
 		AttributesMetadataLocalTableName,
+		ColumnEvolutionMetadataTableName,
 	)
 }
 
@@ -59,7 +78,7 @@ func TestGetKeys(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore, newTestCache(t))
 
 	rows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "statement", Type: "String"},
@@ -169,7 +188,7 @@ func TestApplyBackwardCompatibleKeys(t *testing.T) {
 			mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 			mock := mockTelemetryStore.Mock()
 
-			metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+			metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore, newTestCache(t))
 
 			hasTraces := false
 			hasLogs := false
@@ -318,7 +337,7 @@ func TestGetMetricFieldValuesIntrinsicMetricName(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore, newTestCache(t))
 
 	valueRows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "metric_name", Type: "String"},
@@ -357,7 +376,7 @@ func TestGetMetricFieldValuesIntrinsicBoolReturnsEmpty(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore, newTestCache(t))
 
 	metadataRows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "attr_string_value", Type: "String"},
@@ -383,4 +402,216 @@ func TestGetMetricFieldValuesIntrinsicBoolReturnsEmpty(t *testing.T) {
 	assert.Empty(t, values.StringValues)
 	assert.Empty(t, values.BoolValues)
 	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+var (
+	clickHouseQueryPattern = "SELECT.*base_column.*base_column_type.*new_column.*new_column_type.*path.*release_time.*FROM.*distributed_column_evolution_metadata.*WHERE.*base_column.*=.*"
+	clickHouseColumns      = []cmock.ColumnType{
+		{Name: base_column, Type: "String"},
+		{Name: base_column_type, Type: "String"},
+		{Name: new_column, Type: "String"},
+		{Name: new_column_type, Type: "String"},
+		{Name: path, Type: "String"},
+		{Name: release_time, Type: "UInt64"},
+	}
+)
+
+func createMockRows(values [][]any) *cmock.Rows {
+	return cmock.NewRows(clickHouseColumns, values)
+}
+
+func assertMetadataEqual(t *testing.T, expected, actual *telemetrytypes.ColumnEvolutionMetadata) {
+	t.Helper()
+	assert.Equal(t, expected.BaseColumn, actual.BaseColumn)
+	assert.Equal(t, expected.BaseColumnType, actual.BaseColumnType)
+	assert.Equal(t, expected.NewColumn, actual.NewColumn)
+	assert.Equal(t, expected.NewColumnType, actual.NewColumnType)
+	assert.Equal(t, expected.ReleaseTime, actual.ReleaseTime)
+}
+
+func TestKeyEvolutionMetadata_Get_CacheHit(t *testing.T) {
+	ctx := context.Background()
+	orgId := valuer.GenerateUUID()
+	keyName := "service.name"
+
+	testCache := newTestCache(t)
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore, testCache)
+
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	expectedMetadata := []*telemetrytypes.ColumnEvolutionMetadata{
+		{
+			BaseColumn:     "resources_string",
+			BaseColumnType: "Map(LowCardinality(String), String)",
+			NewColumn:      "resource",
+			NewColumnType:  "JSON(max_dynamic_paths=100)",
+			ReleaseTime:    releaseTime,
+		},
+	}
+
+	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
+	cachedData := &CachedColumnEvolutionMetadata{Metadata: expectedMetadata}
+	err := testCache.Set(ctx, orgId, cacheKey, cachedData, 24*time.Hour)
+	require.NoError(t, err)
+
+	result := metadata.GetColumnEvolutionMetadata(ctx, orgId, keyName)
+
+	require.Len(t, result, 1)
+	assertMetadataEqual(t, expectedMetadata[0], result[0])
+}
+
+func TestKeyEvolutionMetadata_Get_CacheMiss_FetchFromClickHouse(t *testing.T) {
+	ctx := context.Background()
+	orgId := valuer.GenerateUUID()
+	keyName := "resources_string"
+
+	testCache := newTestCache(t)
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	values := [][]any{
+		{
+			"resources_string",
+			"Map(LowCardinality(String), String)",
+			"resource",
+			"JSON(max_dynamic_paths=100)",
+			"",
+			uint64(releaseTime.UnixNano()),
+		},
+	}
+
+	rows := createMockRows(values)
+	mock.ExpectQuery(clickHouseQueryPattern).WithArgs(keyName).WillReturnRows(rows)
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore, testCache)
+	result := metadata.GetColumnEvolutionMetadata(ctx, orgId, keyName)
+
+	require.Len(t, result, 1)
+	assert.Equal(t, "resources_string", result[0].BaseColumn)
+	assert.Equal(t, "Map(LowCardinality(String), String)", result[0].BaseColumnType)
+	assert.Equal(t, "resource", result[0].NewColumn)
+	assert.Equal(t, "JSON(max_dynamic_paths=100)", result[0].NewColumnType)
+	assert.Equal(t, releaseTime.UnixNano(), result[0].ReleaseTime.UnixNano())
+
+	// Verify data was cached
+	var cachedData CachedColumnEvolutionMetadata
+	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
+	err := testCache.Get(ctx, orgId, cacheKey, &cachedData)
+	require.NoError(t, err)
+	require.Len(t, cachedData.Metadata, 1)
+	assert.Equal(t, result[0].BaseColumn, cachedData.Metadata[0].BaseColumn)
+}
+
+func TestKeyEvolutionMetadata_Get_MultipleMetadataEntries(t *testing.T) {
+	ctx := context.Background()
+	orgId := valuer.GenerateUUID()
+	keyName := "resources_string"
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	releaseTime1 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	releaseTime2 := time.Date(2024, 2, 15, 10, 0, 0, 0, time.UTC)
+
+	values := [][]any{
+		{
+			"resources_string",
+			"Map(LowCardinality(String), String)",
+			"resource",
+			"JSON(max_dynamic_paths=100)",
+			"",
+			uint64(releaseTime1.UnixNano()),
+		},
+		{
+			"resources_string",
+			"Map(LowCardinality(String), String)",
+			"resource_v2",
+			"JSON(max_dynamic_paths=100, max_dynamic_path_depth=10)",
+			"",
+			uint64(releaseTime2.UnixNano()),
+		},
+	}
+
+	rows := createMockRows(values)
+	mock.ExpectQuery(clickHouseQueryPattern).WithArgs(keyName).WillReturnRows(rows)
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore, newTestCache(t))
+	result := metadata.GetColumnEvolutionMetadata(ctx, orgId, keyName)
+
+	require.Len(t, result, 2)
+	assert.Equal(t, "resources_string", result[0].BaseColumn)
+	assert.Equal(t, "resource", result[0].NewColumn)
+	assert.Equal(t, "JSON(max_dynamic_paths=100)", result[0].NewColumnType)
+	assert.Equal(t, releaseTime1.UnixNano(), result[0].ReleaseTime.UnixNano())
+	assert.Equal(t, "resource_v2", result[1].NewColumn)
+	assert.Equal(t, "JSON(max_dynamic_paths=100, max_dynamic_path_depth=10)", result[1].NewColumnType)
+	assert.Equal(t, releaseTime2.UnixNano(), result[1].ReleaseTime.UnixNano())
+}
+
+func TestKeyEvolutionMetadata_Get_EmptyResultFromClickHouse(t *testing.T) {
+	ctx := context.Background()
+	orgId := valuer.GenerateUUID()
+	keyName := "resources_string"
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	rows := createMockRows([][]any{})
+	mock.ExpectQuery(clickHouseQueryPattern).WithArgs(keyName).WillReturnRows(rows)
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore, newTestCache(t))
+	result := metadata.GetColumnEvolutionMetadata(ctx, orgId, keyName)
+
+	assert.Empty(t, result)
+}
+
+func TestKeyEvolutionMetadata_Get_ClickHouseQueryError(t *testing.T) {
+	ctx := context.Background()
+	orgId := valuer.GenerateUUID()
+	keyName := "resources_string"
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	mock.ExpectQuery(clickHouseQueryPattern).WithArgs(keyName).WillReturnError(assert.AnError)
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore, newTestCache(t))
+	result := metadata.GetColumnEvolutionMetadata(ctx, orgId, keyName)
+
+	assert.Empty(t, result)
+}
+
+func TestKeyEvolutionMetadata_Get_NilFromClickHouse_IsCached(t *testing.T) {
+	ctx := context.Background()
+	orgId := valuer.GenerateUUID()
+	keyName := "nonexistent_key"
+
+	testCache := newTestCache(t)
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	// Mock ClickHouse to return an error, which causes fetchFromClickHouse to return nil
+	mock.ExpectQuery(clickHouseQueryPattern).WithArgs(keyName).WillReturnError(assert.AnError)
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore, testCache)
+
+	// First call - cache miss, fetch from ClickHouse returns nil
+	result := metadata.GetColumnEvolutionMetadata(ctx, orgId, keyName)
+	assert.Empty(t, result)
+
+	// Verify that nil result was cached
+	var cachedData CachedColumnEvolutionMetadata
+	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
+	err := testCache.Get(ctx, orgId, cacheKey, &cachedData)
+	require.NoError(t, err)
+	assert.Nil(t, cachedData.Metadata)
+
+	// Second call - should hit cache and not query ClickHouse again
+	result2 := metadata.GetColumnEvolutionMetadata(ctx, orgId, keyName)
+	assert.Empty(t, result2)
+
+	// Verify no additional queries were made (all expectations were consumed)
+	err = mock.ExpectationsWereMet()
+	require.NoError(t, err)
 }

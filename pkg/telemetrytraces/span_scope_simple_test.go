@@ -76,7 +76,8 @@ func TestSpanScopeFilterExpression(t *testing.T) {
 				FieldContext: telemetrytypes.FieldContextSpan,
 			}}
 
-			whereClause, err := querybuilder.PrepareWhereClause(context.Background(), tt.expression, querybuilder.FilterExprVisitorOpts{
+			whereClause, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
+				Context:          context.Background(),
 				Logger:           instrumentationtest.New().Logger(),
 				FieldMapper:      fm,
 				ConditionBuilder: cb,
@@ -143,7 +144,8 @@ func TestSpanScopeWithResourceFilter(t *testing.T) {
 				FieldContext: telemetrytypes.FieldContextResource,
 			}}
 
-			_, err := querybuilder.PrepareWhereClause(context.Background(), tt.expression, querybuilder.FilterExprVisitorOpts{
+			_, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
+				Context:            context.Background(),
 				Logger:             instrumentationtest.New().Logger(),
 				FieldMapper:        fm,
 				ConditionBuilder:   cb,

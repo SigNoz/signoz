@@ -230,9 +230,9 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 	if query.Filter != nil && query.Filter.Expression != "" {
 		b.stmtBuilder.logger.DebugContext(ctx, "Applying filter to query CTE", "query_name", queryName, "filter", query.Filter.Expression)
 		filterWhereClause, err := querybuilder.PrepareWhereClause(
-			ctx,
 			query.Filter.Expression,
 			querybuilder.FilterExprVisitorOpts{
+				Context:            ctx,
 				Logger:             b.stmtBuilder.logger,
 				FieldMapper:        b.stmtBuilder.fm,
 				ConditionBuilder:   b.stmtBuilder.cb,

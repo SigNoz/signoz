@@ -346,7 +346,8 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
-		preparedWhereClause, err = querybuilder.PrepareWhereClause(ctx, query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Context:          ctx,
 			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,

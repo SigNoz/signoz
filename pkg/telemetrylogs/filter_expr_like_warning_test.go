@@ -18,13 +18,14 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
 		OrgID: valuer.GenerateUUID().String(),
 	})
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
+	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm, nil)
 
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          ctx,
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -42,7 +43,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 	for _, expr := range tests {
 		t.Run(expr, func(t *testing.T) {
-			clause, err := querybuilder.PrepareWhereClause(ctx, expr, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(expr, opts, 0, 0)
 			require.NoError(t, err)
 			require.NotNil(t, clause)
 
@@ -55,13 +56,14 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 // TestLikeAndILikeWithWildcards_NoWarn Tests that LIKE/ILIKE with wildcards do not add warnings
 func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
+	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm, nil)
 
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          context.Background(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -83,7 +85,7 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 
 	for _, expr := range tests {
 		t.Run(expr, func(t *testing.T) {
-			clause, err := querybuilder.PrepareWhereClause(ctx, expr, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(expr, opts, 0, 0)
 			require.NoError(t, err)
 			require.NotNil(t, clause)
 

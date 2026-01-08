@@ -2,11 +2,14 @@ package telemetrymetadata
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"slices"
 	"strings"
+	"time"
 
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -14,9 +17,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 )
@@ -32,23 +37,25 @@ var (
 )
 
 type telemetryMetaStore struct {
-	logger                    *slog.Logger
-	telemetrystore            telemetrystore.TelemetryStore
-	tracesDBName              string
-	tracesFieldsTblName       string
-	spanAttributesKeysTblName string
-	indexV3TblName            string
-	metricsDBName             string
-	metricsFieldsTblName      string
-	meterDBName               string
-	meterFieldsTblName        string
-	logsDBName                string
-	logsFieldsTblName         string
-	logAttributeKeysTblName   string
-	logResourceKeysTblName    string
-	logsV2TblName             string
-	relatedMetadataDBName     string
-	relatedMetadataTblName    string
+	logger                         *slog.Logger
+	telemetrystore                 telemetrystore.TelemetryStore
+	cache                          cache.Cache
+	tracesDBName                   string
+	tracesFieldsTblName            string
+	spanAttributesKeysTblName      string
+	indexV3TblName                 string
+	metricsDBName                  string
+	metricsFieldsTblName           string
+	meterDBName                    string
+	meterFieldsTblName             string
+	logsDBName                     string
+	logsFieldsTblName              string
+	logAttributeKeysTblName        string
+	logResourceKeysTblName         string
+	logsV2TblName                  string
+	relatedMetadataDBName          string
+	relatedMetadataTblName         string
+	columnEvolutionMetadataTblName string
 
 	fm               qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
@@ -61,6 +68,7 @@ func escapeForLike(s string) string {
 func NewTelemetryMetaStore(
 	settings factory.ProviderSettings,
 	telemetrystore telemetrystore.TelemetryStore,
+	cache cache.Cache,
 	tracesDBName string,
 	tracesFieldsTblName string,
 	spanAttributesKeysTblName string,
@@ -76,27 +84,30 @@ func NewTelemetryMetaStore(
 	logResourceKeysTblName string,
 	relatedMetadataDBName string,
 	relatedMetadataTblName string,
+	columnEvolutionMetadataTblName string,
 ) telemetrytypes.MetadataStore {
 	metadataSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetadata")
 
 	t := &telemetryMetaStore{
-		logger:                    metadataSettings.Logger(),
-		telemetrystore:            telemetrystore,
-		tracesDBName:              tracesDBName,
-		tracesFieldsTblName:       tracesFieldsTblName,
-		spanAttributesKeysTblName: spanAttributesKeysTblName,
-		indexV3TblName:            indexV3TblName,
-		metricsDBName:             metricsDBName,
-		metricsFieldsTblName:      metricsFieldsTblName,
-		meterDBName:               meterDBName,
-		meterFieldsTblName:        meterFieldsTblName,
-		logsDBName:                logsDBName,
-		logsV2TblName:             logsV2TblName,
-		logsFieldsTblName:         logsFieldsTblName,
-		logAttributeKeysTblName:   logAttributeKeysTblName,
-		logResourceKeysTblName:    logResourceKeysTblName,
-		relatedMetadataDBName:     relatedMetadataDBName,
-		relatedMetadataTblName:    relatedMetadataTblName,
+		logger:                         metadataSettings.Logger(),
+		telemetrystore:                 telemetrystore,
+		cache:                          cache,
+		tracesDBName:                   tracesDBName,
+		tracesFieldsTblName:            tracesFieldsTblName,
+		spanAttributesKeysTblName:      spanAttributesKeysTblName,
+		indexV3TblName:                 indexV3TblName,
+		metricsDBName:                  metricsDBName,
+		metricsFieldsTblName:           metricsFieldsTblName,
+		meterDBName:                    meterDBName,
+		meterFieldsTblName:             meterFieldsTblName,
+		logsDBName:                     logsDBName,
+		logsV2TblName:                  logsV2TblName,
+		logsFieldsTblName:              logsFieldsTblName,
+		logAttributeKeysTblName:        logAttributeKeysTblName,
+		logResourceKeysTblName:         logResourceKeysTblName,
+		relatedMetadataDBName:          relatedMetadataDBName,
+		relatedMetadataTblName:         relatedMetadataTblName,
+		columnEvolutionMetadataTblName: columnEvolutionMetadataTblName,
 	}
 
 	fm := NewFieldMapper()
@@ -1035,7 +1046,8 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 			return nil, false, err
 		}
 
-		whereClause, err := querybuilder.PrepareWhereClause(ctx, fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
+		whereClause, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
+			Context:          ctx,
 			Logger:           t.logger,
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
@@ -1766,4 +1778,125 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Cont
 	}
 
 	return result, nil
+}
+
+const (
+	// KeyEvolutionMetadataCacheKeyPrefix is the prefix for cache keys
+	KeyEvolutionMetadataCacheKeyPrefix = "key_evolution_metadata:"
+
+	base_column      = "base_column"
+	base_column_type = "base_column_type"
+	new_column       = "new_column"
+	new_column_type  = "new_column_type"
+	path             = "path"
+	release_time     = "release_time"
+)
+
+// CachedColumnEvolutionMetadata is a cacheable type for storing column evolution metadata
+type CachedColumnEvolutionMetadata struct {
+	Metadata []*telemetrytypes.ColumnEvolutionMetadata `json:"metadata"`
+}
+
+var _ cachetypes.Cacheable = (*CachedColumnEvolutionMetadata)(nil)
+
+func (c *CachedColumnEvolutionMetadata) MarshalBinary() ([]byte, error) {
+	return json.Marshal(c)
+}
+
+func (c *CachedColumnEvolutionMetadata) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, c)
+}
+
+func (k *telemetryMetaStore) fetchColumnEvolutionMetadataFromClickHouse(ctx context.Context, key string) []*telemetrytypes.ColumnEvolutionMetadata {
+	store := k.telemetrystore
+	logger := k.logger
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	// Build query to fetch all key evolution metadata
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		base_column,
+		base_column_type,
+		new_column,
+		new_column_type,
+		path,
+		release_time,
+	)
+	sb.From(fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName))
+	sb.OrderBy(base_column, release_time)
+	sb.Where(sb.E(base_column, key))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := store.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		logger.WarnContext(ctx, "Failed to fetch key evolution metadata from ClickHouse", "error", err)
+		return nil
+	}
+	defer rows.Close()
+
+	// Group metadata by base_column
+	metadataByKey := make(map[string][]*telemetrytypes.ColumnEvolutionMetadata)
+
+	for rows.Next() {
+		var (
+			baseColumn     string
+			baseColumnType string
+			newColumn      string
+			newColumnType  string
+			path           string
+			releaseTime    uint64
+		)
+
+		if err := rows.Scan(&baseColumn, &baseColumnType, &newColumn, &newColumnType, &path, &releaseTime); err != nil {
+			logger.WarnContext(ctx, "Failed to scan key evolution metadata row", "error", err)
+			continue
+		}
+
+		key := &telemetrytypes.ColumnEvolutionMetadata{
+			BaseColumn:     baseColumn,
+			BaseColumnType: baseColumnType,
+			NewColumn:      newColumn,
+			NewColumnType:  newColumnType,
+			Path:           path,
+			ReleaseTime:    time.Unix(0, int64(releaseTime)),
+		}
+
+		metadataByKey[baseColumn] = append(metadataByKey[baseColumn], key)
+	}
+
+	if err := rows.Err(); err != nil {
+		logger.WarnContext(ctx, "Error iterating key evolution metadata rows", "error", err)
+		return nil
+	}
+
+	return metadataByKey[key]
+
+}
+
+// Get retrieves all metadata keys for the given key name and orgId from cache.
+// Returns an empty slice if the key is not found in cache.
+func (k *telemetryMetaStore) GetColumnEvolutionMetadata(ctx context.Context, orgId valuer.UUID, keyName string) []*telemetrytypes.ColumnEvolutionMetadata {
+
+	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
+	cachedData := &CachedColumnEvolutionMetadata{}
+	if err := k.cache.Get(ctx, orgId, cacheKey, cachedData); err != nil {
+
+		if !errors.Ast(err, errors.TypeNotFound) {
+			k.logger.ErrorContext(ctx, "Failed to get key evolution metadata from cache", "error", err)
+			return nil
+		}
+
+		// Cache miss - fetch from ClickHouse and try again
+		metadata := k.fetchColumnEvolutionMetadataFromClickHouse(ctx, keyName)
+
+		cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
+		cachedData = &CachedColumnEvolutionMetadata{Metadata: metadata}
+		if err := k.cache.Set(ctx, orgId, cacheKey, cachedData, 24*time.Hour); err != nil {
+			k.logger.WarnContext(ctx, "Failed to set key evolution metadata in cache", "key", keyName, "error", err)
+		}
+	}
+	return cachedData.Metadata
 }

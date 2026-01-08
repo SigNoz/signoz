@@ -15,13 +15,14 @@ import (
 
 // TestFilterExprLogsBodyJSON tests a comprehensive set of query patterns for body JSON search
 func TestFilterExprLogsBodyJSON(t *testing.T) {
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
+	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm, telemetrytypestest.NewMockMetadataStore())
 	// Define a comprehensive set of field keys to support all test cases
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          context.Background(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -164,7 +165,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(context.Background(), tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
 
 			if tc.shouldPass {
 				if err != nil {

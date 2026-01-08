@@ -26,7 +26,8 @@ func TestFilterExprLogs(t *testing.T) {
 	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
 		OrgID: orgId.String(),
 	})
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(mockKeyEvolutionMetadata(orgId, releaseTime))
+	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
+	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, releaseTime)
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm, nil)
 
@@ -34,6 +35,7 @@ func TestFilterExprLogs(t *testing.T) {
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          ctx,
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -2398,7 +2400,7 @@ func TestFilterExprLogs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(ctx, tc.query, opts, uint64(releaseTime.Add(-5*time.Minute).UnixNano()), uint64(releaseTime.Add(5*time.Minute).UnixNano()))
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, uint64(releaseTime.Add(-5*time.Minute).UnixNano()), uint64(releaseTime.Add(5*time.Minute).UnixNano()))
 
 			if tc.shouldPass {
 				if err != nil {
@@ -2434,7 +2436,7 @@ func TestFilterExprLogs(t *testing.T) {
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogsConflictNegation(t *testing.T) {
-	storeWithMetadata := telemetrytypestest.NewMockKeyEvolutionMetadataStore(nil)
+	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm, nil)
 
@@ -2455,6 +2457,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          context.Background(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -2517,7 +2520,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(context.Background(), tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
 
 			if tc.shouldPass {
 				if err != nil {
