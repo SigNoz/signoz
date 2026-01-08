@@ -131,12 +131,16 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 
 	var groups []string
 	if groupsClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Groups; groupsClaim != "" {
-		if g, ok := claims[groupsClaim].([]any); ok {
+		switch g := claims[groupsClaim].(type) {
+		case []any:
 			for _, group := range g {
 				if gs, ok := group.(string); ok {
 					groups = append(groups, gs)
 				}
 			}
+		case string:
+			// Some IDPs return a single group as a string instead of an array
+			groups = append(groups, g)
 		}
 	}
 
