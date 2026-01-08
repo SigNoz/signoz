@@ -561,53 +561,6 @@ def test_oidc_empty_name_uses_fallback(
     # Note: displayName may be empty - this is a known limitation
 
 
-# def test_oidc_role_mapping_update_on_subsequent_login(
-#     signoz: SigNoz,
-#     idp: TestContainerIDP,
-#     driver: webdriver.Chrome,
-#     create_user_idp_with_groups: Callable[[str, str, bool, List[str]], None],
-#     add_user_to_group: Callable[[str, str], None],
-#     idp_login: Callable[[str, str], None],
-#     get_token: Callable[[str, str], str],
-#     get_session_context: Callable[[str], str],
-# ) -> None:
-#     """
-#     Test: User's role should update on subsequent logins when IDP groups change.
-    
-#     This tests the critical bug where GetOrCreateUser doesn't update roles.
-    
-#     Steps:
-#     1. User logs in with 'signoz-editors' group -> gets EDITOR role
-#     2. User's group changes in IDP to 'signoz-admins'
-#     3. User logs in again -> should get ADMIN role
-#     """
-#     email = "role-update-user@oidc.integration.test"
-    
-#     # First login with EDITOR group
-#     create_user_idp_with_groups(email, "password123", True, ["signoz-editors"])
-#     _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
-
-#     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-#     found_user = _get_user_by_email(signoz, admin_token, email)
-
-#     assert found_user is not None
-#     assert found_user["role"] == "EDITOR"
-
-#     # Add user to admin group in IDP
-#     add_user_to_group(email, "signoz-admins")
-
-#     # Clear browser session and login again
-#     driver.delete_all_cookies()
-#     _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
-
-#     # Check if role was updated
-#     found_user = _get_user_by_email(signoz, admin_token, email)
-
-#     assert found_user is not None
-#     # After fix, this should be ADMIN. Currently stays EDITOR (bug).
-#     assert found_user["role"] == "ADMIN"
-
-
 #!########################################################################
 #!############## KEEP THIS IN THE END ALWAYS #############################
 #!########################################################################
