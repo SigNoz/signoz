@@ -3,6 +3,7 @@ package jwttokenizer
 import (
 	"context"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -29,6 +30,7 @@ type provider struct {
 	cache               cache.Cache
 	tokenStore          authtypes.TokenStore
 	lastObservedAtCache *ristretto.Cache[string, map[valuer.UUID]time.Time]
+	lastObservedAtMtx   sync.RWMutex
 	stopC               chan struct{}
 }
 
@@ -61,6 +63,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		cache:               cache,
 		tokenStore:          tokenStore,
 		lastObservedAtCache: lastObservedAtCache,
+		lastObservedAtMtx:   sync.RWMutex{},
 		stopC:               make(chan struct{}),
 	}), nil
 }
@@ -155,6 +158,9 @@ func (provider *provider) DeleteIdentity(ctx context.Context, userID valuer.UUID
 }
 
 func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken string, lastObservedAt time.Time) error {
+	provider.lastObservedAtMtx.Lock()
+	defer provider.lastObservedAtMtx.Unlock()
+
 	claims, err := provider.getClaimsFromToken(accessToken)
 	if err != nil {
 		provider.settings.Logger().ErrorContext(ctx, "failed to set last observed at", "error", err)
