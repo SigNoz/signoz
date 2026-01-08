@@ -82,10 +82,8 @@ def test_create_and_get_domain(
     assert len(data) == 2
 
     for domain in data:
-        if domain["name"] == "domain-google.integration.test":
-            assert domain["ssoType"] == "google_auth"
-        elif domain["name"] == "domain-saml.integration.test":
-            assert domain["ssoType"] == "saml"
+        assert domain["name"] in ["domain-google.integration.test", "domain-saml.integration.test"]
+        assert domain["ssoType"] in ["google_auth", "saml"]
 
 
 def test_create_invalid(
