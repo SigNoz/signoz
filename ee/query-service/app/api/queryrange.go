@@ -257,18 +257,20 @@ func (aH *APIHandler) queryRangeV5(rw http.ResponseWriter, req *http.Request) {
 			results = append(results, item)
 		}
 
+		// Build step intervals from the anomaly query
+		stepIntervals := make(map[string]uint64)
+		if anomalyQuery.StepInterval.Duration > 0 {
+			stepIntervals[anomalyQuery.Name] = uint64(anomalyQuery.StepInterval.Duration.Seconds())
+		}
+
 		finalResp := &qbtypes.QueryRangeResponse{
 			Type: queryRangeRequest.RequestType,
-			Data: struct {
-				Results []any `json:"results"`
-			}{
+			Data: qbtypes.QueryData{
 				Results: results,
 			},
-			Meta: struct {
-				RowsScanned  uint64 `json:"rowsScanned"`
-				BytesScanned uint64 `json:"bytesScanned"`
-				DurationMS   uint64 `json:"durationMs"`
-			}{},
+			Meta: qbtypes.ExecStats{
+				StepIntervals: stepIntervals,
+			},
 		}
 
 		render.Success(rw, http.StatusOK, finalResp)
