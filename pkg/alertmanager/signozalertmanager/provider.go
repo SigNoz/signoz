@@ -2,9 +2,10 @@ package signozalertmanager
 
 import (
 	"context"
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/prometheus/common/model"
-	"time"
 
 	amConfig "github.com/prometheus/alertmanager/config"
 
@@ -191,7 +192,11 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 		return err
 	}
 
-	channel := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
+	channel, err := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
+	if err != nil {
+		return err
+	}
+
 	return provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
 		return provider.configStore.Set(ctx, config)
 	}))

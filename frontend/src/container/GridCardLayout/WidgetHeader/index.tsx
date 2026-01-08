@@ -26,7 +26,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { CircleX, X } from 'lucide-react';
+import { CircleX, SquareArrowOutUpRight, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
@@ -185,7 +185,18 @@ function WidgetHeader({
 			{
 				key: MenuItemKeys.CreateAlerts,
 				icon: <AlertOutlined />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
+				label: (
+					<span
+						style={{
+							display: 'flex',
+							alignItems: 'baseline',
+							justifyContent: 'space-between',
+						}}
+					>
+						{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts]}
+						<SquareArrowOutUpRight size={10} />
+					</span>
+				),
 				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
 				disabled: false,
 			},

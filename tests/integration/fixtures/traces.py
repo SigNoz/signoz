@@ -5,7 +5,7 @@ import secrets
 import uuid
 from abc import ABC
 from enum import Enum
-from typing import Any, Callable, Generator, List
+from typing import Any, Callable, Generator, List, Optional
 from urllib.parse import urlparse
 
 import numpy as np
@@ -81,7 +81,9 @@ class TracesResourceOrAttributeKeys(ABC):
         self.is_column = is_column
 
     def np_arr(self) -> np.array:
-        return np.array([self.name, self.tag_type, self.datatype, self.is_column])
+        return np.array(
+            [self.name, self.tag_type, self.datatype, self.is_column], dtype=object
+        )
 
 
 class TracesTagAttributes(ABC):
@@ -98,7 +100,7 @@ class TracesTagAttributes(ABC):
         tag_key: str,
         tag_type: str,
         tag_data_type: str,
-        string_value: str,
+        string_value: Optional[str],
         number_value: np.float64,
     ) -> None:
         self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
@@ -254,7 +256,7 @@ class Traces(ABC):
 
     def __init__(
         self,
-        timestamp: datetime.datetime = datetime.datetime.now(),
+        timestamp: Optional[datetime.datetime] = None,
         duration: datetime.timedelta = datetime.timedelta(seconds=1),
         trace_id: str = "",
         span_id: str = "",
@@ -270,6 +272,8 @@ class Traces(ABC):
         trace_state: str = "",
         flags: np.uint32 = 0,
     ) -> None:
+        if timestamp is None:
+            timestamp = datetime.datetime.now()
         self.tag_attributes = []
         self.attribute_keys = []
         self.resource_keys = []
@@ -636,14 +640,23 @@ def insert_traces(
             )
 
         attribute_keys: List[TracesResourceOrAttributeKeys] = []
+        resource_keys: List[TracesResourceOrAttributeKeys] = []
         for trace in traces:
             attribute_keys.extend(trace.attribute_keys)
+            resource_keys.extend(trace.resource_keys)
 
         if len(attribute_keys) > 0:
             clickhouse.conn.insert(
                 database="signoz_traces",
                 table="distributed_span_attributes_keys",
                 data=[attribute_key.np_arr() for attribute_key in attribute_keys],
+            )
+
+        if len(resource_keys) > 0:
+            clickhouse.conn.insert(
+                database="signoz_traces",
+                table="distributed_span_attributes_keys",
+                data=[resource_key.np_arr() for resource_key in resource_keys],
             )
 
         # Insert main traces
@@ -716,3 +729,31 @@ def insert_traces(
     clickhouse.conn.query(
         f"TRUNCATE TABLE signoz_traces.signoz_error_index_v2 ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
     )
+
+
+@pytest.fixture(name="remove_traces_ttl_and_storage_settings", scope="function")
+def remove_traces_ttl_and_storage_settings(signoz: types.SigNoz):
+    """
+    Remove any custom TTL settings on traces tables to revert to default retention.
+    Also resets storage policy to default by recreating tables if needed.
+    """
+    tables = [
+        "signoz_index_v3",
+        "traces_v3_resource",
+        "signoz_error_index_v2",
+        "usage_explorer",
+        "dependency_graph_minutes_v2",
+        "trace_summary",
+        "span_attributes_keys",
+    ]
+
+    for table in tables:
+        try:
+            signoz.telemetrystore.conn.query(
+                f"ALTER TABLE signoz_traces.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' REMOVE TTL"
+            )
+            signoz.telemetrystore.conn.query(
+                f"ALTER TABLE signoz_traces.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' RESET SETTING storage_policy;"
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            print(f"ttl and storage policy reset failed for {table}: {e}")
