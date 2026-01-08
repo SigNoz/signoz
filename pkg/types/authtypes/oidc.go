@@ -69,6 +69,10 @@ func (config *OIDCConfig) UnmarshalJSON(data []byte) error {
 		temp.ClaimMapping.Email = "email"
 	}
 
+	if temp.ClaimMapping.Name == "" {
+		temp.ClaimMapping.Name = "name"
+	}
+
 	if temp.ClaimMapping.Groups == "" {
 		temp.ClaimMapping.Groups = "groups"
 	}
