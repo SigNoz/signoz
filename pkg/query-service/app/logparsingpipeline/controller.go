@@ -11,13 +11,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
+
 	"go.uber.org/zap"
 )
 
@@ -126,6 +129,40 @@ func (ic *LogParsingPipelineController) ValidatePipelines(ctx context.Context,
 	sampleLogs := []model.SignozLog{{Body: ""}}
 	_, _, err := SimulatePipelinesProcessing(ctx, gettablePipelines, sampleLogs)
 	return err
+}
+
+func (ic *LogParsingPipelineController) getDefaultPipelines() ([]pipelinetypes.GettablePipeline, error) {
+	defaultPipelines := []pipelinetypes.GettablePipeline{}
+	if querybuilder.BodyJSONQueryEnabled {
+		preprocessingPipeline := pipelinetypes.GettablePipeline{
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
+				Name:    "Default Pipeline - PreProcessing Body",
+				Alias:   "NormalizeBodyDefault",
+				Enabled: true,
+			},
+			Filter: &v3.FilterSet{
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key: "body",
+						},
+						Operator: v3.FilterOperatorExists,
+					},
+				},
+			},
+			Config: []pipelinetypes.PipelineOperator{
+				{
+					ID:      uuid.NewString(),
+					Type:    "normalize",
+					Enabled: true,
+					If:      "body != nil",
+				},
+			},
+		}
+
+		defaultPipelines = append(defaultPipelines, preprocessingPipeline)
+	}
+	return defaultPipelines, nil
 }
 
 // Returns effective list of pipelines including user created
@@ -257,6 +294,13 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	if err != nil {
 		return nil, "", err
 	}
+
+	// recommend default pipelines along with user created pipelines
+	defaultPipelines, err := pc.getDefaultPipelines()
+	if err != nil {
+		return nil, "", model.InternalError(fmt.Errorf("failed to get default pipelines: %w", err))
+	}
+	pipelinesResp.Pipelines = append(pipelinesResp.Pipelines, defaultPipelines...)
 
 	updatedConf, err := GenerateCollectorConfigWithPipelines(currentConfYaml, pipelinesResp.Pipelines)
 	if err != nil {

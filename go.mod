@@ -11,6 +11,7 @@ require (
 	github.com/SigNoz/signoz-otel-collector v0.129.10-rc.9
 	github.com/antlr4-go/antlr/v4 v4.13.1
 	github.com/antonmedv/expr v1.15.3
+	github.com/bytedance/sonic v1.14.1
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/coreos/go-oidc/v3 v3.14.1
 	github.com/dgraph-io/ristretto/v2 v2.3.0
@@ -89,7 +90,6 @@ require (
 
 require (
 	github.com/bytedance/gopkg v0.1.3 // indirect
-	github.com/bytedance/sonic v1.14.1 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
