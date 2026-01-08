@@ -38,7 +38,7 @@ import { TimeRangeValidationResult, validateTimeRange } from 'utils/timeUtils';
 
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
 
-const maxAllowedMinTimeInMonths = 6;
+const maxAllowedMinTimeInMonths = 15;
 type ViewType = 'datetime' | 'timezone';
 const DEFAULT_VIEW: ViewType = 'datetime';
 
@@ -383,7 +383,7 @@ function CustomTimePicker({
 	};
 
 	const handleSelect = (label: string, value: string): void => {
-		if (label === 'Custom') {
+		if (value === 'custom') {
 			setCustomDTPickerVisible?.(true);
 			return;
 		}
@@ -524,8 +524,8 @@ function CustomTimePicker({
 						newPopover ? (
 							<CustomTimePickerPopoverContent
 								setIsOpen={setOpen}
-								customDateTimeVisible={defaultTo(customDateTimeVisible, false)}
 								setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
+								customDateTimeVisible={defaultTo(customDateTimeVisible, false)}
 								onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
 								onSelectHandler={handleSelect}
 								onGoLive={defaultTo(onGoLive, noop)}
@@ -539,6 +539,8 @@ function CustomTimePicker({
 								showRecentlyUsed={showRecentlyUsed}
 								customDateTimeInputStatus={inputStatus}
 								inputErrorDetails={inputErrorDetails}
+								minTime={minTime}
+								maxTime={maxTime}
 							/>
 						) : (
 							content

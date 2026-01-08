@@ -1,10 +1,10 @@
 import './CustomTimePicker.styles.scss';
 
+import { Calendar } from '@signozhq/calendar';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
-import DatePickerV2 from 'components/DatePickerV2/DatePickerV2';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -15,7 +15,14 @@ import {
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
-import { Clock, PenLine, TriangleAlertIcon } from 'lucide-react';
+import {
+	CalendarIcon,
+	Check,
+	Clock,
+	PenLine,
+	TriangleAlertIcon,
+	X,
+} from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
@@ -32,7 +39,14 @@ import { TimeRangeValidationResult } from 'utils/timeUtils';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
 
+type DateRange = {
+	from: Date | undefined;
+	to?: Date | undefined;
+};
+
 interface CustomTimePickerPopoverContentProps {
+	minTime: number;
+	maxTime: number;
 	options: any[];
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
 	customDateTimeVisible: boolean;
@@ -62,8 +76,27 @@ interface RecentlyUsedDateTimeRange {
 	to: string;
 }
 
+const getDateRange = (
+	minTime: number,
+	maxTime: number,
+	timezone: string,
+): DateRange => {
+	const from = dayjs(minTime / 1000_000)
+		.tz(timezone)
+		.startOf('day')
+		.toDate();
+	const to = dayjs(maxTime / 1000_000)
+		.tz(timezone)
+		.endOf('day')
+		.toDate();
+
+	return { from, to };
+};
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function CustomTimePickerPopoverContent({
+	minTime,
+	maxTime,
 	options,
 	setIsOpen,
 	customDateTimeVisible,
@@ -89,6 +122,9 @@ function CustomTimePickerPopoverContent({
 
 	const url = new URLSearchParams(window.location.search);
 
+	const { timezone } = useTimezone();
+	const activeTimezoneOffset = timezone.offset;
+
 	let panelTypeFromURL = url.get(QueryParams.panelTypes);
 
 	try {
@@ -100,8 +136,9 @@ function CustomTimePickerPopoverContent({
 	const isLogsListView =
 		panelTypeFromURL !== 'table' && panelTypeFromURL !== 'graph'; // we do not select list view in the url
 
-	const { timezone } = useTimezone();
-	const activeTimezoneOffset = timezone.offset;
+	const [dateRange, setDateRange] = useState<DateRange | undefined>(
+		getDateRange(minTime, maxTime, timezone.value),
+	);
 
 	const [recentlyUsedTimeRanges, setRecentlyUsedTimeRanges] = useState<
 		RecentlyUsedDateTimeRange[]
@@ -112,6 +149,8 @@ function CustomTimePickerPopoverContent({
 			onExitLiveLogs();
 		}
 	}, [isLogsExplorerPage, onExitLiveLogs]);
+
+	console.log('selected date range', selectedTime);
 
 	useEffect(() => {
 		if (!customDateTimeVisible) {
@@ -183,42 +222,62 @@ function CustomTimePickerPopoverContent({
 		setIsOpen(false);
 	};
 
+	const handleSelectDateRange = (dateRange: DateRange): void => {
+		setDateRange(dateRange);
+	};
+
+	const handleCalendarRangeApply = (): void => {
+		if (dateRange) {
+			const from = dayjs(dateRange.from)
+				.tz(timezone.value)
+				.startOf('day')
+				.toDate();
+			const to = dayjs(dateRange.to).tz(timezone.value).endOf('day').toDate();
+
+			onCustomDateHandler([dayjs(from), dayjs(to)]);
+		}
+		setIsOpen(false);
+	};
+
+	const handleCalendarRangeCancel = (): void => {
+		setCustomDTPickerVisible(false);
+	};
+
 	return (
 		<>
 			<div className="date-time-popover">
-				{!customDateTimeVisible && (
-					<div className="date-time-options">
-						{isLogsExplorerPage && isLogsListView && (
-							<Button className="data-time-live" type="text" onClick={handleGoLive}>
-								Live
-							</Button>
-						)}
-						{options.map((option) => (
-							<Button
-								type="text"
-								key={option.label + option.value}
-								onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
-									e.stopPropagation();
-									e.preventDefault();
-									handleExitLiveLogs();
-									onSelectHandler(option.label, option.value);
-								}}
-								className={cx(
-									'date-time-options-btn',
-									customDateTimeVisible
-										? option.value === 'custom' && 'active'
-										: selectedTime === option.value && 'active',
-								)}
-							>
-								<span className="time-label">{option.label}</span>
+				<div className="date-time-options">
+					{isLogsExplorerPage && isLogsListView && (
+						<Button className="data-time-live" type="text" onClick={handleGoLive}>
+							Live
+						</Button>
+					)}
+					{options.map((option) => (
+						<Button
+							type="text"
+							key={option.label + option.value}
+							onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
+								e.stopPropagation();
+								e.preventDefault();
+								handleExitLiveLogs();
+								onSelectHandler(option.label, option.value);
+							}}
+							className={cx(
+								'date-time-options-btn',
+								customDateTimeVisible
+									? option.value === 'custom' && 'active'
+									: selectedTime === option.value && 'active',
+							)}
+						>
+							<span className="time-label">{option.label}</span>
 
-								{option.value !== 'custom' && option.value !== '1month' && (
-									<span className="time-value">{option.value}</span>
-								)}
-							</Button>
-						))}
-					</div>
-				)}
+							{option.value !== 'custom' && option.value !== '1month' && (
+								<span className="time-value">{option.value}</span>
+							)}
+						</Button>
+					))}
+				</div>
+
 				<div
 					className={cx(
 						'relative-date-time',
@@ -226,11 +285,52 @@ function CustomTimePickerPopoverContent({
 					)}
 				>
 					{customDateTimeVisible ? (
-						<DatePickerV2
-							onSetCustomDTPickerVisible={setCustomDTPickerVisible}
-							setIsOpen={setIsOpen}
-							onCustomDateHandler={onCustomDateHandler}
-						/>
+						<div className="calendar-container">
+							<div className="calendar-container-header">
+								<CalendarIcon size={16} />
+								<div className="calendar-container-header-title">
+									{dayjs(dateRange?.from)
+										.tz(timezone.value)
+										.format(DATE_TIME_FORMATS.MONTH_DATE_SHORT)}{' '}
+									-{' '}
+									{dayjs(dateRange?.to)
+										.tz(timezone.value)
+										.format(DATE_TIME_FORMATS.MONTH_DATE_SHORT)}
+								</div>
+							</div>
+
+							<div className="calendar-container-body">
+								<Calendar
+									mode="range"
+									required
+									defaultMonth={dateRange?.from}
+									selected={dateRange}
+									disabled={{
+										after: dayjs().toDate(),
+									}}
+									onSelect={handleSelectDateRange}
+								/>
+
+								<div className="calendar-actions">
+									<Button
+										type="primary"
+										className="periscope-btn secondary cancel-btn"
+										onClick={handleCalendarRangeCancel}
+										icon={<X size={12} />}
+									>
+										Cancel
+									</Button>
+									<Button
+										type="primary"
+										className="periscope-btn primary apply-btn"
+										onClick={handleCalendarRangeApply}
+										icon={<Check size={12} />}
+									>
+										Apply
+									</Button>
+								</div>
+							</div>
+						</div>
 					) : (
 						<div className="time-selector-container">
 							{customDateTimeInputStatus === CustomTimePickerInputStatus.ERROR &&
