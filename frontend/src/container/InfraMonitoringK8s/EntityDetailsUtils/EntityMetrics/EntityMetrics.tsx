@@ -258,6 +258,8 @@ function EntityMetrics<T>({
 						defaultRelativeTime="5m"
 						isModalTimeSelection={isModalTimeSelection}
 						modalSelectedInterval={selectedInterval}
+						modalInitialStartTime={timeRange.startTime * 1000}
+						modalInitialEndTime={timeRange.endTime * 1000}
 					/>
 				</div>
 			</div>

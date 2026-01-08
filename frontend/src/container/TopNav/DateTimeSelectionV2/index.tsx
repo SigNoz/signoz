@@ -73,6 +73,11 @@ function DateTimeSelection({
 	const navigationType = useNavigationType(); // Returns 'POP' for back/forward navigation
 	const dispatch = useDispatch();
 
+	const { maxTime, minTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -173,11 +178,6 @@ function DateTimeSelection({
 	);
 
 	const { stagedQuery, currentQuery, initQueryBuilderData } = useQueryBuilder();
-
-	const { maxTime, minTime, selectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
 
 	const getInputLabel = (
 		startTime?: Dayjs,
@@ -654,6 +654,14 @@ function DateTimeSelection({
 		);
 	};
 
+	const minTimeForDateTimePicker = isModalTimeSelection
+		? modalStartTime * 1000000
+		: minTime;
+
+	const maxTimeForDateTimePicker = isModalTimeSelection
+		? modalEndTime * 1000000
+		: maxTime;
+
 	return (
 		<div className="date-time-selector">
 			{showResetButton && selectedTime !== defaultRelativeTime && (
@@ -719,6 +727,8 @@ function DateTimeSelection({
 						setCustomDTPickerVisible={setCustomDTPickerVisible}
 						onExitLiveLogs={onExitLiveLogs}
 						showRecentlyUsed={showRecentlyUsed}
+						minTime={minTimeForDateTimePicker}
+						maxTime={maxTimeForDateTimePicker}
 					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (

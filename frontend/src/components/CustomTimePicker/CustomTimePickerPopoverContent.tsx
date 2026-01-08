@@ -285,7 +285,7 @@ function CustomTimePickerPopoverContent({
 					{customDateTimeVisible ? (
 						<div className="calendar-container">
 							<div className="calendar-container-header">
-								<CalendarIcon size={16} />
+								<CalendarIcon size={12} />
 								<div className="calendar-container-header-title">
 									{dayjs(dateRange?.from)
 										.tz(timezone.value)

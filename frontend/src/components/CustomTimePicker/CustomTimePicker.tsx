@@ -28,10 +28,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { getTimeDifference, validateEpochRange } from 'utils/epochUtils';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { TimeRangeValidationResult, validateTimeRange } from 'utils/timeUtils';
@@ -73,6 +70,8 @@ interface CustomTimePickerProps {
 	onExitLiveLogs?: () => void;
 	/** When false, hides the "Recently Used" time ranges section */
 	showRecentlyUsed?: boolean;
+	minTime: number;
+	maxTime: number;
 }
 
 function CustomTimePicker({
@@ -93,15 +92,13 @@ function CustomTimePicker({
 	onExitLiveLogs,
 	showLiveLogs,
 	showRecentlyUsed = true,
+	minTime,
+	maxTime,
 }: CustomTimePickerProps): JSX.Element {
 	const [
 		selectedTimePlaceholderValue,
 		setSelectedTimePlaceholderValue,
 	] = useState('Select / Enter Time Range');
-
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 
 	const [inputValue, setInputValue] = useState('');
 	const [inputStatus, setInputStatus] = useState<CustomTimePickerInputStatus>(
@@ -337,6 +334,8 @@ function CustomTimePicker({
 					time: [minTime, currentTime],
 					timeStr: inputValue,
 				});
+
+				setOpen(false);
 			}
 
 			return;

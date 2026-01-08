@@ -301,10 +301,10 @@
 				align-items: center;
 				justify-content: center;
 				gap: 8px;
-				padding: 12px 24px;
+				padding: 6px 24px;
 				width: 100%;
 				color: var(--bg-vanilla-400);
-				font-size: 13px;
+				font-size: 12px;
 				font-style: normal;
 				font-weight: 500;
 				line-height: normal;
@@ -325,7 +325,8 @@
 					border-radius: 4px;
 					border: none !important;
 					background: none !important;
-					padding: 8px 0 !important;
+					padding: 0px !important;
+					padding-top: 8px !important;
 				}
 
 				.periscope-calendar-day {
