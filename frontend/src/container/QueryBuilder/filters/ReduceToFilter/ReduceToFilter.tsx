@@ -23,15 +23,19 @@ export const ReduceToFilter = memo(function ReduceToFilter({
 		onChange(newValue.value);
 	};
 
-	useEffect(() => {
-		const reduceToValue =
-			(query.aggregations?.[0] as MetricAggregation)?.reduceTo || query.reduceTo;
+	useEffect(
+		() => {
+			const reduceToValue =
+				(query.aggregations?.[0] as MetricAggregation)?.reduceTo || query.reduceTo;
 
-		setCurrentValue(
-			REDUCE_TO_VALUES.find((option) => option.value === reduceToValue) ||
-				REDUCE_TO_VALUES[2],
-		);
-	}, [query.aggregations, query.reduceTo]);
+			setCurrentValue(
+				REDUCE_TO_VALUES.find((option) => option.value === reduceToValue) ||
+					REDUCE_TO_VALUES[2],
+			);
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[(query.aggregations?.[0] as MetricAggregation)?.reduceTo, query.reduceTo],
+	);
 
 	return (
 		<Select
