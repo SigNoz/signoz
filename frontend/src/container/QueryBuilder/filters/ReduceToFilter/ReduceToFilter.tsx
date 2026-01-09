@@ -14,7 +14,7 @@ export const ReduceToFilter = memo(function ReduceToFilter({
 }: ReduceToFilterProps): JSX.Element {
 	const [currentValue, setCurrentValue] = useState<
 		SelectOption<ReduceOperators, string>
-	>();
+	>(REDUCE_TO_VALUES[2]);
 
 	const handleChange = (
 		newValue: SelectOption<ReduceOperators, string>,
@@ -27,12 +27,11 @@ export const ReduceToFilter = memo(function ReduceToFilter({
 		const reduceToValue =
 			(query.aggregations?.[0] as MetricAggregation)?.reduceTo || query.reduceTo;
 
-		const findReduceToValue =
+		setCurrentValue(
 			REDUCE_TO_VALUES.find((option) => option.value === reduceToValue) ||
-			REDUCE_TO_VALUES.find((option) => option.value === ReduceOperators.AVG);
-
-		setCurrentValue(findReduceToValue);
-	}, [query.aggregations, query.reduceTo]);
+				REDUCE_TO_VALUES[2],
+		);
+	}, [query]);
 
 	return (
 		<Select

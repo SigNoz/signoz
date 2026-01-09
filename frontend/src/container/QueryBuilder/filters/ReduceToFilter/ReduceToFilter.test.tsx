@@ -38,7 +38,15 @@ describe('ReduceToFilter', () => {
 		render(
 			<ReduceToFilter
 				query={baseQuery({
-					aggregations: [{ reduceTo: ReduceOperators.SUM } as any],
+					aggregations: [
+						{
+							reduceTo: ReduceOperators.SUM,
+							metricName: 'test',
+							temporality: '',
+							timeAggregation: 'sum',
+							spaceAggregation: 'sum',
+						},
+					],
 					aggregateAttribute: { key: 'test', type: MetricType.SUM },
 				})}
 				onChange={mockOnChange}
