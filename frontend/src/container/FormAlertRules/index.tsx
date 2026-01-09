@@ -232,16 +232,18 @@ function FormAlertRules({
 	};
 
 	useEffect(() => {
-		const ruleType =
-			detectionMethod === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
-				? AlertDetectionTypes.ANOMALY_DETECTION_ALERT
-				: AlertDetectionTypes.THRESHOLD_ALERT;
+		if (detectionMethod) {
+			const ruleType =
+				detectionMethod === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+					? AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+					: AlertDetectionTypes.THRESHOLD_ALERT;
 
-		queryParams.set(QueryParams.ruleType, ruleType);
+			queryParams.set(QueryParams.ruleType, ruleType);
 
-		const generatedUrl = `${location.pathname}?${queryParams.toString()}`;
+			const generatedUrl = `${location.pathname}?${queryParams.toString()}`;
 
-		safeNavigate(generatedUrl);
+			safeNavigate(generatedUrl);
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [detectionMethod]);
 

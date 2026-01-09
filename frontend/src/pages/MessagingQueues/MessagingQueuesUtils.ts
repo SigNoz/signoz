@@ -15,7 +15,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 export const KAFKA_SETUP_DOC_LINK =
@@ -148,7 +148,7 @@ export function getWidgetQuery({
 						limit: null,
 						orderBy: [],
 						queryName: 'A',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'avg',
 						stepInterval: 60,
 						timeAggregation: 'max',

@@ -3,6 +3,7 @@ import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { useLocation } from 'react-router-dom';
 import { render } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { ReduceOperators } from 'types/common/queryBuilder';
 
 import { ColumnUnitSelector } from '../ColumnUnitSelector';
 
@@ -42,7 +43,7 @@ const compositeQueryParam = {
 					},
 				],
 				legend: '',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			},
 		],
 		queryFormulas: [

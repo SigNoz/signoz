@@ -18,11 +18,37 @@ type FlaggerProvider interface {
 
 // This is the consumer facing interface for the Flagger service.
 type Flagger interface {
-	Boolean(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (bool, error)
-	String(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (string, error)
-	Float(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (float64, error)
-	Int(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (int64, error)
-	Object(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (any, error)
+	// Returns value for the flag of kind boolean otherwise returns error
+	Boolean(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (bool, error)
+
+	// Returns value for the flag of kind string otherwise returns error
+	String(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (string, error)
+
+	// Returns value for the flag of kind float otherwise returns error
+	Float(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (float64, error)
+
+	// Returns value for the flag of kind int otherwise returns error
+	Int(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (int64, error)
+
+	// Returns value for the flag of kind object otherwise returns error
+	Object(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (any, error)
+
+	// Returns value for the flag of kind boolean otherwise returns empty (default) value
+	BooleanOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) bool
+
+	// Returns value for the flag of kind string otherwise returns empty (default) value
+	StringOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) string
+
+	// Returns value for the flag of kind float otherwise returns empty (default) value
+	FloatOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) float64
+
+	// Returns value for the flag of kind int otherwise returns empty (default) value
+	IntOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) int64
+
+	// Returns value for the flag of kind object otherwise returns empty (default) value
+	ObjectOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) any
+
+	// Returns all the features in the registry
 	List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.GettableFeature, error)
 }
 
@@ -65,9 +91,9 @@ func New(ctx context.Context, ps factory.ProviderSettings, config Config, regist
 	}, nil
 }
 
-func (f *flagger) Boolean(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (bool, error) {
+func (f *flagger) Boolean(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (bool, error) {
 	// check if the feature is present in the default registry
-	feature, _, err := f.registry.GetByString(flag)
+	feature, _, err := f.registry.Get(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
 		return false, err
@@ -84,7 +110,7 @@ func (f *flagger) Boolean(ctx context.Context, flag string, evalCtx featuretypes
 	// * this logic can be optimised based on priority of the clients and short circuiting
 	// now ask all the available clients for the value
 	for _, client := range f.clients {
-		value, err := client.BooleanValue(ctx, flag, defaultValue, evalCtx.Ctx())
+		value, err := client.BooleanValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
 			f.settings.Logger().ErrorContext(ctx, "failed to get value from client", "error", err, "flag", flag, "client", client.Metadata().Name)
 			continue
@@ -98,9 +124,9 @@ func (f *flagger) Boolean(ctx context.Context, flag string, evalCtx featuretypes
 	return defaultValue, nil
 }
 
-func (f *flagger) String(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (string, error) {
+func (f *flagger) String(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (string, error) {
 	// check if the feature is present in the default registry
-	feature, _, err := f.registry.GetByString(flag)
+	feature, _, err := f.registry.Get(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
 		return "", err
@@ -117,7 +143,7 @@ func (f *flagger) String(ctx context.Context, flag string, evalCtx featuretypes.
 	// * this logic can be optimised based on priority of the clients and short circuiting
 	// now ask all the available clients for the value
 	for _, client := range f.clients {
-		value, err := client.StringValue(ctx, flag, defaultValue, evalCtx.Ctx())
+		value, err := client.StringValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
 			f.settings.Logger().WarnContext(ctx, "failed to get value from client", "error", err, "flag", flag, "client", client.Metadata().Name)
 			continue
@@ -131,9 +157,9 @@ func (f *flagger) String(ctx context.Context, flag string, evalCtx featuretypes.
 	return defaultValue, nil
 }
 
-func (f *flagger) Float(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (float64, error) {
+func (f *flagger) Float(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (float64, error) {
 	// check if the feature is present in the default registry
-	feature, _, err := f.registry.GetByString(flag)
+	feature, _, err := f.registry.Get(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
 		return 0, err
@@ -150,7 +176,7 @@ func (f *flagger) Float(ctx context.Context, flag string, evalCtx featuretypes.F
 	// * this logic can be optimised based on priority of the clients and short circuiting
 	// now ask all the available clients for the value
 	for _, client := range f.clients {
-		value, err := client.FloatValue(ctx, flag, defaultValue, evalCtx.Ctx())
+		value, err := client.FloatValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
 			f.settings.Logger().WarnContext(ctx, "failed to get value from client", "error", err, "flag", flag, "client", client.Metadata().Name)
 			continue
@@ -164,9 +190,9 @@ func (f *flagger) Float(ctx context.Context, flag string, evalCtx featuretypes.F
 	return defaultValue, nil
 }
 
-func (f *flagger) Int(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (int64, error) {
+func (f *flagger) Int(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (int64, error) {
 	// check if the feature is present in the default registry
-	feature, _, err := f.registry.GetByString(flag)
+	feature, _, err := f.registry.Get(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
 		return 0, err
@@ -183,7 +209,7 @@ func (f *flagger) Int(ctx context.Context, flag string, evalCtx featuretypes.Fla
 	// * this logic can be optimised based on priority of the clients and short circuiting
 	// now ask all the available clients for the value
 	for _, client := range f.clients {
-		value, err := client.IntValue(ctx, flag, defaultValue, evalCtx.Ctx())
+		value, err := client.IntValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
 			f.settings.Logger().WarnContext(ctx, "failed to get value from client", "error", err, "flag", flag, "client", client.Metadata().Name)
 			continue
@@ -197,9 +223,9 @@ func (f *flagger) Int(ctx context.Context, flag string, evalCtx featuretypes.Fla
 	return defaultValue, nil
 }
 
-func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.FlaggerEvaluationContext) (any, error) {
+func (f *flagger) Object(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) (any, error) {
 	// check if the feature is present in the default registry
-	feature, _, err := f.registry.GetByString(flag)
+	feature, _, err := f.registry.Get(flag)
 	if err != nil {
 		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", "error", err, "flag", flag)
 		return nil, err
@@ -216,7 +242,7 @@ func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.
 	// * this logic can be optimised based on priority of the clients and short circuiting
 	// now ask all the available clients for the value
 	for _, client := range f.clients {
-		value, err := client.ObjectValue(ctx, flag, defaultValue, evalCtx.Ctx())
+		value, err := client.ObjectValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
 			f.settings.Logger().WarnContext(ctx, "failed to get value from client", "error", err, "flag", flag, "client", client.Metadata().Name)
 			continue
@@ -230,6 +256,56 @@ func (f *flagger) Object(ctx context.Context, flag string, evalCtx featuretypes.
 	}
 
 	return defaultValue, nil
+}
+
+func (f *flagger) BooleanOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) bool {
+	defaultValue := false
+	value, err := f.Boolean(ctx, flag, evalCtx)
+	if err != nil {
+		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", "error", err, "flag", flag)
+		return defaultValue
+	}
+	return value
+}
+
+func (f *flagger) StringOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) string {
+	defaultValue := ""
+	value, err := f.String(ctx, flag, evalCtx)
+	if err != nil {
+		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", "error", err, "flag", flag)
+		return defaultValue
+	}
+	return value
+}
+
+func (f *flagger) FloatOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) float64 {
+	defaultValue := 0.0
+	value, err := f.Float(ctx, flag, evalCtx)
+	if err != nil {
+		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", "error", err, "flag", flag)
+		return defaultValue
+	}
+	return value
+}
+
+func (f *flagger) IntOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) int64 {
+	defaultValue := int64(0)
+	value, err := f.Int(ctx, flag, evalCtx)
+	if err != nil {
+		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", "error", err, "flag", flag)
+		return defaultValue
+	}
+	return value
+}
+
+func (f *flagger) ObjectOrEmpty(ctx context.Context, flag featuretypes.Name, evalCtx featuretypes.FlaggerEvaluationContext) any {
+	defaultValue := struct{}{}
+	value, err := f.Object(ctx, flag, evalCtx)
+	if err != nil {
+		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", "error", err, "flag", flag)
+		return defaultValue
+	}
+	return value
 }
 
 func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluationContext) ([]*featuretypes.GettableFeature, error) {

@@ -47,17 +47,10 @@ var (
 //
 // searchOperator: LIKE for pattern matching, EQUAL for exact match
 // Returns: (paths, error)
-// TODO(Piyush): Remove this lint skip
-//
-// nolint:unused
 func (t *telemetryMetaStore) getBodyJSONPaths(ctx context.Context,
 	fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 
-	query, args, limit, err := buildGetBodyJSONPathsQuery(fieldKeySelectors)
-	if err != nil {
-		return nil, false, err
-	}
-
+	query, args, limit := buildGetBodyJSONPathsQuery(fieldKeySelectors)
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to extract body JSON keys")
@@ -80,7 +73,8 @@ func (t *telemetryMetaStore) getBodyJSONPaths(ctx context.Context,
 		for _, typ := range typesArray {
 			mapping, found := telemetrytypes.MappingStringToJSONDataType[typ]
 			if !found {
-				return nil, false, errors.NewInternalf(CodeUnknownJSONDataType, "failed to map type string to JSON data type: %s", typ)
+				t.logger.ErrorContext(ctx, "failed to map type string to JSON data type", "type", typ, "path", path)
+				continue
 			}
 			fieldKeys = append(fieldKeys, &telemetrytypes.TelemetryFieldKey{
 				Name:          path,
@@ -116,9 +110,9 @@ func (t *telemetryMetaStore) getBodyJSONPaths(ctx context.Context,
 	return fieldKeys, rowCount <= limit, nil
 }
 
-func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySelector) (string, []any, int, error) {
+func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySelector) (string, []any, int) {
 	if len(fieldKeySelectors) == 0 {
-		return "", nil, defaultPathLimit, errors.NewInternalf(CodeFailBuildJSONPathsQuery, "no field key selectors provided")
+		return "", nil, defaultPathLimit
 	}
 	from := fmt.Sprintf("%s.%s", DBName, PathTypesTableName)
 
@@ -135,14 +129,14 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 	orClauses := []string{}
 	for _, fieldKeySelector := range fieldKeySelectors {
 		// replace [*] with []
-		fieldKeySelector.Name = strings.ReplaceAll(fieldKeySelector.Name, telemetrylogs.ArrayAnyIndex, telemetrylogs.ArraySep)
+		fieldKeySelector.Name = strings.ReplaceAll(fieldKeySelector.Name, telemetrytypes.ArrayAnyIndex, telemetrytypes.ArraySep)
 		// Extract search text for body JSON keys
 		keyName := CleanPathPrefixes(fieldKeySelector.Name)
 		if fieldKeySelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
 			orClauses = append(orClauses, sb.Equal("path", keyName))
 		} else {
 			// Pattern matching for metadata API (defaults to LIKE behavior for other operators)
-			orClauses = append(orClauses, sb.Like("path", querybuilder.FormatValueForContains(keyName)))
+			orClauses = append(orClauses, sb.ILike("path", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(keyName))))
 		}
 		limit += fieldKeySelector.Limit
 	}
@@ -159,22 +153,20 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 	sb.Limit(limit)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return query, args, limit, nil
+	return query, args, limit
 }
 
-// TODO(Piyush): Remove this lint skip
-//
-// nolint:unused
 func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...string) (map[string][]telemetrytypes.JSONDataTypeIndex, error) {
 	filteredPaths := []string{}
 	for _, path := range paths {
-		if strings.Contains(path, telemetrylogs.ArraySep) || strings.Contains(path, telemetrylogs.ArrayAnyIndex) {
+		// skip array paths; since they don't have any indexes
+		if strings.Contains(path, telemetrytypes.ArraySep) || strings.Contains(path, telemetrytypes.ArrayAnyIndex) {
 			continue
 		}
 		filteredPaths = append(filteredPaths, path)
 	}
 	if len(filteredPaths) == 0 {
-		return nil, errors.NewInternalf(CodeNoPathsToQueryIndexes, "no paths to query indexes provided")
+		return make(map[string][]telemetrytypes.JSONDataTypeIndex), nil
 	}
 
 	// list indexes for the paths
@@ -194,7 +186,8 @@ func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...st
 
 			jsonDataType, found := telemetrytypes.MappingStringToJSONDataType[columnType]
 			if !found {
-				return nil, errors.NewInternalf(CodeUnknownJSONDataType, "failed to map column type to JSON data type: %s", columnType)
+				t.logger.ErrorContext(ctx, "failed to map column type to JSON data type", "column_type", columnType, "column_expr", columnExpr)
+				continue
 			}
 
 			if jsonDataType == telemetrytypes.String {
@@ -296,7 +289,7 @@ func (t *telemetryMetaStore) ListPromotedPaths(ctx context.Context, paths ...str
 func (t *telemetryMetaStore) ListJSONValues(ctx context.Context, path string, limit int) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	path = CleanPathPrefixes(path)
 
-	if strings.Contains(path, telemetrylogs.ArraySep) || strings.Contains(path, telemetrylogs.ArrayAnyIndex) {
+	if strings.Contains(path, telemetrytypes.ArraySep) || strings.Contains(path, telemetrytypes.ArrayAnyIndex) {
 		return nil, false, errors.NewInvalidInputf(errors.CodeInvalidInput, "array paths are not supported")
 	}
 
@@ -456,7 +449,7 @@ func derefValue(v any) any {
 
 // IsPathPromoted checks if a specific path is promoted
 func (t *telemetryMetaStore) IsPathPromoted(ctx context.Context, path string) (bool, error) {
-	split := strings.Split(path, telemetrylogs.ArraySep)
+	split := strings.Split(path, telemetrytypes.ArraySep)
 	query := fmt.Sprintf("SELECT 1 FROM %s.%s WHERE path = ? LIMIT 1", DBName, PromotedPathsTableName)
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, split[0])
 	if err != nil {

@@ -4,8 +4,7 @@ from typing import Any, Dict, List, Optional
 
 def expected_minutely_bucket_timestamps_ms(now: datetime) -> List[List[int]]:
     previous_five = [
-        int((now - timedelta(minutes=m)).timestamp() * 1000)
-        for m in range(5, 0, -1)
+        int((now - timedelta(minutes=m)).timestamp() * 1000) for m in range(5, 0, -1)
     ]
     with_current = previous_five + [int(now.timestamp() * 1000)]
     return [previous_five, with_current]
