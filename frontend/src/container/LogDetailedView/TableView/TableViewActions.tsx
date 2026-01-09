@@ -22,7 +22,6 @@ import { useTimezone } from 'providers/Timezone';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
-	AutocompleteType,
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -159,12 +158,16 @@ export default function TableViewActions(
 
 	const handleGroupByAttribute = useCallback((): void => {
 		if (!stagedQuery) return;
+		const normalizedDataType: DataTypes | undefined =
+			dataType && Object.values(DataTypes).includes(dataType as DataTypes)
+				? (dataType as DataTypes)
+				: undefined;
 
 		const updatedQuery = updateQueriesData(stagedQuery, 'queryData', (item) => {
 			const newGroupByItem: BaseAutocompleteData = {
 				key: fieldFilterKey,
-				type: (fieldType || '') as AutocompleteType | string | null,
-				dataType: dataType as DataTypes | undefined,
+				type: fieldType || '',
+				dataType: normalizedDataType,
 			};
 
 			const updatedGroupBy = [...(item.groupBy || []), newGroupByItem];
