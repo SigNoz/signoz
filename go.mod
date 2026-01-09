@@ -54,7 +54,7 @@ require (
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.10.1
-	github.com/srikanthccv/ClickHouse-go-mock v0.12.0
+	github.com/srikanthccv/ClickHouse-go-mock v0.13.0
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggest/jsonschema-go v0.3.78
 	github.com/swaggest/rest v0.2.75
