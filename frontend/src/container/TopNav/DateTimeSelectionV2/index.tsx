@@ -29,6 +29,7 @@ import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { addCustomTimeRange } from 'utils/customTimeRangeUtils';
 import { normalizeTimeToMs } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -404,6 +405,8 @@ function DateTimeSelection({
 					startTime.toDate().getTime(),
 					endTime.toDate().getTime(),
 				]);
+
+				addCustomTimeRange([startTime, endTime]);
 
 				setLocalStorageKey('startTime', startTime.toString());
 				setLocalStorageKey('endTime', endTime.toString());

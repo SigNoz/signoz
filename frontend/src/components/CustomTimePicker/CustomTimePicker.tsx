@@ -326,9 +326,9 @@ function CustomTimePicker({
 				setInputStatus(CustomTimePickerInputStatus.ERROR);
 				onError(true);
 				setInputErrorDetails({
-					message: 'Please enter time less than 6 months',
-					code: 'TIME_LESS_THAN_6_MONTHS',
-					description: 'Please enter time less than 6 months',
+					message: `Please enter time less than ${maxAllowedMinTimeInMonths} months`,
+					code: 'TIME_LESS_THAN_MAX_ALLOWED_TIME_IN_MONTHS',
+					description: `Please enter time less than ${maxAllowedMinTimeInMonths} months`,
 				});
 				if (isFunction(onCustomTimeStatusUpdate)) {
 					onCustomTimeStatusUpdate(true);
@@ -526,6 +526,7 @@ function CustomTimePicker({
 					content={
 						newPopover ? (
 							<CustomTimePickerPopoverContent
+								isLiveLogsEnabled={!!showLiveLogs}
 								setIsOpen={setOpen}
 								setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
 								customDateTimeVisible={defaultTo(customDateTimeVisible, false)}

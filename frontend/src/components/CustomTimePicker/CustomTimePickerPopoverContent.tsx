@@ -45,6 +45,7 @@ type DateRange = {
 };
 
 interface CustomTimePickerPopoverContentProps {
+	isLiveLogsEnabled: boolean;
 	minTime: number;
 	maxTime: number;
 	options: any[];
@@ -95,6 +96,7 @@ const getDateRange = (
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function CustomTimePickerPopoverContent({
+	isLiveLogsEnabled,
 	minTime,
 	maxTime,
 	options,
@@ -246,7 +248,11 @@ function CustomTimePickerPopoverContent({
 			<div className="date-time-popover">
 				<div className="date-time-options">
 					{isLogsExplorerPage && isLogsListView && (
-						<Button className="data-time-live" type="text" onClick={handleGoLive}>
+						<Button
+							className={cx('data-time-live', isLiveLogsEnabled ? 'active' : '')}
+							type="text"
+							onClick={handleGoLive}
+						>
 							Live
 						</Button>
 					)}
@@ -263,8 +269,8 @@ function CustomTimePickerPopoverContent({
 							className={cx(
 								'date-time-options-btn',
 								customDateTimeVisible
-									? option.value === 'custom' && 'active'
-									: selectedTime === option.value && 'active',
+									? option.value === 'custom' && !isLiveLogsEnabled && 'active'
+									: selectedTime === option.value && !isLiveLogsEnabled && 'active',
 							)}
 						>
 							<span className="time-label">{option.label}</span>
@@ -354,7 +360,7 @@ function CustomTimePickerPopoverContent({
 								<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
 							</div>
 
-							{showRecentlyUsed && (
+							{showRecentlyUsed && recentlyUsedTimeRanges.length > 0 && (
 								<div className="recently-used-container">
 									<div className="time-heading">RECENTLY USED</div>
 									<div className="recently-used-range">
