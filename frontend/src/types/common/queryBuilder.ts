@@ -208,6 +208,7 @@ export enum QueryFunctionsTypes {
 	MEDIAN_5 = 'median5',
 	MEDIAN_7 = 'median7',
 	TIME_SHIFT = 'timeShift',
+	FILL_ZERO = 'fillZero',
 }
 
 export type PanelTypeKeys =

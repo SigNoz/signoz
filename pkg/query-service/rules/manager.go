@@ -764,8 +764,10 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 			a := &alertmanagertypes.PostableAlert{}
 			a.Annotations = alert.Annotations.Map()
 			a.StartsAt = strfmt.DateTime(alert.FiredAt)
+			labelsMap := alert.Labels.Map()
+			labelsMap[labels.TestAlertLabel] = "true"
 			a.Alert = alertmanagertypes.AlertModel{
-				Labels:       alert.Labels.Map(),
+				Labels:       labelsMap,
 				GeneratorURL: strfmt.URI(generatorURL),
 			}
 			if !alert.ResolvedAt.IsZero() {
