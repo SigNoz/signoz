@@ -7,17 +7,19 @@ import (
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // MockMetadataStore implements the MetadataStore interface for testing purposes
 type MockMetadataStore struct {
 	// Maps to store test data
-	KeysMap            map[string][]*telemetrytypes.TelemetryFieldKey
-	RelatedValuesMap   map[string][]string
-	AllValuesMap       map[string]*telemetrytypes.TelemetryFieldValues
-	TemporalityMap     map[string]metrictypes.Temporality
-	PromotedPathsMap   map[string]struct{}
-	LogsJSONIndexesMap map[string][]schemamigrator.Index
+	KeysMap                    map[string][]*telemetrytypes.TelemetryFieldKey
+	RelatedValuesMap           map[string][]string
+	AllValuesMap               map[string]*telemetrytypes.TelemetryFieldValues
+	TemporalityMap             map[string]metrictypes.Temporality
+	PromotedPathsMap           map[string]struct{}
+	LogsJSONIndexesMap         map[string][]schemamigrator.Index
+	ColumnEvolutionMetadataMap map[string]map[string][]*telemetrytypes.EvolutionEntry
 }
 
 // NewMockMetadataStore creates a new instance of MockMetadataStore with initialized maps
@@ -119,7 +121,7 @@ func (m *MockMetadataStore) GetKey(ctx context.Context, fieldKeySelector *teleme
 }
 
 // GetRelatedValues returns a list of related values for the given key name and selection
-func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
+func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
 	if fieldValueSelector == nil {
 		return nil, true, nil
 	}
@@ -306,4 +308,24 @@ func (m *MockMetadataStore) ListPromotedPaths(ctx context.Context, paths ...stri
 // ListLogsJSONIndexes lists the JSON indexes for the logs table.
 func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...string) (map[string][]schemamigrator.Index, error) {
 	return m.LogsJSONIndexesMap, nil
+}
+
+// Get retrieves all metadata keys for the given key name and orgId.
+// Returns an empty slice if the key is not found.
+func (m *MockMetadataStore) GetColumnEvolutionMetadata(ctx context.Context, orgId valuer.UUID, selector telemetrytypes.EvolutionSelector) []*telemetrytypes.EvolutionEntry {
+	if m.ColumnEvolutionMetadataMap == nil {
+		return nil
+	}
+	orgMetadata, orgExists := m.ColumnEvolutionMetadataMap[orgId.String()]
+	if !orgExists {
+		return nil
+	}
+	keys, exists := orgMetadata[selector.Signal.StringValue()+":"+selector.FieldContext.StringValue()+":"+selector.FieldName]
+	if !exists {
+		return nil
+	}
+	// Return a copy to prevent external modification
+	result := make([]*telemetrytypes.EvolutionEntry, len(keys))
+	copy(result, keys)
+	return result
 }

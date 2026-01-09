@@ -10,6 +10,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -421,6 +422,7 @@ func TestTraceOperatorStatementBuilder(t *testing.T) {
 
 			q, err := statementBuilder.Build(
 				context.Background(),
+				valuer.GenerateUUID(),
 				1747947419000,
 				1747983448000,
 				c.requestType,
@@ -536,6 +538,7 @@ func TestTraceOperatorStatementBuilderErrors(t *testing.T) {
 			if err == nil { // Only proceed if parsing succeeded
 				_, err = statementBuilder.Build(
 					context.Background(),
+					valuer.GenerateUUID(),
 					1747947419000,
 					1747983448000,
 					qbtypes.RequestTypeRaw,

@@ -5,6 +5,7 @@ import (
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // MetadataStore is the interface for the telemetry metadata store.
@@ -21,7 +22,7 @@ type MetadataStore interface {
 
 	// GetRelatedValues returns a list of related values for the given key name
 	// and the existing selection of keys.
-	GetRelatedValues(ctx context.Context, fieldValueSelector *FieldValueSelector) ([]string, bool, error)
+	GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) ([]string, bool, error)
 
 	// GetAllValues returns a list of all values.
 	GetAllValues(ctx context.Context, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
@@ -40,4 +41,7 @@ type MetadataStore interface {
 
 	// PromotePaths promotes the paths.
 	PromotePaths(ctx context.Context, paths ...string) error
+
+	// GetKey returns a list of keys with the given name.
+	GetColumnEvolutionMetadata(ctx context.Context, orgID valuer.UUID, selector EvolutionSelector) []*EvolutionEntry
 }

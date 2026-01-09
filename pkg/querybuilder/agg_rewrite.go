@@ -48,6 +48,9 @@ func NewAggExprRewriter(
 // and the args if the parametric aggregation function is used.
 func (r *aggExprRewriter) Rewrite(
 	ctx context.Context,
+	orgID valuer.UUID,
+	startNs uint64,
+	endNs uint64,
 	expr string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -74,7 +77,13 @@ func (r *aggExprRewriter) Rewrite(
 		return "", nil, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
 	}
 
-	visitor := newExprVisitor(r.logger, keys,
+	visitor := newExprVisitor(
+		ctx,
+		orgID,
+		startNs,
+		endNs,
+		r.logger,
+		keys,
 		r.fullTextColumn,
 		r.fieldMapper,
 		r.conditionBuilder,
@@ -94,6 +103,9 @@ func (r *aggExprRewriter) Rewrite(
 // RewriteMulti rewrites a slice of expressions.
 func (r *aggExprRewriter) RewriteMulti(
 	ctx context.Context,
+	orgID valuer.UUID,
+	startNs uint64,
+	endNs uint64,
 	exprs []string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -102,7 +114,7 @@ func (r *aggExprRewriter) RewriteMulti(
 	var errs []error
 	var chArgsList [][]any
 	for i, e := range exprs {
-		w, chArgs, err := r.Rewrite(ctx, e, rateInterval, keys)
+		w, chArgs, err := r.Rewrite(ctx, orgID, startNs, endNs, e, rateInterval, keys)
 		if err != nil {
 			errs = append(errs, err)
 			out[i] = e
@@ -119,6 +131,10 @@ func (r *aggExprRewriter) RewriteMulti(
 
 // exprVisitor walks FunctionExpr nodes and applies the mappers.
 type exprVisitor struct {
+	ctx     context.Context
+	orgID   valuer.UUID
+	startNs uint64
+	endNs   uint64
 	chparser.DefaultASTVisitor
 	logger           *slog.Logger
 	fieldKeys        map[string][]*telemetrytypes.TelemetryFieldKey
@@ -132,6 +148,10 @@ type exprVisitor struct {
 }
 
 func newExprVisitor(
+	ctx context.Context,
+	orgID valuer.UUID,
+	startNs uint64,
+	endNs uint64,
 	logger *slog.Logger,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
@@ -140,6 +160,10 @@ func newExprVisitor(
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *exprVisitor {
 	return &exprVisitor{
+		ctx:              ctx,
+		orgID:            orgID,
+		startNs:          startNs,
+		endNs:            endNs,
 		logger:           logger,
 		fieldKeys:        fieldKeys,
 		fullTextColumn:   fullTextColumn,
@@ -186,13 +210,14 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		whereClause, err := PrepareWhereClause(
 			origPred,
 			FilterExprVisitorOpts{
+				Context:          v.ctx,
 				Logger:           v.logger,
 				FieldKeys:        v.fieldKeys,
 				FieldMapper:      v.fieldMapper,
 				ConditionBuilder: v.conditionBuilder,
 				FullTextColumn:   v.fullTextColumn,
 				JsonKeyToKey:     v.jsonKeyToKey,
-			}, 0, 0,
+			}, v.startNs, v.endNs,
 		)
 		if err != nil {
 			return err
@@ -212,7 +237,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i := 0; i < len(args)-1; i++ {
 			origVal := args[i].String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
-			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey)
+			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
@@ -230,7 +255,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i, arg := range args {
 			orig := arg.String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
-			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey)
+			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey)
 			if err != nil {
 				return err
 			}

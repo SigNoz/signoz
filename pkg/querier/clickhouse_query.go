@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type chSQLQuery struct {
@@ -97,7 +98,7 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 	return newQuery.String(), nil
 }
 
-func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
+func (q *chSQLQuery) Execute(ctx context.Context, _ valuer.UUID) (*qbtypes.Result, error) {
 
 	totalRows := uint64(0)
 	totalBytes := uint64(0)

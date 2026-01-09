@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -206,7 +207,7 @@ func TestConditionBuilder(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(context.Background(), tc.key, tc.op, tc.value, sb, 0, 0)
+			cond, err := conditionBuilder.ConditionFor(context.Background(), valuer.GenerateUUID(), 0, 0, tc.key, tc.op, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedErr != nil {

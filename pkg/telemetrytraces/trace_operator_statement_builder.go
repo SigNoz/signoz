@@ -2,12 +2,14 @@ package telemetrytraces
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"log/slog"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type traceOperatorStatementBuilder struct {
@@ -46,6 +48,7 @@ func NewTraceOperatorStatementBuilder(
 // Build builds a SQL query based on the given parameters.
 func (b *traceOperatorStatementBuilder) Build(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start uint64,
 	end uint64,
 	requestType qbtypes.RequestType,
@@ -91,5 +94,5 @@ func (b *traceOperatorStatementBuilder) Build(
 	}
 
 	// Build the query
-	return builder.build(ctx, requestType)
+	return builder.build(ctx, orgID, requestType)
 }

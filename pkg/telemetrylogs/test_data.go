@@ -2,8 +2,10 @@ package telemetrylogs
 
 import (
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // Helper function to limit string length for display
@@ -950,4 +952,35 @@ func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryF
 		}
 	}
 	return keysMap
+}
+
+// mockKeyEvolutionMetadata builds a mock org-scoped key evolution metadata map for a column evolution.
+func mockKeyEvolutionMetadata(orgId valuer.UUID, signal, fieldContext string, releaseTime time.Time) map[string]map[string][]*telemetrytypes.EvolutionEntry {
+	metadata := make(map[string]map[string][]*telemetrytypes.EvolutionEntry)
+
+	// Make sure to initialize the inner map before assignment to prevent 'assignment to entry in nil map'
+	orgIdStr := orgId.String()
+	if _, exists := metadata[orgIdStr]; !exists {
+		metadata[orgIdStr] = make(map[string][]*telemetrytypes.EvolutionEntry)
+	}
+	newKeyEvolutionMetadataEntry := []*telemetrytypes.EvolutionEntry{
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "resources_string",
+			FieldContext: telemetrytypes.FieldContextResource,
+			ColumnType:   "Map(LowCardinality(String), String)",
+			FieldName:    "resource",
+			ReleaseTime:  time.Unix(0, 0),
+		},
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "resource",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "__all__",
+			ReleaseTime:  releaseTime,
+		},
+	}
+	metadata[orgIdStr][signal+":"+fieldContext+":"] = newKeyEvolutionMetadataEntry
+	return metadata
 }

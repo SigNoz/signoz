@@ -3,9 +3,12 @@ package telemetrylogs
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,7 +16,9 @@ import (
 
 func TestConditionFor(t *testing.T) {
 	ctx := context.Background()
-
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: valuer.GenerateUUID().String(),
+	})
 	testCases := []struct {
 		name          string
 		key           telemetrytypes.TelemetryFieldKey
@@ -242,7 +247,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
+			expectedSQL:   "mapContains(resources_string, 'service.name') = ?",
+			expectedArgs:  []any{true},
 			expectedError: nil,
 		},
 		{
@@ -254,7 +260,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NULL",
+			expectedSQL:   "mapContains(resources_string, 'service.name') <> ?",
+			expectedArgs:  []any{true},
 			expectedError: nil,
 		},
 		{
@@ -317,8 +324,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorRegexp,
 			value:         "frontend-.*",
-			expectedSQL:   "(match(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL), ?) AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL) IS NOT NULL)",
-			expectedArgs:  []any{"frontend-.*"},
+			expectedSQL:   "WHERE (match(`resource_string_service$$name`, ?) AND `resource_string_service$$name_exists` = ?)",
+			expectedArgs:  []any{"frontend-.*", true},
 			expectedError: nil,
 		},
 		{
@@ -331,7 +338,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotRegexp,
 			value:         "test-.*",
-			expectedSQL:   "WHERE NOT match(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL), ?)",
+			expectedSQL:   "WHERE NOT match(`resource_string_service$$name`, ?)",
 			expectedArgs:  []any{"test-.*"},
 			expectedError: nil,
 		},
@@ -371,15 +378,20 @@ func TestConditionFor(t *testing.T) {
 			expectedError: qbtypes.ErrColumnNotFound,
 		},
 	}
-
-	fm := NewFieldMapper()
+	OrgID := valuer.GenerateUUID()
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: OrgID.String(),
+	})
 	mockMetadataStore := buildTestTelemetryMetadataStore()
+	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(OrgID, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
+	fm := NewFieldMapper(mockMetadataStore)
+
 	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
+			cond, err := conditionBuilder.ConditionFor(ctx, OrgID, 0, 0, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {
@@ -426,7 +438,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	fm := NewFieldMapper(nil)
 	mockMetadataStore := buildTestTelemetryMetadataStore()
 	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
@@ -435,7 +447,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-				cond, err := conditionBuilder.ConditionFor(ctx, &key, tc.operator, tc.value, sb, 0, 0)
+				cond, err := conditionBuilder.conditionFor(ctx, valuer.GenerateUUID(), 0, 0, &key, tc.operator, tc.value, sb)
 				sb.Where(cond)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)
@@ -686,14 +698,14 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	fm := NewFieldMapper(nil)
 	mockMetadataStore := buildTestTelemetryMetadataStore()
 	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
+			cond, err := conditionBuilder.conditionFor(ctx, valuer.GenerateUUID(), 0, 0, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {
