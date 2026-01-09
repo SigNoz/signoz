@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+import { ReduceOperators } from 'types/common/queryBuilder';
 
 import { usePrefillAlertConditions } from '../usePrefillAlertConditions';
 
@@ -55,7 +56,7 @@ const mockStagedQuery = {
 	builder: {
 		queryData: [
 			{
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			},
 		],
 	},
@@ -84,10 +85,10 @@ describe('usePrefillAlertConditions', () => {
 				builder: {
 					queryData: [
 						{
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 						},
 						{
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 						},
 					],
 				},
@@ -102,10 +103,10 @@ describe('usePrefillAlertConditions', () => {
 				builder: {
 					queryData: [
 						{
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 						},
 						{
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 						},
 					],
 				},

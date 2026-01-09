@@ -10,7 +10,7 @@ import {
 
 import QueryAddOns from '../QueryV2/QueryAddOns/QueryAddOns';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 // Mocks: only what is required for this component to render and for us to assert handler calls
 const mockHandleChangeQueryData = jest.fn();
@@ -200,7 +200,7 @@ describe('QueryAddOns', () => {
 	it('auto-opens reduce-to content when reduceTo is set', () => {
 		render(
 			<QueryAddOns
-				query={baseQuery({ reduceTo: 'sum' })}
+				query={baseQuery({ reduceTo: ReduceOperators.SUM })}
 				version="v5"
 				isListViewPanel={false}
 				showReduceTo
@@ -216,8 +216,10 @@ describe('QueryAddOns', () => {
 	it('calls handleSetQueryData when reduce-to value changes', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const query = baseQuery({
-			reduceTo: 'avg',
-			aggregations: [{ id: 'a', operator: 'count', reduceTo: 'avg' }],
+			reduceTo: ReduceOperators.AVG,
+			aggregations: [
+				{ id: 'a', operator: 'count', reduceTo: ReduceOperators.AVG },
+			],
 		});
 		render(
 			<QueryAddOns
@@ -258,7 +260,7 @@ describe('QueryAddOns', () => {
 				aggregations: [
 					{
 						...(query.aggregations?.[0] as any),
-						reduceTo: 'sum',
+						reduceTo: ReduceOperators.SUM,
 					},
 				],
 			});

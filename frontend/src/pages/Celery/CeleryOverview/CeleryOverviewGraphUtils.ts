@@ -9,7 +9,7 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuidv4 } from 'uuid';
 
 export const celeryOverviewRequestRateWidgetData = (
@@ -42,7 +42,7 @@ export const celeryOverviewRequestRateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'rate',
@@ -95,7 +95,7 @@ export const celeryOverviewErrorRateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'rate',
@@ -135,7 +135,7 @@ export const celeryOverviewAvgLatencyWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'p95',
@@ -178,7 +178,7 @@ export const celeryOverviewRequestRateGraphData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'rate',
@@ -238,7 +238,7 @@ export const celeryOverviewErrorRateGraphData = (
 					orderBy: [],
 					groupBy: groupByFilter ? [groupByFilter] : [],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 				{
 					dataSource: DataSource.TRACES,
@@ -278,7 +278,7 @@ export const celeryOverviewErrorRateGraphData = (
 					orderBy: [],
 					groupBy: groupByFilter ? [groupByFilter] : [],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 				{
 					dataSource: DataSource.TRACES,
@@ -305,7 +305,7 @@ export const celeryOverviewErrorRateGraphData = (
 					orderBy: [],
 					groupBy: groupByFilter ? [groupByFilter] : [],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 				{
 					queryName: 'F1',
@@ -358,7 +358,7 @@ export const celeryOverviewAvgLatencyGraphData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'C',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'p90',
@@ -385,7 +385,7 @@ export const celeryOverviewAvgLatencyGraphData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'D',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'p95',
@@ -412,7 +412,7 @@ export const celeryOverviewAvgLatencyGraphData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'E',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'p99',
