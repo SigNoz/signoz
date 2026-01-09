@@ -247,7 +247,8 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 			}
 		}
 		results, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
-			ActiveAlerts: r.ActiveAlertsLabelFP(),
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+			SendUnmatched: r.ShouldSendUnmatched(),
 		})
 		if err != nil {
 			return nil, err
@@ -311,7 +312,8 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 			}
 		}
 		results, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
-			ActiveAlerts: r.ActiveAlertsLabelFP(),
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+			SendUnmatched: r.ShouldSendUnmatched(),
 		})
 		if err != nil {
 			return nil, err

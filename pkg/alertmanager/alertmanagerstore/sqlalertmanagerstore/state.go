@@ -40,7 +40,7 @@ func (store *state) Get(ctx context.Context, orgID string) (*alertmanagertypes.S
 }
 
 // Set implements alertmanagertypes.StateStore.
-func (store *state) Set(ctx context.Context, orgID string, storeableState *alertmanagertypes.StoreableState) error {
+func (store *state) Set(ctx context.Context, storeableState *alertmanagertypes.StoreableState) error {
 	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -55,7 +55,6 @@ func (store *state) Set(ctx context.Context, orgID string, storeableState *alert
 		Set("silences = EXCLUDED.silences").
 		Set("nflog = EXCLUDED.nflog").
 		Set("updated_at = EXCLUDED.updated_at").
-		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
 		return err

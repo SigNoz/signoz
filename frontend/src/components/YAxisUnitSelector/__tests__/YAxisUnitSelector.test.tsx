@@ -106,7 +106,7 @@ describe('YAxisUnitSelector', () => {
 		fireEvent.mouseOver(warningIcon);
 		return screen
 			.findByText(
-				'Unit mismatch. Saved unit is Seconds (s), but Bytes (B) is selected.',
+				'Unit mismatch. The metric was sent with unit Seconds (s), but Bytes (B) is selected.',
 			)
 			.then((el) => expect(el).toBeInTheDocument());
 	});
