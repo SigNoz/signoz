@@ -23,7 +23,7 @@ describe('YAxisUnitSelectorV2', () => {
 				value={UniversalYAxisUnit.BYTES}
 				onSelect={onSelect}
 				fieldLabel="Bytes label"
-				showWarning={false}
+				shouldUpdateYAxisUnit={false}
 			/>,
 		);
 
@@ -42,7 +42,7 @@ describe('YAxisUnitSelectorV2', () => {
 				value={UniversalYAxisUnit.BYTES}
 				onSelect={onSelect}
 				fieldLabel="Bytes label"
-				showWarning
+				shouldUpdateYAxisUnit
 			/>,
 		);
 		expect(onSelect).toHaveBeenCalledWith(UniversalYAxisUnit.SECONDS);
@@ -54,7 +54,7 @@ describe('YAxisUnitSelectorV2', () => {
 				value={UniversalYAxisUnit.BYTES}
 				onSelect={onSelect}
 				fieldLabel="Bytes label"
-				showWarning={false}
+				shouldUpdateYAxisUnit={false}
 			/>,
 		);
 		expect(onSelect).not.toHaveBeenCalled();
@@ -71,7 +71,7 @@ describe('YAxisUnitSelectorV2', () => {
 				value={UniversalYAxisUnit.BYTES}
 				onSelect={onSelect}
 				fieldLabel="Bytes label"
-				showWarning
+				shouldUpdateYAxisUnit
 			/>,
 		);
 		expect(onSelect).toHaveBeenCalledWith('');
