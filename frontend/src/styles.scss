@@ -166,7 +166,7 @@ body {
 						height: 11px;
 						flex-shrink: 0;
 						cursor: pointer;
-						transition: all 0.2s ease;
+						transition: transform 0.2s ease;
 						position: relative;
 
 						&:hover {
@@ -280,7 +280,7 @@ body {
 					height: 11px;
 					flex-shrink: 0;
 					cursor: pointer;
-					transition: all 0.2s ease;
+					transition: transform 0.2s ease;
 					position: relative;
 
 					&:hover {
