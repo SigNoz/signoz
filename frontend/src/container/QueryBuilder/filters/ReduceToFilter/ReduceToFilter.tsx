@@ -31,7 +31,7 @@ export const ReduceToFilter = memo(function ReduceToFilter({
 			REDUCE_TO_VALUES.find((option) => option.value === reduceToValue) ||
 				REDUCE_TO_VALUES[2],
 		);
-	}, [query]);
+	}, [query.aggregations, query.reduceTo]);
 
 	return (
 		<Select
