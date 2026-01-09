@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -57,11 +58,11 @@ func (b *traceOperatorCTEBuilder) collectQueries() error {
 	return nil
 }
 
-func (b *traceOperatorCTEBuilder) build(ctx context.Context, requestType qbtypes.RequestType) (*qbtypes.Statement, error) {
+func (b *traceOperatorCTEBuilder) build(ctx context.Context, orgID valuer.UUID, requestType qbtypes.RequestType) (*qbtypes.Statement, error) {
 
 	b.buildAllSpansCTE(ctx)
 
-	rootCTEName, err := b.buildExpressionCTEs(ctx, b.operator.ParsedExpression)
+	rootCTEName, err := b.buildExpressionCTEs(ctx, orgID, b.operator.ParsedExpression)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +77,7 @@ func (b *traceOperatorCTEBuilder) build(ctx context.Context, requestType qbtypes
 		}
 	}
 
-	finalStmt, err := b.buildFinalQuery(ctx, selectFromCTE, requestType)
+	finalStmt, err := b.buildFinalQuery(ctx, orgID, selectFromCTE, requestType)
 	if err != nil {
 		return nil, err
 	}
@@ -134,9 +135,10 @@ func (b *traceOperatorCTEBuilder) buildTimeConstantsCTE() string {
 	return fmt.Sprintf(`toDateTime64(%d, 9) AS t_from, toDateTime64(%d, 9) AS t_to, %d AS bucket_from, %d AS bucket_to`, b.start, b.end, startBucket, endBucket)
 }
 
-func (b *traceOperatorCTEBuilder) buildResourceFilterCTE(ctx context.Context, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (*qbtypes.Statement, error) {
+func (b *traceOperatorCTEBuilder) buildResourceFilterCTE(ctx context.Context, orgID valuer.UUID, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (*qbtypes.Statement, error) {
 	return b.stmtBuilder.resourceFilterStmtBuilder.Build(
 		ctx,
+		orgID,
 		b.start,
 		b.end,
 		qbtypes.RequestTypeRaw,
@@ -145,27 +147,27 @@ func (b *traceOperatorCTEBuilder) buildResourceFilterCTE(ctx context.Context, qu
 	)
 }
 
-func (b *traceOperatorCTEBuilder) buildExpressionCTEs(ctx context.Context, expr *qbtypes.TraceOperand) (string, error) {
+func (b *traceOperatorCTEBuilder) buildExpressionCTEs(ctx context.Context, orgID valuer.UUID, expr *qbtypes.TraceOperand) (string, error) {
 	if expr == nil {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "expression is nil")
 	}
 
 	if expr.QueryRef != nil {
-		return b.buildQueryCTE(ctx, expr.QueryRef.Name)
+		return b.buildQueryCTE(ctx, orgID, expr.QueryRef.Name)
 	}
 
 	var leftCTE, rightCTE string
 	var err error
 
 	if expr.Left != nil {
-		leftCTE, err = b.buildExpressionCTEs(ctx, expr.Left)
+		leftCTE, err = b.buildExpressionCTEs(ctx, orgID, expr.Left)
 		if err != nil {
 			return "", err
 		}
 	}
 
 	if expr.Right != nil {
-		rightCTE, err = b.buildExpressionCTEs(ctx, expr.Right)
+		rightCTE, err = b.buildExpressionCTEs(ctx, orgID, expr.Right)
 		if err != nil {
 			return "", err
 		}
@@ -174,7 +176,7 @@ func (b *traceOperatorCTEBuilder) buildExpressionCTEs(ctx context.Context, expr 
 	return b.buildOperatorCTE(ctx, *expr.Operator, leftCTE, rightCTE)
 }
 
-func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName string) (string, error) {
+func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, orgID valuer.UUID, queryName string) (string, error) {
 	query, exists := b.queries[queryName]
 	if !exists {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "query %s not found", queryName)
@@ -197,7 +199,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 
 	// Build resource filter CTE for this specific query
 	resourceFilterCTEName := fmt.Sprintf("__resource_filter_%s", cteName)
-	resourceStmt, err := b.buildResourceFilterCTE(ctx, *query)
+	resourceStmt, err := b.buildResourceFilterCTE(ctx, orgID, *query)
 	if err != nil {
 		return "", err
 	}
@@ -393,22 +395,22 @@ func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string,
 	return sql, args, []string{leftCTE, rightCTE}
 }
 
-func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFromCTE string, requestType qbtypes.RequestType) (*qbtypes.Statement, error) {
+func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, orgID valuer.UUID, selectFromCTE string, requestType qbtypes.RequestType) (*qbtypes.Statement, error) {
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
-		return b.buildListQuery(ctx, selectFromCTE)
+		return b.buildListQuery(ctx, orgID, selectFromCTE)
 	case qbtypes.RequestTypeTimeSeries:
-		return b.buildTimeSeriesQuery(ctx, selectFromCTE)
+		return b.buildTimeSeriesQuery(ctx, orgID, selectFromCTE)
 	case qbtypes.RequestTypeTrace:
-		return b.buildTraceQuery(ctx, selectFromCTE)
+		return b.buildTraceQuery(ctx, orgID, selectFromCTE)
 	case qbtypes.RequestTypeScalar:
-		return b.buildScalarQuery(ctx, selectFromCTE)
+		return b.buildScalarQuery(ctx, orgID, selectFromCTE)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 	}
 }
 
-func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
+func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, orgID valuer.UUID, selectFromCTE string) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	// Select core fields
@@ -451,7 +453,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		if selectedFields[field.Name] {
 			continue
 		}
-		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.start, b.end, &field, keys)
+		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, orgID, b.start, b.end, &field, keys)
 		if err != nil {
 			b.stmtBuilder.logger.WarnContext(ctx, "failed to map select field",
 				"field", field.Name, "error", err)
@@ -466,7 +468,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	// Add order by support using ColumnExpressionFor
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
-		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.start, b.end, &orderBy.Key.TelemetryFieldKey, keys)
+		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, orgID, b.start, b.end, &orderBy.Key.TelemetryFieldKey, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -529,7 +531,7 @@ func (b *traceOperatorCTEBuilder) getKeySelectors() []*telemetrytypes.FieldKeySe
 	return keySelectors
 }
 
-func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
+func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, orgID valuer.UUID, selectFromCTE string) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select(fmt.Sprintf(
@@ -548,6 +550,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	for _, gb := range b.operator.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(
 			ctx,
+			orgID,
 			b.start,
 			b.end,
 			&gb.TelemetryFieldKey,
@@ -574,6 +577,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	for i, agg := range b.operator.Aggregations {
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
+			orgID,
 			b.start,
 			b.end,
 			agg.Expression,
@@ -645,7 +649,7 @@ func (b *traceOperatorCTEBuilder) buildTraceSummaryCTE(selectFromCTE string) {
 	b.addCTE("trace_summary", sql, args, []string{"all_spans", selectFromCTE})
 }
 
-func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
+func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, orgID valuer.UUID, selectFromCTE string) (*qbtypes.Statement, error) {
 	b.buildTraceSummaryCTE(selectFromCTE)
 
 	sb := sqlbuilder.NewSelectBuilder()
@@ -661,6 +665,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 	for _, gb := range b.operator.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(
 			ctx,
+			orgID,
 			b.start,
 			b.end,
 			&gb.TelemetryFieldKey,
@@ -689,6 +694,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 	for i, agg := range b.operator.Aggregations {
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
+			orgID,
 			b.start,
 			b.end,
 			agg.Expression,
@@ -790,7 +796,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 	}, nil
 }
 
-func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
+func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, orgID valuer.UUID, selectFromCTE string) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	keySelectors := b.getKeySelectors()
@@ -804,6 +810,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	for _, gb := range b.operator.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(
 			ctx,
+			orgID,
 			b.start,
 			b.end,
 			&gb.TelemetryFieldKey,
@@ -830,6 +837,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	for i, agg := range b.operator.Aggregations {
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
+			orgID,
 			b.start,
 			b.end,
 			agg.Expression,

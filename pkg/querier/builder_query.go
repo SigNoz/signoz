@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/bytedance/sonic"
 )
 
@@ -182,14 +183,14 @@ func (q *builderQuery[T]) isWindowList() bool {
 	return true
 }
 
-func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) {
+func (q *builderQuery[T]) Execute(ctx context.Context, orgID valuer.UUID) (*qbtypes.Result, error) {
 
 	// can we do window based pagination?
 	if q.kind == qbtypes.RequestTypeRaw && q.isWindowList() {
-		return q.executeWindowList(ctx)
+		return q.executeWindowList(ctx, orgID)
 	}
 
-	stmt, err := q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
+	stmt, err := q.stmtBuilder.Build(ctx, orgID, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +296,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	}, nil
 }
 
-func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Result, error) {
+func (q *builderQuery[T]) executeWindowList(ctx context.Context, orgID valuer.UUID) (*qbtypes.Result, error) {
 	isAsc := len(q.spec.Order) > 0 &&
 		strings.ToLower(string(q.spec.Order[0].Direction.StringValue())) == "asc"
 
@@ -345,7 +346,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		q.spec.Offset = 0
 		q.spec.Limit = need
 
-		stmt, err := q.stmtBuilder.Build(ctx, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables)
+		stmt, err := q.stmtBuilder.Build(ctx, orgID, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables)
 		if err != nil {
 			return nil, err
 		}

@@ -13,12 +13,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 )
 
 func CollisionHandledFinalExpr(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
@@ -46,7 +48,7 @@ func CollisionHandledFinalExpr(
 
 	addCondition := func(key *telemetrytypes.TelemetryFieldKey) error {
 		sb := sqlbuilder.NewSelectBuilder()
-		condition, err := cb.ConditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, startNs, endNs)
+		condition, err := cb.ConditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return err
 		}
@@ -59,7 +61,7 @@ func CollisionHandledFinalExpr(
 		return nil
 	}
 
-	colName, fieldForErr := fm.FieldFor(ctx, startNs, endNs, field)
+	colName, fieldForErr := fm.FieldFor(ctx, orgID, startNs, endNs, field)
 	if errors.Is(fieldForErr, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -94,7 +96,7 @@ func CollisionHandledFinalExpr(
 				if err != nil {
 					return "", nil, err
 				}
-				colName, _ = fm.FieldFor(ctx, startNs, endNs, key)
+				colName, _ = fm.FieldFor(ctx, orgID, startNs, endNs, key)
 				colName, _ = DataTypeCollisionHandledFieldName(key, dummyValue, colName, qbtypes.FilterOperatorUnknown)
 				stmts = append(stmts, colName)
 			}

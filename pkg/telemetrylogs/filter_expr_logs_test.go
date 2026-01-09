@@ -27,7 +27,7 @@ func TestFilterExprLogs(t *testing.T) {
 		OrgID: orgId.String(),
 	})
 	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
-	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, releaseTime)
+	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), releaseTime)
 	fm := NewFieldMapper(storeWithMetadata)
 	cb := NewConditionBuilder(fm, nil)
 

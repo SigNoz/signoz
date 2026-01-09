@@ -955,21 +955,32 @@ func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryF
 }
 
 // mockKeyEvolutionMetadata builds a mock org-scoped key evolution metadata map for a column evolution.
-func mockKeyEvolutionMetadata(orgId valuer.UUID, releaseTime time.Time) map[string]map[string][]*telemetrytypes.ColumnEvolutionMetadata {
-	metadata := make(map[string]map[string][]*telemetrytypes.ColumnEvolutionMetadata)
+func mockKeyEvolutionMetadata(orgId valuer.UUID, signal, fieldContext string, releaseTime time.Time) map[string]map[string][]*telemetrytypes.EvolutionEntry {
+	metadata := make(map[string]map[string][]*telemetrytypes.EvolutionEntry)
 
 	// Make sure to initialize the inner map before assignment to prevent 'assignment to entry in nil map'
 	orgIdStr := orgId.String()
 	if _, exists := metadata[orgIdStr]; !exists {
-		metadata[orgIdStr] = make(map[string][]*telemetrytypes.ColumnEvolutionMetadata)
+		metadata[orgIdStr] = make(map[string][]*telemetrytypes.EvolutionEntry)
 	}
-	newKeyEvolutionMetadataEntry := telemetrytypes.ColumnEvolutionMetadata{
-		BaseColumn:     "resources_string",
-		BaseColumnType: "Map(LowCardinality(String), String)",
-		NewColumn:      "resource",
-		NewColumnType:  "JSON(max_dynamic_paths=100)",
-		ReleaseTime:    releaseTime,
+	newKeyEvolutionMetadataEntry := []*telemetrytypes.EvolutionEntry{
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "resources_string",
+			FieldContext: telemetrytypes.FieldContextResource,
+			ColumnType:   "Map(LowCardinality(String), String)",
+			FieldName:    "resource",
+			ReleaseTime:  time.Unix(0, 0),
+		},
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "resource",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "__all__",
+			ReleaseTime:  releaseTime,
+		},
 	}
-	metadata[orgIdStr]["resources_string"] = []*telemetrytypes.ColumnEvolutionMetadata{&newKeyEvolutionMetadataEntry}
+	metadata[orgIdStr][signal+":"+fieldContext+":"] = newKeyEvolutionMetadataEntry
 	return metadata
 }

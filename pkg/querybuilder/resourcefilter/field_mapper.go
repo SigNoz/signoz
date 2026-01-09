@@ -7,6 +7,7 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
@@ -27,46 +28,51 @@ func NewFieldMapper() *defaultFieldMapper {
 
 func (m *defaultFieldMapper) getColumn(
 	_ context.Context,
+	_, _ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-) (*schema.Column, error) {
+) ([]*schema.Column, error) {
 	if key.FieldContext == telemetrytypes.FieldContextResource {
-		return resourceColumns["labels"], nil
+		return []*schema.Column{resourceColumns["labels"]}, nil
 	}
 	if col, ok := resourceColumns[key.Name]; ok {
-		return col, nil
+		return []*schema.Column{col}, nil
 	}
 	return nil, qbtypes.ErrColumnNotFound
 }
 
 func (m *defaultFieldMapper) ColumnFor(
 	ctx context.Context,
+	_ valuer.UUID,
+	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-) (*schema.Column, error) {
-	return m.getColumn(ctx, key)
+) ([]*schema.Column, error) {
+	return m.getColumn(ctx, tsStart, tsEnd, key)
 }
 
 func (m *defaultFieldMapper) FieldFor(
 	ctx context.Context,
+	_ valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
-	column, err := m.getColumn(ctx, key)
+	columns, err := m.getColumn(ctx, tsStart, tsEnd, key)
 	if err != nil {
 		return "", err
 	}
 	if key.FieldContext == telemetrytypes.FieldContextResource {
-		return fmt.Sprintf("simpleJSONExtractString(%s, '%s')", column.Name, key.Name), nil
+		return fmt.Sprintf("simpleJSONExtractString(%s, '%s')", columns[0].Name, key.Name), nil
 	}
-	return column.Name, nil
+	return columns[0].Name, nil
 }
 
 func (m *defaultFieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
-	colName, err := m.FieldFor(ctx, tsStart, tsEnd, key)
+	colName, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
 	if err != nil {
 		return "", err
 	}

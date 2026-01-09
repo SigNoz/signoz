@@ -2,6 +2,8 @@ package querybuildertypesv5
 
 import (
 	"context"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Query interface {
@@ -11,7 +13,7 @@ type Query interface {
 	// Window returns [from, to) in epoch‑ms so cache can slice/merge.
 	Window() (startMS, endMS uint64)
 	// Execute runs the query; implementors must be side‑effect‑free.
-	Execute(ctx context.Context) (*Result, error)
+	Execute(ctx context.Context, orgID valuer.UUID) (*Result, error)
 }
 
 type Result struct {

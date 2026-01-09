@@ -26,6 +26,10 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+const (
+	KeyEvolutionMetadataCacheKeyPrefix = "key_evolution_metadata:"
+)
+
 var (
 	ErrFailedToGetTracesKeys    = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get traces keys")
 	ErrFailedToGetLogsKeys      = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get logs keys")
@@ -1001,7 +1005,7 @@ func (t *telemetryMetaStore) GetKey(ctx context.Context, fieldKeySelector *telem
 	return keys[fieldKeySelector.Name], nil
 }
 
-func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
+func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
 
 	// nothing to return as "related" value if there is nothing to filter on
 	if fieldValueSelector.ExistingQuery == "" {
@@ -1015,18 +1019,18 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		FieldDataType: fieldValueSelector.FieldDataType,
 	}
 
-	selectColumn, err := t.fm.FieldFor(ctx, 0, 0, key)
+	selectColumn, err := t.fm.FieldFor(ctx, orgID, 0, 0, key)
 
 	if err != nil {
 		// we don't have a explicit column to select from the related metadata table
 		// so we will select either from resource_attributes or attributes table
 		// in that order
-		resourceColumn, _ := t.fm.FieldFor(ctx, 0, 0, &telemetrytypes.TelemetryFieldKey{
+		resourceColumn, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
 			Name:          key.Name,
 			FieldContext:  telemetrytypes.FieldContextResource,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		})
-		attributeColumn, _ := t.fm.FieldFor(ctx, 0, 0, &telemetrytypes.TelemetryFieldKey{
+		attributeColumn, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
 			Name:          key.Name,
 			FieldContext:  telemetrytypes.FieldContextAttribute,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
@@ -1076,20 +1080,20 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 			// search on attributes
 			key.FieldContext = telemetrytypes.FieldContextAttribute
-			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, cond)
 			}
 
 			// search on resource
 			key.FieldContext = telemetrytypes.FieldContextResource
-			cond, err = t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err = t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, cond)
 			}
 			key.FieldContext = origContext
 		} else {
-			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, cond)
 			}
@@ -1143,8 +1147,8 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 	return attributeValues, complete, nil
 }
 
-func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
-	return t.getRelatedValues(ctx, fieldValueSelector)
+func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
+	return t.getRelatedValues(ctx, orgID, fieldValueSelector)
 }
 
 func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
@@ -1780,108 +1784,93 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Cont
 	return result, nil
 }
 
-const (
-	// KeyEvolutionMetadataCacheKeyPrefix is the prefix for cache keys
-	KeyEvolutionMetadataCacheKeyPrefix = "key_evolution_metadata:"
-
-	base_column      = "base_column"
-	base_column_type = "base_column_type"
-	new_column       = "new_column"
-	new_column_type  = "new_column_type"
-	path             = "path"
-	release_time     = "release_time"
-)
-
 // CachedColumnEvolutionMetadata is a cacheable type for storing column evolution metadata
-type CachedColumnEvolutionMetadata struct {
-	Metadata []*telemetrytypes.ColumnEvolutionMetadata `json:"metadata"`
+type CachedEvolutionEntry struct {
+	Metadata []*telemetrytypes.EvolutionEntry `json:"metadata"`
 }
 
-var _ cachetypes.Cacheable = (*CachedColumnEvolutionMetadata)(nil)
+var _ cachetypes.Cacheable = (*CachedEvolutionEntry)(nil)
 
-func (c *CachedColumnEvolutionMetadata) MarshalBinary() ([]byte, error) {
+func (c *CachedEvolutionEntry) MarshalBinary() ([]byte, error) {
 	return json.Marshal(c)
 }
 
-func (c *CachedColumnEvolutionMetadata) UnmarshalBinary(data []byte) error {
+func (c *CachedEvolutionEntry) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, c)
 }
 
-func (k *telemetryMetaStore) fetchColumnEvolutionMetadataFromClickHouse(ctx context.Context, key string) []*telemetrytypes.ColumnEvolutionMetadata {
-	store := k.telemetrystore
-	logger := k.logger
-
+func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selector telemetrytypes.EvolutionSelector) []*telemetrytypes.EvolutionEntry {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	// Build query to fetch all key evolution metadata
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		base_column,
-		base_column_type,
-		new_column,
-		new_column_type,
-		path,
-		release_time,
-	)
+	sb.Select("signal", "column_name", "column_type", "field_context", "field_name", "release_time")
 	sb.From(fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName))
-	sb.OrderBy(base_column, release_time)
-	sb.Where(sb.E(base_column, key))
+	sb.OrderBy("release_time ASC")
+
+	if selector.Signal != telemetrytypes.SignalUnspecified {
+		sb.Where(sb.E("signal", selector.Signal))
+	}
+	if selector.FieldContext != telemetrytypes.FieldContextUnspecified {
+		sb.Where(sb.E("field_context", selector.FieldContext))
+	}
+	if selector.FieldName != "" {
+		sb.Where(
+			sb.Or(
+				sb.E("field_name", selector.FieldName),
+				sb.E("field_name", "__all__"),
+			),
+		)
+	}
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	rows, err := store.ClickhouseDB().Query(ctx, query, args...)
+	var entries []*telemetrytypes.EvolutionEntry
+	rows, err := k.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		logger.WarnContext(ctx, "Failed to fetch key evolution metadata from ClickHouse", "error", err)
+		k.logger.WarnContext(ctx, "Failed to fetch key evolution metadata from ClickHouse", "error", err)
 		return nil
 	}
 	defer rows.Close()
 
-	// Group metadata by base_column
-	metadataByKey := make(map[string][]*telemetrytypes.ColumnEvolutionMetadata)
-
 	for rows.Next() {
-		var (
-			baseColumn     string
-			baseColumnType string
-			newColumn      string
-			newColumnType  string
-			path           string
-			releaseTime    uint64
-		)
-
-		if err := rows.Scan(&baseColumn, &baseColumnType, &newColumn, &newColumnType, &path, &releaseTime); err != nil {
-			logger.WarnContext(ctx, "Failed to scan key evolution metadata row", "error", err)
+		var entry telemetrytypes.EvolutionEntry
+		var releaseTimeNs uint64
+		if err := rows.Scan(
+			&entry.Signal,
+			&entry.ColumnName,
+			&entry.ColumnType,
+			&entry.FieldContext,
+			&entry.FieldName,
+			&releaseTimeNs,
+		); err != nil {
+			k.logger.WarnContext(ctx, "Failed to scan evolution entry", "error", err)
 			continue
 		}
-
-		key := &telemetrytypes.ColumnEvolutionMetadata{
-			BaseColumn:     baseColumn,
-			BaseColumnType: baseColumnType,
-			NewColumn:      newColumn,
-			NewColumnType:  newColumnType,
-			Path:           path,
-			ReleaseTime:    time.Unix(0, int64(releaseTime)),
-		}
-
-		metadataByKey[baseColumn] = append(metadataByKey[baseColumn], key)
+		// Convert nanoseconds to time.Time
+		releaseTime := time.Unix(0, int64(releaseTimeNs))
+		entry.ReleaseTime = releaseTime
+		entries = append(entries, &entry)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.WarnContext(ctx, "Error iterating key evolution metadata rows", "error", err)
+		k.logger.WarnContext(ctx, "Error iterating evolution entries", "error", err)
 		return nil
 	}
 
-	return metadataByKey[key]
+	return entries
+}
 
+func getEvolutionMetadataCacheKey(selector telemetrytypes.EvolutionSelector) string {
+	return KeyEvolutionMetadataCacheKeyPrefix + selector.Signal.StringValue() + ":" + selector.FieldContext.StringValue() + ":" + selector.FieldName
 }
 
 // Get retrieves all metadata keys for the given key name and orgId from cache.
 // Returns an empty slice if the key is not found in cache.
-func (k *telemetryMetaStore) GetColumnEvolutionMetadata(ctx context.Context, orgId valuer.UUID, keyName string) []*telemetrytypes.ColumnEvolutionMetadata {
+func (k *telemetryMetaStore) GetColumnEvolutionMetadata(ctx context.Context, orgId valuer.UUID, selector telemetrytypes.EvolutionSelector) []*telemetrytypes.EvolutionEntry {
 
-	cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
-	cachedData := &CachedColumnEvolutionMetadata{}
+	cacheKey := getEvolutionMetadataCacheKey(selector)
+	cachedData := &CachedEvolutionEntry{}
 	if err := k.cache.Get(ctx, orgId, cacheKey, cachedData); err != nil {
 
 		if !errors.Ast(err, errors.TypeNotFound) {
@@ -1890,12 +1879,14 @@ func (k *telemetryMetaStore) GetColumnEvolutionMetadata(ctx context.Context, org
 		}
 
 		// Cache miss - fetch from ClickHouse and try again
-		metadata := k.fetchColumnEvolutionMetadataFromClickHouse(ctx, keyName)
+		metadata := k.fetchEvolutionEntryFromClickHouse(ctx, selector)
 
-		cacheKey := KeyEvolutionMetadataCacheKeyPrefix + keyName
-		cachedData = &CachedColumnEvolutionMetadata{Metadata: metadata}
-		if err := k.cache.Set(ctx, orgId, cacheKey, cachedData, 24*time.Hour); err != nil {
-			k.logger.WarnContext(ctx, "Failed to set key evolution metadata in cache", "key", keyName, "error", err)
+		cacheKey := getEvolutionMetadataCacheKey(selector)
+		cachedData = &CachedEvolutionEntry{Metadata: metadata}
+		if metadata != nil {
+			if err := k.cache.Set(ctx, orgId, cacheKey, cachedData, 24*time.Hour); err != nil {
+				k.logger.WarnContext(ctx, "Failed to set key evolution metadata in cache", "key", selector.FieldName, "error", err)
+			}
 		}
 	}
 	return cachedData.Metadata

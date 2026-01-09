@@ -7,15 +7,21 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type ColumnEvolutionMetadata struct {
-	BaseColumn     string
-	BaseColumnType string
-	NewColumn      string
-	NewColumnType  string
-	Path           string
-	ReleaseTime    time.Time
+type EvolutionEntry struct {
+	Signal       Signal
+	ColumnName   string
+	ColumnType   string
+	FieldContext FieldContext
+	FieldName    string
+	ReleaseTime  time.Time
+}
+
+type EvolutionSelector struct {
+	Signal       Signal
+	FieldContext FieldContext
+	FieldName    string
 }
 
 type ColumnEvolutionMetadataStore interface {
-	Get(ctx context.Context, orgId valuer.UUID, keyName string) []*ColumnEvolutionMetadata
+	Get(ctx context.Context, orgId valuer.UUID, keyName string) []*EvolutionEntry
 }

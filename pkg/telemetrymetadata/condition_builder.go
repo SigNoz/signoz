@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -21,11 +22,12 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
+	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	tsStart, tsEnd uint64,
 ) (string, error) {
 
 	switch operator {
@@ -38,13 +40,13 @@ func (c *conditionBuilder) ConditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	column, err := c.fm.ColumnFor(ctx, key)
+	columns, err := c.fm.ColumnFor(ctx, orgID, tsStart, tsEnd, key)
 	if err != nil {
 		// if we don't have a column, we can't build a condition for related values
 		return "", nil
 	}
 
-	tblFieldName, err := c.fm.FieldFor(ctx, tsStart, tsEnd, key)
+	tblFieldName, err := c.fm.FieldFor(ctx, orgID, tsStart, tsEnd, key)
 	if err != nil {
 		// if we don't have a table field name, we can't build a condition for related values
 		return "", nil
@@ -119,12 +121,12 @@ func (c *conditionBuilder) ConditionFor(
 	// in the query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		switch column.Type {
+		switch columns[0].Type {
 		case schema.MapColumnType{
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}:
-			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
+			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", columns[0].Name, key.Name)
 			if operator == qbtypes.FilterOperatorExists {
 				cond = sb.E(leftOperand, true)
 			} else {
@@ -133,5 +135,5 @@ func (c *conditionBuilder) ConditionFor(
 		}
 	}
 
-	return fmt.Sprintf(expr, column.Name, sb.Var(key.Name), cond), nil
+	return fmt.Sprintf(expr, columns[0].Name, sb.Var(key.Name), cond), nil
 }

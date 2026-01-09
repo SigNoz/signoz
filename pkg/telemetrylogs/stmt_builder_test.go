@@ -20,6 +20,8 @@ func resourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.LogAggregation
 	fm := resourcefilter.NewFieldMapper()
 	cb := resourcefilter.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	orgId := valuer.GenerateUUID()
+	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	keysMap := buildCompleteFieldKeyMap()
 	for _, keys := range keysMap {
 		for _, key := range keys {
@@ -221,6 +223,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	})
 
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper(mockMetadataStore)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	cb := NewConditionBuilder(fm, mockMetadataStore)
@@ -243,7 +246,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(ctx, c.startTs, c.endTs, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, orgId, c.startTs, c.endTs, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -340,7 +343,13 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		},
 	}
 
+	orgId := valuer.GenerateUUID()
+	ctx := context.Background()
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: orgId.String(),
+	})
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper(mockMetadataStore)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	cb := NewConditionBuilder(fm, mockMetadataStore)
@@ -363,7 +372,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, orgId, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -448,7 +457,13 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		},
 	}
 
+	orgId := valuer.GenerateUUID()
+	ctx := context.Background()
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: orgId.String(),
+	})
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper(mockMetadataStore)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	cb := NewConditionBuilder(fm, mockMetadataStore)
@@ -473,7 +488,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, orgId, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -524,7 +539,13 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		},
 	}
 
+	orgId := valuer.GenerateUUID()
+	ctx := context.Background()
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: orgId.String(),
+	})
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper(mockMetadataStore)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	cb := NewConditionBuilder(fm, mockMetadataStore)
@@ -547,7 +568,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, orgId, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErrContains != "" {
 				require.Error(t, err)
@@ -619,7 +640,13 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		},
 	}
 
+	orgId := valuer.GenerateUUID()
+	ctx := context.Background()
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: orgId.String(),
+	})
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper(mockMetadataStore)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
 	cb := NewConditionBuilder(fm, mockMetadataStore)
@@ -642,7 +669,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, orgId, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)

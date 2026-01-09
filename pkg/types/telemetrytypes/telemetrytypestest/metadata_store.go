@@ -19,7 +19,7 @@ type MockMetadataStore struct {
 	TemporalityMap             map[string]metrictypes.Temporality
 	PromotedPathsMap           map[string]struct{}
 	LogsJSONIndexesMap         map[string][]schemamigrator.Index
-	ColumnEvolutionMetadataMap map[string]map[string][]*telemetrytypes.ColumnEvolutionMetadata
+	ColumnEvolutionMetadataMap map[string]map[string][]*telemetrytypes.EvolutionEntry
 }
 
 // NewMockMetadataStore creates a new instance of MockMetadataStore with initialized maps
@@ -121,7 +121,7 @@ func (m *MockMetadataStore) GetKey(ctx context.Context, fieldKeySelector *teleme
 }
 
 // GetRelatedValues returns a list of related values for the given key name and selection
-func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
+func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
 	if fieldValueSelector == nil {
 		return nil, true, nil
 	}
@@ -312,7 +312,7 @@ func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...
 
 // Get retrieves all metadata keys for the given key name and orgId.
 // Returns an empty slice if the key is not found.
-func (m *MockMetadataStore) GetColumnEvolutionMetadata(ctx context.Context, orgId valuer.UUID, keyName string) []*telemetrytypes.ColumnEvolutionMetadata {
+func (m *MockMetadataStore) GetColumnEvolutionMetadata(ctx context.Context, orgId valuer.UUID, selector telemetrytypes.EvolutionSelector) []*telemetrytypes.EvolutionEntry {
 	if m.ColumnEvolutionMetadataMap == nil {
 		return nil
 	}
@@ -320,12 +320,12 @@ func (m *MockMetadataStore) GetColumnEvolutionMetadata(ctx context.Context, orgI
 	if !orgExists {
 		return nil
 	}
-	keys, exists := orgMetadata[keyName]
+	keys, exists := orgMetadata[selector.Signal.StringValue()+":"+selector.FieldContext.StringValue()+":"+selector.FieldName]
 	if !exists {
 		return nil
 	}
 	// Return a copy to prevent external modification
-	result := make([]*telemetrytypes.ColumnEvolutionMetadata, len(keys))
+	result := make([]*telemetrytypes.EvolutionEntry, len(keys))
 	copy(result, keys)
 	return result
 }

@@ -126,6 +126,7 @@ func GetKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation])
 
 func (b *MetricQueryStatementBuilder) Build(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start uint64,
 	end uint64,
 	_ qbtypes.RequestType,
@@ -140,7 +141,7 @@ func (b *MetricQueryStatementBuilder) Build(
 
 	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
 
-	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
+	return b.buildPipelineStatement(ctx, orgID, start, end, query, keys, variables)
 }
 
 // Fast‑path (no fingerprint grouping)
@@ -193,6 +194,7 @@ func (b *MetricQueryStatementBuilder) CanShortCircuitDelta(q qbtypes.QueryBuilde
 
 func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -248,7 +250,7 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 
 	// time_series_cte
 	// this is applicable for all the queries
-	if timeSeriesCTE, timeSeriesCTEArgs, err = b.buildTimeSeriesCTE(ctx, start, end, query, keys, variables); err != nil {
+	if timeSeriesCTE, timeSeriesCTEArgs, err = b.buildTimeSeriesCTE(ctx, orgID, start, end, query, keys, variables); err != nil {
 		return nil, err
 	}
 
@@ -335,6 +337,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 
 func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -365,7 +368,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 
 	sb.Select("fingerprint")
 	for _, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, start, end, &g.TelemetryFieldKey, keys)
+		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, keys)
 		if err != nil {
 			return "", nil, err
 		}

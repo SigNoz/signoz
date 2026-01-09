@@ -553,7 +553,7 @@ func (q *querier) run(
 			} else {
 				q.logger.InfoContext(ctx, "no bucket cache or fingerprint, executing query", "fingerprint", query.Fingerprint())
 			}
-			result, err := query.Execute(ctx)
+			result, err := query.Execute(ctx, orgID)
 			qbEvent.HasData = qbEvent.HasData || hasData(result)
 			if err != nil {
 				return nil, err
@@ -652,7 +652,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	if cachedResult == nil && len(missingRanges) == 1 {
 		startMs, endMs := query.Window()
 		if missingRanges[0].From == startMs && missingRanges[0].To == endMs {
-			result, err := query.Execute(ctx)
+			result, err := query.Execute(ctx, orgID)
 			if err != nil {
 				return nil, err
 			}
@@ -690,7 +690,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 			}
 
 			// Execute the ranged query
-			result, err := rangedQuery.Execute(ctx)
+			result, err := rangedQuery.Execute(ctx, orgID)
 			if err != nil {
 				errs[idx] = err
 				return
@@ -708,7 +708,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 		if err != nil {
 			// If any query failed, fall back to full execution
 			q.logger.ErrorContext(ctx, "parallel query execution failed", "error", err)
-			result, err := query.Execute(ctx)
+			result, err := query.Execute(ctx, orgID)
 			if err != nil {
 				return nil, err
 			}

@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 )
@@ -169,45 +170,46 @@ func NewFieldMapper() *defaultFieldMapper {
 
 func (m *defaultFieldMapper) getColumn(
 	_ context.Context,
+	_, _ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-) (*schema.Column, error) {
+) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return indexV3Columns["resource"], nil
+		return []*schema.Column{indexV3Columns["resource"]}, nil
 	case telemetrytypes.FieldContextScope:
-		return nil, qbtypes.ErrColumnNotFound
+		return []*schema.Column{}, qbtypes.ErrColumnNotFound
 	case telemetrytypes.FieldContextAttribute:
 		switch key.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
-			return indexV3Columns["attributes_string"], nil
+			return []*schema.Column{indexV3Columns["attributes_string"]}, nil
 		case telemetrytypes.FieldDataTypeInt64,
 			telemetrytypes.FieldDataTypeFloat64,
 			telemetrytypes.FieldDataTypeNumber:
-			return indexV3Columns["attributes_number"], nil
+			return []*schema.Column{indexV3Columns["attributes_number"]}, nil
 		case telemetrytypes.FieldDataTypeBool:
-			return indexV3Columns["attributes_bool"], nil
+			return []*schema.Column{indexV3Columns["attributes_bool"]}, nil
 		}
 	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextUnspecified:
 		// Check if this is a span scope field
 		if strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint {
 			// The actual SQL will be generated in the condition builder
-			return &schema.Column{Name: key.Name, Type: schema.ColumnTypeBool}, nil
+			return []*schema.Column{{Name: key.Name, Type: schema.ColumnTypeBool}}, nil
 		}
 
 		// TODO(srikanthccv): remove this when it's safe to remove
 		// issue with CH aliasing
 		if _, ok := CalculatedFieldsDeprecated[key.Name]; ok {
-			return indexV3Columns[oldToNew[key.Name]], nil
+			return []*schema.Column{indexV3Columns[oldToNew[key.Name]]}, nil
 		}
 		if _, ok := IntrinsicFieldsDeprecated[key.Name]; ok {
 			// Check if we have a mapping for the deprecated intrinsic field
 			if _, ok := indexV3Columns[oldToNew[key.Name]]; ok {
-				return indexV3Columns[oldToNew[key.Name]], nil
+				return []*schema.Column{indexV3Columns[oldToNew[key.Name]]}, nil
 			}
 		}
 
 		if col, ok := indexV3Columns[key.Name]; ok {
-			return col, nil
+			return []*schema.Column{col}, nil
 		}
 		return nil, qbtypes.ErrColumnNotFound
 	}
@@ -216,15 +218,18 @@ func (m *defaultFieldMapper) getColumn(
 
 func (m *defaultFieldMapper) ColumnFor(
 	ctx context.Context,
+	orgID valuer.UUID,
+	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-) (*schema.Column, error) {
-	return m.getColumn(ctx, key)
+) ([]*schema.Column, error) {
+	return m.getColumn(ctx, startNs, endNs, key)
 }
 
 // FieldFor returns the table field name for the given key if it exists
 // otherwise it returns qbtypes.ErrColumnNotFound
 func (m *defaultFieldMapper) FieldFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
@@ -235,10 +240,11 @@ func (m *defaultFieldMapper) FieldFor(
 		return key.Name, nil
 	}
 
-	column, err := m.getColumn(ctx, key)
+	columns, err := m.getColumn(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
+	column := columns[0]
 
 	switch column.Type.GetType() {
 	case schema.ColumnTypeEnumJSON:
@@ -298,12 +304,13 @@ func (m *defaultFieldMapper) FieldFor(
 // if it exists otherwise it returns qbtypes.ErrColumnNotFound
 func (m *defaultFieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	colName, err := m.FieldFor(ctx, startNs, endNs, field)
+	colName, err := m.FieldFor(ctx, orgID, startNs, endNs, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -313,7 +320,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 			if _, ok := indexV3Columns[field.Name]; ok {
 				// if it is, attach the column name directly
 				field.FieldContext = telemetrytypes.FieldContextSpan
-				colName, _ = m.FieldFor(ctx, startNs, endNs, field)
+				colName, _ = m.FieldFor(ctx, orgID, startNs, endNs, field)
 			} else {
 				// - the context is not provided
 				// - there are not keys for the field
@@ -331,12 +338,12 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it
-			colName, _ = m.FieldFor(ctx, startNs, endNs, keysForField[0])
+			colName, _ = m.FieldFor(ctx, orgID, startNs, endNs, keysForField[0])
 		} else {
 			// select any non-empty value from the keys
 			args := []string{}
 			for _, key := range keysForField {
-				colName, _ = m.FieldFor(ctx, startNs, endNs, key)
+				colName, _ = m.FieldFor(ctx, orgID, startNs, endNs, key)
 				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", colName, colName))
 			}
 			colName = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))
