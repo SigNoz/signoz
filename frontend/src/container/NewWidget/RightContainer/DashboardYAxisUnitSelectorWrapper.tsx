@@ -13,28 +13,25 @@ function DashboardYAxisUnitSelectorWrapper({
 	value,
 	onSelect,
 	fieldLabel,
-	showWarning,
+	shouldUpdateYAxisUnit,
 	selectedQueryName,
 }: {
 	value: string;
 	onSelect: OnSelectType;
 	fieldLabel: string;
-	showWarning: boolean;
+	shouldUpdateYAxisUnit: boolean;
 	selectedQueryName?: string;
 }): JSX.Element {
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
 		selectedQueryName,
-		{
-			enabled: showWarning,
-		},
 	);
 
 	useEffect(() => {
-		if (showWarning) {
+		if (shouldUpdateYAxisUnit) {
 			onSelect(initialYAxisUnit || '');
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [initialYAxisUnit, showWarning]);
+	}, [initialYAxisUnit, shouldUpdateYAxisUnit]);
 
 	return (
 		<div className="y-axis-unit-selector-v2">

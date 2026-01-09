@@ -34,7 +34,7 @@ function YAxisUnitSelector({
 				initialValue,
 			);
 			const currentUniversalUnitName = getUniversalNameFromMetricUnit(value);
-			return `Unit mismatch. Saved unit is ${initialUniversalUnitName}, but ${currentUniversalUnitName} is selected.`;
+			return `Unit mismatch. The metric was sent with unit ${initialUniversalUnitName}, but ${currentUniversalUnitName} is selected.`;
 		}
 		return '';
 	}, [initialValue, value, loading]);

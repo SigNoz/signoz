@@ -83,8 +83,8 @@ export function ColumnUnitSelector(
 						fieldLabel={label}
 						key={value}
 						selectedQueryName={baseQueryName}
-						// Show warning if the widget is being created
-						showWarning={isNewDashboard}
+						// Update the column unit value automatically only in create mode
+						shouldUpdateYAxisUnit={isNewDashboard}
 					/>
 				);
 			})}

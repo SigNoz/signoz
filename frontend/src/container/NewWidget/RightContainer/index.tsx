@@ -363,8 +363,8 @@ function RightContainer({
 								? 'Unit'
 								: 'Y Axis Unit'
 						}
-						// Only show warning if the widget is being created
-						showWarning={isNewDashboard}
+						// Only update the y-axis unit value automatically in create mode
+						shouldUpdateYAxisUnit={isNewDashboard}
 					/>
 				)}
 

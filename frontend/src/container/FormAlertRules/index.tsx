@@ -786,26 +786,23 @@ function FormAlertRules({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
 			?.active || false;
 
-	// Only fetch when creating a new metrics-based alert rule
-	const fetchYAxisUnit = useMemo(
+	// Only update automatically when creating a new metrics-based alert rule
+	const shouldUpdateYAxisUnit = useMemo(
 		() => isNewRule && alertType === AlertTypes.METRICS_BASED_ALERT,
 		[isNewRule, alertType],
 	);
 
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
 		alertDef.condition.selectedQueryName,
-		{
-			enabled: fetchYAxisUnit,
-		},
 	);
 
 	// Every time a new metric is selected, set the y-axis unit to its unit
 	// Only for metrics-based alerts in create mode
 	useEffect(() => {
-		if (fetchYAxisUnit) {
+		if (shouldUpdateYAxisUnit) {
 			setYAxisUnit(initialYAxisUnit || '');
 		}
-	}, [initialYAxisUnit, fetchYAxisUnit]);
+	}, [initialYAxisUnit, shouldUpdateYAxisUnit]);
 
 	return (
 		<>
