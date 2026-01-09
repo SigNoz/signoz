@@ -964,8 +964,8 @@ github.com/spf13/pflag v1.0.10/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3A
 github.com/spf13/viper v1.13.0/go.mod h1:Icm2xNL3/8uyh/wFuB1jI7TiTNKp8632Nwegu+zgdYw=
 github.com/spf13/viper v1.20.1 h1:ZMi+z/lvLyPSCoNtFCpqjy0S4kPbirhpTMwl8BkW9X4=
 github.com/spf13/viper v1.20.1/go.mod h1:P9Mdzt1zoHIG8m2eZQinpiBjo6kCmZSKBClNNqjJvu4=
-github.com/srikanthccv/ClickHouse-go-mock v0.12.0 h1:KUzaWTwuqMc2uf5FylM/oAcTFdE2DdZjvISm9V0/NAA=
-github.com/srikanthccv/ClickHouse-go-mock v0.12.0/go.mod h1:1oUmLtXEXOyS0EEWVKlKEfLfv9y02agCMAvD3tVnhlo=
+github.com/srikanthccv/ClickHouse-go-mock v0.13.0 h1:/b7DQphGkh29ocNtLh4DGmQxQYA0CfHz65Wy2zAH2GM=
+github.com/srikanthccv/ClickHouse-go-mock v0.13.0/go.mod h1:LiiyBUdXNwB/1DE9rgK/8q9qjVYsTzg6WXQ/3mU3TeY=
 github.com/stoewer/go-strcase v1.3.0 h1:g0eASXYtp+yvN9fK8sH94oCIk0fau9uV1/ZdJ0AVEzs=
 github.com/stoewer/go-strcase v1.3.0/go.mod h1:fAH5hQ5pehh+j3nZfvwdk2RgEgQjAoM8wodgtPmh1xo=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

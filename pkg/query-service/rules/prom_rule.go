@@ -119,6 +119,15 @@ func (r *PromRule) getPqlQuery() (string, error) {
 	return "", fmt.Errorf("invalid promql rule query")
 }
 
+func (r *PromRule) matrixToV3Series(res promql.Matrix) []*v3.Series {
+	v3Series := make([]*v3.Series, 0, len(res))
+	for _, series := range res {
+		commonSeries := toCommonSeries(series)
+		v3Series = append(v3Series, &commonSeries)
+	}
+	return v3Series
+}
+
 func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
 	start, end := r.Timestamps(ts)
 	interval := 60 * time.Second // TODO(srikanthccv): this should be configurable
@@ -135,10 +144,23 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 		return nil, err
 	}
 
+	matrixToProcess := r.matrixToV3Series(res)
+	// Filter out new series if newGroupEvalDelay is configured
+	if r.ShouldSkipNewGroups() {
+		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, matrixToProcess)
+		// In case of error we log the error and continue with the original series
+		if filterErr != nil {
+			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
+		} else {
+			matrixToProcess = filteredSeries
+		}
+	}
+
 	var resultVector ruletypes.Vector
-	for _, series := range res {
-		resultSeries, err := r.Threshold.Eval(toCommonSeries(series), r.Unit(), ruletypes.EvalData{
-			ActiveAlerts: r.ActiveAlertsLabelFP(),
+	for _, series := range matrixToProcess {
+		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+      SendUnmatched: r.ShouldSendUnmatched(),
 		})
 		if err != nil {
 			return nil, err

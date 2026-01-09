@@ -66,7 +66,7 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 					queryName: 'A',
 					expression: 'A',
 					disabled: false,
-					reduceTo: 'avg' as ReduceOperators,
+					reduceTo: ReduceOperators.AVG,
 					legend: '',
 				},
 			],
