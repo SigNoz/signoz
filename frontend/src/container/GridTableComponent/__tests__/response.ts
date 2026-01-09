@@ -1,3 +1,5 @@
+import { ReduceOperators } from 'types/common/queryBuilder';
+
 /* eslint-disable sonarjs/no-duplicate-string */
 export const tableDataMultipleQueriesSuccessResponse = {
 	columns: [
@@ -131,7 +133,7 @@ export const widgetQueryWithLegend = {
 					},
 				],
 				legend: 'p99',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			},
 			{
 				dataSource: 'metrics',
@@ -158,7 +160,7 @@ export const widgetQueryWithLegend = {
 				orderBy: [],
 				groupBy: [],
 				legend: '',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			},
 		],
 		queryFormulas: [],
@@ -374,7 +376,7 @@ export const widgetQueryQBv5MultiAggregations = {
 					},
 				],
 				legend: 'p99',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			},
 			{
 				dataSource: 'metrics',
@@ -414,7 +416,7 @@ export const widgetQueryQBv5MultiAggregations = {
 					},
 				],
 				legend: '',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			},
 			{
 				dataSource: 'metrics',
@@ -454,7 +456,7 @@ export const widgetQueryQBv5MultiAggregations = {
 					},
 				],
 				legend: 'max',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			},
 		],
 		queryFormulas: [],

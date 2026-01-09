@@ -1,5 +1,7 @@
 // ===================== Base Types =====================
 
+import { ReduceOperators } from 'types/common/queryBuilder';
+
 import { Warning } from '..';
 
 export type Step = string | number; // Duration string (e.g., "30s") or seconds as number
@@ -190,7 +192,7 @@ export interface MetricAggregation {
 	temporality: Temporality;
 	timeAggregation: TimeAggregation;
 	spaceAggregation: SpaceAggregation;
-	reduceTo?: string;
+	reduceTo?: ReduceOperators;
 }
 
 export interface SecondaryAggregation {

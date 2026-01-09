@@ -27,6 +27,7 @@ const ROUTES = {
 	ALERTS_NEW: '/alerts/new',
 	ALERT_HISTORY: '/alerts/history',
 	ALERT_OVERVIEW: '/alerts/overview',
+	ALERT_TYPE_SELECTION: '/alerts/type-selection',
 	ALL_CHANNELS: '/settings/channels',
 	CHANNELS_NEW: '/settings/channels/new',
 	CHANNELS_EDIT: '/settings/channels/edit/:channelId',
