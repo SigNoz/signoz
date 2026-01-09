@@ -528,8 +528,7 @@ function FormAlertRules({
 			if (response.statusCode === 200) {
 				logData = {
 					status: 'success',
-					statusMessage:
-						!ruleId || isEmpty(ruleId) ? t('rule_created') : t('rule_edited'),
+					statusMessage: isNewRule ? t('rule_created') : t('rule_edited'),
 				};
 
 				notifications.success({
@@ -581,7 +580,7 @@ function FormAlertRules({
 			dataSource: ALERTS_DATA_SOURCE_MAP[postableAlert?.alertType as AlertTypes],
 			channelNames: postableAlert?.preferredChannels,
 			broadcastToAll: postableAlert?.broadcastToAll,
-			isNewRule: !ruleId || isEmpty(ruleId),
+			isNewRule,
 			ruleId,
 			queryType: currentQuery.queryType,
 			alertId: postableAlert?.id,
@@ -666,7 +665,7 @@ function FormAlertRules({
 			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
 			channelNames: postableAlert?.preferredChannels,
 			broadcastToAll: postableAlert?.broadcastToAll,
-			isNewRule: !ruleId || isEmpty(ruleId),
+			isNewRule,
 			ruleId,
 			queryType: currentQuery.queryType,
 			status: statusResponse.status,
@@ -738,8 +737,6 @@ function FormAlertRules({
 		alertDef?.broadcastToAll ||
 		(alertDef.preferredChannels && alertDef.preferredChannels.length > 0);
 
-	const isRuleCreated = !ruleId || isEmpty(ruleId);
-
 	function handleRedirection(option: AlertTypes): void {
 		let url;
 		if (
@@ -754,7 +751,7 @@ function FormAlertRules({
 		if (url) {
 			logEvent('Alert: Check example alert clicked', {
 				dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
-				isNewRule: !ruleId || isEmpty(ruleId),
+				isNewRule,
 				ruleId,
 				queryType: currentQuery.queryType,
 				link: url,
@@ -764,7 +761,7 @@ function FormAlertRules({
 	}
 
 	useEffect(() => {
-		if (!isRuleCreated) {
+		if (!isNewRule) {
 			logEvent('Alert: Edit page visited', {
 				ruleId,
 				dataSource: ALERTS_DATA_SOURCE_MAP[alertType as AlertTypes],
@@ -817,7 +814,7 @@ function FormAlertRules({
 			<div
 				id="top"
 				className={`form-alert-rules-container ${
-					isRuleCreated ? 'create-mode' : 'edit-mode'
+					isNewRule ? 'create-mode' : 'edit-mode'
 				}`}
 			>
 				<div className="overview-header">
@@ -948,7 +945,7 @@ function FormAlertRules({
 							type="default"
 							onClick={onCancelHandler}
 						>
-							{(!ruleId || isEmpty(ruleId)) && t('button_cancelchanges')}
+							{isNewRule && t('button_cancelchanges')}
 							{ruleId && !isEmpty(ruleId) && t('button_discard')}
 						</ActionButton>
 					</ButtonContainer>

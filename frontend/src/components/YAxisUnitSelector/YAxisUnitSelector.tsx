@@ -22,7 +22,6 @@ function YAxisUnitSelector({
 	'data-testid': dataTestId,
 	source,
 	initialValue,
-	onClear = undefined,
 }: YAxisUnitSelectorProps): JSX.Element {
 	const universalUnit = mapMetricUnitToUniversalUnit(value);
 
@@ -63,8 +62,6 @@ function YAxisUnitSelector({
 
 	const categories = getYAxisCategories(source);
 
-	const allowClear = Boolean(onClear);
-
 	return (
 		<div className="y-axis-unit-selector-component">
 			<Select
@@ -85,8 +82,7 @@ function YAxisUnitSelector({
 					'warning-state': incompatibleUnitMessage,
 				})}
 				data-testid={dataTestId}
-				allowClear={allowClear}
-				onClear={onClear}
+				allowClear
 			>
 				{categories.map((category) => (
 					<Select.OptGroup key={category.name} label={category.name}>

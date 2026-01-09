@@ -15,14 +15,12 @@ function DashboardYAxisUnitSelectorWrapper({
 	fieldLabel,
 	showWarning,
 	selectedQueryName,
-	onClear,
 }: {
 	value: string;
 	onSelect: OnSelectType;
 	fieldLabel: string;
 	showWarning: boolean;
 	selectedQueryName?: string;
-	onClear?: () => void;
 }): JSX.Element {
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
 		selectedQueryName,
@@ -47,7 +45,6 @@ function DashboardYAxisUnitSelectorWrapper({
 				initialValue={initialYAxisUnit}
 				source={YAxisSource.DASHBOARDS}
 				loading={isLoading}
-				onClear={onClear}
 			/>
 		</div>
 	);
@@ -55,7 +52,6 @@ function DashboardYAxisUnitSelectorWrapper({
 
 DashboardYAxisUnitSelectorWrapper.defaultProps = {
 	selectedQueryName: undefined,
-	onClear: undefined,
 };
 
 export default DashboardYAxisUnitSelectorWrapper;
