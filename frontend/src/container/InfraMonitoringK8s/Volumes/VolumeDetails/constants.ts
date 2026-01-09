@@ -4,7 +4,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 export const volumeWidgetInfo = [
@@ -141,7 +141,7 @@ export const getVolumeQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -233,7 +233,7 @@ export const getVolumeQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -324,7 +324,7 @@ export const getVolumeQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -416,7 +416,7 @@ export const getVolumeQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -508,7 +508,7 @@ export const getVolumeQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'sum',
+							reduceTo: ReduceOperators.SUM,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
