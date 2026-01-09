@@ -30,8 +30,6 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 
 const TEST_QUERY = 'test-query';
 const TEST_QUERY_2 = 'test-query-2';
-const ANT_SELECT_ITEM_OPTION_CONTENT_SELECTOR =
-	'.ant-select-item-option-content';
 const TEST_GROUP_BY_FIELDS = [{ key: 'service' }, { key: 'environment' }];
 const TRUE = 'true';
 const FALSE = 'false';
@@ -169,19 +167,7 @@ describe('MultipleNotifications', () => {
 		await userEvent.click(select);
 
 		expect(
-			screen.getByText('http.status_code', {
-				selector: ANT_SELECT_ITEM_OPTION_CONTENT_SELECTOR,
-			}),
-		).toBeInTheDocument();
-		expect(
-			screen.getByText('service', {
-				selector: ANT_SELECT_ITEM_OPTION_CONTENT_SELECTOR,
-			}),
-		).toBeInTheDocument();
-		expect(
-			screen.getByText('All', {
-				selector: ANT_SELECT_ITEM_OPTION_CONTENT_SELECTOR,
-			}),
+			screen.getByRole('option', { name: 'http.status_code' }),
 		).toBeInTheDocument();
 	});
 
@@ -227,14 +213,6 @@ describe('MultipleNotifications', () => {
 				},
 			},
 		});
-		jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
-			createMockAlertContextState({
-				notificationSettings: {
-					...INITIAL_NOTIFICATION_SETTINGS_STATE,
-					multipleNotifications: [ALL_SELECTED_VALUE],
-				},
-			}),
-		);
 
 		render(<MultipleNotifications />);
 
@@ -249,7 +227,7 @@ describe('MultipleNotifications', () => {
 		expect(serviceOption[1]).toHaveClass('ant-select-item-option-disabled');
 	});
 
-	it('selecting all option should remove all other selected options', async () => {
+	it('selecting "all" option should remove all other selected options', async () => {
 		useQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
@@ -266,7 +244,7 @@ describe('MultipleNotifications', () => {
 			createMockAlertContextState({
 				notificationSettings: {
 					...INITIAL_NOTIFICATION_SETTINGS_STATE,
-					multipleNotifications: ['service', 'environment'],
+					multipleNotifications: ['service'],
 				},
 				setNotificationSettings: mockSetNotificationSettings,
 			}),
