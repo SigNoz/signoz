@@ -74,7 +74,7 @@ func (b *logQueryStatementBuilder) Build(
 		return nil, err
 	}
 
-	b.adjustKeys(ctx, keys, query)
+	query = b.adjustKeys(ctx, keys, query)
 
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
@@ -128,24 +128,29 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 	return keySelectors
 }
 
-func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) {
-	// for group by / order by, if there is a key
-	// that exactly matches the name of intrinsic field but has
-	// a field context or data type that doesn't match the field context or data type of the
-	// intrinsic field,
-	// and there is no additional key present in the data with the incoming key match,
-	// then override the given context with
-	// intrinsic field context and data type
-	// Why does that happen? Because we have a lot of dashboards created by users and shared over web
-	// that has incorrect context or data type populated so we fix it
-	// note: this override happens only when there is no match; if there is a match,
-	// we can't make decision on behalf of users so we let it use unmodified
+func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) qbtypes.QueryBuilderQuery[qbtypes.LogAggregation] {
+	/*
+		Check if user is using multiple contexts or data types for same field name
+		Idea is to use a super set of keys that can satisfy all the usages
 
-	// example: {"key": "severity_text","type": "tag","dataType": "string"}
-	// This is sent as "tag", when it's not, this was earlier managed with
-	// `isColumn`, which we don't have in v5 (because it's not a user concern whether it's mat col or not)
-	// Such requests as-is look for attributes, the following code exists to handle them
+		For example, lets consider model_id exists in both attributes and resources
+		And user is trying to use `attribute.model_id` and `model_id`.
 
+		In this case, we'll remove the context from `attribute.model_id`
+		and make it just `model_id` and remove the duplicate entry.
+
+		Same goes with data types.
+		Consider user is using http.status_code:number and http.status_code
+		In this case, we'll remove the data type from http.status_code:number
+		and make it just http.status_code and remove the duplicate entry.
+	*/
+	querybuilder.AdjustDuplicateKeys(&query)
+
+	/*
+		Now adjust each key to have correct context and data type
+		Here we try to make intelligent guesses which work for all users (not just majority)
+		Reason for doing this is to not create an unexpected behavior for users
+	*/
 	for idx := range query.SelectFields {
 		b.adjustKey(ctx, &query.SelectFields[idx], keys)
 	}
@@ -164,89 +169,21 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 	}
+
+	return query
 }
 
 func (b *logQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) {
 
 	// First check if it matches with any intrinsic fields
-	var isIntrinsicOrCalculatedField bool
+	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
 	if _, ok := IntrinsicFields[key.Name]; ok {
-		isIntrinsicOrCalculatedField = true
-	}
-
-	if isIntrinsicOrCalculatedField {
-		// Check if it also matches with any of the metadata keys
-		match := false
-		for _, mapKey := range keys[key.Name] {
-			// Either field context is unspecified or matches
-			// and
-			// Either field data type is unspecified or matches
-			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || mapKey.FieldContext == key.FieldContext) &&
-				(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || mapKey.FieldDataType == key.FieldDataType) {
-				match = true
-				break
-			}
-		}
-
-		// NOTE: if a user is highly opinionated and use attribute.body:number
-		// It will be defaulted to intrinsic field body as the actual attribute might be attribute.body:string
-
-		// We don't have a match, then it doesn't exist in attribute or resource attribute
-		// use the intrinsic/calculated field
-		if !match {
-			b.logger.InfoContext(ctx, "overriding the field context and data type", "key", key.Name)
-			key.FieldContext = IntrinsicFields[key.Name].FieldContext
-			key.FieldDataType = IntrinsicFields[key.Name].FieldDataType
-			key.Materialized = IntrinsicFields[key.Name].Materialized
-		} else {
-			// Here we have a key which is an intrinsic field but also exists in the metadata with the same name
-			// cannot do anything, so just return
-			return
-		}
-
+		intrinsicOrCalculatedField = IntrinsicFields[key.Name]
+		querybuilder.AdjustKey(ctx, key, keys, &intrinsicOrCalculatedField)
 	} else {
-		// check for all the keys for the given field with matching context and data type
-		matchingKeys := []*telemetrytypes.TelemetryFieldKey{}
-		for _, metadataKey := range keys[key.Name] {
-			// Only consider keys that match the context and data type (if specified)
-			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || key.FieldContext == metadataKey.FieldContext) &&
-				(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || key.FieldDataType == metadataKey.FieldDataType) {
-				matchingKeys = append(matchingKeys, metadataKey)
-			}
-		}
-
-		if len(matchingKeys) == 0 {
-			// we do not have any matching keys, most likely user made a mistake, let QB handle it
-			// Set materialized to false explicitly to avoid QB looking for materialized column
-			key.Materialized = false
-		} else if len(matchingKeys) == 1 {
-			// only one matching key, use it
-			key.FieldContext = matchingKeys[0].FieldContext
-			key.FieldDataType = matchingKeys[0].FieldDataType
-			key.Materialized = matchingKeys[0].Materialized
-		} else {
-			// multiple matching keys, set materialized only if all the keys are materialized
-			materialized := true
-			fieldContextsSeen := map[telemetrytypes.FieldContext]bool{}
-			dataTypesSeen := map[telemetrytypes.FieldDataType]bool{}
-			for _, matchingKey := range matchingKeys {
-				materialized = materialized && matchingKey.Materialized
-				fieldContextsSeen[matchingKey.FieldContext] = true
-				dataTypesSeen[matchingKey.FieldDataType] = true
-			}
-			key.Materialized = materialized
-
-			if len(fieldContextsSeen) == 1 {
-				// all matching keys have same field context, use it
-				key.FieldContext = matchingKeys[0].FieldContext
-			}
-
-			if len(dataTypesSeen) == 1 {
-				// all matching keys have same data type, use it
-				key.FieldDataType = matchingKeys[0].FieldDataType
-			}
-		}
+		querybuilder.AdjustKey(ctx, key, keys, nil)
 	}
+
 }
 
 // buildListQuery builds a query for list panel type

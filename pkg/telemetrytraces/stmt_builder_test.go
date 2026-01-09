@@ -1288,7 +1288,7 @@ func TestAdjustKeys(t *testing.T) {
 			}
 
 			// Call adjustKeys
-			statementBuilder.adjustKeys(context.Background(), keysMapCopy, c.query)
+			c.query = statementBuilder.adjustKeys(context.Background(), keysMapCopy, c.query)
 
 			// Verify select fields were adjusted
 			if c.expectedSelectFields != nil {
