@@ -279,7 +279,7 @@ func TestGetFieldKeyName(t *testing.T) {
 			mockStore := telemetrytypestest.NewMockMetadataStore()
 			mockStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 			fm := NewFieldMapper(mockStore)
-			result, err := fm.FieldFor(ctx, orgId, 0, 0, &tc.key)
+			result, err := fm.FieldFor(ctx, orgId, 0, 0, &tc.key, nil)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -291,294 +291,285 @@ func TestGetFieldKeyName(t *testing.T) {
 	}
 }
 
-// func TestBuildEvolutionMultiIfExpression(t *testing.T) {
-// 	key := &telemetrytypes.TelemetryFieldKey{
-// 		Name:         "service.name",
-// 		FieldContext: telemetrytypes.FieldContextResource,
-// 	}
+func TestFieldForWithEvolutions(t *testing.T) {
+	ctx := context.Background()
+	orgId := valuer.GenerateUUID()
+	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
+		OrgID: orgId.String(),
+	})
 
-// 	testCases := []struct {
-// 		name           string
-// 		evolutions     []*telemetrytypes.EvolutionEntry
-// 		key            *telemetrytypes.TelemetryFieldKey
-// 		tsStartTime    time.Time
-// 		tsEndTime      time.Time
-// 		expectedResult string
-// 	}{
-// 		{
-// 			name:           "No evolution",
-// 			evolutions:     []*telemetrytypes.EvolutionEntry{},
-// 			key:            key,
-// 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 			expectedResult: "multiIf(, NULL)",
-// 		},
-// 		{
-// 			name:       "No evolution - JSON body",
-// 			evolutions: []*telemetrytypes.EvolutionEntry{},
-// 			key: &telemetrytypes.TelemetryFieldKey{
-// 				Name:         "user.name",
-// 				FieldContext: telemetrytypes.FieldContextBody,
-// 			},
-// 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 			expectedResult: "multiIf(, NULL)",
-// 		},
-// 		{
-// 			name: "Single evolution before tsStartTime",
-// 			evolutions: []*telemetrytypes.EvolutionEntry{
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resources_string",
-// 					ColumnType:   "Map(LowCardinality(String), String)",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
-// 				},
-// 			},
-// 			key:            key,
-// 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 			expectedResult: "resources_string['service.name']",
-// 		},
-// 		{
-// 			name: "Single evolution exactly at tsStartTime",
-// 			evolutions: []*telemetrytypes.EvolutionEntry{
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "attributes_string",
-// 					ColumnType:   "Map(LowCardinality(String), String)",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 				},
-// 			},
-// 			key:            key,
-// 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 			expectedResult: "attributes_string['service.name']",
-// 		},
-// 		{
-// 			name: "Single evolution exactly at tsStartTime - JSON body",
-// 			evolutions: []*telemetrytypes.EvolutionEntry{
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "body_json",
-// 					ColumnType:   "JSON(max_dynamic_paths=0)",
-// 					FieldContext: telemetrytypes.FieldContextBody,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 				},
-// 			},
-// 			key: &telemetrytypes.TelemetryFieldKey{
-// 				Name:         "user.name",
-// 				FieldContext: telemetrytypes.FieldContextBody,
-// 			},
-// 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 			expectedResult: "body_json.`user.name`::String",
-// 		},
-// 		{
-// 			name: "Single evolution after tsStartTime",
-// 			evolutions: []*telemetrytypes.EvolutionEntry{
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resources_string",
-// 					ColumnType:   "Map(LowCardinality(String), String)",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
-// 				},
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resource",
-// 					ColumnType:   "JSON()",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
-// 				},
-// 			},
-// 			key:            key,
-// 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
-// 		},
-// 		{
-// 			name: "Single evolution after tsStartTime - JSON body",
-// 			evolutions: []*telemetrytypes.EvolutionEntry{
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "body_json",
-// 					ColumnType:   "JSON(max_dynamic_paths=0)",
-// 					FieldContext: telemetrytypes.FieldContextBody,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
-// 				},
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "body_promoted",
-// 					ColumnType:   "JSON()",
-// 					FieldContext: telemetrytypes.FieldContextBody,
-// 					FieldName:    "user.name",
-// 					ReleaseTime:  time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
-// 				},
-// 			},
-// 			key: &telemetrytypes.TelemetryFieldKey{
-// 				Name:         "user.name",
-// 				FieldContext: telemetrytypes.FieldContextBody,
-// 			},
-// 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 			expectedResult: "multiIf(body_promoted.`user.name` IS NOT NULL, body_promoted.`user.name`::String, body_json.`user.name` IS NOT NULL, body_json.`user.name`::String, NULL)",
-// 		},
-// 		{
-// 			name: "Multiple evolutions before tsStartTime - only latest should be included",
-// 			evolutions: []*telemetrytypes.EvolutionEntry{
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resources_string",
-// 					ColumnType:   "Map(LowCardinality(String), String)",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
-// 				},
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resource",
-// 					ColumnType:   "JSON()",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-// 				},
-// 			},
-// 			key:            key,
-// 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 			expectedResult: "resource.`service.name`::String",
-// 		},
-// 		{
-// 			name: "Multiple evolutions after tsStartTime - all should be included",
-// 			evolutions: []*telemetrytypes.EvolutionEntry{
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resources_string",
-// 					ColumnType:   "Map(LowCardinality(String), String)",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
-// 				},
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resource",
-// 					ColumnType:   "JSON()",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-// 				},
-// 			},
-// 			key:            key,
-// 			tsStartTime:    time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
-// 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
-// 		},
-// 		{
-// 			name: "Duplicate evolutions after tsStartTime - all should be included",
-// 			// Note: on production when this happens, we should go ahead and clean it up if required
-// 			evolutions: []*telemetrytypes.EvolutionEntry{
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resources_string",
-// 					ColumnType:   "Map(LowCardinality(String), String)",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
-// 				},
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resource",
-// 					ColumnType:   "JSON()",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 				},
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resource",
-// 					ColumnType:   "JSON()",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(2024, 2, 3, 0, 0, 0, 0, time.UTC),
-// 				},
-// 			},
-// 			key:            key,
-// 			tsStartTime:    time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
-// 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL)",
-// 		},
-// 		{
-// 			name: "Many evolutions after tsStartTime",
-// 			evolutions: []*telemetrytypes.EvolutionEntry{
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resources_string",
-// 					ColumnType:   "Map(LowCardinality(String), String)",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
-// 				},
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resource",
-// 					ColumnType:   "JSON()",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 				},
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resource_v2",
-// 					ColumnType:   "JSON()",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(2024, 2, 3, 0, 0, 0, 0, time.UTC),
-// 				},
-// 			},
-// 			key:            key,
-// 			tsStartTime:    time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
-// 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 			expectedResult: "multiIf(resource_v2.`service.name` IS NOT NULL, resource_v2.`service.name`::String, resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL)",
-// 		},
-// 		{
-// 			name: "Evolution exactly at tsEndTime - should not be included",
-// 			evolutions: []*telemetrytypes.EvolutionEntry{
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resources_string",
-// 					ColumnType:   "Map(LowCardinality(String), String)",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
-// 				},
-// 				{
-// 					Signal:       telemetrytypes.SignalLogs,
-// 					ColumnName:   "resource",
-// 					ColumnType:   "JSON()",
-// 					FieldContext: telemetrytypes.FieldContextResource,
-// 					FieldName:    "__all__",
-// 					ReleaseTime:  time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 				},
-// 			},
-// 			key:            key,
-// 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-// 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-// 			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
-// 		},
-// 	}
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:         "service.name",
+		FieldContext: telemetrytypes.FieldContextResource,
+	}
 
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			result := buildEvolutionMultiIfExpression(tc.evolutions, tc.key, tc.tsStartTime, tc.tsEndTime)
-// 			assert.Equal(t, tc.expectedResult, result)
-// 		})
-// 	}
-// }
+	testCases := []struct {
+		name           string
+		evolutions     []*telemetrytypes.EvolutionEntry
+		key            *telemetrytypes.TelemetryFieldKey
+		tsStartTime    time.Time
+		tsEndTime      time.Time
+		expectedResult string
+		expectedError  error
+	}{
+		{
+			name: "Single evolution before tsStartTime",
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "resources_string['service.name']",
+			expectedError:  nil,
+		},
+		{
+			name: "Single evolution exactly at tsStartTime",
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "resources_string['service.name']",
+			expectedError:  nil,
+		},
+		{
+			name: "Single evolution after tsStartTime",
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Unix(0, 0),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedError:  nil,
+		},
+		// {
+		// 	name: "Single evolution after tsStartTime - JSON body",
+		// 	evolutions: []*telemetrytypes.EvolutionEntry{
+		// 		{
+		// 			Signal:       telemetrytypes.SignalLogs,
+		// 			ColumnName:   LogsV2BodyJSONColumn,
+		// 			ColumnType:   "JSON(max_dynamic_paths=0)",
+		// 			FieldContext: telemetrytypes.FieldContextBody,
+		// 			FieldName:    "__all__",
+		// 			ReleaseTime:  time.Unix(0, 0),
+		// 		},
+		// 		{
+		// 			Signal:       telemetrytypes.SignalLogs,
+		// 			ColumnName:   LogsV2BodyPromotedColumn,
+		// 			ColumnType:   "JSON()",
+		// 			FieldContext: telemetrytypes.FieldContextBody,
+		// 			FieldName:    "user.name",
+		// 			ReleaseTime:  time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
+		// 		},
+		// 	},
+		// 	key: &telemetrytypes.TelemetryFieldKey{
+		// 		Name:         "user.name",
+		// 		FieldContext: telemetrytypes.FieldContextBody,
+		// 		JSONDataType: &telemetrytypes.String,
+		// 		Materialized: true,
+		// 	},
+		// 	tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+		// 	tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+		// 	expectedResult: "coalesce(dynamicElement(body_json.`user.name`, 'String'), dynamicElement(body_promoted.`user.name`, 'String'))",
+		// 	expectedError:  nil,
+		// },
+		{
+			name: "Multiple evolutions before tsStartTime - only latest should be included",
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Unix(0, 0),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "resource.`service.name`",
+			expectedError:  nil,
+		},
+		{
+			name: "Multiple evolutions after tsStartTime - all should be included",
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Unix(0, 0),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			tsStartTime:    time.Unix(0, 0),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedError:  nil,
+		},
+		{
+			name: "Duplicate evolutions after tsStartTime - all should be included",
+			// Note: on production when this happens, we should go ahead and clean it up if required
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Unix(0, 0),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 3, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			tsStartTime:    time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`, resource.`service.name` IS NOT NULL, resource.`service.name`, NULL)",
+			expectedError:  nil,
+		},
+		{
+			name: "Many evolutions after tsStartTime",
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Unix(0, 0),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource_v2",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 3, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			tsStartTime:    time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource_v2.`service.name` IS NOT NULL, resource_v2.`service.name`, resource.`service.name` IS NOT NULL, resource.`service.name`, NULL)",
+			expectedError:  nil,
+		},
+		{
+			name: "Evolution exactly at tsEndTime - should not be included",
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Unix(0, 0),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			key:            key,
+			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedError:  nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockStore := telemetrytypestest.NewMockMetadataStore()
+			fm := NewFieldMapper(mockStore)
+
+			tsStart := uint64(tc.tsStartTime.UnixNano())
+			tsEnd := uint64(tc.tsEndTime.UnixNano())
+
+			result, err := fm.FieldFor(ctx, orgId, tsStart, tsEnd, tc.key, tc.evolutions)
+
+			if tc.expectedError != nil {
+				assert.Equal(t, tc.expectedError, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedResult, result)
+			}
+		})
+	}
+}

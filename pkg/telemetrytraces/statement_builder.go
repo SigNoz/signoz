@@ -296,7 +296,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// TODO: should we deprecate `SelectFields` and return everything from a span like we do for logs?
 	for _, field := range selectedFields {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &field, keys)
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &field, keys, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -314,7 +314,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, keys)
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, keys, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -500,7 +500,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -517,6 +517,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			ctx, orgID, start, end, agg.Expression,
 			uint64(query.StepInterval.Seconds()),
 			keys,
+			nil,
 		)
 		if err != nil {
 			return nil, err
@@ -643,7 +644,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 	var allGroupByArgs []any
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -663,6 +664,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 				ctx, orgID, start, end, aggExpr.Expression,
 				rateInterval,
 				keys,
+				nil,
 			)
 			if err != nil {
 				return nil, err

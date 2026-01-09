@@ -31,6 +31,7 @@ func (c *conditionBuilder) conditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 
 	switch operator {
@@ -43,7 +44,7 @@ func (c *conditionBuilder) conditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	tblFieldName, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
+	tblFieldName, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key, evolutions)
 	if err != nil {
 		return "", err
 	}
@@ -146,8 +147,9 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
-	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb)
+	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb, evolutions)
 	if err != nil {
 		return "", err
 	}

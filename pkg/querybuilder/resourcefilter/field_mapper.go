@@ -54,6 +54,7 @@ func (m *defaultFieldMapper) FieldFor(
 	_ valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
+	_ []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 	columns, err := m.getColumn(ctx, tsStart, tsEnd, key)
 	if err != nil {
@@ -71,8 +72,9 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
-	colName, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
+	colName, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key, evolutions)
 	if err != nil {
 		return "", err
 	}

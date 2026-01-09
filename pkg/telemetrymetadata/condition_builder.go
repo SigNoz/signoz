@@ -28,6 +28,7 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 
 	switch operator {
@@ -46,7 +47,7 @@ func (c *conditionBuilder) ConditionFor(
 		return "", nil
 	}
 
-	tblFieldName, err := c.fm.FieldFor(ctx, orgID, tsStart, tsEnd, key)
+	tblFieldName, err := c.fm.FieldFor(ctx, orgID, tsStart, tsEnd, key, evolutions)
 	if err != nil {
 		// if we don't have a table field name, we can't build a condition for related values
 		return "", nil

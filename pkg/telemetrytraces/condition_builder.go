@@ -37,6 +37,7 @@ func (c *conditionBuilder) conditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 
 	switch operator {
@@ -56,7 +57,7 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	// then ask the mapper for the actual SQL reference
-	tblFieldName, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
+	tblFieldName, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key, evolutions)
 	if err != nil {
 		return "", err
 	}
@@ -245,19 +246,20 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 	if c.isSpanScopeField(key.Name) {
 		return c.buildSpanScopeCondition(key, operator, value, startNs)
 	}
 
-	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb)
+	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb, evolutions)
 	if err != nil {
 		return "", err
 	}
 
 	if operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
-		field, _ := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
+		field, _ := c.fm.FieldFor(ctx, orgID, startNs, endNs, key, evolutions)
 		if slices.Contains(maps.Keys(IntrinsicFields), field) ||
 			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), field) ||
 			slices.Contains(maps.Keys(CalculatedFields), field) ||
@@ -265,7 +267,7 @@ func (c *conditionBuilder) ConditionFor(
 			return condition, nil
 		}
 
-		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
+		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb, evolutions)
 		if err != nil {
 			return "", err
 		}

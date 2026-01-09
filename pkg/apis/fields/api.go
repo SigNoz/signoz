@@ -124,7 +124,7 @@ func (api *API) GetFieldsValues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	relatedValues, relatedComplete, err := api.telemetryMetadataStore.GetRelatedValues(ctx, orgID, fieldValueSelector)
+	relatedValues, relatedComplete, err := api.telemetryMetadataStore.GetRelatedValues(ctx, orgID, fieldValueSelector, nil)
 	if err != nil {
 		// we don't want to return error if we fail to get related values for some reason
 		relatedValues = []string{}

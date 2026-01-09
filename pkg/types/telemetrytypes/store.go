@@ -22,7 +22,7 @@ type MetadataStore interface {
 
 	// GetRelatedValues returns a list of related values for the given key name
 	// and the existing selection of keys.
-	GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) ([]string, bool, error)
+	GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector, evolutions []*EvolutionEntry) ([]string, bool, error)
 
 	// GetAllValues returns a list of all values.
 	GetAllValues(ctx context.Context, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)

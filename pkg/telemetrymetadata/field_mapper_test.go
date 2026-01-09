@@ -206,7 +206,7 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := fm.FieldFor(ctx, valuer.GenerateUUID(), tc.tsStart, tc.tsEnd, &tc.key)
+			result, err := fm.FieldFor(ctx, valuer.GenerateUUID(), tc.tsStart, tc.tsEnd, &tc.key, nil)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)

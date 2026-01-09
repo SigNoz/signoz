@@ -453,7 +453,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, orgID valu
 		if selectedFields[field.Name] {
 			continue
 		}
-		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, orgID, b.start, b.end, &field, keys)
+		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, orgID, b.start, b.end, &field, keys, nil)
 		if err != nil {
 			b.stmtBuilder.logger.WarnContext(ctx, "failed to map select field",
 				"field", field.Name, "error", err)
@@ -468,7 +468,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, orgID valu
 	// Add order by support using ColumnExpressionFor
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
-		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, orgID, b.start, b.end, &orderBy.Key.TelemetryFieldKey, keys)
+		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, orgID, b.start, b.end, &orderBy.Key.TelemetryFieldKey, keys, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -559,6 +559,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, orgI
 			keys,
 			telemetrytypes.FieldDataTypeString,
 			nil,
+			nil,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
@@ -583,6 +584,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, orgI
 			agg.Expression,
 			uint64(b.operator.StepInterval.Seconds()),
 			keys,
+			nil,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
@@ -674,6 +676,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, orgID val
 			keys,
 			telemetrytypes.FieldDataTypeString,
 			nil,
+			nil,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
@@ -700,6 +703,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, orgID val
 			agg.Expression,
 			rateInterval,
 			keys,
+			nil,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
@@ -819,6 +823,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, orgID va
 			keys,
 			telemetrytypes.FieldDataTypeString,
 			nil,
+			nil,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
@@ -843,6 +848,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, orgID va
 			agg.Expression,
 			uint64((b.end-b.start)/querybuilder.NsToSeconds),
 			keys,
+			nil,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(

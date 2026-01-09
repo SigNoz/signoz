@@ -273,9 +273,14 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			if query.SelectFields[index].Name == LogsV2TimestampColumn || query.SelectFields[index].Name == LogsV2IDColumn {
 				continue
 			}
+			// get all evolution for the column
+			evolutions := b.metadataStore.GetColumnEvolutionMetadata(ctx, orgID, telemetrytypes.EvolutionSelector{
+				Signal:       telemetrytypes.SignalLogs,
+				FieldContext: query.SelectFields[index].FieldContext,
+			})
 
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], keys)
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], keys, evolutions)
 			if err != nil {
 				return nil, err
 			}
@@ -284,9 +289,12 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
-
+	evolutions := b.metadataStore.GetColumnEvolutionMetadata(ctx, orgID, telemetrytypes.EvolutionSelector{
+		Signal:       telemetrytypes.SignalLogs,
+		FieldContext: telemetrytypes.FieldContextResource,
+	})
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, evolutions)
 
 	if err != nil {
 		return nil, err
@@ -294,7 +302,12 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, keys)
+		// get all evolution for the column
+		evolutions := b.metadataStore.GetColumnEvolutionMetadata(ctx, orgID, telemetrytypes.EvolutionSelector{
+			Signal:       telemetrytypes.SignalLogs,
+			FieldContext: orderBy.Key.FieldContext,
+		})
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, keys, evolutions)
 		if err != nil {
 			return nil, err
 		}
@@ -361,7 +374,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -379,6 +392,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 			ctx, orgID, start, end, agg.Expression,
 			uint64(query.StepInterval.Seconds()),
 			keys,
+			nil,
 		)
 		if err != nil {
 			return nil, err
@@ -390,7 +404,11 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Add FROM clause
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	evolutions := b.metadataStore.GetColumnEvolutionMetadata(ctx, orgID, telemetrytypes.EvolutionSelector{
+		Signal:       telemetrytypes.SignalLogs,
+		FieldContext: telemetrytypes.FieldContextResource,
+	})
+	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, evolutions)
 
 	if err != nil {
 		return nil, err
@@ -509,7 +527,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	var allGroupByArgs []any
 
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -530,6 +548,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 				ctx, orgID, start, end, aggExpr.Expression,
 				rateInterval,
 				keys,
+				nil,
 			)
 			if err != nil {
 				return nil, err
@@ -541,8 +560,12 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
+	evolutions := b.metadataStore.GetColumnEvolutionMetadata(ctx, orgID, telemetrytypes.EvolutionSelector{
+		Signal:       telemetrytypes.SignalLogs,
+		FieldContext: telemetrytypes.FieldContextResource,
+	})
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, evolutions)
 
 	if err != nil {
 		return nil, err
@@ -600,11 +623,13 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 // buildFilterCondition builds SQL condition from filter expression
 func (b *logQueryStatementBuilder) addFilterCondition(
 	ctx context.Context,
+	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) (*querybuilder.PreparedWhereClause, error) {
 
 	var preparedWhereClause *querybuilder.PreparedWhereClause
@@ -614,6 +639,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 		// add filter expression
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
+			OrgID:              orgID,
 			Logger:             b.logger,
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
@@ -622,6 +648,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			FullTextColumn:     b.fullTextColumn,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
+			Evolutions:         evolutions,
 		}, start, end)
 
 		if err != nil {

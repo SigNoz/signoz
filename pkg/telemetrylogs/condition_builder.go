@@ -34,6 +34,7 @@ func (c *conditionBuilder) conditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
@@ -52,7 +53,7 @@ func (c *conditionBuilder) conditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	tblFieldName, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
+	tblFieldName, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key, evolutions)
 	if err != nil {
 		return "", err
 	}
@@ -179,12 +180,6 @@ func (c *conditionBuilder) conditionFor(
 
 		var value any
 
-		// get all evolution for the column
-		evolutions := c.metadataStore.GetColumnEvolutionMetadata(ctx, orgID, telemetrytypes.EvolutionSelector{
-			Signal:       telemetrytypes.SignalLogs,
-			FieldContext: key.FieldContext,
-		})
-
 		// remove columns which is not required based on the evolution
 		newColumns := []*schema.Column{}
 		if len(evolutions) == 0 {
@@ -272,8 +267,9 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
-	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb)
+	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb, evolutions)
 	if err != nil {
 		return "", err
 	}
@@ -281,12 +277,12 @@ func (c *conditionBuilder) ConditionFor(
 	if !(key.FieldContext == telemetrytypes.FieldContextBody && querybuilder.BodyJSONQueryEnabled) && operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
-		field, _ := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
+		field, _ := c.fm.FieldFor(ctx, orgID, startNs, endNs, key, evolutions)
 		if slices.Contains(maps.Keys(IntrinsicFields), field) && key.FieldContext != telemetrytypes.FieldContextBody {
 			return condition, nil
 		}
 
-		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
+		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb, evolutions)
 		if err != nil {
 			return "", err
 		}

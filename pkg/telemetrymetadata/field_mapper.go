@@ -52,7 +52,7 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, tsStart, tsE
 	return columns, nil
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, _ []*telemetrytypes.EvolutionEntry) (string, error) {
 	columns, err := m.getColumn(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
@@ -74,9 +74,10 @@ func (m *fieldMapper) ColumnExpressionFor(
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 
-	colName, err := m.FieldFor(ctx, orgID, startNs, endNs, field)
+	colName, err := m.FieldFor(ctx, orgID, startNs, endNs, field, evolutions)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -86,7 +87,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 			if _, ok := attributeMetadataColumns[field.Name]; ok {
 				// if it is, attach the column name directly
 				field.FieldContext = telemetrytypes.FieldContextSpan
-				colName, _ = m.FieldFor(ctx, orgID, startNs, endNs, field)
+				colName, _ = m.FieldFor(ctx, orgID, startNs, endNs, field, evolutions)
 			} else {
 				// - the context is not provided
 				// - there are not keys for the field
@@ -104,12 +105,12 @@ func (m *fieldMapper) ColumnExpressionFor(
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it
-			colName, _ = m.FieldFor(ctx, orgID, startNs, endNs, keysForField[0])
+			colName, _ = m.FieldFor(ctx, orgID, startNs, endNs, keysForField[0], evolutions)
 		} else {
 			// select any non-empty value from the keys
 			args := []string{}
 			for _, key := range keysForField {
-				colName, _ = m.FieldFor(ctx, orgID, startNs, endNs, key)
+				colName, _ = m.FieldFor(ctx, orgID, startNs, endNs, key, evolutions)
 				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", colName, colName))
 			}
 			colName = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))

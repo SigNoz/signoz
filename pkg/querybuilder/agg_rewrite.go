@@ -54,6 +54,7 @@ func (r *aggExprRewriter) Rewrite(
 	expr string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, []any, error) {
 
 	wrapped := fmt.Sprintf("SELECT %s", expr)
@@ -88,6 +89,7 @@ func (r *aggExprRewriter) Rewrite(
 		r.fieldMapper,
 		r.conditionBuilder,
 		r.jsonKeyToKey,
+		evolutions,
 	)
 	// Rewrite the first select item (our expression)
 	if err := sel.SelectItems[0].Accept(visitor); err != nil {
@@ -109,12 +111,13 @@ func (r *aggExprRewriter) RewriteMulti(
 	exprs []string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) ([]string, [][]any, error) {
 	out := make([]string, len(exprs))
 	var errs []error
 	var chArgsList [][]any
 	for i, e := range exprs {
-		w, chArgs, err := r.Rewrite(ctx, orgID, startNs, endNs, e, rateInterval, keys)
+		w, chArgs, err := r.Rewrite(ctx, orgID, startNs, endNs, e, rateInterval, keys, evolutions)
 		if err != nil {
 			errs = append(errs, err)
 			out[i] = e
@@ -145,6 +148,7 @@ type exprVisitor struct {
 	Modified         bool
 	chArgs           []any
 	isRate           bool
+	evolutions       []*telemetrytypes.EvolutionEntry
 }
 
 func newExprVisitor(
@@ -158,6 +162,7 @@ func newExprVisitor(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+	evolutions []*telemetrytypes.EvolutionEntry,
 ) *exprVisitor {
 	return &exprVisitor{
 		ctx:              ctx,
@@ -170,6 +175,7 @@ func newExprVisitor(
 		fieldMapper:      fieldMapper,
 		conditionBuilder: conditionBuilder,
 		jsonKeyToKey:     jsonKeyToKey,
+		evolutions:       evolutions,
 	}
 }
 
@@ -217,6 +223,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 				ConditionBuilder: v.conditionBuilder,
 				FullTextColumn:   v.fullTextColumn,
 				JsonKeyToKey:     v.jsonKeyToKey,
+				Evolutions:       v.evolutions,
 			}, v.startNs, v.endNs,
 		)
 		if err != nil {
@@ -237,7 +244,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i := 0; i < len(args)-1; i++ {
 			origVal := args[i].String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
-			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey)
+			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey, v.evolutions)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
@@ -255,7 +262,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i, arg := range args {
 			orig := arg.String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
-			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey)
+			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey, v.evolutions)
 			if err != nil {
 				return err
 			}

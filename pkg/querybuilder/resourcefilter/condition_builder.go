@@ -52,6 +52,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 	op qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
+	_ []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 
 	if key.FieldContext != telemetrytypes.FieldContextResource {
@@ -70,7 +71,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 	keyIdxFilter := sb.Like(columns[0].Name, keyIndexFilter(key))
 	valueForIndexFilter := valueForIndexFilter(op, key, value)
 
-	fieldName, err := b.fm.FieldFor(ctx, orgID, startNs, endNs, key)
+	fieldName, err := b.fm.FieldFor(ctx, orgID, startNs, endNs, key, nil)
 	if err != nil {
 		return "", err
 	}

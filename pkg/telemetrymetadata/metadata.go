@@ -1005,7 +1005,7 @@ func (t *telemetryMetaStore) GetKey(ctx context.Context, fieldKeySelector *telem
 	return keys[fieldKeySelector.Name], nil
 }
 
-func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
+func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector, evolutions []*telemetrytypes.EvolutionEntry) ([]string, bool, error) {
 
 	// nothing to return as "related" value if there is nothing to filter on
 	if fieldValueSelector.ExistingQuery == "" {
@@ -1019,7 +1019,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		FieldDataType: fieldValueSelector.FieldDataType,
 	}
 
-	selectColumn, err := t.fm.FieldFor(ctx, orgID, 0, 0, key)
+	selectColumn, err := t.fm.FieldFor(ctx, orgID, 0, 0, key, evolutions)
 
 	if err != nil {
 		// we don't have a explicit column to select from the related metadata table
@@ -1029,12 +1029,12 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 			Name:          key.Name,
 			FieldContext:  telemetrytypes.FieldContextResource,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
-		})
+		}, evolutions)
 		attributeColumn, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
 			Name:          key.Name,
 			FieldContext:  telemetrytypes.FieldContextAttribute,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
-		})
+		}, evolutions)
 		selectColumn = fmt.Sprintf("if(notEmpty(%s), %s, %s)", resourceColumn, resourceColumn, attributeColumn)
 	}
 
@@ -1080,20 +1080,20 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 
 			// search on attributes
 			key.FieldContext = telemetrytypes.FieldContextAttribute
-			cond, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			cond, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, evolutions)
 			if err == nil {
 				conds = append(conds, cond)
 			}
 
 			// search on resource
 			key.FieldContext = telemetrytypes.FieldContextResource
-			cond, err = t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			cond, err = t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, evolutions)
 			if err == nil {
 				conds = append(conds, cond)
 			}
 			key.FieldContext = origContext
 		} else {
-			cond, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			cond, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, evolutions)
 			if err == nil {
 				conds = append(conds, cond)
 			}
@@ -1147,8 +1147,8 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 	return attributeValues, complete, nil
 }
 
-func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
-	return t.getRelatedValues(ctx, orgID, fieldValueSelector)
+func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector, evolutions []*telemetrytypes.EvolutionEntry) ([]string, bool, error) {
+	return t.getRelatedValues(ctx, orgID, fieldValueSelector, evolutions)
 }
 
 func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {

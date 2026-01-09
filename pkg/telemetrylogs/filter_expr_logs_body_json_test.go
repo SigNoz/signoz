@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/require"
 )
@@ -23,6 +24,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 
 	opts := querybuilder.FilterExprVisitorOpts{
 		Context:          context.Background(),
+		OrgID:            valuer.GenerateUUID(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,

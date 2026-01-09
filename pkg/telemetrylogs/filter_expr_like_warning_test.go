@@ -28,12 +28,14 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 	opts := querybuilder.FilterExprVisitorOpts{
 		Context:          ctx,
+		OrgID:            valuer.GenerateUUID(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
+		Evolutions:       nil,
 	}
 
 	tests := []string{
@@ -72,12 +74,14 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 
 	opts := querybuilder.FilterExprVisitorOpts{
 		Context:          ctx,
+		OrgID:            orgId,
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
+		Evolutions:       nil,
 	}
 
 	tests := []string{

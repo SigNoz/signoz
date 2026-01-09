@@ -121,7 +121,7 @@ func (m *MockMetadataStore) GetKey(ctx context.Context, fieldKeySelector *teleme
 }
 
 // GetRelatedValues returns a list of related values for the given key name and selection
-func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
+func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector, evolutions []*telemetrytypes.EvolutionEntry) ([]string, bool, error) {
 	if fieldValueSelector == nil {
 		return nil, true, nil
 	}
