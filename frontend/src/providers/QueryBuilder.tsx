@@ -60,6 +60,7 @@ import {
 	IsDefaultQueryProps,
 	QueryBuilderContextType,
 	QueryBuilderData,
+	ReduceOperators,
 } from 'types/common/queryBuilder';
 import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
@@ -329,7 +330,7 @@ export function QueryBuilderProvider({
 				// set to default values
 				orderBy: [],
 				limit: null,
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			};
 		},
 		[],

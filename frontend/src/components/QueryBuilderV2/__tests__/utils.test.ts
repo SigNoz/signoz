@@ -6,7 +6,7 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 
 import {
@@ -803,7 +803,7 @@ describe('convertAggregationToExpression', () => {
 			timeAggregation: 'avg',
 			spaceAggregation: 'max',
 			alias: 'test_alias',
-			reduceTo: 'sum',
+			reduceTo: ReduceOperators.SUM,
 			temporality: 'delta',
 		});
 
@@ -812,7 +812,7 @@ describe('convertAggregationToExpression', () => {
 				metricName: 'test_metric',
 				timeAggregation: 'avg',
 				spaceAggregation: 'max',
-				reduceTo: 'sum',
+				reduceTo: ReduceOperators.SUM,
 				temporality: 'delta',
 			},
 		]);
