@@ -96,7 +96,30 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: invalid email").WithAdditional("The nameID assertion is used to retrieve the email address, please check your IDP configuration and try again.")
 	}
 
-	return authtypes.NewCallbackIdentity("", email, authDomain.StorableAuthDomain().OrgID, state), nil
+	name := ""
+	var groups []string
+	role := ""
+
+	attributeMapping := authDomain.AuthDomainConfig().SAML.AttributeMapping
+	if attributeMapping != nil {
+		if attributeMapping.Name != "" {
+			if val := assertionInfo.Values.Get(attributeMapping.Name); val != "" {
+				name = val
+			}
+		}
+
+		if attributeMapping.Groups != "" {
+			groups = assertionInfo.Values.GetAll(attributeMapping.Groups)
+		}
+
+		if attributeMapping.Role != "" {
+			if val := assertionInfo.Values.Get(attributeMapping.Role); val != "" {
+				role = val
+			}
+		}
+	}
+
+	return authtypes.NewCallbackIdentity(name, email, authDomain.StorableAuthDomain().OrgID, state, groups, role), nil
 }
 
 func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDomain) *authtypes.AuthNProviderInfo {

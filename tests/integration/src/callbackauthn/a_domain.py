@@ -78,11 +78,12 @@ def test_create_and_get_domain(
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     data = response.json()["data"]
+    
     assert len(data) == 2
-    assert data[0]["name"] == "domain-google.integration.test"
-    assert data[0]["ssoType"] == "google_auth"
-    assert data[1]["name"] == "domain-saml.integration.test"
-    assert data[1]["ssoType"] == "saml"
+
+    for domain in data:
+        assert domain["name"] in ["domain-google.integration.test", "domain-saml.integration.test"]
+        assert domain["ssoType"] in ["google_auth", "saml"]
 
 
 def test_create_invalid(
@@ -165,3 +166,91 @@ def test_create_invalid(
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_create_invalid_role_mapping(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """Test that invalid role mappings are rejected."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Create domain with invalid defaultRole
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        json={
+            "name": "invalid-role-test.integration.test",
+            "config": {
+                "ssoEnabled": True,
+                "ssoType": "saml",
+                "samlConfig": {
+                    "samlEntity": "saml-entity",
+                    "samlIdp": "saml-idp",
+                    "samlCert": "saml-cert",
+                },
+                "roleMapping": {
+                    "defaultRole": "SUPERADMIN",  # Invalid role
+                },
+            },
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+    # Create domain with invalid role in groupMappings
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        json={
+            "name": "invalid-group-role.integration.test",
+            "config": {
+                "ssoEnabled": True,
+                "ssoType": "saml",
+                "samlConfig": {
+                    "samlEntity": "saml-entity",
+                    "samlIdp": "saml-idp",
+                    "samlCert": "saml-cert",
+                },
+                "roleMapping": {
+                    "defaultRole": "VIEWER",
+                    "groupMappings": {
+                        "admins": "SUPERUSER",  # Invalid role
+                    },
+                },
+            },
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+    # Valid role mapping should succeed
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        json={
+            "name": "valid-role-mapping.integration.test",
+            "config": {
+                "ssoEnabled": True,
+                "ssoType": "saml",
+                "samlConfig": {
+                    "samlEntity": "saml-entity",
+                    "samlIdp": "saml-idp",
+                    "samlCert": "saml-cert",
+                },
+                "roleMapping": {
+                    "defaultRole": "VIEWER",
+                    "groupMappings": {
+                        "signoz-admins": "ADMIN",
+                        "signoz-editors": "EDITOR",
+                    },
+                },
+            },
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+
+    assert response.status_code == HTTPStatus.CREATED

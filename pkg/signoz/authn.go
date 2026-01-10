@@ -14,7 +14,7 @@ import (
 func NewAuthNs(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error) {
 	emailPasswordAuthN := emailpasswordauthn.New(store)
 
-	googleCallbackAuthN, err := googlecallbackauthn.New(ctx, store)
+	googleCallbackAuthN, err := googlecallbackauthn.New(ctx, store, providerSettings)
 	if err != nil {
 		return nil, err
 	}

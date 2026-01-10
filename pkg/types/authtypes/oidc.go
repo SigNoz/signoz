@@ -29,11 +29,20 @@ type OIDCConfig struct {
 
 	// Uses the userinfo endpoint to get additional claims for the token. This is especially useful where upstreams return "thin" id tokens
 	GetUserInfo bool `json:"getUserInfo"`
+
+	// Scopes for the token. Defaults to "email profile openid"
+	Scopes []string `json:"scopes"`
 }
 
 type ClaimMapping struct {
 	// Configurable key which contains the email claims. Defaults to "email"
 	Email string `json:"email"`
+	// Configuration key which contains the name. Defaults to "name"
+	Name string `json:"name"`
+	// Configuration key which contains the name. Defaults to "groups" (Optional)
+	Groups string `json:"groups"`
+	// Configuration key which contains the name. Defaults to "role" (Optional)
+	Role string `json:"role"`
 }
 
 func (config *OIDCConfig) UnmarshalJSON(data []byte) error {
@@ -58,6 +67,22 @@ func (config *OIDCConfig) UnmarshalJSON(data []byte) error {
 
 	if temp.ClaimMapping.Email == "" {
 		temp.ClaimMapping.Email = "email"
+	}
+
+	if temp.ClaimMapping.Name == "" {
+		temp.ClaimMapping.Name = "name"
+	}
+
+	if temp.ClaimMapping.Groups == "" {
+		temp.ClaimMapping.Groups = "groups"
+	}
+
+	if temp.ClaimMapping.Role == "" {
+		temp.ClaimMapping.Role = "role"
+	}
+
+	if len(temp.Scopes) == 0 {
+		temp.Scopes = []string{"email", "profile", "openid"}
 	}
 
 	*config = OIDCConfig(temp)

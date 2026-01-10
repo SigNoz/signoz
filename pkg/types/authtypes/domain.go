@@ -63,6 +63,7 @@ type AuthDomainConfig struct {
 	SAML          *SamlConfig   `json:"samlConfig"`
 	Google        *GoogleConfig `json:"googleAuthConfig"`
 	OIDC          *OIDCConfig   `json:"oidcConfig"`
+	RoleMapping   *RoleMapping  `json:"roleMapping"`
 }
 
 type AuthDomain struct {
@@ -178,6 +179,12 @@ func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
 
 	default:
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid authn provider %q", temp.AuthNProvider.StringValue())
+	}
+
+	if temp.RoleMapping != nil {
+		if err := temp.RoleMapping.Validate(); err != nil {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid role mapping: %s", err)
+		}
 	}
 
 	*typ = AuthDomainConfig(temp)
