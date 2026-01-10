@@ -588,17 +588,17 @@ func (q *querier) run(
 		}
 	}
 
-	processedResults, postWarnings, postWarningsDocURL, err := q.postProcessResults(ctx, results, req)
+	processedResults, processedResultsWarnings, processedResultsDocsURL, err := q.postProcessResults(ctx, results, req)
 	if err != nil {
 		return nil, err
 	}
 
 	// Merge warnings collected during post-processing.
-	if len(postWarnings) > 0 {
-		warnings = append(warnings, postWarnings...)
+	if len(processedResultsWarnings) > 0 {
+		warnings = append(warnings, processedResultsWarnings...)
 	}
-	if postWarningsDocURL != "" {
-		warningsDocURL = postWarningsDocURL
+	if processedResultsDocsURL != "" {
+		warningsDocURL = processedResultsDocsURL
 	}
 
 	// attach step interval to metadata so client can make informed decisions, ex: width of the bar
