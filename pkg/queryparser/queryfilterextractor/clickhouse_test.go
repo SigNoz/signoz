@@ -125,6 +125,62 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 				{Name: "os.type", Alias: "os_type", OriginExpr: "`os.type`", OriginField: "os.type"},
 			},
 		},
+		{
+			name: "13 - Group by with function aliases in group by",
+			query: `
+		    SELECT
+		    toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) as ts,
+		        JSONExtractString(labels, 'region') AS region,
+		        JSONExtractString(labels, 'instance') AS instance,
+		        JSONExtractString(labels, 'http.method') AS http_method,
+		        metric_name as metricName,
+		        rand() as value
+		    FROM signoz_metrics.time_series_v4
+		    WHERE (metric_name IN ('test_metric_cardinality'))
+		    GROUP BY
+		    ts,
+		    metric_name,
+		        region,
+		        instance,
+		        http_method
+			`,
+			wantMetrics: []string{"test_metric_cardinality"},
+			wantGroupByColumns: []ColumnInfo{
+				{Name: "region", Alias: "", OriginExpr: "JSONExtractString(labels, 'region')", OriginField: "region"},
+				{Name: "instance", Alias: "", OriginExpr: "JSONExtractString(labels, 'instance')", OriginField: "instance"},
+				{Name: "http_method", Alias: "", OriginExpr: "JSONExtractString(labels, 'http.method')", OriginField: "http.method"},
+				{Name: "metric_name", Alias: "metricName", OriginExpr: "metric_name", OriginField: "metric_name"},
+				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60))", OriginField: ""},
+			},
+		},
+		{
+			name: "14 - Group by with function group by column",
+			query: `
+            SELECT        
+            toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) as ts,        
+                JSONExtractString(labels, 'region'),
+                JSONExtractString(labels, 'instance'),
+                JSONExtractString(labels, 'http.method'),
+                metric_name as metricName,
+                rand() as value
+            FROM signoz_metrics.time_series_v4
+            WHERE (metric_name IN ('test_metric_cardinality'))
+            GROUP BY                
+            ts,
+            metric_name,      
+                JSONExtractString(labels, 'region'),
+                JSONExtractString(labels, 'instance'),
+                JSONExtractString(labels, 'http.method')
+			`,
+			wantMetrics: []string{"test_metric_cardinality"},
+			wantGroupByColumns: []ColumnInfo{
+				{Name: "JSONExtractString(labels, 'region')", Alias: "", OriginExpr: "JSONExtractString(labels, 'region')", OriginField: "region"},
+				{Name: "JSONExtractString(labels, 'instance')", Alias: "", OriginExpr: "JSONExtractString(labels, 'instance')", OriginField: "instance"},
+				{Name: "JSONExtractString(labels, 'http.method')", Alias: "", OriginExpr: "JSONExtractString(labels, 'http.method')", OriginField: "http.method"},
+				{Name: "metric_name", Alias: "metricName", OriginExpr: "metric_name", OriginField: "metric_name"},
+				{Name: "ts", Alias: "", OriginExpr: "toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60))", OriginField: ""},
+			},
+		},
 	}
 
 	for _, tt := range tests {

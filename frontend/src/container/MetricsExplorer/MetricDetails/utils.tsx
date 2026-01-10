@@ -4,7 +4,7 @@ import { SpaceAggregation, TimeAggregation } from 'api/v5/v5';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 export function formatTimestampToReadableDate(timestamp: string): string {
 	const date = new Date(timestamp);
@@ -114,7 +114,7 @@ export function getMetricDetailsQuery(
 							metricName,
 							timeAggregation: timeAggregation as TimeAggregation,
 							spaceAggregation: spaceAggregation as SpaceAggregation,
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							temporality: '',
 						},
 					],
