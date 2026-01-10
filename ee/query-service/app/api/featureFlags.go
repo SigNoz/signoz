@@ -9,9 +9,10 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
-	pkgError "github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
@@ -25,11 +26,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, pkgError.Newf(pkgError.TypeInvalidInput, pkgError.CodeInvalidInput, "orgId is invalid"))
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	featureSet, err := ah.Signoz.Licensing.GetFeatureFlags(r.Context(), orgID)
 	if err != nil {
@@ -59,13 +56,16 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if constants.IsPreferSpanMetrics {
-		for idx, feature := range featureSet {
-			if feature.Name == licensetypes.UseSpanMetrics {
-				featureSet[idx].Active = true
-			}
-		}
-	}
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	useSpanMetrics := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseSpanMetrics, evalCtx)
+
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
+		Active:     useSpanMetrics,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
 
 	if constants.IsDotMetricsEnabled {
 		for idx, feature := range featureSet {

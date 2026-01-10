@@ -99,6 +99,14 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 	return authtypes.NewCallbackIdentity("", email, authDomain.StorableAuthDomain().OrgID, state), nil
 }
 
+func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDomain) *authtypes.AuthNProviderInfo {
+	state := authtypes.NewState(&url.URL{Path: "login"}, authDomain.StorableAuthDomain().ID).URL.String()
+
+	return &authtypes.AuthNProviderInfo{
+		RelayStatePath: &state,
+	}
+}
+
 func (a *AuthN) serviceProvider(siteURL *url.URL, authDomain *authtypes.AuthDomain) (*saml2.SAMLServiceProvider, error) {
 	certStore, err := a.getCertificateStore(authDomain)
 	if err != nil {

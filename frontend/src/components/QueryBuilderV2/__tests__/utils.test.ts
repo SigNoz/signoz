@@ -6,13 +6,14 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 
 import {
 	convertAggregationToExpression,
 	convertFiltersToExpression,
 	convertFiltersToExpressionWithExistingQuery,
+	formatValueForExpression,
 	removeKeysFromExpression,
 } from '../utils';
 
@@ -802,7 +803,7 @@ describe('convertAggregationToExpression', () => {
 			timeAggregation: 'avg',
 			spaceAggregation: 'max',
 			alias: 'test_alias',
-			reduceTo: 'sum',
+			reduceTo: ReduceOperators.SUM,
 			temporality: 'delta',
 		});
 
@@ -811,7 +812,7 @@ describe('convertAggregationToExpression', () => {
 				metricName: 'test_metric',
 				timeAggregation: 'avg',
 				spaceAggregation: 'max',
-				reduceTo: 'sum',
+				reduceTo: ReduceOperators.SUM,
 				temporality: 'delta',
 			},
 		]);
@@ -1190,6 +1191,223 @@ describe('removeKeysFromExpression', () => {
 			// Verify the result can be parsed by extractQueryPairs
 			const pairs = extractQueryPairs(result);
 			expect(pairs).toHaveLength(2);
+		});
+	});
+});
+
+describe('formatValueForExpression', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
+
+	describe('Variable values', () => {
+		it('should return variable values as-is', () => {
+			expect(formatValueForExpression('$variable')).toBe('$variable');
+			expect(formatValueForExpression('$env')).toBe('$env');
+			expect(formatValueForExpression(' $variable ')).toBe(' $variable ');
+		});
+
+		it('should return variable arrays as-is', () => {
+			expect(formatValueForExpression(['$var1', '$var2'])).toBe('$var1,$var2');
+		});
+	});
+
+	describe('Numeric string values', () => {
+		it('should return numeric strings with quotes', () => {
+			expect(formatValueForExpression('123')).toBe("'123'");
+			expect(formatValueForExpression('0')).toBe("'0'");
+			expect(formatValueForExpression('100000')).toBe("'100000'");
+			expect(formatValueForExpression('-42')).toBe("'-42'");
+			expect(formatValueForExpression('3.14')).toBe("'3.14'");
+			expect(formatValueForExpression(' 456 ')).toBe("' 456 '");
+		});
+
+		it('should handle numeric strings with IN operator', () => {
+			expect(formatValueForExpression('123', 'IN')).toBe("['123']");
+			expect(formatValueForExpression(['123', '456'], 'IN')).toBe(
+				"['123', '456']",
+			);
+		});
+	});
+
+	describe('Quoted string values', () => {
+		it('should return already quoted strings as-is', () => {
+			expect(formatValueForExpression("'quoted'")).toBe("'quoted'");
+			expect(formatValueForExpression('"double-quoted"')).toBe('"double-quoted"');
+			expect(formatValueForExpression('`backticked`')).toBe('`backticked`');
+			expect(formatValueForExpression("'100000'")).toBe("'100000'");
+		});
+
+		it('should preserve quoted strings in arrays', () => {
+			expect(formatValueForExpression(["'value1'", "'value2'"])).toBe(
+				"['value1', 'value2']",
+			);
+			expect(formatValueForExpression(["'100000'", "'200000'"], 'IN')).toBe(
+				"['100000', '200000']",
+			);
+		});
+	});
+
+	describe('Regular string values', () => {
+		it('should wrap regular strings in single quotes', () => {
+			expect(formatValueForExpression('hello')).toBe("'hello'");
+			expect(formatValueForExpression('api-gateway')).toBe("'api-gateway'");
+			expect(formatValueForExpression('test value')).toBe("'test value'");
+		});
+
+		it('should escape single quotes in strings', () => {
+			expect(formatValueForExpression("user's data")).toBe("'user\\'s data'");
+			expect(formatValueForExpression("John's")).toBe("'John\\'s'");
+			expect(formatValueForExpression("it's a test")).toBe("'it\\'s a test'");
+		});
+
+		it('should handle empty strings', () => {
+			expect(formatValueForExpression('')).toBe("''");
+		});
+
+		it('should handle strings with special characters', () => {
+			expect(formatValueForExpression('/api/v1/users')).toBe("'/api/v1/users'");
+			expect(formatValueForExpression('user@example.com')).toBe(
+				"'user@example.com'",
+			);
+			expect(formatValueForExpression('Contains "quotes"')).toBe(
+				'\'Contains "quotes"\'',
+			);
+		});
+	});
+
+	describe('Number values', () => {
+		it('should convert numbers to strings without quotes', () => {
+			expect(formatValueForExpression(123)).toBe('123');
+			expect(formatValueForExpression(0)).toBe('0');
+			expect(formatValueForExpression(-42)).toBe('-42');
+			expect(formatValueForExpression(100000)).toBe('100000');
+			expect(formatValueForExpression(3.14)).toBe('3.14');
+		});
+
+		it('should handle numbers with IN operator', () => {
+			expect(formatValueForExpression(123, 'IN')).toBe('[123]');
+			expect(formatValueForExpression([100, 200] as any, 'IN')).toBe('[100, 200]');
+		});
+	});
+
+	describe('Boolean values', () => {
+		it('should convert booleans to strings without quotes', () => {
+			expect(formatValueForExpression(true)).toBe('true');
+			expect(formatValueForExpression(false)).toBe('false');
+		});
+
+		it('should handle booleans with IN operator', () => {
+			expect(formatValueForExpression(true, 'IN')).toBe('[true]');
+			expect(formatValueForExpression([true, false] as any, 'IN')).toBe(
+				'[true, false]',
+			);
+		});
+	});
+
+	describe('Array values', () => {
+		it('should format array of strings', () => {
+			expect(formatValueForExpression(['a', 'b', 'c'])).toBe("['a', 'b', 'c']");
+			expect(formatValueForExpression(['service1', 'service2'])).toBe(
+				"['service1', 'service2']",
+			);
+		});
+
+		it('should format array of numeric strings', () => {
+			expect(formatValueForExpression(['123', '456', '789'])).toBe(
+				"['123', '456', '789']",
+			);
+		});
+
+		it('should format array of numbers', () => {
+			expect(formatValueForExpression([1, 2, 3] as any)).toBe('[1, 2, 3]');
+			expect(formatValueForExpression([100, 200, 300] as any)).toBe(
+				'[100, 200, 300]',
+			);
+		});
+
+		it('should format mixed array types', () => {
+			expect(formatValueForExpression(['hello', 123, true] as any)).toBe(
+				"['hello', 123, true]",
+			);
+		});
+
+		it('should format array with quoted values', () => {
+			expect(formatValueForExpression(["'quoted'", 'regular'])).toBe(
+				"['quoted', 'regular']",
+			);
+		});
+
+		it('should format array with empty strings', () => {
+			expect(formatValueForExpression(['', 'value'])).toBe("['', 'value']");
+		});
+	});
+
+	describe('IN and NOT IN operators', () => {
+		it('should format single value as array for IN operator', () => {
+			expect(formatValueForExpression('value', 'IN')).toBe("['value']");
+			expect(formatValueForExpression(123, 'IN')).toBe('[123]');
+			expect(formatValueForExpression('123', 'IN')).toBe("['123']");
+		});
+
+		it('should format array for IN operator', () => {
+			expect(formatValueForExpression(['a', 'b'], 'IN')).toBe("['a', 'b']");
+			expect(formatValueForExpression(['123', '456'], 'IN')).toBe(
+				"['123', '456']",
+			);
+		});
+
+		it('should format single value as array for NOT IN operator', () => {
+			expect(formatValueForExpression('value', 'NOT IN')).toBe("['value']");
+			expect(formatValueForExpression('value', 'not in')).toBe("['value']");
+		});
+
+		it('should format array for NOT IN operator', () => {
+			expect(formatValueForExpression(['a', 'b'], 'NOT IN')).toBe("['a', 'b']");
+		});
+	});
+
+	describe('Edge cases', () => {
+		it('should handle strings that look like numbers but have quotes', () => {
+			expect(formatValueForExpression("'123'")).toBe("'123'");
+			expect(formatValueForExpression('"456"')).toBe('"456"');
+			expect(formatValueForExpression('`789`')).toBe('`789`');
+		});
+
+		it('should handle strings with leading/trailing whitespace', () => {
+			expect(formatValueForExpression('  hello  ')).toBe("'  hello  '");
+			expect(formatValueForExpression('  123  ')).toBe("'  123  '");
+		});
+
+		it('should handle very large numbers', () => {
+			expect(formatValueForExpression('999999999')).toBe("'999999999'");
+			expect(formatValueForExpression(999999999)).toBe('999999999');
+		});
+
+		it('should handle decimal numbers', () => {
+			expect(formatValueForExpression('123.456')).toBe("'123.456'");
+			expect(formatValueForExpression(123.456)).toBe('123.456');
+		});
+
+		it('should handle negative numbers', () => {
+			expect(formatValueForExpression('-100')).toBe("'-100'");
+			expect(formatValueForExpression(-100)).toBe('-100');
+		});
+
+		it('should handle strings that are not valid numbers', () => {
+			expect(formatValueForExpression('123abc')).toBe("'123abc'");
+			expect(formatValueForExpression('abc123')).toBe("'abc123'");
+			expect(formatValueForExpression('12.34.56')).toBe("'12.34.56'");
+		});
+
+		it('should handle empty array', () => {
+			expect(formatValueForExpression([])).toBe('[]');
+			expect(formatValueForExpression([], 'IN')).toBe('[]');
+		});
+
+		it('should handle array with single element', () => {
+			expect(formatValueForExpression(['single'])).toBe("['single']");
+			expect(formatValueForExpression([123] as any)).toBe('[123]');
 		});
 	});
 });

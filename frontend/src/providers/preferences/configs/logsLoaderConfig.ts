@@ -8,6 +8,18 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 
 import { FormattingOptions } from '../types';
 
+/**
+ * Validates if a column is valid for Logs Explorer
+ * Filters out Traces-specific columns that would cause query failures
+ */
+const isValidLogColumn = (col: {
+	name?: string;
+	signal?: string;
+	[key: string]: unknown;
+}): boolean =>
+	// If column has signal field, it must be 'logs'
+	!(col?.signal && col.signal !== 'logs');
+
 // --- LOGS preferences loader config ---
 const logsLoaders = {
 	local: (): {
@@ -18,10 +30,16 @@ const logsLoaders = {
 		if (local) {
 			try {
 				const parsed = JSON.parse(local);
+
+				const localColumns = parsed.selectColumns || [];
+
+				// Filter out invalid columns (e.g., Logs columns that might have been incorrectly stored)
+				const validLogColumns = localColumns.filter(isValidLogColumn);
+
 				return {
-					columns: parsed.selectColumns || [],
+					columns: validLogColumns.length > 0 ? validLogColumns : [],
 					formatting: {
-						maxLines: parsed.maxLines ?? 2,
+						maxLines: parsed.maxLines ?? 1,
 						format: parsed.format ?? 'table',
 						fontSize: parsed.fontSize ?? 'small',
 						version: parsed.version ?? 1,
@@ -38,10 +56,16 @@ const logsLoaders = {
 		const urlParams = new URLSearchParams(window.location.search);
 		try {
 			const options = JSON.parse(urlParams.get('options') || '{}');
+
+			const urlColumns = options.selectColumns || [];
+
+			// Filter out invalid columns (e.g., Logs columns that might have been incorrectly stored)
+			const validLogColumns = urlColumns.filter(isValidLogColumn);
+
 			return {
-				columns: options.selectColumns || [],
+				columns: validLogColumns.length > 0 ? validLogColumns : [],
 				formatting: {
-					maxLines: options.maxLines ?? 2,
+					maxLines: options.maxLines ?? 1,
 					format: options.format ?? 'table',
 					fontSize: options.fontSize ?? 'small',
 					version: options.version ?? 1,
@@ -56,7 +80,7 @@ const logsLoaders = {
 	} => ({
 		columns: defaultLogsSelectedColumns,
 		formatting: {
-			maxLines: 2,
+			maxLines: 1,
 			format: 'table',
 			fontSize: 'small' as FontSize,
 			version: 1,

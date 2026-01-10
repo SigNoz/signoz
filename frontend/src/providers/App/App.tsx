@@ -1,4 +1,5 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import get from 'api/v1/user/me/get';
 import listUserPreferences from 'api/v1/user/preferences/list';
@@ -77,6 +78,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 
 	useEffect(() => {
 		if (!isFetchingUser && userData && userData.data) {
+			setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL, userData.data.email);
 			setUser((prev) => ({
 				...prev,
 				...userData.data,

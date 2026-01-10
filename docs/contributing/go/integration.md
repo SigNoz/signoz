@@ -9,7 +9,7 @@ SigNoz uses integration tests to verify that different components work together 
 Before running integration tests, ensure you have the following installed:
 
 - Python 3.13+
-- Poetry (for dependency management)
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - Docker (for containerized services)
 
 ### Initial Setup
@@ -19,17 +19,19 @@ Before running integration tests, ensure you have the following installed:
 cd tests/integration
 ```
 
-2. Install dependencies using Poetry:
+2. Install dependencies using uv:
 ```bash
-poetry install --no-root
+uv sync
 ```
+
+> **_NOTE:_**  the build backend could throw an error while installing `psycopg2`, pleae see https://www.psycopg.org/docs/install.html#build-prerequisites
 
 ### Starting the Test Environment
 
 To spin up all the containers necessary for writing integration tests and keep them running:
 
 ```bash
-poetry run pytest --basetemp=./tmp/ -vv --reuse src/bootstrap/setup.py::test_setup
+uv run pytest --basetemp=./tmp/ -vv --reuse src/bootstrap/setup.py::test_setup
 ```
 
 This command will:
@@ -42,7 +44,7 @@ This command will:
 When you're done writing integration tests, clean up the environment:
 
 ```bash
-poetry run pytest --basetemp=./tmp/ -vv --teardown -s src/bootstrap/setup.py::test_teardown
+uv run pytest --basetemp=./tmp/ -vv --teardown -s src/bootstrap/setup.py::test_teardown
 ```
 
 This will destroy the running integration test setup and clean up resources.
@@ -72,7 +74,7 @@ Python and pytest form the foundation of the integration testing framework. Test
 │   ├── sqlite.py
 │   ├── types.py
 │   └── zookeeper.py
-├── poetry.lock
+├── uv.lock
 ├── pyproject.toml
 └── src
     └── bootstrap
@@ -125,7 +127,7 @@ def test_version(signoz: types.SigNoz) -> None:
 We have written a simple test which calls the `version` endpoint of the container in step 1. In **order to just run this function, run the following command:**
 
 ```bash
-poetry run pytest --basetemp=./tmp/ -vv --reuse src/bootstrap/e_version.py::test_version
+uv run pytest --basetemp=./tmp/ -vv --reuse src/bootstrap/e_version.py::test_version
 ```
 
 > Note: The `--reuse` flag is used to reuse the environment if it is already running. Always use this flag when writing and running integration tests. If you don't use this flag, the environment will be destroyed and recreated every time you run the test.
@@ -153,7 +155,7 @@ def test_user_registration(signoz: types.SigNoz) -> None:
         },
         timeout=2,
     )
-    
+
     assert response.status_code == HTTPStatus.OK
     assert response.json()["setupCompleted"] is True
 ```
@@ -163,27 +165,27 @@ def test_user_registration(signoz: types.SigNoz) -> None:
 ### Running All Tests
 
 ```bash
-poetry run pytest --basetemp=./tmp/ -vv --reuse src/
+uv run pytest --basetemp=./tmp/ -vv --reuse src/
 ```
 
 ### Running Specific Test Categories
 
 ```bash
-poetry run pytest --basetemp=./tmp/ -vv --reuse src/<suite>
+uv run pytest --basetemp=./tmp/ -vv --reuse src/<suite>
 
 # Run querier tests
-poetry run pytest --basetemp=./tmp/ -vv --reuse src/querier/
+uv run pytest --basetemp=./tmp/ -vv --reuse src/querier/
 # Run auth tests
-poetry run pytest --basetemp=./tmp/ -vv --reuse src/auth/
+uv run pytest --basetemp=./tmp/ -vv --reuse src/auth/
 ```
 
 ### Running Individual Tests
 
 ```bash
-poetry run pytest --basetemp=./tmp/ -vv --reuse src/<suite>/<file>.py::test_name
+uv run pytest --basetemp=./tmp/ -vv --reuse src/<suite>/<file>.py::test_name
 
 # Run test_register in file a_register.py in auth suite
-poetry run pytest --basetemp=./tmp/ -vv --reuse src/auth/a_register.py::test_register
+uv run pytest --basetemp=./tmp/ -vv --reuse src/auth/a_register.py::test_register
 ```
 
 ## How to configure different options for integration tests?
@@ -197,7 +199,7 @@ Tests can be configured using pytest options:
 
 Example:
 ```bash
-poetry run pytest --basetemp=./tmp/ -vv --reuse --sqlstore-provider=postgres --postgres-version=14 src/auth/
+uv run pytest --basetemp=./tmp/ -vv --reuse --sqlstore-provider=postgres --postgres-version=14 src/auth/
 ```
 
 

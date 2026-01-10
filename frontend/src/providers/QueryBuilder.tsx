@@ -60,6 +60,7 @@ import {
 	IsDefaultQueryProps,
 	QueryBuilderContextType,
 	QueryBuilderData,
+	ReduceOperators,
 } from 'types/common/queryBuilder';
 import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
@@ -329,7 +330,7 @@ export function QueryBuilderProvider({
 				// set to default values
 				orderBy: [],
 				limit: null,
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			};
 		},
 		[],
@@ -564,8 +565,6 @@ export function QueryBuilderProvider({
 	const addNewBuilderQuery = useCallback(() => {
 		setCurrentQuery((prevState) => {
 			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
-
-			console.log('prevState', prevState.builder.queryData);
 
 			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
 

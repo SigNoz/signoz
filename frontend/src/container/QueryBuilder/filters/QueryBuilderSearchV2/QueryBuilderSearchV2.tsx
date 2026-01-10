@@ -74,7 +74,7 @@ export interface ITag {
 	id?: string;
 	key: BaseAutocompleteData;
 	op: string;
-	value: string[] | string | number | boolean;
+	value: (string | number | boolean)[] | string | number | boolean;
 }
 
 interface CustomTagProps {
@@ -300,7 +300,8 @@ function QueryBuilderSearchV2(
 				currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
 			tagType: currentFilterItem?.key?.type ?? '',
 			searchText: isArray(currentFilterItem?.value)
-				? currentFilterItem?.value?.[currentFilterItem.value.length - 1] || ''
+				? String(currentFilterItem?.value?.[currentFilterItem.value.length - 1]) ||
+				  ''
 				: currentFilterItem?.value?.toString() || '',
 		},
 		{

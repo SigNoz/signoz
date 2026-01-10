@@ -4,13 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/slices"
 )
@@ -67,6 +69,7 @@ type MetricQueryStatementBuilder struct {
 	metadataStore telemetrytypes.MetadataStore
 	fm            qbtypes.FieldMapper
 	cb            qbtypes.ConditionBuilder
+	flagger       flagger.Flagger
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.MetricAggregation] = (*MetricQueryStatementBuilder)(nil)
@@ -76,6 +79,7 @@ func NewMetricQueryStatementBuilder(
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
+	flagger flagger.Flagger,
 ) *MetricQueryStatementBuilder {
 	metricsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetrics")
 	return &MetricQueryStatementBuilder{
@@ -83,6 +87,7 @@ func NewMetricQueryStatementBuilder(
 		metadataStore: metadataStore,
 		fm:            fieldMapper,
 		cb:            conditionBuilder,
+		flagger:       flagger,
 	}
 }
 
@@ -348,13 +353,13 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-        }, start, end)
+		}, start, end)
 		if err != nil {
 			return "", nil, err
 		}
 	}
 
-	start, end, tbl := WhichTSTableToUse(start, end, query.Aggregations[0].TableHints)
+	start, end, _, tbl := WhichTSTableToUse(start, end, query.Aggregations[0].TableHints)
 	sb.From(fmt.Sprintf("%s.%s", DBName, tbl))
 
 	sb.Select("fingerprint")
@@ -450,7 +455,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDelta(
 }
 
 func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
-	_ context.Context,
+	ctx context.Context,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	timeSeriesCTE string,
@@ -485,10 +490,13 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 
 	innerQuery, innerArgs := baseSb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
 
+	// ! TODO (balanikaran) Get OrgID via function parameter instead of valuer.GenerateUUID()
+	interpolationEnabled := b.flagger.BooleanOrEmpty(ctx, flagger.FeatureInterpolationEnabled, featuretypes.NewFlaggerEvaluationContext(valuer.GenerateUUID()))
+
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
 		rateExpr := fmt.Sprintf(RateWithoutNegative, start, start)
-		if os.Getenv("INTERPOLATION_ENABLED") == "true" {
+		if interpolationEnabled {
 			rateExpr = RateWithInterpolation
 		}
 		wrapped := sqlbuilder.NewSelectBuilder()
@@ -503,7 +511,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 
 	case metrictypes.TimeAggregationIncrease:
 		incExpr := fmt.Sprintf(IncreaseWithoutNegative, start, start)
-		if os.Getenv("INTERPOLATION_ENABLED") == "true" {
+		if interpolationEnabled {
 			incExpr = IncreaseWithInterpolation
 		}
 		wrapped := sqlbuilder.NewSelectBuilder()

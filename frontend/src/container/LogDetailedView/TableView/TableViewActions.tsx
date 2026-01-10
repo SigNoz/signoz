@@ -60,7 +60,8 @@ const BodyContent: React.FC<{
 	fieldData: Record<string, string>;
 	record: DataType;
 	bodyHtml: { __html: string };
-}> = React.memo(({ fieldData, record, bodyHtml }) => {
+	textToCopy: string;
+}> = React.memo(({ fieldData, record, bodyHtml, textToCopy }) => {
 	const { isLoading, treeData, error } = useAsyncJSONProcessing(
 		fieldData.value,
 		record.field === 'body',
@@ -92,11 +93,13 @@ const BodyContent: React.FC<{
 
 	if (record.field === 'body') {
 		return (
-			<span
-				style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
-			>
-				<span dangerouslySetInnerHTML={bodyHtml} />
-			</span>
+			<CopyClipboardHOC entityKey="body" textToCopy={textToCopy}>
+				<span
+					style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
+				>
+					<span dangerouslySetInnerHTML={bodyHtml} />
+				</span>
+			</CopyClipboardHOC>
 		);
 	}
 
@@ -172,7 +175,12 @@ export default function TableViewActions(
 		switch (record.field) {
 			case 'body':
 				return (
-					<BodyContent fieldData={fieldData} record={record} bodyHtml={bodyHtml} />
+					<BodyContent
+						fieldData={fieldData}
+						record={record}
+						bodyHtml={bodyHtml}
+						textToCopy={textToCopy}
+					/>
 				);
 
 			case 'timestamp':
@@ -194,6 +202,7 @@ export default function TableViewActions(
 		record,
 		fieldData,
 		bodyHtml,
+		textToCopy,
 		formatTimezoneAdjustedTimestamp,
 		cleanTimestamp,
 	]);
@@ -202,12 +211,15 @@ export default function TableViewActions(
 	if (record.field === 'body') {
 		return (
 			<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
-				<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
-					<BodyContent fieldData={fieldData} record={record} bodyHtml={bodyHtml} />
-				</CopyClipboardHOC>
+				<BodyContent
+					fieldData={fieldData}
+					record={record}
+					bodyHtml={bodyHtml}
+					textToCopy={textToCopy}
+				/>
 				{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
 					<span className="action-btn">
-						<Tooltip title="Filter for value">
+						<Tooltip title="Filter for value" mouseLeaveDelay={0}>
 							<Button
 								className="filter-btn periscope-btn"
 								icon={
@@ -226,7 +238,7 @@ export default function TableViewActions(
 								)}
 							/>
 						</Tooltip>
-						<Tooltip title="Filter out value">
+						<Tooltip title="Filter out value" mouseLeaveDelay={0}>
 							<Button
 								className="filter-btn periscope-btn"
 								icon={
@@ -287,7 +299,7 @@ export default function TableViewActions(
 			</CopyClipboardHOC>
 			{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
 				<span className="action-btn">
-					<Tooltip title="Filter for value">
+					<Tooltip title="Filter for value" mouseLeaveDelay={0}>
 						<Button
 							className="filter-btn periscope-btn"
 							icon={
@@ -306,7 +318,7 @@ export default function TableViewActions(
 							)}
 						/>
 					</Tooltip>
-					<Tooltip title="Filter out value">
+					<Tooltip title="Filter out value" mouseLeaveDelay={0}>
 						<Button
 							className="filter-btn periscope-btn"
 							icon={

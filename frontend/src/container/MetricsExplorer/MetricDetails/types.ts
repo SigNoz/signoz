@@ -11,7 +11,7 @@ export interface MetricDetailsProps {
 	isOpen: boolean;
 	metricName: string | null;
 	isModalTimeSelection: boolean;
-	openInspectModal: (metricName: string) => void;
+	openInspectModal?: (metricName: string) => void;
 }
 
 export interface DashboardsAndAlertsPopoverProps {

@@ -18,6 +18,16 @@ jest.mock('api/browser/localstorage/get', () => ({
 	default: jest.fn((key: string) => mockLocalStorage[key] || null),
 }));
 
+const mockLogsColumns = [
+	{ name: 'timestamp', signal: 'logs', fieldContext: 'log' },
+	{ name: 'body', signal: 'logs', fieldContext: 'log' },
+];
+
+const mockTracesColumns = [
+	{ name: 'service.name', signal: 'traces', fieldContext: 'resource' },
+	{ name: 'name', signal: 'traces', fieldContext: 'span' },
+];
+
 describe('logsLoaderConfig', () => {
 	// Save original location object
 	const originalWindowLocation = window.location;
@@ -150,11 +160,90 @@ describe('logsLoaderConfig', () => {
 		expect(result).toEqual({
 			columns: defaultLogsSelectedColumns,
 			formatting: {
-				maxLines: 2,
+				maxLines: 1,
 				format: 'table' as LogViewMode,
 				fontSize: 'small' as FontSize,
 				version: 1,
 			} as FormattingOptions,
+		});
+	});
+
+	describe('Column validation - filtering Traces columns', () => {
+		it('should filter out Traces columns (name with traces signal) from URL', async () => {
+			const mixedColumns = [...mockLogsColumns, ...mockTracesColumns];
+
+			mockedLocation.search = `?options=${encodeURIComponent(
+				JSON.stringify({
+					selectColumns: mixedColumns,
+				}),
+			)}`;
+
+			const result = await logsLoaderConfig.url();
+
+			// Should only keep logs columns
+			expect(result.columns).toEqual(mockLogsColumns);
+		});
+
+		it('should filter out Traces columns from localStorage', async () => {
+			const tracesColumns = [...mockTracesColumns];
+
+			mockLocalStorage[LOCALSTORAGE.LOGS_LIST_OPTIONS] = JSON.stringify({
+				selectColumns: tracesColumns,
+			});
+
+			const result = await logsLoaderConfig.local();
+
+			// Should filter out all Traces columns
+			expect(result.columns).toEqual([]);
+		});
+
+		it('should accept valid Logs columns from URL', async () => {
+			const logsColumns = [...mockLogsColumns];
+
+			mockedLocation.search = `?options=${encodeURIComponent(
+				JSON.stringify({
+					selectColumns: logsColumns,
+				}),
+			)}`;
+
+			const result = await logsLoaderConfig.url();
+
+			expect(result.columns).toEqual(logsColumns);
+		});
+
+		it('should fall back to defaults when all columns are filtered out from URL', async () => {
+			const tracesColumns = [...mockTracesColumns];
+
+			mockedLocation.search = `?options=${encodeURIComponent(
+				JSON.stringify({
+					selectColumns: tracesColumns,
+				}),
+			)}`;
+
+			const result = await logsLoaderConfig.url();
+
+			// Should return empty array, which triggers fallback to defaults in preferencesLoader
+			expect(result.columns).toEqual([]);
+		});
+
+		it('should handle columns without signal field (legacy data)', async () => {
+			const columnsWithoutSignal = [
+				{ name: 'body', fieldContext: 'log' },
+				{ name: 'service.name', fieldContext: 'resource' },
+			];
+
+			mockedLocation.search = `?options=${encodeURIComponent(
+				JSON.stringify({
+					selectColumns: columnsWithoutSignal,
+				}),
+			)}`;
+
+			const result = await logsLoaderConfig.url();
+
+			// Without signal field, columns pass through validation
+			// This matches the current implementation behavior where only columns
+			// with signal !== 'logs' are filtered out
+			expect(result.columns).toEqual(columnsWithoutSignal);
 		});
 	});
 });

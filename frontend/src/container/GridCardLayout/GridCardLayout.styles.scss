@@ -99,6 +99,12 @@
 			height: calc(100% - 30px);
 		}
 	}
+
+	&:hover {
+		.widget-header-more-options {
+			visibility: visible;
+		}
+	}
 }
 
 .widget-full-view {

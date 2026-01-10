@@ -31,6 +31,11 @@ var (
 type GettableAuthDomain struct {
 	*StorableAuthDomain
 	*AuthDomainConfig
+	AuthNProviderInfo *AuthNProviderInfo `json:"authNProviderInfo"`
+}
+
+type AuthNProviderInfo struct {
+	RelayStatePath *string `json:"relayStatePath"`
 }
 
 type PostableAuthDomain struct {
@@ -43,7 +48,7 @@ type UpdateableAuthDomain struct {
 }
 
 type StorableAuthDomain struct {
-	bun.BaseModel `bun:"table:org_domains"`
+	bun.BaseModel `bun:"table:auth_domain"`
 
 	types.Identifiable
 	Name  string      `bun:"name" json:"name"`
@@ -103,10 +108,11 @@ func NewAuthDomainFromStorableAuthDomain(storableAuthDomain *StorableAuthDomain)
 	}, nil
 }
 
-func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain) *GettableAuthDomain {
+func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain, authNProviderInfo *AuthNProviderInfo) *GettableAuthDomain {
 	return &GettableAuthDomain{
 		StorableAuthDomain: authDomain.StorableAuthDomain(),
 		AuthDomainConfig:   authDomain.AuthDomainConfig(),
+		AuthNProviderInfo:  authNProviderInfo,
 	}
 }
 

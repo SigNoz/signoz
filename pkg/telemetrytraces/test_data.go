@@ -77,6 +77,21 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				FieldDataType: telemetrytypes.FieldDataTypeInt64,
 			},
 		},
+		"materialized.key.name": {
+			{
+				Name:          "materialized.key.name",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+		},
+		"isentrypoint": {
+			{
+				Name:          "isentrypoint",
+				FieldContext:  telemetrytypes.FieldContextSpan,
+				FieldDataType: telemetrytypes.FieldDataTypeBool,
+			},
+		},
 	}
 	for _, keys := range keysMap {
 		for _, key := range keys {

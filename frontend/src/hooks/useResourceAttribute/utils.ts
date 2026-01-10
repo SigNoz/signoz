@@ -63,7 +63,8 @@ export function convertOperatorLabelForExceptions(
 export function formatStringValuesForTrace(
 	val: TagFilterItem['value'] = [],
 ): string[] {
-	return !Array.isArray(val) ? [String(val)] : val;
+	// IN QB V5 we can pass array of all (boolean, number, string) values. To make this compatible with the old version, we need to convert the array to a string array.
+	return !Array.isArray(val) ? [String(val)] : val.map((item) => String(item));
 }
 
 export const convertCompositeQueryToTraceSelectedTags = (

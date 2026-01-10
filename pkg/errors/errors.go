@@ -208,3 +208,18 @@ func WrapUnexpectedf(cause error, code Code, format string, args ...any) *base {
 func NewUnexpectedf(code Code, format string, args ...any) *base {
 	return Newf(TypeInvalidInput, code, format, args...)
 }
+
+// NewMethodNotAllowedf is a wrapper around Newf with TypeMethodNotAllowed.
+func NewMethodNotAllowedf(code Code, format string, args ...any) *base {
+	return Newf(TypeMethodNotAllowed, code, format, args...)
+}
+
+// WrapTimeoutf is a wrapper around Wrapf with TypeTimeout.
+func WrapTimeoutf(cause error, code Code, format string, args ...any) *base {
+	return Wrapf(cause, TypeTimeout, code, format, args...)
+}
+
+// NewTimeoutf is a wrapper around Newf with TypeTimeout.
+func NewTimeoutf(code Code, format string, args ...any) *base {
+	return Newf(TypeTimeout, code, format, args...)
+}

@@ -1,4 +1,5 @@
 import ROUTES from 'constants/routes';
+import AlertTypeSelectionPage from 'pages/AlertTypeSelection';
 import MessagingQueues from 'pages/MessagingQueues';
 import MeterExplorer from 'pages/MeterExplorer';
 import { RouteProps } from 'react-router-dom';
@@ -34,6 +35,7 @@ import {
 	OrgOnboarding,
 	PasswordReset,
 	PipelinePage,
+	PublicDashboardPage,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -170,6 +172,13 @@ const routes: AppRoutes[] = [
 		key: 'DASHBOARD',
 	},
 	{
+		path: ROUTES.PUBLIC_DASHBOARD,
+		exact: false,
+		component: PublicDashboardPage,
+		isPrivate: false,
+		key: 'PUBLIC_DASHBOARD',
+	},
+	{
 		path: ROUTES.DASHBOARD_WIDGET,
 		exact: true,
 		component: DashboardWidget,
@@ -189,6 +198,13 @@ const routes: AppRoutes[] = [
 		component: ListAllALertsPage,
 		isPrivate: true,
 		key: 'LIST_ALL_ALERT',
+	},
+	{
+		path: ROUTES.ALERT_TYPE_SELECTION,
+		exact: true,
+		component: AlertTypeSelectionPage,
+		isPrivate: true,
+		key: 'ALERT_TYPE_SELECTION',
 	},
 	{
 		path: ROUTES.ALERTS_NEW,
