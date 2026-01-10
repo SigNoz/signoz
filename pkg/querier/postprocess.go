@@ -2,6 +2,7 @@ package querier
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"slices"
@@ -178,6 +179,11 @@ func postProcessBuilderQuery[T any](
 	return result
 }
 
+func marshalInterface(inter any) string {
+	b, _ := json.Marshal(inter)
+	return string(b)
+}
+
 // postProcessMetricQuery applies postprocessing to a metric query result
 func postProcessMetricQuery(
 	q *querier,
@@ -185,6 +191,72 @@ func postProcessMetricQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
+
+	// Strip diagnostic series (bucket_sum, bucket_count) after computing warnings.
+	if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok && tsData != nil {
+		var kept []*qbtypes.AggregationBucket
+		var bucketSum, bucketCount *qbtypes.AggregationBucket
+
+		for _, b := range tsData.Aggregations {
+			switch b.Alias {
+			case "bucket_sum", "__result_1":
+				bucketSum = b
+			case "bucket_count", "__result_2":
+				bucketCount = b
+			default:
+				kept = append(kept, b)
+			}
+		}
+
+		// Derive warnings from diagnostics
+		allZero := true
+		if bucketSum != nil {
+			if len(bucketSum.Series) == 0 {
+				allZero = false // dont calculate for no values
+			} else {
+				for _, s := range bucketSum.Series {
+					for _, v := range s.Values {
+						if v.Value > 0 {
+							allZero = false
+							break
+						}
+					}
+					if !allZero {
+						break
+					}
+				}
+			}
+		}
+
+		allSparse := true
+		if bucketCount != nil {
+			if len(bucketCount.Series) == 0 {
+				allSparse = false // dont calculate for no values
+			} else {
+				for _, s := range bucketCount.Series {
+					for _, v := range s.Values {
+						if v.Value >= 2 {
+							allSparse = false
+							break
+						}
+					}
+					if !allSparse {
+						break
+					}
+				}
+			}
+		}
+
+		if allZero {
+			result.Warnings = append(result.Warnings, "No change observed for this cumulative metric in the selected range.")
+		}
+		if allSparse {
+			result.Warnings = append(result.Warnings, "Only +Inf bucket present; add finite buckets to compute quantiles.")
+		}
+
+		tsData.Aggregations = kept
+		result.Value = tsData
+	}
 
 	config := query.Aggregations[0]
 	spaceAggOrderBy := fmt.Sprintf("%s(%s)", config.SpaceAggregation.StringValue(), config.MetricName)
