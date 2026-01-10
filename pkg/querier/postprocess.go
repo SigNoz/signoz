@@ -2,7 +2,6 @@ package querier
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math"
 	"slices"
@@ -47,7 +46,7 @@ func getQueryName(spec any) string {
 	return getqueryInfo(spec).Name
 }
 
-func (q *querier) postProcessResults(ctx context.Context, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, error) {
+func (q *querier) postProcessResults(ctx context.Context, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, []string, string, error) {
 	// Convert results to typed format for processing
 	typedResults := make(map[string]*qbtypes.Result)
 	for name, result := range results {
@@ -97,7 +96,7 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 				for name, v := range typedResults {
 					retResult[name] = v.Value
 				}
-				return retResult, nil
+				return retResult, nil, "", nil
 			}
 		}
 
@@ -109,11 +108,11 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 			firstQueryName := getQueryName(req.CompositeQuery.Queries[0].Spec)
 			if firstQueryName != "" && tableResult["table"] != nil {
 				// Return table under first query name
-				return map[string]any{firstQueryName: tableResult["table"]}, nil
+				return map[string]any{firstQueryName: tableResult["table"]}, nil, "", nil
 			}
 		}
 
-		return tableResult, nil
+		return tableResult, nil, "", nil
 	}
 
 	if req.RequestType == qbtypes.RequestTypeTimeSeries && req.FormatOptions != nil && req.FormatOptions.FillGaps {
@@ -156,7 +155,19 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 		finalResults[name] = result.Value
 	}
 
-	return finalResults, nil
+	// collect warnings from typed results
+	var warnings []string
+	var warningsDocURL string
+	for _, res := range typedResults {
+		if len(res.Warnings) > 0 {
+			warnings = append(warnings, res.Warnings...)
+		}
+		if res.WarningsDocURL != "" {
+			warningsDocURL = res.WarningsDocURL
+		}
+	}
+
+	return finalResults, warnings, warningsDocURL, nil
 }
 
 // postProcessBuilderQuery applies postprocessing to a single builder query result
@@ -177,11 +188,6 @@ func postProcessBuilderQuery[T any](
 	}
 
 	return result
-}
-
-func marshalInterface(inter any) string {
-	b, _ := json.Marshal(inter)
-	return string(b)
 }
 
 // postProcessMetricQuery applies postprocessing to a metric query result
