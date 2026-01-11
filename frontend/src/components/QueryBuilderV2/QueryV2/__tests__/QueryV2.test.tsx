@@ -3,12 +3,10 @@
 import '@testing-library/jest-dom';
 
 import { jest } from '@jest/globals';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import userEvent from '@testing-library/user-event';
 import { render, screen } from 'tests/test-utils';
 import { Having, IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { UseQueryOperations } from 'types/common/operations.types';
-import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryV2 } from '../QueryV2';
 
@@ -27,50 +25,13 @@ jest.mock(
 			return <div>MetricsAggregateSection</div>;
 		},
 );
-// Mock hooks
-jest.mock('hooks/queryBuilder/useQueryBuilder');
-jest.mock('hooks/queryBuilder/useQueryBuilderOperations');
-
-const mockedUseQueryBuilder = jest.mocked(useQueryBuilder);
-const mockedUseQueryOperations = jest.mocked(
-	useQueryOperations,
-) as jest.MockedFunction<UseQueryOperations>;
 
 describe('QueryV2 - base render', () => {
-	beforeEach(() => {
-		const mockCloneQuery = jest.fn() as jest.MockedFunction<
-			(type: string, q: IBuilderQuery) => void
-		>;
-
-		mockedUseQueryBuilder.mockReturnValue(({
-			// Only fields used by QueryV2
-			cloneQuery: mockCloneQuery,
-			panelType: null,
-		} as unknown) as QueryBuilderContextType);
-
-		mockedUseQueryOperations.mockReturnValue({
-			isTracePanelType: false,
-			isMetricsDataSource: false,
-			operators: [],
-			spaceAggregationOptions: [],
-			listOfAdditionalFilters: [],
-			handleChangeOperator: jest.fn(),
-			handleSpaceAggregationChange: jest.fn(),
-			handleChangeAggregatorAttribute: jest.fn(),
-			handleChangeDataSource: jest.fn(),
-			handleDeleteQuery: jest.fn(),
-			handleChangeQueryData: (jest.fn() as unknown) as ReturnType<UseQueryOperations>['handleChangeQueryData'],
-			handleChangeFormulaData: jest.fn(),
-			handleQueryFunctionsUpdates: jest.fn(),
-			listOfAdditionalFormulaFilters: [],
-		});
-	});
-
 	afterEach(() => {
 		jest.clearAllMocks();
 	});
 
-	it('renders limit input when dataSource is logs', () => {
+	it('renders limit input when dataSource is logs', async () => {
 		const baseQuery: IBuilderQuery = {
 			queryName: 'A',
 			dataSource: DataSource.LOGS,
@@ -114,5 +75,13 @@ describe('QueryV2 - base render', () => {
 		expect(limitInput).toHaveAttribute('type', 'number');
 		expect(limitInput).toHaveAttribute('name', 'limit');
 		expect(limitInput).toHaveAttribute('data-testid', 'input-Limit');
+
+		// Clear the input and ensure it stays visible (post-mount should not auto-hide)
+		const user = userEvent.setup();
+		await user.click(limitInput);
+		expect(limitInput.value).toBe('10');
+		await user.keyboard('{Backspace>2}'); // press backspace twice
+		expect(limitInput.value).toBe('');
+		expect(limitInput).toBeInTheDocument();
 	});
 });
