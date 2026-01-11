@@ -168,6 +168,7 @@ describe('RightContainer - Alerts Section', () => {
 		contextLinks: { linksData: [] },
 		setContextLinks: jest.fn(),
 		enableDrillDown: false,
+		isNewDashboard: false,
 	};
 
 	beforeEach(() => {

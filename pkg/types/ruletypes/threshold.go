@@ -63,6 +63,11 @@ type EvalData struct {
 	// used to check if a sample is part of an active alert
 	// when evaluating the recovery threshold.
 	ActiveAlerts map[uint64]struct{}
+
+	// SendUnmatched is a flag to return samples
+	// even if they don't match the rule condition.
+	// This is useful in testing the rule.
+	SendUnmatched bool
 }
 
 // HasActiveAlert checks if the given sample figerprint is active
@@ -129,6 +134,24 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 				smpl.RecoveryTarget = threshold.RecoveryTarget
 			}
 			smpl.TargetUnit = threshold.TargetUnit
+			resultVector = append(resultVector, smpl)
+			continue
+		} else if evalData.SendUnmatched {
+			// Sanitise the series points to remove any NaN or Inf values
+			series.Points = removeGroupinSetPoints(series)
+			if len(series.Points) == 0 {
+				continue
+			}
+			// prepare the sample with the first point of the series
+			smpl := Sample{
+				Point:      Point{T: series.Points[0].Timestamp, V: series.Points[0].Value},
+				Metric:     PrepareSampleLabelsForRule(series.Labels, threshold.Name),
+				Target:     *threshold.TargetValue,
+				TargetUnit: threshold.TargetUnit,
+			}
+			if threshold.RecoveryTarget != nil {
+				smpl.RecoveryTarget = threshold.RecoveryTarget
+			}
 			resultVector = append(resultVector, smpl)
 			continue
 		}

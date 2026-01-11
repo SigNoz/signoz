@@ -30,29 +30,35 @@ def test_logs_json_body_simple_searches(
     now = datetime.now(tz=timezone.utc)
 
     # Log with simple JSON body
-    log1_body = json.dumps({
-        "message": "User logged in successfully",
-        "status": 200,
-        "active": True,
-        "level": "info",
-        "code": 100
-    })
+    log1_body = json.dumps(
+        {
+            "message": "User logged in successfully",
+            "status": 200,
+            "active": True,
+            "level": "info",
+            "code": 100,
+        }
+    )
 
-    log2_body = json.dumps({
-        "message": "User authentication failed",
-        "status": 401,
-        "active": False,
-        "level": "error",
-        "code": 401
-    })
+    log2_body = json.dumps(
+        {
+            "message": "User authentication failed",
+            "status": 401,
+            "active": False,
+            "level": "error",
+            "code": 401,
+        }
+    )
 
-    log3_body = json.dumps({
-        "message": "Database connection established",
-        "status": 200,
-        "active": True,
-        "level": "info",
-        "code": 200
-    })
+    log3_body = json.dumps(
+        {
+            "message": "Database connection established",
+            "status": 200,
+            "active": True,
+            "level": "info",
+            "code": 200,
+        }
+    )
 
     insert_logs(
         [
@@ -102,7 +108,9 @@ def test_logs_json_body_simple_searches(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": 'body.message CONTAINS "logged in"'},
+                            "filter": {
+                                "expression": 'body.message CONTAINS "logged in"'
+                            },
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
@@ -309,92 +317,56 @@ def test_logs_json_body_nested_keys(
     """
     now = datetime.now(tz=timezone.utc)
 
-    log1_body = json.dumps({
-        "user": {
-            "name": "john_doe",
-            "id": 12345,
-            "email": "john@example.com"
-        },
-        "request": {
-            "method": "GET",
-            "secure": True,
-            "headers": {
-                "content_type": "application/json",
-                "authorization": "Bearer token123"
-            }
-        },
-        "metadata": {
-            "tags": {
-                "environment": "production",
-                "region": "us-east-1"
-            }
-        },
-        "response": {
-            "status": {
-                "code": 200,
-                "message": "OK"
+    log1_body = json.dumps(
+        {
+            "user": {"name": "john_doe", "id": 12345, "email": "john@example.com"},
+            "request": {
+                "method": "GET",
+                "secure": True,
+                "headers": {
+                    "content_type": "application/json",
+                    "authorization": "Bearer token123",
+                },
             },
-            "latency": 123.45
+            "metadata": {"tags": {"environment": "production", "region": "us-east-1"}},
+            "response": {"status": {"code": 200, "message": "OK"}, "latency": 123.45},
         }
-    })
+    )
 
-    log2_body = json.dumps({
-        "user": {
-            "name": "jane_smith",
-            "id": 67890,
-            "email": "jane@example.com"
-        },
-        "request": {
-            "method": "POST",
-            "secure": False,
-            "headers": {
-                "content_type": "text/html",
-                "authorization": "Bearer token456"
-            }
-        },
-        "metadata": {
-            "tags": {
-                "environment": "staging",
-                "region": "us-west-2"
-            }
-        },
-        "response": {
-            "status": {
-                "code": 201,
-                "message": "Created"
+    log2_body = json.dumps(
+        {
+            "user": {"name": "jane_smith", "id": 67890, "email": "jane@example.com"},
+            "request": {
+                "method": "POST",
+                "secure": False,
+                "headers": {
+                    "content_type": "text/html",
+                    "authorization": "Bearer token456",
+                },
             },
-            "latency": 456.78
+            "metadata": {"tags": {"environment": "staging", "region": "us-west-2"}},
+            "response": {
+                "status": {"code": 201, "message": "Created"},
+                "latency": 456.78,
+            },
         }
-    })
+    )
 
-    log3_body = json.dumps({
-        "user": {
-            "name": "john_doe",
-            "id": 11111,
-            "email": "john2@example.com"
-        },
-        "request": {
-            "method": "PUT",
-            "secure": True,
-            "headers": {
-                "content_type": "application/json",
-                "authorization": "Bearer token789"
-            }
-        },
-        "metadata": {
-            "tags": {
-                "environment": "production",
-                "region": "eu-west-1"
-            }
-        },
-        "response": {
-            "status": {
-                "code": 200,
-                "message": "OK"
+    log3_body = json.dumps(
+        {
+            "user": {"name": "john_doe", "id": 11111, "email": "john2@example.com"},
+            "request": {
+                "method": "PUT",
+                "secure": True,
+                "headers": {
+                    "content_type": "application/json",
+                    "authorization": "Bearer token789",
+                },
             },
-            "latency": 123.45
+            "metadata": {"tags": {"environment": "production", "region": "eu-west-1"}},
+            "response": {"status": {"code": 200, "message": "OK"}, "latency": 123.45},
         }
-    })
+    )
 
     insert_logs(
         [
@@ -505,7 +477,9 @@ def test_logs_json_body_nested_keys(
     assert len(results) == 1
     rows = results[0]["rows"]
     assert len(rows) == 2  # log1 and log3 have secure = true
-    secure_values = [json.loads(row["data"]["body"])["request"]["secure"] for row in rows]
+    secure_values = [
+        json.loads(row["data"]["body"])["request"]["secure"] for row in rows
+    ]
     assert all(secure is True for secure in secure_values)
 
     # Test 3: Search by body.response.latency = 123.45
@@ -589,7 +563,9 @@ def test_logs_json_body_nested_keys(
     assert len(results) == 1
     rows = results[0]["rows"]
     assert len(rows) == 2  # log1 and log3 have status.code = 200
-    status_codes = [json.loads(row["data"]["body"])["response"]["status"]["code"] for row in rows]
+    status_codes = [
+        json.loads(row["data"]["body"])["response"]["status"]["code"] for row in rows
+    ]
     assert all(code == 200 for code in status_codes)
 
 
@@ -610,35 +586,41 @@ def test_logs_json_body_array_membership(
     """
     now = datetime.now(tz=timezone.utc)
 
-    log1_body = json.dumps({
-        "tags": ["production", "api", "critical"],
-        "ids": [100, 200, 300],
-        "flags": [True, False, True],
-        "users": [
-            {"name": "alice", "role": "admin"},
-            {"name": "bob", "role": "user"}
-        ]
-    })
+    log1_body = json.dumps(
+        {
+            "tags": ["production", "api", "critical"],
+            "ids": [100, 200, 300],
+            "flags": [True, False, True],
+            "users": [
+                {"name": "alice", "role": "admin"},
+                {"name": "bob", "role": "user"},
+            ],
+        }
+    )
 
-    log2_body = json.dumps({
-        "tags": ["staging", "api", "test"],
-        "ids": [200, 400, 500],
-        "flags": [False, False, True],
-        "users": [
-            {"name": "charlie", "role": "user"},
-            {"name": "david", "role": "admin"}
-        ]
-    })
+    log2_body = json.dumps(
+        {
+            "tags": ["staging", "api", "test"],
+            "ids": [200, 400, 500],
+            "flags": [False, False, True],
+            "users": [
+                {"name": "charlie", "role": "user"},
+                {"name": "david", "role": "admin"},
+            ],
+        }
+    )
 
-    log3_body = json.dumps({
-        "tags": ["production", "web", "important"],
-        "ids": [100, 600, 700],
-        "flags": [True, True, False],
-        "users": [
-            {"name": "alice", "role": "admin"},
-            {"name": "eve", "role": "user"}
-        ]
-    })
+    log3_body = json.dumps(
+        {
+            "tags": ["production", "web", "important"],
+            "ids": [100, 600, 700],
+            "flags": [True, True, False],
+            "users": [
+                {"name": "alice", "role": "admin"},
+                {"name": "eve", "role": "user"},
+            ],
+        }
+    )
 
     insert_logs(
         [
@@ -817,58 +799,68 @@ def test_logs_json_body_listing(
     logs_data = [
         {
             "timestamp": now - timedelta(seconds=5),
-            "body": json.dumps({
-                "id": "log-1",
-                "service": "auth",
-                "action": "login",
-                "status": "success",
-                "user_id": 1
-            }),
-            "severity": "INFO"
+            "body": json.dumps(
+                {
+                    "id": "log-1",
+                    "service": "auth",
+                    "action": "login",
+                    "status": "success",
+                    "user_id": 1,
+                }
+            ),
+            "severity": "INFO",
         },
         {
             "timestamp": now - timedelta(seconds=4),
-            "body": json.dumps({
-                "id": "log-2",
-                "service": "auth",
-                "action": "logout",
-                "status": "success",
-                "user_id": 2
-            }),
-            "severity": "INFO"
+            "body": json.dumps(
+                {
+                    "id": "log-2",
+                    "service": "auth",
+                    "action": "logout",
+                    "status": "success",
+                    "user_id": 2,
+                }
+            ),
+            "severity": "INFO",
         },
         {
             "timestamp": now - timedelta(seconds=3),
-            "body": json.dumps({
-                "id": "log-3",
-                "service": "payment",
-                "action": "charge",
-                "status": "success",
-                "user_id": 1
-            }),
-            "severity": "INFO"
+            "body": json.dumps(
+                {
+                    "id": "log-3",
+                    "service": "payment",
+                    "action": "charge",
+                    "status": "success",
+                    "user_id": 1,
+                }
+            ),
+            "severity": "INFO",
         },
         {
             "timestamp": now - timedelta(seconds=2),
-            "body": json.dumps({
-                "id": "log-4",
-                "service": "auth",
-                "action": "login",
-                "status": "failed",
-                "user_id": 3
-            }),
-            "severity": "ERROR"
+            "body": json.dumps(
+                {
+                    "id": "log-4",
+                    "service": "auth",
+                    "action": "login",
+                    "status": "failed",
+                    "user_id": 3,
+                }
+            ),
+            "severity": "ERROR",
         },
         {
             "timestamp": now - timedelta(seconds=1),
-            "body": json.dumps({
-                "id": "log-5",
-                "service": "payment",
-                "action": "refund",
-                "status": "success",
-                "user_id": 2
-            }),
-            "severity": "INFO"
+            "body": json.dumps(
+                {
+                    "id": "log-5",
+                    "service": "payment",
+                    "action": "refund",
+                    "status": "success",
+                    "user_id": 2,
+                }
+            ),
+            "severity": "INFO",
         },
     ]
 
@@ -1032,7 +1024,9 @@ def test_logs_json_body_listing(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": 'body.service = "auth" AND body.action = "login"'},
+                            "filter": {
+                                "expression": 'body.service = "auth" AND body.action = "login"'
+                            },
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
@@ -1076,7 +1070,9 @@ def test_logs_json_body_listing(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": 'body.service = "auth" OR body.service = "payment"'},
+                            "filter": {
+                                "expression": 'body.service = "auth" OR body.service = "payment"'
+                            },
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
