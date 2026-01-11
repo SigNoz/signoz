@@ -39,6 +39,7 @@ function RawLogView({
 	selectedFields = [],
 	fontSize,
 	onLogClick,
+	handleChangeSelectedView,
 }: RawLogViewProps): JSX.Element {
 	const {
 		isHighlighted: isUrlHighlighted,
@@ -52,7 +53,6 @@ function RawLogView({
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
-		onGroupByAttribute,
 	} = useActiveLog();
 
 	const [selectedTab, setSelectedTab] = useState<VIEWS | undefined>();
@@ -224,13 +224,12 @@ function RawLogView({
 					onClose={handleCloseLogDetail}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
-					onGroupByAttribute={onGroupByAttribute}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			)}
 		</RawLogViewContainer>
 	);
 }
-
 RawLogView.defaultProps = {
 	isActiveLog: false,
 	isReadOnly: false,

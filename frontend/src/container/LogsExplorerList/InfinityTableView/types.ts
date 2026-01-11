@@ -1,4 +1,5 @@
 import { UseTableViewProps } from 'components/Logs/TableView/types';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 
 export type InfinityTableProps = {
 	isLoading?: boolean;
@@ -6,4 +7,5 @@ export type InfinityTableProps = {
 	infitiyTableProps?: {
 		onEndReached: (index: number) => void;
 	};
+	handleChangeSelectedView?: ChangeViewFunctionType;
 };

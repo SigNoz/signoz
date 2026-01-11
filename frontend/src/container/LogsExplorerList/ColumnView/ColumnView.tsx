@@ -47,7 +47,6 @@ function ColumnView({
 		onSetActiveLog: handleSetActiveLog,
 		onClearActiveLog: handleClearActiveLog,
 		onAddToQuery: handleAddToQuery,
-		onGroupByAttribute: handleGroupByAttribute,
 	} = useActiveLog();
 
 	const [showActiveLog, setShowActiveLog] = useState<boolean>(false);
@@ -271,7 +270,6 @@ function ColumnView({
 					onClose={handleLogDetailClose}
 					onAddToQuery={handleAddToQuery}
 					onClickActionItem={handleAddToQuery}
-					onGroupByAttribute={handleGroupByAttribute}
 				/>
 			)}
 		</div>

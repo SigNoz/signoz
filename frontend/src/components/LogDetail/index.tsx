@@ -55,11 +55,11 @@ function LogDetailInner({
 	log,
 	onClose,
 	onAddToQuery,
-	onGroupByAttribute,
 	onClickActionItem,
 	selectedTab,
 	isListViewPanel = false,
 	listViewPanelSelectedFields,
+	handleChangeSelectedView,
 }: LogDetailInnerProps): JSX.Element {
 	const initialContextQuery = useInitialQuery(log);
 	const [contextQuery, setContextQuery] = useState<Query | undefined>(
@@ -365,10 +365,10 @@ function LogDetailInner({
 					logData={log}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onClickActionItem}
-					onGroupByAttribute={onGroupByAttribute}
 					isListViewPanel={isListViewPanel}
 					selectedOptions={options}
 					listViewPanelSelectedFields={listViewPanelSelectedFields}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			)}
 			{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}

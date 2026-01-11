@@ -447,8 +447,9 @@ function LogsExplorerViewsContainer({
 					)}
 
 				<div className="logs-explorer-views-type-content">
-					{showLiveLogs && <LiveLogs />}
-
+					{showLiveLogs && (
+						<LiveLogs handleChangeSelectedView={handleChangeSelectedView} />
+					)}
 					{selectedPanelType === PANEL_TYPES.LIST && !showLiveLogs && (
 						<LogsExplorerList
 							isLoading={isLoading}
@@ -460,9 +461,9 @@ function LogsExplorerViewsContainer({
 							isError={isError}
 							error={error as APIError}
 							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
+							handleChangeSelectedView={handleChangeSelectedView}
 						/>
 					)}
-
 					{selectedPanelType === PANEL_TYPES.TIME_SERIES && !showLiveLogs && (
 						<div className="time-series-view-container">
 							<div className="time-series-view-container-header">
@@ -483,7 +484,6 @@ function LogsExplorerViewsContainer({
 							/>
 						</div>
 					)}
-
 					{selectedPanelType === PANEL_TYPES.TABLE && !showLiveLogs && (
 						<LogsExplorerTable
 							data={

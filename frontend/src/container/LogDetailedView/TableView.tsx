@@ -13,6 +13,7 @@ import AddToQueryHOC, {
 import { ResizeTable } from 'components/ResizeTable';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
@@ -47,7 +48,7 @@ interface TableViewProps {
 	selectedOptions: OptionsQuery;
 	isListViewPanel?: boolean;
 	listViewPanelSelectedFields?: IField[] | null;
-	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
+	handleChangeSelectedView?: ChangeViewFunctionType;
 }
 
 type Props = TableViewProps &
@@ -61,8 +62,8 @@ function TableView({
 	onClickActionItem,
 	isListViewPanel = false,
 	selectedOptions,
-	onGroupByAttribute,
 	listViewPanelSelectedFields,
+	handleChangeSelectedView,
 }: Props): JSX.Element | null {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
@@ -291,7 +292,7 @@ function TableView({
 					isfilterInLoading={isfilterInLoading}
 					isfilterOutLoading={isfilterOutLoading}
 					onClickHandler={onClickHandler}
-					onGroupByAttribute={onGroupByAttribute}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			),
 		},
@@ -334,7 +335,7 @@ function TableView({
 TableView.defaultProps = {
 	isListViewPanel: false,
 	listViewPanelSelectedFields: null,
-	onGroupByAttribute: undefined,
+	handleChangeSelectedView: undefined,
 };
 
 export interface DataType {

@@ -1,5 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
+import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
 
 import TableViewActions from '../TableViewActions';
 import useAsyncJSONProcessing from '../useAsyncJSONProcessing';
@@ -49,6 +52,20 @@ jest.mock('../useAsyncJSONProcessing', () => ({
 	default: jest.fn(),
 }));
 
+jest.mock('antd', () => {
+	const antd = jest.requireActual('antd');
+	return {
+		...antd,
+		// Render popover content inline to make its children testable
+		Popover: ({ content, children }: any): JSX.Element => (
+			<div data-testid="popover">
+				<div data-testid="popover-content">{content}</div>
+				{children}
+			</div>
+		),
+	};
+});
+
 jest.mock('providers/Timezone', () => ({
 	useTimezone: (): {
 		formatTimezoneAdjustedTimestamp: (timestamp: string) => string;
@@ -71,29 +88,35 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
+jest.mock('hooks/queryBuilder/useQueryBuilder');
+jest.mock('hooks/queryBuilder/useGetSearchQueryParam');
+
 describe('TableViewActions', () => {
 	const TEST_VALUE = 'test value';
+	const TEST_FIELD = 'test-field';
 	const ACTION_BUTTON_TEST_ID = '.action-btn';
 	const defaultProps = {
 		fieldData: {
-			field: 'test-field',
+			field: TEST_FIELD,
 			value: TEST_VALUE,
 		},
 		record: {
 			key: 'test-key',
-			field: 'test-field',
+			field: TEST_FIELD,
 			value: TEST_VALUE,
 		},
 		isListViewPanel: false,
 		isfilterInLoading: false,
 		isfilterOutLoading: false,
 		onClickHandler: jest.fn(),
-		onGroupByAttribute: jest.fn(),
+		handleChangeSelectedView: jest.fn(),
 	};
 
 	beforeEach(() => {
 		mockCopyToClipboard = jest.fn();
 		mockNotificationsSuccess = jest.fn();
+		defaultProps.onClickHandler = jest.fn();
+		defaultProps.handleChangeSelectedView = jest.fn();
 
 		// Default mock for useAsyncJSONProcessing
 		const mockUseAsyncJSONProcessing = jest.mocked(useAsyncJSONProcessing);
@@ -102,6 +125,24 @@ describe('TableViewActions', () => {
 			treeData: null,
 			error: null,
 		});
+
+		// Default mock for useQueryBuilder
+		jest.mocked(useQueryBuilder).mockReturnValue({
+			stagedQuery: null,
+			updateQueriesData: jest.fn((query, type, callback) => {
+				const updatedBuilder = {
+					...query.builder,
+					[type]: query.builder[type].map(callback),
+				};
+				return {
+					...query,
+					builder: updatedBuilder,
+				};
+			}),
+		} as any);
+
+		// Default mock for useGetSearchQueryParam
+		jest.mocked(useGetSearchQueryParam).mockReturnValue(null);
 	});
 
 	it('should render without crashing', () => {
@@ -113,7 +154,7 @@ describe('TableViewActions', () => {
 				isfilterInLoading={defaultProps.isfilterInLoading}
 				isfilterOutLoading={defaultProps.isfilterOutLoading}
 				onClickHandler={defaultProps.onClickHandler}
-				onGroupByAttribute={defaultProps.onGroupByAttribute}
+				handleChangeSelectedView={defaultProps.handleChangeSelectedView}
 			/>,
 		);
 		expect(screen.getByText(TEST_VALUE)).toBeInTheDocument();
@@ -135,7 +176,7 @@ describe('TableViewActions', () => {
 					isfilterInLoading={defaultProps.isfilterInLoading}
 					isfilterOutLoading={defaultProps.isfilterOutLoading}
 					onClickHandler={defaultProps.onClickHandler}
-					onGroupByAttribute={defaultProps.onGroupByAttribute}
+					handleChangeSelectedView={defaultProps.handleChangeSelectedView}
 				/>,
 			);
 			// Verify that action buttons are not rendered for restricted fields
@@ -154,11 +195,98 @@ describe('TableViewActions', () => {
 				isfilterInLoading={defaultProps.isfilterInLoading}
 				isfilterOutLoading={defaultProps.isfilterOutLoading}
 				onClickHandler={defaultProps.onClickHandler}
-				onGroupByAttribute={defaultProps.onGroupByAttribute}
+				handleChangeSelectedView={defaultProps.handleChangeSelectedView}
 			/>,
 		);
 		// Verify that action buttons are rendered for non-restricted fields
 		expect(container.querySelector(ACTION_BUTTON_TEST_ID)).toBeInTheDocument();
+	});
+
+	it('should call handleChangeSelectedView when clicking group by', () => {
+		const mockStagedQuery = {
+			id: 'test-query-id',
+			queryType: 'queryBuilder',
+			builder: {
+				queryData: [
+					{
+						queryName: 'A',
+						dataSource: 'logs',
+						aggregateOperator: 'count',
+						functions: [],
+						filter: {},
+						groupBy: [],
+						expression: '',
+						disabled: false,
+						having: [],
+						limit: null,
+						stepInterval: null,
+						orderBy: [],
+						legend: '',
+					},
+				],
+				queryFormulas: [],
+				queryTraceOperator: [],
+			},
+			promql: [],
+			clickhouse_sql: [],
+		};
+
+		const mockUpdateQueriesData = jest.fn((query, type, callback) => {
+			const section = query.builder?.[type];
+			if (!Array.isArray(section)) {
+				return query;
+			}
+			return {
+				...query,
+				builder: {
+					...query.builder,
+					[type]: section.map(callback),
+				},
+			};
+		});
+
+		jest.mocked(useQueryBuilder).mockReturnValue({
+			stagedQuery: mockStagedQuery,
+			updateQueriesData: mockUpdateQueriesData,
+		} as any);
+
+		jest.mocked(useGetSearchQueryParam).mockReturnValue(null);
+
+		render(
+			<TableViewActions
+				fieldData={defaultProps.fieldData}
+				record={defaultProps.record}
+				isListViewPanel={defaultProps.isListViewPanel}
+				isfilterInLoading={defaultProps.isfilterInLoading}
+				isfilterOutLoading={defaultProps.isfilterOutLoading}
+				onClickHandler={defaultProps.onClickHandler}
+				handleChangeSelectedView={defaultProps.handleChangeSelectedView}
+			/>,
+		);
+
+		fireEvent.click(screen.getByText('Group By Attribute'));
+
+		expect(defaultProps.handleChangeSelectedView).toHaveBeenCalledWith(
+			ExplorerViews.TIMESERIES,
+			expect.objectContaining({
+				name: '',
+				id: 'test-query-id',
+				query: expect.objectContaining({
+					builder: expect.objectContaining({
+						queryData: expect.arrayContaining([
+							expect.objectContaining({
+								groupBy: expect.arrayContaining([
+									expect.objectContaining({
+										key: TEST_FIELD,
+										type: '',
+									}),
+								]),
+							}),
+						]),
+					}),
+				}),
+			}),
+		);
 	});
 
 	it('should not render action buttons in list view panel', () => {
@@ -170,7 +298,7 @@ describe('TableViewActions', () => {
 				isfilterInLoading={defaultProps.isfilterInLoading}
 				isfilterOutLoading={defaultProps.isfilterOutLoading}
 				onClickHandler={defaultProps.onClickHandler}
-				onGroupByAttribute={defaultProps.onGroupByAttribute}
+				handleChangeSelectedView={defaultProps.handleChangeSelectedView}
 			/>,
 		);
 		// Verify that action buttons are not rendered in list view panel
@@ -200,7 +328,7 @@ describe('TableViewActions', () => {
 			isfilterInLoading: false,
 			isfilterOutLoading: false,
 			onClickHandler: jest.fn(),
-			onGroupByAttribute: jest.fn(),
+			handleChangeSelectedView: jest.fn(),
 		};
 
 		// Render component with body field
@@ -212,7 +340,7 @@ describe('TableViewActions', () => {
 				isfilterInLoading={bodyProps.isfilterInLoading}
 				isfilterOutLoading={bodyProps.isfilterOutLoading}
 				onClickHandler={bodyProps.onClickHandler}
-				onGroupByAttribute={bodyProps.onGroupByAttribute}
+				handleChangeSelectedView={bodyProps.handleChangeSelectedView}
 			/>,
 		);
 

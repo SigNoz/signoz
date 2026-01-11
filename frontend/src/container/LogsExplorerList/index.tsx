@@ -48,6 +48,7 @@ function LogsExplorerList({
 	isError,
 	error,
 	isFilterApplied,
+	handleChangeSelectedView,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 	const { activeLogId } = useCopyLogLink();
@@ -56,7 +57,6 @@ function LogsExplorerList({
 		activeLog,
 		onClearActiveLog,
 		onAddToQuery,
-		onGroupByAttribute,
 		onSetActiveLog,
 	} = useActiveLog();
 
@@ -100,6 +100,7 @@ function LogsExplorerList({
 						linesPerRow={options.maxLines}
 						selectedFields={selectedFields}
 						fontSize={options.fontSize}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				);
 			}
@@ -114,11 +115,13 @@ function LogsExplorerList({
 					activeLog={activeLog}
 					fontSize={options.fontSize}
 					linesPerRow={options.maxLines}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			);
 		},
 		[
 			activeLog,
+			handleChangeSelectedView,
 			onAddToQuery,
 			onSetActiveLog,
 			options.fontSize,
@@ -149,10 +152,10 @@ function LogsExplorerList({
 						activeLogIndex,
 					}}
 					infitiyTableProps={{ onEndReached }}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			);
 		}
-
 		function getMarginTop(): string {
 			switch (options.fontSize) {
 				case FontSize.SMALL:
@@ -195,6 +198,7 @@ function LogsExplorerList({
 		onEndReached,
 		getItemContent,
 		selectedFields,
+		handleChangeSelectedView,
 	]);
 
 	const isTraceToLogsNavigation = useMemo(() => {
@@ -273,8 +277,8 @@ function LogsExplorerList({
 						log={activeLog}
 						onClose={onClearActiveLog}
 						onAddToQuery={onAddToQuery}
-						onGroupByAttribute={onGroupByAttribute}
 						onClickActionItem={onAddToQuery}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				</>
 			)}
