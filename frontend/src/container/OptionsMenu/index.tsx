@@ -41,7 +41,18 @@ function OptionsMenu({
 
 	return (
 		<OptionsContainer>
-			<Popover placement="bottom" trigger="click" content={OptionsContent}>
+			<Popover
+				placement="bottom"
+				trigger="click"
+				content={OptionsContent}
+				onOpenChange={(open: boolean): void => {
+					if (!open) {
+						config?.addColumn?.onBlur?.();
+					} else {
+						config?.addColumn?.onFocus?.();
+					}
+				}}
+			>
 				<Space align="center">
 					{t('options_menu.options')}
 					<SettingIcon />

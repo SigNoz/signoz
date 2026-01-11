@@ -1,3 +1,6 @@
+/* eslint-disable sonarjs/no-duplicate-string */
+import userEvent from '@testing-library/user-event';
+import { ENVIRONMENT } from 'constants/env';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, waitFor } from 'tests/test-utils';
 
@@ -184,5 +187,70 @@ describe('Traces ListView - Error and Empty States', () => {
 			const optionsButton = screen.getByText(/options_menu.options|options/i);
 			expect(optionsButton).toBeInTheDocument();
 		});
+	});
+});
+
+describe('AttributeKey handling (UI)', () => {
+	const BASE_URL = ENVIRONMENT.baseURL;
+
+	beforeEach(() => {
+		server.use(
+			rest.get(`${BASE_URL}/api/v1/fields/keys`, (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							complete: true,
+							keys: {
+								attributeKeys: [
+									{
+										name: 'http.status_code_attribute',
+										signal: 'traces',
+										fieldContext: 'attribute',
+										fieldDataType: 'string',
+									},
+									{
+										name: 'http.status_code_attribute',
+										signal: 'traces',
+										fieldContext: 'attribute',
+										fieldDataType: 'number',
+									},
+									{
+										name: 'test options',
+										signal: 'traces',
+										fieldContext: 'attribute',
+										fieldDataType: 'string',
+									},
+								],
+							},
+						},
+					}),
+				),
+			),
+		);
+	});
+
+	it('opens Options menu and shows attribute variants in the Add Column select', async () => {
+		renderListView({ isFilterApplied: true });
+
+		verifyControlsVisibility();
+
+		// Open options popover
+
+		const optionsButton = screen.getByText(/options_menu.options|options/i);
+		await userEvent.click(optionsButton);
+
+		const selectSearchInput = document.querySelector(
+			'.ant-popover-content input.ant-select-selection-search-input',
+		) as HTMLInputElement;
+
+		expect(selectSearchInput).toBeInTheDocument();
+		await userEvent.click(selectSearchInput);
+
+		// Ensure dropdown items have rendered by waiting for a known option
+		await screen.findByText('test options');
+
+		expect(screen.getAllByText('http.status_code_attribute').length).toBe(2);
 	});
 });

@@ -52,7 +52,7 @@ export const defaultTraceSelectedColumns: TelemetryFieldKey[] = [
 		name: 'duration_nano',
 		signal: 'traces',
 		fieldContext: 'span',
-		fieldDataType: '',
+		fieldDataType: 'number',
 	},
 	{
 		name: 'http_method',
