@@ -219,12 +219,54 @@ def assert_results_equal(
     query_name: str,
     context: str,
     tolerance: float = DEFAULT_TOLERANCE,
+    allow_boundary_diff: bool = False,
 ) -> None:
     values_cached = get_series_values(result_cached, query_name)
     values_no_cache = get_series_values(result_no_cache, query_name)
 
     sorted_cached = sorted(values_cached, key=lambda x: x["timestamp"])
     sorted_no_cache = sorted(values_no_cache, key=lambda x: x["timestamp"])
+
+    if allow_boundary_diff:
+        len_diff = len(sorted_no_cache) - len(sorted_cached)
+
+        assert 0 <= len_diff <= 2, (
+            f"{context}: Length difference too large. "
+            f"Cached: {len(sorted_cached)}, No-cache: {len(sorted_no_cache)}, "
+            f"diff: {len_diff} (max allowed: 2)"
+        )
+
+        if len_diff > 0 and len(sorted_cached) > 0:
+            cached_start_ts = sorted_cached[0]["timestamp"]
+            cached_end_ts = sorted_cached[-1]["timestamp"]
+
+            start_offset = 0
+            for i, v in enumerate(sorted_no_cache):
+                if v["timestamp"] == cached_start_ts:
+                    start_offset = i
+                    break
+
+            if start_offset > 0:
+                extra_start = sorted_no_cache[:start_offset]
+                print(
+                    f"{context}: Ground truth has {start_offset} extra value(s) "
+                    f"at beginning: {extra_start}"
+                )
+
+            end_offset = len(sorted_no_cache)
+            for i in range(len(sorted_no_cache) - 1, -1, -1):
+                if sorted_no_cache[i]["timestamp"] == cached_end_ts:
+                    end_offset = i + 1
+                    break
+
+            if end_offset < len(sorted_no_cache):
+                extra_end = sorted_no_cache[end_offset:]
+                print(
+                    f"{context}: Ground truth has {len(extra_end)} extra value(s) "
+                    f"at end: {extra_end}"
+                )
+
+            sorted_no_cache = sorted_no_cache[start_offset:end_offset]
 
     assert len(sorted_cached) == len(sorted_no_cache), (
         f"{context}: Different number of values. "
