@@ -341,7 +341,7 @@ func (b *traceOperatorCTEBuilder) buildDirectDescendantCTE(parentCTE, childCTE s
 }
 
 func (b *traceOperatorCTEBuilder) buildIndirectDescendantCTE(ancestorCTE, descendantCTE string) (string, []string) {
-	sql := fmt.Sprintf(`WITH RECURSIVE up AS (SELECT d.trace_id, d.span_id, d.parent_span_id, 0 AS depth FROM %s AS d UNION ALL SELECT p.trace_id, p.span_id, p.parent_span_id, up.depth + 1 FROM all_spans AS p JOIN up ON p.trace_id = up.trace_id AND p.span_id = up.parent_span_id WHERE up.depth < 100) SELECT DISTINCT a.* FROM %s AS a GLOBAL INNER JOIN (SELECT DISTINCT trace_id, span_id FROM up WHERE depth > 0 ) AS ancestors ON ancestors.trace_id = a.trace_id AND ancestors.span_id = a.span_id`, descendantCTE, ancestorCTE)
+	sql := fmt.Sprintf(`WITH RECURSIVE down AS (SELECT d.trace_id, d.span_id, d.parent_span_id, 0 AS depth FROM %s AS d UNION ALL SELECT p.trace_id, p.span_id, p.parent_span_id, down.depth + 1 FROM all_spans AS p INNER JOIN down ON p.trace_id = down.trace_id AND p.parent_span_id = down.span_id WHERE down.depth < 100) SELECT DISTINCT b.* FROM %s AS b GLOBAL INNER JOIN (SELECT DISTINCT trace_id, span_id FROM down WHERE depth >= 0) AS descendants ON descendants.trace_id = b.trace_id AND descendants.span_id = b.span_id`, ancestorCTE, descendantCTE)
 	return sql, []string{ancestorCTE, descendantCTE, "all_spans"}
 }
 
