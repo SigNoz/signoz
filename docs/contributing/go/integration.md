@@ -79,15 +79,15 @@ Python and pytest form the foundation of the integration testing framework. Test
 └── src
     └── bootstrap
         ├── __init__.py
-        ├── a_database.py
-        ├── b_register.py
-        └── c_license.py
+        ├── 01_database.py
+        ├── 02_register.py
+        └── 03_license.py
 ```
 
 Each test suite follows some important principles:
 
 1. **Organization**: Test suites live under `src/` in self-contained packages. Fixtures (a pytest concept) live inside `fixtures/`.
-2. **Execution Order**: Files are prefixed with `a_`, `b_`, `c_` to ensure sequential execution.
+2. **Execution Order**: Files are prefixed with two-digit numbers (`01_`, `02_`, `03_`) to ensure sequential execution.
 3. **Time Constraints**: Each suite should complete in under 10 minutes (setup takes ~4 mins).
 
 ### Test Suite Design
@@ -109,7 +109,7 @@ Other test suites can be **pipelines, auth, querier.**
 
 ## How to write an integration test?
 
-Now start writing an integration test. Create a new file `src/bootstrap/e_version.py` and paste the following:
+Now start writing an integration test. Create a new file `src/bootstrap/05_version.py` and paste the following:
 
 ```python
 import requests
@@ -127,7 +127,7 @@ def test_version(signoz: types.SigNoz) -> None:
 We have written a simple test which calls the `version` endpoint of the container in step 1. In **order to just run this function, run the following command:**
 
 ```bash
-uv run pytest --basetemp=./tmp/ -vv --reuse src/bootstrap/e_version.py::test_version
+uv run pytest --basetemp=./tmp/ -vv --reuse src/bootstrap/05_version.py::test_version
 ```
 
 > Note: The `--reuse` flag is used to reuse the environment if it is already running. Always use this flag when writing and running integration tests. If you don't use this flag, the environment will be destroyed and recreated every time you run the test.
@@ -184,8 +184,8 @@ uv run pytest --basetemp=./tmp/ -vv --reuse src/auth/
 ```bash
 uv run pytest --basetemp=./tmp/ -vv --reuse src/<suite>/<file>.py::test_name
 
-# Run test_register in file a_register.py in auth suite
-uv run pytest --basetemp=./tmp/ -vv --reuse src/auth/a_register.py::test_register
+# Run test_register in file 01_register.py in passwordauthn suite
+uv run pytest --basetemp=./tmp/ -vv --reuse src/passwordauthn/01_register.py::test_register
 ```
 
 ## How to configure different options for integration tests?
@@ -207,7 +207,7 @@ uv run pytest --basetemp=./tmp/ -vv --reuse --sqlstore-provider=postgres --postg
 
 - **Always use the `--reuse` flag** when setting up the environment to keep containers running
 - **Use the `--teardown` flag** when cleaning up to avoid resource leaks
-- **Follow the naming convention** with alphabetical prefixes for test execution order
+- **Follow the naming convention** with two-digit numeric prefixes (`01_`, `02_`) for test execution order
 - **Use proper timeouts** in HTTP requests to avoid hanging tests
 - **Clean up test data** between tests to avoid interference
 - **Use descriptive test names** that clearly indicate what is being tested
