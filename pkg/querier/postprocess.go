@@ -46,7 +46,7 @@ func getQueryName(spec any) string {
 	return getqueryInfo(spec).Name
 }
 
-func (q *querier) postProcessResults(ctx context.Context, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, error) {
+func (q *querier) postProcessResults(ctx context.Context, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, []string, string, error) {
 	// Convert results to typed format for processing
 	typedResults := make(map[string]*qbtypes.Result)
 	for name, result := range results {
@@ -96,7 +96,7 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 				for name, v := range typedResults {
 					retResult[name] = v.Value
 				}
-				return retResult, nil
+				return retResult, nil, "", nil
 			}
 		}
 
@@ -108,11 +108,11 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 			firstQueryName := getQueryName(req.CompositeQuery.Queries[0].Spec)
 			if firstQueryName != "" && tableResult["table"] != nil {
 				// Return table under first query name
-				return map[string]any{firstQueryName: tableResult["table"]}, nil
+				return map[string]any{firstQueryName: tableResult["table"]}, nil, "", nil
 			}
 		}
 
-		return tableResult, nil
+		return tableResult, nil, "", nil
 	}
 
 	if req.RequestType == qbtypes.RequestTypeTimeSeries && req.FormatOptions != nil && req.FormatOptions.FillGaps {
@@ -155,7 +155,19 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 		finalResults[name] = result.Value
 	}
 
-	return finalResults, nil
+	// collect warnings from typed results
+	var warnings []string
+	var warningsDocURL string
+	for _, res := range typedResults {
+		if len(res.Warnings) > 0 {
+			warnings = append(warnings, res.Warnings...)
+		}
+		if res.WarningsDocURL != "" {
+			warningsDocURL = res.WarningsDocURL
+		}
+	}
+
+	return finalResults, warnings, warningsDocURL, nil
 }
 
 // postProcessBuilderQuery applies postprocessing to a single builder query result
@@ -185,6 +197,72 @@ func postProcessMetricQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
+
+	// Strip diagnostic series (bucket_sum, bucket_count) after computing warnings.
+	if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok && tsData != nil {
+		var kept []*qbtypes.AggregationBucket
+		var bucketSum, bucketCount *qbtypes.AggregationBucket
+
+		for _, b := range tsData.Aggregations {
+			switch b.Alias {
+			case "bucket_sum", "__result_1":
+				bucketSum = b
+			case "bucket_count", "__result_2":
+				bucketCount = b
+			default:
+				kept = append(kept, b)
+			}
+		}
+
+		// Derive warnings from diagnostics
+		allZero := true
+		if bucketSum != nil {
+			if len(bucketSum.Series) == 0 {
+				allZero = false // dont calculate for no values
+			} else {
+				for _, s := range bucketSum.Series {
+					for _, v := range s.Values {
+						if v.Value > 0 {
+							allZero = false
+							break
+						}
+					}
+					if !allZero {
+						break
+					}
+				}
+			}
+		}
+
+		allSparse := true
+		if bucketCount != nil {
+			if len(bucketCount.Series) == 0 {
+				allSparse = false // dont calculate for no values
+			} else {
+				for _, s := range bucketCount.Series {
+					for _, v := range s.Values {
+						if v.Value >= 2 {
+							allSparse = false
+							break
+						}
+					}
+					if !allSparse {
+						break
+					}
+				}
+			}
+		}
+
+		if allZero {
+			result.Warnings = append(result.Warnings, "No change observed for this cumulative metric in the selected range.")
+		}
+		if allSparse {
+			result.Warnings = append(result.Warnings, "Only +Inf bucket present; add finite buckets to compute quantiles.")
+		}
+
+		tsData.Aggregations = kept
+		result.Value = tsData
+	}
 
 	config := query.Aggregations[0]
 	spaceAggOrderBy := fmt.Sprintf("%s(%s)", config.SpaceAggregation.StringValue(), config.MetricName)
