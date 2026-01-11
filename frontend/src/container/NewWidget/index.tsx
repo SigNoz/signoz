@@ -370,10 +370,6 @@ function NewWidget({
 	// this has been moved here from the left container
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		const updatedQuery = cloneDeep(stagedQuery || initialQueriesMap.metrics);
-		if (updatedQuery?.builder?.queryData?.[0]) {
-			updatedQuery.builder.queryData[0].pageSize = 10;
-		}
-
 		if (selectedWidget) {
 			if (selectedGraph === PANEL_TYPES.LIST) {
 				return {
@@ -419,16 +415,12 @@ function NewWidget({
 	useEffect(() => {
 		if (stagedQuery) {
 			setIsLoadingPanelData(false);
-			const updatedStagedQuery = cloneDeep(stagedQuery);
-			if (updatedStagedQuery?.builder?.queryData?.[0]) {
-				updatedStagedQuery.builder.queryData[0].pageSize = 10;
-			}
 			setRequestData((prev) => ({
 				...prev,
 				selectedTime: selectedTime.enum || prev.selectedTime,
 				globalSelectedInterval: customGlobalSelectedInterval,
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
-				query: updatedStagedQuery,
+				query: stagedQuery,
 				fillGaps: selectedWidget.fillSpans || false,
 				isLogScale: selectedWidget.isLogScale || false,
 				formatForWeb:
@@ -501,7 +493,7 @@ function NewWidget({
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								decimalPrecision:
-									selectedWidget?.decimalPrecision || PrecisionOptionsEnum.TWO,
+									selectedWidget?.decimalPrecision ?? PrecisionOptionsEnum.TWO,
 								panelTypes: graphType,
 								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,
@@ -532,7 +524,7 @@ function NewWidget({
 								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								decimalPrecision:
-									selectedWidget?.decimalPrecision || PrecisionOptionsEnum.TWO,
+									selectedWidget?.decimalPrecision ?? PrecisionOptionsEnum.TWO,
 								panelTypes: graphType,
 								query: adjustedQueryForV5,
 								thresholds: selectedWidget?.thresholds,
@@ -868,6 +860,7 @@ function NewWidget({
 							contextLinks={contextLinks}
 							setContextLinks={setContextLinks}
 							enableDrillDown={enableDrillDown}
+							isNewDashboard={isNewDashboard}
 						/>
 					</OverlayScrollbar>
 				</RightContainerWrapper>

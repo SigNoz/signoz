@@ -15,6 +15,9 @@ const findCategoryByName = (
 
 type OnSelectType = Dispatch<SetStateAction<string>> | ((val: string) => void);
 
+/**
+ * @deprecated Use DashboardYAxisUnitSelectorWrapper instead.
+ */
 function YAxisUnitSelector({
 	value,
 	onSelect,

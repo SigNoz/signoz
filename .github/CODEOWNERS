@@ -2,7 +2,7 @@
 # Owners are automatically requested for review for PRs that changes code
 # that they own.
 
-/frontend/ @YounixM @aks07
+/frontend/ @SigNoz/frontend-maintainers
 
 # Onboarding
 /frontend/src/container/OnboardingV2Container/onboarding-configs/onboarding-config-with-links.json @makeavish
@@ -47,5 +47,7 @@
 /pkg/telemetrytraces/ @srikanthccv
 
 # AuthN / AuthZ Owners 
-
 /pkg/authz/ @vikrantgupta25 @therealpandey
+
+# Integration tests
+/tests/integration/ @therealpandey

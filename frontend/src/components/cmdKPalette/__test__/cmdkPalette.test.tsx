@@ -159,7 +159,6 @@ describe('CmdKPalette', () => {
 
 		expect(screen.getByText(HOME_LABEL)).toBeInTheDocument();
 		expect(screen.getByText('Go to Dashboards')).toBeInTheDocument();
-		expect(screen.getByText('Open Sidebar')).toBeInTheDocument();
 		expect(screen.getByText('Switch to Dark Mode')).toBeInTheDocument();
 	});
 

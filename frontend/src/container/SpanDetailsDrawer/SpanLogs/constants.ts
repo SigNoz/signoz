@@ -4,7 +4,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { Filter } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -55,7 +55,7 @@ export const getSpanLogsQueryPayload = (
 					],
 					groupBy: [],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					offset: 0,
 					pageSize: 100,
 				},

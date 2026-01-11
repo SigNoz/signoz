@@ -7,7 +7,7 @@ import {
 	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 interface GetWidgetQueryProps {
@@ -101,7 +101,7 @@ export const getTotalLogSizeWidgetData = (): Widgets =>
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'sum',
+					reduceTo: ReduceOperators.SUM,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'increase',
@@ -138,7 +138,7 @@ export const getTotalTraceSizeWidgetData = (): Widgets =>
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'sum',
+					reduceTo: ReduceOperators.SUM,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'increase',
@@ -175,7 +175,7 @@ export const getTotalMetricDatapointCountWidgetData = (): Widgets =>
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'sum',
+					reduceTo: ReduceOperators.SUM,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'increase',
@@ -212,7 +212,7 @@ export const getLogCountWidgetData = (): Widgets =>
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'increase',
@@ -249,7 +249,7 @@ export const getLogSizeWidgetData = (): Widgets =>
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'increase',
@@ -286,7 +286,7 @@ export const getSpanCountWidgetData = (): Widgets =>
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'increase',
@@ -323,7 +323,7 @@ export const getSpanSizeWidgetData = (): Widgets =>
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'increase',
@@ -360,7 +360,7 @@ export const getMetricCountWidgetData = (): Widgets =>
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'increase',

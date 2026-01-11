@@ -49,6 +49,7 @@ ee/query-service/tests/test-deploy/data/
 # local data
 *.backup
 *.db
+**/db
 /deploy/docker/clickhouse-setup/data/
 /deploy/docker-swarm/clickhouse-setup/data/
 bin/
@@ -221,8 +222,6 @@ cython_debug/
 #.idea/
 
 ### Python Patch ###
-# Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
-poetry.toml
 
 # ruff
 .ruff_cache/
