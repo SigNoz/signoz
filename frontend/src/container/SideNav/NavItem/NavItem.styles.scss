@@ -13,6 +13,12 @@
 		.nav-item-active-marker {
 			background: #4e74f8;
 		}
+
+		.nav-item-data {
+			.nav-item-label {
+				color: var(--Vanilla-100, #fff);
+			}
+		}
 	}
 
 	&.disabled {
@@ -119,6 +125,12 @@
 		&.active {
 			.nav-item-active-marker {
 				background: #4e74f8;
+			}
+
+			.nav-item-data {
+				.nav-item-label {
+					color: var(--bg-slate-500);
+				}
 			}
 		}
 
