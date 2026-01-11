@@ -367,13 +367,7 @@ function VariableItem({
 			multiSelect: variableMultiSelect,
 			showALLOption: queryType === 'DYNAMIC' ? true : variableShowALLOption,
 			sort: variableSortType,
-			...(queryType === 'TEXTBOX' && {
-				selectedValue: (variableData.selectedValue ||
-					variableTextboxValue) as never,
-			}),
-			...(queryType !== 'TEXTBOX' && {
-				defaultValue: variableDefaultValue as never,
-			}),
+			defaultValue: variableDefaultValue,
 			modificationUUID: generateUUID(),
 			id: variableData.id || generateUUID(),
 			order: variableData.order,
@@ -731,6 +725,7 @@ function VariableItem({
 								className="default-input"
 								onChange={(e): void => {
 									setVariableTextboxValue(e.target.value);
+									setVariableDefaultValue(e.target.value);
 								}}
 								placeholder="Enter a default value (if any)..."
 								style={{ width: 400 }}
