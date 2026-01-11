@@ -9,7 +9,7 @@ import (
 
 type correlation struct{}
 
-func NewCorrelation() *correlation {
+func NewCorrelation() Wrapper {
 	return &correlation{}
 }
 

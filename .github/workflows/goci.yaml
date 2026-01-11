@@ -88,4 +88,4 @@ jobs:
       - name: generate-openapi
         run: |
           go run cmd/enterprise/*.go generate openapi
-          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in openapi spec. Run go run cmd/enterprise/*.go generate openapi locally and commit."; exit 1)
+          git diff --compact-summary --exit-code || (echo; echo 'Unexpected difference in openapi spec. Run `go run cmd/enterprise/*.go generate openapi` locally and commit.'; exit 1)
