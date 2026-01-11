@@ -95,17 +95,9 @@
 	&.danger {
 		border-radius: 2px;
 		color: var(--text-vanilla-100) !important;
+		background: var(--bg-cherry-500);
 		text-align: center;
 		font-variant-numeric: slashed-zero;
-
-		/* Label/Small/500 */
-		font-family: Inter;
-		font-size: 11px;
-		font-style: normal;
-		font-weight: 500;
-		line-height: 100%; /* 11px */
-		background: var(--bg-cherry-500);
-
 		box-shadow: none !important;
 
 		&:hover {

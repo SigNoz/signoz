@@ -62,7 +62,7 @@ const setupCommonMocks = (): void => {
 			minTime: 1713734400000,
 			maxTime: 1713738000000,
 		})),
-		isValidTimeFormat: jest.fn().mockReturnValue(true),
+		isValidShortHandDateTimeFormat: jest.fn().mockReturnValue(true),
 	}));
 
 	jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({

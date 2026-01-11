@@ -97,9 +97,9 @@ describe('ToolbarActions', () => {
 			</MockQueryClientProvider>,
 		);
 
-		const stageNRunBtn = queryByText('Stage & Run Query');
-		expect(stageNRunBtn).toBeInTheDocument();
-		await userEvent.click(stageNRunBtn as HTMLElement);
+		const runQueryBtn = queryByText('Run Query');
+		expect(runQueryBtn).toBeInTheDocument();
+		await userEvent.click(runQueryBtn as HTMLElement);
 		expect(onStageRunQuery).toBeCalled();
 	});
 });

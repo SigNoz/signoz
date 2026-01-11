@@ -366,6 +366,8 @@ function DateTimeSelection({
 						)}
 						data-testid="dropDown"
 						items={options}
+						minTime={minTime}
+						maxTime={maxTime}
 					/>
 
 					<FormItem hidden={refreshButtonHidden}>

@@ -158,6 +158,8 @@ function PublicDashboardContainer({
 								modalSelectedInterval={selectedTimeRangeLabel as Time}
 								disableUrlSync
 								showRecentlyUsed={false}
+								modalInitialStartTime={selectedTimeRange.startTime * 1000}
+								modalInitialEndTime={selectedTimeRange.endTime * 1000}
 							/>
 						</div>
 					</div>

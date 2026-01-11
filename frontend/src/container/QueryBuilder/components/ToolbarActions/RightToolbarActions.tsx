@@ -3,7 +3,7 @@ import './ToolbarActions.styles.scss';
 import { Button } from 'antd';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { Play, X } from 'lucide-react';
+import { Loader2, Play } from 'lucide-react';
 import { MutableRefObject, useEffect } from 'react';
 import { useQueryClient } from 'react-query';
 
@@ -37,37 +37,49 @@ export default function RightToolbarActions({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [onStageRunQuery, showLiveLogs]);
 
-	if (showLiveLogs) return <div />;
+	if (showLiveLogs)
+		return (
+			<div className="right-toolbar-actions-container">
+				<Button
+					type="primary"
+					className="run-query-btn periscope-btn primary"
+					disabled
+					icon={<Play size={14} />}
+				>
+					Run Query
+				</Button>
+			</div>
+		);
+
+	const handleCancelQuery = (): void => {
+		if (listQueryKeyRef?.current) {
+			queryClient.cancelQueries(listQueryKeyRef.current);
+		}
+		if (chartQueryKeyRef?.current) {
+			queryClient.cancelQueries(chartQueryKeyRef.current);
+		}
+	};
 
 	return (
-		<div>
+		<div className="right-toolbar-actions-container">
 			{isLoadingQueries ? (
-				<div className="loading-container">
-					<Button className="loading-btn" loading={isLoadingQueries} />
-					<Button
-						icon={<X size={14} />}
-						className="cancel-run"
-						onClick={(): void => {
-							if (listQueryKeyRef?.current) {
-								queryClient.cancelQueries(listQueryKeyRef.current);
-							}
-							if (chartQueryKeyRef?.current) {
-								queryClient.cancelQueries(chartQueryKeyRef.current);
-							}
-						}}
-					>
-						Cancel Run
-					</Button>
-				</div>
+				<Button
+					type="default"
+					icon={<Loader2 size={14} className="loading-icon animate-spin" />}
+					className="cancel-query-btn periscope-btn danger"
+					onClick={handleCancelQuery}
+				>
+					Cancel
+				</Button>
 			) : (
 				<Button
 					type="primary"
-					className="right-toolbar"
+					className="run-query-btn periscope-btn primary"
 					disabled={isLoadingQueries}
 					onClick={onStageRunQuery}
 					icon={<Play size={14} />}
 				>
-					Stage & Run Query
+					Run Query
 				</Button>
 			)}
 		</div>

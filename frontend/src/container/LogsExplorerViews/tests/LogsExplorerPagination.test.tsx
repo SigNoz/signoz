@@ -518,15 +518,15 @@ describe('Logs Explorer -> stage and run query', () => {
 		const initialStart = initialPayload.start;
 		const initialEnd = initialPayload.end;
 
-		// Click the Stage & Run Query button
+		// Click the Run Query button
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		await user.click(
 			screen.getByRole('button', {
-				name: /stage & run query/i,
+				name: /run query/i,
 			}),
 		);
 
-		// Wait for additional API calls to be made after clicking Stage & Run Query
+		// Wait for additional API calls to be made after clicking Run Query
 		await waitFor(
 			() => {
 				expect(capturedPayloads.length).toBeGreaterThan(1);

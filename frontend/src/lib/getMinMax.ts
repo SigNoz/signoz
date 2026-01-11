@@ -7,7 +7,7 @@ import getMinAgo from './getStartAndEndTime/getMinAgo';
 
 const validCustomTimeRegex = /^(\d+)([mhdw])$/;
 
-export const isValidTimeFormat = (time: string): boolean =>
+export const isValidShortHandDateTimeFormat = (time: string): boolean =>
 	validCustomTimeRegex.test(time);
 
 const extractTimeAndUnit = (time: string): { time: number; unit: string } => {
@@ -114,7 +114,7 @@ const GetMinMax = (
 	} else if (interval === 'custom') {
 		maxTime = (dateTimeRange || [])[1] || 0;
 		minTime = (dateTimeRange || [])[0] || 0;
-	} else if (isString(interval) && isValidTimeFormat(interval)) {
+	} else if (isString(interval) && isValidShortHandDateTimeFormat(interval)) {
 		const { time, unit } = extractTimeAndUnit(interval);
 
 		minTime = getMinTimeForRelativeTimes(time, unit);
