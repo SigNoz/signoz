@@ -29,12 +29,11 @@ import { getWebAutoInstrumentations } from '@opentelemetry/auto-instrumentations
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import { B3Propagator } from '@opentelemetry/propagator-b3';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
 const resource = Resource.default().merge(
   new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: '{MYAPP}',
-    [SemanticResourceAttributes.SERVICE_VERSION]: '0.1.0',
+    [ATTR_SERVICE_NAME]: '{MYAPP}',
   })
 );
 
