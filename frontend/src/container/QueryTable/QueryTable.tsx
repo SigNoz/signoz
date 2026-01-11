@@ -1,9 +1,11 @@
 import './QueryTable.styles.scss';
 
+import { Pagination as AntPagination } from 'antd';
 import cx from 'classnames';
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
+import { DEFAULT_PER_PAGE_OPTIONS, Pagination } from 'hooks/queryPagination';
 import {
 	createTableColumnsFromQuery,
 	RowData,
@@ -14,7 +16,10 @@ import { useParams } from 'react-router-dom';
 
 import useTableContextMenu from './Drilldown/useTableContextMenu';
 import { QueryTableProps } from './QueryTable.intefaces';
-import { createDownloadableData } from './utils';
+import { createDownloadableData, getFormattedTimestamp } from './utils';
+
+// I saw this done in other places
+const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];
 
 export function QueryTable({
 	queryTableData,
@@ -31,7 +36,12 @@ export function QueryTable({
 	panelType,
 	...props
 }: QueryTableProps): JSX.Element {
-	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
+	const {
+		isDownloadEnabled = false,
+		fileName = '',
+		columnLabels,
+		valueTransforms,
+	} = downloadOption || {};
 	const isQueryTypeBuilder = query.queryType === 'builder';
 
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
@@ -78,8 +88,6 @@ export function QueryTable({
 		renderActionCell,
 		renderColumnCell,
 	]);
-
-	const downloadableData = createDownloadableData(newDataSource);
 
 	const tableColumns = modifyColumns ? modifyColumns(newColumns) : newColumns;
 
@@ -130,12 +138,6 @@ export function QueryTable({
 		[tableColumns, isQueryTypeBuilder, enableDrillDown, handleColumnClick],
 	);
 
-	const paginationConfig = {
-		pageSize: 10,
-		showSizeChanger: false,
-		hideOnSinglePage: true,
-	};
-
 	const [filterTable, setFilterTable] = useState<RowData[] | null>(null);
 
 	const onTableSearch = useCallback(
@@ -157,24 +159,72 @@ export function QueryTable({
 		onTableSearch(searchTerm);
 	}, [newDataSource, onTableSearch, searchTerm]);
 
+	const [pagination, setPagination] = useState<Pagination>({
+		limit: 10,
+		offset: 0,
+	});
+
+	// Reset pagination to first page when data changes
+	useEffect(() => {
+		setPagination((prev) => ({ ...prev, offset: 0 }));
+	}, [newDataSource, filterTable]);
+
+	const paginatedData = useMemo(() => {
+		const source = filterTable ?? newDataSource;
+		return source.slice(pagination.offset, pagination.offset + pagination.limit);
+	}, [filterTable, newDataSource, pagination.offset, pagination.limit]);
+
+	// Use filtered data for download (all filtered rows, not just current page)
+	const downloadableData = createDownloadableData(
+		filterTable ?? newDataSource,
+		columnLabels,
+		valueTransforms,
+	);
+
+	const handlePageChange = useCallback(
+		(page: number, pageSize: number): void => {
+			setPagination({
+				limit: pageSize,
+				offset: (page - 1) * pageSize,
+			});
+		},
+		[],
+	);
+
+	const currentPage = Math.floor(pagination.offset / pagination.limit) + 1;
+	const totalItems = filterTable?.length ?? newDataSource.length;
+
 	return (
 		<>
-			<div className="query-table">
+			<div className="query-table-controls">
+				<AntPagination
+					current={currentPage}
+					pageSize={pagination.limit}
+					total={totalItems}
+					onChange={handlePageChange}
+					showSizeChanger
+					pageSizeOptions={PER_PAGE_OPTIONS}
+					disabled={loading as boolean}
+					showTotal={(total, range): string =>
+						`${range[0]}-${range[1]} of ${total} items`
+					}
+				/>
 				{isDownloadEnabled && (
-					<div className="query-table--download">
-						<Download
-							data={downloadableData}
-							fileName={`${fileName}-${servicename}`}
-							isLoading={loading as boolean}
-						/>
-					</div>
+					<Download
+						data={downloadableData}
+						fileName={`${fileName}-${servicename}-${getFormattedTimestamp()}`}
+						isLoading={loading as boolean}
+					/>
 				)}
+			</div>
+
+			<div className="query-table">
 				<ResizeTable
 					columns={columnsWithClickHandlers}
 					tableLayout="fixed"
-					dataSource={filterTable === null ? newDataSource : filterTable}
+					dataSource={paginatedData}
 					scroll={{ x: 'max-content' }}
-					pagination={paginationConfig}
+					pagination={false}
 					widgetId={widgetId}
 					shouldPersistColumnWidths
 					sticky={sticky}
@@ -191,4 +241,4 @@ export function QueryTable({
 			/>
 		</>
 	);
-}
+} 
