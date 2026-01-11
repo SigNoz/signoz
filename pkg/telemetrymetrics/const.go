@@ -36,3 +36,5 @@ var IntrinsicMetricFieldDefinitions = map[string]telemetrytypes.TelemetryFieldKe
 	// 	FieldDataType: telemetrytypes.FieldDataTypeBool,
 	// },
 }
+
+const MetricScopeFieldIsTopLevelOperation = "isTopLevelOperation"
