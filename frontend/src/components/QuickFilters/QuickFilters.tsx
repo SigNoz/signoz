@@ -86,6 +86,10 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		}));
 	}, [currentQuery?.builder?.queryData]);
 
+	// Show dropdown in ListView only for TRACES_EXPLORER source
+	const shouldShowDropdownInListView =
+		isListView && source === QuickFiltersSource.TRACES_EXPLORER;
+
 	const showAnnouncementTooltip = useMemo(() => {
 		const localStorageValue = getLocalStorageKey(
 			LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT,
@@ -98,8 +102,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	// clear all the filters for the query which is in sync with filters
 	const handleReset = (): void => {
+		const activeQueryIndex = isListView ? 0 : lastUsedQuery || 0;
 		const updatedQuery = cloneDeep(
-			currentQuery?.builder.queryData?.[lastUsedQuery || 0],
+			currentQuery?.builder.queryData?.[activeQueryIndex],
 		);
 
 		if (!updatedQuery) {
@@ -156,7 +161,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 			<Typography.Text className="text">
 				{lastQueryName ? 'Filters for' : 'Filters'}
 			</Typography.Text>
-			{queryOptions.length > 1 && !isListView ? (
+			{queryOptions.length > 1 && (!isListView || shouldShowDropdownInListView) ? (
 				<Combobox open={open} onOpenChange={setOpen}>
 					<ComboboxTrigger
 						placeholder="Select a query"
