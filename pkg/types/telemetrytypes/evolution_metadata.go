@@ -7,6 +7,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+const (
+	KeyEvolutionMetadataCacheKeyPrefix = "key_evolution_metadata:"
+)
+
 type EvolutionEntry struct {
 	Signal       Signal
 	ColumnName   string
@@ -24,4 +28,9 @@ type EvolutionSelector struct {
 
 type ColumnEvolutionMetadataStore interface {
 	Get(ctx context.Context, orgId valuer.UUID, keyName string) []*EvolutionEntry
+}
+
+func GetEvolutionMetadataCacheKey(selector *EvolutionSelector) string {
+	return KeyEvolutionMetadataCacheKeyPrefix + selector.Signal.StringValue() + ":" + selector.FieldContext.StringValue() + ":" + selector.FieldName
+
 }

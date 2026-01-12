@@ -26,10 +26,6 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-const (
-	KeyEvolutionMetadataCacheKeyPrefix = "key_evolution_metadata:"
-)
-
 var (
 	ErrFailedToGetTracesKeys    = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get traces keys")
 	ErrFailedToGetLogsKeys      = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get logs keys")
@@ -1799,7 +1795,7 @@ func (c *CachedEvolutionEntry) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, c)
 }
 
-func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selector telemetrytypes.EvolutionSelector) []*telemetrytypes.EvolutionEntry {
+func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []telemetrytypes.EvolutionSelector) []*telemetrytypes.EvolutionEntry {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -1808,19 +1804,31 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 	sb.From(fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName))
 	sb.OrderBy("release_time ASC")
 
-	if selector.Signal != telemetrytypes.SignalUnspecified {
-		sb.Where(sb.E("signal", selector.Signal))
-	}
-	if selector.FieldContext != telemetrytypes.FieldContextUnspecified {
-		sb.Where(sb.E("field_context", selector.FieldContext))
-	}
-	if selector.FieldName != "" {
-		sb.Where(
-			sb.Or(
+	for _, selector := range selectors {
+		var clauses []string
+		if selector.FieldContext != telemetrytypes.FieldContextUnspecified {
+
+			if selector.FieldName != "" {
+				// Match both provided field_name and "__all__"
+				clauses = append(clauses,
+					sb.And(
+						sb.E("field_context", selector.FieldContext),
+						sb.Or(sb.E("field_name", selector.FieldName), sb.E("field_name", "__all__")),
+					),
+				)
+			} else {
+				// Only match context, accept any name
+				clauses = append(clauses, sb.E("field_context", selector.FieldContext))
+			}
+		} else if selector.FieldName != "" {
+			// Only match by field name on any context
+			clauses = append(clauses,
 				sb.E("field_name", selector.FieldName),
 				sb.E("field_name", "__all__"),
-			),
-		)
+			)
+		}
+
+		sb.Where(sb.And(sb.E("signal", selector.Signal), sb.Or(clauses...)))
 	}
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -1861,35 +1869,32 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 	return entries
 }
 
-func getEvolutionMetadataCacheKey(selector telemetrytypes.EvolutionSelector) string {
-	return KeyEvolutionMetadataCacheKeyPrefix + selector.Signal.StringValue() + ":" + selector.FieldContext.StringValue() + ":" + selector.FieldName
-}
-
-// Get retrieves all metadata keys for the given key name and orgId from cache.
+// Get retrieves all metadata keys for the given key name and orgId from DB.
 // Returns an empty slice if the key is not found in cache.
-func (k *telemetryMetaStore) GetColumnEvolutionMetadata(ctx context.Context, orgId valuer.UUID, selector telemetrytypes.EvolutionSelector) []*telemetrytypes.EvolutionEntry {
-
-	cacheKey := getEvolutionMetadataCacheKey(selector)
-	cachedData := &CachedEvolutionEntry{}
-	if err := k.cache.Get(ctx, orgId, cacheKey, cachedData); err != nil {
-
-		if !errors.Ast(err, errors.TypeNotFound) {
-			k.logger.ErrorContext(ctx, "Failed to get key evolution metadata from cache", "error", err)
-			return nil
-		}
-
-		// Cache miss - fetch from ClickHouse and try again
-		metadata := k.fetchEvolutionEntryFromClickHouse(ctx, selector)
-
-		cacheKey := getEvolutionMetadataCacheKey(selector)
-		cachedData = &CachedEvolutionEntry{Metadata: metadata}
-		if metadata != nil {
-			if err := k.cache.Set(ctx, orgId, cacheKey, cachedData, 24*time.Hour); err != nil {
-				k.logger.WarnContext(ctx, "Failed to set key evolution metadata in cache", "key", selector.FieldName, "error", err)
-			}
+// Use cache as an enchancement
+func (k *telemetryMetaStore) GetColumnEvolutionMetadataMulti(ctx context.Context, orgId valuer.UUID, selectors []*telemetrytypes.EvolutionSelector) map[string][]*telemetrytypes.EvolutionEntry {
+	// deduplicated selectors
+	deduplicatedSelectors := make(map[string]telemetrytypes.EvolutionSelector)
+	for _, selector := range selectors {
+		key := telemetrytypes.GetEvolutionMetadataCacheKey(selector)
+		if _, ok := deduplicatedSelectors[key]; !ok {
+			deduplicatedSelectors[key] = *selector
 		}
 	}
-	return cachedData.Metadata
+	deduplicatedSelectorsList := make([]telemetrytypes.EvolutionSelector, 0, len(deduplicatedSelectors))
+	for _, selector := range deduplicatedSelectors {
+		deduplicatedSelectorsList = append(deduplicatedSelectorsList, selector)
+	}
+
+	evolutions := k.fetchEvolutionEntryFromClickHouse(ctx, deduplicatedSelectorsList)
+
+	var evolutionsByUniqueKey map[string][]*telemetrytypes.EvolutionEntry
+
+	for _, evolution := range evolutions {
+		key := evolution.Signal.StringValue() + ":" + evolution.FieldContext.StringValue() + ":" + evolution.FieldName
+		evolutionsByUniqueKey[key] = append(evolutionsByUniqueKey[key], evolution)
+	}
+	return evolutionsByUniqueKey
 }
 
 // chunkSizeFirstSeenMetricMetadata limits the number of tuples per SQL query to avoid hitting the max_query_size limit.

@@ -73,6 +73,10 @@ func (b *logQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	// get metadata key selectors
+	metadataKeySelectors := getMetadataKeySelectors(keySelectors)
+	evolutions := b.metadataStore.GetColumnEvolutionMetadataMulti(ctx, orgID, metadataKeySelectors)
+
 	b.adjustKeys(ctx, keys, query)
 
 	// Create SQL builder
@@ -80,14 +84,30 @@ func (b *logQueryStatementBuilder) Build(
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeRawStream:
-		return b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables)
+		return b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables, evolutions)
 	case qbtypes.RequestTypeTimeSeries:
-		return b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
+		return b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables, evolutions)
 	case qbtypes.RequestTypeScalar:
-		return b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, false, variables)
+		return b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, false, variables, evolutions)
 	}
 
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
+}
+
+func getMetadataKeySelectors(keySelectors []*telemetrytypes.FieldKeySelector) []*telemetrytypes.EvolutionSelector {
+	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
+	for _, keySelector := range keySelectors {
+		selector := &telemetrytypes.EvolutionSelector{
+			Signal:       keySelector.Signal,
+			FieldContext: keySelector.FieldContext,
+			FieldName:    "__all__",
+		}
+		if keySelector.FieldContext == telemetrytypes.FieldContextBody {
+			selector.FieldName = keySelector.Name
+		}
+		metadataKeySelectors = append(metadataKeySelectors, selector)
+	}
+	return metadataKeySelectors
 }
 
 func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []*telemetrytypes.FieldKeySelector {
@@ -230,6 +250,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	evolutions map[string][]*telemetrytypes.EvolutionEntry,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -273,11 +294,6 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			if query.SelectFields[index].Name == LogsV2TimestampColumn || query.SelectFields[index].Name == LogsV2IDColumn {
 				continue
 			}
-			// get all evolution for the column
-			evolutions := b.metadataStore.GetColumnEvolutionMetadata(ctx, orgID, telemetrytypes.EvolutionSelector{
-				Signal:       telemetrytypes.SignalLogs,
-				FieldContext: query.SelectFields[index].FieldContext,
-			})
 
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
 			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], keys, evolutions)
@@ -289,10 +305,6 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
-	evolutions := b.metadataStore.GetColumnEvolutionMetadata(ctx, orgID, telemetrytypes.EvolutionSelector{
-		Signal:       telemetrytypes.SignalLogs,
-		FieldContext: telemetrytypes.FieldContextResource,
-	})
 	// Add filter conditions
 	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, evolutions)
 
@@ -302,11 +314,6 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		// get all evolution for the column
-		evolutions := b.metadataStore.GetColumnEvolutionMetadata(ctx, orgID, telemetrytypes.EvolutionSelector{
-			Signal:       telemetrytypes.SignalLogs,
-			FieldContext: orderBy.Key.FieldContext,
-		})
 		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, keys, evolutions)
 		if err != nil {
 			return nil, err
@@ -350,6 +357,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	evolutions map[string][]*telemetrytypes.EvolutionEntry,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -404,10 +412,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Add FROM clause
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
-	evolutions := b.metadataStore.GetColumnEvolutionMetadata(ctx, orgID, telemetrytypes.EvolutionSelector{
-		Signal:       telemetrytypes.SignalLogs,
-		FieldContext: telemetrytypes.FieldContextResource,
-	})
 	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, evolutions)
 
 	if err != nil {
@@ -420,7 +424,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
 		cteSB := sqlbuilder.NewSelectBuilder()
-		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, true, variables)
+		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, true, variables, evolutions)
 		if err != nil {
 			return nil, err
 		}
@@ -508,6 +512,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	skipResourceCTE bool,
 	variables map[string]qbtypes.VariableItem,
+	evolutions map[string][]*telemetrytypes.EvolutionEntry,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -560,10 +565,6 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
-	evolutions := b.metadataStore.GetColumnEvolutionMetadata(ctx, orgID, telemetrytypes.EvolutionSelector{
-		Signal:       telemetrytypes.SignalLogs,
-		FieldContext: telemetrytypes.FieldContextResource,
-	})
 	// Add filter conditions
 	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, evolutions)
 
@@ -629,7 +630,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
-	evolutions []*telemetrytypes.EvolutionEntry,
+	evolutions map[string][]*telemetrytypes.EvolutionEntry,
 ) (*querybuilder.PreparedWhereClause, error) {
 
 	var preparedWhereClause *querybuilder.PreparedWhereClause

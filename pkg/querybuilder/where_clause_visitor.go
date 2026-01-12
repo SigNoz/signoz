@@ -46,7 +46,7 @@ type filterExpressionVisitor struct {
 	keysWithWarnings map[string]bool
 	startNs          uint64
 	endNs            uint64
-	evolutions       []*telemetrytypes.EvolutionEntry
+	evolutions       map[string][]*telemetrytypes.EvolutionEntry
 }
 
 type FilterExprVisitorOpts struct {
@@ -66,7 +66,7 @@ type FilterExprVisitorOpts struct {
 	Variables          map[string]qbtypes.VariableItem
 	StartNs            uint64
 	EndNs              uint64
-	Evolutions         []*telemetrytypes.EvolutionEntry
+	Evolutions         map[string][]*telemetrytypes.EvolutionEntry
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor
