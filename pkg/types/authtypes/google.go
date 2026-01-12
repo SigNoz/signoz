@@ -73,6 +73,10 @@ func (config *GoogleConfig) UnmarshalJSON(data []byte) error {
 		}
 	}
 
+	if len(temp.AllowedGroups) > 0 && !temp.FetchGroups {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "fetchGroups must be true when allowedGroups is configured")
+	}
+
 	if len(temp.Scopes) == 0 {
 		temp.Scopes = []string{"email", "profile"}
 	}
