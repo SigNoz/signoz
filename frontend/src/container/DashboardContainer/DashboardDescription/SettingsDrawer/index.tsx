@@ -1,4 +1,4 @@
-import './Description.styles.scss';
+import './SettingsDrawer.styles.scss';
 
 import { Drawer } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
