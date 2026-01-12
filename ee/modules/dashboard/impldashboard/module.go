@@ -164,7 +164,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
 		err := module.DeletePublic(ctx, orgID, id)
-		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) && !errors.Ast(err, errors.TypeLicenseUnavailable) {
 			return err
 		}
 
