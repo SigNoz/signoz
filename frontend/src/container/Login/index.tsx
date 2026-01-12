@@ -65,6 +65,11 @@ function Login(): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
 	const [errorMessage, setErrorMessage] = useState<APIError>();
 
+	// Watch form values for validation
+	const email = Form.useWatch('email', form);
+	const password = Form.useWatch('password', form);
+	const orgId = Form.useWatch('orgId', form);
+
 	// setupCompleted information to route to signup page in case setup is incomplete
 	const {
 		data: versionData,
@@ -254,6 +259,31 @@ function Login(): JSX.Element {
 		}
 	}, [sessionsOrgWarning, setErrorMessage]);
 
+	// Validation helpers
+	const isEmailValid = Boolean(
+		email?.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+	);
+
+	const isNextButtonEnabled =
+		isEmailValid && !versionLoading && !sessionsContextLoading;
+
+	const isSubmitButtonEnabled = useMemo((): boolean => {
+		if (!isEmailValid || isSubmitting) return false;
+		const hasMultipleOrgs = (sessionsContext?.orgs.length ?? 0) > 1;
+		if (hasMultipleOrgs && !orgId) {
+			return false;
+		}
+
+		return !(isPasswordAuthN && !password?.trim());
+	}, [
+		isEmailValid,
+		isSubmitting,
+		sessionsContext,
+		orgId,
+		isPasswordAuthN,
+		password,
+	]);
+
 	return (
 		<div className="login-form-container">
 			<FormContainer form={form} onFinish={onSubmitHandler}>
@@ -295,7 +325,7 @@ function Login(): JSX.Element {
 								<Select
 									id="orgId"
 									data-testid="orgId"
-									className="login-form-input"
+									className="login-form-input login-form-select-no-border"
 									placeholder="Select your organization"
 									options={sessionsContext.orgs.map((org) => ({
 										value: org.id,
@@ -339,6 +369,7 @@ function Login(): JSX.Element {
 						size="small"
 						showIcon
 						className="login-error-callout"
+						message={errorMessage?.getErrorCode() || 'Something went wrong'}
 						description={errorMessage?.getErrorMessage() || 'Something went wrong'}
 					/>
 				)}
@@ -346,7 +377,7 @@ function Login(): JSX.Element {
 				<div className="login-form-actions">
 					{!sessionsContext && (
 						<Button
-							disabled={versionLoading || sessionsContextLoading}
+							disabled={!isNextButtonEnabled}
 							variant="solid"
 							onClick={onNextHandler}
 							data-testid="initiate_login"
@@ -359,7 +390,7 @@ function Login(): JSX.Element {
 
 					{sessionsContext && isCallbackAuthN && (
 						<Button
-							disabled={isSubmitting}
+							disabled={!isSubmitButtonEnabled}
 							variant="solid"
 							type="submit"
 							color="primary"
@@ -374,7 +405,7 @@ function Login(): JSX.Element {
 
 					{sessionsContext && isPasswordAuthN && (
 						<Button
-							disabled={isSubmitting}
+							disabled={!isSubmitButtonEnabled}
 							variant="solid"
 							color="primary"
 							data-testid="password_authn_submit"

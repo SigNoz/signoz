@@ -13,7 +13,7 @@ import afterLogin from 'AppRoutes/utils';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
@@ -58,6 +58,12 @@ function SignUp(): JSX.Element {
 
 	const { notifications } = useNotifications();
 	const [form] = Form.useForm<FormValues>();
+
+	// Watch form values for reactive validation
+	const email = Form.useWatch('email', form);
+	const firstName = Form.useWatch('firstName', form);
+	const password = Form.useWatch('password', form);
+	const confirmPassword = Form.useWatch('confirmPassword', form);
 
 	useEffect(() => {
 		if (
@@ -184,16 +190,16 @@ function SignUp(): JSX.Element {
 		}
 	};
 
-	const isValidForm: () => boolean = () => {
-		const values = form.getFieldsValue();
-		return (
-			loading ||
-			!values.email ||
-			!values.password ||
-			!values.confirmPassword ||
-			confirmPasswordError
-		);
-	};
+	const isValidForm = useMemo(
+		(): boolean =>
+			!loading &&
+			Boolean(email?.trim()) &&
+			Boolean(firstName?.trim()) &&
+			Boolean(password?.trim()) &&
+			Boolean(confirmPassword?.trim()) &&
+			!confirmPasswordError,
+		[loading, email, firstName, password, confirmPassword, confirmPasswordError],
+	);
 
 	return (
 		<AuthPageContainer>
@@ -242,7 +248,6 @@ function SignUp(): JSX.Element {
 										type="text"
 										required
 										id="firstName"
-										disabled={isDetailsDisable}
 										className="signup-form-input"
 									/>
 								</FormContainer.Item>
@@ -313,7 +318,7 @@ function SignUp(): JSX.Element {
 							color="primary"
 							type="submit"
 							data-attr="signup"
-							disabled={isValidForm()}
+							disabled={!isValidForm}
 							className="signup-submit-button"
 							suffixIcon={<ArrowRight size={16} />}
 						>

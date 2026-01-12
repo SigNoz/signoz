@@ -134,6 +134,14 @@
 		padding-top: 15vh;
 		align-items: center;
 	}
+
+	&.onboarding-flow {
+		padding-top: 0;
+
+		@media (max-width: 768px) {
+			padding-top: 0;
+		}
+	}
 }
 
 .lightMode {

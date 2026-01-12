@@ -28,6 +28,14 @@
 	height: 12px;
 }
 
+.trust-footer-status-indicator {
+	width: 6px;
+	height: 6px;
+	border-radius: 9999px;
+	background: #25e192;
+	flex-shrink: 0;
+}
+
 .trust-footer-icon {
 	aspect-ratio: 1.93;
 	width: 29px;
@@ -60,6 +68,16 @@
 .trust-footer-link-icon {
 	flex-shrink: 0;
 	color: var(--text-neutral-dark-50, #eceef2);
+}
+
+.trust-footer-link-status {
+	.trust-footer-text {
+		color: #25e192;
+	}
+
+	.trust-footer-link-icon {
+		color: #25e192;
+	}
 }
 
 .trust-footer-separator {

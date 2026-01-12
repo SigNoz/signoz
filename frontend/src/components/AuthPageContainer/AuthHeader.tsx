@@ -4,7 +4,7 @@ import { LifeBuoy } from 'lucide-react';
 
 function AuthHeader(): JSX.Element {
 	const handleGetHelp = (): void => {
-		window.open('mailto:cloud-support@signoz.io', '_blank');
+		window.open('https://signoz.io/support/', '_blank');
 	};
 
 	return (

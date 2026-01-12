@@ -1,11 +1,13 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import '../OnboardingQuestionaire.styles.scss';
 
-import { Color } from '@signozhq/design-tokens';
-import { Button, Checkbox, Input, Typography } from 'antd';
+import { Button } from '@signozhq/button';
+import { Checkbox } from '@signozhq/checkbox';
+import { Input } from '@signozhq/input';
+import { Typography } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 import logEvent from 'api/common/logEvent';
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export interface SignozDetails {
@@ -18,7 +20,6 @@ interface AboutSigNozQuestionsProps {
 	signozDetails: SignozDetails;
 	setSignozDetails: (details: SignozDetails) => void;
 	onNext: () => void;
-	onBack: () => void;
 }
 
 const interestedInOptions: Record<string, string> = {
@@ -34,7 +35,6 @@ export function AboutSigNozQuestions({
 	signozDetails,
 	setSignozDetails,
 	onNext,
-	onBack,
 }: AboutSigNozQuestionsProps): JSX.Element {
 	const [interestInSignoz, setInterestInSignoz] = useState<string[]>(
 		signozDetails?.interestInSignoz || [],
@@ -83,24 +83,19 @@ export function AboutSigNozQuestions({
 		onNext();
 	};
 
-	const handleOnBack = (): void => {
-		setSignozDetails({
-			discoverSignoz,
-			interestInSignoz,
-			otherInterestInSignoz,
-		});
-
-		onBack();
-	};
-
 	return (
 		<div className="questions-container">
-			<Typography.Title level={3} className="title">
-				Tell Us About Your Interest in SigNoz
-			</Typography.Title>
-			<Typography.Paragraph className="sub-title">
-				We&apos;d love to know a little bit about you and your interest in SigNoz
-			</Typography.Paragraph>
+			<div className="onboarding-header-section">
+				<div className="onboarding-header-icon">
+					<img src="/svgs/barber-pool.svg" alt="SigNoz" width="32" height="32" />
+				</div>
+				<Typography.Title level={4} className="onboarding-header-title">
+					Set up your workspace
+				</Typography.Title>
+				<Typography.Paragraph className="onboarding-header-subtitle">
+					Tailor SigNoz to suit your observability needs.
+				</Typography.Paragraph>
+			</div>
 
 			<div className="questions-form-container">
 				<div className="questions-form">
@@ -123,23 +118,25 @@ export function AboutSigNozQuestions({
 							{Object.keys(interestedInOptions).map((option: string) => (
 								<div key={option} className="checkbox-item">
 									<Checkbox
+										id={`checkbox-${option}`}
 										checked={interestInSignoz.includes(option)}
-										onChange={(e): void => handleInterestChange(option, e.target.checked)}
-									>
-										{interestedInOptions[option]}
-									</Checkbox>
+										onCheckedChange={(checked): void =>
+											handleInterestChange(option, Boolean(checked))
+										}
+										labelName={interestedInOptions[option]}
+									/>
 								</div>
 							))}
 
 							<div className="checkbox-item">
 								<Checkbox
+									id="others-checkbox"
 									checked={interestInSignoz.includes('Others')}
-									onChange={(e): void =>
-										handleInterestChange('Others', e.target.checked)
+									onCheckedChange={(checked): void =>
+										handleInterestChange('Others', Boolean(checked))
 									}
-								>
-									Others
-								</Checkbox>
+									labelName="Others"
+								/>
 								{interestInSignoz.includes('Others') && (
 									<Input
 										type="text"
@@ -147,13 +144,6 @@ export function AboutSigNozQuestions({
 										placeholder="Please specify your interest"
 										value={otherInterestInSignoz}
 										autoFocus
-										addonAfter={
-											otherInterestInSignoz !== '' ? (
-												<CheckCircle size={12} color={Color.BG_FOREST_500} />
-											) : (
-												''
-											)
-										}
 										onChange={(e): void => setOtherInterestInSignoz(e.target.value)}
 									/>
 								)}
@@ -162,20 +152,16 @@ export function AboutSigNozQuestions({
 					</div>
 				</div>
 
-				<div className="next-prev-container">
-					<Button type="default" className="next-button" onClick={handleOnBack}>
-						<ArrowLeft size={14} />
-						Back
-					</Button>
-
+				<div className="onboarding-buttons-container">
 					<Button
-						type="primary"
-						className={`next-button ${isNextDisabled ? 'disabled' : ''}`}
+						variant="solid"
+						color="primary"
+						className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
 						onClick={handleOnNext}
 						disabled={isNextDisabled}
+						suffixIcon={<ArrowRight size={12} />}
 					>
 						Next
-						<ArrowRight size={14} />
 					</Button>
 				</div>
 			</div>

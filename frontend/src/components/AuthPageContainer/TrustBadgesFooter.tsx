@@ -7,16 +7,14 @@ interface TrustBadge {
 	icon?: string;
 	text: string;
 	url?: string;
+	statusIndicator?: boolean;
 }
 
 const trustBadges: TrustBadge[] = [
 	{
-		icon: '/svgs/hipaa.svg',
-		text: 'HIPAA',
-	},
-	{
-		icon: '/svgs/SOC-2.svg',
-		text: 'SOC2',
+		text: 'All systems operational',
+		url: 'https://status.signoz.io/',
+		statusIndicator: true,
 	},
 	{
 		text: 'Privacy',
@@ -35,6 +33,9 @@ function TrustBadgesFooter(): JSX.Element {
 				{trustBadges.map((badge, index) => (
 					<React.Fragment key={badge.text}>
 						<div className="trust-footer-item">
+							{badge.statusIndicator && (
+								<div className="trust-footer-status-indicator" />
+							)}
 							{badge.icon && (
 								<img
 									loading="lazy"
@@ -46,12 +47,16 @@ function TrustBadgesFooter(): JSX.Element {
 							{badge.url ? (
 								<a
 									href={badge.url}
-									className="trust-footer-link"
+									className={`trust-footer-link ${
+										badge.statusIndicator ? 'trust-footer-link-status' : ''
+									}`}
 									target="_blank"
 									rel="noopener noreferrer"
 								>
 									<span className="trust-footer-text">{badge.text}</span>
-									<ArrowUpRight size={12} className="trust-footer-link-icon" />
+									{!badge.statusIndicator && (
+										<ArrowUpRight size={12} className="trust-footer-link-icon" />
+									)}
 								</a>
 							) : (
 								<span className="trust-footer-text">{badge.text}</span>
