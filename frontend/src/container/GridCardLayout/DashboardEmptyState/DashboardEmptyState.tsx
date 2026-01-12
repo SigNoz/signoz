@@ -4,7 +4,7 @@ import './DashboardEmptyState.styles.scss';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import SettingsDrawer from 'container/NewDashboard/DashboardDescription/SettingsDrawer';
+import SettingsDrawer from 'container/DashboardContainer/DashboardDescription/SettingsDrawer';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';

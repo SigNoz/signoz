@@ -2,6 +2,7 @@ package alertmanagertypes
 
 import (
 	"encoding/json"
+	"net/url"
 	"testing"
 	"time"
 
@@ -227,4 +228,67 @@ func TestNewConfigFromChannels(t *testing.T) {
 			assert.ElementsMatch(t, tc.expectedReceivers, actualReceivers)
 		})
 	}
+}
+
+func TestNewChannelFromReceiver(t *testing.T) {
+	testCases := []struct {
+		name     string
+		receiver config.Receiver
+		expected *Channel
+		pass     bool
+	}{
+		{
+			name: "InvalidReceiver_OnlyName",
+			receiver: config.Receiver{
+				Name: "test-receiver",
+			},
+			expected: nil,
+			pass:     false,
+		},
+		{
+			name: "InvalidReceiver_DefaultReceiver",
+			receiver: config.Receiver{
+				Name: DefaultReceiverName,
+			},
+			expected: nil,
+			pass:     false,
+		},
+		{
+			name: "ValidReceiver_Slack",
+			receiver: config.Receiver{
+				Name: "test-receiver",
+				SlackConfigs: []*config.SlackConfig{
+					{
+						Channel: "#alerts",
+						APIURL:  &config.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
+						NotifierConfig: config.NotifierConfig{
+							VSendResolved: true,
+						},
+					},
+				},
+			},
+			expected: &Channel{
+				Name: "test-receiver",
+				Type: "slack",
+				Data: `{"name":"test-receiver","slack_configs":[{"send_resolved":true,"api_url":"https://slack.com/api/test","channel":"#alerts"}]}`,
+			},
+			pass: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			channel, err := NewChannelFromReceiver(testCase.receiver, "1")
+			if !testCase.pass {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.expected.Name, channel.Name)
+			assert.Equal(t, testCase.expected.Type, channel.Type)
+			assert.Equal(t, testCase.expected.Data, channel.Data)
+		})
+	}
+
 }
