@@ -5,6 +5,14 @@ import {
 	SyncOutlined,
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
+import {
+	Combobox,
+	ComboboxCommand,
+	ComboboxContent,
+	ComboboxItem,
+	ComboboxList,
+	ComboboxTrigger,
+} from '@signozhq/combobox';
 import { Skeleton, Switch, Tooltip, Typography } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -12,6 +20,7 @@ import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isFunction, isNull } from 'lodash-es';
@@ -40,6 +49,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		showFilterCollapse = true,
 		showQueryName = true,
 	} = props;
+	const [value, setValue] = useState(0);
+	const [open, setOpen] = useState(false);
 	const { user } = useAppContext();
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const isAdmin = user.role === USER_ROLES.ADMIN;
@@ -57,8 +68,23 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const {
 		currentQuery,
 		lastUsedQuery,
+		setLastUsedQuery,
 		redirectWithQueryBuilderData,
+		panelType,
 	} = useQueryBuilder();
+
+	// Determine if we're in ListView mode
+	const isListView = panelType === PANEL_TYPES.LIST;
+
+	// Generate query options based on available queries
+	const queryOptions = useMemo(() => {
+		if (!currentQuery?.builder?.queryData) return [];
+
+		return currentQuery.builder.queryData.map((query, index) => ({
+			label: query.queryName || String.fromCharCode(65 + index),
+			value: index,
+		}));
+	}, [currentQuery?.builder?.queryData]);
 
 	const showAnnouncementTooltip = useMemo(() => {
 		const localStorageValue = getLocalStorageKey(
@@ -114,138 +140,190 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		showQueryName &&
 		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
 
+	// In ListView, always show the 0th query's name; otherwise use the active query's name
+	const displayedQueryName = isListView
+		? currentQuery.builder.queryData?.[0]?.queryName
+		: lastQueryName;
+
+	const handleQueryChange = (value: number): void => {
+		setLastUsedQuery(value);
+	};
+
+	// Helpers to reduce cognitive complexity in main render
+	const renderLeftActions = (): JSX.Element => (
+		<section className="left-actions">
+			<FilterOutlined />
+			<Typography.Text className="text">
+				{lastQueryName ? 'Filters for' : 'Filters'}
+			</Typography.Text>
+			{queryOptions.length > 1 && !isListView ? (
+				<Combobox open={open} onOpenChange={setOpen}>
+					<ComboboxTrigger
+						placeholder="Select a query"
+						value={queryOptions.find((f) => f.value === value)?.label || ''}
+						className="select-box"
+					/>
+					{open && (
+						<ComboboxContent>
+							<ComboboxCommand>
+								<ComboboxList>
+									{queryOptions.map((option) => (
+										<ComboboxItem
+											key={option.value}
+											value={String(option.value)}
+											onSelect={(): void => {
+												setValue(option.value);
+												handleQueryChange(option.value);
+												setOpen(false);
+											}}
+											isSelected={value === option.value}
+											showCheck={false}
+										>
+											{option.label}
+										</ComboboxItem>
+									))}
+								</ComboboxList>
+							</ComboboxCommand>
+						</ComboboxContent>
+					)}
+				</Combobox>
+			) : (
+				displayedQueryName && (
+					<Tooltip
+						title={`Filter currently in sync with query ${displayedQueryName}`}
+					>
+						<Typography.Text className="sync-tag">
+							{displayedQueryName}
+						</Typography.Text>
+					</Tooltip>
+				)
+			)}
+		</section>
+	);
+
+	const renderRightActions = (): JSX.Element => (
+		<section className="right-actions">
+			<Tooltip title="Reset All">
+				<div className="right-action-icon-container">
+					<SyncOutlined className="sync-icon" onClick={handleReset} />
+				</div>
+			</Tooltip>
+			{showFilterCollapse && (
+				<Tooltip title="Collapse Filters">
+					<div className="right-action-icon-container">
+						<VerticalAlignTopOutlined
+							rotate={270}
+							onClick={handleFilterVisibilityChange}
+						/>
+					</div>
+				</Tooltip>
+			)}
+			{isDynamicFilters && isAdmin && (
+				<Tooltip title="Settings">
+					<div
+						className={classNames('right-action-icon-container', {
+							active: isSettingsOpen,
+						})}
+					>
+						<SettingsIcon
+							className="settings-icon"
+							data-testid="settings-icon"
+							width={14}
+							height={14}
+							onClick={(): void => setIsSettingsOpen(true)}
+						/>
+						<AnnouncementTooltip
+							show={showAnnouncementTooltip}
+							position={{ top: -5, left: 15 }}
+							title="Edit your quick filters"
+							message="You can now customize and re-arrange your quick filters panel. Select the quick filters you’d need and hide away the rest for faster exploration."
+							onClose={(): void => {
+								setLocalStorageKey(
+									LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT,
+									'false',
+								);
+							}}
+						/>
+					</div>
+				</Tooltip>
+			)}
+		</section>
+	);
+
+	const renderContent = (): JSX.Element => (
+		<>
+			{source === QuickFiltersSource.API_MONITORING && (
+				<div className="api-quick-filters-header">
+					<Typography.Text>Show IP addresses</Typography.Text>
+					<Switch
+						size="small"
+						style={{ marginLeft: 'auto' }}
+						checked={showIP ?? true}
+						onClick={(): void => {
+							logEvent('API Monitoring: Show IP addresses clicked', {
+								showIP: !(showIP ?? true),
+							});
+							setParams({ showIP });
+						}}
+					/>
+				</div>
+			)}
+			<section className="filters">
+				{filterConfig.map((filter) => {
+					switch (filter.type) {
+						case FiltersType.CHECKBOX:
+							return (
+								<Checkbox
+									source={source}
+									filter={filter}
+									onFilterChange={onFilterChange}
+								/>
+							);
+						case FiltersType.DURATION:
+							return <Duration filter={filter} onFilterChange={onFilterChange} />;
+						case FiltersType.SLIDER:
+							return <Slider filter={filter} />;
+						// eslint-disable-next-line sonarjs/no-duplicated-branches
+						default:
+							return (
+								<Checkbox
+									source={source}
+									filter={filter}
+									onFilterChange={onFilterChange}
+								/>
+							);
+					}
+				})}
+
+				{filterConfig.length === 0 && (
+					<div className="no-filters-container">
+						<Frown size={16} />
+						<Typography.Text>No filters found</Typography.Text>
+					</div>
+				)}
+			</section>
+		</>
+	);
+
 	return (
 		<div className="quick-filters-container">
 			<div className="quick-filters">
 				{source !== QuickFiltersSource.INFRA_MONITORING && (
 					<section className="header">
-						<section className="left-actions">
-							<FilterOutlined />
-							<Typography.Text className="text">
-								{lastQueryName ? 'Filters for' : 'Filters'}
-							</Typography.Text>
-							{lastQueryName && (
-								<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
-									<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
-								</Tooltip>
-							)}
-						</section>
-
-						<section className="right-actions">
-							<Tooltip title="Reset All">
-								<div className="right-action-icon-container">
-									<SyncOutlined className="sync-icon" onClick={handleReset} />
-								</div>
-							</Tooltip>
-							{showFilterCollapse && (
-								<Tooltip title="Collapse Filters">
-									<div className="right-action-icon-container">
-										<VerticalAlignTopOutlined
-											rotate={270}
-											onClick={handleFilterVisibilityChange}
-										/>
-									</div>
-								</Tooltip>
-							)}
-							{isDynamicFilters && isAdmin && (
-								<Tooltip title="Settings">
-									<div
-										className={classNames('right-action-icon-container', {
-											active: isSettingsOpen,
-										})}
-									>
-										<SettingsIcon
-											className="settings-icon"
-											data-testid="settings-icon"
-											width={14}
-											height={14}
-											onClick={(): void => setIsSettingsOpen(true)}
-										/>
-										<AnnouncementTooltip
-											show={showAnnouncementTooltip}
-											position={{ top: -5, left: 15 }}
-											title="Edit your quick filters"
-											message="You can now customize and re-arrange your quick filters panel. Select the quick filters you’d need and hide away the rest for faster exploration."
-											onClose={(): void => {
-												setLocalStorageKey(
-													LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT,
-													'false',
-												);
-											}}
-										/>
-									</div>
-								</Tooltip>
-							)}
-						</section>
+						{renderLeftActions()}
+						{renderRightActions()}
 					</section>
 				)}
 
 				{isCustomFiltersLoading ? (
 					<div className="quick-filters-skeleton">
 						{Array.from({ length: 5 }).map((_, index) => (
-							<Skeleton.Input
-								active
-								size="small"
-								// eslint-disable-next-line react/no-array-index-key
-								key={index}
-							/>
+							// eslint-disable-next-line react/no-array-index-key
+							<Skeleton.Input active size="small" key={index} />
 						))}
 					</div>
 				) : (
-					<OverlayScrollbar>
-						<>
-							{source === QuickFiltersSource.API_MONITORING && (
-								<div className="api-quick-filters-header">
-									<Typography.Text>Show IP addresses</Typography.Text>
-									<Switch
-										size="small"
-										style={{ marginLeft: 'auto' }}
-										checked={showIP ?? true}
-										onClick={(): void => {
-											logEvent('API Monitoring: Show IP addresses clicked', {
-												showIP: !(showIP ?? true),
-											});
-											setParams({ showIP });
-										}}
-									/>
-								</div>
-							)}
-							<section className="filters">
-								{filterConfig.map((filter) => {
-									switch (filter.type) {
-										case FiltersType.CHECKBOX:
-											return (
-												<Checkbox
-													source={source}
-													filter={filter}
-													onFilterChange={onFilterChange}
-												/>
-											);
-										case FiltersType.DURATION:
-											return <Duration filter={filter} onFilterChange={onFilterChange} />;
-										case FiltersType.SLIDER:
-											return <Slider filter={filter} />;
-										// eslint-disable-next-line sonarjs/no-duplicated-branches
-										default:
-											return (
-												<Checkbox
-													source={source}
-													filter={filter}
-													onFilterChange={onFilterChange}
-												/>
-											);
-									}
-								})}
-
-								{filterConfig.length === 0 && (
-									<div className="no-filters-container">
-										<Frown size={16} />
-										<Typography.Text>No filters found</Typography.Text>
-									</div>
-								)}
-							</section>
-						</>
-					</OverlayScrollbar>
+					<OverlayScrollbar>{renderContent()}</OverlayScrollbar>
 				)}
 			</div>
 			<div className="quick-filters-settings-container">
