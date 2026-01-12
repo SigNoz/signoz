@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/govaluate"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -205,9 +206,9 @@ func postProcessMetricQuery(
 
 		for _, b := range tsData.Aggregations {
 			switch b.Alias {
-			case "bucket_sum", "__result_1":
+			case "__result_1":
 				bucketSum = b
-			case "bucket_count", "__result_2":
+			case "__result_2":
 				bucketCount = b
 			default:
 				kept = append(kept, b)
@@ -215,8 +216,9 @@ func postProcessMetricQuery(
 		}
 
 		// Derive warnings from diagnostics
-		allZero := true
+		allZero := false
 		if bucketSum != nil {
+			allZero = true
 			if len(bucketSum.Series) == 0 {
 				allZero = false // dont calculate for no values
 			} else {
@@ -234,8 +236,9 @@ func postProcessMetricQuery(
 			}
 		}
 
-		allSparse := true
+		allSparse := false
 		if bucketCount != nil {
+			allSparse = true
 			if len(bucketCount.Series) == 0 {
 				allSparse = false // dont calculate for no values
 			} else {
@@ -253,7 +256,7 @@ func postProcessMetricQuery(
 			}
 		}
 
-		if allZero {
+		if allZero && query.Aggregations[0].Temporality == metrictypes.Cumulative {
 			result.Warnings = append(result.Warnings, "No change observed for this cumulative metric in the selected range.")
 		}
 		if allSparse {

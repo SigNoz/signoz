@@ -490,6 +490,7 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*cac
 		key      string
 	}
 	seriesMap := make(map[seriesKey]*qbtypes.TimeSeries, estimatedSeries)
+	aliasMap := make(map[int]string)
 
 	for _, bucket := range buckets {
 		var tsData *qbtypes.TimeSeriesData
@@ -499,6 +500,10 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*cac
 		}
 
 		for _, aggBucket := range tsData.Aggregations {
+			if aggBucket.Alias != "" {
+				aliasMap[aggBucket.Index] = aggBucket.Alias
+			}
+
 			for _, series := range aggBucket.Series {
 				// Create series key from labels
 				key := seriesKey{
@@ -571,7 +576,13 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*cac
 			}
 		}
 
+		var alias string
+		if aliasMap[index] != "" {
+			alias = aliasMap[index]
+		}
+
 		result.Aggregations = append(result.Aggregations, &qbtypes.AggregationBucket{
+			Alias:  alias,
 			Index:  index,
 			Series: seriesList,
 		})
@@ -736,6 +747,7 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 			for _, aggBucket := range tsData.Aggregations {
 				trimmedBucket := &qbtypes.AggregationBucket{
 					Index: aggBucket.Index,
+					Alias: aggBucket.Alias,
 				}
 
 				for _, series := range aggBucket.Series {
