@@ -6,7 +6,14 @@ This file demonstrates how to write declarative alert test cases using the frame
 
 
 from fixtures.alerts import AlertFramework
-from fixtures.types import AlertExpectations, AlertTestCase, MetricValues, create_default_metric_rule
+from fixtures.types import (
+    AlertExpectations,
+    AlertTestCase,
+    MetricValues,
+    create_default_metric_rule,
+    CompareOp,
+    MatchType,
+)
 
 # uv run pytest --basetemp=./tmp/ -vv --reuse src/alerts/test_threshold_rules.py::test_threshold_above_at_least_once
 
@@ -33,10 +40,8 @@ def test_threshold_above_at_least_once(alert_framework: AlertFramework):
         metric_name="test_cpu_usage",
     ).with_threshold(
         target_value=80.0,
-        compare_op="above",
-        match_type="at_least_once",
-    ).with_description(
-        "Alert when CPU usage exceeds 80% at least once"
+        compare_op=CompareOp.ABOVE,
+        match_type=MatchType.AT_LEAST_ONCE,
     )
     
     # Define expectations
@@ -80,8 +85,8 @@ def test_threshold_above_all_the_time(alert_framework: AlertFramework):
         metric_name="test_memory_usage",
     ).with_threshold(
         target_value=80.0,
-        compare_op="above",
-        match_type="all_the_time",
+        compare_op=CompareOp.ABOVE,
+        match_type=MatchType.ALL_THE_TIME,
     )
     
     expectations = AlertExpectations(
@@ -121,9 +126,9 @@ def test_threshold_below_on_average(alert_framework: AlertFramework):
         metric_name="test_request_rate",
     ).with_threshold(
         target_value=40.0,
-        compare_op="below",
-        match_type="on_average",
-    ).with_eval_window("5m").with_frequency("1m")
+        compare_op=CompareOp.BELOW,
+        match_type=MatchType.ON_AVERAGE,
+    )
     
     expectations = AlertExpectations(
         should_fire=True,
@@ -161,11 +166,16 @@ def test_multi_threshold_warning_and_critical(alert_framework: AlertFramework):
     rule = create_default_metric_rule(
         alert_name="Disk Usage High",
         metric_name="test_disk_usage",
-    ).with_multi_threshold(
-        critical_value=90.0,
-        warning_value=70.0,
-        compare_op="above",
-        match_type="at_least_once",
+    ).with_threshold(
+        target_value=70.0,
+        compare_op=CompareOp.ABOVE,
+        match_type=MatchType.AT_LEAST_ONCE,
+        severity="warning",
+    ).with_threshold(
+        target_value=90.0,
+        compare_op=CompareOp.ABOVE,
+        match_type=MatchType.AT_LEAST_ONCE,
+        severity="critical",
     )
     
     expectations = AlertExpectations(
@@ -206,8 +216,8 @@ def test_threshold_equal_to_last(alert_framework: AlertFramework):
         metric_name="test_status_code",
     ).with_threshold(
         target_value=50.0,
-        compare_op="equal_to",
-        match_type="last",
+        compare_op=CompareOp.EQUAL,
+        match_type=MatchType.LAST,
     )
     
     expectations = AlertExpectations(
@@ -245,11 +255,11 @@ def test_threshold_in_total(alert_framework: AlertFramework):
     rule = create_default_metric_rule(
         alert_name="High Error Count",
         metric_name="test_error_count",
-        aggregate_operator="sum",
+        space_aggregation="sum",
     ).with_threshold(
         target_value=100.0,
-        compare_op="above",
-        match_type="in_total",
+        compare_op=CompareOp.ABOVE,
+        match_type=MatchType.IN_TOTAL,
     )
     
     expectations = AlertExpectations(

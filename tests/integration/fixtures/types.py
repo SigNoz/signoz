@@ -448,7 +448,7 @@ class PostableRule:
             target_unit=target_unit,
         )
 
-        self.condition.thresholds = ThresholdsData(kind="basic", spec=[threshold])
+        self.condition.thresholds.spec.append(threshold)
         return self
 
     def with_no_data(
@@ -561,9 +561,10 @@ def create_default_metric_rule(
         queries=[query_envelope],
     )
 
-    # Create RuleCondition
+    # Create RuleCondition with empty thresholds (to be set later via .with_threshold())
     condition = RuleCondition(
         composite_query=composite_query,
+        thresholds=ThresholdsData(kind="basic", spec=[]),
         selected_query_name=query_name,
     )
 
