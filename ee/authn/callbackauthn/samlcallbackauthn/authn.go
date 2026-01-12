@@ -100,7 +100,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 	var groups []string
 	role := ""
 
-	attributeMapping := authDomain.AuthDomainConfig().SAML.AttributeMapping
+	attributeMapping := authDomain.AuthDomainConfig().SAML.SamlAttributeMapping
 	if attributeMapping != nil {
 		if attributeMapping.Name != "" {
 			if val := assertionInfo.Values.Get(attributeMapping.Name); val != "" {

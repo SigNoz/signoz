@@ -2736,6 +2736,17 @@ paths:
       - sessions
 components:
   schemas:
+    AuthtypesAttributeMapping:
+      properties:
+        email:
+          type: string
+        groups:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+      type: object
     AuthtypesAuthDomainConfig:
       properties:
         googleAuthConfig:
@@ -2775,17 +2786,6 @@ components:
         provider:
           type: string
         url:
-          type: string
-      type: object
-    AuthtypesClaimMapping:
-      properties:
-        email:
-          type: string
-        groups:
-          type: string
-        name:
-          type: string
-        role:
           type: string
       type: object
     AuthtypesDeprecatedGettableLogin:
@@ -2875,7 +2875,7 @@ components:
     AuthtypesOIDCConfig:
       properties:
         claimMapping:
-          $ref: '#/components/schemas/AuthtypesClaimMapping'
+          $ref: '#/components/schemas/AuthtypesAttributeMapping'
         clientId:
           type: string
         clientSecret:
@@ -2943,21 +2943,12 @@ components:
         useRoleAttribute:
           type: boolean
       type: object
-    AuthtypesSamlAttributeMapping:
-      properties:
-        groups:
-          type: string
-        name:
-          type: string
-        role:
-          type: string
-      type: object
     AuthtypesSamlConfig:
       properties:
         insecureSkipAuthNRequestsSigned:
           type: boolean
         samlAttributeMapping:
-          $ref: '#/components/schemas/AuthtypesSamlAttributeMapping'
+          $ref: '#/components/schemas/AuthtypesAttributeMapping'
         samlCert:
           type: string
         samlEntity:

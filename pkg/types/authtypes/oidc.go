@@ -22,7 +22,7 @@ type OIDCConfig struct {
 	ClientSecret string `json:"clientSecret"`
 
 	// Mapping of claims to the corresponding fields in the token.
-	ClaimMapping ClaimMapping `json:"claimMapping"`
+	ClaimMapping AttributeMapping `json:"claimMapping"`
 
 	// Whether to skip email verification. Defaults to "false"
 	InsecureSkipEmailVerified bool `json:"insecureSkipEmailVerified"`
@@ -32,17 +32,6 @@ type OIDCConfig struct {
 
 	// Scopes for the token. Defaults to "email profile openid"
 	Scopes []string `json:"scopes"`
-}
-
-type ClaimMapping struct {
-	// Configurable key which contains the email claims. Defaults to "email"
-	Email string `json:"email"`
-	// Configuration key which contains the name. Defaults to "name"
-	Name string `json:"name"`
-	// Configuration key which contains the name. Defaults to "groups" (Optional)
-	Groups string `json:"groups"`
-	// Configuration key which contains the name. Defaults to "role" (Optional)
-	Role string `json:"role"`
 }
 
 func (config *OIDCConfig) UnmarshalJSON(data []byte) error {
@@ -63,22 +52,6 @@ func (config *OIDCConfig) UnmarshalJSON(data []byte) error {
 
 	if temp.ClientSecret == "" {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "clientSecret is required")
-	}
-
-	if temp.ClaimMapping.Email == "" {
-		temp.ClaimMapping.Email = "email"
-	}
-
-	if temp.ClaimMapping.Name == "" {
-		temp.ClaimMapping.Name = "name"
-	}
-
-	if temp.ClaimMapping.Groups == "" {
-		temp.ClaimMapping.Groups = "groups"
-	}
-
-	if temp.ClaimMapping.Role == "" {
-		temp.ClaimMapping.Role = "role"
 	}
 
 	if len(temp.Scopes) == 0 {

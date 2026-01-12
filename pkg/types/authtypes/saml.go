@@ -22,16 +22,7 @@ type SamlConfig struct {
 	InsecureSkipAuthNRequestsSigned bool `json:"insecureSkipAuthNRequestsSigned"`
 
 	// Mapping of SAML assertion attributes
-	AttributeMapping *SamlAttributeMapping `json:"samlAttributeMapping"`
-}
-
-type SamlAttributeMapping struct {
-	// SAML attribute name for display name
-	Name string `json:"name"`
-	// SAML attribute name for groups
-	Groups string `json:"groups"`
-	// SAML attribute name for direct role
-	Role string `json:"role"`
+	SamlAttributeMapping *AttributeMapping `json:"samlAttributeMapping"`
 }
 
 func (config *SamlConfig) UnmarshalJSON(data []byte) error {
