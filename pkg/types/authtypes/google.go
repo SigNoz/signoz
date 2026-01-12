@@ -40,9 +40,6 @@ type GoogleConfig struct {
 	// If this is present, only users belonging to one of these groups will be allowed to login
 	AllowedGroups []string `json:"allowedGroups,omitempty"`
 
-	// Scopes for oauth2.Config. Defaults to "email profile"
-	Scopes []string `json:"scopes"`
-
 	// Whether to skip email verification. Defaults to "false"
 	InsecureSkipEmailVerified bool `json:"insecureSkipEmailVerified"`
 }
@@ -75,10 +72,6 @@ func (config *GoogleConfig) UnmarshalJSON(data []byte) error {
 
 	if len(temp.AllowedGroups) > 0 && !temp.FetchGroups {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "fetchGroups must be true when allowedGroups is configured")
-	}
-
-	if len(temp.Scopes) == 0 {
-		temp.Scopes = []string{"email", "profile"}
 	}
 
 	*config = GoogleConfig(temp)
