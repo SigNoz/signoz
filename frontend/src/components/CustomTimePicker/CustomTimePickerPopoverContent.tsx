@@ -1,6 +1,5 @@
 import './CustomTimePicker.styles.scss';
 
-import { Calendar } from '@signozhq/calendar';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -15,14 +14,7 @@ import {
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
-import {
-	CalendarIcon,
-	Check,
-	Clock,
-	PenLine,
-	TriangleAlertIcon,
-	X,
-} from 'lucide-react';
+import { Clock, PenLine, TriangleAlertIcon } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
@@ -36,10 +28,11 @@ import { useLocation } from 'react-router-dom';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
+import CalendarContainer from './CalendarContainer';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
 
-type DateRange = {
+export type DateRange = {
 	from: Date | undefined;
 	to?: Date | undefined;
 };
@@ -86,6 +79,7 @@ const getDateRange = (
 		.tz(timezone)
 		.startOf('day')
 		.toDate();
+
 	const to = dayjs(maxTime / 1000_000)
 		.tz(timezone)
 		.endOf('day')
@@ -138,7 +132,7 @@ function CustomTimePickerPopoverContent({
 	const isLogsListView =
 		panelTypeFromURL !== 'table' && panelTypeFromURL !== 'graph'; // we do not select list view in the url
 
-	const [dateRange, setDateRange] = useState<DateRange | undefined>(
+	const [dateRange, setDateRange] = useState<DateRange>(
 		getDateRange(minTime, maxTime, timezone.value),
 	);
 
@@ -289,52 +283,12 @@ function CustomTimePickerPopoverContent({
 					)}
 				>
 					{customDateTimeVisible ? (
-						<div className="calendar-container">
-							<div className="calendar-container-header">
-								<CalendarIcon size={12} />
-								<div className="calendar-container-header-title">
-									{dayjs(dateRange?.from)
-										.tz(timezone.value)
-										.format(DATE_TIME_FORMATS.MONTH_DATE_SHORT)}{' '}
-									-{' '}
-									{dayjs(dateRange?.to)
-										.tz(timezone.value)
-										.format(DATE_TIME_FORMATS.MONTH_DATE_SHORT)}
-								</div>
-							</div>
-
-							<div className="calendar-container-body">
-								<Calendar
-									mode="range"
-									required
-									defaultMonth={dateRange?.from}
-									selected={dateRange}
-									disabled={{
-										after: dayjs().toDate(),
-									}}
-									onSelect={handleSelectDateRange}
-								/>
-
-								<div className="calendar-actions">
-									<Button
-										type="primary"
-										className="periscope-btn secondary cancel-btn"
-										onClick={handleCalendarRangeCancel}
-										icon={<X size={12} />}
-									>
-										Cancel
-									</Button>
-									<Button
-										type="primary"
-										className="periscope-btn primary apply-btn"
-										onClick={handleCalendarRangeApply}
-										icon={<Check size={12} />}
-									>
-										Apply
-									</Button>
-								</div>
-							</div>
-						</div>
+						<CalendarContainer
+							dateRange={dateRange}
+							onSelectDateRange={handleSelectDateRange}
+							onCancel={handleCalendarRangeCancel}
+							onApply={handleCalendarRangeApply}
+						/>
 					) : (
 						<div className="time-selector-container">
 							{customDateTimeInputStatus === CustomTimePickerInputStatus.ERROR &&

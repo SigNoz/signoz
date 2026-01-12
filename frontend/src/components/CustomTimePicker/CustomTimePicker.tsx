@@ -553,6 +553,7 @@ function CustomTimePicker({
 					arrow={false}
 					trigger="click"
 					open={open}
+					destroyTooltipOnHide
 					onOpenChange={handleOpenChange}
 					style={{
 						padding: 0,
