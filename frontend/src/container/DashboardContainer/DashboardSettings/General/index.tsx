@@ -1,7 +1,7 @@
 import './GeneralSettings.styles.scss';
 
 import { Col, Input, Select, Space, Typography } from 'antd';
-import AddTags from 'container/NewDashboard/DashboardSettings/General/AddTags';
+import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddTags';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { isEqual } from 'lodash-es';
 import { Check, X } from 'lucide-react';

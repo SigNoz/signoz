@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import { AxiosError } from 'axios';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
-import DashboardContainer from 'container/NewDashboard';
+import DashboardContainer from 'container/DashboardContainer';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect } from 'react';
 import { ErrorType } from 'types/common';
