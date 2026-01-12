@@ -669,6 +669,48 @@ func TestAdjustKey(t *testing.T) {
 			},
 		},
 		{
+			name: "intrinsic field with metadata match - no override",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "body",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap: buildCompleteFieldKeyMap(),
+			expectedKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "body",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+		},
+		{
+			name: "json field with no context specified",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "body.severity_text",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap: buildCompleteFieldKeyMap(),
+			expectedKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "body.severity_text",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+		},
+		{
+			name: "json field with context specified",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "body.severity_text",
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap: buildCompleteFieldKeyMap(),
+			expectedKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "severity_text",
+				FieldContext:  telemetrytypes.FieldContextBody,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		{
 			name: "single matching key in metadata",
 			inputKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "service.name",
@@ -826,6 +868,8 @@ func TestAdjustKey(t *testing.T) {
 			require.Equal(t, c.expectedKey.FieldContext, key.FieldContext, "field context should match")
 			require.Equal(t, c.expectedKey.FieldDataType, key.FieldDataType, "field data type should match")
 			require.Equal(t, c.expectedKey.Materialized, key.Materialized, "materialized should match")
+			require.Equal(t, c.expectedKey.JSONDataType, key.JSONDataType, "json data type should match")
+			require.Equal(t, c.expectedKey.Indexes, key.Indexes, "json exists should match")
 		})
 	}
 }

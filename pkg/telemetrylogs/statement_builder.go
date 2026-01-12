@@ -107,8 +107,22 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 
 	for idx := range query.GroupBy {
 		groupBy := query.GroupBy[idx]
-		selectors := querybuilder.QueryStringToKeysSelectors(groupBy.TelemetryFieldKey.Name)
-		keySelectors = append(keySelectors, selectors...)
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:          groupBy.Name,
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  groupBy.FieldContext,
+			FieldDataType: groupBy.FieldDataType,
+		})
+	}
+
+	for idx := range query.SelectFields {
+		selectField := query.SelectFields[idx]
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:          selectField.Name,
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  selectField.FieldContext,
+			FieldDataType: selectField.FieldDataType,
+		})
 	}
 
 	for idx := range query.Order {
@@ -144,7 +158,8 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 		In this case, we'll remove the data type from http.status_code:number
 		and make it just http.status_code and remove the duplicate entry.
 	*/
-	querybuilder.AdjustDuplicateKeys(&query)
+
+	actions := querybuilder.AdjustDuplicateKeys(&query)
 
 	/*
 		Now adjust each key to have correct context and data type
@@ -152,13 +167,18 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 		Reason for doing this is to not create an unexpected behavior for users
 	*/
 	for idx := range query.SelectFields {
-		b.adjustKey(ctx, &query.SelectFields[idx], keys)
+		actions = append(actions, b.adjustKey(ctx, &query.SelectFields[idx], keys)...)
 	}
 	for idx := range query.GroupBy {
-		b.adjustKey(ctx, &query.GroupBy[idx].TelemetryFieldKey, keys)
+		actions = append(actions, b.adjustKey(ctx, &query.GroupBy[idx].TelemetryFieldKey, keys)...)
 	}
 	for idx := range query.Order {
-		b.adjustKey(ctx, &query.Order[idx].Key.TelemetryFieldKey, keys)
+		actions = append(actions, b.adjustKey(ctx, &query.Order[idx].Key.TelemetryFieldKey, keys)...)
+	}
+
+	for _, action := range actions {
+		// TODO: change to debug level once we are confident about the behavior
+		b.logger.InfoContext(ctx, action)
 	}
 
 	keys["id"] = []*telemetrytypes.TelemetryFieldKey{
@@ -173,16 +193,16 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 	return query
 }
 
-func (b *logQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) {
+func (b *logQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
 
 	// First check if it matches with any intrinsic fields
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
 	if _, ok := IntrinsicFields[key.Name]; ok {
 		intrinsicOrCalculatedField = IntrinsicFields[key.Name]
-		querybuilder.AdjustKey(ctx, key, keys, &intrinsicOrCalculatedField)
-	} else {
-		querybuilder.AdjustKey(ctx, key, keys, nil)
+		return querybuilder.AdjustKey(ctx, key, keys, &intrinsicOrCalculatedField)
 	}
+
+	return querybuilder.AdjustKey(ctx, key, keys, nil)
 
 }
 

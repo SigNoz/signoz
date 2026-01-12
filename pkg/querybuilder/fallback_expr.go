@@ -45,7 +45,7 @@ func CollisionHandledFinalExpr(
 
 	addCondition := func(key *telemetrytypes.TelemetryFieldKey) error {
 		sb := sqlbuilder.NewSelectBuilder()
-        condition, err := cb.ConditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, 0, 0)
+		condition, err := cb.ConditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, 0, 0)
 		if err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func CollisionHandledFinalExpr(
 			return "", nil, err
 		}
 
-		if strings.HasPrefix(field.Name, jsonBodyPrefix) && jsonBodyPrefix != "" && jsonKeyToKey != nil {
+		if field.FieldContext == telemetrytypes.FieldContextBody && jsonBodyPrefix != "" && jsonKeyToKey != nil {
 			// TODO(nitya): enable group by on body column?
 			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
 			// colName, _ = jsonKeyToKey(context.Background(), field, qbtypes.FilterOperatorUnknown, dummyValue)

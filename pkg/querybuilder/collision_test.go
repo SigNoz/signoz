@@ -11,10 +11,11 @@ import (
 
 func TestAdjustDuplicateKeys(t *testing.T) {
 	tests := []struct {
-		name           string
-		query          qbtypes.QueryBuilderQuery[any]
-		expectedQuery  qbtypes.QueryBuilderQuery[any]
-		description    string
+		name            string
+		query           qbtypes.QueryBuilderQuery[any]
+		expectedQuery   qbtypes.QueryBuilderQuery[any]
+		expectedActions []string
+		description     string
 	}{
 		{
 			name: "no duplicates - should remain unchanged",
@@ -42,7 +43,8 @@ func TestAdjustDuplicateKeys(t *testing.T) {
 					{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "field4", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeNumber}}},
 				},
 			},
-			description: "No duplicate keys - fields should remain unchanged",
+			expectedActions: []string{},
+			description:     "No duplicate keys - fields should remain unchanged",
 		},
 		{
 			name: "duplicate in SelectFields with different context",
@@ -58,6 +60,10 @@ func TestAdjustDuplicateKeys(t *testing.T) {
 				},
 				GroupBy: []qbtypes.GroupByKey{},
 				Order:   []qbtypes.OrderBy{},
+			},
+			expectedActions: []string{
+				"Removed field context from name=duration,context=attribute,datatype=number for duplicate key name=duration,context=resource,datatype=number",
+				"Skipped duplicate SelectField key name=duration,context=resource,datatype=number",
 			},
 			description: "Duplicate key with different context should be merged with unspecified context",
 		},
@@ -76,6 +82,10 @@ func TestAdjustDuplicateKeys(t *testing.T) {
 				GroupBy: []qbtypes.GroupByKey{},
 				Order:   []qbtypes.OrderBy{},
 			},
+			expectedActions: []string{
+				"Removed field data type from name=value,context=attribute,datatype=string for duplicate key name=value,context=attribute,datatype=number",
+				"Skipped duplicate SelectField key name=value,context=attribute,datatype=number",
+			},
 			description: "Duplicate key with different data type should be merged with unspecified data type",
 		},
 		{
@@ -92,6 +102,11 @@ func TestAdjustDuplicateKeys(t *testing.T) {
 				},
 				GroupBy: []qbtypes.GroupByKey{},
 				Order:   []qbtypes.OrderBy{},
+			},
+			expectedActions: []string{
+				"Removed field context from name=field,context=attribute,datatype=string for duplicate key name=field,context=resource,datatype=number",
+				"Removed field data type from name=field,datatype=string for duplicate key name=field,context=resource,datatype=number",
+				"Skipped duplicate SelectField key name=field,context=resource,datatype=number",
 			},
 			description: "Duplicate key with different context and data type should be merged with both unspecified",
 		},
@@ -113,6 +128,9 @@ func TestAdjustDuplicateKeys(t *testing.T) {
 					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service", FieldContext: telemetrytypes.FieldContextUnspecified, FieldDataType: telemetrytypes.FieldDataTypeString}},
 				},
 				Order: []qbtypes.OrderBy{},
+			},
+			expectedActions: []string{
+				"Removed field context from name=service,context=attribute,datatype=string for duplicate key name=service,context=resource,datatype=string",
 			},
 			description: "Duplicate across SelectFields and GroupBy with different context should be merged",
 		},
@@ -140,6 +158,10 @@ func TestAdjustDuplicateKeys(t *testing.T) {
 					{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp", FieldContext: telemetrytypes.FieldContextUnspecified, FieldDataType: telemetrytypes.FieldDataTypeUnspecified}}},
 				},
 			},
+			expectedActions: []string{
+				"Removed field context from name=timestamp,context=attribute,datatype=number for duplicate key name=timestamp,context=resource,datatype=number",
+				"Removed field data type from name=timestamp,datatype=number for duplicate key name=timestamp,context=attribute,datatype=string",
+			},
 			description: "Duplicate across all three sections with different contexts and data types should be fully merged",
 		},
 		{
@@ -166,6 +188,10 @@ func TestAdjustDuplicateKeys(t *testing.T) {
 					},
 				},
 			},
+			expectedActions: []string{
+				"Removed field context from name=field,context=attribute,datatype=string for duplicate key name=field,context=resource,datatype=string",
+				"Skipped duplicate OrderBy key name=field,context=resource,datatype=string",
+			},
 			description: "Multiple OrderBy on same key keeps first occurrence and merges contexts",
 		},
 		{
@@ -184,7 +210,35 @@ func TestAdjustDuplicateKeys(t *testing.T) {
 				GroupBy: []qbtypes.GroupByKey{},
 				Order:   []qbtypes.OrderBy{},
 			},
+			expectedActions: []string{
+				"Removed field context from name=status,context=attribute,datatype=string for duplicate key name=status,context=resource,datatype=string",
+				"Removed field data type from name=status,datatype=string for duplicate key name=status,context=attribute,datatype=number",
+				"Skipped duplicate SelectField key name=status,context=resource,datatype=string",
+				"Skipped duplicate SelectField key name=status,context=attribute,datatype=number",
+			},
 			description: "Three duplicate entries with various differences should be fully merged",
+		},
+		{
+			name: "duplicate entries in GroupBy",
+			query: qbtypes.QueryBuilderQuery[any]{
+				GroupBy: []qbtypes.GroupByKey{
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "status", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString}},
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "status", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeNumber}},
+				},
+			},
+			expectedQuery: qbtypes.QueryBuilderQuery[any]{
+				SelectFields: []telemetrytypes.TelemetryFieldKey{},
+				GroupBy: []qbtypes.GroupByKey{
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "status", FieldContext: telemetrytypes.FieldContextUnspecified, FieldDataType: telemetrytypes.FieldDataTypeUnspecified}},
+				},
+				Order: []qbtypes.OrderBy{},
+			},
+			expectedActions: []string{
+				"Removed field context from name=status,context=attribute,datatype=string for duplicate key name=status,context=resource,datatype=number",
+				"Removed field data type from name=status,datatype=string for duplicate key name=status,context=resource,datatype=number",
+				"Skipped duplicate GroupBy key name=status,context=resource,datatype=number",
+			},
+			description: "Duplicate entries in GroupBy with different context should be merged",
 		},
 		{
 			name:  "empty query",
@@ -194,7 +248,8 @@ func TestAdjustDuplicateKeys(t *testing.T) {
 				GroupBy:      []qbtypes.GroupByKey{},
 				Order:        []qbtypes.OrderBy{},
 			},
-			description: "Empty query should result in empty slices",
+			expectedActions: []string{},
+			description:     "Empty query should result in empty slices",
 		},
 	}
 
@@ -202,11 +257,12 @@ func TestAdjustDuplicateKeys(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Make a copy to avoid modifying the original
 			query := tt.query
-			AdjustDuplicateKeys(&query)
+			actions := AdjustDuplicateKeys(&query)
 
 			assert.Equal(t, tt.expectedQuery.SelectFields, query.SelectFields, "SelectFields mismatch: %s", tt.description)
 			assert.Equal(t, tt.expectedQuery.GroupBy, query.GroupBy, "GroupBy mismatch: %s", tt.description)
 			assert.Equal(t, tt.expectedQuery.Order, query.Order, "Order mismatch: %s", tt.description)
+			assert.Equal(t, tt.expectedActions, actions, "Actions mismatch: %s", tt.description)
 		})
 	}
 }
@@ -218,6 +274,7 @@ func TestAdjustKey(t *testing.T) {
 		keys                       map[string][]*telemetrytypes.TelemetryFieldKey
 		intrinsicOrCalculatedField *telemetrytypes.TelemetryFieldKey
 		expectedKey                telemetrytypes.TelemetryFieldKey
+		expectedActions            []string
 		description                string
 	}{
 		{
@@ -239,6 +296,9 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
+			},
+			expectedActions: []string{
+				"Overriding key: name=trace_id,context=attribute,datatype=string to name=trace_id,datatype=string,materialized=true",
 			},
 			description: "Intrinsic field with no metadata match should use intrinsic field properties",
 		},
@@ -271,7 +331,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 				Materialized:  false,
 			},
-			description: "Intrinsic field with metadata match should set materialized to false (ambiguous case)",
+			expectedActions: []string{},
+			description:     "Intrinsic field with metadata match should set materialized to false (ambiguous case)",
 		},
 		{
 			name: "non-intrinsic field with single matching metadata key",
@@ -297,6 +358,9 @@ func TestAdjustKey(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
 			},
+			expectedActions: []string{
+				"Adjusting key name=custom_field to name=custom_field,context=attribute,datatype=string,materialized=true",
+			},
 			description: "Single matching metadata key should use its properties",
 		},
 		{
@@ -314,7 +378,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  false,
 			},
-			description: "No matching metadata keys should set materialized to false",
+			expectedActions: []string{},
+			description:     "No matching metadata keys should set materialized to false",
 		},
 		{
 			name: "multiple matching keys all materialized with same context and data type",
@@ -346,7 +411,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
 			},
-			description: "Multiple matching keys all materialized with same properties should use those properties",
+			expectedActions: []string{},
+			description:     "Multiple matching keys all materialized with same properties should use those properties",
 		},
 		{
 			name: "multiple matching keys with mixed materialization",
@@ -378,7 +444,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  false,
 			},
-			description: "Multiple matching keys with mixed materialization should set materialized to false",
+			expectedActions: []string{},
+			description:     "Multiple matching keys with mixed materialization should set materialized to false",
 		},
 		{
 			name: "multiple matching keys with different contexts",
@@ -410,7 +477,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
 			},
-			description: "Multiple matching keys with different contexts should keep context unspecified",
+			expectedActions: []string{},
+			description:     "Multiple matching keys with different contexts should keep context unspecified",
 		},
 		{
 			name: "multiple matching keys with different data types",
@@ -442,7 +510,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 				Materialized:  true,
 			},
-			description: "Multiple matching keys with different data types should keep data type unspecified",
+			expectedActions: []string{},
+			description:     "Multiple matching keys with different data types should keep data type unspecified",
 		},
 		{
 			name: "specific context filters matching keys",
@@ -473,6 +542,9 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
+			},
+			expectedActions: []string{
+				"Adjusting key name=field,context=attribute to name=field,context=attribute,datatype=string,materialized=true",
 			},
 			description: "Specific context should filter to matching keys only",
 		},
@@ -506,6 +578,9 @@ func TestAdjustKey(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
 			},
+			expectedActions: []string{
+				"Adjusting key name=field,datatype=string to name=field,context=attribute,datatype=string,materialized=true",
+			},
 			description: "Specific data type should filter to matching keys only",
 		},
 		{
@@ -537,7 +612,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 				Materialized:  false,
 			},
-			description: "User explicitly specified attribute.duration, should prefer metadata over intrinsic",
+			expectedActions: []string{},
+			description:     "User explicitly specified attribute.duration, should prefer metadata over intrinsic",
 		},
 	}
 
@@ -545,12 +621,13 @@ func TestAdjustKey(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			key := tt.key
 			ctx := context.Background()
-			AdjustKey(ctx, &key, tt.keys, tt.intrinsicOrCalculatedField)
+			actions := AdjustKey(ctx, &key, tt.keys, tt.intrinsicOrCalculatedField)
 
 			assert.Equal(t, tt.expectedKey.Name, key.Name, "Name mismatch: %s", tt.description)
 			assert.Equal(t, tt.expectedKey.FieldContext, key.FieldContext, "FieldContext mismatch: %s", tt.description)
 			assert.Equal(t, tt.expectedKey.FieldDataType, key.FieldDataType, "FieldDataType mismatch: %s", tt.description)
 			assert.Equal(t, tt.expectedKey.Materialized, key.Materialized, "Materialized mismatch: %s", tt.description)
+			assert.Equal(t, tt.expectedActions, actions, "Actions mismatch: %s", tt.description)
 		})
 	}
 }

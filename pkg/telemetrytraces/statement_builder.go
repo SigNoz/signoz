@@ -126,8 +126,12 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 
 	for idx := range query.GroupBy {
 		groupBy := query.GroupBy[idx]
-		selectors := querybuilder.QueryStringToKeysSelectors(groupBy.TelemetryFieldKey.Name)
-		keySelectors = append(keySelectors, selectors...)
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:          groupBy.Name,
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  groupBy.FieldContext,
+			FieldDataType: groupBy.FieldDataType,
+		})
 	}
 
 	for idx := range query.SelectFields {
@@ -171,7 +175,8 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 		In this case, we'll remove the data type from http.status_code:number
 		and make it just http.status_code and remove the duplicate entry.
 	*/
-	querybuilder.AdjustDuplicateKeys(&query)
+
+	actions := querybuilder.AdjustDuplicateKeys(&query)
 
 	/*
 		Now adjust each key to have correct context and data type
@@ -179,13 +184,18 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 		Reason for doing this is to not create an unexpected behavior for users
 	*/
 	for idx := range query.SelectFields {
-		b.adjustKey(ctx, &query.SelectFields[idx], keys)
+		actions = append(actions, b.adjustKey(ctx, &query.SelectFields[idx], keys)...)
 	}
 	for idx := range query.GroupBy {
-		b.adjustKey(ctx, &query.GroupBy[idx].TelemetryFieldKey, keys)
+		actions = append(actions, b.adjustKey(ctx, &query.GroupBy[idx].TelemetryFieldKey, keys)...)
 	}
 	for idx := range query.Order {
-		b.adjustKey(ctx, &query.Order[idx].Key.TelemetryFieldKey, keys)
+		actions = append(actions, b.adjustKey(ctx, &query.Order[idx].Key.TelemetryFieldKey, keys)...)
+	}
+
+	for _, action := range actions {
+		// TODO: change to debug level once we are confident about the behavior
+		b.logger.InfoContext(ctx, action)
 	}
 
 	// add deprecated fields only during statement building
@@ -211,8 +221,10 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 	return query
 }
 
-func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) {
+func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
 
+	// for recording actions taken
+	actions := []string{}
 	/*
 		Check if this key is an intrinsic or calculated field
 
@@ -235,84 +247,12 @@ func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemet
 	}
 
 	if isIntrinsicOrCalculatedField {
-<<<<<<< HEAD
-		// Check if it also matches with any of the metadata keys
-		match := false
-		for _, mapKey := range keys[key.Name] {
-			// Either field context is unspecified or matches
-			// and
-			// Either field data type is unspecified or matches
-			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || mapKey.FieldContext == key.FieldContext) &&
-				(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || mapKey.FieldDataType == key.FieldDataType) {
-				match = true
-				break
-			}
-		}
-
-		// NOTE: if a user is highly opinionated and use attribute.duration_nano:string
-		// It will be defaulted to intrinsic field duration_nano as the actual attribute might be attribute.duration_nano:number
-
-		// We don't have a match, then it doesn't exist in attribute or resource attribute
-		// use the intrinsic/calculated field
-		if !match {
-			b.logger.InfoContext(ctx, "overriding the field context and data type", "key", key.Name)
-			key.FieldContext = intrinsicOrCalculatedField.FieldContext
-			key.FieldDataType = intrinsicOrCalculatedField.FieldDataType
-			key.Materialized = intrinsicOrCalculatedField.Materialized
-		} else {
-			// Here we have a key which is an intrinsic field but also exists in the metadata with the same name
-			// cannot do anything, so just return
-			return
-		}
-
+		actions = append(actions, querybuilder.AdjustKey(ctx, key, keys, &intrinsicOrCalculatedField)...)
 	} else {
-		// check if all the keys for the given field have matching context and data type
-		matchingKeys := []*telemetrytypes.TelemetryFieldKey{}
-		for _, metadataKey := range keys[key.Name] {
-			// Only consider keys that match the context and data type (if specified)
-			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || key.FieldContext == metadataKey.FieldContext) &&
-				(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || key.FieldDataType == metadataKey.FieldDataType) {
-				matchingKeys = append(matchingKeys, metadataKey)
-			}
-		}
-
-		if len(matchingKeys) == 0 {
-			// we do not have any matching keys, most likely user made a mistake, let QB handle it
-			// Set materialized to false explicitly to avoid QB looking for materialized column
-			key.Materialized = false
-		} else if len(matchingKeys) == 1 {
-			// only one matching key, use it
-			key.FieldContext = matchingKeys[0].FieldContext
-			key.FieldDataType = matchingKeys[0].FieldDataType
-			key.Materialized = matchingKeys[0].Materialized
-		} else {
-			// multiple matching keys, set materialized only if all the keys are materialized
-			materialized := true
-			fieldContextsSeen := map[telemetrytypes.FieldContext]bool{}
-			dataTypesSeen := map[telemetrytypes.FieldDataType]bool{}
-			for _, matchingKey := range matchingKeys {
-				materialized = materialized && matchingKey.Materialized
-				fieldContextsSeen[matchingKey.FieldContext] = true
-				dataTypesSeen[matchingKey.FieldDataType] = true
-			}
-			key.Materialized = materialized
-
-			if len(fieldContextsSeen) == 1 {
-				// all matching keys have same field context, use it
-				key.FieldContext = matchingKeys[0].FieldContext
-			}
-
-			if len(dataTypesSeen) == 1 {
-				// all matching keys have same data type, use it
-				key.FieldDataType = matchingKeys[0].FieldDataType
-			}
-		}
-=======
-		querybuilder.AdjustKey(ctx, key, keys, &intrinsicOrCalculatedField)
-	} else {
-		querybuilder.AdjustKey(ctx, key, keys, nil)
->>>>>>> 7ecdc4f69 (fix: moved methods to collision.go)
+		actions = append(actions, querybuilder.AdjustKey(ctx, key, keys, nil)...)
 	}
+
+	return actions
 }
 
 // buildListQuery builds a query for list panel type
