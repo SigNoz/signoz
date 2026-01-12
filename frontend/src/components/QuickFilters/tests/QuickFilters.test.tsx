@@ -122,6 +122,103 @@ describe('Quick Filters', () => {
 		expect(screen.getByText(QUERY_NAME)).toBeInTheDocument();
 	});
 
+	it('should display and allow selection from query dropdown when multiple queries exist', async () => {
+		const setLastUsedQuery = jest.fn();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		(useQueryBuilder as jest.Mock).mockReturnValue({
+			currentQuery: {
+				builder: {
+					queryData: [
+						{
+							queryName: 'Query A',
+							filters: { items: [] },
+						},
+						{
+							queryName: 'Query B',
+							filters: { items: [] },
+						},
+						{
+							queryName: 'Query C',
+							filters: { items: [] },
+						},
+					],
+				},
+			},
+			lastUsedQuery: 0,
+			setLastUsedQuery,
+			redirectWithQueryBuilderData,
+			panelType: 'graph', // not LIST view
+		});
+
+		render(<TestQuickFilters />);
+
+		// The dropdown trigger should show the first query name
+		const trigger = screen.getByText('Query A');
+		expect(trigger).toBeInTheDocument();
+
+		// Click to open the dropdown
+		await user.click(trigger);
+
+		// All query options should be visible
+		await waitFor(() => {
+			expect(screen.getByRole('option', { name: 'Query A' })).toBeInTheDocument();
+			expect(screen.getByRole('option', { name: 'Query B' })).toBeInTheDocument();
+			expect(screen.getByRole('option', { name: 'Query C' })).toBeInTheDocument();
+		});
+
+		// Select Query B
+		const queryBOption = screen.getByRole('option', { name: 'Query B' });
+		await user.click(queryBOption);
+
+		// Verify setLastUsedQuery was called with index 1
+		await waitFor(() => {
+			expect(setLastUsedQuery).toHaveBeenCalledWith(1);
+		});
+	});
+
+	it('should not display query dropdown in ListView', () => {
+		(useQueryBuilder as jest.Mock).mockReturnValue({
+			currentQuery: {
+				builder: {
+					queryData: [
+						{
+							queryName: 'Query A',
+							filters: { items: [] },
+						},
+						{
+							queryName: 'Query B',
+							filters: { items: [] },
+						},
+					],
+				},
+			},
+			lastUsedQuery: 0,
+			redirectWithQueryBuilderData,
+			panelType: 'list', // ListView
+		});
+
+		render(<TestQuickFilters />);
+
+		// Should show static query name without dropdown
+		expect(screen.getByText('Query A')).toBeInTheDocument();
+
+		// Dropdown trigger should not be interactive (no button/combobox)
+		const queryText = screen.getByText('Query A');
+		expect(queryText.tagName).not.toBe('BUTTON');
+	});
+
+	it('should display static query name when only one query exists', () => {
+		render(<TestQuickFilters />);
+
+		// Should show static query name
+		expect(screen.getByText(QUERY_NAME)).toBeInTheDocument();
+
+		// No dropdown should be present
+		const queryText = screen.getByText(QUERY_NAME);
+		expect(queryText.closest('[role="combobox"]')).not.toBeInTheDocument();
+	});
+
 	it('should add filter data to query when checkbox is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
