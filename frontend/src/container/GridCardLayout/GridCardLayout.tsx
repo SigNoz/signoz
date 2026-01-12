@@ -10,7 +10,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
-import { DEFAULT_ROW_NAME } from 'container/NewDashboard/DashboardDescription/utils';
+import { DEFAULT_ROW_NAME } from 'container/DashboardContainer/DashboardDescription/utils';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { createDynamicVariableToWidgetsMap } from 'hooks/dashboard/utils';
 import useComponentPermission from 'hooks/useComponentPermission';

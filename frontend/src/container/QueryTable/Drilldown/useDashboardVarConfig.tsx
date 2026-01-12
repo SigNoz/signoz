@@ -7,7 +7,7 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 // import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import useDashboardVariableUpdate from '../../NewDashboard/DashboardVariablesSelection/useDashboardVariableUpdate';
+import useDashboardVariableUpdate from '../../DashboardContainer/DashboardVariablesSelection/useDashboardVariableUpdate';
 import { getAggregateColumnHeader } from './drilldownUtils';
 import { AggregateData } from './useAggregateDrilldown';
 

@@ -3,7 +3,7 @@ import './PanelTypeSelector.scss';
 import { Select, Typography } from 'antd';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
+import GraphTypes from 'container/DashboardContainer/ComponentsSlider/menuItems';
 import { handleQueryChange } from 'container/NewWidget/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useCallback } from 'react';
