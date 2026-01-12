@@ -954,6 +954,27 @@ func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryF
 	return keysMap
 }
 
+func mockColumnEvolutionMetadata(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {
+	return []*telemetrytypes.EvolutionEntry{
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "resources_string",
+			FieldContext: telemetrytypes.FieldContextResource,
+			ColumnType:   "Map(LowCardinality(String), String)",
+			FieldName:    "resource",
+			ReleaseTime:  time.Unix(0, 0),
+		},
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "resource",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "__all__",
+			ReleaseTime:  releaseTime,
+		},
+	}
+}
+
 // mockKeyEvolutionMetadata builds a mock org-scoped key evolution metadata map for a column evolution.
 func mockKeyEvolutionMetadata(orgId valuer.UUID, signal, fieldContext string, releaseTime time.Time) map[string]map[string][]*telemetrytypes.EvolutionEntry {
 	metadata := make(map[string]map[string][]*telemetrytypes.EvolutionEntry)

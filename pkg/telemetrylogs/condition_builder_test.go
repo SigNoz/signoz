@@ -19,11 +19,14 @@ func TestConditionFor(t *testing.T) {
 	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
 		OrgID: valuer.GenerateUUID().String(),
 	})
+
+	mockEvolution := mockColumnEvolutionMetadata(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	testCases := []struct {
 		name          string
 		key           telemetrytypes.TelemetryFieldKey
 		operator      qbtypes.FilterOperator
 		value         any
+		evolutions    []*telemetrytypes.EvolutionEntry
 		expectedSQL   string
 		expectedArgs  []any
 		expectedError error
@@ -245,6 +248,7 @@ func TestConditionFor(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextResource,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
+			evolutions:    mockEvolution,
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
 			expectedSQL:   "mapContains(resources_string, 'service.name') = ?",
@@ -258,6 +262,7 @@ func TestConditionFor(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextResource,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
+			evolutions:    mockEvolution,
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
 			expectedSQL:   "mapContains(resources_string, 'service.name') <> ?",
@@ -322,6 +327,7 @@ func TestConditionFor(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
 			},
+			evolutions:    mockEvolution,
 			operator:      qbtypes.FilterOperatorRegexp,
 			value:         "frontend-.*",
 			expectedSQL:   "WHERE (match(`resource_string_service$$name`, ?) AND `resource_string_service$$name_exists` = ?)",
@@ -336,6 +342,7 @@ func TestConditionFor(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
 			},
+			evolutions:    mockEvolution,
 			operator:      qbtypes.FilterOperatorNotRegexp,
 			value:         "test-.*",
 			expectedSQL:   "WHERE NOT match(`resource_string_service$$name`, ?)",
@@ -383,7 +390,7 @@ func TestConditionFor(t *testing.T) {
 		OrgID: OrgID.String(),
 	})
 	mockMetadataStore := buildTestTelemetryMetadataStore()
-	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(OrgID, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
+	// mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(OrgID, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper(mockMetadataStore)
 
 	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
@@ -391,7 +398,7 @@ func TestConditionFor(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(ctx, OrgID, 0, 0, &tc.key, tc.operator, tc.value, sb, nil)
+			cond, err := conditionBuilder.ConditionFor(ctx, OrgID, 0, 0, &tc.key, tc.operator, tc.value, sb, tc.evolutions)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

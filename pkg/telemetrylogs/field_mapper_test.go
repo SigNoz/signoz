@@ -191,9 +191,12 @@ func TestGetFieldKeyName(t *testing.T) {
 		OrgID: orgId.String(),
 	})
 
+	resourceEvolution := mockColumnEvolutionMetadata(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
+
 	testCases := []struct {
 		name            string
 		key             telemetrytypes.TelemetryFieldKey
+		evolutions      []*telemetrytypes.EvolutionEntry
 		expectedResult  string
 		expectedError   error
 		addExistsFilter bool
@@ -247,6 +250,7 @@ func TestGetFieldKeyName(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
+			evolutions:      resourceEvolution,
 			expectedResult:  "resources_string['service.name']",
 			expectedError:   nil,
 			addExistsFilter: false,
@@ -259,6 +263,7 @@ func TestGetFieldKeyName(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
 			},
+			evolutions:      resourceEvolution,
 			expectedResult:  "`resource_string_service$$name`",
 			expectedError:   nil,
 			addExistsFilter: false,
@@ -277,9 +282,8 @@ func TestGetFieldKeyName(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockStore := telemetrytypestest.NewMockMetadataStore()
-			mockStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 			fm := NewFieldMapper(mockStore)
-			result, err := fm.FieldFor(ctx, orgId, 0, 0, &tc.key, nil)
+			result, err := fm.FieldFor(ctx, orgId, 0, 0, &tc.key, tc.evolutions)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -374,6 +378,7 @@ func TestFieldForWithEvolutions(t *testing.T) {
 			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 			expectedError:  nil,
 		},
+		// TODO(piyush): to be added once integration with JSON is done.
 		// {
 		// 	name: "Single evolution after tsStartTime - JSON body",
 		// 	evolutions: []*telemetrytypes.EvolutionEntry{
@@ -489,41 +494,7 @@ func TestFieldForWithEvolutions(t *testing.T) {
 			key:            key,
 			tsStartTime:    time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`, resource.`service.name` IS NOT NULL, resource.`service.name`, NULL)",
-			expectedError:  nil,
-		},
-		{
-			name: "Many evolutions after tsStartTime",
-			evolutions: []*telemetrytypes.EvolutionEntry{
-				{
-					Signal:       telemetrytypes.SignalLogs,
-					ColumnName:   "resources_string",
-					ColumnType:   "Map(LowCardinality(String), String)",
-					FieldContext: telemetrytypes.FieldContextResource,
-					FieldName:    "__all__",
-					ReleaseTime:  time.Unix(0, 0),
-				},
-				{
-					Signal:       telemetrytypes.SignalLogs,
-					ColumnName:   "resource",
-					ColumnType:   "JSON()",
-					FieldContext: telemetrytypes.FieldContextResource,
-					FieldName:    "__all__",
-					ReleaseTime:  time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-				},
-				{
-					Signal:       telemetrytypes.SignalLogs,
-					ColumnName:   "resource_v2",
-					ColumnType:   "JSON()",
-					FieldContext: telemetrytypes.FieldContextResource,
-					FieldName:    "__all__",
-					ReleaseTime:  time.Date(2024, 2, 3, 0, 0, 0, 0, time.UTC),
-				},
-			},
-			key:            key,
-			tsStartTime:    time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
-			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource_v2.`service.name` IS NOT NULL, resource_v2.`service.name`, resource.`service.name` IS NOT NULL, resource.`service.name`, NULL)",
+			expectedResult: "resource.`service.name`",
 			expectedError:  nil,
 		},
 		{
@@ -549,7 +520,7 @@ func TestFieldForWithEvolutions(t *testing.T) {
 			key:            key,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedResult: "resources_string['service.name']",
 			expectedError:  nil,
 		},
 	}
@@ -569,6 +540,290 @@ func TestFieldForWithEvolutions(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestSelectEvolutionsForColumns(t *testing.T) {
+	testCases := []struct {
+		name            string
+		columns         []*schema.Column
+		evolutions      []*telemetrytypes.EvolutionEntry
+		tsStart         uint64
+		tsEnd           uint64
+		fieldName       string
+		expectedColumns []string // column names
+		expectedEvols   []string // evolution column names
+		expectedError   error
+	}{
+		{
+			name: "New evolutions after tsStartTime - should include all",
+			columns: []*schema.Column{
+				logsV2Columns["resources_string"],
+				logsV2Columns["resource"],
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 3, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			fieldName:       "__all__",
+			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{"resource", "resources_string"}, // sorted by ReleaseTime desc
+			expectedEvols:   []string{"resource", "resources_string"},
+			expectedError:   nil,
+		},
+		{
+			name: "Columns without matching evolutions - should exclude them",
+			columns: []*schema.Column{
+				logsV2Columns["resources_string"],
+				logsV2Columns["resource"],          // no evolution for this
+				logsV2Columns["attributes_string"], // no evolution for this
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			fieldName:       "__all__",
+			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{"resources_string"},
+			expectedEvols:   []string{"resources_string"},
+			expectedError:   nil,
+		},
+		{
+			name: "New evolutions after tsEndTime - should exclude all",
+			columns: []*schema.Column{
+				logsV2Columns["resources_string"],
+				logsV2Columns["resource"],
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 25, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			fieldName:       "__all__",
+			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{"resources_string"},
+			expectedEvols:   []string{"resources_string"},
+			expectedError:   nil,
+		},
+		{
+			name:    "Empty columns array",
+			columns: []*schema.Column{},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			fieldName:       "__all__",
+			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{},
+			expectedEvols:   []string{},
+			expectedError:   nil,
+		},
+		{
+			name: "Duplicate evolutions - should use first encountered (oldest if sorted)",
+			columns: []*schema.Column{
+				logsV2Columns["resource"],
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			fieldName:       "__all__",
+			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{"resource"},
+			expectedEvols:   []string{"resource"}, // should use first one (older)
+			expectedError:   nil,
+		},
+		{
+			name: "Evolution exactly at tsEndTime",
+			columns: []*schema.Column{
+				logsV2Columns["resources_string"],
+				logsV2Columns["resource"],
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC), // exactly at tsEnd
+				},
+			},
+			fieldName:       "__all__",
+			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{"resources_string"}, // resource excluded because After(tsEnd) is true
+			expectedEvols:   []string{"resources_string"},
+			expectedError:   nil,
+		},
+		{
+			name: "Single evolution after tsStartTime - JSON body",
+			columns: []*schema.Column{
+				logsV2Columns[LogsV2BodyJSONColumn],
+				logsV2Columns[LogsV2BodyPromotedColumn],
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   LogsV2BodyJSONColumn,
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextBody,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Unix(0, 0),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   LogsV2BodyPromotedColumn,
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextBody,
+					FieldName:    "user.name",
+					ReleaseTime:  time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			fieldName:       "user.name",
+			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{LogsV2BodyPromotedColumn, LogsV2BodyJSONColumn}, // sorted by ReleaseTime desc (newest first)
+			expectedEvols:   []string{LogsV2BodyPromotedColumn, LogsV2BodyJSONColumn},
+			expectedError:   nil,
+		},
+		{
+			name: "No evolution after tsStartTime - JSON body",
+			columns: []*schema.Column{
+				logsV2Columns[LogsV2BodyJSONColumn],
+				logsV2Columns[LogsV2BodyPromotedColumn],
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   LogsV2BodyJSONColumn,
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextBody,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Unix(0, 0),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   LogsV2BodyPromotedColumn,
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextBody,
+					FieldName:    "user.name",
+					ReleaseTime:  time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			fieldName:       "user.name",
+			tsStart:         uint64(time.Date(2024, 2, 3, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{LogsV2BodyPromotedColumn},
+			expectedEvols:   []string{LogsV2BodyPromotedColumn},
+			expectedError:   nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resultColumns, resultEvols, err := selectEvolutionsForColumns(tc.columns, tc.evolutions, tc.tsStart, tc.tsEnd, tc.fieldName)
+
+			if tc.expectedError != nil {
+				assert.Equal(t, tc.expectedError, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, len(tc.expectedColumns), len(resultColumns), "column count mismatch")
+				assert.Equal(t, len(tc.expectedEvols), len(resultEvols), "evolution count mismatch")
+
+				resultColumnNames := make([]string, len(resultColumns))
+				for i, col := range resultColumns {
+					resultColumnNames[i] = col.Name
+				}
+				resultEvolNames := make([]string, len(resultEvols))
+				for i, evol := range resultEvols {
+					resultEvolNames[i] = evol.ColumnName
+				}
+
+				assert.Equal(t, tc.expectedColumns, resultColumnNames, "column names mismatch")
+				assert.Equal(t, tc.expectedEvols, resultEvolNames, "evolution column names mismatch")
+
+				// Verify sorting: should be descending by ReleaseTime
+				for i := 0; i < len(resultEvols)-1; i++ {
+					assert.True(t, !resultEvols[i].ReleaseTime.Before(resultEvols[i+1].ReleaseTime),
+						"evolutions should be sorted descending by ReleaseTime")
+				}
 			}
 		})
 	}

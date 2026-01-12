@@ -25,12 +25,13 @@ type MockMetadataStore struct {
 // NewMockMetadataStore creates a new instance of MockMetadataStore with initialized maps
 func NewMockMetadataStore() *MockMetadataStore {
 	return &MockMetadataStore{
-		KeysMap:            make(map[string][]*telemetrytypes.TelemetryFieldKey),
-		RelatedValuesMap:   make(map[string][]string),
-		AllValuesMap:       make(map[string]*telemetrytypes.TelemetryFieldValues),
-		TemporalityMap:     make(map[string]metrictypes.Temporality),
-		PromotedPathsMap:   make(map[string]struct{}),
-		LogsJSONIndexesMap: make(map[string][]schemamigrator.Index),
+		KeysMap:                    make(map[string][]*telemetrytypes.TelemetryFieldKey),
+		RelatedValuesMap:           make(map[string][]string),
+		AllValuesMap:               make(map[string]*telemetrytypes.TelemetryFieldValues),
+		TemporalityMap:             make(map[string]metrictypes.Temporality),
+		PromotedPathsMap:           make(map[string]struct{}),
+		LogsJSONIndexesMap:         make(map[string][]schemamigrator.Index),
+		ColumnEvolutionMetadataMap: make(map[string]map[string][]*telemetrytypes.EvolutionEntry),
 	}
 }
 

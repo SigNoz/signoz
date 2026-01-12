@@ -124,115 +124,88 @@ func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.Telemet
 }
 
 // selectEvolutionsForColumns selects the appropriate evolution entries for each column based on the time range.
-// For each column, it finds matching evolutions and filters them based on tsStart and tsEnd:
-//   - Evolution is needed if: ReleaseTime <= tsEndTime
-//   - First, finds the latest base evolution (<= tsStartTime) across ALL columns
+// Assumes: evolutions are sorted and there's exactly one evolution per column.
+// Logic:
+//   - Finds the latest base evolution (<= tsStartTime) across ALL columns
 //   - Rejects all evolutions before this latest base evolution
-//   - For each column, keeps the latest base evolution (if >= latest base evolution) and all evolutions > tsStartTime and <= tsEndTime
+//   - For each column, includes its evolution if it's >= latest base evolution and <= tsEndTime
 //   - Results are sorted by ReleaseTime descending (newest first)
-func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64) ([]*schema.Column, []*telemetrytypes.EvolutionEntry) {
-	if len(evolutions) == 0 {
-		// When there are no evolutions, return columns with nil evolution entries
-		newColumns := make([]*schema.Column, len(columns))
-		evolutionsEntries := make([]*telemetrytypes.EvolutionEntry, len(columns))
-		copy(newColumns, columns)
-		return newColumns, evolutionsEntries
-	}
+func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64, fieldName string) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
 
 	tsStartTime := time.Unix(0, int64(tsStart))
 	tsEndTime := time.Unix(0, int64(tsEnd))
 
-	// Find the latest base evolution (<= tsStartTime) across ALL columns
-	var latestBaseEvolutionAcrossAll *telemetrytypes.EvolutionEntry
+	// Build evolution map: column name -> evolution (one evolution per column)
+	evolutionMap := make(map[string]*telemetrytypes.EvolutionEntry)
 	for _, evolution := range evolutions {
-		if evolution.ReleaseTime.After(tsStartTime) || evolution.ReleaseTime.After(tsEndTime) {
+		if _, exists := evolutionMap[evolution.ColumnName+":"+evolution.FieldName]; exists {
+			// since if there is duplicate we would just use the oldest one.
 			continue
 		}
-		if latestBaseEvolutionAcrossAll == nil || evolution.ReleaseTime.After(latestBaseEvolutionAcrossAll.ReleaseTime) {
-			latestBaseEvolutionAcrossAll = evolution
-		}
+		evolutionMap[evolution.ColumnName+":"+evolution.FieldName] = evolution
 	}
 
-	// Group evolutions by column name and build column map
-	evolutionsByColumn := make(map[string][]*telemetrytypes.EvolutionEntry)
-	columnMap := make(map[string]*schema.Column)
+	// Find the latest base evolution (<= tsStartTime) across ALL columns
+	// Evolutions are sorted, so we can break early
+	var latestBaseEvolutionAcrossAll *telemetrytypes.EvolutionEntry
 	for _, evolution := range evolutions {
-		evolutionsByColumn[evolution.ColumnName] = append(evolutionsByColumn[evolution.ColumnName], evolution)
-	}
-	for _, column := range columns {
-		columnMap[column.Name] = column
+		if evolution.ReleaseTime.After(tsStartTime) {
+			break
+		}
+		latestBaseEvolutionAcrossAll = evolution
 	}
 
-	// Collect all column-evolution pairs
+	if latestBaseEvolutionAcrossAll == nil {
+		return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no base evolution found for columns %v", columns)
+	}
+
+	// Collect column-evolution pairs
 	type colEvoPair struct {
 		column    *schema.Column
 		evolution *telemetrytypes.EvolutionEntry
 	}
 	pairs := []colEvoPair{}
 
-	// Process all columns (both existing and synthetic)
-	allColumnNames := make(map[string]bool)
 	for _, column := range columns {
-		allColumnNames[column.Name] = true
-	}
-	for columnName := range evolutionsByColumn {
-		allColumnNames[columnName] = true
-	}
+		var evolution *telemetrytypes.EvolutionEntry
+		var exists bool
 
-	for columnName := range allColumnNames {
-		matchingEvolutions := evolutionsByColumn[columnName]
-		if len(matchingEvolutions) == 0 {
+		// First, try to find evolution with the specific fieldName
+		evolution, exists = evolutionMap[column.Name+":"+fieldName]
+
+		// If not found and fieldName is not "__all__", fall back to "__all__"
+		if !exists && fieldName != "__all__" {
+			evolution, exists = evolutionMap[column.Name+":__all__"]
+		}
+
+		if !exists {
 			continue
 		}
 
-		// Get or create column
-		column, exists := columnMap[columnName]
-		if !exists {
-			// Create synthetic column
-			firstEvolution := matchingEvolutions[0]
-			if strings.Contains(firstEvolution.ColumnType, "JSON") {
-				column = &schema.Column{Name: columnName, Type: schema.JSONColumnType{}}
-			} else if strings.Contains(firstEvolution.ColumnType, "Map") {
-				column = &schema.Column{
-					Name: columnName,
-					Type: schema.MapColumnType{
-						KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-						ValueType: schema.ColumnTypeString,
-					},
-				}
-			} else {
-				continue
-			}
+		// skip evolutions after tsEndTime
+		if evolution.ReleaseTime.After(tsEndTime) || evolution.ReleaseTime.Equal(tsEndTime) {
+			continue
 		}
 
-		// Filter evolutions for this column
-		var latestBaseEvolution *telemetrytypes.EvolutionEntry
-		for _, evolution := range matchingEvolutions {
-			if evolution.ReleaseTime.After(tsEndTime) {
-				continue
-			}
-			if latestBaseEvolutionAcrossAll != nil && evolution.ReleaseTime.Before(latestBaseEvolutionAcrossAll.ReleaseTime) {
-				continue
-			}
-
-			if evolution.ReleaseTime.After(tsStartTime) {
-				// New evolution - add it
-				pairs = append(pairs, colEvoPair{column, evolution})
-			} else {
-				// Base evolution - keep only the latest
-				if latestBaseEvolution == nil || evolution.ReleaseTime.After(latestBaseEvolution.ReleaseTime) {
-					latestBaseEvolution = evolution
-				}
-			}
+		// Reject evolutions before the latest base evolution
+		if evolution.ReleaseTime.Before(latestBaseEvolutionAcrossAll.ReleaseTime) {
+			continue
 		}
 
-		// Add base evolution if found
-		if latestBaseEvolution != nil {
-			pairs = append(pairs, colEvoPair{column, latestBaseEvolution})
+		pairs = append(pairs, colEvoPair{column, evolution})
+	}
+
+	// If no pairs found, fall back to latestBaseEvolutionAcrossAll for matching columns
+	if len(pairs) == 0 {
+		for _, column := range columns {
+			// Use latestBaseEvolutionAcrossAll if this column name matches its column name
+			if column.Name == latestBaseEvolutionAcrossAll.ColumnName {
+				pairs = append(pairs, colEvoPair{column, latestBaseEvolutionAcrossAll})
+			}
 		}
 	}
 
-	// Sort pairs by ReleaseTime descending (newest first)
+	// Sort by ReleaseTime descending (newest first)
 	for i := 0; i < len(pairs)-1; i++ {
 		for j := i + 1; j < len(pairs); j++ {
 			if pairs[i].evolution.ReleaseTime.Before(pairs[j].evolution.ReleaseTime) {
@@ -249,7 +222,7 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		evolutionsEntries[i] = pair.evolution
 	}
 
-	return newColumns, evolutionsEntries
+	return newColumns, evolutionsEntries, nil
 }
 
 func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, evolutions []*telemetrytypes.EvolutionEntry) (string, error) {
@@ -258,21 +231,26 @@ func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, 
 		return "", err
 	}
 
-	// get all evolution for the column
-	// evolutions := m.metadataStore.GetColumnEvolutionMetadata(ctx, orgID, telemetrytypes.EvolutionSelector{
-	// 	Signal:       telemetrytypes.SignalLogs,
-	// 	FieldContext: key.FieldContext,
-	// })
-
-	// we will use the corresponding column and its evolution entry for the query
-	newColumns, evolutionsEntries := selectEvolutionsForColumns(columns, evolutions, tsStart, tsEnd)
+	var newColumns []*schema.Column
+	var evolutionsEntries []*telemetrytypes.EvolutionEntry
+	if len(evolutions) > 0 {
+		// hardcoded for now, make it dynamic while supporting JSON
+		fieldName := "__all__"
+		// we will use the corresponding column and its evolution entry for the query
+		newColumns, evolutionsEntries, err = selectEvolutionsForColumns(columns, evolutions, tsStart, tsEnd, fieldName)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		newColumns = columns
+	}
 
 	exprs := []string{}
 	existExpr := []string{}
 	for i, column := range newColumns {
 		// Use evolution column name if available, otherwise use the column name
 		columnName := column.Name
-		if evolutionsEntries[i] != nil {
+		if evolutionsEntries != nil && evolutionsEntries[i] != nil {
 			columnName = evolutionsEntries[i].ColumnName
 		}
 

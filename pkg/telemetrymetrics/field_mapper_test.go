@@ -130,7 +130,7 @@ func TestGetColumn(t *testing.T) {
 				assert.Equal(t, tc.expectedError, err)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tc.expectedCol, col)
+				assert.Equal(t, tc.expectedCol, col[0])
 			}
 		})
 	}
