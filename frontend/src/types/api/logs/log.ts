@@ -17,6 +17,7 @@ export interface ILog {
 	attributesFloat: Record<string, never>;
 	severity_text: string;
 	severity_number: number;
+	trace_id?: string;
 }
 
 type OmitAttributesResources = Pick<
