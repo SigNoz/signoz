@@ -45,7 +45,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	if config.JWT.Secret == "" {
 		settings.Logger().ErrorContext(ctx, "🚨 CRITICAL SECURITY ISSUE: No JWT secret key specified!", "error", "SIGNOZ_TOKENIZER_JWT_SECRET environment variable is not set. This has dire consequences for the security of the application. Without a JWT secret, user sessions are vulnerable to tampering and unauthorized access. Please set the SIGNOZ_TOKENIZER_JWT_SECRET environment variable immediately. For more information, please refer to https://github.com/SigNoz/signoz/issues/8400.")
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "no jwt secret key specified. Please set the SIGNOZ_TOKENIZER_JWT_SECRET environment variable.")
 	}
 
 	lastObservedAtCache, err := ristretto.NewCache(&ristretto.Config[string, map[valuer.UUID]time.Time]{
