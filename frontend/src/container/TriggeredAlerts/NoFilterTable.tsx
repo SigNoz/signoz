@@ -11,6 +11,12 @@ import { Alerts } from 'types/api/alerts/getTriggered';
 import { Value } from './Filter';
 import { FilterAlerts } from './utils';
 
+const severitySorter = (a: Alerts, b: Alerts): number => {
+	const severityLengthOfA = a.labels?.severity?.length || 0;
+	const severityLengthOfB = b.labels?.severity?.length || 0;
+	return severityLengthOfB - severityLengthOfA;
+};
+
 function NoFilterTable({
 	allAlerts,
 	selectedFilter,
@@ -25,11 +31,7 @@ function NoFilterTable({
 			dataIndex: 'status',
 			width: 80,
 			key: 'status',
-			sorter: (a, b): number => {
-				const severityLengthOfA = a.labels?.severity?.length || 0;
-				const severityLengthOfB = b.labels?.severity?.length || 0;
-				return severityLengthOfA - severityLengthOfB;
-			},
+			sorter: (a, b): number => severitySorter(a, b),
 			render: (value): JSX.Element => <AlertStatus severity={value.state} />,
 		},
 		{
@@ -51,7 +53,9 @@ function NoFilterTable({
 			key: 'tags',
 			width: 100,
 			render: (labels): JSX.Element => {
-				if (!labels) return <Typography>-</Typography>;
+				if (!labels) {
+					return <Typography>-</Typography>;
+				}
 				const objectKeys = Object.keys(labels);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
 
@@ -69,12 +73,7 @@ function NoFilterTable({
 			dataIndex: 'labels',
 			key: 'severity',
 			width: 100,
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			sorter: (a, b): number => {
-				const severityLengthOfA = a.labels?.severity?.length || 0;
-				const severityLengthOfB = b.labels?.severity?.length || 0;
-				return severityLengthOfA - severityLengthOfB;
-			},
+			sorter: (a, b): number => severitySorter(a, b),
 			render: (value): JSX.Element => {
 				if (!value) return <Typography>-</Typography>;
 				const objectKeys = Object.keys(value);

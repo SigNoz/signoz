@@ -26,7 +26,7 @@ interface Receivers {
 }
 
 interface AlertsLabel {
-	[key: string]: string | undefined;
+	[key: string]: string;
 }
 
 export interface Props {

@@ -51,14 +51,15 @@ function FilteredTable({
 				}
 
 				const objects = tagsAlert[0].labels;
-				if (!objects) return null;
+				if (!objects) {
+					return null;
+				}
+
 				const keysArray = Object.keys(objects);
 				const valueArray: string[] = [];
 
 				keysArray.forEach((e) => {
-					if (objects[e]) {
-						valueArray.push(objects[e] as string);
-					}
+					valueArray.push(objects[e]);
 				});
 
 				const tags = tagsValue
