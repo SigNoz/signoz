@@ -9,6 +9,7 @@ import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useMemo } from 'react';
 import { useMutation } from 'react-query';
@@ -71,6 +72,11 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
 				const updatedQuery = mapQueryDataFromApi(data.data.compositeQuery);
+				// If widget has a y-axis unit, set it to the updated query if it is not already set
+				if (widget.yAxisUnit && !isEmpty(widget.yAxisUnit)) {
+					updatedQuery.unit = widget.yAxisUnit;
+				}
+
 				const url = `${ROUTES.ALERTS_NEW}?${
 					QueryParams.compositeQuery
 				}=${encodeURIComponent(JSON.stringify(updatedQuery))}&${
