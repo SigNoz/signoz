@@ -3,7 +3,7 @@ import { useFullScreenHandle } from 'react-full-screen';
 import Description from './DashboardDescription';
 import GridGraphs from './GridGraphs';
 
-function NewDashboard(): JSX.Element {
+function DashboardContainer(): JSX.Element {
 	const handle = useFullScreenHandle();
 	return (
 		<div>
@@ -13,4 +13,4 @@ function NewDashboard(): JSX.Element {
 	);
 }
 
-export default NewDashboard;
+export default DashboardContainer;
