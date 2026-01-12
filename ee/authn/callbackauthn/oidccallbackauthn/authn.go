@@ -19,6 +19,8 @@ const (
 	redirectPath string = "/api/v1/complete/oidc"
 )
 
+var scopes []string = []string{"email", "profile", "openid", "groups"}
+
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
 type AuthN struct {
@@ -174,7 +176,7 @@ func (a *AuthN) oidcProviderAndoauth2Config(ctx context.Context, siteURL *url.UR
 		ClientID:     authDomain.AuthDomainConfig().OIDC.ClientID,
 		ClientSecret: authDomain.AuthDomainConfig().OIDC.ClientSecret,
 		Endpoint:     oidcProvider.Endpoint(),
-		Scopes:       authDomain.AuthDomainConfig().OIDC.Scopes,
+		Scopes:       scopes,
 		RedirectURL: (&url.URL{
 			Scheme: siteURL.Scheme,
 			Host:   siteURL.Host,

@@ -29,9 +29,6 @@ type OIDCConfig struct {
 
 	// Uses the userinfo endpoint to get additional claims for the token. This is especially useful where upstreams return "thin" id tokens
 	GetUserInfo bool `json:"getUserInfo"`
-
-	// Scopes for the token. Defaults to "email profile openid"
-	Scopes []string `json:"scopes"`
 }
 
 func (config *OIDCConfig) UnmarshalJSON(data []byte) error {
@@ -54,8 +51,10 @@ func (config *OIDCConfig) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "clientSecret is required")
 	}
 
-	if len(temp.Scopes) == 0 {
-		temp.Scopes = []string{"email", "profile", "openid"}
+	if temp.ClaimMapping == (AttributeMapping{}) {
+		if err := json.Unmarshal([]byte("{}"), &temp.ClaimMapping); err != nil {
+			return err
+		}
 	}
 
 	*config = OIDCConfig(temp)

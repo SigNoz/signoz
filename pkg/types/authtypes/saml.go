@@ -22,7 +22,7 @@ type SamlConfig struct {
 	InsecureSkipAuthNRequestsSigned bool `json:"insecureSkipAuthNRequestsSigned"`
 
 	// Mapping of SAML assertion attributes
-	SamlAttributeMapping *AttributeMapping `json:"samlAttributeMapping"`
+	SamlAttributeMapping AttributeMapping `json:"samlAttributeMapping"`
 }
 
 func (config *SamlConfig) UnmarshalJSON(data []byte) error {
@@ -43,6 +43,12 @@ func (config *SamlConfig) UnmarshalJSON(data []byte) error {
 
 	if temp.SamlCert == "" {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "samlCert is required")
+	}
+
+	if temp.SamlAttributeMapping == (AttributeMapping{}) {
+		if err := json.Unmarshal([]byte("{}"), &temp.SamlAttributeMapping); err != nil {
+			return err
+		}
 	}
 
 	*config = SamlConfig(temp)
