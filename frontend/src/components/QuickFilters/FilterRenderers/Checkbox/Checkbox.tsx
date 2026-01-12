@@ -70,8 +70,16 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 	// Determine if we're in ListView mode
 	const isListView = panelType === PANEL_TYPES.LIST;
-	// In ListView mode, always use index 0; otherwise use lastUsedQuery
-	const activeQueryIndex = isListView ? 0 : lastUsedQuery || 0;
+	// In ListView mode, use index 0 for most sources; for TRACES_EXPLORER, use lastUsedQuery
+	// Otherwise use lastUsedQuery for non-ListView modes
+	const activeQueryIndex = useMemo(() => {
+		if (isListView) {
+			return source === QuickFiltersSource.TRACES_EXPLORER
+				? lastUsedQuery || 0
+				: 0;
+		}
+		return lastUsedQuery || 0;
+	}, [isListView, source, lastUsedQuery]);
 
 	// Check if this filter has active filters in the query
 	const isSomeFilterPresentForCurrentAttribute = useMemo(
@@ -129,7 +137,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		signal: filter.dataSource || DataSource.LOGS,
 		signalSource: 'meter',
 		options: {
-			enabled: isOpen,
+			enabled: isOpen && source === QuickFiltersSource.METER_EXPLORER,
 			keepPreviousData: true,
 		},
 	});
