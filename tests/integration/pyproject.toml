@@ -38,6 +38,15 @@ ignore = [".venv"]
 [tool.pylint.format]
 max-line-length = "400"
 
+[tool.pylint.basic]
+# test ordering (example; 01_abc.py)
+module-rgx = "(([0-9]+_)?[a-z_][a-z0-9_]*)|(__.*__)$"
+
+# to avoid overly restrictive pylint naming for attributes
+attr-rgx = "([A-Z_][A-Z0-9_]*|[a-z_][a-z0-9_]*|(__.*__))$"
+class-attribute-rgx = "([A-Z_][A-Z0-9_]*|[a-z_][a-z0-9_]*|(__.*__))$"
+class-const-rgx = "[A-Z_][A-Z0-9_]*$"
+
 [tool.pylint."messages control"]
 disable = ["missing-module-docstring", "missing-function-docstring", "missing-class-docstring", "duplicate-code", "dangerous-default-value", "too-many-positional-arguments", "too-many-arguments", "too-few-public-methods", "too-many-instance-attributes", "too-many-locals", "too-many-statements", "too-many-lines"]
 
