@@ -20,8 +20,6 @@ function CalendarContainer({
 }): JSX.Element {
 	const { timezone } = useTimezone();
 
-	console.log('dateRange', dateRange);
-
 	return (
 		<div className="calendar-container">
 			<div className="calendar-container-header">

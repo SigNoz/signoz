@@ -32,6 +32,8 @@ import CalendarContainer from './CalendarContainer';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
 
+const TO_MILLISECONDS_FACTOR = 1000_000;
+
 export type DateRange = {
 	from: Date | undefined;
 	to?: Date | undefined;
@@ -75,12 +77,12 @@ const getDateRange = (
 	maxTime: number,
 	timezone: string,
 ): DateRange => {
-	const from = dayjs(minTime / 1000_000)
+	const from = dayjs(minTime / TO_MILLISECONDS_FACTOR)
 		.tz(timezone)
 		.startOf('day')
 		.toDate();
 
-	const to = dayjs(maxTime / 1000_000)
+	const to = dayjs(maxTime / TO_MILLISECONDS_FACTOR)
 		.tz(timezone)
 		.endOf('day')
 		.toDate();
@@ -132,7 +134,7 @@ function CustomTimePickerPopoverContent({
 	const isLogsListView =
 		panelTypeFromURL !== 'table' && panelTypeFromURL !== 'graph'; // we do not select list view in the url
 
-	const [dateRange, setDateRange] = useState<DateRange>(
+	const [dateRange, setDateRange] = useState<DateRange>(() =>
 		getDateRange(minTime, maxTime, timezone.value),
 	);
 
