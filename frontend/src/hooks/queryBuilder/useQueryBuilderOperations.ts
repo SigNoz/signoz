@@ -43,7 +43,11 @@ import {
 	HandleChangeQueryDataV5,
 	UseQueryOperations,
 } from 'types/common/operations.types';
-import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	ReduceOperators,
+} from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
 
@@ -317,7 +321,8 @@ export const useQueryOperations: UseQueryOperations = ({
 									timeAggregation: MetricAggregateOperator.RATE,
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									spaceAggregation: '',
+									spaceAggregation: MetricAggregateOperator.SUM,
+									reduceTo: ReduceOperators.SUM,
 								},
 							];
 						} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
@@ -326,7 +331,22 @@ export const useQueryOperations: UseQueryOperations = ({
 									timeAggregation: MetricAggregateOperator.AVG,
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									spaceAggregation: '',
+									spaceAggregation: MetricAggregateOperator.AVG,
+									reduceTo: ReduceOperators.AVG,
+								},
+							];
+						} else if (
+							newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
+							newQuery.aggregateAttribute?.type ===
+								ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM
+						) {
+							newQuery.aggregations = [
+								{
+									timeAggregation: '',
+									metricName: newQuery.aggregateAttribute?.key || '',
+									temporality: '',
+									spaceAggregation: MetricAggregateOperator.P90,
+									reduceTo: ReduceOperators.AVG,
 								},
 							];
 						} else {
@@ -336,6 +356,7 @@ export const useQueryOperations: UseQueryOperations = ({
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
 									spaceAggregation: '',
+									reduceTo: ReduceOperators.AVG,
 								},
 							];
 						}

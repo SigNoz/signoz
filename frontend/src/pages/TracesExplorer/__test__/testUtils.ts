@@ -59,7 +59,7 @@ export const optionMenuReturn = {
 				id: 'dbName--string--tag--true',
 			},
 		],
-		maxLines: 2,
+		maxLines: 1,
 		format: 'list',
 	},
 	handleOptionsChange: jest.fn(),

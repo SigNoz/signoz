@@ -1,57 +1,21 @@
 # CODEOWNERS info: https://help.github.com/en/articles/about-code-owners
+
 # Owners are automatically requested for review for PRs that changes code
+
 # that they own.
 
-/frontend/ @YounixM @aks07
-/frontend/src/container/MetricsApplication @srikanthccv
-/frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
+/frontend/ @SigNoz/frontend-maintainers
 
 # Onboarding
+
 /frontend/src/container/OnboardingV2Container/onboarding-configs/onboarding-config-with-links.json @makeavish
 /frontend/src/container/OnboardingV2Container/AddDataSource/AddDataSource.tsx @makeavish
-
-# Dashboard, Alert, Metrics, Service Map, Services
-/frontend/src/container/ListOfDashboard/ @srikanthccv
-/frontend/src/container/NewDashboard/ @srikanthccv
-/frontend/src/pages/DashboardsListPage/ @srikanthccv
-/frontend/src/pages/DashboardWidget/ @srikanthccv
-/frontend/src/pages/NewDashboard/ @srikanthccv
-/frontend/src/providers/Dashboard/ @srikanthccv
-
-# Alerts
-/frontend/src/container/AlertHistory/ @srikanthccv
-/frontend/src/container/AllAlertChannels/ @srikanthccv
-/frontend/src/container/AnomalyAlertEvaluationView/ @srikanthccv
-/frontend/src/container/CreateAlertChannels/ @srikanthccv
-/frontend/src/container/CreateAlertRule/ @srikanthccv
-/frontend/src/container/EditAlertChannels/ @srikanthccv
-/frontend/src/container/FormAlertChannels/ @srikanthccv
-/frontend/src/container/FormAlertRules/ @srikanthccv
-/frontend/src/container/ListAlertRules/ @srikanthccv
-/frontend/src/container/TriggeredAlerts/ @srikanthccv
-/frontend/src/pages/AlertChannelCreate/ @srikanthccv
-/frontend/src/pages/AlertDetails/ @srikanthccv
-/frontend/src/pages/AlertHistory/ @srikanthccv
-/frontend/src/pages/AlertList/ @srikanthccv
-/frontend/src/pages/CreateAlert/ @srikanthccv
-/frontend/src/providers/Alert.tsx @srikanthccv
-
-# Metrics
-/frontend/src/container/MetricsExplorer/ @srikanthccv
-/frontend/src/pages/MetricsApplication/ @srikanthccv
-/frontend/src/pages/MetricsExplorer/ @srikanthccv
-
-# Services and Service Map
-/frontend/src/container/ServiceApplication/ @srikanthccv
-/frontend/src/container/ServiceTable/ @srikanthccv
-/frontend/src/pages/Services/ @srikanthccv
-/frontend/src/pages/ServiceTopLevelOperations/ @srikanthccv
-/frontend/src/container/Home/Services/ @srikanthccv
 
 /deploy/ @SigNoz/devops
 .github @SigNoz/devops
 
 # Scaffold Owners
+
 /pkg/config/ @therealpandey
 /pkg/errors/ @therealpandey
 /pkg/factory/ @therealpandey
@@ -61,22 +25,26 @@
 .golangci.yml @therealpandey
 
 # Zeus Owners
+
 /pkg/zeus/ @vikrantgupta25
 /ee/zeus/ @vikrantgupta25
 /pkg/licensing/ @vikrantgupta25
 /ee/licensing/ @vikrantgupta25
 
 # SQL Owners
+
 /pkg/sqlmigration/ @vikrantgupta25
 /ee/sqlmigration/ @vikrantgupta25
 /pkg/sqlschema/ @vikrantgupta25
 /ee/sqlschema/ @vikrantgupta25
 
 # Analytics Owners
+
 /pkg/analytics/ @vikrantgupta25
 /pkg/statsreporter/ @vikrantgupta25
 
 # Querier Owners
+
 /pkg/querier/ @srikanthccv
 /pkg/variables/ @srikanthccv
 /pkg/types/querybuildertypes/ @srikanthccv
@@ -86,6 +54,16 @@
 /pkg/telemetrymetrics/ @srikanthccv
 /pkg/telemetrytraces/ @srikanthccv
 
-# AuthN / AuthZ Owners 
+# AuthN / AuthZ Owners
 
 /pkg/authz/ @vikrantgupta25 @therealpandey
+
+# Integration tests
+
+/tests/integration/ @therealpandey
+
+# Dashboard Owners
+
+/frontend/src/pages/DashboardPage/ @SigNoz/pulse-frontend
+/frontend/src/container/NewDashboard/ @SigNoz/pulse-frontend
+/frontend/src/container/GridCardLayout/ @SigNoz/pulse-frontend

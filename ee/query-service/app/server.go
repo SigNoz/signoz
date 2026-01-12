@@ -3,14 +3,16 @@ package app
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	"go.opentelemetry.io/otel/propagation"
 
@@ -103,10 +105,12 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.Alertmanager,
 		signoz.SQLStore,
 		signoz.TelemetryStore,
+		signoz.TelemetryMetadataStore,
 		signoz.Prometheus,
 		signoz.Modules.OrgGetter,
 		signoz.Querier,
-		signoz.Instrumentation.Logger(),
+		signoz.Instrumentation.ToProviderSettings(),
+		signoz.QueryParser,
 	)
 
 	if err != nil {
@@ -243,6 +247,11 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	apiHandler.MetricExplorerRoutes(r, am)
 	apiHandler.RegisterTraceFunnelsRoutes(r, am)
 
+	err := s.signoz.APIServer.AddToRouter(r)
+	if err != nil {
+		return nil, err
+	}
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
@@ -253,7 +262,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 
 	handler = handlers.CompressHandler(handler)
 
-	err := web.AddToRouter(r)
+	err = web.AddToRouter(r)
 	if err != nil {
 		return nil, err
 	}
@@ -348,18 +357,19 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, logger *slog.Logger) (*baserules.Manager, error) {
-	ruleStore := sqlrulestore.NewRuleStore(sqlstore)
+func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, providerSettings factory.ProviderSettings, queryParser queryparser.QueryParser) (*baserules.Manager, error) {
+	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,
+		MetadataStore:       metadataStore,
 		Prometheus:          prometheus,
 		Context:             context.Background(),
 		Logger:              zap.L(),
 		Reader:              ch,
 		Querier:             querier,
-		SLogger:             logger,
+		SLogger:             providerSettings.Logger,
 		Cache:               cache,
 		EvalDelay:           baseconst.GetEvalDelay(),
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
@@ -369,6 +379,7 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		RuleStore:           ruleStore,
 		MaintenanceStore:    maintenanceStore,
 		SqlStore:            sqlstore,
+		QueryParser:         queryParser,
 	}
 
 	// create Manager

@@ -46,3 +46,7 @@ func (typeableMetaResources *typeableMetaResources) Name() Name {
 func (typeableMetaResources *typeableMetaResources) Prefix(orgID valuer.UUID) string {
 	return typeableMetaResources.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + typeableMetaResources.Name().String()
 }
+
+func (typeableMetaResources *typeableMetaResources) Scope(relation Relation) string {
+	return typeableMetaResources.Name().String() + ":" + relation.StringValue()
+}

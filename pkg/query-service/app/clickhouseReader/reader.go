@@ -43,6 +43,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
+
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -933,6 +934,8 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				events = append(events, eventMap)
 			}
 
+			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())
+
 			jsonItem := model.Span{
 				SpanID:           item.SpanID,
 				TraceID:          item.TraceID,
@@ -948,10 +951,10 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				Events:           events,
 				TagMap:           item.Attributes_string,
 				Children:         make([]*model.Span, 0),
+				TimeUnixNano:     startTimeUnixNano, // Store nanoseconds temporarily
 			}
 
 			// metadata calculation
-			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())
 			if startTime == 0 || startTimeUnixNano < startTime {
 				startTime = startTimeUnixNano
 			}
@@ -966,12 +969,9 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				totalErrorSpans = totalErrorSpans + 1
 			}
 
-			// convert start timestamp to millis because right now frontend is expecting it in millis
-			jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)
-
 			// collect the intervals for service for execution time calculation
 			serviceNameIntervalMap[jsonItem.ServiceName] =
-				append(serviceNameIntervalMap[jsonItem.ServiceName], tracedetail.Interval{StartTime: jsonItem.TimeUnixNano, Duration: jsonItem.DurationNano / 1000000, Service: jsonItem.ServiceName})
+				append(serviceNameIntervalMap[jsonItem.ServiceName], tracedetail.Interval{StartTime: jsonItem.TimeUnixNano, Duration: jsonItem.DurationNano, Service: jsonItem.ServiceName})
 
 			// append to the span node map
 			spanIdToSpanNodeMap[jsonItem.SpanID] = &jsonItem
@@ -1048,6 +1048,15 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	processingPostCache := time.Now()
 	selectedSpans, uncollapsedSpans, rootServiceName, rootServiceEntryPoint := tracedetail.GetSelectedSpans(req.UncollapsedSpans, req.SelectedSpanID, traceRoots, spanIdToSpanNodeMap, req.IsSelectedSpanIDUnCollapsed)
 	zap.L().Info("getWaterfallSpansForTraceWithMetadata: processing post cache", zap.Duration("duration", time.Since(processingPostCache)), zap.String("traceID", traceID))
+
+	// convert start timestamp to millis because right now frontend is expecting it in millis
+	for _, span := range selectedSpans {
+		span.TimeUnixNano = span.TimeUnixNano / 1000000
+	}
+
+	for serviceName, totalDuration := range serviceNameToTotalDurationMap {
+		serviceNameToTotalDurationMap[serviceName] = totalDuration / 1000000
+	}
 
 	response.Spans = selectedSpans
 	response.UncollapsedSpans = uncollapsedSpans
@@ -6252,17 +6261,6 @@ LIMIT 40`, // added rand to get diff value every time we run this query
 	return fingerprints, nil
 }
 
-func (r *ClickHouseReader) DeleteMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricName string) *model.ApiError {
-	delQuery := fmt.Sprintf(`ALTER TABLE %s.%s DELETE WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataLocalTable)
-	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-	err := r.db.Exec(valueCtx, delQuery, metricName)
-	if err != nil {
-		return &model.ApiError{Typ: "ClickHouseError", Err: err}
-	}
-	r.cache.Delete(ctx, orgID, constants.UpdatedMetricsMetadataCachePrefix+metricName)
-	return nil
-}
-
 func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *model.UpdateMetricsMetadata) *model.ApiError {
 	if req.MetricType == v3.MetricTypeHistogram {
 		labels := []string{"le"}
@@ -6292,10 +6290,7 @@ func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, orgID valu
 		}
 	}
 
-	apiErr := r.DeleteMetricsMetadata(ctx, orgID, req.MetricName)
-	if apiErr != nil {
-		return apiErr
-	}
+	// Insert new metadata (keeping history of all updates)
 	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, temporality, is_monotonic, type, description, unit, created_at)
 VALUES ( ?, ?, ?, ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
@@ -6364,9 +6359,19 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 	var stillMissing []string
 	if len(missingMetrics) > 0 {
 		metricList := "'" + strings.Join(missingMetrics, "', '") + "'"
-		query := fmt.Sprintf(`SELECT metric_name, type, description, temporality, is_monotonic, unit
-			FROM %s.%s 
-			WHERE metric_name IN (%s);`, signozMetricDBName, signozUpdatedMetricsMetadataTable, metricList)
+		query := fmt.Sprintf(`SELECT 
+						metric_name,
+						argMax(type, created_at) AS type,
+						argMax(description, created_at) AS description,
+						argMax(temporality, created_at) AS temporality,
+						argMax(is_monotonic, created_at) AS is_monotonic,
+						argMax(unit, created_at) AS unit
+					FROM %s.%s 
+					WHERE metric_name IN (%s)
+					GROUP BY metric_name;`,
+			signozMetricDBName,
+			signozUpdatedMetricsMetadataTable,
+			metricList)
 
 		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 		rows, err := r.db.Query(valueCtx, query)

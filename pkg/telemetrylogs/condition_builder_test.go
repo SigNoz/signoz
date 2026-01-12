@@ -373,7 +373,8 @@ func TestConditionFor(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	mockMetadataStore := buildTestTelemetryMetadataStore()
+	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -426,7 +427,8 @@ func TestConditionForMultipleKeys(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	mockMetadataStore := buildTestTelemetryMetadataStore()
+	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -465,7 +467,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Equal operator - int64",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         200,
@@ -475,7 +478,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Equal operator - float64",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.duration_ms",
+				Name:         "duration_ms",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         405.5,
@@ -485,7 +489,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Equal operator - string",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.method",
+				Name:         "http.method",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "GET",
@@ -495,7 +500,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Equal operator - bool",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.success",
+				Name:         "http.success",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         true,
@@ -505,7 +511,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Exists operator",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
@@ -515,7 +522,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Not Exists operator",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
@@ -525,7 +533,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Greater than operator - string",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorGreaterThan,
 			value:         "200",
@@ -535,7 +544,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Greater than operator - int64",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorGreaterThan,
 			value:         200,
@@ -545,7 +555,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Less than operator - string",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorLessThan,
 			value:         "300",
@@ -555,7 +566,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Less than operator - int64",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorLessThan,
 			value:         300,
@@ -565,7 +577,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Contains operator - string",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorContains,
 			value:         "200",
@@ -575,7 +588,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Not Contains operator - string",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorNotContains,
 			value:         "200",
@@ -585,7 +599,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Between operator - string",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorBetween,
 			value:         []any{"200", "300"},
@@ -595,7 +610,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Between operator - int64",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorBetween,
 			value:         []any{400, 500},
@@ -605,7 +621,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "In operator - string",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorIn,
 			value:         []any{"200", "300"},
@@ -615,7 +632,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "In operator - int64",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.status_code",
+				Name:         "http.status_code",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorIn,
 			value:         []any{401, 404, 500},
@@ -625,7 +643,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Regexp operator - json body string",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.method",
+				Name:         "http.method",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorRegexp,
 			value:         "GET|POST|PUT",
@@ -635,7 +654,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Not Regexp operator - json body string",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.http.method",
+				Name:         "http.method",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorNotRegexp,
 			value:         "DELETE|PATCH",
@@ -645,7 +665,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Regexp operator - json body with dots in path",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.user.email",
+				Name:         "user.email",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorRegexp,
 			value:         "^.*@example\\.com$",
@@ -655,7 +676,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		{
 			name: "Not Regexp operator - json body nested path",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body.response.headers.content-type",
+				Name:         "response.headers.content-type",
+				FieldContext: telemetrytypes.FieldContextBody,
 			},
 			operator:      qbtypes.FilterOperatorNotRegexp,
 			value:         "^text/.*",
@@ -665,7 +687,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	mockMetadataStore := buildTestTelemetryMetadataStore()
+	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()

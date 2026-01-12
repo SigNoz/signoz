@@ -10,6 +10,20 @@ import {
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 // Mock dependencies
+jest.mock('providers/cmdKProvider', () => ({
+	useCmdK: (): {
+		open: boolean;
+		setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+		openCmdK: () => void;
+		closeCmdK: () => void;
+	} => ({
+		open: false,
+		setOpen: jest.fn(),
+		openCmdK: jest.fn(),
+		closeCmdK: jest.fn(),
+	}),
+}));
+
 jest.mock('api/common/logEvent', () => jest.fn());
 
 // Mock the AppContext
@@ -63,7 +77,7 @@ describe('Sidebar Toggle Shortcut', () => {
 
 	describe('Global Shortcuts Constants', () => {
 		it('should have the correct shortcut key combination', () => {
-			expect(GlobalShortcuts.ToggleSidebar).toBe('b+shift');
+			expect(GlobalShortcuts.ToggleSidebar).toBe('shift+b');
 		});
 	});
 

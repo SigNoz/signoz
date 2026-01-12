@@ -8,7 +8,9 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"io"
 	"math"
@@ -62,6 +64,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
@@ -146,6 +149,8 @@ type APIHandler struct {
 
 	QuerierAPI *querierAPI.API
 
+	QueryParserAPI *queryparser.API
+
 	Signoz *signoz.SigNoz
 }
 
@@ -175,6 +180,8 @@ type APIHandlerOpts struct {
 	FieldsAPI *fields.API
 
 	QuerierAPI *querierAPI.API
+
+	QueryParserAPI *queryparser.API
 
 	Signoz *signoz.SigNoz
 }
@@ -238,6 +245,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Signoz:                        opts.Signoz,
 		FieldsAPI:                     opts.FieldsAPI,
 		QuerierAPI:                    opts.QuerierAPI,
+		QueryParserAPI:                opts.QueryParserAPI,
 	}
 
 	logsQueryBuilder := logsv4.PrepareLogsQuery
@@ -549,6 +557,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/settings/ttl", am.AdminAccess(aH.setCustomRetentionTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v2/settings/ttl", am.ViewAccess(aH.getCustomRetentionTTL)).Methods(http.MethodGet)
+
 	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.Signoz.Handlers.Apdex.Set)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.Signoz.Handlers.Apdex.Get)).Methods(http.MethodGet)
 
@@ -569,56 +578,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/user/preferences", am.ViewAccess(aH.Signoz.Handlers.Preference.ListByUser)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/preferences/{name}", am.ViewAccess(aH.Signoz.Handlers.Preference.GetByUser)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/preferences/{name}", am.ViewAccess(aH.Signoz.Handlers.Preference.UpdateByUser)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.Signoz.Handlers.Preference.ListByOrg)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/preferences/{name}", am.AdminAccess(aH.Signoz.Handlers.Preference.GetByOrg)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/preferences/{name}", am.AdminAccess(aH.Signoz.Handlers.Preference.UpdateByOrg)).Methods(http.MethodPut)
-
 	// Quick Filters
 	router.HandleFunc("/api/v1/orgs/me/filters", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetQuickFilters)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetSignalFilters)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.Signoz.Handlers.QuickFilter.UpdateQuickFilters)).Methods(http.MethodPut)
 
-	// === Authentication APIs ===
-	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.Signoz.Handlers.User.CreateInvite)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/invite/bulk", am.AdminAccess(aH.Signoz.Handlers.User.CreateBulkInvite)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.Signoz.Handlers.User.GetInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteInvite)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.Signoz.Handlers.User.ListInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(aH.Signoz.Handlers.User.AcceptInvite)).Methods(http.MethodPost)
-
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.Signoz.Handlers.Session.DeprecatedCreateSessionByEmailPassword)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/sessions/email_password", am.OpenAccess(aH.Signoz.Handlers.Session.CreateSessionByEmailPassword)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/sessions/context", am.OpenAccess(aH.Signoz.Handlers.Session.GetSessionContext)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/sessions/rotate", am.OpenAccess(aH.Signoz.Handlers.Session.RotateSession)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/sessions", am.OpenAccess(aH.Signoz.Handlers.Session.DeleteSession)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/complete/google", am.OpenAccess(aH.Signoz.Handlers.Session.CreateSessionByGoogleCallback)).Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.List)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.Create)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.Update)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.AuthDomain.Delete)).Methods(http.MethodDelete)
-
-	router.HandleFunc("/api/v1/pats", am.AdminAccess(aH.Signoz.Handlers.User.CreateAPIKey)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/pats", am.AdminAccess(aH.Signoz.Handlers.User.ListAPIKeys)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(aH.Signoz.Handlers.User.UpdateAPIKey)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(aH.Signoz.Handlers.User.RevokeAPIKey)).Methods(http.MethodDelete)
-
-	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.Signoz.Handlers.User.ListUsers)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/me", am.OpenAccess(aH.Signoz.Handlers.User.GetMyUser)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.GetUser)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.UpdateUser)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/user/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteUser)).Methods(http.MethodDelete)
-
-	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Get)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Update)).Methods(http.MethodPut)
-
-	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.Signoz.Handlers.User.GetResetPasswordToken)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.Signoz.Handlers.User.ResetPassword)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.Signoz.Handlers.User.ChangePassword)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v3/licenses", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
 		render.Success(rw, http.StatusOK, []any{})
@@ -632,6 +597,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/span_percentile", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetSpanPercentileDetails)).Methods(http.MethodPost)
 
+	// Query Filter Analyzer api used to extract metric names and grouping columns from a query
+	router.HandleFunc("/api/v1/query_filter/analyze", am.ViewAccess(aH.QueryParserAPI.AnalyzeQueryFilter)).Methods(http.MethodPost)
 }
 
 func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.AuthZ) {
@@ -659,11 +626,6 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.Au
 	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
 		am.ViewAccess(ah.UpdateMetricsMetadata)).
 		Methods(http.MethodPost)
-	// v2 endpoints
-	router.HandleFunc("/api/v2/metrics/stats", am.ViewAccess(ah.Signoz.Handlers.Metrics.GetStats)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/metrics/treemap", am.ViewAccess(ah.Signoz.Handlers.Metrics.GetTreemap)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/metrics/metadata", am.ViewAccess(ah.Signoz.Handlers.Metrics.GetMetricMetadata)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/metrics/{metric_name}/metadata", am.ViewAccess(ah.Signoz.Handlers.Metrics.UpdateMetricMetadata)).Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -2038,13 +2000,25 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if constants.PreferSpanMetrics {
-		for idx, feature := range featureSet {
-			if feature.Name == licensetypes.UseSpanMetrics {
-				featureSet[idx].Active = true
-			}
-		}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
 	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	useSpanMetrics := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureUseSpanMetrics, evalCtx)
+
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
+		Active:     useSpanMetrics,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
 	if constants.IsDotMetricsEnabled {
 		for idx, feature := range featureSet {
 			if feature.Name == licensetypes.DotMetricsEnabled {
@@ -2661,7 +2635,10 @@ func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2711,7 +2688,10 @@ func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2762,7 +2742,10 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-topic-throughput")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-topic-throughput", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2813,7 +2796,10 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer_partition_latency")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer_partition_latency", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2978,7 +2964,10 @@ func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *htt
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-throughput-details")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-throughput-details", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3029,7 +3018,10 @@ func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *ht
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-overview")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-overview", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3080,7 +3072,10 @@ func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *htt
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-details")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-details", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3134,7 +3129,10 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval")
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)

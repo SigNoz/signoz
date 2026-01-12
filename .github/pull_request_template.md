@@ -11,6 +11,20 @@
 
 ---
 
+
+## 📝 Changelog 
+
+> Fill this only if the change affects users, APIs, UI, or documented behavior.
+Mention as N/A for internal refactors or non-user-visible changes.
+
+**Deployment Type:** Cloud / OSS / Enterprise
+
+**Type:** Feature / Bug Fix / Maintenance
+
+**Description:** Short, user-facing summary of the change
+
+---
+
 ## 🏷️ Required: Add Relevant Labels
 
 > ⚠️ **Manually add appropriate labels in the PR sidebar**  

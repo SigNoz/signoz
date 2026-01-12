@@ -16,7 +16,7 @@ import (
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogs(t *testing.T) {
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, nil)
 
 	// Define a comprehensive set of field keys to support all test cases
 	keys := buildCompleteFieldKeyMap()
@@ -27,7 +27,6 @@ func TestFilterExprLogs(t *testing.T) {
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
-		JsonBodyPrefix:   BodyJSONStringSearchPrefix,
 		JsonKeyToKey:     GetBodyJSONKey,
 	}
 
@@ -2424,7 +2423,7 @@ func TestFilterExprLogs(t *testing.T) {
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogsConflictNegation(t *testing.T) {
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, nil)
 
 	// Define a comprehensive set of field keys to support all test cases
 	keys := buildCompleteFieldKeyMap()
@@ -2448,7 +2447,6 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
-		JsonBodyPrefix:   BodyJSONStringSearchPrefix,
 		JsonKeyToKey:     GetBodyJSONKey,
 	}
 
