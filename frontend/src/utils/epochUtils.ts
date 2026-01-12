@@ -1,6 +1,8 @@
 import dayjs, { Dayjs } from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 
+import { roundHalfUp } from './round';
+
 dayjs.extend(duration);
 
 type EpochInput = number;
@@ -106,12 +108,6 @@ export const getTimeDifference = (minTime: number, maxTime: number): string => {
 	// Difference is already in milliseconds
 	const diffInMs = maxTime - minTime;
 	const diff = dayjs.duration(diffInMs, 'milliseconds');
-
-	/**
-	 * Applies half-up rounding to ensure a whole number.
-	 * Example: 1.5 → 2, 1.49 → 1
-	 */
-	const roundHalfUp = (value: number): number => Math.floor(value + 0.5);
 
 	const weeks = diff.asWeeks();
 	if (weeks >= 1) return `${roundHalfUp(weeks)}w`;

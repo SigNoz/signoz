@@ -207,6 +207,8 @@ export const validateTimeRange = (
 	const start = dayjs(startTime, format, true);
 	const end = dayjs(endTime, format, true);
 	const now = dayjs();
+	const startTimeMs = start.valueOf();
+	const endTimeMs = end.valueOf();
 
 	// Invalid format or parsing failure
 	if (!start.isValid() || !end.isValid()) {
@@ -228,9 +230,6 @@ Shortcuts:
 			},
 		};
 	}
-
-	const startTimeMs = start.valueOf();
-	const endTimeMs = end.valueOf();
 
 	// dates must not be in the future
 	if (start.isAfter(now) || end.isAfter(now)) {

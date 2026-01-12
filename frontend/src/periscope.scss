@@ -95,7 +95,7 @@
 	&.danger {
 		border-radius: 2px;
 		color: var(--text-vanilla-100) !important;
-		background: var(--bg-cherry-500);
+		background: var(--bg-cherry-500) !important;
 		text-align: center;
 		font-variant-numeric: slashed-zero;
 		box-shadow: none !important;
