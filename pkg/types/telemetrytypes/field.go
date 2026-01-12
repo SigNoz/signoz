@@ -48,66 +48,111 @@ func (f TelemetryFieldKey) String() string {
 	if f.FieldDataType != FieldDataTypeUnspecified {
 		sb.WriteString(fmt.Sprintf(",datatype=%s", f.FieldDataType.StringValue()))
 	}
+	if f.Materialized {
+		sb.WriteString(",materialized=true")
+	}
+	if f.JSONDataType != nil {
+		sb.WriteString(fmt.Sprintf(",jsondatatype=%s", f.JSONDataType.StringValue()))
+	}
+	if len(f.Indexes) > 0 {
+		sb.WriteString(",indexes=[")
+		for i, index := range f.Indexes {
+			if i > 0 {
+				sb.WriteString("; ")
+			}
+			sb.WriteString(fmt.Sprintf("{type=%s, columnExpr=%s, indexExpr=%s}", index.Type.StringValue(), index.ColumnExpression, index.IndexExpression))
+		}
+		sb.WriteString("]")
+	}
 	return sb.String()
+}
+
+func (f TelemetryFieldKey) Text() string {
+	return TelemetryFieldKeyToText(&f)
+}
+
+// NormalizeFieldKey parses and normalizes a TelemetryFieldKey by extracting
+// the field context and data type from the field name if they are not already specified.
+// This function modifies the key in place.
+//
+// Example:
+//
+//	key := &TelemetryFieldKey{Name: "resource.service.name:string"}
+//	NormalizeFieldKey(key)
+//	// Result: Name: "service.name", FieldContext: FieldContextResource, FieldDataType: FieldDataTypeString
+func (f *TelemetryFieldKey) Normalize() {
+	normalizedKeyText := GetFieldKeyFromKeyText(f.Text())
+	f.Name = normalizedKeyText.Name
+	f.FieldContext = normalizedKeyText.FieldContext
+	f.FieldDataType = normalizedKeyText.FieldDataType
 }
 
 // GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
 // The key text is expected to be in the format of `fieldContext.fieldName:fieldDataType` in the search query.
+// Both fieldContext and :fieldDataType are optional.
+// fieldName can contain dots and can start with a dot (e.g., ".http_code").
+// Special cases:
+// - When key exactly matches a field context name (e.g., "body", "attribute"), use unspecified context
+// - When key starts with "body." prefix, use "body" as context with remainder as field name
 func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
+	var explicitFieldDataType FieldDataType = FieldDataTypeUnspecified
+	var fieldName string
 
-	keyTextParts := strings.Split(key, ".")
-
-	var explicitFieldContextProvided, explicitFieldDataTypeProvided bool
-	var explicitFieldContext FieldContext
-	var explicitFieldDataType FieldDataType
-	var ok bool
-
-	if len(keyTextParts) > 1 {
-		explicitFieldContext, ok = fieldContexts[keyTextParts[0]]
-		if ok && explicitFieldContext != FieldContextUnspecified {
-			explicitFieldContextProvided = true
+	// Step 1: Parse data type from the right (after the last ":")
+	var keyWithoutDataType string
+	if colonIdx := strings.LastIndex(key, ":"); colonIdx != -1 {
+		potentialDataType := key[colonIdx+1:]
+		if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
+			explicitFieldDataType = dt
+			keyWithoutDataType = key[:colonIdx]
+		} else {
+			// No valid data type found, treat the entire key as the field name
+			keyWithoutDataType = key
 		}
+	} else {
+		keyWithoutDataType = key
 	}
 
-	if explicitFieldContextProvided {
-		keyTextParts = keyTextParts[1:]
-	}
+	// Step 2: Parse field context from the left
+	if dotIdx := strings.Index(keyWithoutDataType, "."); dotIdx != -1 {
+		potentialContext := keyWithoutDataType[:dotIdx]
+		if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
+			fieldName = keyWithoutDataType[dotIdx+1:]
 
-	// check if there is a field data type provided
-	if len(keyTextParts) >= 1 {
-		lastPart := keyTextParts[len(keyTextParts)-1]
-		lastPartParts := strings.Split(lastPart, ":")
-		if len(lastPartParts) > 1 {
-			explicitFieldDataType, ok = fieldDataTypes[lastPartParts[1]]
-			if ok && explicitFieldDataType != FieldDataTypeUnspecified {
-				explicitFieldDataTypeProvided = true
+			// Step 2a: Handle special case for log.body.* fields
+			if fc == FieldContextLog && strings.HasPrefix(fieldName, BodyJSONStringSearchPrefix) {
+				fc = FieldContextBody
+				fieldName = strings.TrimPrefix(fieldName, BodyJSONStringSearchPrefix)
+			}
+
+			return TelemetryFieldKey{
+				Name:          fieldName,
+				FieldContext:  fc,
+				FieldDataType: explicitFieldDataType,
 			}
 		}
-
-		if explicitFieldDataTypeProvided {
-			keyTextParts[len(keyTextParts)-1] = lastPartParts[0]
-		}
 	}
 
-	realKey := strings.Join(keyTextParts, ".")
-
-	fieldKeySelector := TelemetryFieldKey{
-		Name: realKey,
+	// Step 3: No context found, entire key is the field name
+	return TelemetryFieldKey{
+		Name:          keyWithoutDataType,
+		FieldContext:  FieldContextUnspecified,
+		FieldDataType: explicitFieldDataType,
 	}
+}
 
-	if explicitFieldContextProvided {
-		fieldKeySelector.FieldContext = explicitFieldContext
-	} else {
-		fieldKeySelector.FieldContext = FieldContextUnspecified
+func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {
+	var sb strings.Builder
+	if key.FieldContext != FieldContextUnspecified {
+		sb.WriteString(key.FieldContext.StringValue())
+		sb.WriteString(".")
 	}
-
-	if explicitFieldDataTypeProvided {
-		fieldKeySelector.FieldDataType = explicitFieldDataType
-	} else {
-		fieldKeySelector.FieldDataType = FieldDataTypeUnspecified
+	sb.WriteString(key.Name)
+	if key.FieldDataType != FieldDataTypeUnspecified {
+		sb.WriteString(":")
+		sb.WriteString(key.FieldDataType.StringValue())
 	}
-
-	return fieldKeySelector
+	return sb.String()
 }
 
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
