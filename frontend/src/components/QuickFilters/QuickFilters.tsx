@@ -49,8 +49,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		showFilterCollapse = true,
 		showQueryName = true,
 	} = props;
-	const [value, setValue] = useState(0);
-	const [open, setOpen] = useState(false);
 	const { user } = useAppContext();
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const isAdmin = user.role === USER_ROLES.ADMIN;
@@ -72,6 +70,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		redirectWithQueryBuilderData,
 		panelType,
 	} = useQueryBuilder();
+	const [value, setValue] = useState(lastUsedQuery || 0);
+	const [open, setOpen] = useState(false);
 
 	// Determine if we're in ListView mode
 	const isListView = panelType === PANEL_TYPES.LIST;
