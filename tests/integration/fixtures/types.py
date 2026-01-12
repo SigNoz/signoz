@@ -9,7 +9,6 @@ import clickhouse_connect.driver
 import clickhouse_connect.driver.client
 import py
 from sqlalchemy import Engine
-from fixtures.metrics import Metrics
 
 LegacyPath = py.path.local
 
@@ -165,95 +164,6 @@ class Network:
 
     def __log__(self) -> str:
         return f"Network(id={self.id}, name={self.name})"
-
-
-
-# Alerts manager test data types
-class MetricValues:
-    """Represents a list of metric values that our test case will need to ingest for alert evaluation."""
-    metric_name: str
-    labels: dict[str, str]
-    values: list[float | None]
-    temporality: str
-    interval_sec: int
-
-    def __init__(
-        self,
-        metric_name: str,
-        labels: dict[str, str],
-        values: list[float | None],
-        temporality: str = "Unspecified",
-        interval_sec: int = 60,
-    ) -> None:
-        self.metric_name = metric_name
-        self.labels = labels
-        self.values = values
-        self.temporality = temporality
-        self.interval_sec = interval_sec
-
-    def to_metrics(self, start_time: Optional[datetime.datetime] = None) -> List[Metrics]:
-        """
-        Converts MetricValues to a list of Metrics objects suitable for insertion.
-        
-        Args:
-            start_time: Starting timestamp. If None, uses current time minus (len(values) * interval_sec)
-        
-        Returns:
-            List of Metrics objects with timestamps spaced by interval_sec
-        """
-        if start_time is None:
-            # Calculate start time to ensure latest data point is "now"
-            start_time = datetime.datetime.now() - datetime.timedelta(
-                seconds=len(self.values) * self.interval_sec
-            )
-        
-        metrics_list = []
-        for idx, value in enumerate(self.values):
-            if value is None:
-                # Skip None values (missing data points)
-                continue
-            
-            timestamp = start_time + datetime.timedelta(seconds=idx * self.interval_sec)
-            
-            metrics_list.append(
-                Metrics(
-                    metric_name=self.metric_name,
-                    labels=self.labels,
-                    timestamp=timestamp,
-                    value=value,
-                    temporality=self.temporality,
-                    type_="Sum",
-                    is_monotonic=False,
-                )
-            )
-        
-        return metrics_list
-
-@dataclass
-class AlertExpectations:
-    """Defines what we expect to happen after the data is ingested."""
-    should_fire: bool = False
-    num_alerts: int = 0
-    # Key-value pairs of labels that MUST be present in the alert payload
-    verify_labels: Dict[str, str] = field(default_factory=dict)
-    # Key-value pairs of annotations that MUST be present
-    verify_annotations: Dict[str, str] = field(default_factory=dict)
-    # Max time to wait for the alert (seconds)
-    wait_time_sec: int = 120
-
-@dataclass
-class AlertTestCase:
-    """
-    A declarative definition of an Alert Test Scenario.
-    """
-    name: str
-    description: str
-    # The Rule Definition (PostableRule dataclass)
-    rule: PostableRule
-    # Input Data: List of MetricValues
-    data: List[MetricValues]
-    expectations: AlertExpectations = field(default_factory=AlertExpectations)
-
 
 # Alerts types
 
@@ -493,11 +403,13 @@ class PostableRule:
     This is a dataclass representation that can be modified and converted to dict.
     """
 
+    # Required fields first (no defaults)
     alert: str
-    rule_type: str = "threshold_rule"
-    alert_type: str = "METRIC_BASED_ALERT"
     condition: RuleCondition
     evaluation: Evaluation
+    # Optional fields with defaults
+    rule_type: str = "threshold_rule"
+    alert_type: str = "METRIC_BASED_ALERT"
     labels: Dict[str, str] = field(default_factory=dict)
     annotations: Dict[str, str] = field(default_factory=default_annotations)
     notification_settings: Dict[str, Any] = field(
@@ -670,3 +582,93 @@ def create_default_metric_rule(
         condition=condition,
         evaluation=evaluation,
     )
+
+# Alerts manager test data types
+class MetricValues:
+    """Represents a list of metric values that our test case will need to ingest for alert evaluation."""
+    metric_name: str
+    labels: dict[str, str]
+    values: list[float | None]
+    temporality: str
+    interval_sec: int
+
+    def __init__(
+        self,
+        metric_name: str,
+        labels: dict[str, str],
+        values: list[float | None],
+        temporality: str = "Unspecified",
+        interval_sec: int = 60,
+    ) -> None:
+        self.metric_name = metric_name
+        self.labels = labels
+        self.values = values
+        self.temporality = temporality
+        self.interval_sec = interval_sec
+
+    def to_metrics(self, start_time: Optional[datetime] = None):
+        """
+        Converts MetricValues to a list of Metrics objects suitable for insertion.
+        
+        Args:
+            start_time: Starting timestamp. If None, uses current time minus (len(values) * interval_sec)
+        
+        Returns:
+            List of Metrics objects with timestamps spaced by interval_sec
+        """
+        # Import here to avoid circular dependency
+        from fixtures.metrics import Metrics
+        from datetime import timedelta
+        
+        if start_time is None:
+            # Calculate start time to ensure latest data point is "now"
+            start_time = datetime.now() - timedelta(
+                seconds=len(self.values) * self.interval_sec
+            )
+        
+        metrics_list = []
+        for idx, value in enumerate(self.values):
+            if value is None:
+                # Skip None values (missing data points)
+                continue
+            
+            timestamp = start_time + timedelta(seconds=idx * self.interval_sec)
+            
+            metrics_list.append(
+                Metrics(
+                    metric_name=self.metric_name,
+                    labels=self.labels,
+                    timestamp=timestamp,
+                    value=value,
+                    temporality=self.temporality,
+                    type_="Sum",
+                    is_monotonic=False,
+                )
+            )
+        
+        return metrics_list
+
+@dataclass
+class AlertExpectations:
+    """Defines what we expect to happen after the data is ingested."""
+    should_fire: bool = False
+    num_alerts: int = 0
+    # Key-value pairs of labels that MUST be present in the alert payload
+    verify_labels: Dict[str, str] = field(default_factory=dict)
+    # Key-value pairs of annotations that MUST be present
+    verify_annotations: Dict[str, str] = field(default_factory=dict)
+    # Max time to wait for the alert (seconds)
+    wait_time_sec: int = 120
+
+@dataclass
+class AlertTestCase:
+    """
+    A declarative definition of an Alert Test Scenario.
+    """
+    name: str
+    description: str
+    # The Rule Definition (PostableRule dataclass)
+    rule: PostableRule
+    # Input Data: List of MetricValues
+    data: List[MetricValues]
+    expectations: AlertExpectations = field(default_factory=AlertExpectations)

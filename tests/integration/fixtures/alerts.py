@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from http import HTTPStatus
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import pytest
 import requests
 
 from fixtures.metrics import Metrics
@@ -20,31 +21,6 @@ logger = logging.getLogger(__name__)
 # Constants
 WIREMOCK_WEBHOOK_Path = "/alerts/webhook"
 TEST_CHANNEL_NAME = "IntegrationTestWebhook"
-
-
-@pytest.fixture(name="alert_framework", scope="function")
-def alert_framework(
-    signoz: SigNoz,
-    create_user_admin: Operation,
-    get_token: Callable[[str, str], str],
-    insert_metrics: Callable,
-    insert_logs: Callable,
-) -> AlertFramework:
-    """Creates an AlertFramework instance for testing."""
-    framework = AlertFramework(
-        signoz=signoz,
-        get_token=get_token,
-        insert_metrics=insert_metrics,
-        insert_logs=insert_logs,
-        admin_email=USER_ADMIN_EMAIL,
-        admin_password=USER_ADMIN_PASSWORD,
-    )
-    
-    yield framework
-    
-    # Cleanup after test
-    framework.cleanup()
-
 
 class AlertFramework:
     """
@@ -162,7 +138,6 @@ class AlertFramework:
         # For positive tests, retry until success
         self._wait_for_webhook(expectations)
 
-    @retry(stop=stop_after_delay(120), wait=wait_fixed(2))
     def _wait_for_webhook(self, expectations: AlertExpectations):
         """
         Internal retry loop to check WireMock requests.
@@ -260,3 +235,27 @@ class AlertFramework:
         except Exception as e:
             logger.warning(f"Failed to reset WireMock: {e}")
 
+
+
+@pytest.fixture(name="alert_framework", scope="function")
+def alert_framework(
+    signoz: SigNoz,
+    create_user_admin: Operation,
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable,
+    insert_logs: Callable,
+) -> AlertFramework:
+    """Creates an AlertFramework instance for testing."""
+    framework = AlertFramework(
+        signoz=signoz,
+        get_token=get_token,
+        insert_metrics=insert_metrics,
+        insert_logs=insert_logs,
+        admin_email=USER_ADMIN_EMAIL,
+        admin_password=USER_ADMIN_PASSWORD,
+    )
+    
+    yield framework
+    
+    # Cleanup after test
+    framework.cleanup()
