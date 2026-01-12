@@ -2864,11 +2864,6 @@ components:
           type: boolean
         redirectURI:
           type: string
-        scopes:
-          items:
-            type: string
-          nullable: true
-          type: array
         serviceAccountJson:
           type: string
       type: object
@@ -2888,11 +2883,6 @@ components:
           type: string
         issuerAlias:
           type: string
-        scopes:
-          items:
-            type: string
-          nullable: true
-          type: array
       type: object
     AuthtypesOrgSessionContext:
       properties:
