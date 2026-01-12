@@ -163,7 +163,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err := module.DeletePublic(ctx, orgID, id)
+		err := module.deletePublic(ctx, orgID, id)
 		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return err
 		}
@@ -183,7 +183,12 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 }
 
 func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
-	publicDashboard, err := module.store.GetPublic(ctx, dashboardID.String())
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	publicDashboard, err := module.GetPublic(ctx, orgID, dashboardID)
 	if err != nil {
 		return err
 	}
@@ -257,4 +262,36 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, role types.Role, lock bool) error {
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, role, lock)
+}
+
+func (module *module) deletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
+	publicDashboard, err := module.store.GetPublic(ctx, dashboardID.String())
+	if err != nil {
+		return err
+	}
+
+	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.AnonymousUserRoleName, roletypes.AnonymousUserRoleDescription, roletypes.RoleTypeManaged.StringValue(), orgID))
+	if err != nil {
+		return err
+	}
+
+	deletionObject := authtypes.MustNewObject(
+		authtypes.Resource{
+			Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
+			Type: authtypes.TypeMetaResource,
+		},
+		authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.ID.String()),
+	)
+
+	err = module.role.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, nil, []*authtypes.Object{deletionObject})
+	if err != nil {
+		return err
+	}
+
+	err = module.store.DeletePublic(ctx, dashboardID.StringValue())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
