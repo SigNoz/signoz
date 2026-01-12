@@ -26,30 +26,28 @@ export function createAlert(overrides: Partial<Alerts> = {}): Alerts {
 	};
 }
 
-const mockTimezone: Timezone = {
-	name: 'timezone',
-	value: 'mock-timezone',
-	offset: '+1.30',
-	searchIndex: '1',
-};
-type UseTimezoneReturnType = {
+export function useMockTimezone(): {
 	timezone: Timezone;
 	browserTimezone: Timezone;
 	updateTimezone: (timezone: Timezone) => void;
 	formatTimezoneAdjustedTimestamp: (input: string, format?: string) => string;
 	isAdaptationEnabled: boolean;
 	setIsAdaptationEnabled: (enabled: boolean) => void;
-};
-export const useMockTimezone = (
-	overrides: Partial<UseTimezoneReturnType> = {},
-): UseTimezoneReturnType => ({
-	timezone: mockTimezone,
-	browserTimezone: mockTimezone,
-	updateTimezone: jest.fn(),
-	formatTimezoneAdjustedTimestamp: jest
-		.fn()
-		.mockImplementation((date: string) => new Date(date).toISOString()),
-	isAdaptationEnabled: true,
-	setIsAdaptationEnabled: jest.fn(),
-	...overrides,
-});
+} {
+	const mockTimezone: Timezone = {
+		name: 'timezone',
+		value: 'mock-timezone',
+		offset: '+1.30',
+		searchIndex: '1',
+	};
+	return {
+		timezone: mockTimezone,
+		browserTimezone: mockTimezone,
+		updateTimezone: jest.fn(),
+		formatTimezoneAdjustedTimestamp: jest
+			.fn()
+			.mockImplementation((date: string) => new Date(date).toISOString()),
+		isAdaptationEnabled: true,
+		setIsAdaptationEnabled: jest.fn(),
+	};
+}

@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import NoFilterTable from '../NoFilterTable';
-import { createAlert, useMockTimezone } from './mockUtils';
+import { createAlert } from './mockUtils';
 
 jest.mock('providers/Timezone', () => ({
-	useTimezone: jest.fn((overrides) => useMockTimezone(overrides)),
+	useTimezone: jest.requireActual('./mockUtils').useMockTimezone,
 }));
 
 const allAlerts = [
