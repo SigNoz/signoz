@@ -8,38 +8,48 @@
 }
 
 .invite-team-members-table-header {
-	display: grid;
-	grid-template-columns: 1fr 150px 40px;
-	gap: 12px;
+	display: flex;
+	gap: 16px;
 	align-items: center;
 	padding-top: 12px;
 	flex-shrink: 0;
 	height: auto;
+	width: 100%;
+	justify-content: flex-end;
 
-	.table-header-cell {
-		color: var(--semantic-secondary-foreground, #adb4c2);
-		font-family: Inter, sans-serif;
-		font-size: 13px;
-		font-weight: 400;
-		line-height: 20px;
-		letter-spacing: -0.065px;
+	> div:first-child {
+		flex: 0 0 180px;
+		width: 180px;
 	}
 
-	.action-header {
-		// Empty header for action column
+	> div:nth-child(2) {
+		flex: 1 0 0;
+		min-width: 0;
+	}
+
+	> div:last-child {
+		flex: 0 0 32px;
+		width: 32px;
+	}
+
+	.table-header-cell {
+		color: var(--levels-l1-foreground, #eceef2);
+		font-family: Inter;
+		font-size: 13px;
+		font-style: normal;
+		font-weight: 600;
+		line-height: 100%;
+		letter-spacing: -0.065px;
 	}
 }
 
 .invite-team-members-container {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 16px;
 	width: 100%;
 	flex: 0 1 auto;
 	min-height: 0;
-	max-height: calc(
-		315px - 60px
-	); // 315px total - header (~32px) - button (~28px) - gaps (24px)
 	overflow-y: auto;
 	overflow-x: hidden;
 
@@ -62,67 +72,85 @@
 }
 
 .team-member-row {
-	display: grid;
-	grid-template-columns: 1fr 150px 40px;
-	gap: 12px;
-	align-items: flex-start;
+	display: flex;
+	width: 100%;
+
+	> div:first-child {
+		flex: 0 0 180px;
+		width: 180px;
+		margin-right: 16px;
+	}
+
+	> div:nth-child(2) {
+		flex: 1 0 0;
+		min-width: 0;
+		margin-right: 8px;
+	}
+
+	> div:last-child {
+		flex: 0 0 32px;
+		width: 32px;
+	}
 }
 
 .team-member-cell {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: 8px;
 
 	&.email-cell {
-		// Email input cell
+		width: 180px;
+		flex: 0 0 180px;
 	}
 
 	&.role-cell {
-		// Role select cell
+		flex: 1 0 0;
+		min-width: 0;
 	}
 
 	&.action-cell {
 		display: flex;
-		align-items: flex-start;
+		align-items: flex-end;
 		justify-content: center;
-		padding-top: 1px;
+		flex: 0 0 32px;
+		width: 32px;
+		height: 32px;
 	}
 }
 
 .team-member-email-input {
 	width: 100%;
 	height: 32px !important;
-	margin: 1px;
 
-	input {
-		height: 32px !important;
-		border-radius: 2px;
-		background: var(--levels-l3-background, #23262e);
-		border: 1px solid var(--levels-l3-border, #2c303a);
-		color: var(--levels-l1-foreground, #eceef2);
-		font-family: Inter, sans-serif;
-		font-size: 13px;
-		font-weight: 400;
-		line-height: 20px;
-		letter-spacing: -0.065px;
-		padding: 6px 8px;
-		box-sizing: border-box;
+	height: 32px !important;
+	border-radius: 2px;
+	background: var(--levels-l3-background, #23262e);
+	border: 1px solid var(--levels-l3-border, #2c303a);
+	color: var(--levels-l1-foreground, #eceef2);
+	font-family: Inter, sans-serif;
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 1;
+	letter-spacing: -0.065px;
+	padding: 6px 8px;
+	box-sizing: border-box;
 
-		&::placeholder {
-			color: var(--levels-l3-foreground, #747b8b);
-			opacity: 1;
-		}
+	&::placeholder {
+		color: var(--levels-l3-foreground, #747b8b);
+	}
 
-		&:focus-visible {
-			outline: none;
-			border-color: var(--semantic-primary-background, #4e74f8);
-		}
+	&:hover {
+		border-color: var(--levels-l3-border, #2c303a);
+	}
+
+	&:focus {
+		border-color: var(--semantic-primary-background, #4e74f8);
+		box-shadow: none;
 	}
 }
 
 .team-member-role-select {
 	width: 100%;
-	margin: 1px;
 
 	.ant-select-selector {
 		height: 32px !important;
@@ -133,7 +161,7 @@
 		font-family: Inter, sans-serif !important;
 		font-size: 13px !important;
 		font-weight: 400 !important;
-		line-height: 20px !important;
+		line-height: 1 !important;
 		letter-spacing: -0.065px !important;
 		padding: 0 8px !important;
 		box-sizing: border-box !important;
@@ -171,29 +199,32 @@
 	border: none !important;
 	border-radius: 2px !important;
 	background: transparent !important;
-	color: var(--bg-cherry-500, #f56565) !important;
+	color: #e5484d !important;
+	opacity: 0.6 !important;
 	cursor: pointer;
 	padding: 0 !important;
 	transition: background-color 0.2s, opacity 0.2s;
 	box-shadow: none !important;
 
 	svg {
-		color: var(--bg-cherry-500, #f56565) !important;
+		color: #e5484d !important;
+		width: 12px !important;
+		height: 12px !important;
 	}
 
 	&:hover {
-		background: rgba(245, 101, 101, 0.1) !important;
-		opacity: 0.9;
-		color: var(--bg-cherry-500, #f56565) !important;
+		background: rgba(229, 72, 77, 0.1) !important;
+		opacity: 0.9 !important;
+		color: #e5484d !important;
 
 		svg {
-			color: var(--bg-cherry-500, #f56565) !important;
+			color: #e5484d !important;
 		}
 	}
 
 	&:active {
-		opacity: 0.7;
-		background: rgba(245, 101, 101, 0.15) !important;
+		opacity: 0.7 !important;
+		background: rgba(229, 72, 77, 0.15) !important;
 	}
 
 	&:focus-visible {
@@ -202,11 +233,14 @@
 	}
 }
 
-.email-error-message {
+.email-error-message,
+.role-error-message {
 	font-size: 12px;
 	font-weight: 400;
 	line-height: 16px;
 	margin-top: 4px;
+	width: 100%;
+	display: block;
 }
 
 .invite-team-members-add-another-member-container {
@@ -343,15 +377,15 @@
 
 	.team-member-email-input {
 		input {
-			background: var(--levels-l3-background, #ffffff);
-			border: 1px solid var(--levels-l3-border, #e9e9e9);
-			color: var(--levels-l1-foreground, #1a1d26);
+			background: var(--bg-vanilla-200, #f5f5f5);
+			border-color: var(--bg-vanilla-300, #e9e9e9);
+			color: var(--text-ink-500);
 
 			&::placeholder {
-				color: var(--levels-l3-foreground, #747b8b);
+				color: var(--text-neutral-light-200, #80828d);
 			}
 
-			&:focus-visible {
+			&:focus {
 				border-color: var(--semantic-primary-background, #4e74f8);
 			}
 		}

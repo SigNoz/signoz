@@ -207,7 +207,7 @@ function OrgQuestions({
 						<label className="question" htmlFor="organisationName">
 							Name of your company
 						</label>
-						<input
+						<Input
 							type="text"
 							name="organisationName"
 							id="organisationName"

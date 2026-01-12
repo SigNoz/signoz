@@ -43,12 +43,13 @@ function InviteTeamMembers({
 		{},
 	);
 	const [hasInvalidEmails, setHasInvalidEmails] = useState<boolean>(false);
+	const [hasInvalidRoles, setHasInvalidRoles] = useState<boolean>(false);
 	const [inviteError, setInviteError] = useState<APIError | null>(null);
 	const { notifications } = useNotifications();
 
 	const defaultTeamMember: TeamMember = {
 		email: '',
-		role: 'EDITOR',
+		role: '',
 		name: '',
 		frontendBaseUrl: window.location.origin,
 		id: '',
@@ -81,21 +82,32 @@ function InviteTeamMembers({
 	// Validation function to check all users
 	const validateAllUsers = (): boolean => {
 		let isValid = true;
+		let hasEmailErrors = false;
+		let hasRoleErrors = false;
 
-		const updatedValidity: Record<string, boolean> = {};
+		const updatedEmailValidity: Record<string, boolean> = {};
 
 		teamMembersToInvite?.forEach((member) => {
 			const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email);
+			const roleValid = Boolean(member.role && member.role.trim() !== '');
+
 			if (!emailValid || !member.email) {
 				isValid = false;
-				setHasInvalidEmails(true);
+				hasEmailErrors = true;
 			}
+			if (!roleValid) {
+				isValid = false;
+				hasRoleErrors = true;
+			}
+
 			if (member.id) {
-				updatedValidity[member.id] = emailValid;
+				updatedEmailValidity[member.id] = emailValid;
 			}
 		});
 
-		setEmailValidity(updatedValidity);
+		setEmailValidity(updatedEmailValidity);
+		setHasInvalidEmails(hasEmailErrors);
+		setHasInvalidRoles(hasRoleErrors);
 
 		return isValid;
 	};
@@ -131,6 +143,7 @@ function InviteTeamMembers({
 		if (validateAllUsers()) {
 			setTeamMembers(teamMembersToInvite || []);
 			setHasInvalidEmails(false);
+			setHasInvalidRoles(false);
 			setInviteError(null);
 			sendInvites({
 				invites: teamMembersToInvite || [],
@@ -172,10 +185,34 @@ function InviteTeamMembers({
 	const handleRoleChange = (role: string, member: TeamMember): void => {
 		const updatedMembers = cloneDeep(teamMembersToInvite || []);
 		const memberToUpdate = updatedMembers.find((m) => m.id === member.id);
-		if (memberToUpdate) {
+		if (memberToUpdate && member.id) {
 			memberToUpdate.role = role;
 			setTeamMembersToInvite(updatedMembers);
+
+			// Clear errors when user selects a role
+			if (hasInvalidRoles) {
+				// Check if all roles are now valid
+				const allRolesValid = updatedMembers.every(
+					(m) => m.role && m.role.trim() !== '',
+				);
+				if (allRolesValid) {
+					setHasInvalidRoles(false);
+				}
+			}
+			if (inviteError) {
+				setInviteError(null);
+			}
 		}
+	};
+
+	const getValidationErrorMessage = (): string => {
+		if (hasInvalidEmails && hasInvalidRoles) {
+			return 'Please enter valid emails and select roles for all team members';
+		}
+		if (hasInvalidEmails) {
+			return 'Please enter valid emails for all team members';
+		}
+		return 'Please select roles for all team members';
 	};
 
 	const handleDoLater = (): void => {
@@ -222,6 +259,8 @@ function InviteTeamMembers({
 												placeholder="e.g. john@signoz.io"
 												value={member.email}
 												type="email"
+												id={`email-input-${member.id}`}
+												name={`email-input-${member.id}`}
 												required
 												autoComplete="off"
 												className="team-member-email-input"
@@ -242,7 +281,7 @@ function InviteTeamMembers({
 										</div>
 										<div className="team-member-cell role-cell">
 											<Select
-												value={member.role}
+												value={member.role || undefined}
 												onChange={(value): void => handleRoleChange(value, member)}
 												className="team-member-role-select"
 												placeholder="Select roles"
@@ -261,7 +300,7 @@ function InviteTeamMembers({
 													onClick={(): void => handleRemoveTeamMember(member.id)}
 													aria-label="Remove team member"
 												>
-													<Trash2 size={14} />
+													<Trash2 size={12} />
 												</Button>
 											)}
 										</div>
@@ -284,16 +323,16 @@ function InviteTeamMembers({
 					</div>
 				</div>
 
-				{hasInvalidEmails && (
+				{(hasInvalidEmails || hasInvalidRoles) && (
 					<Callout
 						type="error"
 						size="small"
 						showIcon
-						description="Please enter valid emails for all team members"
+						description={getValidationErrorMessage()}
 					/>
 				)}
 
-				{inviteError && !hasInvalidEmails && (
+				{inviteError && !hasInvalidEmails && !hasInvalidRoles && (
 					<Callout
 						type="error"
 						size="small"

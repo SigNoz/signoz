@@ -144,6 +144,7 @@
 			}
 
 			&.invite-team-members-form {
+				padding-right: 12px;
 				min-height: calc(420px - 24px);
 				max-height: calc(420px - 24px);
 
@@ -314,15 +315,30 @@
 			width: 100%;
 
 			.ant-slider .ant-slider-mark {
-				color: var(--levels-L3-foreground, #747b8b);
-				font-variant-numeric: slashed-zero;
-
 				margin-top: 12px;
-				font-family: Inter;
-				font-size: 11px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 100%;
+
+				.ant-slider-mark-text {
+					color: var(--levels-l3-foreground, #747b8b);
+					font-variant-numeric: lining-nums tabular-nums stacked-fractions
+						slashed-zero;
+					font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+					font-family: Inter;
+					font-size: 11px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 100%;
+				}
+			}
+
+			&.logs-slider-container {
+				.ant-slider .ant-slider-mark {
+					.ant-slider-mark-text {
+						&:last-child {
+							left: calc(100% - 8px) !important;
+							white-space: nowrap;
+						}
+					}
+				}
 			}
 		}
 
@@ -384,7 +400,7 @@
 			height: 32px;
 			border: 1px solid var(--levels-l3-border, #2c303a);
 			background: var(--levels-l3-background, #23262e);
-			color: var(--levels-l3-foreground, #747b8b);
+			color: var(--levels-l1-foreground, #eceef2);
 			box-sizing: border-box;
 
 			&::placeholder {

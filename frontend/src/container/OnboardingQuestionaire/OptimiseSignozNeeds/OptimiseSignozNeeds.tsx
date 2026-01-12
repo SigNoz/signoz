@@ -208,7 +208,7 @@ function OptimiseSignozNeeds({
 						<label className="question-slider" htmlFor="organisationName">
 							Logs / Day
 						</label>
-						<div className="slider-container">
+						<div className="slider-container logs-slider-container">
 							<div>
 								<Slider
 									min={0}
