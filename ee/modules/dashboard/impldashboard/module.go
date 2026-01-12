@@ -164,7 +164,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
 		err := module.DeletePublic(ctx, orgID, id)
-		if err != nil && !errors.Ast(err, errors.TypeNotFound) && !errors.Ast(err, errors.TypeLicenseUnavailable) {
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return err
 		}
 
@@ -183,12 +183,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 }
 
 func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
-	_, err := module.licensing.GetActive(ctx, orgID)
-	if err != nil {
-		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
-
-	publicDashboard, err := module.GetPublic(ctx, orgID, dashboardID)
+	publicDashboard, err := module.store.GetPublic(ctx, dashboardID.String())
 	if err != nil {
 		return err
 	}
