@@ -165,8 +165,12 @@ class Network:
     def __log__(self) -> str:
         return f"Network(id={self.id}, name={self.name})"
 
-# Alerts types
 
+# Alert manager test constants
+TEST_CHANNEL_NAME = "IntegrationTestWebhook"
+WIREMOCK_WEBHOOK_PATH = "/alerts/webhook"
+
+# Alerts types
 class CompareOp(str, Enum):
     """Comparison operators for threshold conditions."""
 
@@ -446,6 +450,8 @@ class PostableRule:
             op=compare_op.value,
             match_type=match_type.value,
             target_unit=target_unit,
+            # use the default test channel to send alerts
+            channels=[TEST_CHANNEL_NAME]
         )
 
         self.condition.thresholds.spec.append(threshold)

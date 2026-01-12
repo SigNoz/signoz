@@ -35,7 +35,7 @@ We define test cases as **Python Dataclasses** (`AlertTestCase`). The framework 
 
 ### **Completed Components**
 
-#### **2.1 Core Dataclasses** (`tests/integration/types/alerts.py`)
+#### **2.1 Core Dataclasses** (`tests/integration/fixtures/types.py`)
 
 All dataclasses match the SigNoz API v5 structure exactly:
 
@@ -51,7 +51,7 @@ All dataclasses match the SigNoz API v5 structure exactly:
 - ✅ **Filter** - Filter expression wrapper
 - ✅ **Having** - Having clause wrapper
 
-#### **2.2 Enums** (`tests/integration/types/alerts.py`)
+#### **2.2 Enums** (`tests/integration/fixtures/types.py`)
 
 ```python
 class CompareOp(str, Enum):
@@ -97,7 +97,7 @@ The following methods are implemented for rule customization:
    - Updates labels dict (merges with existing)
    - Returns self for chaining
 
-#### **2.4 Data Generation** (`tests/integration/src/alerts/framework.py`)
+#### **2.4 Data Generation** (`tests/integration/fixtures/types.py`)
 
 ```python
 class MetricValues:
@@ -138,7 +138,7 @@ class AlertExpectations:
     wait_time_sec: int = 120
 ```
 
-#### **2.6 Orchestration** (`AlertFramework`)
+#### **2.6 Orchestration** (`tests/integration/fixtures/alerts.py` - `AlertFramework`)
 
 - ✅ `setup_test_channel()` - Creates WireMock webhook channel (reusable)
 - ✅ `create_rule()` - POSTs rule to `/api/v1/rules`
@@ -152,14 +152,16 @@ class AlertExpectations:
 ### **Basic Threshold Alert Test**
 
 ```python
-from types.alerts import PostableRule, CompareOp, MatchType
-from src.alerts.framework import (
-    AlertFramework,
+from fixtures.types import (
+    PostableRule,
+    CompareOp,
+    MatchType,
     AlertTestCase,
     AlertExpectations,
     MetricValues,
     create_default_metric_rule,
 )
+from fixtures.alerts import AlertFramework
 
 def test_cpu_alert(alert_framework: AlertFramework):
     # 1. Create the rule
@@ -380,41 +382,39 @@ def create_default_metric_rule(
 - **Rationale**: Allows progressive refinement of default rules
 - **Benefit**: Chain methods for readable configuration
 
-### **6.4 Separate Types Module**
-- **Location**: `tests/integration/types/alerts.py`
-- **Rationale**: Reusable across multiple test files
-- **Benefit**: Single source of truth for API structure
+### **6.4 Centralized Types in Fixtures**
+- **Location**: `tests/integration/fixtures/types.py`
+- **Rationale**: Reusable across multiple test files, co-located with other fixture types
+- **Benefit**: Single source of truth for API structure and test data types
 
 ## **7. File Structure**
 
 ```
 tests/integration/
-├── types/
-│   └── alerts.py              # Core dataclasses, enums, PostableRule
-├── src/alerts/
-│   ├── framework.py           # AlertFramework, MetricValues, test orchestration
-│   ├── test_threshold_rules.py   # Example tests (to be implemented)
-│   ├── example_usage.py       # Usage examples
-│   └── README.md              # User documentation
-└── fixtures/
-    ├── metrics.py             # Metrics insertion fixture
-    ├── logs.py                # Logs insertion fixture
-    └── types.py               # SigNoz container types
+├── fixtures/
+│   ├── alerts.py              # AlertFramework, test orchestration
+│   ├── types.py               # Core dataclasses, enums, PostableRule, AlertTestCase, MetricValues
+│   ├── metrics.py             # Metrics insertion fixture
+│   └── logs.py                # Logs insertion fixture
+└── src/alerts/
+    ├── test_threshold_rules.py   # Threshold combination tests
+    └── test_api.py            # Alert API tests
 ```
 
 ## **8. Running Tests**
 
 ```bash
+# Navigate to test directory
+cd tests/integration
+
 # Run all alert tests
-poetry run pytest --basetemp=./tmp/ -vv --reuse src/alerts/
+uv run pytest --basetemp=./tmp/ -vv --reuse src/alerts/
 
 # Run specific test
-poetry run pytest --basetemp=./tmp/ -vv --reuse \
-    src/alerts/test_threshold_rules.py::test_threshold_above_at_least_once
+uv run pytest --basetemp=./tmp/ -vv --reuse src/alerts/test_threshold_rules.py::test_threshold_above_at_least_once
 
 # With verbose logging
-poetry run pytest --basetemp=./tmp/ -vv --reuse \
-    --log-cli-level=INFO src/alerts/
+uv run pytest --basetemp=./tmp/ -vv --reuse --log-cli-level=INFO  src/alerts/test_threshold_rules.py::test_threshold_above_at_least_once
 ```
 
 ## **9. Next Steps**

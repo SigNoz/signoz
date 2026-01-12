@@ -13,14 +13,10 @@ from fixtures.metrics import Metrics
 from fixtures.logs import Logs
 from fixtures.types import Operation, SigNoz
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.types import AlertExpectations, AlertTestCase, MetricValues
+from fixtures.types import AlertExpectations, AlertTestCase, MetricValues, TEST_CHANNEL_NAME, WIREMOCK_WEBHOOK_PATH
 
 
 logger = logging.getLogger(__name__)
-
-# Constants
-WIREMOCK_WEBHOOK_Path = "/alerts/webhook"
-TEST_CHANNEL_NAME = "IntegrationTestWebhook"
 
 class AlertFramework:
     """
@@ -69,14 +65,18 @@ class AlertFramework:
         # 2. Create if not exists
         payload = {
             "name": TEST_CHANNEL_NAME,
-            "type": "webhook",
-            "data": {
-                "urls": f"{self.zeus_url_internal}{WIREMOCK_WEBHOOK_Path}"
-            }
+            "webhook_configs": [
+                {
+                    # we won't be waiting for the alert getting resolved
+                    "send_resolved": False,
+                    "url": f"{self.zeus_url_internal}{WIREMOCK_WEBHOOK_PATH}",
+                    "http_config": {}
+                }
+            ]
         }
         resp = requests.post(f"{self.base_url}/api/v1/channels", json=payload, headers=self.headers)
-        assert resp.status_code == HTTPStatus.OK, f"Failed to create test channel: {resp.text}"
-        self.channel_id = resp.json()["data"]["id"]
+        assert resp.status_code == HTTPStatus.NO_CONTENT, f"Failed to create test channel: {resp.text}"
+        self.channel_id = TEST_CHANNEL_NAME
         logger.info(f"Created new test channel: {self.channel_id}")
 
     def create_rule(self, rule_payload: Dict[str, Any]) -> str:
@@ -178,7 +178,7 @@ class AlertFramework:
         
         all_reqs = resp.json()["requests"]
         # Filter by URL
-        return [r["request"] for r in all_reqs if r["request"]["url"] == WIREMOCK_WEBHOOK_Path]
+        return [r["request"] for r in all_reqs if r["request"]["url"] == WIREMOCK_WEBHOOK_PATH]
 
     def _get_webhook_request_count(self) -> int:
         return len(self._get_webhook_requests())
