@@ -315,21 +315,33 @@ func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...
 
 // Get retrieves all metadata keys for the given key name and orgId.
 // Returns an empty slice if the key is not found.
-func (m *MockMetadataStore) GetColumnEvolutionMetadata(ctx context.Context, orgId valuer.UUID, selector telemetrytypes.EvolutionSelector) []*telemetrytypes.EvolutionEntry {
+func (m *MockMetadataStore) GetColumnEvolutionMetadataMulti(ctx context.Context, orgId valuer.UUID, selectors []*telemetrytypes.EvolutionSelector) map[string][]*telemetrytypes.EvolutionEntry {
 	if m.ColumnEvolutionMetadataMap == nil {
-		return nil
+		return make(map[string][]*telemetrytypes.EvolutionEntry)
 	}
 	orgMetadata, orgExists := m.ColumnEvolutionMetadataMap[orgId.String()]
 	if !orgExists {
-		return nil
+		return make(map[string][]*telemetrytypes.EvolutionEntry)
 	}
-	keys, exists := orgMetadata[selector.Signal.StringValue()+":"+selector.FieldContext.StringValue()+":"+selector.FieldName]
-	if !exists {
-		return nil
+
+	result := make(map[string][]*telemetrytypes.EvolutionEntry)
+
+	// Iterate over each selector
+	for _, selector := range selectors {
+		if selector == nil {
+			continue
+		}
+		// Build the key: Signal:FieldContext:FieldName
+		key := selector.Signal.StringValue() + ":" + selector.FieldContext.StringValue() + ":" + selector.FieldName
+
+		entries, exists := orgMetadata[key]
+		if exists && len(entries) > 0 {
+			// Return a copy to prevent external modification
+			result[key] = make([]*telemetrytypes.EvolutionEntry, len(entries))
+			copy(result[key], entries)
+		}
 	}
-	// Return a copy to prevent external modification
-	result := make([]*telemetrytypes.EvolutionEntry, len(keys))
-	copy(result, keys)
+
 	return result
 }
 

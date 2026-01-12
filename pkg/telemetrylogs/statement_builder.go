@@ -295,8 +295,10 @@ func (b *logQueryStatementBuilder) buildListQuery(
 				continue
 			}
 
+			keyEvolutions := telemetrytypes.GetEvolutionFromEvolutionsMap(&query.SelectFields[index], evolutions)
+
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], keys, evolutions)
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], keys, keyEvolutions)
 			if err != nil {
 				return nil, err
 			}
@@ -314,7 +316,9 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, keys, evolutions)
+		keyEvolutions := telemetrytypes.GetEvolutionFromEvolutionsMap(&orderBy.Key.TelemetryFieldKey, evolutions)
+
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, keys, keyEvolutions)
 		if err != nil {
 			return nil, err
 		}

@@ -954,14 +954,14 @@ func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryF
 	return keysMap
 }
 
-func mockColumnEvolutionMetadata(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {
+func mockEvolutionData(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {
 	return []*telemetrytypes.EvolutionEntry{
 		{
 			Signal:       telemetrytypes.SignalLogs,
 			ColumnName:   "resources_string",
 			FieldContext: telemetrytypes.FieldContextResource,
 			ColumnType:   "Map(LowCardinality(String), String)",
-			FieldName:    "resource",
+			FieldName:    "__all__",
 			ReleaseTime:  time.Unix(0, 0),
 		},
 		{
@@ -984,24 +984,7 @@ func mockKeyEvolutionMetadata(orgId valuer.UUID, signal, fieldContext string, re
 	if _, exists := metadata[orgIdStr]; !exists {
 		metadata[orgIdStr] = make(map[string][]*telemetrytypes.EvolutionEntry)
 	}
-	newKeyEvolutionMetadataEntry := []*telemetrytypes.EvolutionEntry{
-		{
-			Signal:       telemetrytypes.SignalLogs,
-			ColumnName:   "resources_string",
-			FieldContext: telemetrytypes.FieldContextResource,
-			ColumnType:   "Map(LowCardinality(String), String)",
-			FieldName:    "resource",
-			ReleaseTime:  time.Unix(0, 0),
-		},
-		{
-			Signal:       telemetrytypes.SignalLogs,
-			ColumnName:   "resource",
-			ColumnType:   "JSON()",
-			FieldContext: telemetrytypes.FieldContextResource,
-			FieldName:    "__all__",
-			ReleaseTime:  releaseTime,
-		},
-	}
-	metadata[orgIdStr][signal+":"+fieldContext+":"] = newKeyEvolutionMetadataEntry
+	newKeyEvolutionMetadataEntry := mockEvolutionData(releaseTime)
+	metadata[orgIdStr][signal+":"+fieldContext+":"+"__all__"] = newKeyEvolutionMetadataEntry
 	return metadata
 }

@@ -20,7 +20,7 @@ func TestConditionFor(t *testing.T) {
 		OrgID: valuer.GenerateUUID().String(),
 	})
 
-	mockEvolution := mockColumnEvolutionMetadata(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
+	mockEvolution := mockEvolutionData(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	testCases := []struct {
 		name          string
 		key           telemetrytypes.TelemetryFieldKey

@@ -191,7 +191,7 @@ func TestGetFieldKeyName(t *testing.T) {
 		OrgID: orgId.String(),
 	})
 
-	resourceEvolution := mockColumnEvolutionMetadata(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
+	resourceEvolution := mockEvolutionData(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 
 	testCases := []struct {
 		name            string
@@ -375,7 +375,7 @@ func TestFieldForWithEvolutions(t *testing.T) {
 			key:            key,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 			expectedError:  nil,
 		},
 		// TODO(piyush): to be added once integration with JSON is done.
@@ -433,7 +433,7 @@ func TestFieldForWithEvolutions(t *testing.T) {
 			key:            key,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "resource.`service.name`",
+			expectedResult: "resource.`service.name`::String",
 			expectedError:  nil,
 		},
 		{
@@ -459,7 +459,7 @@ func TestFieldForWithEvolutions(t *testing.T) {
 			key:            key,
 			tsStartTime:    time.Unix(0, 0),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 			expectedError:  nil,
 		},
 		{
@@ -494,7 +494,7 @@ func TestFieldForWithEvolutions(t *testing.T) {
 			key:            key,
 			tsStartTime:    time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "resource.`service.name`",
+			expectedResult: "resource.`service.name`::String",
 			expectedError:  nil,
 		},
 		{

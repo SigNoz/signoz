@@ -1888,7 +1888,7 @@ func (k *telemetryMetaStore) GetColumnEvolutionMetadataMulti(ctx context.Context
 
 	evolutions := k.fetchEvolutionEntryFromClickHouse(ctx, deduplicatedSelectorsList)
 
-	var evolutionsByUniqueKey map[string][]*telemetrytypes.EvolutionEntry
+	evolutionsByUniqueKey := make(map[string][]*telemetrytypes.EvolutionEntry)
 
 	for _, evolution := range evolutions {
 		key := evolution.Signal.StringValue() + ":" + evolution.FieldContext.StringValue() + ":" + evolution.FieldName

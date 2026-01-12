@@ -24,6 +24,7 @@ func TestGetFirstSeenFromMetricMetadata(t *testing.T) {
 	metadata := NewTelemetryMetaStore(
 		instrumentationtest.New().ToProviderSettings(),
 		mockTelemetryStore,
+		newTestCache(t),
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,
 		telemetrytraces.SpanAttributesKeysTblName,
@@ -39,6 +40,7 @@ func TestGetFirstSeenFromMetricMetadata(t *testing.T) {
 		telemetrylogs.LogResourceKeysTblName,
 		DBName,
 		AttributesMetadataLocalTableName,
+		ColumnEvolutionMetadataTableName,
 	)
 
 	lookupKeys := []telemetrytypes.MetricMetadataLookupKey{

@@ -54,7 +54,7 @@ func (r *aggExprRewriter) Rewrite(
 	expr string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-	evolutions []*telemetrytypes.EvolutionEntry,
+	evolutions map[string][]*telemetrytypes.EvolutionEntry,
 ) (string, []any, error) {
 
 	wrapped := fmt.Sprintf("SELECT %s", expr)
@@ -111,7 +111,7 @@ func (r *aggExprRewriter) RewriteMulti(
 	exprs []string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-	evolutions []*telemetrytypes.EvolutionEntry,
+	evolutions map[string][]*telemetrytypes.EvolutionEntry,
 ) ([]string, [][]any, error) {
 	out := make([]string, len(exprs))
 	var errs []error
@@ -148,7 +148,7 @@ type exprVisitor struct {
 	Modified         bool
 	chArgs           []any
 	isRate           bool
-	evolutions       []*telemetrytypes.EvolutionEntry
+	evolutions       map[string][]*telemetrytypes.EvolutionEntry
 }
 
 func newExprVisitor(
@@ -162,7 +162,7 @@ func newExprVisitor(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
-	evolutions []*telemetrytypes.EvolutionEntry,
+	evolutions map[string][]*telemetrytypes.EvolutionEntry,
 ) *exprVisitor {
 	return &exprVisitor{
 		ctx:              ctx,

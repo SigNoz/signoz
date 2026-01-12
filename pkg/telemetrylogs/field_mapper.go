@@ -260,7 +260,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, 
 			case telemetrytypes.FieldContextResource:
 				switch column.Type.GetType() {
 				case schema.ColumnTypeEnumJSON:
-					exprs = append(exprs, fmt.Sprintf("%s.`%s`", columnName, key.Name))
+					// TODO: Update here to support multiple types
+					exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
 					existExpr = append(existExpr, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
 				case schema.ColumnTypeEnumMap:
 					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))

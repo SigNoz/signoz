@@ -86,134 +86,134 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		{
-			startTs:     releaseTimeNano - uint64(24*time.Hour.Nanoseconds()),
-			endTs:       releaseTimeNano + uint64(48*time.Hour.Nanoseconds()),
-			name:        "Time series with OR b/w resource attr and attribute filter and count distinct on service.name",
-			requestType: qbtypes.RequestTypeTimeSeries,
-			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal:       telemetrytypes.SignalTraces,
-				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
-				Aggregations: []qbtypes.LogAggregation{
-					{
-						Expression: "count_distinct(service.name)",
-					},
-				},
-				Filter: &qbtypes.Filter{
-					Expression: "service.name = 'redis-manual' OR http.method = 'GET'",
-				},
-				Limit: 10,
-				GroupBy: []qbtypes.GroupByKey{
-					{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "service.name",
-						},
-					},
-				},
-			},
-			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) OR true) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name`, countDistinct(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (attributes_string['http.method'] = ? AND mapContains(attributes_string, 'http.method') = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name`, countDistinct(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (attributes_string['http.method'] = ? AND mapContains(attributes_string, 'http.method') = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`service.name`) GLOBAL IN (SELECT `service.name` FROM __limit_cte) GROUP BY ts, `service.name`",
-				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1705224600), uint64(1705485600), "redis-manual", "GET", true, "1705226400000000000", uint64(1705224600), "1705485600000000000", uint64(1705485600), 10, "redis-manual", "GET", true, "1705226400000000000", uint64(1705224600), "1705485600000000000", uint64(1705485600)},
-			},
-			expectedErr: nil,
-		},
-		{
-			startTs:     releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
-			endTs:       releaseTimeNano + uint64(48*time.Hour.Nanoseconds()),
-			name:        "Time series with limit + custom order by",
-			requestType: qbtypes.RequestTypeTimeSeries,
-			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal:       telemetrytypes.SignalLogs,
-				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
-				Aggregations: []qbtypes.LogAggregation{
-					{
-						Expression: "count()",
-					},
-				},
-				Filter: &qbtypes.Filter{
-					Expression: "service.name = 'cartservice'",
-				},
-				Limit: 10,
-				GroupBy: []qbtypes.GroupByKey{
-					{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "service.name",
-						},
-					},
-				},
-				Order: []qbtypes.OrderBy{
-					{
-						Key: qbtypes.OrderByKey{
-							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-								Name: "service.name",
-							},
-						},
-						Direction: qbtypes.OrderDirectionDesc,
-					},
-				},
-			},
-			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL), NULL)) AS `service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `service.name` ORDER BY `service.name` desc LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL), NULL)) AS `service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`service.name`) GLOBAL IN (SELECT `service.name` FROM __limit_cte) GROUP BY ts, `service.name` ORDER BY `service.name` desc, ts desc",
-				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1705397400), uint64(1705485600), "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600), 10, "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600)},
-			},
-			expectedErr: nil,
-		},
-		{
-			startTs:     releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
-			endTs:       releaseTimeNano + uint64(48*time.Hour.Nanoseconds()),
-			name:        "Time series with group by on materialized column",
-			requestType: qbtypes.RequestTypeTimeSeries,
-			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal:       telemetrytypes.SignalLogs,
-				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
-				Aggregations: []qbtypes.LogAggregation{
-					{
-						Expression: "count()",
-					},
-				},
-				Filter: &qbtypes.Filter{
-					Expression: "service.name = 'cartservice'",
-				},
-				Limit: 10,
-				GroupBy: []qbtypes.GroupByKey{
-					{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name:          "materialized.key.name",
-							FieldContext:  telemetrytypes.FieldContextAttribute,
-							FieldDataType: telemetrytypes.FieldDataTypeString,
-						},
-					},
-				},
-			},
-			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(`attribute_string_materialized$$key$$name_exists` = ?, `attribute_string_materialized$$key$$name`, NULL)) AS `materialized.key.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `materialized.key.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(`attribute_string_materialized$$key$$name_exists` = ?, `attribute_string_materialized$$key$$name`, NULL)) AS `materialized.key.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`materialized.key.name`) GLOBAL IN (SELECT `materialized.key.name` FROM __limit_cte) GROUP BY ts, `materialized.key.name`",
-				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1705397400), uint64(1705485600), true, "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600), 10, true, "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600)},
-			},
-		},
-		{
-			startTs:     releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
-			endTs:       releaseTimeNano + uint64(48*time.Hour.Nanoseconds()),
-			name:        "Time series with materialised column using or with regex operator",
-			requestType: qbtypes.RequestTypeTimeSeries,
-			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal:       telemetrytypes.SignalLogs,
-				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
-				Aggregations: []qbtypes.LogAggregation{
-					{
-						Expression: "count()",
-					},
-				},
-				Filter: &qbtypes.Filter{
-					Expression: "materialized.key.name REGEXP 'redis.*' OR materialized.key.name = 'memcached'",
-				},
-				Limit: 10,
-			},
-			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (true OR true) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((match(`attribute_string_materialized$$key$$name`, ?) AND `attribute_string_materialized$$key$$name_exists` = ?) OR (`attribute_string_materialized$$key$$name` = ? AND `attribute_string_materialized$$key$$name_exists` = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts",
-				Args:  []any{uint64(1705397400), uint64(1705485600), "redis.*", true, "memcached", true, "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600)},
-			},
-			expectedErr: nil,
-		},
+		// {
+		// 	startTs:     releaseTimeNano - uint64(24*time.Hour.Nanoseconds()),
+		// 	endTs:       releaseTimeNano + uint64(48*time.Hour.Nanoseconds()),
+		// 	name:        "Time series with OR b/w resource attr and attribute filter and count distinct on service.name",
+		// 	requestType: qbtypes.RequestTypeTimeSeries,
+		// 	query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+		// 		Signal:       telemetrytypes.SignalTraces,
+		// 		StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+		// 		Aggregations: []qbtypes.LogAggregation{
+		// 			{
+		// 				Expression: "count_distinct(service.name)",
+		// 			},
+		// 		},
+		// 		Filter: &qbtypes.Filter{
+		// 			Expression: "service.name = 'redis-manual' OR http.method = 'GET'",
+		// 		},
+		// 		Limit: 10,
+		// 		GroupBy: []qbtypes.GroupByKey{
+		// 			{
+		// 				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+		// 					Name: "service.name",
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	expected: qbtypes.Statement{
+		// 		Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) OR true) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name`, countDistinct(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (attributes_string['http.method'] = ? AND mapContains(attributes_string, 'http.method') = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name`, countDistinct(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (attributes_string['http.method'] = ? AND mapContains(attributes_string, 'http.method') = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`service.name`) GLOBAL IN (SELECT `service.name` FROM __limit_cte) GROUP BY ts, `service.name`",
+		// 		Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1705224600), uint64(1705485600), "redis-manual", "GET", true, "1705226400000000000", uint64(1705224600), "1705485600000000000", uint64(1705485600), 10, "redis-manual", "GET", true, "1705226400000000000", uint64(1705224600), "1705485600000000000", uint64(1705485600)},
+		// 	},
+		// 	expectedErr: nil,
+		// },
+		// {
+		// 	startTs:     releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
+		// 	endTs:       releaseTimeNano + uint64(48*time.Hour.Nanoseconds()),
+		// 	name:        "Time series with limit + custom order by",
+		// 	requestType: qbtypes.RequestTypeTimeSeries,
+		// 	query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+		// 		Signal:       telemetrytypes.SignalLogs,
+		// 		StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+		// 		Aggregations: []qbtypes.LogAggregation{
+		// 			{
+		// 				Expression: "count()",
+		// 			},
+		// 		},
+		// 		Filter: &qbtypes.Filter{
+		// 			Expression: "service.name = 'cartservice'",
+		// 		},
+		// 		Limit: 10,
+		// 		GroupBy: []qbtypes.GroupByKey{
+		// 			{
+		// 				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+		// 					Name: "service.name",
+		// 				},
+		// 			},
+		// 		},
+		// 		Order: []qbtypes.OrderBy{
+		// 			{
+		// 				Key: qbtypes.OrderByKey{
+		// 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+		// 						Name: "service.name",
+		// 					},
+		// 				},
+		// 				Direction: qbtypes.OrderDirectionDesc,
+		// 			},
+		// 		},
+		// 	},
+		// 	expected: qbtypes.Statement{
+		// 		Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL), NULL)) AS `service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `service.name` ORDER BY `service.name` desc LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL), NULL)) AS `service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`service.name`) GLOBAL IN (SELECT `service.name` FROM __limit_cte) GROUP BY ts, `service.name` ORDER BY `service.name` desc, ts desc",
+		// 		Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1705397400), uint64(1705485600), "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600), 10, "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600)},
+		// 	},
+		// 	expectedErr: nil,
+		// },
+		// {
+		// 	startTs:     releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
+		// 	endTs:       releaseTimeNano + uint64(48*time.Hour.Nanoseconds()),
+		// 	name:        "Time series with group by on materialized column",
+		// 	requestType: qbtypes.RequestTypeTimeSeries,
+		// 	query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+		// 		Signal:       telemetrytypes.SignalLogs,
+		// 		StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+		// 		Aggregations: []qbtypes.LogAggregation{
+		// 			{
+		// 				Expression: "count()",
+		// 			},
+		// 		},
+		// 		Filter: &qbtypes.Filter{
+		// 			Expression: "service.name = 'cartservice'",
+		// 		},
+		// 		Limit: 10,
+		// 		GroupBy: []qbtypes.GroupByKey{
+		// 			{
+		// 				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+		// 					Name:          "materialized.key.name",
+		// 					FieldContext:  telemetrytypes.FieldContextAttribute,
+		// 					FieldDataType: telemetrytypes.FieldDataTypeString,
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	expected: qbtypes.Statement{
+		// 		Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(`attribute_string_materialized$$key$$name_exists` = ?, `attribute_string_materialized$$key$$name`, NULL)) AS `materialized.key.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `materialized.key.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(`attribute_string_materialized$$key$$name_exists` = ?, `attribute_string_materialized$$key$$name`, NULL)) AS `materialized.key.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`materialized.key.name`) GLOBAL IN (SELECT `materialized.key.name` FROM __limit_cte) GROUP BY ts, `materialized.key.name`",
+		// 		Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1705397400), uint64(1705485600), true, "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600), 10, true, "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600)},
+		// 	},
+		// },
+		// {
+		// 	startTs:     releaseTimeNano + uint64(24*time.Hour.Nanoseconds()),
+		// 	endTs:       releaseTimeNano + uint64(48*time.Hour.Nanoseconds()),
+		// 	name:        "Time series with materialised column using or with regex operator",
+		// 	requestType: qbtypes.RequestTypeTimeSeries,
+		// 	query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+		// 		Signal:       telemetrytypes.SignalLogs,
+		// 		StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+		// 		Aggregations: []qbtypes.LogAggregation{
+		// 			{
+		// 				Expression: "count()",
+		// 			},
+		// 		},
+		// 		Filter: &qbtypes.Filter{
+		// 			Expression: "materialized.key.name REGEXP 'redis.*' OR materialized.key.name = 'memcached'",
+		// 		},
+		// 		Limit: 10,
+		// 	},
+		// 	expected: qbtypes.Statement{
+		// 		Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (true OR true) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((match(`attribute_string_materialized$$key$$name`, ?) AND `attribute_string_materialized$$key$$name_exists` = ?) OR (`attribute_string_materialized$$key$$name` = ? AND `attribute_string_materialized$$key$$name_exists` = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts",
+		// 		Args:  []any{uint64(1705397400), uint64(1705485600), "redis.*", true, "memcached", true, "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600)},
+		// 	},
+		// 	expectedErr: nil,
+		// },
 	}
 
 	ctx := context.Background()

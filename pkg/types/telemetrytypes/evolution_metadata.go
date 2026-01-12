@@ -32,5 +32,16 @@ type ColumnEvolutionMetadataStore interface {
 
 func GetEvolutionMetadataCacheKey(selector *EvolutionSelector) string {
 	return KeyEvolutionMetadataCacheKeyPrefix + selector.Signal.StringValue() + ":" + selector.FieldContext.StringValue() + ":" + selector.FieldName
+}
 
+func GetEvolutionFromEvolutionsMap(key *TelemetryFieldKey, evolutions map[string][]*EvolutionEntry) []*EvolutionEntry {
+	var keyEvolutions []*EvolutionEntry
+	if value, ok := evolutions[GetEvolutionMetadataCacheKey(&EvolutionSelector{
+		Signal:       key.Signal,
+		FieldContext: key.FieldContext,
+		FieldName:    "__all__",
+	})]; ok {
+		keyEvolutions = value
+	}
+	return keyEvolutions
 }

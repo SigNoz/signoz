@@ -29,8 +29,10 @@ func CollisionHandledFinalExpr(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	requiredDataType telemetrytypes.FieldDataType,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
-	evolutions []*telemetrytypes.EvolutionEntry,
+	evolutions map[string][]*telemetrytypes.EvolutionEntry,
 ) (string, []any, error) {
+
+	keyEvolutions := telemetrytypes.GetEvolutionFromEvolutionsMap(field, evolutions)
 
 	if requiredDataType != telemetrytypes.FieldDataTypeString &&
 		requiredDataType != telemetrytypes.FieldDataTypeFloat64 {
@@ -49,7 +51,7 @@ func CollisionHandledFinalExpr(
 
 	addCondition := func(key *telemetrytypes.TelemetryFieldKey) error {
 		sb := sqlbuilder.NewSelectBuilder()
-		condition, err := cb.ConditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb, evolutions)
+		condition, err := cb.ConditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb, keyEvolutions)
 		if err != nil {
 			return err
 		}
@@ -62,7 +64,7 @@ func CollisionHandledFinalExpr(
 		return nil
 	}
 
-	colName, fieldForErr := fm.FieldFor(ctx, orgID, startNs, endNs, field, evolutions)
+	colName, fieldForErr := fm.FieldFor(ctx, orgID, startNs, endNs, field, keyEvolutions)
 	if errors.Is(fieldForErr, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -97,7 +99,7 @@ func CollisionHandledFinalExpr(
 				if err != nil {
 					return "", nil, err
 				}
-				colName, _ = fm.FieldFor(ctx, orgID, startNs, endNs, key, evolutions)
+				colName, _ = fm.FieldFor(ctx, orgID, startNs, endNs, key, keyEvolutions)
 				colName, _ = DataTypeCollisionHandledFieldName(key, dummyValue, colName, qbtypes.FilterOperatorUnknown)
 				stmts = append(stmts, colName)
 			}
