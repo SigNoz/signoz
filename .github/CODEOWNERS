@@ -62,8 +62,6 @@
 
 /tests/integration/ @therealpandey
 
----
-
 # Dashboard Owners
 
 /frontend/src/hooks/dashboard/ @SigNoz/pulse-frontend
@@ -84,5 +82,3 @@
 
 /frontend/src/pages/PublicDashboard/ @SigNoz/pulse-frontend
 /frontend/src/container/PublicDashboardContainer/ @SigNoz/pulse-frontend
-
----
