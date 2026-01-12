@@ -53,9 +53,6 @@ function NoFilterTable({
 			key: 'tags',
 			width: 100,
 			render: (labels): JSX.Element => {
-				if (!labels) {
-					return <Typography>-</Typography>;
-				}
 				const objectKeys = Object.keys(labels);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
 
@@ -75,7 +72,6 @@ function NoFilterTable({
 			width: 100,
 			sorter: (a, b): number => severitySorter(a, b),
 			render: (value): JSX.Element => {
-				if (!value) return <Typography>-</Typography>;
 				const objectKeys = Object.keys(value);
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
 				const severityValue = value[withSeverityKey];
