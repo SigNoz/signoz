@@ -34,6 +34,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
@@ -197,9 +198,9 @@ func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter orga
 	)
 }
 
-func NewRulerProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
+func NewRulerProviderFactories(sqlstore sqlstore.SQLStore, queryParser queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
 	return factory.MustNewNamedMap(
-		signozruler.NewFactory(sqlstore),
+		signozruler.NewFactory(sqlstore, queryParser),
 	)
 }
 
@@ -224,9 +225,9 @@ func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetrySt
 	)
 }
 
-func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
+func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache, flagger flagger.Flagger) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
 	return factory.MustNewNamedMap(
-		signozquerier.NewFactory(telemetryStore, prometheus, cache),
+		signozquerier.NewFactory(telemetryStore, prometheus, cache, flagger),
 	)
 }
 
@@ -245,6 +246,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.FlaggerHandler,
 			modules.Dashboard,
 			handlers.Dashboard,
+			handlers.MetricsExplorer,
 			modules.Role,
 		),
 	)

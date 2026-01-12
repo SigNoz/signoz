@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
@@ -24,21 +25,22 @@ import (
 )
 
 type provider struct {
-	config            apiserver.Config
-	settings          factory.ScopedProviderSettings
-	router            *mux.Router
-	authZ             *middleware.AuthZ
-	orgHandler        organization.Handler
-	userHandler       user.Handler
-	sessionHandler    session.Handler
-	authDomainHandler authdomain.Handler
-	preferenceHandler preference.Handler
-	globalHandler     global.Handler
-	promoteHandler    promote.Handler
-	flaggerHandler    flagger.Handler
-	dashboardModule   dashboard.Module
-	dashboardHandler  dashboard.Handler
-	roleModule        role.Module
+	config                 apiserver.Config
+	settings               factory.ScopedProviderSettings
+	router                 *mux.Router
+	authZ                  *middleware.AuthZ
+	orgHandler             organization.Handler
+	userHandler            user.Handler
+	sessionHandler         session.Handler
+	authDomainHandler      authdomain.Handler
+	preferenceHandler      preference.Handler
+	globalHandler          global.Handler
+	promoteHandler         promote.Handler
+	flaggerHandler         flagger.Handler
+	dashboardModule        dashboard.Module
+	dashboardHandler       dashboard.Handler
+	metricsExplorerHandler metricsexplorer.Handler
+	roleModule             role.Module
 }
 
 func NewFactory(
@@ -54,10 +56,11 @@ func NewFactory(
 	flaggerHandler flagger.Handler,
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
+	metricsExplorerHandler metricsexplorer.Handler,
 	roleModule role.Module,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, roleModule)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler, roleModule)
 	})
 }
 
@@ -77,26 +80,28 @@ func newProvider(
 	flaggerHandler flagger.Handler,
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
+	metricsExplorerHandler metricsexplorer.Handler,
 	roleModule role.Module,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
 
 	provider := &provider{
-		config:            config,
-		settings:          settings,
-		router:            router,
-		orgHandler:        orgHandler,
-		userHandler:       userHandler,
-		sessionHandler:    sessionHandler,
-		authDomainHandler: authDomainHandler,
-		preferenceHandler: preferenceHandler,
-		globalHandler:     globalHandler,
-		promoteHandler:    promoteHandler,
-		flaggerHandler:    flaggerHandler,
-		dashboardModule:   dashboardModule,
-		dashboardHandler:  dashboardHandler,
-		roleModule:        roleModule,
+		config:                 config,
+		settings:               settings,
+		router:                 router,
+		orgHandler:             orgHandler,
+		userHandler:            userHandler,
+		sessionHandler:         sessionHandler,
+		authDomainHandler:      authDomainHandler,
+		preferenceHandler:      preferenceHandler,
+		globalHandler:          globalHandler,
+		promoteHandler:         promoteHandler,
+		flaggerHandler:         flaggerHandler,
+		dashboardModule:        dashboardModule,
+		dashboardHandler:       dashboardHandler,
+		metricsExplorerHandler: metricsExplorerHandler,
+		roleModule:             roleModule,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz, roleModule)
@@ -146,6 +151,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addDashboardRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addMetricsExplorerV2Routes(router); err != nil {
 		return err
 	}
 

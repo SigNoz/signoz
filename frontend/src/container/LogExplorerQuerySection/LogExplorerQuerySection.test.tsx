@@ -6,7 +6,11 @@ import { cleanup, render, screen, waitFor } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, QueryState } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	QueryBuilderContextType,
+	ReduceOperators,
+} from 'types/common/queryBuilder';
 import { explorerViewToPanelType } from 'utils/explorerUtils';
 
 import LogExplorerQuerySection from './index';
@@ -166,7 +170,7 @@ const createMockQuery = (filterExpression?: string): Query => ({
 				orderBy: [{ columnName: 'timestamp', order: 'desc' }],
 				pageSize: 0,
 				queryName: 'A',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 				stepInterval: 60,
 			},
 		],

@@ -46,7 +46,7 @@ def test_metrics_fill_gaps(
     ]
     insert_metrics(metrics)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -67,12 +67,14 @@ def test_metrics_fill_gaps(
                         "spec": {
                             "name": "A",
                             "signal": "metrics",
-                            "aggregations": [{
-                                "metricName": metric_name,
-                                "temporality": "cumulative",
-                                "timeAggregation": "increase",
-                                "spaceAggregation": "sum"
-                            }],
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
                             "stepInterval": 60,
                             "disabled": False,
                         },
@@ -137,7 +139,7 @@ def test_metrics_fill_gaps_with_group_by(
     ]
     insert_metrics(metrics)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -158,15 +160,23 @@ def test_metrics_fill_gaps_with_group_by(
                         "spec": {
                             "name": "A",
                             "signal": "metrics",
-                            "aggregations": [{
-                                "metricName": metric_name,
-                                "temporality": "cumulative",
-                                "timeAggregation": "increase",
-                                "spaceAggregation": "sum"
-                            }],
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
                             "stepInterval": 60,
                             "disabled": False,
-                            "groupBy": [{"name": "my_tag", "fieldDataType": "string", "fieldContext": "attribute"}],
+                            "groupBy": [
+                                {
+                                    "name": "my_tag",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "attribute",
+                                }
+                            ],
                         },
                     }
                 ]
@@ -239,7 +249,7 @@ def test_metrics_fill_gaps_formula(
     ]
     insert_metrics(metrics)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -260,12 +270,14 @@ def test_metrics_fill_gaps_formula(
                         "spec": {
                             "name": "A",
                             "signal": "metrics",
-                            "aggregations": [{
-                                "metricName": metric_name_a,
-                                "temporality": "cumulative",
-                                "timeAggregation": "increase",
-                                "spaceAggregation": "sum"
-                            }],
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name_a,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
                             "stepInterval": 60,
                             "disabled": True,
                         },
@@ -275,12 +287,14 @@ def test_metrics_fill_gaps_formula(
                         "spec": {
                             "name": "B",
                             "signal": "metrics",
-                            "aggregations": [{
-                                "metricName": metric_name_b,
-                                "temporality": "cumulative",
-                                "timeAggregation": "increase",
-                                "spaceAggregation": "sum"
-                            }],
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name_b,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
                             "stepInterval": 60,
                             "disabled": True,
                         },
@@ -292,7 +306,7 @@ def test_metrics_fill_gaps_formula(
                             "expression": "A + B",
                             "disabled": False,
                         },
-                    }
+                    },
                 ]
             },
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
@@ -314,7 +328,9 @@ def test_metrics_fill_gaps_formula(
     aggregations = f1.get("aggregations") or []
     assert len(aggregations) == 1
     series = aggregations[0].get("series") or []
-    assert len(series) >= 1, f"Expected at least one series for F1, got {aggregations[0]}"
+    assert (
+        len(series) >= 1
+    ), f"Expected at least one series for F1, got {aggregations[0]}"
 
     assert_minutely_bucket_values(
         series[0]["values"],
@@ -369,7 +385,7 @@ def test_metrics_fill_gaps_formula_with_group_by(
     ]
     insert_metrics(metrics)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -390,15 +406,23 @@ def test_metrics_fill_gaps_formula_with_group_by(
                         "spec": {
                             "name": "A",
                             "signal": "metrics",
-                            "aggregations": [{
-                                "metricName": metric_name_a,
-                                "temporality": "cumulative",
-                                "timeAggregation": "increase",
-                                "spaceAggregation": "sum"
-                            }],
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name_a,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
                             "stepInterval": 60,
                             "disabled": True,
-                            "groupBy": [{"name": "my_tag", "fieldDataType": "string", "fieldContext": "attribute"}],
+                            "groupBy": [
+                                {
+                                    "name": "my_tag",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "attribute",
+                                }
+                            ],
                         },
                     },
                     {
@@ -406,15 +430,23 @@ def test_metrics_fill_gaps_formula_with_group_by(
                         "spec": {
                             "name": "B",
                             "signal": "metrics",
-                            "aggregations": [{
-                                "metricName": metric_name_b,
-                                "temporality": "cumulative",
-                                "timeAggregation": "increase",
-                                "spaceAggregation": "sum"
-                            }],
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name_b,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
                             "stepInterval": 60,
                             "disabled": True,
-                            "groupBy": [{"name": "my_tag", "fieldDataType": "string", "fieldContext": "attribute"}],
+                            "groupBy": [
+                                {
+                                    "name": "my_tag",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "attribute",
+                                }
+                            ],
                         },
                     },
                     {
@@ -424,7 +456,7 @@ def test_metrics_fill_gaps_formula_with_group_by(
                             "expression": "A + B",
                             "disabled": False,
                         },
-                    }
+                    },
                 ]
             },
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
@@ -488,7 +520,7 @@ def test_metrics_fill_zero(
     ]
     insert_metrics(metrics)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -509,12 +541,14 @@ def test_metrics_fill_zero(
                         "spec": {
                             "name": "A",
                             "signal": "metrics",
-                            "aggregations": [{
-                                "metricName": metric_name,
-                                "temporality": "cumulative",
-                                "timeAggregation": "increase",
-                                "spaceAggregation": "sum"
-                            }],
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
                             "stepInterval": 60,
                             "disabled": False,
                             "functions": [{"name": "fillZero"}],
@@ -577,7 +611,7 @@ def test_metrics_fill_zero_with_group_by(
     ]
     insert_metrics(metrics)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -598,15 +632,23 @@ def test_metrics_fill_zero_with_group_by(
                         "spec": {
                             "name": "A",
                             "signal": "metrics",
-                            "aggregations": [{
-                                "metricName": metric_name,
-                                "temporality": "cumulative",
-                                "timeAggregation": "increase",
-                                "spaceAggregation": "sum"
-                            }],
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
                             "stepInterval": 60,
                             "disabled": False,
-                            "groupBy": [{"name": "my_tag", "fieldDataType": "string", "fieldContext": "attribute"}],
+                            "groupBy": [
+                                {
+                                    "name": "my_tag",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "attribute",
+                                }
+                            ],
                             "functions": [{"name": "fillZero"}],
                         },
                     }
@@ -678,7 +720,7 @@ def test_metrics_fill_zero_formula(
     ]
     insert_metrics(metrics)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -699,12 +741,14 @@ def test_metrics_fill_zero_formula(
                         "spec": {
                             "name": "A",
                             "signal": "metrics",
-                            "aggregations": [{
-                                "metricName": metric_name_a,
-                                "temporality": "cumulative",
-                                "timeAggregation": "increase",
-                                "spaceAggregation": "sum"
-                            }],
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name_a,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
                             "stepInterval": 60,
                             "disabled": True,
                         },
@@ -714,12 +758,14 @@ def test_metrics_fill_zero_formula(
                         "spec": {
                             "name": "B",
                             "signal": "metrics",
-                            "aggregations": [{
-                                "metricName": metric_name_b,
-                                "temporality": "cumulative",
-                                "timeAggregation": "increase",
-                                "spaceAggregation": "sum"
-                            }],
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name_b,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
                             "stepInterval": 60,
                             "disabled": True,
                         },
@@ -732,7 +778,7 @@ def test_metrics_fill_zero_formula(
                             "disabled": False,
                             "functions": [{"name": "fillZero"}],
                         },
-                    }
+                    },
                 ]
             },
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
@@ -753,9 +799,9 @@ def test_metrics_fill_zero_formula(
     aggregations = f1.get("aggregations") or []
     assert len(aggregations) == 1
     series = aggregations[0].get("series") or []
-    assert len(series) >= 1, (
-        f"Expected at least one series for F1, got {aggregations[0]}"
-    )
+    assert (
+        len(series) >= 1
+    ), f"Expected at least one series for F1, got {aggregations[0]}"
 
     assert_minutely_bucket_values(
         series[0]["values"],
@@ -810,7 +856,7 @@ def test_metrics_fill_zero_formula_with_group_by(
     ]
     insert_metrics(metrics)
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -831,15 +877,23 @@ def test_metrics_fill_zero_formula_with_group_by(
                         "spec": {
                             "name": "A",
                             "signal": "metrics",
-                            "aggregations": [{
-                                "metricName": metric_name_a,
-                                "temporality": "cumulative",
-                                "timeAggregation": "increase",
-                                "spaceAggregation": "sum"
-                            }],
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name_a,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
                             "stepInterval": 60,
                             "disabled": True,
-                            "groupBy": [{"name": "my_tag", "fieldDataType": "string", "fieldContext": "attribute"}],
+                            "groupBy": [
+                                {
+                                    "name": "my_tag",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "attribute",
+                                }
+                            ],
                         },
                     },
                     {
@@ -847,15 +901,23 @@ def test_metrics_fill_zero_formula_with_group_by(
                         "spec": {
                             "name": "B",
                             "signal": "metrics",
-                            "aggregations": [{
-                                "metricName": metric_name_b,
-                                "temporality": "cumulative",
-                                "timeAggregation": "increase",
-                                "spaceAggregation": "sum"
-                            }],
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name_b,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
                             "stepInterval": 60,
                             "disabled": True,
-                            "groupBy": [{"name": "my_tag", "fieldDataType": "string", "fieldContext": "attribute"}],
+                            "groupBy": [
+                                {
+                                    "name": "my_tag",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "attribute",
+                                }
+                            ],
                         },
                     },
                     {
@@ -866,7 +928,7 @@ def test_metrics_fill_zero_formula_with_group_by(
                             "disabled": False,
                             "functions": [{"name": "fillZero"}],
                         },
-                    }
+                    },
                 ]
             },
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},

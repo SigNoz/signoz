@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import { AxiosError } from 'axios';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
-import NewDashboard from 'container/NewDashboard';
+import DashboardContainer from 'container/NewDashboard';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect } from 'react';
 import { ErrorType } from 'types/common';
@@ -35,7 +35,7 @@ function DashboardPage(): JSX.Element {
 		return <Spinner tip="Loading.." />;
 	}
 
-	return <NewDashboard />;
+	return <DashboardContainer />;
 }
 
 export default DashboardPage;
