@@ -349,18 +349,21 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		case qbtypes.QueryTypeBuilder:
 			switch spec := query.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				spec.Normalize()
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 				bq := newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				spec.Normalize()
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 				bq := newBuilderQuery(q.telemetryStore, q.logStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				spec.Normalize()
 				for i := range spec.Aggregations {
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Temporality == metrictypes.Unknown {
 						if temp, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && temp != metrictypes.Unknown {
