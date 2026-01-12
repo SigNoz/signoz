@@ -38,9 +38,11 @@
 				font-weight: 400;
 				line-height: 18px;
 				letter-spacing: -0.07px;
+				min-width: 70px;
 			}
 
-			.sync-tag {
+			.sync-tag,
+			.select-box {
 				display: flex;
 				padding: 5px 9px;
 				flex-direction: column;
@@ -57,6 +59,19 @@
 				font-weight: 400;
 				line-height: 18px;
 				text-transform: uppercase;
+			}
+			.select-box {
+				display: flex;
+				padding: 2px 5px;
+				flex-direction: row;
+				justify-content: center;
+				align-items: center;
+				gap: 3px;
+				height: 30px;
+			}
+
+			.select-box-item {
+				min-width: 60px;
 			}
 		}
 
