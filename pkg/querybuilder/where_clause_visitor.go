@@ -51,7 +51,6 @@ type filterExpressionVisitor struct {
 
 type FilterExprVisitorOpts struct {
 	Context            context.Context
-	OrgID              valuer.UUID
 	Logger             *slog.Logger
 	FieldMapper        qbtypes.FieldMapper
 	ConditionBuilder   qbtypes.ConditionBuilder
@@ -73,7 +72,6 @@ type FilterExprVisitorOpts struct {
 func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVisitor {
 	return &filterExpressionVisitor{
 		context:            opts.Context,
-		orgID:              opts.OrgID,
 		logger:             opts.Logger,
 		fieldMapper:        opts.FieldMapper,
 		conditionBuilder:   opts.ConditionBuilder,
@@ -322,13 +320,12 @@ func (v *filterExpressionVisitor) VisitPrimary(tree *grammar.PrimaryContext) any
 			v.errors = append(v.errors, "full text search is not supported")
 			return ""
 		}
-		keyEvolutions := telemetrytypes.GetEvolutionFromEvolutionsMap(v.fullTextColumn, v.evolutions)
 
 		child := tree.GetChild(0)
 		if keyCtx, ok := child.(*grammar.KeyContext); ok {
 			// create a full text search condition on the body field
 			keyText := keyCtx.GetText()
-			cond, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(keyText), v.builder, keyEvolutions)
+			cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(keyText), v.builder)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 				return ""
@@ -348,7 +345,7 @@ func (v *filterExpressionVisitor) VisitPrimary(tree *grammar.PrimaryContext) any
 				v.errors = append(v.errors, fmt.Sprintf("unsupported value type: %s", valCtx.GetText()))
 				return ""
 			}
-			cond, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, keyEvolutions)
+			cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 				return ""
@@ -392,8 +389,7 @@ func (v *filterExpressionVisitor) VisitComparison(tree *grammar.ComparisonContex
 		}
 		var conds []string
 		for _, key := range keys {
-			keyEvolutions := telemetrytypes.GetEvolutionFromEvolutionsMap(key, v.evolutions)
-			condition, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, op, nil, v.builder, keyEvolutions)
+			condition, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, op, nil, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -465,8 +461,7 @@ func (v *filterExpressionVisitor) VisitComparison(tree *grammar.ComparisonContex
 		}
 		var conds []string
 		for _, key := range keys {
-			keyEvolutions := telemetrytypes.GetEvolutionFromEvolutionsMap(key, v.evolutions)
-			condition, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, op, values, v.builder, keyEvolutions)
+			condition, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, op, values, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -498,8 +493,7 @@ func (v *filterExpressionVisitor) VisitComparison(tree *grammar.ComparisonContex
 
 		var conds []string
 		for _, key := range keys {
-			keyEvolutions := telemetrytypes.GetEvolutionFromEvolutionsMap(key, v.evolutions)
-			condition, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, op, []any{value1, value2}, v.builder, keyEvolutions)
+			condition, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, op, []any{value1, value2}, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -584,8 +578,7 @@ func (v *filterExpressionVisitor) VisitComparison(tree *grammar.ComparisonContex
 
 		var conds []string
 		for _, key := range keys {
-			keyEvolutions := telemetrytypes.GetEvolutionFromEvolutionsMap(key, v.evolutions)
-			condition, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, op, value, v.builder, keyEvolutions)
+			condition, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, op, value, v.builder)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
 				return ""
@@ -664,9 +657,8 @@ func (v *filterExpressionVisitor) VisitFullText(tree *grammar.FullTextContext) a
 		v.errors = append(v.errors, "full text search is not supported")
 		return ""
 	}
-	keyEvolutions := telemetrytypes.GetEvolutionFromEvolutionsMap(v.fullTextColumn, v.evolutions)
 
-	cond, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, keyEvolutions)
+	cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
 	if err != nil {
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ""

@@ -36,11 +36,12 @@ func GetEvolutionMetadataCacheKey(selector *EvolutionSelector) string {
 
 func GetEvolutionFromEvolutionsMap(key *TelemetryFieldKey, evolutions map[string][]*EvolutionEntry) []*EvolutionEntry {
 	var keyEvolutions []*EvolutionEntry
-	if value, ok := evolutions[GetEvolutionMetadataCacheKey(&EvolutionSelector{
+	uniqueKey := GetEvolutionMetadataCacheKey(&EvolutionSelector{
 		Signal:       key.Signal,
 		FieldContext: key.FieldContext,
 		FieldName:    "__all__",
-	})]; ok {
+	})
+	if value, ok := evolutions[uniqueKey]; ok {
 		keyEvolutions = value
 	}
 	return keyEvolutions

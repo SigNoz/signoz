@@ -11,7 +11,6 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -119,7 +118,6 @@ func TestTraceTimeRangeOptimization(t *testing.T) {
 
 			stmt, err := statementBuilder.Build(
 				ctx,
-				valuer.GenerateUUID(),
 				1747947419000, // start time in ms
 				1747983448000, // end time in ms
 				qbtypes.RequestTypeRaw,

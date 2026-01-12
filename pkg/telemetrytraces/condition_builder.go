@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 )
@@ -30,14 +29,12 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
-	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 
 	switch operator {
@@ -51,13 +48,13 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	// first, locate the raw column type (so we can choose the right EXISTS logic)
-	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
+	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
 
 	// then ask the mapper for the actual SQL reference
-	tblFieldName, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key, evolutions)
+	tblFieldName, err := c.fm.FieldFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -239,27 +236,25 @@ func (c *conditionBuilder) conditionFor(
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
-	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 	if c.isSpanScopeField(key.Name) {
 		return c.buildSpanScopeCondition(key, operator, value, startNs)
 	}
 
-	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb, evolutions)
+	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
 
 	if operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
-		field, _ := c.fm.FieldFor(ctx, orgID, startNs, endNs, key, evolutions)
+		field, _ := c.fm.FieldFor(ctx, startNs, endNs, key)
 		if slices.Contains(maps.Keys(IntrinsicFields), field) ||
 			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), field) ||
 			slices.Contains(maps.Keys(CalculatedFields), field) ||
@@ -267,7 +262,7 @@ func (c *conditionBuilder) ConditionFor(
 			return condition, nil
 		}
 
-		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb, evolutions)
+		existsCondition, err := c.conditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}

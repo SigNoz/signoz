@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // Helper function to limit string length for display
@@ -976,15 +975,15 @@ func mockEvolutionData(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {
 }
 
 // mockKeyEvolutionMetadata builds a mock org-scoped key evolution metadata map for a column evolution.
-func mockKeyEvolutionMetadata(orgId valuer.UUID, signal, fieldContext string, releaseTime time.Time) map[string]map[string][]*telemetrytypes.EvolutionEntry {
-	metadata := make(map[string]map[string][]*telemetrytypes.EvolutionEntry)
+func mockKeyEvolutionMetadata(signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext, releaseTime time.Time) map[string][]*telemetrytypes.EvolutionEntry {
+	metadata := make(map[string][]*telemetrytypes.EvolutionEntry)
 
-	// Make sure to initialize the inner map before assignment to prevent 'assignment to entry in nil map'
-	orgIdStr := orgId.String()
-	if _, exists := metadata[orgIdStr]; !exists {
-		metadata[orgIdStr] = make(map[string][]*telemetrytypes.EvolutionEntry)
-	}
 	newKeyEvolutionMetadataEntry := mockEvolutionData(releaseTime)
-	metadata[orgIdStr][signal+":"+fieldContext+":"+"__all__"] = newKeyEvolutionMetadataEntry
+	uniqueKey := telemetrytypes.GetEvolutionMetadataCacheKey(&telemetrytypes.EvolutionSelector{
+		Signal:       telemetrytypes.SignalLogs,
+		FieldContext: fieldContext,
+		FieldName:    "__all__",
+	})
+	metadata[uniqueKey] = newKeyEvolutionMetadataEntry
 	return metadata
 }

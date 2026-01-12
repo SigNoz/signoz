@@ -17,7 +17,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,11 +35,10 @@ func newTestCache(t *testing.T) cache.Cache {
 	return testCache
 }
 
-func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore, cache cache.Cache) telemetrytypes.MetadataStore {
+func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) telemetrytypes.MetadataStore {
 	return NewTelemetryMetaStore(
 		instrumentationtest.New().ToProviderSettings(),
 		store,
-		cache,
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,
 		telemetrytraces.SpanAttributesKeysTblName,
@@ -78,7 +76,7 @@ func TestGetKeys(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore, newTestCache(t))
+	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
 
 	rows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "statement", Type: "String"},
@@ -188,7 +186,7 @@ func TestApplyBackwardCompatibleKeys(t *testing.T) {
 			mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 			mock := mockTelemetryStore.Mock()
 
-			metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore, newTestCache(t))
+			metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
 
 			hasTraces := false
 			hasLogs := false
@@ -337,7 +335,7 @@ func TestGetMetricFieldValuesIntrinsicMetricName(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore, newTestCache(t))
+	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
 
 	valueRows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "metric_name", Type: "String"},
@@ -376,7 +374,7 @@ func TestGetMetricFieldValuesIntrinsicBoolReturnsEmpty(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore, newTestCache(t))
+	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
 
 	metadataRows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "attr_string_value", Type: "String"},
@@ -423,7 +421,6 @@ func createMockRows(values [][]any) *cmock.Rows {
 
 func TestKeyEvolutionMetadata_Get_Multi_FetchFromClickHouse(t *testing.T) {
 	ctx := context.Background()
-	orgId := valuer.GenerateUUID()
 
 	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := telemetryStore.Mock()
@@ -448,8 +445,9 @@ func TestKeyEvolutionMetadata_Get_Multi_FetchFromClickHouse(t *testing.T) {
 	rows := createMockRows(values)
 	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource).WillReturnRows(rows)
 
-	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore, newTestCache(t))
-	result := metadata.GetColumnEvolutionMetadataMulti(ctx, orgId, []*telemetrytypes.EvolutionSelector{selector})
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
+	result, err := metadata.GetColumnEvolutionMetadataMulti(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	require.NoError(t, err)
 
 	expectedKey := "logs:resource:__all__"
 	require.Contains(t, result, expectedKey)
@@ -466,7 +464,6 @@ func TestKeyEvolutionMetadata_Get_Multi_FetchFromClickHouse(t *testing.T) {
 
 func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntries(t *testing.T) {
 	ctx := context.Background()
-	orgId := valuer.GenerateUUID()
 
 	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := telemetryStore.Mock()
@@ -496,12 +493,13 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntries(t *testing.T) {
 	rows := createMockRows(values)
 	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource).WillReturnRows(rows)
 
-	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore, newTestCache(t))
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
 	selector := &telemetrytypes.EvolutionSelector{
 		Signal:       telemetrytypes.SignalLogs,
 		FieldContext: telemetrytypes.FieldContextResource,
 	}
-	result := metadata.GetColumnEvolutionMetadataMulti(ctx, orgId, []*telemetrytypes.EvolutionSelector{selector})
+	result, err := metadata.GetColumnEvolutionMetadataMulti(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	require.NoError(t, err)
 
 	expectedKey := "logs:resource:__all__"
 	require.Contains(t, result, expectedKey)
@@ -522,7 +520,6 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntries(t *testing.T) {
 
 func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithFieldName(t *testing.T) {
 	ctx := context.Background()
-	orgId := valuer.GenerateUUID()
 
 	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := telemetryStore.Mock()
@@ -567,8 +564,9 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithFieldName(t *
 	rows := createMockRows(values)
 	mock.ExpectQuery(clickHouseQueryPatternWithFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextBody, selector.FieldName, "__all__").WillReturnRows(rows)
 
-	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore, newTestCache(t))
-	result := metadata.GetColumnEvolutionMetadataMulti(ctx, orgId, []*telemetrytypes.EvolutionSelector{selector})
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
+	result, err := metadata.GetColumnEvolutionMetadataMulti(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	require.NoError(t, err)
 
 	// Check entries for "__all__" field name
 	expectedKeyAll := "logs:body:__all__"
@@ -600,7 +598,6 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithFieldName(t *
 
 func TestKeyEvolutionMetadata_Get_Multi_EmptyResultFromClickHouse(t *testing.T) {
 	ctx := context.Background()
-	orgId := valuer.GenerateUUID()
 
 	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := telemetryStore.Mock()
@@ -608,12 +605,13 @@ func TestKeyEvolutionMetadata_Get_Multi_EmptyResultFromClickHouse(t *testing.T) 
 	rows := createMockRows([][]any{})
 	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource).WillReturnRows(rows)
 
-	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore, newTestCache(t))
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
 	selector := &telemetrytypes.EvolutionSelector{
 		Signal:       telemetrytypes.SignalLogs,
 		FieldContext: telemetrytypes.FieldContextResource,
 	}
-	result := metadata.GetColumnEvolutionMetadataMulti(ctx, orgId, []*telemetrytypes.EvolutionSelector{selector})
+	result, err := metadata.GetColumnEvolutionMetadataMulti(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	require.NoError(t, err)
 
 	assert.Empty(t, result)
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -621,27 +619,23 @@ func TestKeyEvolutionMetadata_Get_Multi_EmptyResultFromClickHouse(t *testing.T) 
 
 func TestKeyEvolutionMetadata_Get_Multi_ClickHouseQueryError(t *testing.T) {
 	ctx := context.Background()
-	orgId := valuer.GenerateUUID()
 
 	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := telemetryStore.Mock()
 
 	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource).WillReturnError(assert.AnError)
 
-	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore, newTestCache(t))
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
 	selector := &telemetrytypes.EvolutionSelector{
 		Signal:       telemetrytypes.SignalLogs,
 		FieldContext: telemetrytypes.FieldContextResource,
 	}
-	result := metadata.GetColumnEvolutionMetadataMulti(ctx, orgId, []*telemetrytypes.EvolutionSelector{selector})
-
-	assert.Empty(t, result)
-	require.NoError(t, mock.ExpectationsWereMet())
+	_, err := metadata.GetColumnEvolutionMetadataMulti(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	require.Error(t, err)
 }
 
 func TestKeyEvolutionMetadata_Get_Multi_MultipleSelectors(t *testing.T) {
 	ctx := context.Background()
-	orgId := valuer.GenerateUUID()
 
 	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := telemetryStore.Mock()
@@ -651,18 +645,18 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleSelectors(t *testing.T) {
 
 	values := [][]any{
 		{
-			"logs",
+			telemetrytypes.SignalLogs,
 			"resources_string",
 			"Map(LowCardinality(String), String)",
-			"resource",
+			telemetrytypes.FieldContextResource,
 			"__all__",
 			uint64(releaseTime1.UnixNano()),
 		},
 		{
-			"logs",
+			telemetrytypes.SignalLogs,
 			"body",
-			"String",
-			"body",
+			"JSON()",
+			telemetrytypes.FieldContextBody,
 			"__all__",
 			uint64(releaseTime2.UnixNano()),
 		},
@@ -672,20 +666,23 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleSelectors(t *testing.T) {
 	// The pattern should match queries with multiple OR clauses
 	queryPattern := "SELECT.*signal.*column_name.*column_type.*field_context.*field_name.*release_time.*FROM.*distributed_column_evolution_metadata.*WHERE.*ORDER BY.*release_time.*ASC"
 	rows := createMockRows(values)
-	mock.ExpectQuery(queryPattern).WillReturnRows(rows)
+	mock.ExpectQuery(queryPattern).WillReturnRows(rows).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, "__all__", "__all__", telemetrytypes.SignalLogs, telemetrytypes.FieldContextBody, "__all__", "__all__")
 
-	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore, newTestCache(t))
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
 	selectors := []*telemetrytypes.EvolutionSelector{
 		{
 			Signal:       telemetrytypes.SignalLogs,
 			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "__all__",
 		},
 		{
 			Signal:       telemetrytypes.SignalLogs,
 			FieldContext: telemetrytypes.FieldContextBody,
+			FieldName:    "__all__",
 		},
 	}
-	result := metadata.GetColumnEvolutionMetadataMulti(ctx, orgId, selectors)
+	result, err := metadata.GetColumnEvolutionMetadataMulti(ctx, selectors)
+	require.NoError(t, err)
 
 	// Should have entries for both selectors
 	expectedKey1 := "logs:resource:__all__"

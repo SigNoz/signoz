@@ -391,14 +391,15 @@ func TestConditionFor(t *testing.T) {
 	})
 	mockMetadataStore := buildTestTelemetryMetadataStore()
 	// mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(OrgID, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
-	fm := NewFieldMapper(mockMetadataStore)
+	fm := NewFieldMapper()
 
 	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(ctx, OrgID, 0, 0, &tc.key, tc.operator, tc.value, sb, tc.evolutions)
+			tc.key.Evolutions = tc.evolutions
+			cond, err := conditionBuilder.ConditionFor(ctx, 0, 0, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {
@@ -445,7 +446,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper(nil)
+	fm := NewFieldMapper()
 	mockMetadataStore := buildTestTelemetryMetadataStore()
 	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
@@ -454,7 +455,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-				cond, err := conditionBuilder.conditionFor(ctx, valuer.GenerateUUID(), 0, 0, &key, tc.operator, tc.value, sb, nil)
+				cond, err := conditionBuilder.conditionFor(ctx, 0, 0, &key, tc.operator, tc.value, sb)
 				sb.Where(cond)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)
@@ -705,14 +706,14 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper(nil)
+	fm := NewFieldMapper()
 	mockMetadataStore := buildTestTelemetryMetadataStore()
 	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.conditionFor(ctx, valuer.GenerateUUID(), 0, 0, &tc.key, tc.operator, tc.value, sb, nil)
+			cond, err := conditionBuilder.conditionFor(ctx, 0, 0, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

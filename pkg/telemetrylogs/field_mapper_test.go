@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -168,11 +167,11 @@ func TestGetColumn(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper(nil)
+	fm := NewFieldMapper()
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			col, err := fm.ColumnFor(ctx, valuer.GenerateUUID(), 0, 0, &tc.key)
+			col, err := fm.ColumnFor(ctx, 0, 0, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -196,7 +195,6 @@ func TestGetFieldKeyName(t *testing.T) {
 	testCases := []struct {
 		name            string
 		key             telemetrytypes.TelemetryFieldKey
-		evolutions      []*telemetrytypes.EvolutionEntry
 		expectedResult  string
 		expectedError   error
 		addExistsFilter bool
@@ -249,8 +247,8 @@ func TestGetFieldKeyName(t *testing.T) {
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
+				Evolutions:   resourceEvolution,
 			},
-			evolutions:      resourceEvolution,
 			expectedResult:  "resources_string['service.name']",
 			expectedError:   nil,
 			addExistsFilter: false,
@@ -262,8 +260,8 @@ func TestGetFieldKeyName(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextResource,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
+				Evolutions:    resourceEvolution,
 			},
-			evolutions:      resourceEvolution,
 			expectedResult:  "`resource_string_service$$name`",
 			expectedError:   nil,
 			addExistsFilter: false,
@@ -281,9 +279,8 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockStore := telemetrytypestest.NewMockMetadataStore()
-			fm := NewFieldMapper(mockStore)
-			result, err := fm.FieldFor(ctx, orgId, 0, 0, &tc.key, tc.evolutions)
+			fm := NewFieldMapper()
+			result, err := fm.FieldFor(ctx, 0, 0, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -527,13 +524,13 @@ func TestFieldForWithEvolutions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockStore := telemetrytypestest.NewMockMetadataStore()
-			fm := NewFieldMapper(mockStore)
+			fm := NewFieldMapper()
 
 			tsStart := uint64(tc.tsStartTime.UnixNano())
 			tsEnd := uint64(tc.tsEndTime.UnixNano())
+			tc.key.Evolutions = tc.evolutions
 
-			result, err := fm.FieldFor(ctx, orgId, tsStart, tsEnd, tc.key, tc.evolutions)
+			result, err := fm.FieldFor(ctx, tsStart, tsEnd, tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)

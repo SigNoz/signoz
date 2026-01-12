@@ -20,15 +20,13 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
 		OrgID: valuer.GenerateUUID().String(),
 	})
-	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
-	fm := NewFieldMapper(storeWithMetadata)
+	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm, nil)
 
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
 		Context:          ctx,
-		OrgID:            valuer.GenerateUUID(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -66,15 +64,14 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 		OrgID: orgId.String(),
 	})
 	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
-	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
-	fm := NewFieldMapper(storeWithMetadata)
+	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
+	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm, storeWithMetadata)
 
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
 		Context:          ctx,
-		OrgID:            orgId,
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,

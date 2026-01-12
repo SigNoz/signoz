@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/maps"
 
 	"github.com/huandu/go-sqlbuilder"
@@ -27,15 +26,13 @@ func NewConditionBuilder(fm qbtypes.FieldMapper, metadataStore telemetrytypes.Me
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
-	orgID valuer.UUID,
 	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	keyEvolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
-	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
+	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +49,7 @@ func (c *conditionBuilder) conditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	tblFieldName, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key, keyEvolutions)
+	tblFieldName, err := c.fm.FieldFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -180,11 +177,11 @@ func (c *conditionBuilder) conditionFor(
 		var value any
 
 		var newColumns []*schema.Column
-		if len(keyEvolutions) > 0 {
+		if len(key.Evolutions) > 0 {
 			// hardcoded for now, make it dynamic while supporting JSON
 			fieldName := "__all__"
 			// we will use the corresponding column and its evolution entry for the query
-			newColumns, _, err = selectEvolutionsForColumns(columns, keyEvolutions, startNs, endNs, fieldName)
+			newColumns, _, err = selectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs, fieldName)
 			if err != nil {
 				return "", err
 			}
@@ -256,17 +253,15 @@ func (c *conditionBuilder) conditionFor(
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
-	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 
-	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb, evolutions)
+	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
@@ -274,12 +269,12 @@ func (c *conditionBuilder) ConditionFor(
 	if !(key.FieldContext == telemetrytypes.FieldContextBody && querybuilder.BodyJSONQueryEnabled) && operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
-		field, _ := c.fm.FieldFor(ctx, orgID, startNs, endNs, key, evolutions)
+		field, _ := c.fm.FieldFor(ctx, startNs, endNs, key)
 		if slices.Contains(maps.Keys(IntrinsicFields), field) && key.FieldContext != telemetrytypes.FieldContextBody {
 			return condition, nil
 		}
 
-		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb, evolutions)
+		existsCondition, err := c.conditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}

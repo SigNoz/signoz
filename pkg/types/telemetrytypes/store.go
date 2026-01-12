@@ -5,7 +5,6 @@ import (
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // MetadataStore is the interface for the telemetry metadata store.
@@ -22,7 +21,7 @@ type MetadataStore interface {
 
 	// GetRelatedValues returns a list of related values for the given key name
 	// and the existing selection of keys.
-	GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector, evolutions []*EvolutionEntry) ([]string, bool, error)
+	GetRelatedValues(ctx context.Context, fieldValueSelector *FieldValueSelector) ([]string, bool, error)
 
 	// GetAllValues returns a list of all values.
 	GetAllValues(ctx context.Context, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
@@ -43,7 +42,7 @@ type MetadataStore interface {
 	PromotePaths(ctx context.Context, paths ...string) error
 
 	// GetColumnEvolutionMetadataMulti returns a list of evolution entries for the given selectors.
-	GetColumnEvolutionMetadataMulti(ctx context.Context, orgID valuer.UUID, selectors []*EvolutionSelector) map[string][]*EvolutionEntry
+	GetColumnEvolutionMetadataMulti(ctx context.Context, selectors []*EvolutionSelector) (map[string][]*EvolutionEntry, error)
 
 	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
 	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)

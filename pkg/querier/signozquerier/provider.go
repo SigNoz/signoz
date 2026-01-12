@@ -51,7 +51,6 @@ func newProvider(
 	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
 		settings,
 		telemetryStore,
-		cache,
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,
 		telemetrytraces.SpanAttributesKeysTblName,
@@ -106,7 +105,7 @@ func newProvider(
 	)
 
 	// Create log statement builder
-	logFieldMapper := telemetrylogs.NewFieldMapper(telemetryMetadataStore)
+	logFieldMapper := telemetrylogs.NewFieldMapper()
 	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, telemetryMetadataStore)
 	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
 		settings,

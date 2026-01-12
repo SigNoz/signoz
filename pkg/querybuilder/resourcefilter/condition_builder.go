@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -45,14 +44,12 @@ func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
 
 func (b *defaultConditionBuilder) ConditionFor(
 	ctx context.Context,
-	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	op qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	_ []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 
 	if key.FieldContext != telemetrytypes.FieldContextResource {
@@ -63,7 +60,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 	// as we store resource values as string
 	formattedValue := querybuilder.FormatValueForContains(value)
 
-	columns, err := b.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
+	columns, err := b.fm.ColumnFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -71,7 +68,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 	keyIdxFilter := sb.Like(columns[0].Name, keyIndexFilter(key))
 	valueForIndexFilter := valueForIndexFilter(op, key, value)
 
-	fieldName, err := b.fm.FieldFor(ctx, orgID, startNs, endNs, key, nil)
+	fieldName, err := b.fm.FieldFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}

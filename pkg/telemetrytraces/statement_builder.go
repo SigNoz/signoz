@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 )
@@ -58,7 +57,6 @@ func NewTraceQueryStatementBuilder(
 // Build builds a SQL query for traces based on the given parameters
 func (b *traceQueryStatementBuilder) Build(
 	ctx context.Context,
-	orgID valuer.UUID,
 	start uint64,
 	end uint64,
 	requestType qbtypes.RequestType,
@@ -100,13 +98,13 @@ func (b *traceQueryStatementBuilder) Build(
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
-		return b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables)
+		return b.buildListQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
-		return b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
+		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
-		return b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, variables, false, false)
+		return b.buildScalarQuery(ctx, q, query, start, end, keys, variables, false, false)
 	case qbtypes.RequestTypeTrace:
-		return b.buildTraceQuery(ctx, orgID, q, query, start, end, keys, variables)
+		return b.buildTraceQuery(ctx, q, query, start, end, keys, variables)
 	}
 
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
@@ -253,7 +251,6 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 // buildListQuery builds a query for list panel type
 func (b *traceQueryStatementBuilder) buildListQuery(
 	ctx context.Context,
-	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
@@ -266,7 +263,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" {
 		cteFragments = append(cteFragments, frag)
@@ -296,7 +293,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// TODO: should we deprecate `SelectFields` and return everything from a span like we do for logs?
 	for _, field := range selectedFields {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &field, keys, nil)
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, start, end, &field, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -314,7 +311,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, keys, nil)
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, start, end, &orderBy.Key.TelemetryFieldKey, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -351,7 +348,6 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 func (b *traceQueryStatementBuilder) buildTraceQuery(
 	ctx context.Context,
-	orgID valuer.UUID,
 	_ *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
@@ -371,7 +367,7 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, distSB, query, start, end, variables); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, distSB, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" {
 		cteFragments = append(cteFragments, frag)
@@ -470,7 +466,6 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 
 func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	ctx context.Context,
-	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
@@ -483,7 +478,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" {
 		cteFragments = append(cteFragments, frag)
@@ -500,7 +495,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil, nil)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -514,10 +509,9 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
 		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
-			ctx, orgID, start, end, agg.Expression,
+			ctx, start, end, agg.Expression,
 			uint64(query.StepInterval.Seconds()),
 			keys,
-			nil,
 		)
 		if err != nil {
 			return nil, err
@@ -538,7 +532,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
 		cteSB := sqlbuilder.NewSelectBuilder()
-		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, variables, true, true)
+		cteStmt, err := b.buildScalarQuery(ctx, cteSB, query, start, end, keys, variables, true, true)
 		if err != nil {
 			return nil, err
 		}
@@ -618,7 +612,6 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 // buildScalarQuery builds a query for scalar panel type
 func (b *traceQueryStatementBuilder) buildScalarQuery(
 	ctx context.Context,
-	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
@@ -633,7 +626,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" && !skipResourceCTE {
 		cteFragments = append(cteFragments, frag)
@@ -644,7 +637,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 	var allGroupByArgs []any
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil, nil)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -661,10 +654,9 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
 			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
-				ctx, orgID, start, end, aggExpr.Expression,
+				ctx, start, end, aggExpr.Expression,
 				rateInterval,
 				keys,
-				nil,
 			)
 			if err != nil {
 				return nil, err
@@ -788,14 +780,13 @@ func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.TraceAggr
 
 func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
 	ctx context.Context,
-	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
 	variables map[string]qbtypes.VariableItem,
 ) (cteSQL string, cteArgs []any, err error) {
 
-	stmt, err := b.buildResourceFilterCTE(ctx, orgID, query, start, end, variables)
+	stmt, err := b.buildResourceFilterCTE(ctx, query, start, end, variables)
 	if err != nil {
 		return "", nil, err
 	}
@@ -807,7 +798,6 @@ func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
 
 func (b *traceQueryStatementBuilder) buildResourceFilterCTE(
 	ctx context.Context,
-	orgID valuer.UUID,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
 	variables map[string]qbtypes.VariableItem,
@@ -815,7 +805,6 @@ func (b *traceQueryStatementBuilder) buildResourceFilterCTE(
 
 	return b.resourceFilterStmtBuilder.Build(
 		ctx,
-		orgID,
 		start,
 		end,
 		qbtypes.RequestTypeRaw,

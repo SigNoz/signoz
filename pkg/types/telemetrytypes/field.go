@@ -37,6 +37,8 @@ type TelemetryFieldKey struct {
 	JSONDataType *JSONDataType       `json:"-"`
 	Indexes      []JSONDataTypeIndex `json:"-"`
 	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
+
+	Evolutions []*EvolutionEntry `json:"-"`
 }
 
 func (f TelemetryFieldKey) String() string {

@@ -27,8 +27,8 @@ func TestFilterExprLogs(t *testing.T) {
 		OrgID: orgId.String(),
 	})
 	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
-	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(orgId, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), releaseTime)
-	fm := NewFieldMapper(storeWithMetadata)
+	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, releaseTime)
+	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm, nil)
 
 	// Define a comprehensive set of field keys to support all test cases
@@ -36,7 +36,6 @@ func TestFilterExprLogs(t *testing.T) {
 
 	opts := querybuilder.FilterExprVisitorOpts{
 		Context:          ctx,
-		OrgID:            orgId,
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -2438,8 +2437,7 @@ func TestFilterExprLogs(t *testing.T) {
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogsConflictNegation(t *testing.T) {
-	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
-	fm := NewFieldMapper(storeWithMetadata)
+	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm, nil)
 
 	// Define a comprehensive set of field keys to support all test cases
@@ -2460,7 +2458,6 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 
 	opts := querybuilder.FilterExprVisitorOpts{
 		Context:          context.Background(),
-		OrgID:            valuer.GenerateUUID(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,

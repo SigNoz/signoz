@@ -190,7 +190,7 @@ func (q *builderQuery[T]) Execute(ctx context.Context, orgID valuer.UUID) (*qbty
 		return q.executeWindowList(ctx, orgID)
 	}
 
-	stmt, err := q.stmtBuilder.Build(ctx, orgID, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
+	stmt, err := q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
 	if err != nil {
 		return nil, err
 	}
@@ -346,7 +346,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context, orgID valuer.UU
 		q.spec.Offset = 0
 		q.spec.Limit = need
 
-		stmt, err := q.stmtBuilder.Build(ctx, orgID, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables)
+		stmt, err := q.stmtBuilder.Build(ctx, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables)
 		if err != nil {
 			return nil, err
 		}

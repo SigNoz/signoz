@@ -7,7 +7,6 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
@@ -42,7 +41,6 @@ func (m *defaultFieldMapper) getColumn(
 
 func (m *defaultFieldMapper) ColumnFor(
 	ctx context.Context,
-	_ valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 ) ([]*schema.Column, error) {
@@ -51,10 +49,8 @@ func (m *defaultFieldMapper) ColumnFor(
 
 func (m *defaultFieldMapper) FieldFor(
 	ctx context.Context,
-	_ valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	_ []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 	columns, err := m.getColumn(ctx, tsStart, tsEnd, key)
 	if err != nil {
@@ -68,13 +64,11 @@ func (m *defaultFieldMapper) FieldFor(
 
 func (m *defaultFieldMapper) ColumnExpressionFor(
 	ctx context.Context,
-	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
-	_ []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
-	colName, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key, nil)
+	colName, err := m.FieldFor(ctx, tsStart, tsEnd, key)
 	if err != nil {
 		return "", err
 	}

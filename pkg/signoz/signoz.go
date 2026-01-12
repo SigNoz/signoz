@@ -348,7 +348,6 @@ func New(
 	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
 		providerSettings,
 		telemetrystore,
-		cache,
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,
 		telemetrytraces.SpanAttributesKeysTblName,

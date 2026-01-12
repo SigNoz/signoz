@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -14,9 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type API struct {
@@ -28,12 +25,10 @@ type API struct {
 func NewAPI(
 	settings factory.ProviderSettings,
 	telemetryStore telemetrystore.TelemetryStore,
-	cache cache.Cache,
 ) *API {
 	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
 		settings,
 		telemetryStore,
-		cache,
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,
 		telemetrytraces.SpanAttributesKeysTblName,
@@ -100,18 +95,6 @@ func (api *API) GetFieldsValues(w http.ResponseWriter, r *http.Request) {
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	ctx := r.Context()
 
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
 	fieldValueSelector, err := parseFieldValueRequest(r)
 	if err != nil {
 		render.Error(w, err)
@@ -124,7 +107,7 @@ func (api *API) GetFieldsValues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	relatedValues, relatedComplete, err := api.telemetryMetadataStore.GetRelatedValues(ctx, orgID, fieldValueSelector, nil)
+	relatedValues, relatedComplete, err := api.telemetryMetadataStore.GetRelatedValues(ctx, fieldValueSelector)
 	if err != nil {
 		// we don't want to return error if we fail to get related values for some reason
 		relatedValues = []string{}

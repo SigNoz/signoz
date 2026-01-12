@@ -12,7 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 
 	"golang.org/x/exp/maps"
@@ -64,13 +63,10 @@ var (
 )
 
 type fieldMapper struct {
-	metadataStore telemetrytypes.MetadataStore
 }
 
-func NewFieldMapper(metadataStore telemetrytypes.MetadataStore) qbtypes.FieldMapper {
-	return &fieldMapper{
-		metadataStore: metadataStore,
-	}
+func NewFieldMapper() qbtypes.FieldMapper {
+	return &fieldMapper{}
 }
 
 func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
@@ -225,7 +221,7 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 	return newColumns, evolutionsEntries, nil
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, evolutions []*telemetrytypes.EvolutionEntry) (string, error) {
+func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	columns, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -233,11 +229,11 @@ func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, 
 
 	var newColumns []*schema.Column
 	var evolutionsEntries []*telemetrytypes.EvolutionEntry
-	if len(evolutions) > 0 {
+	if len(key.Evolutions) > 0 {
 		// hardcoded for now, make it dynamic while supporting JSON
 		fieldName := "__all__"
 		// we will use the corresponding column and its evolution entry for the query
-		newColumns, evolutionsEntries, err = selectEvolutionsForColumns(columns, evolutions, tsStart, tsEnd, fieldName)
+		newColumns, evolutionsEntries, err = selectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd, fieldName)
 		if err != nil {
 			return "", err
 		}
@@ -336,20 +332,18 @@ func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, 
 	return columns[0].Name, nil
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *fieldMapper) ColumnFor(ctx context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	return m.getColumn(ctx, key)
 }
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
-	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-	evolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
 
-	colName, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, field, evolutions)
+	colName, err := m.FieldFor(ctx, tsStart, tsEnd, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -359,7 +353,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 			if _, ok := logsV2Columns[field.Name]; ok {
 				// if it is, attach the column name directly
 				field.FieldContext = telemetrytypes.FieldContextLog
-				colName, _ = m.FieldFor(ctx, orgID, tsStart, tsEnd, field, evolutions)
+				colName, _ = m.FieldFor(ctx, tsStart, tsEnd, field)
 			} else {
 				// - the context is not provided
 				// - there are not keys for the field
@@ -377,12 +371,12 @@ func (m *fieldMapper) ColumnExpressionFor(
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it
-			colName, _ = m.FieldFor(ctx, orgID, tsStart, tsEnd, keysForField[0], evolutions)
+			colName, _ = m.FieldFor(ctx, tsStart, tsEnd, keysForField[0])
 		} else {
 			// select any non-empty value from the keys
 			args := []string{}
 			for _, key := range keysForField {
-				colName, _ = m.FieldFor(ctx, orgID, tsStart, tsEnd, key, evolutions)
+				colName, _ = m.FieldFor(ctx, tsStart, tsEnd, key)
 				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", colName, colName))
 			}
 			colName = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))

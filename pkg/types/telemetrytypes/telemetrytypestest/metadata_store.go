@@ -7,7 +7,6 @@ import (
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // MockMetadataStore implements the MetadataStore interface for testing purposes
@@ -19,7 +18,7 @@ type MockMetadataStore struct {
 	TemporalityMap             map[string]metrictypes.Temporality
 	PromotedPathsMap           map[string]struct{}
 	LogsJSONIndexesMap         map[string][]schemamigrator.Index
-	ColumnEvolutionMetadataMap map[string]map[string][]*telemetrytypes.EvolutionEntry
+	ColumnEvolutionMetadataMap map[string][]*telemetrytypes.EvolutionEntry
 	LookupKeysMap              map[telemetrytypes.MetricMetadataLookupKey]int64
 }
 
@@ -32,7 +31,7 @@ func NewMockMetadataStore() *MockMetadataStore {
 		TemporalityMap:             make(map[string]metrictypes.Temporality),
 		PromotedPathsMap:           make(map[string]struct{}),
 		LogsJSONIndexesMap:         make(map[string][]schemamigrator.Index),
-		ColumnEvolutionMetadataMap: make(map[string]map[string][]*telemetrytypes.EvolutionEntry),
+		ColumnEvolutionMetadataMap: make(map[string][]*telemetrytypes.EvolutionEntry),
 		LookupKeysMap:              make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 	}
 }
@@ -98,7 +97,51 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors 
 		}
 	}
 
+	// fetch and add evolutions
+	for k, v := range result {
+		keys := v
+		metadataKeySelectors := getMetadataKeySelectors(keys)
+		evolutions, err := m.GetColumnEvolutionMetadataMulti(ctx, metadataKeySelectors)
+		if err != nil {
+			return nil, false, err
+		}
+		for i, key := range keys {
+			// Use the same logic as getMetadataKeySelectors to determine the selector key
+			fieldName := "__all__"
+			if keys[i].FieldContext == telemetrytypes.FieldContextBody {
+				fieldName = key.Name
+			}
+			cacheKey := telemetrytypes.GetEvolutionMetadataCacheKey(
+				&telemetrytypes.EvolutionSelector{
+					Signal:       key.Signal,
+					FieldContext: key.FieldContext,
+					FieldName:    fieldName,
+				},
+			)
+			if keyEvolutions, ok := evolutions[cacheKey]; ok {
+				keys[i].Evolutions = keyEvolutions
+			}
+		}
+		result[k] = keys
+	}
+
 	return result, true, nil
+}
+
+func getMetadataKeySelectors(keySelectors []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.EvolutionSelector {
+	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
+	for _, keySelector := range keySelectors {
+		selector := &telemetrytypes.EvolutionSelector{
+			Signal:       keySelector.Signal,
+			FieldContext: keySelector.FieldContext,
+			FieldName:    "__all__", // Hardcoded for now
+		}
+		if keySelector.FieldContext == telemetrytypes.FieldContextBody {
+			selector.FieldName = keySelector.Name
+		}
+		metadataKeySelectors = append(metadataKeySelectors, selector)
+	}
+	return metadataKeySelectors
 }
 
 // GetKey returns a list of keys with the given name
@@ -124,7 +167,7 @@ func (m *MockMetadataStore) GetKey(ctx context.Context, fieldKeySelector *teleme
 }
 
 // GetRelatedValues returns a list of related values for the given key name and selection
-func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector, evolutions []*telemetrytypes.EvolutionEntry) ([]string, bool, error) {
+func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
 	if fieldValueSelector == nil {
 		return nil, true, nil
 	}
@@ -313,28 +356,26 @@ func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...
 	return m.LogsJSONIndexesMap, nil
 }
 
-// Get retrieves all metadata keys for the given key name and orgId.
-// Returns an empty slice if the key is not found.
-func (m *MockMetadataStore) GetColumnEvolutionMetadataMulti(ctx context.Context, orgId valuer.UUID, selectors []*telemetrytypes.EvolutionSelector) map[string][]*telemetrytypes.EvolutionEntry {
-	if m.ColumnEvolutionMetadataMap == nil {
-		return make(map[string][]*telemetrytypes.EvolutionEntry)
-	}
-	orgMetadata, orgExists := m.ColumnEvolutionMetadataMap[orgId.String()]
-	if !orgExists {
-		return make(map[string][]*telemetrytypes.EvolutionEntry)
-	}
-
+func (m *MockMetadataStore) GetColumnEvolutionMetadataMulti(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) (map[string][]*telemetrytypes.EvolutionEntry, error) {
 	result := make(map[string][]*telemetrytypes.EvolutionEntry)
 
-	// Iterate over each selector
+	deduplicatedSelectors := make(map[string]*telemetrytypes.EvolutionSelector)
 	for _, selector := range selectors {
+		key := telemetrytypes.GetEvolutionMetadataCacheKey(selector)
+		if _, ok := deduplicatedSelectors[key]; !ok {
+			deduplicatedSelectors[key] = selector
+		}
+	}
+
+	// Iterate over each selector
+	for _, selector := range deduplicatedSelectors {
 		if selector == nil {
 			continue
 		}
 		// Build the key: Signal:FieldContext:FieldName
-		key := selector.Signal.StringValue() + ":" + selector.FieldContext.StringValue() + ":" + selector.FieldName
+		key := telemetrytypes.GetEvolutionMetadataCacheKey(selector)
 
-		entries, exists := orgMetadata[key]
+		entries, exists := m.ColumnEvolutionMetadataMap[key]
 		if exists && len(entries) > 0 {
 			// Return a copy to prevent external modification
 			result[key] = make([]*telemetrytypes.EvolutionEntry, len(entries))
@@ -342,7 +383,7 @@ func (m *MockMetadataStore) GetColumnEvolutionMetadataMulti(ctx context.Context,
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func (m *MockMetadataStore) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []telemetrytypes.MetricMetadataLookupKey) (map[telemetrytypes.MetricMetadataLookupKey]int64, error) {

@@ -33,7 +33,6 @@ func (q *traceOperatorQuery) Window() (uint64, uint64) {
 func (q *traceOperatorQuery) Execute(ctx context.Context, orgID valuer.UUID) (*qbtypes.Result, error) {
 	stmt, err := q.stmtBuilder.Build(
 		ctx,
-		orgID,
 		q.fromMS,
 		q.toMS,
 		q.kind,
