@@ -247,7 +247,8 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 			}
 		}
 		results, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
-			ActiveAlerts: r.ActiveAlertsLabelFP(),
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+			SendUnmatched: r.ShouldSendUnmatched(),
 		})
 		if err != nil {
 			return nil, err
@@ -291,7 +292,19 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 	scoresJSON, _ := json.Marshal(queryResult.AnomalyScores)
 	r.logger.InfoContext(ctx, "anomaly scores", "scores", string(scoresJSON))
 
-	for _, series := range queryResult.AnomalyScores {
+	// Filter out new series if newGroupEvalDelay is configured
+	seriesToProcess := queryResult.AnomalyScores
+	if r.ShouldSkipNewGroups() {
+		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
+		// In case of error we log the error and continue with the original series
+		if filterErr != nil {
+			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
+		} else {
+			seriesToProcess = filteredSeries
+		}
+	}
+
+	for _, series := range seriesToProcess {
 		if r.Condition().RequireMinPoints {
 			if len(series.Points) < r.Condition().RequiredNumPoints {
 				r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
@@ -299,7 +312,8 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 			}
 		}
 		results, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
-			ActiveAlerts: r.ActiveAlertsLabelFP(),
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+			SendUnmatched: r.ShouldSendUnmatched(),
 		})
 		if err != nil {
 			return nil, err

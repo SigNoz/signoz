@@ -20,6 +20,7 @@ type MockMetadataStore struct {
 	PromotedPathsMap           map[string]struct{}
 	LogsJSONIndexesMap         map[string][]schemamigrator.Index
 	ColumnEvolutionMetadataMap map[string]map[string][]*telemetrytypes.EvolutionEntry
+	LookupKeysMap              map[telemetrytypes.MetricMetadataLookupKey]int64
 }
 
 // NewMockMetadataStore creates a new instance of MockMetadataStore with initialized maps
@@ -32,6 +33,7 @@ func NewMockMetadataStore() *MockMetadataStore {
 		PromotedPathsMap:           make(map[string]struct{}),
 		LogsJSONIndexesMap:         make(map[string][]schemamigrator.Index),
 		ColumnEvolutionMetadataMap: make(map[string]map[string][]*telemetrytypes.EvolutionEntry),
+		LookupKeysMap:              make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 	}
 }
 
@@ -329,4 +331,14 @@ func (m *MockMetadataStore) GetColumnEvolutionMetadata(ctx context.Context, orgI
 	result := make([]*telemetrytypes.EvolutionEntry, len(keys))
 	copy(result, keys)
 	return result
+}
+
+func (m *MockMetadataStore) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []telemetrytypes.MetricMetadataLookupKey) (map[telemetrytypes.MetricMetadataLookupKey]int64, error) {
+	return m.LookupKeysMap, nil
+}
+
+func (m *MockMetadataStore) SetFirstSeenFromMetricMetadata(firstSeenMap map[telemetrytypes.MetricMetadataLookupKey]int64) {
+	for key, value := range firstSeenMap {
+		m.LookupKeysMap[key] = value
+	}
 }

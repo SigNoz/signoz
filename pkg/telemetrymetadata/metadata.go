@@ -1891,3 +1891,84 @@ func (k *telemetryMetaStore) GetColumnEvolutionMetadata(ctx context.Context, org
 	}
 	return cachedData.Metadata
 }
+
+// chunkSizeFirstSeenMetricMetadata limits the number of tuples per SQL query to avoid hitting the max_query_size limit.
+//
+// Calculation Logic:
+//
+//  1. The Ceiling: 250 KB (256,000 bytes). A conservative safety limit set just below the common DB max_query_size (262KB)
+//     to guarantee the database does not reject the query.
+//     Reference: https://clickhouse.com/docs/operations/settings/settings#max_query_size
+//
+//  2. Unit Cost: ~150 bytes per tuple. The estimated "weight" of a single lookup key, summing MetricName (40B),
+//     AttrName (30B), AttrValue (64B), and SQL syntax overhead (16B).
+//
+//  3. Theoretical Max: ~1,706 tuples. The absolute maximum capacity if all keys adhere to the average size (256,000 / 150).
+//
+//  4. Final Limit: 1600. Rounds down to provide a ~6% safety buffer, accounting for data outliers
+//     (unusually long attribute values) and multi-byte character expansion.
+const chunkSizeFirstSeenMetricMetadata = 1600
+
+// GetFirstSeenFromMetricMetadata queries the metadata table to get the first_seen timestamp
+// for each metric-attribute-value combination.
+// Returns a map where key is `telemetrytypes.MetricMetadataLookupKey` and value is first_seen in milliseconds.
+func (t *telemetryMetaStore) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []telemetrytypes.MetricMetadataLookupKey) (map[telemetrytypes.MetricMetadataLookupKey]int64, error) {
+	result := make(map[telemetrytypes.MetricMetadataLookupKey]int64)
+
+	for i := 0; i < len(lookupKeys); i += chunkSizeFirstSeenMetricMetadata {
+		end := i + chunkSizeFirstSeenMetricMetadata
+		if end > len(lookupKeys) {
+			end = len(lookupKeys)
+		}
+		chunk := lookupKeys[i:end]
+
+		sb := sqlbuilder.Select(
+			"metric_name",
+			"attr_name",
+			"attr_string_value",
+			"min(first_reported_unix_milli) AS first_seen",
+		).From(t.metricsDBName + "." + t.metricsFieldsTblName)
+
+		lookupItems := make([]interface{}, 0, len(chunk))
+		for _, key := range chunk {
+			lookupItems = append(lookupItems, sqlbuilder.Tuple(key.MetricName, key.AttributeName, key.AttributeValue))
+		}
+		sb.Where(
+			sb.In(
+				sqlbuilder.TupleNames("metric_name", "attr_name", "attr_string_value"),
+				lookupItems...,
+			),
+		)
+		sb.GroupBy("metric_name", "attr_name", "attr_string_value")
+		sb.OrderBy("first_seen")
+
+		query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+		rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+		if err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to query metadata for first_seen")
+		}
+
+		for rows.Next() {
+			var metricName, attrName, attrValue string
+			var firstSeen uint64
+			if err := rows.Scan(&metricName, &attrName, &attrValue, &firstSeen); err != nil {
+				rows.Close()
+				return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan metadata first_seen result")
+			}
+			result[telemetrytypes.MetricMetadataLookupKey{
+				MetricName:     metricName,
+				AttributeName:  attrName,
+				AttributeValue: attrValue,
+			}] = int64(firstSeen)
+		}
+
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to iterate metadata first_seen results")
+		}
+		rows.Close()
+	}
+
+	return result, nil
+}

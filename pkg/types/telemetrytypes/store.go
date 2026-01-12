@@ -44,4 +44,13 @@ type MetadataStore interface {
 
 	// GetKey returns a list of keys with the given name.
 	GetColumnEvolutionMetadata(ctx context.Context, orgID valuer.UUID, selector EvolutionSelector) []*EvolutionEntry
+
+	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
+	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)
+}
+
+type MetricMetadataLookupKey struct {
+	MetricName     string
+	AttributeName  string
+	AttributeValue string
 }
