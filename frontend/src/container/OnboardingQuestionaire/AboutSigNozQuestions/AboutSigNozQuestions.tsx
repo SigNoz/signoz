@@ -4,11 +4,12 @@ import '../OnboardingQuestionaire.styles.scss';
 import { Button } from '@signozhq/button';
 import { Checkbox } from '@signozhq/checkbox';
 import { Input } from '@signozhq/input';
-import { Typography } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
 
 export interface SignozDetails {
 	interestInSignoz: string[] | null;
@@ -67,6 +68,12 @@ export function AboutSigNozQuestions({
 		}
 	};
 
+	const createInterestChangeHandler = (option: string) => (
+		checked: boolean,
+	): void => {
+		handleInterestChange(option, Boolean(checked));
+	};
+
 	const handleOnNext = (): void => {
 		setSignozDetails({
 			discoverSignoz,
@@ -85,17 +92,10 @@ export function AboutSigNozQuestions({
 
 	return (
 		<div className="questions-container">
-			<div className="onboarding-header-section">
-				<div className="onboarding-header-icon">
-					<img src="/svgs/barber-pool.svg" alt="SigNoz" width="32" height="32" />
-				</div>
-				<Typography.Title level={4} className="onboarding-header-title">
-					Set up your workspace
-				</Typography.Title>
-				<Typography.Paragraph className="onboarding-header-subtitle">
-					Tailor SigNoz to suit your observability needs.
-				</Typography.Paragraph>
-			</div>
+			<OnboardingQuestionHeader
+				title="Set up your workspace"
+				subtitle="Tailor SigNoz to suit your observability needs."
+			/>
 
 			<div className="questions-form-container">
 				<div className="questions-form">
@@ -120,9 +120,7 @@ export function AboutSigNozQuestions({
 									<Checkbox
 										id={`checkbox-${option}`}
 										checked={interestInSignoz.includes(option)}
-										onCheckedChange={(checked): void =>
-											handleInterestChange(option, Boolean(checked))
-										}
+										onCheckedChange={createInterestChangeHandler(option)}
 										labelName={interestedInOptions[option]}
 									/>
 								</div>
@@ -132,9 +130,7 @@ export function AboutSigNozQuestions({
 								<Checkbox
 									id="others-checkbox"
 									checked={interestInSignoz.includes('Others')}
-									onCheckedChange={(checked): void =>
-										handleInterestChange('Others', Boolean(checked))
-									}
+									onCheckedChange={createInterestChangeHandler('Others')}
 									labelName="Others"
 								/>
 								{interestInSignoz.includes('Others') && (

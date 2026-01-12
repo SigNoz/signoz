@@ -4,6 +4,8 @@ import logEvent from 'api/common/logEvent';
 import { ArrowRight, Loader2, Minus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
+
 export interface OptimiseSignozDetails {
 	logsPerDay: number;
 	hostsPerDay: number;
@@ -184,17 +186,10 @@ function OptimiseSignozNeeds({
 
 	return (
 		<div className="questions-container">
-			<div className="onboarding-header-section">
-				<div className="onboarding-header-icon">
-					<img src="/svgs/barber-pool.svg" alt="SigNoz" width="32" height="32" />
-				</div>
-				<Typography.Title level={4} className="onboarding-header-title">
-					Set up your workspace
-				</Typography.Title>
-				<Typography.Paragraph className="onboarding-header-subtitle">
-					Tailor SigNoz to suit your observability needs.
-				</Typography.Paragraph>
-			</div>
+			<OnboardingQuestionHeader
+				title="Set up your workspace"
+				subtitle="Tailor SigNoz to suit your observability needs."
+			/>
 
 			<div className="questions-form-container">
 				<div className="questions-form">

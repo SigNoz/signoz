@@ -2,7 +2,6 @@ import './InviteTeamMembers.styles.scss';
 
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
-import { Color } from '@signozhq/design-tokens';
 import { Input } from '@signozhq/input';
 import { Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -14,6 +13,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import APIError from 'types/api/error';
 import { v4 as uuid } from 'uuid';
+
+import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
 
 interface TeamMember {
 	email: string;
@@ -156,31 +157,40 @@ function InviteTeamMembers({
 		debounce((email: string, memberId: string) => {
 			const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 			setEmailValidity((prev) => ({ ...prev, [memberId]: isValid }));
+
+			// Clear hasInvalidEmails when email becomes valid
+			if (isValid) {
+				setHasInvalidEmails((prev) => (prev ? false : prev));
+			}
 		}, 500),
 		[],
 	);
 
-	const handleEmailChange = (
-		e: React.ChangeEvent<HTMLInputElement>,
-		member: TeamMember,
-	): void => {
-		const { value } = e.target;
-		const updatedMembers = cloneDeep(teamMembersToInvite || []);
+	const handleEmailChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>, member: TeamMember): void => {
+			const { value } = e.target;
+			const updatedMembers = cloneDeep(teamMembersToInvite || []);
 
-		const memberToUpdate = updatedMembers.find((m) => m.id === member.id);
-		if (memberToUpdate && member.id) {
-			memberToUpdate.email = value;
-			setTeamMembersToInvite(updatedMembers);
-			debouncedValidateEmail(value, member.id);
-			// Clear errors when user starts typing
-			if (hasInvalidEmails) {
-				setHasInvalidEmails(false);
+			const memberToUpdate = updatedMembers.find((m) => m.id === member.id);
+			if (memberToUpdate && member.id) {
+				memberToUpdate.email = value;
+				setTeamMembersToInvite(updatedMembers);
+				debouncedValidateEmail(value, member.id);
+				// Clear API error when user starts typing
+				if (inviteError) {
+					setInviteError(null);
+				}
 			}
-			if (inviteError) {
-				setInviteError(null);
-			}
-		}
-	};
+		},
+		[debouncedValidateEmail, inviteError, teamMembersToInvite],
+	);
+
+	const createEmailChangeHandler = useCallback(
+		(member: TeamMember) => (e: React.ChangeEvent<HTMLInputElement>): void => {
+			handleEmailChange(e, member);
+		},
+		[handleEmailChange],
+	);
 
 	const handleRoleChange = (role: string, member: TeamMember): void => {
 		const updatedMembers = cloneDeep(teamMembersToInvite || []);
@@ -223,19 +233,14 @@ function InviteTeamMembers({
 		onNext();
 	};
 
+	const isButtonDisabled = isSendingInvites || isLoading;
+
 	return (
 		<div className="questions-container">
-			<div className="onboarding-header-section">
-				<div className="onboarding-header-icon">
-					<img src="/svgs/barber-pool.svg" alt="SigNoz" width="32" height="32" />
-				</div>
-				<Typography.Title level={4} className="onboarding-header-title">
-					Invite your team
-				</Typography.Title>
-				<Typography.Paragraph className="onboarding-header-subtitle">
-					SigNoz is a lot more useful with collaborators on board.
-				</Typography.Paragraph>
-			</div>
+			<OnboardingQuestionHeader
+				title="Invite your team"
+				subtitle="SigNoz is a lot more useful with collaborators on board."
+			/>
 
 			<div className="questions-form-container">
 				<div className="questions-form invite-team-members-form">
@@ -264,17 +269,12 @@ function InviteTeamMembers({
 												required
 												autoComplete="off"
 												className="team-member-email-input"
-												onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-													handleEmailChange(e, member)
-												}
+												onChange={createEmailChangeHandler(member)}
 											/>
 											{member.id &&
 												emailValidity[member.id] === false &&
 												member.email.trim() !== '' && (
-													<Typography.Text
-														className="email-error-message"
-														style={{ color: Color.BG_CHERRY_500 }}
-													>
+													<Typography.Text className="email-error-message">
 														Invalid email address
 													</Typography.Text>
 												)}
@@ -346,13 +346,11 @@ function InviteTeamMembers({
 					<Button
 						variant="solid"
 						color="primary"
-						className={`onboarding-next-button ${
-							isSendingInvites || isLoading ? 'disabled' : ''
-						}`}
+						className={`onboarding-next-button ${isButtonDisabled ? 'disabled' : ''}`}
 						onClick={handleNext}
-						disabled={isSendingInvites || isLoading}
+						disabled={isButtonDisabled}
 						suffixIcon={
-							isSendingInvites || isLoading ? (
+							isButtonDisabled ? (
 								<Loader2 className="animate-spin" size={12} />
 							) : (
 								<ArrowRight size={12} />
@@ -366,7 +364,7 @@ function InviteTeamMembers({
 						color="secondary"
 						className="onboarding-do-later-button"
 						onClick={handleDoLater}
-						disabled={isSendingInvites || isLoading}
+						disabled={isButtonDisabled}
 					>
 						I&apos;ll do this later
 					</Button>

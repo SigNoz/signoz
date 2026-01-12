@@ -72,11 +72,12 @@ function OrgQuestions({
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
-	const [usesOtel, setUsesOtel] = useState<boolean | null>(
-		orgDetails?.usesOtel ?? null,
-	);
+	const [usesOtel, setUsesOtel] = useState<boolean | null>(orgDetails.usesOtel);
 
 	const handleOrgNameUpdate = async (): Promise<void> => {
+		const usesObservability =
+			!observabilityTool?.includes('None') && observabilityTool !== null;
+
 		/* Early bailout if orgData is not set or if the organisation name is not set or if the organisation name is empty or if the organisation name is the same as the one in the orgData */
 		if (
 			!currentOrgData ||
@@ -85,8 +86,7 @@ function OrgQuestions({
 			orgDetails.organisationName === organisationName
 		) {
 			logEvent('Org Onboarding: Answered', {
-				usesObservability:
-					!observabilityTool?.includes('None') && observabilityTool !== null,
+				usesObservability,
 				observabilityTool,
 				otherTool,
 				usesOtel,
@@ -94,8 +94,7 @@ function OrgQuestions({
 
 			onNext({
 				organisationName,
-				usesObservability:
-					!observabilityTool?.includes('None') && observabilityTool !== null,
+				usesObservability,
 				observabilityTool,
 				otherTool,
 				usesOtel,
@@ -118,8 +117,7 @@ function OrgQuestions({
 				});
 
 				logEvent('Org Onboarding: Answered', {
-					usesObservability:
-						!observabilityTool?.includes('None') && observabilityTool !== null,
+					usesObservability,
 					observabilityTool,
 					otherTool,
 					usesOtel,
@@ -127,8 +125,7 @@ function OrgQuestions({
 
 				onNext({
 					organisationName,
-					usesObservability:
-						!observabilityTool?.includes('None') && observabilityTool !== null,
+					usesObservability,
 					observabilityTool,
 					otherTool,
 					usesOtel,
@@ -185,6 +182,20 @@ function OrgQuestions({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [organisationName, usesOtel, observabilityTool, otherTool]);
 
+	const createObservabilityToolHandler = (tool: string) => (
+		checked: boolean,
+	): void => {
+		if (checked) {
+			setObservabilityTool(tool);
+		} else if (observabilityTool === tool) {
+			setObservabilityTool(null);
+		}
+	};
+
+	const handleOtelChange = (value: string): void => {
+		setUsesOtel(value === 'yes');
+	};
+
 	const handleOnNext = (): void => {
 		handleOrgNameUpdate();
 	};
@@ -223,7 +234,7 @@ function OrgQuestions({
 							Which observability tool do you currently use?
 						</label>
 						<div className="observability-tools-checkbox-container">
-							{Object.keys(observabilityTools).map((tool) => (
+							{Object.entries(observabilityTools).map(([tool, label]) => (
 								<div
 									key={tool}
 									className="checkbox-item observability-tool-checkbox-item"
@@ -231,16 +242,8 @@ function OrgQuestions({
 									<Checkbox
 										id={`checkbox-${tool}`}
 										checked={observabilityTool === tool}
-										onCheckedChange={(checked): void => {
-											if (checked) {
-												setObservabilityTool(tool);
-											} else if (observabilityTool === tool) {
-												setObservabilityTool(null);
-											}
-										}}
-										labelName={
-											observabilityTools[tool as keyof typeof observabilityTools]
-										}
+										onCheckedChange={createObservabilityToolHandler(tool)}
+										labelName={label}
 									/>
 								</div>
 							))}
@@ -268,9 +271,9 @@ function OrgQuestions({
 									if (usesOtel === false) return 'no';
 									return undefined;
 								})()}
-								onChange={(e: RadioChangeEvent): void => {
-									setUsesOtel(e.target.value === 'yes');
-								}}
+								onChange={(e: RadioChangeEvent): void =>
+									handleOtelChange(e.target.value)
+								}
 								className="opentelemetry-radio-group"
 							>
 								<div className="opentelemetry-radio-items-wrapper">

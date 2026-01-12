@@ -1,14 +1,13 @@
 import './AuthPageContainer.styles.scss';
 
-import { ReactNode } from 'react';
+import { PropsWithChildren } from 'react';
 
 import AuthHeader from './AuthHeader';
 import TrustBadgesFooter from './TrustBadgesFooter';
 
-interface AuthPageContainerProps {
-	children: ReactNode;
+type AuthPageContainerProps = PropsWithChildren<{
 	isOnboarding?: boolean;
-}
+}>;
 
 function AuthPageContainer({
 	children,

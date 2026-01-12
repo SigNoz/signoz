@@ -56,7 +56,6 @@ const INITIAL_OPTIMISE_SIGNOZ_DETAILS: OptimiseSignozDetails = {
 	services: 0,
 };
 
-// const BACK_BUTTON_EVENT_NAME = 'Org Onboarding: Back Button Clicked';
 const NEXT_BUTTON_EVENT_NAME = 'Org Onboarding: Next Button Clicked';
 const ONBOARDING_COMPLETE_EVENT_NAME = 'Org Onboarding: Complete';
 
@@ -210,7 +209,10 @@ function OnboardingQuestionaire(): JSX.Element {
 				{currentStep === 1 && (
 					<OrgQuestions
 						currentOrgData={currentOrgData}
-						orgDetails={orgDetails}
+						orgDetails={{
+							...orgDetails,
+							usesOtel: orgDetails.usesOtel ?? null,
+						}}
 						onNext={(orgDetails: OrgDetails): void => {
 							logEvent(NEXT_BUTTON_EVENT_NAME, {
 								currentPageID: 1,

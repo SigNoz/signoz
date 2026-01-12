@@ -96,10 +96,8 @@ describe('OnboardingQuestionaire Component', () => {
 			const otelYes = screen.getByRole('radio', { name: /yes/i });
 			await user.click(otelYes);
 
-			await waitFor(() => {
-				const nextButton = screen.getByRole('button', { name: /next/i });
-				expect(nextButton).not.toBeDisabled();
-			});
+			const nextButton = await screen.findByRole('button', { name: /next/i });
+			expect(nextButton).not.toBeDisabled();
 		});
 
 		it('shows other tool input when Others is selected', async () => {
@@ -109,11 +107,9 @@ describe('OnboardingQuestionaire Component', () => {
 			const othersCheckbox = screen.getByLabelText(/^others$/i);
 			await user.click(othersCheckbox);
 
-			await waitFor(() => {
-				expect(
-					screen.getByPlaceholderText(/please specify the tool/i),
-				).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByPlaceholderText(/please specify the tool/i),
+			).toBeInTheDocument();
 		});
 
 		it('proceeds to step 2 when next is clicked', async () => {
@@ -129,14 +125,9 @@ describe('OnboardingQuestionaire Component', () => {
 			const nextButton = screen.getByRole('button', { name: /next/i });
 			await user.click(nextButton);
 
-			await waitFor(
-				() => {
-					expect(
-						screen.getByText(/how did you first come across signoz/i),
-					).toBeInTheDocument();
-				},
-				{ timeout: 5000 },
-			);
+			expect(
+				await screen.findByText(/how did you first come across signoz/i, {}),
+			).toBeInTheDocument();
 		});
 	});
 
@@ -153,15 +144,12 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			await waitFor(
-				() => {
-					expect(screen.getByText(/set up your workspace/i)).toBeInTheDocument();
-					expect(
-						screen.getByText(/how did you first come across signoz/i),
-					).toBeInTheDocument();
-				},
-				{ timeout: 5000 },
-			);
+			expect(
+				await screen.findByText(/set up your workspace/i, {}),
+			).toBeInTheDocument();
+			expect(
+				await screen.findByText(/how did you first come across signoz/i, {}),
+			).toBeInTheDocument();
 		});
 
 		it('disables next button when fields are empty', async () => {
@@ -176,13 +164,10 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			await waitFor(
-				() => {
-					const nextButton = screen.getByRole('button', { name: /next/i });
-					expect(nextButton).toBeDisabled();
-				},
-				{ timeout: 5000 },
-			);
+			await waitFor(() => {
+				const nextButton = screen.getByRole('button', { name: /next/i });
+				expect(nextButton).toBeDisabled();
+			});
 		});
 
 		it('enables next button when all fields are filled', async () => {
@@ -197,14 +182,9 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			await waitFor(
-				() => {
-					expect(
-						screen.getByPlaceholderText(/e\.g\., googling/i),
-					).toBeInTheDocument();
-				},
-				{ timeout: 5000 },
-			);
+			expect(
+				await screen.findByPlaceholderText(/e\.g\., googling/i, {}),
+			).toBeInTheDocument();
 
 			const discoverInput = screen.getByPlaceholderText(/e\.g\., googling/i);
 			await user.type(discoverInput, 'Found via Google search');
@@ -214,10 +194,8 @@ describe('OnboardingQuestionaire Component', () => {
 			);
 			await user.click(interestCheckbox);
 
-			await waitFor(() => {
-				const nextButton = screen.getByRole('button', { name: /next/i });
-				expect(nextButton).not.toBeDisabled();
-			});
+			const nextButton = await screen.findByRole('button', { name: /next/i });
+			expect(nextButton).not.toBeDisabled();
 		});
 
 		it('shows other interest input when Others checkbox is selected', async () => {
@@ -232,26 +210,16 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			await waitFor(
-				() => {
-					expect(
-						screen.getByText(/what got you interested in signoz/i),
-					).toBeInTheDocument();
-				},
-				{ timeout: 5000 },
-			);
+			expect(
+				await screen.findByText(/what got you interested in signoz/i, {}),
+			).toBeInTheDocument();
 
 			const othersCheckbox = screen.getByLabelText(/^others$/i);
 			await user.click(othersCheckbox);
 
-			await waitFor(
-				() => {
-					expect(
-						screen.getByPlaceholderText(/please specify your interest/i),
-					).toBeInTheDocument();
-				},
-				{ timeout: 3000 },
-			);
+			expect(
+				await screen.findByPlaceholderText(/please specify your interest/i, {}),
+			).toBeInTheDocument();
 		});
 	});
 
@@ -268,15 +236,9 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			await waitFor(
-				// eslint-disable-next-line sonarjs/no-identical-functions
-				() => {
-					expect(
-						screen.getByPlaceholderText(/e\.g\., googling/i),
-					).toBeInTheDocument();
-				},
-				{ timeout: 5000 },
-			);
+			expect(
+				await screen.findByPlaceholderText(/e\.g\., googling/i, {}),
+			).toBeInTheDocument();
 
 			await user.type(
 				screen.getByPlaceholderText(/e\.g\., googling/i),
@@ -285,16 +247,16 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByLabelText(/lowering observability costs/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			await waitFor(
-				() => {
-					expect(
-						screen.getByText(/what does your scale approximately look like/i),
-					).toBeInTheDocument();
-					expect(screen.getByText(/logs \/ day/i)).toBeInTheDocument();
-					expect(screen.getByText(/number of services/i)).toBeInTheDocument();
-				},
-				{ timeout: 5000 },
-			);
+			expect(
+				await screen.findByText(
+					/what does your scale approximately look like/i,
+					{},
+				),
+			).toBeInTheDocument();
+			expect(await screen.findByText(/logs \/ day/i, {})).toBeInTheDocument();
+			expect(
+				await screen.findByText(/number of services/i, {}),
+			).toBeInTheDocument();
 		});
 
 		it('shows do later button', async () => {
@@ -309,15 +271,9 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			await waitFor(
-				// eslint-disable-next-line sonarjs/no-identical-functions
-				() => {
-					expect(
-						screen.getByPlaceholderText(/e\.g\., googling/i),
-					).toBeInTheDocument();
-				},
-				{ timeout: 5000 },
-			);
+			expect(
+				await screen.findByPlaceholderText(/e\.g\., googling/i, {}),
+			).toBeInTheDocument();
 
 			await user.type(
 				screen.getByPlaceholderText(/e\.g\., googling/i),
@@ -326,14 +282,9 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByLabelText(/lowering observability costs/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			await waitFor(
-				() => {
-					expect(
-						screen.getByRole('button', { name: /i'll do this later/i }),
-					).toBeInTheDocument();
-				},
-				{ timeout: 5000 },
-			);
+			expect(
+				await screen.findByRole('button', { name: /i'll do this later/i }),
+			).toBeInTheDocument();
 		});
 	});
 
@@ -367,12 +318,9 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(nextButton);
 
 			// Component should still be functional
-			await waitFor(
-				() => {
-					expect(nextButton).not.toBeDisabled();
-				},
-				{ timeout: 3000 },
-			);
+			await waitFor(() => {
+				expect(nextButton).not.toBeDisabled();
+			});
 		});
 	});
 });
