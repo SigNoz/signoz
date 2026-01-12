@@ -2,7 +2,6 @@ from http import HTTPStatus
 from typing import Callable, List
 
 import requests
-from sqlalchemy import sql
 from wiremock.resources.mappings import Mapping
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
