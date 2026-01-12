@@ -10,11 +10,7 @@ import GeneralDashboardSettings from './General';
 import PublicDashboardSetting from './PublicDashboard';
 import VariablesSetting from './Variables';
 
-function DashboardSettingsContent({
-	variableViewModeRef,
-}: {
-	variableViewModeRef: React.MutableRefObject<(() => void) | undefined>;
-}): JSX.Element {
+function DashboardSettingsContent(): JSX.Element {
 	const { user } = useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
@@ -63,7 +59,7 @@ function DashboardSettingsContent({
 				</Button>
 			),
 			key: 'variables',
-			children: <VariablesSetting variableViewModeRef={variableViewModeRef} />,
+			children: <VariablesSetting />,
 		},
 		...(enablePublicDashboard ? [publicDashboardItem] : []),
 	];

@@ -16,6 +16,7 @@ import { Button, Modal, Row, Space, Table, Typography } from 'antd';
 import { RowProps } from 'antd/lib';
 import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
+import { useOnOutOfViewport } from 'hooks/dashboard/useOnOutOfViewport';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Trash2 } from 'lucide-react';
@@ -77,11 +78,7 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 	);
 }
 
-function VariablesSetting({
-	variableViewModeRef,
-}: {
-	variableViewModeRef: React.MutableRefObject<(() => void) | undefined>;
-}): JSX.Element {
+function VariablesSetting(): JSX.Element {
 	const variableToDelete = useRef<IDashboardVariable | null>(null);
 	const [deleteVariableModal, setDeleteVariableModal] = useState(false);
 	const variableToApplyToAll = useRef<IDashboardVariable | null>(null);
@@ -117,6 +114,15 @@ function VariablesSetting({
 		setVariableEditData(null);
 	};
 
+	// Reset state when component moves out of viewport
+	const containerRef = useOnOutOfViewport({
+		onOutOfViewport: () => {
+			setVariableViewMode(null);
+			setVariableEditData(null);
+		},
+		enabled: variableViewMode !== null,
+	});
+
 	const onVariableViewModeEnter = (
 		viewType: TVariableMode,
 		varData: IDashboardVariable,
@@ -124,13 +130,6 @@ function VariablesSetting({
 		setVariableEditData(varData);
 		setVariableViewMode(viewType);
 	};
-
-	useEffect(() => {
-		if (variableViewModeRef) {
-			// eslint-disable-next-line no-param-reassign
-			variableViewModeRef.current = onDoneVariableViewMode;
-		}
-	}, [variableViewModeRef]);
 
 	const updateMutation = useUpdateDashboard();
 
@@ -413,7 +412,7 @@ function VariablesSetting({
 	};
 
 	return (
-		<>
+		<div ref={containerRef}>
 			{variableViewMode ? (
 				<VariableItem
 					variableData={{ ...variableEditData } as IDashboardVariable}
@@ -506,7 +505,7 @@ function VariablesSetting({
 					applicable.
 				</Typography.Text>
 			</Modal>
-		</>
+		</div>
 	);
 }
 

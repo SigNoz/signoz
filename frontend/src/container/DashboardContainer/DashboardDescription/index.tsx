@@ -12,6 +12,7 @@ import {
 	Typography,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -52,6 +53,7 @@ import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
 
 import DashboardGraphSlider from '../ComponentsSlider';
+import DashboardSettingsContent from '../DashboardSettings';
 import { Base64Icons } from '../DashboardSettings/General/utils';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
@@ -100,6 +102,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		setSelectedRowWidgetId,
 		handleDashboardLockToggle,
 	} = useDashboard();
+
+	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(
+		false,
+	);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
@@ -340,6 +346,14 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		publicDashboardResponse?.data,
 	]);
 
+	const onConfigureClick = useCallback((): void => {
+		setIsSettingsDrawerOpen(true);
+	}, []);
+
+	const onSettingsDrawerClose = useCallback((): void => {
+		setIsSettingsDrawerOpen(false);
+	}, []);
+
 	return (
 		<Card className="dashboard-description-container">
 			<div className="dashboard-header">
@@ -504,7 +518,24 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						/>
 					</Popover>
 					{!isDashboardLocked && editDashboard && (
-						<SettingsDrawer drawerTitle="Dashboard Configuration" />
+						<>
+							<Button
+								type="text"
+								className="configure-button"
+								icon={<ConfigureIcon />}
+								data-testid="show-drawer"
+								onClick={onConfigureClick}
+							>
+								Configure
+							</Button>
+							<SettingsDrawer
+								drawerTitle="Dashboard Configuration"
+								isOpen={isSettingsDrawerOpen}
+								onClose={onSettingsDrawerClose}
+							>
+								<DashboardSettingsContent />
+							</SettingsDrawer>
+						</>
 					)}
 					{!isDashboardLocked && addPanelPermission && (
 						<Button

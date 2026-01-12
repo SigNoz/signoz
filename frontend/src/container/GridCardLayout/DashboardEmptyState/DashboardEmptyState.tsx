@@ -4,11 +4,13 @@ import './DashboardEmptyState.styles.scss';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import SettingsDrawer from 'container/DashboardContainer/DashboardDescription/SettingsDrawer';
+import DashboardSettingsContent from 'container/DashboardContainer/DashboardSettings';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -19,6 +21,10 @@ export default function DashboardEmptyState(): JSX.Element {
 		handleToggleDashboardSlider,
 		setSelectedRowWidgetId,
 	} = useDashboard();
+
+	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(
+		false,
+	);
 
 	const { user } = useAppContext();
 	let permissions: ComponentTypes[] = ['add_panel'];
@@ -44,6 +50,15 @@ export default function DashboardEmptyState(): JSX.Element {
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [handleToggleDashboardSlider]);
+
+	const onConfigureClick = useCallback((): void => {
+		setIsSettingsDrawerOpen(true);
+	}, []);
+
+	const onSettingsDrawerClose = useCallback((): void => {
+		setIsSettingsDrawerOpen(false);
+	}, []);
+
 	return (
 		<section className="dashboard-empty-state">
 			<div className="dashboard-content">
@@ -77,7 +92,24 @@ export default function DashboardEmptyState(): JSX.Element {
 								Give it a name, add description, tags and variables
 							</Typography.Text>
 						</div>
-						<SettingsDrawer drawerTitle="Dashboard Configuration" />
+						{/* This Empty State needs to be consolidated. The SettingsDrawer should be global to the 
+						whole dashboard page instead of confined to this Empty State */}
+						<Button
+							type="text"
+							className="configure-button"
+							icon={<ConfigureIcon />}
+							data-testid="show-drawer"
+							onClick={onConfigureClick}
+						>
+							Configure
+						</Button>
+						<SettingsDrawer
+							drawerTitle="Dashboard Configuration"
+							isOpen={isSettingsDrawerOpen}
+							onClose={onSettingsDrawerClose}
+						>
+							<DashboardSettingsContent />
+						</SettingsDrawer>
 					</div>
 					<div className="actions-1">
 						<div className="actions-add-panel">

@@ -1,53 +1,34 @@
 import './Description.styles.scss';
 
-import { Button } from 'antd';
-import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
+import { Drawer } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { useRef, useState } from 'react';
+import { memo, PropsWithChildren, ReactElement } from 'react';
 
-import DashboardSettingsContent from '../DashboardSettings';
-import { DrawerContainer } from './styles';
+type SettingsDrawerProps = PropsWithChildren<{
+	drawerTitle: string;
+	isOpen: boolean;
+	onClose: () => void;
+}>;
 
-function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
-	const [visible, setVisible] = useState<boolean>(false);
-
-	const variableViewModeRef = useRef<() => void>();
-
-	const showDrawer = (): void => {
-		setVisible(true);
-	};
-
-	const handleClose = (): void => {
-		setVisible(false);
-		variableViewModeRef?.current?.();
-	};
-
+function SettingsDrawer({
+	children,
+	drawerTitle,
+	isOpen,
+	onClose,
+}: SettingsDrawerProps): JSX.Element {
 	return (
-		<>
-			<Button
-				type="text"
-				className="configure-button"
-				icon={<ConfigureIcon />}
-				data-testid="show-drawer"
-				onClick={showDrawer}
-			>
-				Configure
-			</Button>
-
-			<DrawerContainer
-				title={drawerTitle}
-				placement="right"
-				width="50%"
-				onClose={handleClose}
-				open={visible}
-				rootClassName="settings-container-root"
-			>
-				<OverlayScrollbar>
-					<DashboardSettingsContent variableViewModeRef={variableViewModeRef} />
-				</OverlayScrollbar>
-			</DrawerContainer>
-		</>
+		<Drawer
+			title={drawerTitle}
+			placement="right"
+			width="50%"
+			onClose={onClose}
+			open={isOpen}
+			rootClassName="settings-container-root"
+		>
+			{/* Need to type cast because of OverlayScrollbar type definition. We should be good once we remove it. */}
+			<OverlayScrollbar>{children as ReactElement}</OverlayScrollbar>
+		</Drawer>
 	);
 }
 
-export default SettingsDrawer;
+export default memo(SettingsDrawer);
