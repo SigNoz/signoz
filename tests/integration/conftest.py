@@ -18,6 +18,7 @@ pytest_plugins = [
     "fixtures.driver",
     "fixtures.idp",
     "fixtures.idputils",
+    "fixtures.alerts",
 ]
 
 

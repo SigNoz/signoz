@@ -6,7 +6,7 @@ authors = [{ name = "therealpandey", email = "vibhupandey28@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = [
     "pytest>=8.3.5",
-    "psycopg2>=2.9.10",
+    "psycopg2-binary>=2.9.10",
     "testcontainers[clickhouse,keycloak,postgres]>=4.13.1",
     "wiremock>=2.6.1",
     "numpy>=2.3.2",

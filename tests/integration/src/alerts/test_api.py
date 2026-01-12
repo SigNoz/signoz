@@ -18,6 +18,7 @@ def test_health(
 
 
 # poetry run pytest --basetemp=./tmp/ -vv --reuse src/alerts/test_api.py
+# uv run pytest --basetemp=./tmp/ -vv --reuse src/alerts/test_api.py::test_health
 
 # def test_create_and_get_public_dashboard(
 #     signoz: SigNoz,
