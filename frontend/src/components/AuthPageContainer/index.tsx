@@ -2,8 +2,8 @@ import './AuthPageContainer.styles.scss';
 
 import { PropsWithChildren } from 'react';
 
+import AuthFooter from './AuthFooter';
 import AuthHeader from './AuthHeader';
-import TrustBadgesFooter from './TrustBadgesFooter';
 
 type AuthPageContainerProps = PropsWithChildren<{
 	isOnboarding?: boolean;
@@ -28,7 +28,7 @@ function AuthPageContainer({
 				>
 					{children}
 				</main>
-				<TrustBadgesFooter />
+				<AuthFooter />
 			</div>
 		</div>
 	);
