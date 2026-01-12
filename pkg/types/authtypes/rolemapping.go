@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -16,18 +17,26 @@ type RoleMapping struct {
 	UseRoleAttribute bool `json:"useRoleAttribute"`
 }
 
-func (roleMapping *RoleMapping) Validate() error {
-	if roleMapping.DefaultRole != "" {
-		if _, err := types.NewRole(strings.ToUpper(roleMapping.DefaultRole)); err != nil {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid default role %s", roleMapping.DefaultRole)
+func (typ *RoleMapping) UnmarshalJSON(data []byte) error {
+	type Alias RoleMapping
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.DefaultRole != "" {
+		if _, err := types.NewRole(strings.ToUpper(temp.DefaultRole)); err != nil {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid default role %s", temp.DefaultRole)
 		}
 	}
 
-	for group, role := range roleMapping.GroupMappings {
+	for group, role := range temp.GroupMappings {
 		if _, err := types.NewRole(strings.ToUpper(role)); err != nil {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid role %s for group %s", role, group)
 		}
 	}
 
+	*typ = RoleMapping(temp)
 	return nil
 }
