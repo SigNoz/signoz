@@ -227,7 +227,7 @@ def _get_user_by_email(signoz: SigNoz, admin_token: str, email: str) -> dict:
 
 
 def _perform_saml_login(
-    signoz: SigNoz,
+    signoz: SigNoz, # pylint: disable=unused-argument
     driver: webdriver.Chrome,
     get_session_context: Callable[[str], str],
     idp_login: Callable[[str, str], None],
@@ -540,7 +540,7 @@ def test_saml_role_mapping_case_insensitive(
 
 def test_saml_name_mapping(
     signoz: SigNoz,
-    idp: TestContainerIDP,
+    idp: TestContainerIDP, # pylint: disable=unused-argument
     driver: webdriver.Chrome,
     create_user_idp: Callable[[str, str, bool, str, str], None],
     idp_login: Callable[[str, str], None],
@@ -564,7 +564,7 @@ def test_saml_name_mapping(
 
 def test_saml_empty_name_fallback(
     signoz: SigNoz,
-    idp: TestContainerIDP,
+    idp: TestContainerIDP, # pylint: disable=unused-argument
     driver: webdriver.Chrome,
     create_user_idp: Callable[[str, str, bool, str, str], None],
     idp_login: Callable[[str, str], None],

@@ -424,7 +424,7 @@ def create_group_idp(idp: types.TestContainerIDP) -> Callable[[str], str]:
 @pytest.fixture(name="create_user_idp_with_groups", scope="function")
 def create_user_idp_with_groups(
     idp: types.TestContainerIDP,
-    create_group_idp: Callable[[str], str],
+    create_group_idp: Callable[[str], str], # pylint: disable=redefined-outer-name
 ) -> Callable[[str, str, bool, List[str]], None]:
     """Creates a user in Keycloak IDP with specified groups."""
     client = KeycloakAdmin(
@@ -474,7 +474,7 @@ def create_user_idp_with_groups(
 @pytest.fixture(name="add_user_to_group", scope="function")
 def add_user_to_group(
     idp: types.TestContainerIDP,
-    create_group_idp: Callable[[str], str],
+    create_group_idp: Callable[[str], str], # pylint: disable=redefined-outer-name
 ) -> Callable[[str, str], None]:
     """Adds an existing user to a group."""
     client = KeycloakAdmin(
@@ -495,7 +495,7 @@ def add_user_to_group(
 @pytest.fixture(name="create_user_idp_with_role", scope="function")
 def create_user_idp_with_role(
     idp: types.TestContainerIDP,
-    create_group_idp: Callable[[str], str],
+    create_group_idp: Callable[[str], str], # pylint: disable=redefined-outer-name
 ) -> Callable[[str, str, bool, str, List[str]], None]:
     """Creates a user in Keycloak IDP with a custom role attribute and optional groups."""
     client = KeycloakAdmin(

@@ -160,7 +160,7 @@ def _get_user_by_email(signoz: SigNoz, admin_token: str, email: str) -> dict:
 
 
 def _perform_oidc_login(
-    signoz: SigNoz,
+    signoz: SigNoz, # pylint: disable=unused-argument
     idp: TestContainerIDP,
     driver: webdriver.Chrome,
     get_session_context: Callable[[str], str],
