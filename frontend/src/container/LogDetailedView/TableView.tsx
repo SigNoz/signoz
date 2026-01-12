@@ -92,6 +92,10 @@ function TableView({
 				}
 			});
 		}
+		// pin trace_id by default when present
+		if (logData?.trace_id) {
+			pinnedAttributes.trace_id = true;
+		}
 
 		setPinnedAttributes(pinnedAttributes);
 	}, [
