@@ -175,77 +175,77 @@ func (c *conditionBuilder) conditionFor(
 		}
 
 		var value any
-
-		var newColumns []*schema.Column
+		column := columns[0]
 		if len(key.Evolutions) > 0 {
 			// hardcoded for now, make it dynamic while supporting JSON
 			fieldName := "__all__"
 			// we will use the corresponding column and its evolution entry for the query
-			newColumns, _, err = selectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs, fieldName)
+			newColumns, _, err := selectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs, fieldName)
 			if err != nil {
 				return "", err
 			}
-		} else {
-			newColumns = columns
+			// this means the exists conditions are already taken care off, we don't need to add it
+			if len(newColumns) > 1 {
+				return "", nil
+			}
+			column = newColumns[0]
 		}
 
-		// get column evolution metadata
-		for _, column := range newColumns {
-			switch column.Type.GetType() {
-			case schema.ColumnTypeEnumJSON:
-				if operator == qbtypes.FilterOperatorExists {
-					return sb.IsNotNull(tblFieldName), nil
-				} else {
-					return sb.IsNull(tblFieldName), nil
-				}
-			case schema.ColumnTypeEnumLowCardinality:
-				switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
-				case schema.ColumnTypeEnumString:
-					value = ""
-					if operator == qbtypes.FilterOperatorExists {
-						return sb.NE(tblFieldName, value), nil
-					}
-					return sb.E(tblFieldName, value), nil
-				default:
-					return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
-				}
+		switch column.Type.GetType() {
+		case schema.ColumnTypeEnumJSON:
+			if operator == qbtypes.FilterOperatorExists {
+				return sb.IsNotNull(tblFieldName), nil
+			} else {
+				return sb.IsNull(tblFieldName), nil
+			}
+		case schema.ColumnTypeEnumLowCardinality:
+			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
 			case schema.ColumnTypeEnumString:
 				value = ""
 				if operator == qbtypes.FilterOperatorExists {
 					return sb.NE(tblFieldName, value), nil
-				} else {
-					return sb.E(tblFieldName, value), nil
 				}
-			case schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
-				value = 0
-				if operator == qbtypes.FilterOperatorExists {
-					return sb.NE(tblFieldName, value), nil
-				} else {
-					return sb.E(tblFieldName, value), nil
-				}
-			case schema.ColumnTypeEnumMap:
-				keyType := column.Type.(schema.MapColumnType).KeyType
-				if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-					return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
-				}
+				return sb.E(tblFieldName, value), nil
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+			}
+		case schema.ColumnTypeEnumString:
+			value = ""
+			if operator == qbtypes.FilterOperatorExists {
+				return sb.NE(tblFieldName, value), nil
+			} else {
+				return sb.E(tblFieldName, value), nil
+			}
+		case schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
+			value = 0
+			if operator == qbtypes.FilterOperatorExists {
+				return sb.NE(tblFieldName, value), nil
+			} else {
+				return sb.E(tblFieldName, value), nil
+			}
+		case schema.ColumnTypeEnumMap:
+			keyType := column.Type.(schema.MapColumnType).KeyType
+			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
+			}
 
-				switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
-				case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
-					leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
-					if key.Materialized {
-						leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
-					}
-					if operator == qbtypes.FilterOperatorExists {
-						return sb.E(leftOperand, true), nil
-					} else {
-						return sb.NE(leftOperand, true), nil
-					}
-				default:
-					return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
+			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
+				leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
+				if key.Materialized {
+					leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+				}
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.E(leftOperand, true), nil
+				} else {
+					return sb.NE(leftOperand, true), nil
 				}
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
 			}
+		default:
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
+
 		}
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
