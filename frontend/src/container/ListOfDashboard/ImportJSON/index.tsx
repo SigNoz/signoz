@@ -151,7 +151,10 @@ function ImportJSON({
 			wrapClassName="import-json-modal"
 			open={isImportJSONModalVisible}
 			centered
-			closable={false}
+			closable
+			keyboard
+			maskClosable
+			onCancel={onCancelHandler}
 			destroyOnClose
 			width="60vw"
 			footer={
