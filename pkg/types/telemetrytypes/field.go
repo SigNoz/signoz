@@ -65,10 +65,36 @@ func (f TelemetryFieldKey) Text() string {
 //	key.Normalize()
 //	// Result: Name: "service.name", FieldContext: FieldContextResource, FieldDataType: FieldDataTypeString
 func (f *TelemetryFieldKey) Normalize() {
-	normalizedKeyText := GetFieldKeyFromKeyText(f.Text())
-	f.Name = normalizedKeyText.Name
-	f.FieldContext = normalizedKeyText.FieldContext
-	f.FieldDataType = normalizedKeyText.FieldDataType
+
+	// Step 1: Parse data type from the right (after the last ":") if not already specified
+	if f.FieldDataType == FieldDataTypeUnspecified {
+		if colonIdx := strings.LastIndex(f.Name, ":"); colonIdx != -1 {
+			potentialDataType := f.Name[colonIdx+1:]
+			if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
+				f.FieldDataType = dt
+				f.Name = f.Name[:colonIdx]
+			}
+		}
+	}
+
+	// Step 2: Parse field context from the left if not already specified
+	if f.FieldContext == FieldContextUnspecified {
+		if dotIdx := strings.Index(f.Name, "."); dotIdx != -1 {
+			potentialContext := f.Name[:dotIdx]
+			if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
+				f.Name = f.Name[dotIdx+1:]
+				f.FieldContext = fc
+
+				// Step 2a: Handle special case for log.body.* fields
+				if f.FieldContext == FieldContextLog && strings.HasPrefix(f.Name, BodyJSONStringSearchPrefix) {
+					f.FieldContext = FieldContextBody
+					f.Name = strings.TrimPrefix(f.Name, BodyJSONStringSearchPrefix)
+				}
+
+			}
+		}
+	}
+
 }
 
 // GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
