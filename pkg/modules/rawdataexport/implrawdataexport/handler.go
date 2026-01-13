@@ -227,7 +227,7 @@ func (handler *handler) exportTraces(rw http.ResponseWriter, r *http.Request) {
 			}
 
 		default:
-			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query %d has unsupported type: %s", i, compositeQueries[i].Type.String()))
+			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query %d has unsupported type: %s", i, compositeQueries[i].Type.StringValue()))
 			return
 		}
 

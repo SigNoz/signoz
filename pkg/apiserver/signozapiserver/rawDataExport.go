@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types/promotetypes"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/gorilla/mux"
 )
 
@@ -14,7 +14,7 @@ func (provider *provider) addRawDataExportRoutes(router *mux.Router) error {
 		Tags:                []string{"logs", "traces"},
 		Summary:             "Export raw data",
 		Description:         "This endpoints allows exporting raw data for traces and logs",
-		Request:             new([]*promotetypes.PromotePath),
+		Request:             new(types.ExportRawDataQueryParams),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "application/json",

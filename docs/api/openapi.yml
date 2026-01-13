@@ -610,11 +610,15 @@ paths:
   /api/v1/export_raw_data:
     get:
       deprecated: false
-      description: This endpoints promotes and indexes paths
-      operationId: HandlePromoteAndIndexPaths
+      description: This endpoints allows exporting raw data for traces and logs
+      operationId: HandleExportRawData
       responses:
-        "201":
-          description: Created
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
         "400":
           content:
             application/json:
@@ -627,9 +631,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
-      summary: Promote and index paths
+      summary: Export raw data
       tags:
       - logs
+      - traces
   /api/v1/getResetPasswordToken/{id}:
     get:
       deprecated: false
