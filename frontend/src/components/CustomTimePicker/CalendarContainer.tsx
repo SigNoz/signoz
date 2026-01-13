@@ -4,7 +4,6 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { CalendarIcon, Check, X } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { useState } from 'react';
 
 import { DateRange } from './CustomTimePickerPopoverContent';
 
@@ -20,7 +19,6 @@ function CalendarContainer({
 	onApply: () => void;
 }): JSX.Element {
 	const { timezone } = useTimezone();
-	const [range, setRange] = useState<DateRange | undefined>(dateRange);
 
 	// this is to override the default behavior of the shadcn calendar component
 	// if a range is already selected, clicking on a date will reset selection and set the new date as the start date
@@ -33,26 +31,21 @@ function CalendarContainer({
 		}
 
 		// No dates selected → start new
-		if (!range?.from) {
-			setRange({ from: clickedDate });
+		if (!dateRange?.from) {
 			onSelectDateRange({ from: clickedDate });
 			return;
 		}
 
 		// Only start selected → complete the range
-		if (range.from && !range.to) {
-			if (clickedDate < range.from) {
-				setRange({ from: clickedDate, to: range.from });
-				onSelectDateRange({ from: clickedDate, to: range.from });
+		if (dateRange.from && !dateRange.to) {
+			if (clickedDate < dateRange.from) {
+				onSelectDateRange({ from: clickedDate, to: dateRange.from });
 			} else {
-				setRange({ from: range.from, to: clickedDate });
-				onSelectDateRange({ from: range.from, to: clickedDate });
+				onSelectDateRange({ from: dateRange.from, to: clickedDate });
 			}
 			return;
 		}
 
-		// Full range already selected → RESET
-		setRange({ from: clickedDate, to: undefined });
 		onSelectDateRange({ from: clickedDate, to: undefined });
 	};
 
@@ -75,8 +68,8 @@ function CalendarContainer({
 				<Calendar
 					mode="range"
 					required
-					defaultMonth={range?.from}
-					selected={range}
+					defaultMonth={dateRange?.from}
+					selected={dateRange}
 					disabled={{
 						after: dayjs().toDate(),
 					}}
