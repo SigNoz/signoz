@@ -6,7 +6,6 @@ import (
 	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -33,7 +32,7 @@ func (i *PromotePath) ValidateAndSetDefaults() error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path cannot contain spaces")
 	}
 
-	if strings.Contains(i.Path, telemetrylogs.ArraySep) || strings.Contains(i.Path, telemetrylogs.ArrayAnyIndex) {
+	if strings.Contains(i.Path, telemetrytypes.ArraySep) || strings.Contains(i.Path, telemetrytypes.ArrayAnyIndex) {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "array paths can not be promoted or indexed")
 	}
 
@@ -41,12 +40,12 @@ func (i *PromotePath) ValidateAndSetDefaults() error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "`%s`, `%s` don't add these prefixes to the path", constants.BodyJSONColumnPrefix, constants.BodyPromotedColumnPrefix)
 	}
 
-	if !strings.HasPrefix(i.Path, telemetrylogs.BodyJSONStringSearchPrefix) {
+	if !strings.HasPrefix(i.Path, telemetrytypes.BodyJSONStringSearchPrefix) {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must start with `body.`")
 	}
 
 	// remove the "body." prefix from the path
-	i.Path = strings.TrimPrefix(i.Path, telemetrylogs.BodyJSONStringSearchPrefix)
+	i.Path = strings.TrimPrefix(i.Path, telemetrytypes.BodyJSONStringSearchPrefix)
 
 	isCardinal := keycheck.IsCardinal(i.Path)
 	if isCardinal {

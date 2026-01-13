@@ -43,7 +43,6 @@ type resourceFilterStatementBuilder[T any] struct {
 	signal           telemetrytypes.Signal
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
-	jsonBodyPrefix string
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 }
 
@@ -76,7 +75,6 @@ func NewLogResourceFilterStatementBuilder(
 	conditionBuilder qbtypes.ConditionBuilder,
 	metadataStore telemetrytypes.MetadataStore,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
-	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *resourceFilterStatementBuilder[qbtypes.LogAggregation] {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter")
@@ -87,7 +85,6 @@ func NewLogResourceFilterStatementBuilder(
 		metadataStore:    metadataStore,
 		signal:           telemetrytypes.SignalLogs,
 		fullTextColumn:   fullTextColumn,
-		jsonBodyPrefix:   jsonBodyPrefix,
 		jsonKeyToKey:     jsonKeyToKey,
 	}
 }
@@ -100,12 +97,18 @@ func (b *resourceFilterStatementBuilder[T]) getKeySelectors(query qbtypes.QueryB
 		keySelectors = append(keySelectors, whereClauseSelectors...)
 	}
 
+	// exclude out the body related key selectors
+	filteredKeySelectors := []*telemetrytypes.FieldKeySelector{}
 	for idx := range keySelectors {
+		if keySelectors[idx].FieldContext == telemetrytypes.FieldContextBody {
+			continue
+		}
 		keySelectors[idx].Signal = b.signal
 		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
+		filteredKeySelectors = append(filteredKeySelectors, keySelectors[idx])
 	}
 
-	return keySelectors
+	return filteredKeySelectors
 }
 
 // Build builds a SQL query based on the given parameters
@@ -168,7 +171,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			// there is no need for "key" not found error for resource filtering
 			IgnoreNotFoundKeys: true,
 			Variables:          variables,
-        }, start, end)
+		}, start, end)
 
 		if err != nil {
 			return err

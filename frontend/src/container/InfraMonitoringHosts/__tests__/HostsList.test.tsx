@@ -17,7 +17,7 @@ jest.mock('lib/getMinMax', () => ({
 	default: jest.fn().mockImplementation(() => ({
 		minTime: 1713734400000,
 		maxTime: 1713738000000,
-		isValidTimeFormat: jest.fn().mockReturnValue(true),
+		isValidShortHandDateTimeFormat: jest.fn().mockReturnValue(true),
 	})),
 }));
 jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({

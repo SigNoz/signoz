@@ -3,6 +3,8 @@ import {
 	useGetMetrics,
 } from 'container/MetricsExplorer/Explorer/utils';
 import { useEffect, useMemo, useState } from 'react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { MetricAggregation } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -12,6 +14,19 @@ interface UseGetYAxisUnitResult {
 	yAxisUnit: string | undefined;
 	isLoading: boolean;
 	isError: boolean;
+}
+
+function getMetricNameFromQueryData(queryData: IBuilderQuery): string | null {
+	if (queryData.dataSource !== DataSource.METRICS) {
+		return null;
+	}
+	if (queryData.aggregateAttribute?.key) {
+		return queryData.aggregateAttribute?.key;
+	}
+	if (queryData.aggregations?.length && queryData.aggregations.length > 0) {
+		return (queryData.aggregations?.[0] as MetricAggregation)?.metricName;
+	}
+	return null;
 }
 
 /**
@@ -45,19 +60,18 @@ function useGetYAxisUnit(
 		// If a selected query name is provided, return the metric name for that query only
 		if (selectedQueryName) {
 			stagedQuery?.builder?.queryData?.forEach((query) => {
-				if (
-					query.queryName === selectedQueryName &&
-					query.aggregateAttribute?.key
-				) {
-					currentMetricNames.push(query.aggregateAttribute?.key);
+				const metricName = getMetricNameFromQueryData(query);
+				if (query.queryName === selectedQueryName && metricName) {
+					currentMetricNames.push(metricName);
 				}
 			});
 			return currentMetricNames.length ? currentMetricNames : null;
 		}
 		// Else, return all metric names
 		stagedQuery?.builder?.queryData?.forEach((query) => {
-			if (query.aggregateAttribute?.key) {
-				currentMetricNames.push(query.aggregateAttribute?.key);
+			const metricName = getMetricNameFromQueryData(query);
+			if (metricName) {
+				currentMetricNames.push(metricName);
 			}
 		});
 		return currentMetricNames.length ? currentMetricNames : null;
