@@ -1387,9 +1387,10 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 
 	// see Timestamps on base_rule
 	evalWindowMs := int64(5 * 60 * 1000) // 5 minutes in ms
+	lookBackDeltaMs := int64(60 * 1000)  // 1 minute in ms
 	evalTimeMs := evalTime.UnixMilli()
-	queryStart := ((evalTimeMs-2*evalWindowMs)/60000)*60000 + 1 // truncate to minute + 1ms
-	queryEnd := (evalTimeMs / 60000) * 60000                    // truncate to minute
+	queryStart := ((evalTimeMs-evalWindowMs-lookBackDeltaMs)/60000)*60000 + 1 // truncate to minute + 1ms
+	queryEnd := (evalTimeMs / 60000) * 60000                                  // truncate to minute
 
 	type sample struct {
 		timestamp time.Time
@@ -1451,11 +1452,11 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 		{
 			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=insufficient",
 			requireMinPoints:  true,
-			requiredNumPoints: 4,
+			requiredNumPoints: 2,
 			values: []sample{
-				{baseTime, 100.0},
-				{baseTime.Add(1 * time.Minute), 150.0},
-				{baseTime.Add(2 * time.Minute), 250.0},
+				{baseTime.Add(-10 * time.Minute), 100.0},
+				{baseTime.Add(-7 * time.Minute), 150.0},
+				{baseTime.Add(-6 * time.Minute), 250.0},
 			},
 			target:       200,
 			expectAlerts: 0,
@@ -1515,7 +1516,12 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 		}
 
 		t.Run(c.description, func(t *testing.T) {
-			promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore)
+			promProvider := prometheustest.New(
+				context.Background(),
+				instrumentationtest.New().ToProviderSettings(),
+				prometheus.Config{LookbackDelta: time.Minute},
+				telemetryStore,
+			)
 			defer func() {
 				_ = promProvider.Close()
 			}()
@@ -1525,8 +1531,7 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 			require.NoError(t, err)
 
-			ctx := context.Background()
-			alertsFound, err := rule.Eval(ctx, evalTime)
+			alertsFound, err := rule.Eval(context.Background(), evalTime)
 			require.NoError(t, err)
 
 			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
