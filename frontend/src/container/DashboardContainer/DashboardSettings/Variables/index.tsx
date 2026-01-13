@@ -14,9 +14,9 @@ import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Modal, Row, Space, Table, Typography } from 'antd';
 import { RowProps } from 'antd/lib';
+import { VariablesSettingsTabHandle } from 'container/DashboardContainer/DashboardDescription/types';
 import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
-import { useOnOutOfViewport } from 'hooks/dashboard/useOnOutOfViewport';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Trash2 } from 'lucide-react';
@@ -78,7 +78,11 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 	);
 }
 
-function VariablesSetting(): JSX.Element {
+function VariablesSettings({
+	variablesSettingsTabHandle,
+}: {
+	variablesSettingsTabHandle: VariablesSettingsTabHandle;
+}): JSX.Element {
 	const variableToDelete = useRef<IDashboardVariable | null>(null);
 	const [deleteVariableModal, setDeleteVariableModal] = useState(false);
 	const variableToApplyToAll = useRef<IDashboardVariable | null>(null);
@@ -114,15 +118,6 @@ function VariablesSetting(): JSX.Element {
 		setVariableEditData(null);
 	};
 
-	// Reset state when component moves out of viewport
-	const containerRef = useOnOutOfViewport({
-		onOutOfViewport: () => {
-			setVariableViewMode(null);
-			setVariableEditData(null);
-		},
-		enabled: variableViewMode !== null,
-	});
-
 	const onVariableViewModeEnter = (
 		viewType: TVariableMode,
 		varData: IDashboardVariable,
@@ -130,6 +125,15 @@ function VariablesSetting(): JSX.Element {
 		setVariableEditData(varData);
 		setVariableViewMode(viewType);
 	};
+
+	useEffect(() => {
+		if (!variablesSettingsTabHandle) return;
+
+		// eslint-disable-next-line no-param-reassign
+		variablesSettingsTabHandle.current = {
+			resetState: onDoneVariableViewMode,
+		};
+	}, [variablesSettingsTabHandle]);
 
 	const updateMutation = useUpdateDashboard();
 
@@ -412,7 +416,7 @@ function VariablesSetting(): JSX.Element {
 	};
 
 	return (
-		<div ref={containerRef}>
+		<>
 			{variableViewMode ? (
 				<VariableItem
 					variableData={{ ...variableEditData } as IDashboardVariable}
@@ -505,8 +509,8 @@ function VariablesSetting(): JSX.Element {
 					applicable.
 				</Typography.Text>
 			</Modal>
-		</div>
+		</>
 	);
 }
 
-export default VariablesSetting;
+export default VariablesSettings;

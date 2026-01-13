@@ -41,7 +41,7 @@ import {
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
@@ -53,10 +53,11 @@ import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
 
 import DashboardGraphSlider from '../ComponentsSlider';
-import DashboardSettingsContent from '../DashboardSettings';
+import DashboardSettings from '../DashboardSettings';
 import { Base64Icons } from '../DashboardSettings/General/utils';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
+import { VariablesSettingsTab } from './types';
 import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
 
 interface DashboardDescriptionProps {
@@ -103,6 +104,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		handleDashboardLockToggle,
 	} = useDashboard();
 
+	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
 	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(
 		false,
 	);
@@ -352,6 +354,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const onSettingsDrawerClose = useCallback((): void => {
 		setIsSettingsDrawerOpen(false);
+		// good use case for a state library like Jotai
+		if (variablesSettingsTabHandle.current) {
+			variablesSettingsTabHandle.current.resetState();
+		}
 	}, []);
 
 	return (
@@ -533,7 +539,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 								isOpen={isSettingsDrawerOpen}
 								onClose={onSettingsDrawerClose}
 							>
-								<DashboardSettingsContent />
+								<DashboardSettings
+									variablesSettingsTabHandle={variablesSettingsTabHandle}
+								/>
 							</SettingsDrawer>
 						</>
 					)}

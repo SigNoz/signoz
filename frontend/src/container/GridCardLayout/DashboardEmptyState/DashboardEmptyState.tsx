@@ -6,11 +6,12 @@ import { Button, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import SettingsDrawer from 'container/DashboardContainer/DashboardDescription/SettingsDrawer';
-import DashboardSettingsContent from 'container/DashboardContainer/DashboardSettings';
+import { VariablesSettingsTab } from 'container/DashboardContainer/DashboardDescription/types';
+import DashboardSettings from 'container/DashboardContainer/DashboardSettings';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -22,6 +23,7 @@ export default function DashboardEmptyState(): JSX.Element {
 		setSelectedRowWidgetId,
 	} = useDashboard();
 
+	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
 	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(
 		false,
 	);
@@ -108,7 +110,9 @@ export default function DashboardEmptyState(): JSX.Element {
 							isOpen={isSettingsDrawerOpen}
 							onClose={onSettingsDrawerClose}
 						>
-							<DashboardSettingsContent />
+							<DashboardSettings
+								variablesSettingsTabHandle={variablesSettingsTabHandle}
+							/>
 						</SettingsDrawer>
 					</div>
 					<div className="actions-1">
