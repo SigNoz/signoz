@@ -6,6 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	pql "github.com/prometheus/prometheus/promql"
+	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
@@ -14,11 +20,8 @@ import (
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	pql "github.com/prometheus/prometheus/promql"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
-	"github.com/stretchr/testify/assert"
 )
 
 func getVectorValues(vectors []ruletypes.Sample) []float64 {
@@ -961,7 +964,7 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Duration(time.Second), nil, nil, options)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
@@ -1077,7 +1080,7 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Duration(time.Second), nil, nil, options)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
@@ -1309,7 +1312,7 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Duration(time.Second), nil, nil, options)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
@@ -1339,5 +1342,194 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 		}
 
 		promProvider.Close()
+	}
+}
+
+func TestPromRuleEval_RequireMinPoints(t *testing.T) {
+	// fixed base time for deterministic tests
+	baseTime := time.Unix(1700000000, 0)
+	evalTime := baseTime.Add(5 * time.Minute)
+
+	postableRule := ruletypes.PostableRule{
+		AlertName: "Unit test",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeProm,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompareOp: ruletypes.ValueIsAbove,
+			MatchType: ruletypes.AtleastOnce,
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {Query: "test_metric"},
+				},
+			},
+		},
+	}
+
+	// time_series_v4 cols of interest
+	fingerprintCols := []cmock.ColumnType{
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "any(labels)", Type: "String"},
+	}
+
+	// samples_v4 columns
+	samplesCols := []cmock.ColumnType{
+		{Name: "metric_name", Type: "String"},
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "unix_milli", Type: "Int64"},
+		{Name: "value", Type: "Float64"},
+		{Name: "flags", Type: "UInt32"},
+	}
+
+	// see Timestamps on base_rule
+	evalWindowMs := int64(5 * 60 * 1000) // 5 minutes in ms
+	evalTimeMs := evalTime.UnixMilli()
+	queryStart := ((evalTimeMs-2*evalWindowMs)/60000)*60000 + 1 // truncate to minute + 1ms
+	queryEnd := (evalTimeMs / 60000) * 60000                    // truncate to minute
+
+	type sample struct {
+		timestamp time.Time
+		value     float64
+	}
+	cases := []struct {
+		description       string
+		requireMinPoints  bool
+		requiredNumPoints int
+		values            []sample
+		target            float64
+		expectAlerts      int
+	}{
+		{
+			description:      "AlertCondition=false, RequireMinPoints=false",
+			requireMinPoints: false,
+			values: []sample{
+				{baseTime, 100.0},
+				{baseTime.Add(1 * time.Minute), 150.0},
+			},
+			target:       200,
+			expectAlerts: 0,
+		},
+		{
+			description:      "AlertCondition=true, RequireMinPoints=false",
+			requireMinPoints: false,
+			values: []sample{
+				{baseTime, 100.0},
+				{baseTime.Add(1 * time.Minute), 150.0},
+				{baseTime.Add(2 * time.Minute), 250.0},
+			},
+			target:       200,
+			expectAlerts: 1,
+		},
+		{
+			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=more_than_required",
+			requireMinPoints:  true,
+			requiredNumPoints: 2,
+			values: []sample{
+				{baseTime, 100.0},
+				{baseTime.Add(1 * time.Minute), 150.0},
+				{baseTime.Add(2 * time.Minute), 250.0},
+			},
+			target:       200,
+			expectAlerts: 1,
+		},
+		{
+			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=same_as_required",
+			requireMinPoints:  true,
+			requiredNumPoints: 3,
+			values: []sample{
+				{baseTime, 100.0},
+				{baseTime.Add(1 * time.Minute), 150.0},
+				{baseTime.Add(2 * time.Minute), 250.0},
+			},
+			target:       200,
+			expectAlerts: 1,
+		},
+		{
+			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=insufficient",
+			requireMinPoints:  true,
+			requiredNumPoints: 4,
+			values: []sample{
+				{baseTime, 100.0},
+				{baseTime.Add(1 * time.Minute), 150.0},
+				{baseTime.Add(2 * time.Minute), 250.0},
+			},
+			target:       200,
+			expectAlerts: 0,
+		},
+		{
+			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=zero",
+			requireMinPoints:  true,
+			requiredNumPoints: 4,
+			values:            []sample{},
+			target:            200,
+			expectAlerts:      0,
+		},
+	}
+
+	logger := instrumentationtest.New().Logger()
+
+	for idx, c := range cases {
+		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+
+		// single fingerprint with labels JSON
+		fingerprint := uint64(12345)
+		labelsJSON := `{"__name__":"test_metric"}`
+		fingerprintData := [][]any{
+			{fingerprint, labelsJSON},
+		}
+		//// args: $1=metric_name, $2=label_name, $3=label_value
+		telemetryStore.Mock().
+			ExpectQuery("SELECT fingerprint, any").
+			WithArgs("test_metric", "__name__", "test_metric").
+			WillReturnRows(cmock.NewRows(fingerprintCols, fingerprintData))
+
+		// create samples data from test case values
+		samplesData := make([][]any, len(c.values))
+		for i, v := range c.values {
+			samplesData[i] = []any{"test_metric", fingerprint, v.timestamp.UnixMilli(), v.value, 0}
+		}
+		// args: $1=metric_name (outer), $2=metric_name (subquery), $3=label_name, $4=label_value, $5=start, $6=end
+		telemetryStore.Mock().
+			ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
+			WithArgs("test_metric", "test_metric", "__name__", "test_metric", queryStart, queryEnd).
+			WillReturnRows(cmock.NewRows(samplesCols, samplesData))
+
+		rc := postableRule.RuleCondition
+		rc.RequireMinPoints = c.requireMinPoints
+		rc.RequiredNumPoints = c.requiredNumPoints
+		rc.Target = &c.target
+		rc.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					Name:        postableRule.AlertName,
+					TargetValue: &c.target,
+					MatchType:   rc.MatchType,
+					CompareOp:   rc.CompareOp,
+				},
+			},
+		}
+
+		t.Run(c.description, func(t *testing.T) {
+			promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore)
+			defer func() {
+				_ = promProvider.Close()
+			}()
+
+			options := clickhouseReader.NewOptions("primaryNamespace")
+			reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
+			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
+			require.NoError(t, err)
+
+			ctx := context.Background()
+			alertsFound, err := rule.Eval(ctx, evalTime)
+			require.NoError(t, err)
+
+			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
+		})
 	}
 }
