@@ -93,7 +93,7 @@ func TestGetFieldKeyFromKeyText(t *testing.T) {
 			},
 		},
 		// Test case for log.body. with data type
-		{	
+		{
 			keyText: "log.body.status_code:int",
 			expected: TelemetryFieldKey{
 				Name:          "status_code",
