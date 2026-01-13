@@ -40,6 +40,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		settings:   settings,
 		config:     config,
 		httpClient: httpClient,
+		licensing:  licensing,
 	}, nil
 }
 
