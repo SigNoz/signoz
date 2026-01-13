@@ -8,10 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
-var (
-	ErrCodeInvalidGatewayConfig = errors.MustNewCode("invalid_gateway_config")
-)
-
 type Config struct {
 	URL *url.URL `mapstructure:"url"`
 }
