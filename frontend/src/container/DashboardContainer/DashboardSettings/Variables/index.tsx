@@ -14,7 +14,8 @@ import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Modal, Row, Space, Table, Typography } from 'antd';
 import { RowProps } from 'antd/lib';
-import { convertVariablesToDbFormat } from 'container/NewDashboard/DashboardVariablesSelection/util';
+import { VariablesSettingsTabHandle } from 'container/DashboardContainer/DashboardDescription/types';
+import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
@@ -77,10 +78,10 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 	);
 }
 
-function VariablesSetting({
-	variableViewModeRef,
+function VariablesSettings({
+	variablesSettingsTabHandle,
 }: {
-	variableViewModeRef: React.MutableRefObject<(() => void) | undefined>;
+	variablesSettingsTabHandle: VariablesSettingsTabHandle;
 }): JSX.Element {
 	const variableToDelete = useRef<IDashboardVariable | null>(null);
 	const [deleteVariableModal, setDeleteVariableModal] = useState(false);
@@ -126,11 +127,13 @@ function VariablesSetting({
 	};
 
 	useEffect(() => {
-		if (variableViewModeRef) {
-			// eslint-disable-next-line no-param-reassign
-			variableViewModeRef.current = onDoneVariableViewMode;
-		}
-	}, [variableViewModeRef]);
+		if (!variablesSettingsTabHandle) return;
+
+		// eslint-disable-next-line no-param-reassign
+		variablesSettingsTabHandle.current = {
+			resetState: onDoneVariableViewMode,
+		};
+	}, [variablesSettingsTabHandle]);
 
 	const updateMutation = useUpdateDashboard();
 
@@ -510,4 +513,4 @@ function VariablesSetting({
 	);
 }
 
-export default VariablesSetting;
+export default VariablesSettings;

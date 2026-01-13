@@ -40,4 +40,13 @@ type MetadataStore interface {
 
 	// PromotePaths promotes the paths.
 	PromotePaths(ctx context.Context, paths ...string) error
+
+	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
+	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)
+}
+
+type MetricMetadataLookupKey struct {
+	MetricName     string
+	AttributeName  string
+	AttributeValue string
 }
