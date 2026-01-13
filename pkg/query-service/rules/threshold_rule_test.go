@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -2079,19 +2080,14 @@ func TestThresholdEval_RequireMinPoints(t *testing.T) {
 						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
 						AggregateOperator:  v3.AggregateOperatorSumRate,
+						SpaceAggregation:   v3.SpaceAggregationSum,
+						TimeAggregation:    v3.TimeAggregationRate,
 						DataSource:         v3.DataSourceMetrics,
 						Expression:         "A",
 					},
 				},
 			},
 		},
-	}
-	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
-
-	cols := []cmock.ColumnType{
-		{Name: "value", Type: "Float64"},
-		{Name: "attr", Type: "String"},
-		{Name: "timestamp", Type: "DateTime"},
 	}
 
 	cases := []struct {
@@ -2169,53 +2165,75 @@ func TestThresholdEval_RequireMinPoints(t *testing.T) {
 		},
 	}
 
-	logger := instrumentationtest.New().Logger()
+	validateMetricNameColumns := []cmock.ColumnType{
+		{Name: "metric_name", Type: "String"},
+		{Name: "toUInt8(__normalized)", Type: "UInt8"},
+	}
+	dataColumns := []cmock.ColumnType{
+		{Name: "value", Type: "Float64"},
+		{Name: "attr", Type: "String"},
+		{Name: "timestamp", Type: "DateTime"},
+	}
 
-	for idx, c := range cases {
-		telemetryStore.Mock().
-			ExpectQuery("SELECT any").
-			WillReturnRows(cmock.NewRows(cols, c.values))
+	// TODO: handle tests for v5
+	for _, version := range []string{"v3", "v4"} {
+		postableRule.Version = version
 
-		rc := postableRule.RuleCondition
-		rc.Target = &c.target
-		rc.RequireMinPoints = c.requireMinPoints
-		rc.RequiredNumPoints = c.requiredNumPoints
-		rc.Thresholds = &ruletypes.RuleThresholdData{
-			Kind: ruletypes.BasicThresholdKind,
-			Spec: ruletypes.BasicRuleThresholds{
-				{
-					Name:        postableRule.AlertName,
-					TargetValue: &c.target,
-					MatchType:   rc.MatchType,
-					CompareOp:   rc.CompareOp,
+		for idx, c := range cases {
+			logger := instrumentationtest.New().Logger()
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+			if version == "v4" {
+				telemetryStore.Mock().
+					ExpectQuery("SELECT metric_name, toUInt8(__normalized) .*").
+					WillReturnRows(cmock.NewRows(validateMetricNameColumns, [][]any{{"signoz_calls_total", 1}}))
+			}
+			telemetryStore.Mock().
+				ExpectQuery("SELECT any").
+				WillReturnRows(cmock.NewRows(dataColumns, c.values))
+
+			rc := postableRule.RuleCondition
+			rc.Target = &c.target
+			rc.RequireMinPoints = c.requireMinPoints
+			rc.RequiredNumPoints = c.requiredNumPoints
+			rc.Thresholds = &ruletypes.RuleThresholdData{
+				Kind: ruletypes.BasicThresholdKind,
+				Spec: ruletypes.BasicRuleThresholds{
+					{
+						Name:        postableRule.AlertName,
+						TargetValue: &c.target,
+						MatchType:   rc.MatchType,
+						CompareOp:   rc.CompareOp,
+					},
 				},
-			},
-		}
-
-		options := clickhouseReader.NewOptions("primaryNamespace")
-		readerCache, err := cachetest.New(
-			cache.Config{
-				Provider: "memory",
-				Memory: cache.Memory{
-					NumCounters: 10 * 1000,
-					MaxCost:     1 << 26,
-				},
-			},
-		)
-		require.NoError(t, err)
-		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Second, nil, readerCache, options)
-
-		t.Run(c.description, func(t *testing.T) {
-			rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
-			require.NoError(t, err)
-			rule.TemporalityMap = map[string]map[v3.Temporality]bool{
-				"signoz_calls_total": {v3.Delta: true},
 			}
 
-			alertsFound, err := rule.Eval(context.Background(), time.Now())
+			options := clickhouseReader.NewOptions("primaryNamespace")
+			readerCache, err := cachetest.New(
+				cache.Config{
+					Provider: "memory",
+					Memory: cache.Memory{
+						NumCounters: 10 * 1000,
+						MaxCost:     1 << 26,
+					},
+				},
+			)
 			require.NoError(t, err)
 
-			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
-		})
+			prometheusProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore)
+			reader := clickhouseReader.NewReader(nil, telemetryStore, prometheusProvider, "", time.Second, nil, readerCache, options)
+
+			t.Run(fmt.Sprintf("%d Version=%s, %s", idx, "vv", c.description), func(t *testing.T) {
+				rule, err := NewThresholdRule("some-id", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
+				require.NoError(t, err)
+				rule.TemporalityMap = map[string]map[v3.Temporality]bool{
+					"signoz_calls_total": {v3.Delta: true},
+				}
+
+				alertsFound, err := rule.Eval(context.Background(), time.Now())
+				require.NoError(t, err)
+
+				assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
+			})
+		}
 	}
 }
