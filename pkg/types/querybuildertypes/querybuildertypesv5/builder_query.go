@@ -159,4 +159,14 @@ func (q *QueryBuilderQuery[T]) Normalize() {
 		q.Order[idx].Key.Normalize()
 	}
 
+	// normalize secondary aggregations
+	for idx := range q.SecondaryAggregations {
+		for jdx := range q.SecondaryAggregations[idx].Order {
+			q.SecondaryAggregations[idx].Order[jdx].Key.Normalize()
+		}
+		for jdx := range q.SecondaryAggregations[idx].GroupBy {
+			q.SecondaryAggregations[idx].GroupBy[jdx].Normalize()
+		}
+	}
+
 }
