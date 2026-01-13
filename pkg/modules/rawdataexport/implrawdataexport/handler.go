@@ -117,7 +117,7 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (handler *handler) exportMetrics(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) exportMetrics(rw http.ResponseWriter, _ *http.Request) {
 	render.Error(rw, errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "metrics export is not yet supported"))
 }
 
@@ -156,7 +156,11 @@ func (handler *handler) exportTraces(rw http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	compositeQueries := getCompositeQueriesFromQueryParams(queryParams)
+	compositeQueries, err := getCompositeQueriesFromQueryParams(queryParams)
+	if err != nil {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query is malformed: %v", err))
+		return
+	}
 	if len(compositeQueries) == 0 {
 		// If no composite queries specified, add a default one
 
@@ -749,7 +753,7 @@ func getExportQueryOrderByTraces(queryParams url.Values) ([]qbtypes.OrderBy, err
 	return orderBy, nil
 }
 
-func getCompositeQueriesFromQueryParams(queryParams url.Values) []qbtypes.QueryEnvelope {
+func getCompositeQueriesFromQueryParams(queryParams url.Values) ([]qbtypes.QueryEnvelope, error) {
 	// Check if composite_query parameter exists in query params
 	compositeQueryParams := queryParams["composite_query"]
 
@@ -759,10 +763,10 @@ func getCompositeQueriesFromQueryParams(queryParams url.Values) []qbtypes.QueryE
 		var query qbtypes.QueryEnvelope
 		if err := json.Unmarshal([]byte(compositeQueryParam), &query); err != nil {
 			// If unmarshaling fails, return empty slice (will fall back to default query)
-			return nil
+			return nil, err
 		}
 		queries = append(queries, query)
 	}
 
-	return queries
+	return queries, nil
 }
