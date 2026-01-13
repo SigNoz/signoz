@@ -55,14 +55,14 @@ func (f TelemetryFieldKey) Text() string {
 	return TelemetryFieldKeyToText(&f)
 }
 
-// NormalizeFieldKey parses and normalizes a TelemetryFieldKey by extracting
+// Normalize parses and normalizes a TelemetryFieldKey by extracting
 // the field context and data type from the field name if they are not already specified.
 // This function modifies the key in place.
 //
 // Example:
 //
 //	key := &TelemetryFieldKey{Name: "resource.service.name:string"}
-//	NormalizeFieldKey(key)
+//	key.Normalize()
 //	// Result: Name: "service.name", FieldContext: FieldContextResource, FieldDataType: FieldDataTypeString
 func (f *TelemetryFieldKey) Normalize() {
 	normalizedKeyText := GetFieldKeyFromKeyText(f.Text())
