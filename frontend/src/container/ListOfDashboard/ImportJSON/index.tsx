@@ -20,7 +20,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
-import { ExternalLink, Github, MonitorDot, MoveRight, X } from 'lucide-react';
+import { ExternalLink, Github, MonitorDot, MoveRight } from 'lucide-react';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 // #TODO: Lucide will be removing brand icons like GitHub in the future. In that case, we can use Simple Icons. https://simpleicons.org/
 // See more: https://github.com/lucide-icons/lucide/issues/94
@@ -151,7 +151,10 @@ function ImportJSON({
 			wrapClassName="import-json-modal"
 			open={isImportJSONModalVisible}
 			centered
-			closable={false}
+			closable
+			keyboard
+			maskClosable
+			onCancel={onCancelHandler}
 			destroyOnClose
 			width="60vw"
 			footer={
@@ -223,8 +226,6 @@ function ImportJSON({
 			<div className="import-json-content-container">
 				<div className="import-json-content-header">
 					<Typography.Text>{t('import_json')}</Typography.Text>
-
-					<X size={14} className="periscope-btn ghost" onClick={onCancelHandler} />
 				</div>
 
 				<MEditor
