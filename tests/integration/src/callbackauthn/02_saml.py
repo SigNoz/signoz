@@ -260,7 +260,7 @@ def test_saml_update_domain_with_group_mappings(
                     "samlEntity": settings["entityID"],
                     "samlIdp": settings["singleSignOnServiceLocation"],
                     "samlCert": settings["certificate"],
-                    "samlAttributeMapping": {
+                    "attributeMapping": {
                         "name": "givenName",
                         "groups": "groups",
                         "role": "signoz_role",
@@ -429,7 +429,7 @@ def test_saml_update_domain_with_use_role_claim(
                     "samlEntity": settings["entityID"],
                     "samlIdp": settings["singleSignOnServiceLocation"],
                     "samlCert": settings["certificate"],
-                    "samlAttributeMapping": {
+                    "attributeMapping": {
                         "name": "displayName",
                         "groups": "groups",
                         "role": "signoz_role",
