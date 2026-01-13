@@ -1,6 +1,8 @@
 package querybuildertypesv5
 
 import (
+	"fmt"
+
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -131,13 +133,15 @@ func (q *QueryBuilderQuery[T]) UnmarshalJSON(data []byte) error {
 
 	var temp Alias
 	// Use UnmarshalJSONWithContext for better error messages
-	if err := UnmarshalJSONWithContext(data, &temp, "query spec"); err != nil {
+	if err := UnmarshalJSONWithContext(data, &temp, fmt.Sprintf("query spec for %T", q)); err != nil {
 		return err
 	}
 
 	// Copy the decoded values back to the original struct
 	*q = QueryBuilderQuery[T](temp)
 
+	// Nomarlize the query after unmarshaling
+	q.Normalize()
 	return nil
 }
 
