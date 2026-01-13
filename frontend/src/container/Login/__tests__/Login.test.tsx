@@ -146,7 +146,7 @@ describe('Login Component', () => {
 			).toBeInTheDocument();
 			expect(getByTestId('email')).toBeInTheDocument();
 			expect(getByTestId('initiate_login')).toBeInTheDocument();
-			expect(getByPlaceholderText('name@yourcompany.com')).toBeInTheDocument();
+			expect(getByPlaceholderText('e.g. john@signoz.io')).toBeInTheDocument();
 		});
 
 		it('shows loading state when version data is being fetched', () => {
@@ -315,8 +315,8 @@ describe('Login Component', () => {
 
 			await waitFor(() => {
 				expect(getByText('Organization Name')).toBeInTheDocument();
-				expect(screen.getByRole('combobox')).toBeInTheDocument();
 			});
+			await screen.findByRole('combobox');
 
 			// Click on the dropdown to reveal the options
 			await user.click(screen.getByRole('combobox'));
@@ -344,19 +344,13 @@ describe('Login Component', () => {
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
 			await user.click(nextButton);
 
-			await waitFor(() => {
-				expect(screen.getByRole('combobox')).toBeInTheDocument();
-			});
+			await screen.findByRole('combobox');
 
 			// Select CALLBACK_AUTHN_ORG
 			await user.click(screen.getByRole('combobox'));
 			await user.click(screen.getByText(CALLBACK_AUTHN_ORG));
 
-			await waitFor(() => {
-				expect(
-					screen.getByRole('button', { name: /login with callback/i }),
-				).toBeInTheDocument();
-			});
+			await screen.findByRole('button', { name: /sign in with sso/i });
 		});
 	});
 
@@ -599,7 +593,7 @@ describe('Login Component', () => {
 			});
 
 			await waitFor(() => {
-				expect(getByText('AUTH_ERROR')).toBeInTheDocument();
+				expect(getByText('Authentication failed')).toBeInTheDocument();
 			});
 		});
 
@@ -611,7 +605,7 @@ describe('Login Component', () => {
 
 			await waitFor(() => {
 				expect(queryByText('invalid-json')).not.toBeInTheDocument();
-				expect(getByText('AUTH_ERROR')).toBeInTheDocument();
+				expect(getByText('Authentication failed')).toBeInTheDocument();
 			});
 		});
 	});
@@ -681,9 +675,7 @@ describe('Login Component', () => {
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
 			await user.click(nextButton);
 
-			await waitFor(() => {
-				expect(screen.getByRole('combobox')).toBeInTheDocument();
-			});
+			await screen.findByRole('combobox');
 
 			// Select the organization with a warning
 			await user.click(screen.getByRole('combobox'));
@@ -744,7 +736,7 @@ describe('Login Component', () => {
 			await user.click(nextButton);
 
 			await waitFor(() => {
-				// Should show "Login" button for password auth
+				// Should show "Sign in with Password" button for password auth
 				expect(screen.getByTestId('password_authn_submit')).toBeInTheDocument();
 				expect(screen.queryByTestId('initiate_login')).not.toBeInTheDocument();
 			});
