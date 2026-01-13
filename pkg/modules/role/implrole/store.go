@@ -20,7 +20,7 @@ func NewStore(sqlstore sqlstore.SQLStore) roletypes.Store {
 func (store *store) Create(ctx context.Context, role *roletypes.StorableRole) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewInsert().
 		Model(role).
 		Exec(ctx)
@@ -35,7 +35,7 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	role := new(roletypes.StorableRole)
 	err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(role).
 		Where("org_id = ?", orgID).
@@ -52,7 +52,7 @@ func (store *store) GetByOrgIDAndName(ctx context.Context, name string, orgID va
 	role := new(roletypes.StorableRole)
 	err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(role).
 		Where("org_id = ?", orgID).
@@ -69,7 +69,7 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.S
 	roles := make([]*roletypes.StorableRole, 0)
 	err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(&roles).
 		Where("org_id = ?", orgID).
@@ -84,7 +84,7 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.S
 func (store *store) Update(ctx context.Context, orgID valuer.UUID, role *roletypes.StorableRole) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewUpdate().
 		Model(role).
 		WherePK().
@@ -100,7 +100,7 @@ func (store *store) Update(ctx context.Context, orgID valuer.UUID, role *roletyp
 func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewDelete().
 		Model(new(roletypes.StorableRole)).
 		Where("org_id = ?", orgID).

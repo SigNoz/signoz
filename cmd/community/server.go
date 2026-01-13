@@ -92,7 +92,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			return impldashboard.NewModule(impldashboard.NewStore(store), settings, analytics, orgGetter, queryParser)
 		},
 		func(store sqlstore.SQLStore, authz authz.AuthZ, _ []role.RegisterTypeable) role.Module {
-			return implrole.NewModule(implrole.NewStore(store), authz)
+			return implrole.NewModule(implrole.NewStore(store))
 		},
 	)
 	if err != nil {

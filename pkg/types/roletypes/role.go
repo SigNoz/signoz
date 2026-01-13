@@ -148,6 +148,7 @@ func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.O
 	return &PatchableObjects{Additions: additions, Deletions: deletions}, nil
 }
 
+// TODO[vikrantgupta25]: add domain checks for managed roles
 func (role *Role) PatchMetadata(name, description *string) {
 	if name != nil {
 		role.Name = *name

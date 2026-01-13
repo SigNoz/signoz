@@ -46,13 +46,25 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		role, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-viewer")
+		signozViewer, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-viewer")
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, authtypes.RelationAssignee, authtypes.RelationAssignee, authtypes.TypeableRole, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String())})
+		signozEditor, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-editor")
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		signozAdmin, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-admin")
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, authtypes.RelationAssignee, authtypes.RelationAssignee, authtypes.TypeableRole, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeRole, signozViewer.ID.String()), authtypes.MustNewSelector(authtypes.TypeRole, signozEditor.ID.String()), authtypes.MustNewSelector(authtypes.TypeRole, signozAdmin.ID.String())})
 		if err != nil {
 			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
 			render.Error(rw, err)
@@ -77,13 +89,19 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		role, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-editor")
+		signozEditor, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-editor")
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, authtypes.RelationAssignee, authtypes.RelationAssignee, authtypes.TypeableRole, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String())})
+		signozAdmin, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-admin")
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, authtypes.RelationAssignee, authtypes.RelationAssignee, authtypes.TypeableRole, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeRole, signozEditor.ID.String()), authtypes.MustNewSelector(authtypes.TypeRole, signozAdmin.ID.String())})
 		if err != nil {
 			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
 			render.Error(rw, err)

@@ -379,10 +379,9 @@ func New(
 
 	// Initialize all modules
 	roleModule := roleModuleCallback(sqlstore, authz, nil)
-	// todo[vikrant]: make this singleton
 	grant := implrole.NewGrant(implrole.NewStore(sqlstore), authz)
 	dashboardModule := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, roleModule, grant, queryParser, querier, licensing)
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboardModule, roleModule)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboardModule, roleModule, grant)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger)

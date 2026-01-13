@@ -441,21 +441,22 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 		return nil, err
 	}
 
-	if err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err := module.orgSetter.Create(ctx, organization)
-		if err != nil {
-			return err
-		}
-
-		err = module.CreateUser(ctx, user, root.WithFactorPassword(password))
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
+	// TODO[vikrantgupta25]: figure out how to make this work without transaction wrapping
+	// if err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+	err = module.orgSetter.Create(ctx, organization)
+	if err != nil {
 		return nil, err
 	}
+
+	err = module.CreateUser(ctx, user, root.WithFactorPassword(password))
+	if err != nil {
+		return nil, err
+	}
+
+	// return nil
+	// }); err != nil {
+	// 	return nil, err
+	// }
 
 	return user, nil
 }
