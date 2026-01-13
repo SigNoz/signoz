@@ -3,7 +3,7 @@ package v3
 import (
 	"bytes"
 	"fmt"
-	"html/template"
+	"text/template"
 	"time"
 
 	clickhouse "github.com/AfterShip/clickhouse-sql-parser/parser"

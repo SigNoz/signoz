@@ -1465,6 +1465,10 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 
 	rule, err := aH.ruleManager.CreateRule(r.Context(), string(body))
 	if err != nil {
+		if apiErr, ok := err.(*model.ApiError); ok {
+			RespondError(w, apiErr, nil)
+			return
+		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
