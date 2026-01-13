@@ -155,7 +155,7 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 
 	var resultVector ruletypes.Vector
 	for _, series := range matrixToProcess {
-		if !r.ruleCondition.ShouldEval(series) {
+		if !r.Condition().ShouldEval(series) {
 			r.logger.InfoContext(
 				ctx, "not enough data points to evaluate series, skipping",
 				"rule_id", r.ID(), "num_points", len(series.Points), "required_points", r.Condition().RequiredNumPoints,
