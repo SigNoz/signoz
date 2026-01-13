@@ -64,6 +64,21 @@
 
 # Dashboard Owners
 
+/frontend/src/hooks/dashboard/ @SigNoz/pulse-frontend
+
+## Dashboard List
+
+/frontend/src/pages/DashboardsListPage/ @SigNoz/pulse-frontend
+/frontend/src/container/ListOfDashboard/ @SigNoz/pulse-frontend
+
+## Dashboard Page
+
 /frontend/src/pages/DashboardPage/ @SigNoz/pulse-frontend
-/frontend/src/container/NewDashboard/ @SigNoz/pulse-frontend
+/frontend/src/container/DashboardContainer/ @SigNoz/pulse-frontend
 /frontend/src/container/GridCardLayout/ @SigNoz/pulse-frontend
+/frontend/src/container/NewWidget/ @SigNoz/pulse-frontend
+
+## Public Dashboard Page
+
+/frontend/src/pages/PublicDashboard/ @SigNoz/pulse-frontend
+/frontend/src/container/PublicDashboardContainer/ @SigNoz/pulse-frontend
