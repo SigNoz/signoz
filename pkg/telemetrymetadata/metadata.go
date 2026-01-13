@@ -600,7 +600,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		if keys[i].FieldContext == telemetrytypes.FieldContextBody {
 			fieldName = key.Name
 		}
-		cacheKey := telemetrytypes.GetEvolutionMetadataCacheKey(
+		cacheKey := telemetrytypes.GetEvolutionMetadataUniqueKey(
 			&telemetrytypes.EvolutionSelector{
 				Signal:       key.Signal,
 				FieldContext: key.FieldContext,
@@ -1910,7 +1910,7 @@ func (k *telemetryMetaStore) GetColumnEvolutionMetadataMulti(ctx context.Context
 	// deduplicated selectors
 	deduplicatedSelectors := make(map[string]*telemetrytypes.EvolutionSelector)
 	for _, selector := range selectors {
-		key := telemetrytypes.GetEvolutionMetadataCacheKey(selector)
+		key := telemetrytypes.GetEvolutionMetadataUniqueKey(selector)
 		if _, ok := deduplicatedSelectors[key]; !ok {
 			deduplicatedSelectors[key] = selector
 		}

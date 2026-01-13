@@ -111,7 +111,7 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors 
 			if keys[i].FieldContext == telemetrytypes.FieldContextBody {
 				fieldName = key.Name
 			}
-			cacheKey := telemetrytypes.GetEvolutionMetadataCacheKey(
+			cacheKey := telemetrytypes.GetEvolutionMetadataUniqueKey(
 				&telemetrytypes.EvolutionSelector{
 					Signal:       key.Signal,
 					FieldContext: key.FieldContext,
@@ -361,7 +361,7 @@ func (m *MockMetadataStore) GetColumnEvolutionMetadataMulti(ctx context.Context,
 
 	deduplicatedSelectors := make(map[string]*telemetrytypes.EvolutionSelector)
 	for _, selector := range selectors {
-		key := telemetrytypes.GetEvolutionMetadataCacheKey(selector)
+		key := telemetrytypes.GetEvolutionMetadataUniqueKey(selector)
 		if _, ok := deduplicatedSelectors[key]; !ok {
 			deduplicatedSelectors[key] = selector
 		}
@@ -373,7 +373,7 @@ func (m *MockMetadataStore) GetColumnEvolutionMetadataMulti(ctx context.Context,
 			continue
 		}
 		// Build the key: Signal:FieldContext:FieldName
-		key := telemetrytypes.GetEvolutionMetadataCacheKey(selector)
+		key := telemetrytypes.GetEvolutionMetadataUniqueKey(selector)
 
 		entries, exists := m.ColumnEvolutionMetadataMap[key]
 		if exists && len(entries) > 0 {

@@ -195,10 +195,13 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 			// check if all the key for the given field have been materialized, if so
 			// set the key to materialized
 			materilized := true
+			var evolutions []*telemetrytypes.EvolutionEntry
 			for _, key := range keys[k.Name] {
 				materilized = materilized && key.Materialized
+				evolutions = key.Evolutions
 			}
 			k.Materialized = materilized
+			k.Evolutions = evolutions
 		}
 	}
 

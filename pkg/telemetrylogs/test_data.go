@@ -979,7 +979,7 @@ func mockKeyEvolutionMetadata(signal telemetrytypes.Signal, fieldContext telemet
 	metadata := make(map[string][]*telemetrytypes.EvolutionEntry)
 
 	newKeyEvolutionMetadataEntry := mockEvolutionData(releaseTime)
-	uniqueKey := telemetrytypes.GetEvolutionMetadataCacheKey(&telemetrytypes.EvolutionSelector{
+	uniqueKey := telemetrytypes.GetEvolutionMetadataUniqueKey(&telemetrytypes.EvolutionSelector{
 		Signal:       signal,
 		FieldContext: fieldContext,
 		FieldName:    "__all__",
