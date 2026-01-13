@@ -48,6 +48,8 @@ interface TableViewProps {
 	isListViewPanel?: boolean;
 	listViewPanelSelectedFields?: IField[] | null;
 	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
+	onAddColumn?: (fieldName: string) => void;
+	onRemoveColumn?: (fieldName: string) => void;
 }
 
 type Props = TableViewProps &
@@ -63,6 +65,8 @@ function TableView({
 	selectedOptions,
 	onGroupByAttribute,
 	listViewPanelSelectedFields,
+	onAddColumn,
+	onRemoveColumn,
 }: Props): JSX.Element | null {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
@@ -296,6 +300,9 @@ function TableView({
 					isfilterOutLoading={isfilterOutLoading}
 					onClickHandler={onClickHandler}
 					onGroupByAttribute={onGroupByAttribute}
+					onAddColumn={onAddColumn}
+					onRemoveColumn={onRemoveColumn}
+					selectedOptions={selectedOptions}
 				/>
 			),
 		},
@@ -339,6 +346,8 @@ TableView.defaultProps = {
 	isListViewPanel: false,
 	listViewPanelSelectedFields: null,
 	onGroupByAttribute: undefined,
+	onAddColumn: undefined,
+	onRemoveColumn: undefined,
 };
 
 export interface DataType {

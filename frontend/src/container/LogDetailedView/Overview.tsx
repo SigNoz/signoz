@@ -30,6 +30,8 @@ interface OverviewProps {
 	selectedOptions: OptionsQuery;
 	listViewPanelSelectedFields?: IField[] | null;
 	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
+	onAddColumn?: (fieldName: string) => void;
+	onRemoveColumn?: (fieldName: string) => void;
 }
 
 type Props = OverviewProps &
@@ -44,6 +46,8 @@ function Overview({
 	selectedOptions,
 	onGroupByAttribute,
 	listViewPanelSelectedFields,
+	onAddColumn,
+	onRemoveColumn,
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
@@ -213,6 +217,8 @@ function Overview({
 									isListViewPanel={isListViewPanel}
 									selectedOptions={selectedOptions}
 									listViewPanelSelectedFields={listViewPanelSelectedFields}
+									onAddColumn={onAddColumn}
+									onRemoveColumn={onRemoveColumn}
 								/>
 							</>
 						),
@@ -228,6 +234,8 @@ Overview.defaultProps = {
 	isListViewPanel: false,
 	listViewPanelSelectedFields: null,
 	onGroupByAttribute: undefined,
+	onAddColumn: undefined,
+	onRemoveColumn: undefined,
 };
 
 export default Overview;

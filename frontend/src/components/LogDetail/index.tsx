@@ -80,11 +80,30 @@ function LogDetailInner({
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
 
-	const { options } = useOptionsMenu({
+	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
+
+	const handleAddColumn = useCallback(
+		(fieldName: string): void => {
+			if (config?.addColumn?.onSelect) {
+				// onSelect from SelectProps has signature (value, option), but handleSelectColumns only needs value
+				config.addColumn.onSelect(fieldName, {} as any);
+			}
+		},
+		[config],
+	);
+
+	const handleRemoveColumn = useCallback(
+		(fieldName: string): void => {
+			if (config?.addColumn?.onRemove) {
+				config.addColumn.onRemove(fieldName);
+			}
+		},
+		[config],
+	);
 
 	const isDarkMode = useIsDarkMode();
 	const location = useLocation();
@@ -369,6 +388,8 @@ function LogDetailInner({
 					isListViewPanel={isListViewPanel}
 					selectedOptions={options}
 					listViewPanelSelectedFields={listViewPanelSelectedFields}
+					onAddColumn={handleAddColumn}
+					onRemoveColumn={handleRemoveColumn}
 				/>
 			)}
 			{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}
