@@ -319,7 +319,7 @@ func TestGetExportQueryColumns(t *testing.T) {
 	}
 }
 
-func TestGetExportQueryOrderBy(t *testing.T) {
+func TestGetExportQueryOrderByLogs(t *testing.T) {
 	tests := []struct {
 		name          string
 		queryParams   url.Values
@@ -506,7 +506,7 @@ func TestGetExportQueryOrderBy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			order, err := getExportQueryOrderBy(tt.queryParams)
+			order, err := getExportQueryOrderByLogs(tt.queryParams)
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {
@@ -578,7 +578,10 @@ func TestGetExportQueryOrderByTraces(t *testing.T) {
 					Direction: qbtypes.OrderDirectionDesc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "timestamp",
+							Name:          "timestamp",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeNumber,
 						},
 					},
 				},
@@ -586,7 +589,10 @@ func TestGetExportQueryOrderByTraces(t *testing.T) {
 					Direction: qbtypes.OrderDirectionDesc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "span_id",
+							Name:          "span_id",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
 						},
 					},
 				},
@@ -611,7 +617,10 @@ func TestGetExportQueryOrderByTraces(t *testing.T) {
 					Direction: qbtypes.OrderDirectionAsc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "span_id",
+							Name:          "span_id",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
 						},
 					},
 				},
@@ -636,7 +645,10 @@ func TestGetExportQueryOrderByTraces(t *testing.T) {
 					Direction: qbtypes.OrderDirectionDesc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "span_id",
+							Name:          "span_id",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
 						},
 					},
 				},
@@ -742,7 +754,10 @@ func TestGetExportQueryOrderByTraces(t *testing.T) {
 					Direction: qbtypes.OrderDirectionDesc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "timestamp",
+							Name:          "timestamp",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeNumber,
 						},
 					},
 				},
@@ -750,7 +765,10 @@ func TestGetExportQueryOrderByTraces(t *testing.T) {
 					Direction: qbtypes.OrderDirectionDesc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "span_id",
+							Name:          "span_id",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
 						},
 					},
 				},
@@ -767,7 +785,10 @@ func TestGetExportQueryOrderByTraces(t *testing.T) {
 					Direction: qbtypes.OrderDirectionDesc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "timestamp",
+							Name:          "timestamp",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeNumber,
 						},
 					},
 				},
@@ -775,7 +796,10 @@ func TestGetExportQueryOrderByTraces(t *testing.T) {
 					Direction: qbtypes.OrderDirectionDesc,
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "span_id",
+							Name:          "span_id",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
 						},
 					},
 				},
