@@ -25,6 +25,23 @@ export const FormContainer = styled(Form)`
 	& .ant-form-item {
 		margin-bottom: 0px;
 		width: 100%;
+
+		& .ant-select {
+			width: 100%;
+			margin: 0;
+		}
+
+		& .ant-form-item-control {
+			width: 100%;
+		}
+
+		& .ant-form-item-control-input {
+			width: 100%;
+		}
+
+		& .ant-form-item-control-input-content {
+			width: 100%;
+		}
 	}
 
 	& .ant-input,
