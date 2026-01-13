@@ -21,6 +21,13 @@ jest.mock(
 		},
 );
 jest.mock(
+	'../QuerySearch/QuerySearch',
+	() =>
+		function () {
+			return <div>QuerySearch</div>;
+		},
+);
+jest.mock(
 	'../MerticsAggregateSection/MetricsAggregateSection',
 	() =>
 		function () {
