@@ -16,7 +16,6 @@ import {
 	isQueryPairComplete,
 	isValueToken,
 } from './tokenUtils';
-	
 
 // Function to create a context object
 export function createContext(
