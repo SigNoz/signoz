@@ -174,14 +174,14 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	return resultVector, nil
 }
 
-func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
+func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	prevState := r.State()
 	valueFormatter := formatter.FromUnit(r.Unit())
 
 	// prepare query, run query get data and filter the data based on the threshold
 	results, err := r.buildAndRunQuery(ctx, ts)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	r.mtx.Lock()
@@ -254,7 +254,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			// SetLastError will deadlock.
 			r.health = ruletypes.HealthBad
 			r.lastError = err
-			return nil, err
+			return 0, err
 		}
 		alerts[h] = &ruletypes.Alert{
 			Labels:            lbs,

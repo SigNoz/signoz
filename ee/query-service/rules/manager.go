@@ -203,14 +203,10 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 	// set timestamp to current utc time
 	ts := time.Now().UTC()
 
-	count, err := rule.Eval(ctx, ts)
+	alertsFound, err := rule.Eval(ctx, ts)
 	if err != nil {
 		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
 		return 0, basemodel.InternalError(fmt.Errorf("rule evaluation failed"))
-	}
-	alertsFound, ok := count.(int)
-	if !ok {
-		return 0, basemodel.InternalError(fmt.Errorf("something went wrong"))
 	}
 	rule.SendAlerts(ctx, ts, 0, time.Duration(1*time.Minute), opts.NotifyFunc)
 
