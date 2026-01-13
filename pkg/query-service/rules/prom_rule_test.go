@@ -969,14 +969,14 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 			continue
 		}
 
-		retVal, err := rule.Eval(context.Background(), evalTime)
+		alertsFound, err := rule.Eval(context.Background(), evalTime)
 		if err != nil {
 			assert.NoError(t, err)
 			promProvider.Close()
 			continue
 		}
 
-		assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+		assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 		if c.expectAlerts != 0 {
 			foundCount := 0
 			for _, item := range rule.Active {
@@ -1085,14 +1085,14 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 			continue
 		}
 
-		retVal, err := rule.Eval(context.Background(), evalTime)
+		alertsFound, err := rule.Eval(context.Background(), evalTime)
 		if err != nil {
 			assert.NoError(t, err)
 			promProvider.Close()
 			continue
 		}
 
-		assert.Equal(t, 1, retVal.(int), "case %d", idx)
+		assert.Equal(t, 1, alertsFound, "case %d", idx)
 		for _, item := range rule.Active {
 			if c.expectNoData {
 				assert.True(t, strings.Contains(item.Labels.Get(qslabels.AlertNameLabel), "[No data]"), "case %d", idx)
@@ -1317,14 +1317,14 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 			continue
 		}
 
-		retVal, err := rule.Eval(context.Background(), evalTime)
+		alertsFound, err := rule.Eval(context.Background(), evalTime)
 		if err != nil {
 			assert.NoError(t, err)
 			promProvider.Close()
 			continue
 		}
 
-		assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+		assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 		if c.expectAlerts != 0 {
 			foundCount := 0
 			for _, item := range rule.Active {

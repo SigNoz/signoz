@@ -593,7 +593,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	return resultVector, nil
 }
 
-func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
+func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	prevState := r.State()
 
 	valueFormatter := formatter.FromUnit(r.Unit())
@@ -610,7 +610,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 	}
 
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	r.mtx.Lock()
@@ -702,7 +702,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		resultFPs[h] = struct{}{}
 
 		if _, ok := alerts[h]; ok {
-			return nil, fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
+			return 0, fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
 		}
 
 		alerts[h] = &ruletypes.Alert{
