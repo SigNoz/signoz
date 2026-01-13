@@ -59,6 +59,10 @@ export default function DashboardEmptyState(): JSX.Element {
 
 	const onSettingsDrawerClose = useCallback((): void => {
 		setIsSettingsDrawerOpen(false);
+
+		if (variablesSettingsTabHandle.current) {
+			variablesSettingsTabHandle.current.resetState();
+		}
 	}, []);
 
 	return (
