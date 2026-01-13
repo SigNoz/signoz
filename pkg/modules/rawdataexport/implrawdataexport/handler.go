@@ -198,8 +198,8 @@ func (handler *handler) exportTraces(rw http.ResponseWriter, r *http.Request) {
 	}
 	for i := range compositeQueries {
 		// Ensure each query envelope has the correct type
-		if compositeQueries[i].Type != (qbtypes.QueryType{}) {
-			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query %d has invalid or missing type", i))
+		if compositeQueries[i].Type != qbtypes.QueryTypeBuilder && compositeQueries[i].Type != qbtypes.QueryTypeTraceOperator {
+			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query %d has unsupported type: %s", i, compositeQueries[i].Type.StringValue()))
 			return
 		}
 
