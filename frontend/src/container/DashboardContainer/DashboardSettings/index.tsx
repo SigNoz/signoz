@@ -7,9 +7,9 @@ import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
 import { VariablesSettingsTabHandle } from '../DashboardDescription/types';
+import DashboardVariableSettings from './DashboardVariableSettings';
 import GeneralDashboardSettings from './General';
 import PublicDashboardSetting from './PublicDashboard';
-import VariablesSetting from './Variables';
 
 function DashboardSettings({
 	variablesSettingsTabHandle,
@@ -65,7 +65,9 @@ function DashboardSettings({
 			),
 			key: 'variables',
 			children: (
-				<VariablesSetting variablesSettingsTabHandle={variablesSettingsTabHandle} />
+				<DashboardVariableSettings
+					variablesSettingsTabHandle={variablesSettingsTabHandle}
+				/>
 			),
 		},
 		...(enablePublicDashboard ? [publicDashboardItem] : []),
