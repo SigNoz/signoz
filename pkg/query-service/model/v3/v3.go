@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/query-service/converter"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 
@@ -612,6 +613,19 @@ func (c *CompositeQuery) Validate() error {
 			errors.CodeInvalidInput,
 			"at least one query is required",
 		)
+	}
+
+	// Validate unit if supplied
+	if c.Unit != "" {
+		unit := converter.Unit(c.Unit)
+		err := unit.Validate()
+		if err != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"invalid unit: %s",
+				err.Error(),
+			)
+		}
 	}
 
 	// Validate each query

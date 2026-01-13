@@ -32,8 +32,26 @@ func TestValidateCompositeQuery(t *testing.T) {
 			errContains: "at least one query is required",
 		},
 		{
+			name: "invalid input error",
+			compositeQuery: &CompositeQuery{
+				Unit: "some_invalid_unit",
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypePromQL,
+						Spec: qbtypes.PromQuery{
+							Name:  "prom_query",
+							Query: "rate(http_requests_total[5m])",
+						},
+					},
+				},
+			},
+			wantErr:     true,
+			errContains: "invalid unit",
+		},
+		{
 			name: "valid metric builder query should pass",
 			compositeQuery: &CompositeQuery{
+				Unit: "bytes", // valid unit
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -54,6 +72,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		{
 			name: "valid log builder query should pass",
 			compositeQuery: &CompositeQuery{
+				Unit: "µs", // valid unit
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -74,6 +93,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		{
 			name: "valid trace builder query should pass",
 			compositeQuery: &CompositeQuery{
+				Unit: "MBs", // valid unit
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -94,6 +114,7 @@ func TestValidateCompositeQuery(t *testing.T) {
 		{
 			name: "valid PromQL query should pass",
 			compositeQuery: &CompositeQuery{
+				Unit: "{req}/s", // valid unit
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypePromQL,
