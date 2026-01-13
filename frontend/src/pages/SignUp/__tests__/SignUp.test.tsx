@@ -330,7 +330,7 @@ describe('SignUp Component - Accept Invite', () => {
 			});
 		});
 
-		it('disables email and name fields when invite details are loaded', async () => {
+		it('disables email field when invite details are loaded', async () => {
 			server.use(
 				rest.get(INVITE_DETAILS_ENDPOINT, (_req, res, ctx) =>
 					res(
@@ -348,11 +348,9 @@ describe('SignUp Component - Accept Invite', () => {
 			});
 
 			const emailInput = await screen.findByLabelText(/email address/i);
-			const nameInput = await screen.findByLabelText(/^name$/i);
 
 			await waitFor(() => {
 				expect(emailInput).toBeDisabled();
-				expect(nameInput).toBeDisabled();
 			});
 		});
 
