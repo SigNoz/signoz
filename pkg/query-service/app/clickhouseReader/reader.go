@@ -3258,7 +3258,12 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 
 	seen := make(map[string]struct{})
 	for _, name := range metricNames {
-		metadata := metadataMap[name]
+		metadata, exists := metadataMap[name]
+		if !exists {
+			zap.L().Warn("metric metadata not found, skipping", zap.String("metric_name", name))
+			// Skip metrics without metadata to avoid nil pointer dereference
+			continue
+		}
 
 		typ := string(metadata.MetricType)
 		temporality := string(metadata.Temporality)
