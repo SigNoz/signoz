@@ -156,9 +156,9 @@ describe('SignUp Component - Regular Signup', () => {
 			await user.type(passwordInput, 'password123');
 			await user.type(confirmPasswordInput, 'password456');
 
-			await waitFor(() => {
-				expect(screen.getByText(/passwords don't match/i)).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByText(/passwords don't match/i),
+			).toBeInTheDocument();
 		});
 
 		it('clears password mismatch error when passwords match', async () => {
@@ -174,9 +174,9 @@ describe('SignUp Component - Regular Signup', () => {
 			await user.type(passwordInput, 'password123');
 			await user.type(confirmPasswordInput, 'password456');
 
-			await waitFor(() => {
-				expect(screen.getByText(/passwords don't match/i)).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByText(/passwords don't match/i),
+			).toBeInTheDocument();
 
 			await user.clear(confirmPasswordInput);
 			await user.type(confirmPasswordInput, 'password123');
@@ -287,11 +287,8 @@ describe('SignUp Component - Regular Signup', () => {
 
 			await user.click(submitButton);
 
-			await waitFor(() => {
-				// Check for error in Callout component (more specific)
-				const errorCallouts = screen.getAllByText(/email already exists/i);
-				expect(errorCallouts.length).toBeGreaterThan(0);
-			});
+			const errorCallouts = await screen.findAllByText(/email already exists/i);
+			expect(errorCallouts.length).toBeGreaterThan(0);
 		});
 	});
 });
@@ -324,10 +321,10 @@ describe('SignUp Component - Accept Invite', () => {
 				initialRoute: '/signup?token=invite-token-123',
 			});
 
-			await waitFor(() => {
-				const emailInput = screen.getByLabelText(/email address/i);
-				const nameInput = screen.getByLabelText(/^name$/i);
+			const emailInput = await screen.findByLabelText(/email address/i);
+			const nameInput = await screen.findByLabelText(/^name$/i);
 
+			await waitFor(() => {
 				expect(emailInput).toHaveValue('invited@signoz.io');
 				expect(nameInput).toHaveValue('Invited User');
 			});
@@ -350,10 +347,10 @@ describe('SignUp Component - Accept Invite', () => {
 				initialRoute: '/signup?token=invite-token-123',
 			});
 
-			await waitFor(() => {
-				const emailInput = screen.getByLabelText(/email address/i);
-				const nameInput = screen.getByLabelText(/^name$/i);
+			const emailInput = await screen.findByLabelText(/email address/i);
+			const nameInput = await screen.findByLabelText(/^name$/i);
 
+			await waitFor(() => {
 				expect(emailInput).toBeDisabled();
 				expect(nameInput).toBeDisabled();
 			});
@@ -422,10 +419,9 @@ describe('SignUp Component - Accept Invite', () => {
 				initialRoute: '/signup?token=invite-token-123',
 			});
 
+			const emailInput = await screen.findByLabelText(/email address/i);
 			await waitFor(() => {
-				expect(screen.getByLabelText(/email address/i)).toHaveValue(
-					'invited@signoz.io',
-				);
+				expect(emailInput).toHaveValue('invited@signoz.io');
 			});
 
 			const passwordInput = screen.getByPlaceholderText(/enter new password/i);
@@ -475,16 +471,13 @@ describe('SignUp Component - Accept Invite', () => {
 			});
 
 			// Verify form is still accessible and fields are enabled
-			await waitFor(() => {
-				const emailInput = screen.getByLabelText(/email address/i);
-				const nameInput = screen.getByLabelText(/^name$/i);
+			const emailInput = await screen.findByLabelText(/email address/i);
+			const nameInput = await screen.findByLabelText(/^name$/i);
 
-				expect(emailInput).toBeInTheDocument();
-				expect(nameInput).toBeInTheDocument();
-				// Fields should be enabled since invite details failed to load
-				expect(emailInput).not.toBeDisabled();
-				expect(nameInput).not.toBeDisabled();
-			});
+			expect(emailInput).toBeInTheDocument();
+			expect(nameInput).toBeInTheDocument();
+			expect(emailInput).not.toBeDisabled();
+			expect(nameInput).not.toBeDisabled();
 		});
 
 		it('displays error when accept invite API fails', async () => {
@@ -517,10 +510,9 @@ describe('SignUp Component - Accept Invite', () => {
 				initialRoute: '/signup?token=expired-token',
 			});
 
+			const emailInput = await screen.findByLabelText(/email address/i);
 			await waitFor(() => {
-				expect(screen.getByLabelText(/email address/i)).toHaveValue(
-					'invited@signoz.io',
-				);
+				expect(emailInput).toHaveValue('invited@signoz.io');
 			});
 
 			const passwordInput = screen.getByPlaceholderText(/enter new password/i);
@@ -540,11 +532,9 @@ describe('SignUp Component - Accept Invite', () => {
 
 			await user.click(submitButton);
 
-			await waitFor(() => {
-				expect(
-					screen.getByText(/invalid or expired invite token/i),
-				).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByText(/invalid or expired invite token/i),
+			).toBeInTheDocument();
 		});
 	});
 });

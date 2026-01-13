@@ -315,8 +315,8 @@ describe('Login Component', () => {
 
 			await waitFor(() => {
 				expect(getByText('Organization Name')).toBeInTheDocument();
-				expect(screen.getByRole('combobox')).toBeInTheDocument();
 			});
+			await screen.findByRole('combobox');
 
 			// Click on the dropdown to reveal the options
 			await user.click(screen.getByRole('combobox'));
@@ -344,19 +344,13 @@ describe('Login Component', () => {
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
 			await user.click(nextButton);
 
-			await waitFor(() => {
-				expect(screen.getByRole('combobox')).toBeInTheDocument();
-			});
+			await screen.findByRole('combobox');
 
 			// Select CALLBACK_AUTHN_ORG
 			await user.click(screen.getByRole('combobox'));
 			await user.click(screen.getByText(CALLBACK_AUTHN_ORG));
 
-			await waitFor(() => {
-				expect(
-					screen.getByRole('button', { name: /sign in with sso/i }),
-				).toBeInTheDocument();
-			});
+			await screen.findByRole('button', { name: /sign in with sso/i });
 		});
 	});
 
@@ -681,9 +675,7 @@ describe('Login Component', () => {
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
 			await user.click(nextButton);
 
-			await waitFor(() => {
-				expect(screen.getByRole('combobox')).toBeInTheDocument();
-			});
+			await screen.findByRole('combobox');
 
 			// Select the organization with a warning
 			await user.click(screen.getByRole('combobox'));
