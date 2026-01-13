@@ -576,7 +576,7 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		for _, g := range query.GroupBy {
 			diag.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 		}
-		diag.SelectMore("arraySort(groupArray(le)) AS les")
+		diag.SelectMore("groupArray(le) AS les")
 		diag.SelectMore("groupArray(value) AS vals")
 		diag.SelectMore("arraySum(groupArray(value)) AS bucket_sum")
 		diag.SelectMore("countDistinct(le) AS bucket_count")
