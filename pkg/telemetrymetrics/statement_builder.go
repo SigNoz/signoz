@@ -609,8 +609,8 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			"histogramQuantile(arrayMap(x -> toFloat64(x), les), vals, %.3f) AS __result_0",
 			quantile,
 		))
-		sb.SelectMore("bucket_sum AS __result_1")
-		sb.SelectMore("bucket_count AS __result_2")
+		sb.SelectMore(fmt.Sprintf("bucket_sum AS %s", DiagnosticColumnCumulativeHistLeSum))
+		sb.SelectMore(fmt.Sprintf("bucket_count AS %s", DiagnosticColumnCumulativeHistLeCount))
 
 		sb.From("__diagnostics_cte")
 		if query.Having != nil && query.Having.Expression != "" {

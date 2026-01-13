@@ -2,6 +2,11 @@ package telemetrymetrics
 
 import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
+const (
+	DiagnosticColumnCumulativeHistLeSum   = "__diagnostic_cumulative_hist_le_sum"
+	DiagnosticColumnCumulativeHistLeCount = "__diagnostic_cumulative_hist_le_count"
+)
+
 var IntrinsicFields = []string{
 	"__normalized",
 	"temporality",

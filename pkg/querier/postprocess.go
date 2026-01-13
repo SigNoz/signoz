@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/govaluate"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -156,19 +156,19 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 		finalResults[name] = result.Value
 	}
 
-	// collect warnings from typed results
-	var warnings []string
-	var warningsDocURL string
+	// collect postProcessWarnings from typed results
+	var postProcessWarnings []string
+	var postProcessWarningsDocURL string
 	for _, res := range typedResults {
 		if len(res.Warnings) > 0 {
-			warnings = append(warnings, res.Warnings...)
+			postProcessWarnings = append(postProcessWarnings, res.Warnings...)
 		}
 		if res.WarningsDocURL != "" {
-			warningsDocURL = res.WarningsDocURL
+			postProcessWarningsDocURL = res.WarningsDocURL
 		}
 	}
 
-	return finalResults, warnings, warningsDocURL, nil
+	return finalResults, postProcessWarnings, postProcessWarningsDocURL, nil
 }
 
 // postProcessBuilderQuery applies postprocessing to a single builder query result
@@ -191,6 +191,86 @@ func postProcessBuilderQuery[T any](
 	return result
 }
 
+func removeDiagnosticSeriesAndCheckWarnings(result *qbtypes.Result) {
+	tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
+	if !ok {
+		return
+	}
+
+	if tsData == nil {
+		return
+	}
+
+	var nonDiagnosticBuckets []*qbtypes.AggregationBucket
+	var bucketSum, bucketCount *qbtypes.AggregationBucket
+
+	// First pass: identify diagnostic buckets and separate them from non-diagnostic ones
+	for _, b := range tsData.Aggregations {
+		if !slices.Contains(diagnosticColumnAliases, b.Alias) {
+			nonDiagnosticBuckets = append(nonDiagnosticBuckets, b)
+			continue
+		}
+		// warning columns
+		switch b.Alias {
+		case telemetrymetrics.DiagnosticColumnCumulativeHistLeSum:
+			bucketSum = b
+		case telemetrymetrics.DiagnosticColumnCumulativeHistLeCount:
+			bucketCount = b
+		}
+	}
+
+	// Second pass: calculate warnings based on diagnostic buckets (only once, after identifying both)
+	allZero := false
+	if bucketSum != nil {
+		allZero = true
+		if len(bucketSum.Series) == 0 {
+			allZero = false // dont calculate for no values
+		} else {
+			for _, s := range bucketSum.Series {
+				for _, v := range s.Values {
+					if v.Value > 0 {
+						allZero = false
+						break
+					}
+				}
+				if !allZero {
+					break
+				}
+			}
+		}
+	}
+
+	allSparse := false
+	if bucketCount != nil {
+		allSparse = true
+		if len(bucketCount.Series) == 0 {
+			allSparse = false // dont calculate for no values
+		} else {
+			for _, s := range bucketCount.Series {
+				for _, v := range s.Values {
+					if v.Value >= 2 {
+						allSparse = false
+						break
+					}
+				}
+				if !allSparse {
+					break
+				}
+			}
+		}
+	}
+
+	if allZero {
+		result.Warnings = append(result.Warnings, "No change observed for this cumulative metric in the selected range.")
+	}
+	if allSparse {
+		result.Warnings = append(result.Warnings, "Only +Inf bucket present; add finite buckets to compute quantiles.")
+	}
+
+	tsData.Aggregations = nonDiagnosticBuckets
+	result.Value = tsData
+}
+
 // postProcessMetricQuery applies postprocessing to a metric query result
 func postProcessMetricQuery(
 	q *querier,
@@ -199,73 +279,7 @@ func postProcessMetricQuery(
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
-	// Strip diagnostic series (bucket_sum, bucket_count) after computing warnings.
-	if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok && tsData != nil {
-		var kept []*qbtypes.AggregationBucket
-		var bucketSum, bucketCount *qbtypes.AggregationBucket
-
-		for _, b := range tsData.Aggregations {
-			switch b.Alias {
-			case "__result_1":
-				bucketSum = b
-			case "__result_2":
-				bucketCount = b
-			default:
-				kept = append(kept, b)
-			}
-		}
-
-		// Derive warnings from diagnostics
-		allZero := false
-		if bucketSum != nil {
-			allZero = true
-			if len(bucketSum.Series) == 0 {
-				allZero = false // dont calculate for no values
-			} else {
-				for _, s := range bucketSum.Series {
-					for _, v := range s.Values {
-						if v.Value > 0 {
-							allZero = false
-							break
-						}
-					}
-					if !allZero {
-						break
-					}
-				}
-			}
-		}
-
-		allSparse := false
-		if bucketCount != nil {
-			allSparse = true
-			if len(bucketCount.Series) == 0 {
-				allSparse = false // dont calculate for no values
-			} else {
-				for _, s := range bucketCount.Series {
-					for _, v := range s.Values {
-						if v.Value >= 2 {
-							allSparse = false
-							break
-						}
-					}
-					if !allSparse {
-						break
-					}
-				}
-			}
-		}
-
-		if allZero && query.Aggregations[0].Temporality == metrictypes.Cumulative {
-			result.Warnings = append(result.Warnings, "No change observed for this cumulative metric in the selected range.")
-		}
-		if allSparse {
-			result.Warnings = append(result.Warnings, "Only +Inf bucket present; add finite buckets to compute quantiles.")
-		}
-
-		tsData.Aggregations = kept
-		result.Value = tsData
-	}
+	removeDiagnosticSeriesAndCheckWarnings(result)
 
 	config := query.Aggregations[0]
 	spaceAggOrderBy := fmt.Sprintf("%s(%s)", config.SpaceAggregation.StringValue(), config.MetricName)
