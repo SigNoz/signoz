@@ -91,16 +91,6 @@ func (f QueryBuilderFormula) Validate() error {
 		)
 	}
 
-	// If having is not null, validate that expression is not blank
-	if f.Having != nil {
-		if strings.TrimSpace(f.Having.Expression) == "" {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"having expression cannot be blank when having clause is present",
-			)
-		}
-	}
-
 	// Validate functions if present
 	for i, fn := range f.Functions {
 		if err := fn.Validate(); err != nil {
