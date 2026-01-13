@@ -172,6 +172,7 @@ function QueryAddOns({
 	const [selectedViews, setSelectedViews] = useState<AddOn[]>([]);
 
 	const initializedRef = useRef(false);
+	const prevAvailableKeysCountRef = useRef<number | null>(null);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index,
@@ -215,7 +216,13 @@ function QueryAddOns({
 		}
 		setAddOns(filteredAddOns);
 
-		if (!initializedRef.current) {
+		const availableAddOnKeys = new Set(filteredAddOns.map((a) => a.key));
+		const hasAvailabilityCountChanged =
+			prevAvailableKeysCountRef.current !== null &&
+			prevAvailableKeysCountRef.current !== availableAddOnKeys.size;
+		prevAvailableKeysCountRef.current = availableAddOnKeys.size;
+
+		if (!initializedRef.current || hasAvailabilityCountChanged) {
 			initializedRef.current = true;
 
 			const activeAddOnKeys = new Set(
@@ -223,8 +230,6 @@ function QueryAddOns({
 					.filter(([, path]) => hasValue(get(query, path)))
 					.map(([key]) => key),
 			);
-
-			const availableAddOnKeys = new Set(filteredAddOns.map((addOn) => addOn.key));
 
 			// Initial seeding from query values on mount
 			setSelectedViews(
