@@ -116,7 +116,6 @@ func TestParseIntoRule(t *testing.T) {
 							"A": {
 								"queryName": "A",
 								"expression": "A",
-								"dataSource": "metrics",
 								"disabled": false,
 								"aggregateAttribute": {
 									"key": "test_metric"
@@ -160,9 +159,6 @@ func TestParseIntoRule(t *testing.T) {
 						"panelType": "graph",
 						"builderQueries": {
 							"A": {
-								"queryName": "A",
-								"expression": "A",
-								"dataSource": "metrics",
 								"disabled": false,
 								"aggregateAttribute": {
 									"key": "test_metric"
@@ -273,9 +269,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 						"panelType": "graph",
 						"builderQueries": {
 							"A": {
-								"queryName": "A",
-								"expression": "A",
-								"dataSource": "metrics",
 								"aggregateAttribute": {
 									"key": "cpu_usage"
 								}
@@ -366,9 +359,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 						"panelType": "graph",
 						"builderQueries": {
 							"A": {
-								"queryName": "A",
-								"expression": "A",
-								"dataSource": "metrics",
 								"aggregateAttribute": {
 									"key": "memory_usage"
 								}
@@ -411,9 +401,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 						"panelType": "graph",
 						"builderQueries": {
 							"A": {
-								"queryName": "A",
-								"expression": "A",
-								"dataSource": "metrics",
 								"aggregateAttribute": {
 									"key": "cpu_usage"
 								}
@@ -506,9 +493,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 						"panelType": "graph",
 						"builderQueries": {
 							"A": {
-								"queryName": "A",
-								"expression": "A",
-								"dataSource": "metrics",
 								"aggregateAttribute": {
 									"key": "test_metric"
 								}
@@ -554,9 +538,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 						"panelType": "graph",
 						"builderQueries": {
 							"A": {
-								"queryName": "A",
-								"expression": "A",
-								"dataSource": "metrics",
 								"aggregateAttribute": {
 									"key": "test_metric"
 								}
