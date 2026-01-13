@@ -2935,10 +2935,10 @@ components:
       type: object
     AuthtypesSamlConfig:
       properties:
+        attributeMapping:
+          $ref: '#/components/schemas/AuthtypesAttributeMapping'
         insecureSkipAuthNRequestsSigned:
           type: boolean
-        samlAttributeMapping:
-          $ref: '#/components/schemas/AuthtypesAttributeMapping'
         samlCert:
           type: string
         samlEntity:
