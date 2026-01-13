@@ -10,10 +10,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/require"
 )
@@ -22,10 +20,6 @@ import (
 func TestFilterExprLogs(t *testing.T) {
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	ctx := context.Background()
-	orgId := valuer.GenerateUUID()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: orgId.String(),
-	})
 	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
 	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, releaseTime)
 	fm := NewFieldMapper()
@@ -42,7 +36,6 @@ func TestFilterExprLogs(t *testing.T) {
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
-		Evolutions:       nil,
 	}
 
 	testCases := []struct {
@@ -2464,7 +2457,6 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
-		Evolutions:       nil,
 	}
 
 	testCases := []struct {

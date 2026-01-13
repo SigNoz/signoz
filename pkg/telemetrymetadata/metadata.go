@@ -1905,7 +1905,7 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 
 // Get retrieves all metadata keys for the given selector from DB.
 // Returns an empty slice if the key is not found in cache.
-// Use cache as an enchancement
+// Use cache as an enhancement
 func (k *telemetryMetaStore) GetColumnEvolutionMetadataMulti(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) (map[string][]*telemetrytypes.EvolutionEntry, error) {
 	// deduplicated selectors
 	deduplicatedSelectors := make(map[string]*telemetrytypes.EvolutionSelector)

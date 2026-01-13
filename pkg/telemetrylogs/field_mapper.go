@@ -69,7 +69,7 @@ func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
 
-func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		columns := []*schema.Column{logsV2Columns["resource"], logsV2Columns["resources_string"]}
@@ -316,10 +316,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 		return exprs[0], nil
 	} else if len(exprs) > 1 {
 		// Ensure existExpr has the same length as exprs
-		for len(existExpr) < len(exprs) {
-			// For expressions without existExpr, use a default check
-			// This shouldn't happen in normal cases, but we handle it for safety
-			existExpr = append(existExpr, "1 = 1")
+		if len(existExpr) != len(exprs) {
+			return "", errors.New(errors.TypeInternal, errors.CodeInternal, "length of exist exprs doesn't match to that of exprs")
 		}
 		finalExprs := []string{}
 		for i, expr := range exprs {

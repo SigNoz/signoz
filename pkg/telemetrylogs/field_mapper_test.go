@@ -6,10 +6,8 @@ import (
 	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -185,10 +183,6 @@ func TestGetColumn(t *testing.T) {
 
 func TestGetFieldKeyName(t *testing.T) {
 	ctx := context.Background()
-	orgId := valuer.GenerateUUID()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: orgId.String(),
-	})
 
 	resourceEvolution := mockEvolutionData(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 
@@ -294,10 +288,6 @@ func TestGetFieldKeyName(t *testing.T) {
 
 func TestFieldForWithEvolutions(t *testing.T) {
 	ctx := context.Background()
-	orgId := valuer.GenerateUUID()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: orgId.String(),
-	})
 
 	key := &telemetrytypes.TelemetryFieldKey{
 		Name:         "service.name",

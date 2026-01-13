@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -21,19 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func newTestCache(t *testing.T) cache.Cache {
-	t.Helper()
-	testCache, err := cachetest.New(cache.Config{
-		Provider: "memory",
-		Memory: cache.Memory{
-			NumCounters: 10 * 1000,
-			MaxCost:     1 << 26,
-		},
-	})
-	require.NoError(t, err)
-	return testCache
-}
 
 func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) telemetrytypes.MetadataStore {
 	return NewTelemetryMetaStore(

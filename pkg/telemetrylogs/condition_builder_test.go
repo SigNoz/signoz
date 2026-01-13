@@ -5,10 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,9 +14,6 @@ import (
 
 func TestConditionFor(t *testing.T) {
 	ctx := context.Background()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: valuer.GenerateUUID().String(),
-	})
 
 	mockEvolution := mockEvolutionData(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	testCases := []struct {
@@ -385,14 +380,8 @@ func TestConditionFor(t *testing.T) {
 			expectedError: qbtypes.ErrColumnNotFound,
 		},
 	}
-	OrgID := valuer.GenerateUUID()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: OrgID.String(),
-	})
 	mockMetadataStore := buildTestTelemetryMetadataStore()
-	// mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(OrgID, telemetrytypes.SignalLogs.StringValue(), telemetrytypes.FieldContextResource.StringValue(), time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper()
-
 	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
 
 	for _, tc := range testCases {

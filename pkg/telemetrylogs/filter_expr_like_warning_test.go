@@ -7,19 +7,14 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
 // TestLikeAndILikeWithoutWildcards_Warns Tests that LIKE/ILIKE without wildcards add warnings and include docs URL
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 	ctx := context.Background()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: valuer.GenerateUUID().String(),
-	})
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm, nil)
 
@@ -33,7 +28,6 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
-		Evolutions:       nil,
 	}
 
 	tests := []string{
@@ -58,11 +52,6 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 // TestLikeAndILikeWithWildcards_NoWarn Tests that LIKE/ILIKE with wildcards do not add warnings
 func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
-	orgId := valuer.GenerateUUID()
-	ctx := context.Background()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: orgId.String(),
-	})
 	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
 	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper()
@@ -71,14 +60,13 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
-		Context:          ctx,
+		Context:          context.Background(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
-		Evolutions:       nil,
 	}
 
 	tests := []string{

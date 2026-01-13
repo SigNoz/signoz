@@ -51,7 +51,7 @@ func (m *mockQuery) Window() (uint64, uint64) {
 	return m.startMs, m.endMs
 }
 
-func (m *mockQuery) Execute(ctx context.Context, _ valuer.UUID) (*qbtypes.Result, error) {
+func (m *mockQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	if m.result != nil {
 		return m.result, nil
 	}

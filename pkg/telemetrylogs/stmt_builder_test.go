@@ -8,11 +8,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -216,10 +214,6 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	orgId := valuer.GenerateUUID()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: orgId.String(),
-	})
 
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC))
@@ -342,11 +336,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		},
 	}
 
-	orgId := valuer.GenerateUUID()
 	ctx := context.Background()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: orgId.String(),
-	})
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper()
@@ -456,11 +446,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		},
 	}
 
-	orgId := valuer.GenerateUUID()
 	ctx := context.Background()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: orgId.String(),
-	})
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper()
@@ -538,11 +524,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		},
 	}
 
-	orgId := valuer.GenerateUUID()
 	ctx := context.Background()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: orgId.String(),
-	})
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper()
@@ -639,11 +621,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		},
 	}
 
-	orgId := valuer.GenerateUUID()
 	ctx := context.Background()
-	ctx = authtypes.NewContextWithClaims(ctx, authtypes.Claims{
-		OrgID: orgId.String(),
-	})
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper()

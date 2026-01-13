@@ -7,7 +7,6 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type traceOperatorQuery struct {
@@ -30,7 +29,7 @@ func (q *traceOperatorQuery) Window() (uint64, uint64) {
 	return q.fromMS, q.toMS
 }
 
-func (q *traceOperatorQuery) Execute(ctx context.Context, orgID valuer.UUID) (*qbtypes.Result, error) {
+func (q *traceOperatorQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	stmt, err := q.stmtBuilder.Build(
 		ctx,
 		q.fromMS,

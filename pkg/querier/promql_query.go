@@ -15,7 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
 )
@@ -141,7 +140,7 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 	return newQuery.String(), nil
 }
 
-func (q *promqlQuery) Execute(ctx context.Context, _ valuer.UUID) (*qbv5.Result, error) {
+func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 
 	start := int64(querybuilder.ToNanoSecs(q.tr.From))
 	end := int64(querybuilder.ToNanoSecs(q.tr.To))
