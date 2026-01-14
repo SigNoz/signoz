@@ -10,9 +10,10 @@ import getInviteDetails from 'api/v1/invite/id/get';
 import signUpApi from 'api/v1/register/post';
 import passwordAuthNContext from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
+import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, CircleAlert } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
@@ -296,21 +297,13 @@ function SignUp(): JSX.Element {
 							type="error"
 							size="small"
 							showIcon
+							icon={<CircleAlert size={12} />}
 							className="signup-error-callout"
 							description="Passwords don't match. Please try again."
 						/>
 					)}
 
-					{formError && !confirmPasswordError && (
-						<Callout
-							type="error"
-							size="small"
-							showIcon
-							className="signup-error-callout"
-							message={formError?.getErrorCode() || undefined}
-							description={formError?.getErrorMessage() || 'Something went wrong'}
-						/>
-					)}
+					{formError && !confirmPasswordError && <AuthError error={formError} />}
 
 					<div className="signup-form-actions">
 						<Button

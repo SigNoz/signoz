@@ -1,12 +1,12 @@
 import './Login.styles.scss';
 
 import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
 import { Form, Input, Select, Tooltip, Typography } from 'antd';
 import getVersion from 'api/v1/version/get';
 import get from 'api/v2/sessions/context/get';
 import post from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
+import AuthError from 'components/AuthError/AuthError';
 import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
@@ -363,16 +363,7 @@ function Login(): JSX.Element {
 					)}
 				</div>
 
-				{errorMessage && (
-					<Callout
-						type="error"
-						size="small"
-						showIcon
-						className="login-error-callout"
-						message={errorMessage?.getErrorCode() || 'Something went wrong'}
-						description={errorMessage?.getErrorMessage() || 'Something went wrong'}
-					/>
-				)}
+				{errorMessage && <AuthError error={errorMessage} />}
 
 				<div className="login-form-actions">
 					{!sessionsContext && (

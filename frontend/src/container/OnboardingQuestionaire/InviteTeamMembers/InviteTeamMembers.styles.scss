@@ -71,6 +71,12 @@
 	}
 }
 
+.invite-team-members-error-callout {
+	background: rgba(229, 72, 77, 0.1);
+	border: 1px solid rgba(229, 72, 77, 0.2);
+	border-radius: 4px;
+}
+
 .team-member-row {
 	display: flex;
 	width: 100%;

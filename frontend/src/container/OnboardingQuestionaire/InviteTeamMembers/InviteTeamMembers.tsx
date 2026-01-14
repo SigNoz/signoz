@@ -6,9 +6,10 @@ import { Input } from '@signozhq/input';
 import { Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
+import AuthError from 'components/AuthError/AuthError';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
-import { ArrowRight, Loader2, Plus, Trash2 } from 'lucide-react';
+import { ArrowRight, CircleAlert, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import APIError from 'types/api/error';
@@ -328,18 +329,14 @@ function InviteTeamMembers({
 						type="error"
 						size="small"
 						showIcon
+						icon={<CircleAlert size={12} />}
+						className="invite-team-members-error-callout"
 						description={getValidationErrorMessage()}
 					/>
 				)}
 
 				{inviteError && !hasInvalidEmails && !hasInvalidRoles && (
-					<Callout
-						type="error"
-						size="small"
-						showIcon
-						message={inviteError.getErrorCode() || undefined}
-						description={inviteError.getErrorMessage() || 'Something went wrong'}
-					/>
+					<AuthError error={inviteError} />
 				)}
 
 				<div className="onboarding-buttons-container">

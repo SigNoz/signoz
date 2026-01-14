@@ -5,12 +5,13 @@ import { Callout } from '@signozhq/callout';
 import { Form, Input as AntdInput, Typography } from 'antd';
 import { Logout } from 'api/utils';
 import resetPasswordApi from 'api/v1/factor_password/resetPassword';
+import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { ArrowRight, KeyRound } from 'lucide-react';
+import { ArrowRight, CircleAlert, KeyRound } from 'lucide-react';
 import { Label } from 'pages/SignUp/styles';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -182,20 +183,14 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							type="error"
 							size="small"
 							showIcon
+							icon={<CircleAlert size={12} />}
 							className="reset-password-error-callout"
 							description="Passwords don't match. Please try again."
 						/>
 					)}
 
 					{errorMessage && !confirmPasswordError && (
-						<Callout
-							type="error"
-							size="small"
-							showIcon
-							className="reset-password-error-callout"
-							message={errorMessage?.getErrorCode() || undefined}
-							description={errorMessage?.getErrorMessage() || 'Something went wrong'}
-						/>
+						<AuthError error={errorMessage} />
 					)}
 
 					<div className="reset-password-form-actions">
