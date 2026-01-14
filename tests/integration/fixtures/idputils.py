@@ -32,7 +32,7 @@ def create_saml_client(
             existing_client_id = client.get_client_id(client_id=saml_client_id)
             if existing_client_id:
                 client.delete_client(existing_client_id)
-        except Exception:
+        except Exception: # pylint: disable=broad-exception-caught
             pass  # Client doesn't exist, that's fine
 
         client.create_client(
@@ -216,7 +216,7 @@ def create_oidc_client(
             existing_client_id = client.get_client_id(client_id=client_id)
             if existing_client_id:
                 client.delete_client(existing_client_id)
-        except Exception:
+        except Exception: # pylint: disable=broad-exception-caught
             pass  # Client doesn't exist, that's fine
 
         client.create_client(
@@ -417,7 +417,7 @@ def create_group_idp(idp: types.TestContainerIDP) -> Callable[[str], str]:
     for group_id in created_groups:
         try:
             client.delete_group(group_id)
-        except Exception:
+        except Exception: # pylint: disable=broad-exception-caught
             pass
 
 
@@ -467,7 +467,7 @@ def create_user_idp_with_groups(
     for user_id in created_users:
         try:
             client.delete_user(user_id)
-        except Exception:
+        except Exception: # pylint: disable=broad-exception-caught
             pass
 
 
@@ -541,7 +541,7 @@ def create_user_idp_with_role(
     for user_id in created_users:
         try:
             client.delete_user(user_id)
-        except Exception:
+        except Exception: # pylint: disable=broad-exception-caught
             pass
 
 
