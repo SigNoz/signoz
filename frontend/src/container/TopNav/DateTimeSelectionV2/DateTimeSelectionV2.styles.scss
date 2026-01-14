@@ -330,14 +330,6 @@
 				}
 
 				.periscope-calendar-day {
-					background: none !important;
-
-					&.periscope-calendar-today {
-						&.text-accent-foreground {
-							color: var(--bg-vanilla-100) !important;
-						}
-					}
-
 					button {
 						&:hover {
 							background-color: var(--bg-robin-500) !important;
@@ -556,12 +548,6 @@
 
 	.calendar-container {
 		.periscope-calendar-day {
-			&.periscope-calendar-today {
-				&.text-accent-foreground {
-					color: var(--bg-ink-500) !important;
-				}
-			}
-
 			button {
 				&:hover {
 					background-color: var(--bg-robin-500) !important;

@@ -10,7 +10,7 @@ import {
 } from 'types/api/dashboard/getAll';
 
 import { useAddDynamicVariableToPanels } from '../../../hooks/dashboard/useAddDynamicVariableToPanels';
-import { WidgetSelector } from '../DashboardSettings/Variables/VariableItem/WidgetSelector';
+import { WidgetSelector } from '../DashboardSettings/DashboardVariableSettings/VariableItem/WidgetSelector';
 
 // Mock scrollIntoView since it's not available in JSDOM
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
