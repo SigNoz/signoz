@@ -20,6 +20,35 @@ function CalendarContainer({
 }): JSX.Element {
 	const { timezone } = useTimezone();
 
+	// this is to override the default behavior of the shadcn calendar component
+	// if a range is already selected, clicking on a date will reset selection and set the new date as the start date
+	const handleSelect = (
+		_selected: DateRange | undefined,
+		clickedDate?: Date,
+	): void => {
+		if (!clickedDate) {
+			return;
+		}
+
+		// No dates selected → start new
+		if (!dateRange?.from) {
+			onSelectDateRange({ from: clickedDate });
+			return;
+		}
+
+		// Only start selected → complete the range
+		if (dateRange.from && !dateRange.to) {
+			if (clickedDate < dateRange.from) {
+				onSelectDateRange({ from: clickedDate, to: dateRange.from });
+			} else {
+				onSelectDateRange({ from: dateRange.from, to: clickedDate });
+			}
+			return;
+		}
+
+		onSelectDateRange({ from: clickedDate, to: undefined });
+	};
+
 	return (
 		<div className="calendar-container">
 			<div className="calendar-container-header">
@@ -44,7 +73,7 @@ function CalendarContainer({
 					disabled={{
 						after: dayjs().toDate(),
 					}}
-					onSelect={onSelectDateRange}
+					onSelect={handleSelect}
 				/>
 
 				<div className="calendar-actions">
