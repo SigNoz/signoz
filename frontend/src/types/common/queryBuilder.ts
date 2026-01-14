@@ -219,7 +219,13 @@ export type PanelTypeKeys =
 	| 'TRACE'
 	| 'EMPTY_WIDGET';
 
-export type ReduceOperators = 'last' | 'sum' | 'avg' | 'max' | 'min';
+export enum ReduceOperators {
+	LAST = 'last',
+	SUM = 'sum',
+	AVG = 'avg',
+	MAX = 'max',
+	MIN = 'min',
+}
 
 export type QueryBuilderData = {
 	queryData: IBuilderQuery[];

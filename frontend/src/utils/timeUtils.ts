@@ -170,3 +170,96 @@ export const getDaysUntilExpiry = (expiresAt: string): number => {
 	if (!date.isValid()) return 0;
 	return date.diff(dayjs(), 'day');
 };
+
+export interface TimeRangeValidationResult {
+	isValid: boolean;
+	errorDetails?: {
+		message: string;
+		code: string;
+		description: string;
+	};
+	startTimeMs?: number;
+	endTimeMs?: number;
+}
+
+/**
+ * Validates a start and end datetime string.
+ *
+ * Validation rules:
+ * 1. Both start and end must be valid date-time values
+ * 2. End time must be after start time
+ * 3. End time must not be in the future
+ *
+ * Assumptions:
+ * - Input values follow the provided date-time format
+ * - All comparisons are performed in epoch milliseconds
+ *
+ * @param startTime - Start datetime string
+ * @param endTime - End datetime string
+ * @param format - Expected date-time format (e.g. DD/MM/YYYY HH:mm:ss)
+ * @returns Validation result with parsed epoch milliseconds
+ */
+export const validateTimeRange = (
+	startTime: string,
+	endTime: string,
+	format: string,
+): TimeRangeValidationResult => {
+	const start = dayjs(startTime, format, true);
+	const end = dayjs(endTime, format, true);
+	const now = dayjs();
+	const startTimeMs = start.valueOf();
+	const endTimeMs = end.valueOf();
+
+	// Invalid format or parsing failure
+	if (!start.isValid() || !end.isValid()) {
+		return {
+			isValid: false,
+			errorDetails: {
+				message: 'Invalid date/time format',
+				code: 'INVALID_DATE_TIME_FORMAT',
+				description: `
+Enter a valid date/time. e.g. 
+
+
+Range:
+${now.subtract(1, 'hour').format(format)} - ${now.format(format)}
+
+Shortcuts:
+15m, 2h, 2d, 2w
+`,
+			},
+		};
+	}
+
+	// dates must not be in the future
+	if (start.isAfter(now) || end.isAfter(now)) {
+		return {
+			isValid: false,
+			errorDetails: {
+				message: 'Dates in the future',
+				code: 'DATES_IN_THE_FUTURE',
+				description:
+					'Dates must not be in the future. Enter a past or current date/time.',
+			},
+		};
+	}
+
+	// start time must be before end time
+	if (startTimeMs >= endTimeMs) {
+		return {
+			isValid: false,
+			errorDetails: {
+				message: 'Start time after end time',
+				code: 'START_TIME_AFTER_END_TIME',
+				description:
+					'Start time must be before end time. Change the start or end so the range is chronological.',
+			},
+		};
+	}
+
+	return {
+		isValid: true,
+		startTimeMs,
+		endTimeMs,
+	};
+};

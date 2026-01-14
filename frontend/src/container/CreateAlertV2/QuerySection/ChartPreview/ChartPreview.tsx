@@ -35,24 +35,21 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 
 	const yAxisUnit = alertState.yAxisUnit || '';
 
-	const fetchYAxisUnit =
+	const shouldUpdateYAxisUnit =
 		!isEditMode && alertType === AlertTypes.METRICS_BASED_ALERT;
 
 	const selectedQueryName = thresholdState.selectedQuery;
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
 		selectedQueryName,
-		{
-			enabled: fetchYAxisUnit,
-		},
 	);
 
 	// Every time a new metric is selected, set the y-axis unit to its unit value if present
-	// Only for metrics-based alerts
+	// Only for metrics-based alerts in create mode
 	useEffect(() => {
-		if (fetchYAxisUnit) {
+		if (shouldUpdateYAxisUnit) {
 			setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: initialYAxisUnit });
 		}
-	}, [initialYAxisUnit, setAlertState, fetchYAxisUnit]);
+	}, [initialYAxisUnit, setAlertState, shouldUpdateYAxisUnit]);
 
 	const headline = (
 		<div className="chart-preview-headline">

@@ -18,6 +18,7 @@ type MockMetadataStore struct {
 	TemporalityMap     map[string]metrictypes.Temporality
 	PromotedPathsMap   map[string]struct{}
 	LogsJSONIndexesMap map[string][]schemamigrator.Index
+	LookupKeysMap      map[telemetrytypes.MetricMetadataLookupKey]int64
 }
 
 // NewMockMetadataStore creates a new instance of MockMetadataStore with initialized maps
@@ -29,6 +30,7 @@ func NewMockMetadataStore() *MockMetadataStore {
 		TemporalityMap:     make(map[string]metrictypes.Temporality),
 		PromotedPathsMap:   make(map[string]struct{}),
 		LogsJSONIndexesMap: make(map[string][]schemamigrator.Index),
+		LookupKeysMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 	}
 }
 
@@ -306,4 +308,14 @@ func (m *MockMetadataStore) ListPromotedPaths(ctx context.Context, paths ...stri
 // ListLogsJSONIndexes lists the JSON indexes for the logs table.
 func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...string) (map[string][]schemamigrator.Index, error) {
 	return m.LogsJSONIndexesMap, nil
+}
+
+func (m *MockMetadataStore) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []telemetrytypes.MetricMetadataLookupKey) (map[telemetrytypes.MetricMetadataLookupKey]int64, error) {
+	return m.LookupKeysMap, nil
+}
+
+func (m *MockMetadataStore) SetFirstSeenFromMetricMetadata(firstSeenMap map[telemetrytypes.MetricMetadataLookupKey]int64) {
+	for key, value := range firstSeenMap {
+		m.LookupKeysMap[key] = value
+	}
 }
