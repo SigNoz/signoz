@@ -358,6 +358,7 @@ export enum PANEL_TYPES {
 	BAR = 'bar',
 	PIE = 'pie',
 	HISTOGRAM = 'histogram',
+	HEATMAP = 'heatmap',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
 
@@ -509,6 +510,7 @@ export enum PanelDisplay {
 	BAR = 'Bar',
 	PIE = 'Pie',
 	HISTOGRAM = 'Histogram',
+	HEATMAP = 'Heatmap',
 }
 
 export const DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY: Record<

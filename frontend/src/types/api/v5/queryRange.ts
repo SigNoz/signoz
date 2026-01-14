@@ -10,6 +10,7 @@ export type RequestType =
 	| 'trace'
 	| 'raw'
 	| 'distribution'
+	| 'heatmap'
 	| '';
 
 export type QueryType =
@@ -402,6 +403,14 @@ export interface DistributionData {
 	[key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
+export interface HeatmapData {
+	queryName: string;
+	bucketStarts?: number[];
+	bucketBounds: number[];
+	timestamps: number[];
+	counts: number[][];
+}
+
 // Response data structures with results array
 export interface TimeSeriesResponseData {
 	results: TimeSeriesData[];
@@ -419,11 +428,16 @@ export interface DistributionResponseData {
 	results: DistributionData[];
 }
 
+export interface HeatmapResponseData {
+	results: HeatmapData[];
+}
+
 export type QueryRangeDataV5 =
 	| TimeSeriesResponseData
 	| ScalarResponseData
 	| RawResponseData
-	| DistributionResponseData;
+	| DistributionResponseData
+	| HeatmapResponseData;
 
 export interface QueryRangeResponseV5 {
 	type: RequestType;

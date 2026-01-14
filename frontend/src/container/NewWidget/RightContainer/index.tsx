@@ -52,6 +52,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import { ColumnUnitSelector } from './ColumnUnitSelector/ColumnUnitSelector';
 import {
 	panelTypeVsBucketConfig,
+	panelTypeVsColorPalette,
 	panelTypeVsColumnUnitPreferences,
 	panelTypeVsContextLinks,
 	panelTypeVsCreateAlert,
@@ -129,6 +130,8 @@ function RightContainer({
 	contextLinks,
 	setContextLinks,
 	enableDrillDown = false,
+	heatmapColorPalette,
+	setHeatmapColorPalette,
 }: RightContainerProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 	const [inputValue, setInputValue] = useState(title);
@@ -167,6 +170,7 @@ function RightContainer({
 	const allowContextLinks =
 		panelTypeVsContextLinks[selectedGraph] && enableDrillDown;
 	const allowDecimalPrecision = panelTypeVsDecimalPrecision[selectedGraph];
+	const allowColorPalette = panelTypeVsColorPalette[selectedGraph];
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -362,6 +366,25 @@ function RightContainer({
 								: 'Y Axis Unit'
 						}
 					/>
+				)}
+
+				{allowColorPalette && (
+					<section className="heatmap-color-palette-selector">
+						<Typography.Text className="typography">Color Palette</Typography.Text>
+						<Select
+							options={[
+								{ label: 'Purple', value: 'default' },
+								{ label: 'Blue', value: 'blue' },
+								{ label: 'Green', value: 'green' },
+								{ label: 'Orange', value: 'orange' },
+								{ label: 'Red', value: 'red' },
+							]}
+							value={heatmapColorPalette}
+							style={{ width: '100%' }}
+							className="panel-type-select"
+							onChange={(val: string): void => setHeatmapColorPalette(val)}
+						/>
+					</section>
 				)}
 
 				{allowDecimalPrecision && (
@@ -612,6 +635,8 @@ export interface RightContainerProps {
 	contextLinks: ContextLinksData;
 	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
 	enableDrillDown?: boolean;
+	heatmapColorPalette: string;
+	setHeatmapColorPalette: Dispatch<SetStateAction<string>>;
 }
 
 RightContainer.defaultProps = {

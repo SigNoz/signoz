@@ -2,6 +2,7 @@ import { DefaultOptionType } from 'antd/es/select';
 import { omitIdFromQuery } from 'components/ExplorerCard/utils';
 import { PrecisionOptionsEnum } from 'components/Graph/types';
 import {
+	ATTRIBUTE_TYPES,
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
@@ -18,8 +19,9 @@ import { cloneDeep, defaultTo, isEmpty, isEqual, set, unset } from 'lodash-es';
 import { Layout } from 'react-grid-layout';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { MetricAggregation } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 
 import {
 	dataTypeCategories,
@@ -47,6 +49,7 @@ export type PartialPanelTypes = {
 	[PANEL_TYPES.VALUE]: 'value';
 	[PANEL_TYPES.PIE]: 'pie';
 	[PANEL_TYPES.HISTOGRAM]: 'histogram';
+	[PANEL_TYPES.HEATMAP]: 'heatmap';
 };
 
 export const panelTypeDataSourceFormValuesMap: Record<
@@ -188,6 +191,73 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		},
 	},
 	[PANEL_TYPES.HISTOGRAM]: {
+		[DataSource.LOGS]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
+					'filter',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+					'stepInterval',
+					'disabled',
+					'queryName',
+					'legend',
+					'expression',
+					'aggregations',
+				],
+			},
+		},
+		[DataSource.METRICS]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'disabled',
+					'functions',
+					'expression',
+					'aggregations',
+				],
+			},
+		},
+		[DataSource.TRACES]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
+					'filter',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+					'stepInterval',
+					'disabled',
+					'queryName',
+					'legend',
+					'expression',
+					'aggregations',
+				],
+			},
+		},
+	},
+	[PANEL_TYPES.HEATMAP]: {
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
@@ -486,6 +556,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 	},
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function handleQueryChange(
 	newPanelType: keyof PartialPanelTypes,
 	supersetQuery: Query,
@@ -525,6 +596,51 @@ export function handleQueryChange(
 					newPanelType !== PANEL_TYPES.LIST
 				) {
 					set(tempQuery, 'orderBy', undefined);
+				}
+
+				if (
+					newPanelType === PANEL_TYPES.HEATMAP &&
+					dataSource === DataSource.METRICS
+				) {
+					const { aggregateAttribute } = tempQuery;
+					if (
+						aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
+						aggregateAttribute?.type === ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM
+					) {
+						set(tempQuery, 'aggregations', [
+							{
+								metricName: aggregateAttribute?.key || '',
+								timeAggregation: MetricAggregateOperator.INCREASE,
+								spaceAggregation: MetricAggregateOperator.SUM,
+								temporality: '',
+							} as MetricAggregation,
+						]);
+					}
+				}
+
+				if (
+					currentPanelType === PANEL_TYPES.HEATMAP &&
+					newPanelType !== PANEL_TYPES.HEATMAP &&
+					dataSource === DataSource.METRICS
+				) {
+					const { aggregateAttribute, aggregations } = tempQuery;
+					const currentAgg = aggregations?.[0] as MetricAggregation;
+
+					if (
+						aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
+						(aggregateAttribute?.type === ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM &&
+							currentAgg?.timeAggregation === MetricAggregateOperator.INCREASE &&
+							currentAgg?.spaceAggregation === MetricAggregateOperator.SUM)
+					) {
+						set(tempQuery, 'aggregations', [
+							{
+								metricName: aggregateAttribute?.key || '',
+								timeAggregation: '',
+								spaceAggregation: MetricAggregateOperator.P99,
+								temporality: '',
+							} as MetricAggregation,
+						]);
+					}
 				}
 
 				return tempQuery;
@@ -589,6 +705,11 @@ export const PANEL_TYPE_TO_QUERY_TYPES: Record<PANEL_TYPES, EQueryType[]> = {
 	],
 	[PANEL_TYPES.PIE]: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
 	[PANEL_TYPES.HISTOGRAM]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.HEATMAP]: [
 		EQueryType.QUERY_BUILDER,
 		EQueryType.CLICKHOUSE,
 		EQueryType.PROM,

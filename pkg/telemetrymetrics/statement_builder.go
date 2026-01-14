@@ -128,7 +128,7 @@ func (b *MetricQueryStatementBuilder) Build(
 	ctx context.Context,
 	start uint64,
 	end uint64,
-	_ qbtypes.RequestType,
+	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
@@ -139,6 +139,10 @@ func (b *MetricQueryStatementBuilder) Build(
 	}
 
 	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
+
+	if requestType == qbtypes.RequestTypeHeatmap {
+		return b.buildHeatmapQuery(ctx, start, end, query, keys, variables)
+	}
 
 	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
 }
@@ -359,7 +363,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 		}
 	}
 
-	start, end, _, tbl := WhichTSTableToUse(start, end, query.Aggregations[0].TableHints)
+	start, end, tbl, _ := WhichTSTableToUse(start, end, query.Aggregations[0].TableHints)
 	sb.From(fmt.Sprintf("%s.%s", DBName, tbl))
 
 	sb.Select("fingerprint")
@@ -377,14 +381,17 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.LTE("unix_milli", end),
 	)
 
-	if query.Aggregations[0].Temporality != metrictypes.Unknown {
+	if query.Aggregations[0].Temporality != metrictypes.Unknown && query.Aggregations[0].Temporality != metrictypes.Unspecified {
 		sb.Where(sb.ILike("temporality", query.Aggregations[0].Temporality.StringValue()))
 	}
 
 	// TODO configurable if we don't rollout the new un-normalized metrics
-	sb.Where(
-		sb.EQ("__normalized", false),
-	)
+	skipNormalizationCheck := query.Aggregations[0].TableHints != nil && query.Aggregations[0].TableHints.SkipNormalizationCheck
+	if !skipNormalizationCheck {
+		sb.Where(
+			sb.EQ("__normalized", false),
+		)
+	}
 
 	if preparedWhereClause != nil {
 		sb.AddWhereClause(preparedWhereClause.WhereClause)
@@ -604,4 +611,97 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
+}
+
+func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
+	ctx context.Context,
+	start, end uint64,
+	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+
+	delete(keys, "le")
+
+	leExists := false
+	for _, g := range query.GroupBy {
+		if g.TelemetryFieldKey.Name == "le" {
+			leExists = true
+			break
+		}
+	}
+
+	if !leExists {
+		query.GroupBy = append(query.GroupBy, qbtypes.GroupByKey{
+			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "le"},
+		})
+	}
+
+	query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
+	query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
+	// For heatmap queries, we want to ignore the __normalized filter because we want all data
+	if query.Aggregations[0].TableHints == nil {
+		query.Aggregations[0].TableHints = &metrictypes.MetricTableHints{}
+	}
+	query.Aggregations[0].TableHints.SkipNormalizationCheck = true
+
+	var (
+		cteFragments []string
+		cteArgs      [][]any
+	)
+
+	timeSeriesCTE, timeSeriesCTEArgs, err := b.buildTimeSeriesCTE(ctx, start, end, query, keys, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	frag, args, err := b.buildTemporalAggregationCTE(ctx, start, end, query, keys, timeSeriesCTE, timeSeriesCTEArgs)
+	if err != nil {
+		return nil, err
+	}
+	if frag != "" {
+		cteFragments = append(cteFragments, frag)
+		cteArgs = append(cteArgs, args)
+	}
+
+	frag, args = b.buildSpatialAggregationCTE(ctx, start, end, query, keys)
+	if frag != "" {
+		cteFragments = append(cteFragments, frag)
+		cteArgs = append(cteArgs, args)
+	}
+
+	combined := querybuilder.CombineCTEs(cteFragments)
+
+	finalArgs := []any{}
+	for _, a := range cteArgs {
+		finalArgs = append(finalArgs, a...)
+	}
+
+	inner := sqlbuilder.NewSelectBuilder()
+	inner.Select("ts")
+	inner.Where("le != '+Inf'")
+	inner.Where("toFloat64OrNull(le) IS NOT NULL")
+	inner.Where("isFinite(toFloat64OrNull(le))")
+	inner.SelectMore("toFloat64OrNull(le) AS bucket_end")
+	inner.SelectMore("sum(value) AS value")
+	inner.From("__spatial_aggregation_cte")
+	inner.GroupBy("ts", "bucket_end")
+	inner.OrderBy("ts", "bucket_end")
+	innerQ, innerArgs := inner.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("ts")
+	sb.SelectMore("lagInFrame(bucket_end, 1, toFloat64(0)) OVER (PARTITION BY ts ORDER BY bucket_end) AS bucket_start")
+	sb.SelectMore("bucket_end")
+	sb.SelectMore("greatest(value - lagInFrame(value, 1, toFloat64(0)) OVER (PARTITION BY ts ORDER BY bucket_end), toFloat64(0)) AS value")
+	sb.From("(" + innerQ + ")")
+	sb.OrderBy("ts", "bucket_end")
+
+	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	finalQuery := combined + q
+	return &qbtypes.Statement{
+		Query: finalQuery,
+		Args:  append(finalArgs, append(innerArgs, a...)...),
+	}, nil
 }

@@ -190,6 +190,9 @@ function NewWidget({
 	const [thresholds, setThresholds] = useState<ThresholdProps[]>(
 		selectedWidget?.thresholds || [],
 	);
+	const [heatmapColorPalette, setHeatmapColorPalette] = useState<string>(
+		selectedWidget?.heatmapColorPalette || 'default',
+	);
 	const [selectedNullZeroValue, setSelectedNullZeroValue] = useState<string>(
 		selectedWidget?.nullZeroValues || 'zero',
 	);
@@ -279,6 +282,7 @@ function NewWidget({
 				customLegendColors,
 				columnWidths: columnWidths?.[selectedWidget?.id],
 				contextLinks,
+				heatmapColorPalette,
 			};
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -306,6 +310,7 @@ function NewWidget({
 		customLegendColors,
 		columnWidths,
 		contextLinks,
+		heatmapColorPalette,
 	]);
 
 	const closeModal = (): void => {
@@ -860,6 +865,8 @@ function NewWidget({
 							contextLinks={contextLinks}
 							setContextLinks={setContextLinks}
 							enableDrillDown={enableDrillDown}
+							heatmapColorPalette={heatmapColorPalette}
+							setHeatmapColorPalette={setHeatmapColorPalette}
 						/>
 					</OverlayScrollbar>
 				</RightContainerWrapper>

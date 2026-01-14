@@ -3,6 +3,7 @@ import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import {
 	DistributionData,
+	HeatmapData,
 	MetricRangePayloadV5,
 	QueryRangeRequestV5,
 	RawData,
@@ -334,6 +335,22 @@ function convertV5DataByType(
 				result: distributionData.map((distribution) =>
 					convertDistributionData(distribution, legendMap),
 				),
+			};
+		}
+		case 'heatmap': {
+			const heatmapData = v5Data.data.results as HeatmapData[];
+			return {
+				resultType: 'heatmap',
+				result: heatmapData.map((h) => ({
+					queryName: h.queryName,
+					legend: legendMap[h.queryName] || h.queryName,
+					series: null,
+					list: null,
+					bucketStarts: h.bucketStarts,
+					bucketBounds: h.bucketBounds,
+					timestamps: h.timestamps,
+					counts: h.counts,
+				})),
 			};
 		}
 		default:
