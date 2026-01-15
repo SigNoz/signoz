@@ -9,7 +9,7 @@ import {
 import {
 	listViewInitialLogQuery,
 	PANEL_TYPES_INITIAL_QUERY,
-} from 'container/NewDashboard/ComponentsSlider/constants';
+} from 'container/DashboardContainer/ComponentsSlider/constants';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,

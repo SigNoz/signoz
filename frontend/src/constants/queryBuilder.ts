@@ -138,11 +138,11 @@ export const mapOfFormulaToFilters: Record<
 };
 
 export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
-	{ value: 'last', label: 'Latest of values in timeframe' },
-	{ value: 'sum', label: 'Sum of values in timeframe' },
-	{ value: 'avg', label: 'Average of values in timeframe' },
-	{ value: 'max', label: 'Max of values in timeframe' },
-	{ value: 'min', label: 'Min of values in timeframe' },
+	{ value: ReduceOperators.LAST, label: 'Latest of values in timeframe' },
+	{ value: ReduceOperators.SUM, label: 'Sum of values in timeframe' },
+	{ value: ReduceOperators.AVG, label: 'Average of values in timeframe' },
+	{ value: ReduceOperators.MAX, label: 'Max of values in timeframe' },
+	{ value: ReduceOperators.MIN, label: 'Min of values in timeframe' },
 ];
 
 export const initialHavingValues: HavingForm = {
@@ -180,7 +180,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 			temporality: '',
 			timeAggregation: MetricAggregateOperator.COUNT,
 			spaceAggregation: MetricAggregateOperator.SUM,
-			reduceTo: 'avg',
+			reduceTo: ReduceOperators.AVG,
 		},
 	],
 	functions: [],
@@ -196,7 +196,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	orderBy: [],
 	groupBy: [],
 	legend: '',
-	reduceTo: 'avg',
+	reduceTo: ReduceOperators.AVG,
 	source: '',
 };
 
@@ -228,7 +228,7 @@ export const initialQueryBuilderFormMeterValues: IBuilderQuery = {
 			temporality: '',
 			timeAggregation: MeterAggregateOperator.COUNT,
 			spaceAggregation: MeterAggregateOperator.SUM,
-			reduceTo: 'avg',
+			reduceTo: ReduceOperators.AVG,
 		},
 	],
 	functions: [],
@@ -244,7 +244,7 @@ export const initialQueryBuilderFormMeterValues: IBuilderQuery = {
 	orderBy: [],
 	groupBy: [],
 	legend: '',
-	reduceTo: 'avg',
+	reduceTo: ReduceOperators.AVG,
 };
 
 export const initialQueryBuilderFormValuesMap: Record<

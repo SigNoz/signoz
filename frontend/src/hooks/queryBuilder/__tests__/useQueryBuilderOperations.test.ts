@@ -6,7 +6,11 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	ReduceOperators,
+} from 'types/common/queryBuilder';
 
 import { useQueryBuilder } from '../useQueryBuilder';
 import { useQueryOperations } from '../useQueryBuilderOperations';
@@ -54,7 +58,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 		stepInterval: 60,
 		expression: '',
 		disabled: false,
-		reduceTo: 'avg',
+		reduceTo: ReduceOperators.AVG,
 		legend: '',
 	};
 
@@ -189,6 +193,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 							metricName: 'new_sum_metric',
 							temporality: '',
 							spaceAggregation: MetricAggregateOperator.SUM,
+							reduceTo: ReduceOperators.SUM,
 						},
 					],
 				}),
@@ -208,6 +213,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 						metricName: 'original_sum_metric',
 						temporality: '',
 						spaceAggregation: MetricAggregateOperator.SUM,
+						reduceTo: ReduceOperators.SUM,
 					},
 				],
 			};
@@ -240,6 +246,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 							metricName: 'new_sum_metric',
 							temporality: '',
 							spaceAggregation: MetricAggregateOperator.SUM,
+							reduceTo: ReduceOperators.SUM,
 						},
 					],
 				}),
@@ -261,6 +268,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 						metricName: 'original_gauge',
 						temporality: '',
 						spaceAggregation: '',
+						reduceTo: ReduceOperators.AVG,
 					},
 				],
 			};
@@ -291,6 +299,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 						metricName: '',
 						temporality: '',
 						spaceAggregation: MetricAggregateOperator.SUM,
+						reduceTo: ReduceOperators.AVG,
 					},
 				],
 			};
@@ -316,6 +325,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 							metricName: 'new_gauge',
 							temporality: '',
 							spaceAggregation: MetricAggregateOperator.AVG,
+							reduceTo: ReduceOperators.AVG,
 						},
 					],
 				}),

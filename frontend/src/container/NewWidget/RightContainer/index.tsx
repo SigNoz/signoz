@@ -17,7 +17,7 @@ import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import GraphTypes, {
 	ItemsProps,
-} from 'container/NewDashboard/ComponentsSlider/menuItems';
+} from 'container/DashboardContainer/ComponentsSlider/menuItems';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
@@ -68,11 +68,11 @@ import {
 	panelTypeVsYAxisUnit,
 } from './constants';
 import ContextLinks from './ContextLinks';
+import DashboardYAxisUnitSelectorWrapper from './DashboardYAxisUnitSelectorWrapper';
 import LegendColors from './LegendColors/LegendColors';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
-import YAxisUnitSelector from './YAxisUnitSelector';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -130,6 +130,7 @@ function RightContainer({
 	contextLinks,
 	setContextLinks,
 	enableDrillDown = false,
+	isNewDashboard,
 	heatmapColorPalette,
 	setHeatmapColorPalette,
 }: RightContainerProps): JSX.Element {
@@ -352,11 +353,12 @@ function RightContainer({
 					<ColumnUnitSelector
 						columnUnits={columnUnits}
 						setColumnUnits={setColumnUnits}
+						isNewDashboard={isNewDashboard}
 					/>
 				)}
 
 				{allowYAxisUnit && (
-					<YAxisUnitSelector
+					<DashboardYAxisUnitSelectorWrapper
 						onSelect={setYAxisUnit}
 						value={yAxisUnit || ''}
 						fieldLabel={
@@ -365,6 +367,8 @@ function RightContainer({
 								? 'Unit'
 								: 'Y Axis Unit'
 						}
+						// Only update the y-axis unit value automatically in create mode
+						shouldUpdateYAxisUnit={isNewDashboard}
 					/>
 				)}
 
@@ -635,6 +639,7 @@ export interface RightContainerProps {
 	contextLinks: ContextLinksData;
 	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
 	enableDrillDown?: boolean;
+	isNewDashboard: boolean;
 	heatmapColorPalette: string;
 	setHeatmapColorPalette: Dispatch<SetStateAction<string>>;
 }

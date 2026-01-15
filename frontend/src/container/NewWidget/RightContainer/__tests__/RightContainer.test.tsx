@@ -168,6 +168,9 @@ describe('RightContainer - Alerts Section', () => {
 		contextLinks: { linksData: [] },
 		setContextLinks: jest.fn(),
 		enableDrillDown: false,
+		isNewDashboard: false,
+		heatmapColorPalette: 'default',
+		setHeatmapColorPalette: jest.fn(),
 	};
 
 	beforeEach(() => {

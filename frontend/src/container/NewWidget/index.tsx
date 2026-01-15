@@ -865,6 +865,7 @@ function NewWidget({
 							contextLinks={contextLinks}
 							setContextLinks={setContextLinks}
 							enableDrillDown={enableDrillDown}
+							isNewDashboard={isNewDashboard}
 							heatmapColorPalette={heatmapColorPalette}
 							setHeatmapColorPalette={setHeatmapColorPalette}
 						/>
