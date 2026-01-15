@@ -30,10 +30,14 @@ type Gateway interface {
 
 	// Create Ingestion Key
 	CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.CreateIngestionKeyResponse, error)
+
+	// Update Ingestion Key
+	UpdateIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string, name string, tags []string, expiresAt time.Time) error
 }
 
 type Handler interface {
 	GetIngestionKeys(http.ResponseWriter, *http.Request)
 	SearchIngestionKeys(http.ResponseWriter, *http.Request)
 	CreateIngestionKey(http.ResponseWriter, *http.Request)
+	UpdateIngestionKey(http.ResponseWriter, *http.Request)
 }
