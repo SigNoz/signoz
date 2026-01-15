@@ -541,13 +541,14 @@ func readAsHeatmapFromRows(rows driver.Rows, queryName string) (*qbtypes.Heatmap
 				if s, ok := val.(string); ok {
 					if s == "+Inf" {
 						bucketEnd = math.Inf(1)
+						endFound = true
 					} else {
 						f, err := strconv.ParseFloat(s, 64)
 						if err == nil {
 							bucketEnd = f
+							endFound = true
 						}
 					}
-					endFound = true
 				} else {
 					bucketEnd = numericAsFloat(val)
 					if !math.IsNaN(bucketEnd) {
