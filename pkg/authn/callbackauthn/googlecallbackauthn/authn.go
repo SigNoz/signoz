@@ -112,12 +112,12 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 
 	if err := idToken.Claims(&claims); err != nil {
 		a.settings.Logger().ErrorContext(ctx, "google: missing or invalid claims", "error", err)
-		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: missing or invalid claims")
+		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: missing or invalid claims").WithAdditional(err.Error())
 	}
 
 	if claims.HostedDomain != authDomain.StorableAuthDomain().Name {
 		a.settings.Logger().ErrorContext(ctx, "google: unexpected hd claim", "expected", authDomain.StorableAuthDomain().Name, "actual", claims.HostedDomain)
-		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: unexpected hosted domain claim")
+		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: unexpected hd claim")
 	}
 
 	if !authDomain.AuthDomainConfig().Google.InsecureSkipEmailVerified {
@@ -137,13 +137,14 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		groups, err = a.fetchGoogleWorkspaceGroups(ctx, claims.Email, authDomain.AuthDomainConfig().Google)
 		if err != nil {
 			a.settings.Logger().ErrorContext(ctx, "google: could not fetch groups", "error", err)
-			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: could not fetch groups")
+			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: could not fetch groups").WithAdditional(err.Error())
 		}
 
-		if len(authDomain.AuthDomainConfig().Google.AllowedGroups) > 0 {
-			groups = filterGroups(groups, authDomain.AuthDomainConfig().Google.AllowedGroups)
+		allowedGroups := authDomain.AuthDomainConfig().Google.AllowedGroups
+		if len(allowedGroups) > 0 {
+			groups = filterGroups(groups, allowedGroups)
 			if len(groups) == 0 {
-				return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: user %q is not in any allowed groups", claims.Email)
+				return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: user %q is not in any allowed groups", claims.Email).WithAdditional(allowedGroups...)
 			}
 		}
 	}
