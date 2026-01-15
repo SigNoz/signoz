@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/http/client"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -26,15 +27,23 @@ var scopes []string = []string{"email", "profile"}
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
 type AuthN struct {
-	store    authtypes.AuthNStore
-	settings factory.ScopedProviderSettings
+	store      authtypes.AuthNStore
+	settings   factory.ScopedProviderSettings
+	httpClient *client.Client
 }
 
 func New(ctx context.Context, store authtypes.AuthNStore, providerSettings factory.ProviderSettings) (*AuthN, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/authn/callbackauthn/googlecallbackauthn")
+
+	httpClient, err := client.New(settings.Logger(), providerSettings.TracerProvider, providerSettings.MeterProvider)
+	if err != nil {
+		return nil, err
+	}
+
 	return &AuthN{
-		store:    store,
-		settings: settings,
+		store:      store,
+		settings:   settings,
+		httpClient: httpClient,
 	}, nil
 }
 
@@ -186,7 +195,9 @@ func (a *AuthN) fetchGoogleWorkspaceGroups(ctx context.Context, userEmail string
 
 	jwtConfig.Subject = adminEmail
 
-	adminService, err := admin.NewService(ctx, option.WithHTTPClient(jwtConfig.Client(ctx)))
+	customCtx := context.WithValue(ctx, oauth2.HTTPClient, a.httpClient.Client())
+
+	adminService, err := admin.NewService(ctx, option.WithHTTPClient(jwtConfig.Client(customCtx)))
 	if err != nil {
 		a.settings.Logger().ErrorContext(ctx, "google: unable to create directory service", "error", err)
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to create directory service")

@@ -2,6 +2,7 @@ package oidccallbackauthn
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/authn"
@@ -138,13 +139,17 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	var groups []string
 	if groupsClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Groups; groupsClaim != "" {
 		switch g := claims[groupsClaim].(type) {
-		case []string:
-			groups = g
+		case []any:
+			for _, group := range g {
+				if gs, ok := group.(string); ok {
+					groups = append(groups, gs)
+				}
+			}
 		case string:
 			// Some IDPs return a single group as a string instead of an array
 			groups = append(groups, g)
 		default:
-			a.settings.Logger().WarnContext(ctx, "oidc: unsupported groups type")
+			a.settings.Logger().WarnContext(ctx, "oidc: unsupported groups type", "type", fmt.Sprintf("%T", claims[groupsClaim]))
 		}
 	}
 
