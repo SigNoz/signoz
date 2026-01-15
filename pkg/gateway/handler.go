@@ -168,6 +168,36 @@ func (handler *handler) UpdateIngestionKey(rw http.ResponseWriter, r *http.Reque
 	render.Success(rw, http.StatusOK, nil)
 }
 
+func (handler *handler) DeleteIngestionKey(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	keyID := mux.Vars(r)["keyId"]
+	if keyID == "" {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "keyId is required"))
+		return
+	}
+
+	err = handler.gateway.DeleteIngestionKey(ctx, orgID, keyID)
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to delete ingestion key from gateway"))
+		return
+	}
+
+	render.Success(rw, http.StatusOK, nil)
+}
+
 func parseIntWithDefaultValue(value string, defaultValue int) (int, error) {
 	if value == "" {
 		return defaultValue, nil

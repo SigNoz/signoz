@@ -33,6 +33,9 @@ type Gateway interface {
 
 	// Update Ingestion Key
 	UpdateIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string, name string, tags []string, expiresAt time.Time) error
+
+	// Delete Ingestion Key
+	DeleteIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string) error
 }
 
 type Handler interface {
@@ -43,4 +46,6 @@ type Handler interface {
 	CreateIngestionKey(http.ResponseWriter, *http.Request)
 
 	UpdateIngestionKey(http.ResponseWriter, *http.Request)
+
+	DeleteIngestionKey(http.ResponseWriter, *http.Request)
 }
