@@ -363,7 +363,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 		}
 	}
 
-	start, end, tbl, _ := WhichTSTableToUse(start, end, query.Aggregations[0].TableHints)
+	start, end, _, tbl := WhichTSTableToUse(start, end, query.Aggregations[0].TableHints)
 	sb.From(fmt.Sprintf("%s.%s", DBName, tbl))
 
 	sb.Select("fingerprint")
@@ -381,7 +381,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.LTE("unix_milli", end),
 	)
 
-	if query.Aggregations[0].Temporality != metrictypes.Unknown && query.Aggregations[0].Temporality != metrictypes.Unspecified {
+	if query.Aggregations[0].Temporality != metrictypes.Unknown {
 		sb.Where(sb.ILike("temporality", query.Aggregations[0].Temporality.StringValue()))
 	}
 
