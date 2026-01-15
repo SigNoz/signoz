@@ -136,7 +136,12 @@ export function calculateValueBuckets(
 			bucketSize: 1,
 			numberOfBuckets: 1,
 			cellHeight: availableHeight,
-			buckets: [{ start: minValue, end: maxValue }],
+			buckets: [
+				{
+					start: Number.isFinite(minValue) ? minValue : 0,
+					end: Number.isFinite(maxValue) ? maxValue : 0,
+				},
+			],
 		};
 	}
 

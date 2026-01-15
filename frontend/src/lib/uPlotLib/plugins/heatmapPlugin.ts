@@ -547,7 +547,7 @@ function heatmapPlugin(
 
 				u.over.addEventListener('click', () => {
 					if (!opts.onClick) return;
-					if (hoveredXi !== null && hoveredYi !== null) {
+					if (hoveredXi !== null && hoveredYi !== null && hoveredYi >= 0) {
 						const bbox = overBBox || u.over.getBoundingClientRect();
 						const { left } = u.cursor;
 						const { top } = u.cursor;

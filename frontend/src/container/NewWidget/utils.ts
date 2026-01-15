@@ -636,7 +636,7 @@ export function handleQueryChange(
 							{
 								metricName: aggregateAttribute?.key || '',
 								timeAggregation: '',
-								spaceAggregation: MetricAggregateOperator.P99,
+								spaceAggregation: MetricAggregateOperator.P90,
 								temporality: '',
 							} as MetricAggregation,
 						]);
