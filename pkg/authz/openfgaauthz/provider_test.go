@@ -40,6 +40,7 @@ func TestProviderStartStop(t *testing.T) {
 	sqlstore.Mock().ExpectQuery("SELECT authorization_model_id, schema_version, type, type_definition, serialized_protobuf FROM authorization_model WHERE authorization_model_id = (.+)  AND store = (.+)").WithArgs("01K44QQKXR6F729W160NFCJT58", "01K3V0NTN47MPTMEV1PD5ST6ZC").WillReturnRows(modelRows)
 
 	sqlstore.Mock().ExpectExec("INSERT INTO authorization_model (.+) VALUES (.+)").WillReturnResult(sqlmock.NewResult(1, 1))
+	sqlstore.Mock().ExpectQuery(`SELECT (.+) FROM "organizations" AS (.+) WHERE (.+)`).WillReturnRows(sqlstore.Mock().NewRows([]string{"id", "name", "created_at", "updated_at"}))
 	go func() {
 		err := provider.Start(context.Background())
 		require.NoError(t, err)
