@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/gatewaytypes"
@@ -26,9 +27,13 @@ type Gateway interface {
 
 	// Search Ingestion Keys by Name (this is supposed to be for the current user but for now in gateway code this is ignoring the consumer user)
 	SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) ([]gatewaytypes.IngestionKey, error)
+
+	// Create Ingestion Key
+	CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.CreateIngestionKeyResponse, error)
 }
 
 type Handler interface {
 	GetIngestionKeys(http.ResponseWriter, *http.Request)
 	SearchIngestionKeys(http.ResponseWriter, *http.Request)
+	CreateIngestionKey(http.ResponseWriter, *http.Request)
 }

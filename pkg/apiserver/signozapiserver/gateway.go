@@ -48,5 +48,22 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/gateway/ingestion-keys", handler.New(provider.authZ.AdminAccess(provider.gatewayHandler.CreateIngestionKey), handler.OpenAPIDef{
+		ID:                  "CreateIngestionKey",
+		Tags:                []string{"gateway"},
+		Summary:             "Create ingestion key for workspace",
+		Description:         "This endpoint creates an ingestion key for the workspace",
+		Request:             gatewaytypes.CreateIngestionKeyRequest{},
+		RequestContentType:  "application/json",
+		Response:            gatewaytypes.CreateIngestionKeyResponse{},
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }

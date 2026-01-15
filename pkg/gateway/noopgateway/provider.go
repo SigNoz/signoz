@@ -2,6 +2,7 @@ package noopgateway
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -27,5 +28,9 @@ func (p *provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page
 }
 
 func (p *provider) SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) ([]gatewaytypes.IngestionKey, error) {
+	return nil, errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
+}
+
+func (p *provider) CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.CreateIngestionKeyResponse, error) {
 	return nil, errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
 }
