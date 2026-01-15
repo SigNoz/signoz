@@ -340,7 +340,7 @@ func New(
 	}
 
 	gatewayFactory := gatewayProviderFactory(licensing)
-	gateway, err := gatewayFactory.New(ctx, providerSettings, gateway.Config{})
+	gateway, err := gatewayFactory.New(ctx, providerSettings, config.Gateway)
 	if err != nil {
 		return nil, err
 	}
