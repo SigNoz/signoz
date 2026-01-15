@@ -697,7 +697,7 @@ function HeatmapPanelWrapper({
 			queryPayload?.data?.result ||
 			[];
 
-		if (results.length === 0) return false;
+		if (results.length === 0) return true;
 
 		const hasValidHeatmapData = results.some(
 			(r: any) => r.bucketBounds && r.counts,

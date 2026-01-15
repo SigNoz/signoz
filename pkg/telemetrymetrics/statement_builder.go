@@ -626,6 +626,10 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	}
 	delete(filteredKeys, "le")
 
+	if len(query.Aggregations) == 0 {
+		return nil, fmt.Errorf("at least one aggregation is required")
+	}
+
 	query.GroupBy = slices.Clone(query.GroupBy)
 
 	leExists := false
