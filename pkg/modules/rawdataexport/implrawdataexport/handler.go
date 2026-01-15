@@ -64,8 +64,8 @@ func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 //   - composite_query (optional): Advanced query specification as JSON-encoded QueryEnvelope array
 //     When provided, this overrides filter, columns, order_by, and limit parameters
 //     Format: JSON array of QueryEnvelope objects
-//     Each QueryEnvelope must have a valid "type" field (e.g., "builder", "trace_operator")
-//     Supported types for traces: "builder", "trace_operator"
+//     Each QueryEnvelope must have a valid "type" field (e.g., "builder_query", "builder_trace_operator")
+//     Supported types for traces: "builder_query", "builder_trace_operator"
 //     Note: Limits in composite queries are validated and cannot exceed MAX_EXPORT_ROW_COUNT_LIMIT
 //
 // Response Headers:
@@ -97,8 +97,8 @@ func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 //
 //	Export with composite query (advanced):
 //	  GET /api/v1/export_raw_data?source=traces&start=1693612800000000000&end=1693699199000000000
-//	      &composite_query={"type":"builder","spec":{"signal":"traces","name":"A","limit":1000}}
-//	      &composite_query={"type":"trace_operator","spec":{"name":"B","operator":"join","limit":500}}
+//	      &composite_query={"type":"builder_query","spec":{"signal":"traces","name":"A","limit":1000}}
+//	      &composite_query={"type":"builder_trace_operator","spec":{"name":"B","expression":"join","limit":500}} 
 func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	source, err := getExportQuerySource(r.URL.Query())
 	if err != nil {
@@ -183,7 +183,6 @@ func (handler *handler) exportTraces(rw http.ResponseWriter, r *http.Request) {
 
 		spec := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal:       telemetrytypes.SignalTraces,
-			Name:         "raw",
 			SelectFields: columns,
 			Filter: &qbtypes.Filter{
 				Expression: filterExpression,
