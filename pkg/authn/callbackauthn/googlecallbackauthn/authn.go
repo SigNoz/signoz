@@ -75,7 +75,6 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 
 	authDomain, err := a.store.GetAuthDomainFromID(ctx, state.DomainID)
 	if err != nil {
-		a.settings.Logger().ErrorContext(ctx, "google: could not get auth domain", "error", err)
 		return nil, err
 	}
 
