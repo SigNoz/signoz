@@ -47,6 +47,18 @@ type UsageMetric struct {
 	Size  int64 `json:"size"`
 }
 
+type Pagination struct {
+	Page    int `json:"page"`
+	PerPage int `json:"per_page"`
+	Pages   int `json:"pages"`
+	Total   int `json:"total"`
+}
+
+type GetOrSearchIngestionKeyResponse struct {
+	Data       []IngestionKey `json:"data"`
+	Pagination Pagination     `json:"_pagination"`
+}
+
 type CreateOrUpdateIngestionKeyRequest struct {
 	Name      string    `json:"name"`
 	Tags      []string  `json:"tags"`

@@ -53,13 +53,13 @@ func (handler *handler) GetIngestionKeys(rw http.ResponseWriter, r *http.Request
 		return
 	}
 
-	keys, err := handler.gateway.GetIngestionKeys(ctx, orgID, page, perPage)
+	response, err := handler.gateway.GetIngestionKeys(ctx, orgID, page, perPage)
 	if err != nil {
 		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to get ingestion keys from gateway"))
 		return
 	}
 
-	render.Success(rw, http.StatusOK, keys)
+	render.Success(rw, http.StatusOK, response)
 }
 
 func (handler *handler) SearchIngestionKeys(rw http.ResponseWriter, r *http.Request) {
@@ -93,13 +93,13 @@ func (handler *handler) SearchIngestionKeys(rw http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	keys, err := handler.gateway.SearchIngestionKeysByName(ctx, orgID, name, page, perPage)
+	response, err := handler.gateway.SearchIngestionKeysByName(ctx, orgID, name, page, perPage)
 	if err != nil {
 		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to search ingestion keys from gateway"))
 		return
 	}
 
-	render.Success(rw, http.StatusOK, keys)
+	render.Success(rw, http.StatusOK, response)
 }
 
 func (handler *handler) CreateIngestionKey(rw http.ResponseWriter, r *http.Request) {
