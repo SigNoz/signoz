@@ -55,7 +55,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	}, nil
 }
 
-func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]gatewaytypes.IngestionKey, error) {
+func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]gatewaytypes.GetOrSearchIngestionKeyResponse, error) {
 	qParams := url.Values{}
 	qParams.Add("page", strconv.Itoa(page))
 	qParams.Add("per_page", strconv.Itoa(perPage))
@@ -65,15 +65,15 @@ func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUI
 		return nil, err
 	}
 
-	var ingestionKeys []gatewaytypes.IngestionKey
-	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &ingestionKeys); err != nil {
+	var response []gatewaytypes.GetOrSearchIngestionKeyResponse
+	if err := json.Unmarshal(responseBody, &response); err != nil {
 		return nil, err
 	}
 
-	return ingestionKeys, nil
+	return response, nil
 }
 
-func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) ([]gatewaytypes.IngestionKey, error) {
+func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) ([]gatewaytypes.GetOrSearchIngestionKeyResponse, error) {
 	qParams := url.Values{}
 	qParams.Add("name", name)
 	qParams.Add("page", strconv.Itoa(page))
@@ -84,12 +84,12 @@ func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID v
 		return nil, err
 	}
 
-	var ingestionKeys []gatewaytypes.IngestionKey
-	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &ingestionKeys); err != nil {
+	var response []gatewaytypes.GetOrSearchIngestionKeyResponse
+	if err := json.Unmarshal(responseBody, &response); err != nil {
 		return nil, err
 	}
 
-	return ingestionKeys, nil
+	return response, nil
 }
 
 func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.CreateIngestionKeyResponse, error) {

@@ -23,10 +23,10 @@ const (
 
 type Gateway interface {
 	// Get Ingestions Keys (this is supposed to be for the current user but for now in gateway code this is ignoring the consumer user)
-	GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]gatewaytypes.IngestionKey, error)
+	GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]gatewaytypes.GetOrSearchIngestionKeyResponse, error)
 
 	// Search Ingestion Keys by Name (this is supposed to be for the current user but for now in gateway code this is ignoring the consumer user)
-	SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) ([]gatewaytypes.IngestionKey, error)
+	SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) ([]gatewaytypes.GetOrSearchIngestionKeyResponse, error)
 
 	// Create Ingestion Key
 	CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.CreateIngestionKeyResponse, error)
@@ -37,7 +37,10 @@ type Gateway interface {
 
 type Handler interface {
 	GetIngestionKeys(http.ResponseWriter, *http.Request)
+
 	SearchIngestionKeys(http.ResponseWriter, *http.Request)
+
 	CreateIngestionKey(http.ResponseWriter, *http.Request)
+
 	UpdateIngestionKey(http.ResponseWriter, *http.Request)
 }
