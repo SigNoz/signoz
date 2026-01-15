@@ -117,19 +117,19 @@ func (handler *handler) CreateIngestionKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var req gatewaytypes.CreateOrUpdateIngestionKeyRequest
+	var req gatewaytypes.IngestionKeyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
 		return
 	}
 
-	createKeyResponse, err := handler.gateway.CreateIngestionKey(ctx, orgID, req.Name, req.Tags, req.ExpiresAt)
+	response, err := handler.gateway.CreateIngestionKey(ctx, orgID, req.Name, req.Tags, req.ExpiresAt)
 	if err != nil {
 		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to create ingestion key from gateway"))
 		return
 	}
 
-	render.Success(rw, http.StatusOK, createKeyResponse)
+	render.Success(rw, http.StatusOK, response)
 }
 
 func (handler *handler) UpdateIngestionKey(rw http.ResponseWriter, r *http.Request) {
@@ -153,7 +153,7 @@ func (handler *handler) UpdateIngestionKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var req gatewaytypes.CreateOrUpdateIngestionKeyRequest
+	var req gatewaytypes.IngestionKeyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
 		return
@@ -165,7 +165,7 @@ func (handler *handler) UpdateIngestionKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	render.Success(rw, http.StatusOK, nil)
+	render.Success(rw, http.StatusNoContent, nil)
 }
 
 func (handler *handler) DeleteIngestionKey(rw http.ResponseWriter, r *http.Request) {
@@ -195,7 +195,43 @@ func (handler *handler) DeleteIngestionKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	render.Success(rw, http.StatusOK, nil)
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) CreateIngestionKeyLimit(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	keyID := mux.Vars(r)["keyId"]
+	if keyID == "" {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "keyId is required"))
+		return
+	}
+
+	var req gatewaytypes.IngestionKeyLimitRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
+		return
+	}
+
+	response, err := handler.gateway.CreateIngestionKeyLimit(ctx, orgID, keyID, req.Signal, req.Config)
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to create ingestion key limit from gateway"))
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, response)
 }
 
 func parseIntWithDefaultValue(value string, defaultValue int) (int, error) {

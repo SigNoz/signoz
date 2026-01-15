@@ -55,7 +55,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	}, nil
 }
 
-func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]gatewaytypes.GetOrSearchIngestionKeyResponse, error) {
+func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) (*gatewaytypes.IngestionKeysResponse, error) {
 	qParams := url.Values{}
 	qParams.Add("page", strconv.Itoa(page))
 	qParams.Add("per_page", strconv.Itoa(perPage))
@@ -65,15 +65,23 @@ func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUI
 		return nil, err
 	}
 
-	var response []gatewaytypes.GetOrSearchIngestionKeyResponse
-	if err := json.Unmarshal(responseBody, &response); err != nil {
+	var ingestionKeys []gatewaytypes.IngestionKey
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &ingestionKeys); err != nil {
 		return nil, err
 	}
 
-	return response, nil
+	var pagination gatewaytypes.Pagination
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "_pagination").String()), &pagination); err != nil {
+		return nil, err
+	}
+
+	return &gatewaytypes.IngestionKeysResponse{
+		Keys:       ingestionKeys,
+		Pagination: pagination,
+	}, nil
 }
 
-func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) ([]gatewaytypes.GetOrSearchIngestionKeyResponse, error) {
+func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) (*gatewaytypes.IngestionKeysResponse, error) {
 	qParams := url.Values{}
 	qParams.Add("name", name)
 	qParams.Add("page", strconv.Itoa(page))
@@ -84,16 +92,24 @@ func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID v
 		return nil, err
 	}
 
-	var response []gatewaytypes.GetOrSearchIngestionKeyResponse
-	if err := json.Unmarshal(responseBody, &response); err != nil {
+	var ingestionKeys []gatewaytypes.IngestionKey
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &ingestionKeys); err != nil {
 		return nil, err
 	}
 
-	return response, nil
+	var pagination gatewaytypes.Pagination
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "_pagination").String()), &pagination); err != nil {
+		return nil, err
+	}
+
+	return &gatewaytypes.IngestionKeysResponse{
+		Keys:       ingestionKeys,
+		Pagination: pagination,
+	}, nil
 }
 
-func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.CreateIngestionKeyResponse, error) {
-	requestBody := gatewaytypes.CreateOrUpdateIngestionKeyRequest{
+func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.CreatedIngestionKeyResponse, error) {
+	requestBody := gatewaytypes.IngestionKeyRequest{
 		Name:      name,
 		Tags:      tags,
 		ExpiresAt: expiresAt,
@@ -108,16 +124,16 @@ func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.U
 		return nil, err
 	}
 
-	var createKeyResponse gatewaytypes.CreateIngestionKeyResponse
-	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &createKeyResponse); err != nil {
+	var createdKeyResponse gatewaytypes.CreatedIngestionKeyResponse
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &createdKeyResponse); err != nil {
 		return nil, err
 	}
 
-	return &createKeyResponse, nil
+	return &createdKeyResponse, nil
 }
 
 func (provider *Provider) UpdateIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string, name string, tags []string, expiresAt time.Time) error {
-	requestBody := gatewaytypes.CreateOrUpdateIngestionKeyRequest{
+	requestBody := gatewaytypes.IngestionKeyRequest{
 		Name:      name,
 		Tags:      tags,
 		ExpiresAt: expiresAt,
@@ -142,6 +158,30 @@ func (provider *Provider) DeleteIngestionKey(ctx context.Context, orgID valuer.U
 	}
 
 	return nil
+}
+
+func (provider *Provider) CreateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, keyID string, signal string, limitConfig gatewaytypes.LimitConfig) (*gatewaytypes.CreatedIngestionKeyLimitResponse, error) {
+	requestBody := gatewaytypes.IngestionKeyLimitRequest{
+		Signal: signal,
+		Config: limitConfig,
+		KeyID:  keyID,
+	}
+	requestBodyBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, err
+	}
+
+	responseBody, err := provider.do(ctx, orgID, http.MethodPost, "/v1/workspaces/me/keys/"+keyID+"/limits", nil, requestBodyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	var createdIngestionKeyLimitResponse gatewaytypes.CreatedIngestionKeyLimitResponse
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &createdIngestionKeyLimitResponse); err != nil {
+		return nil, err
+	}
+
+	return &createdIngestionKeyLimitResponse, nil
 }
 
 func (provider *Provider) do(ctx context.Context, orgID valuer.UUID, method string, path string, queryParams url.Values, body []byte) ([]byte, error) {

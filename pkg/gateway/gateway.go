@@ -23,19 +23,22 @@ const (
 
 type Gateway interface {
 	// Get Ingestions Keys (this is supposed to be for the current user but for now in gateway code this is ignoring the consumer user)
-	GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]gatewaytypes.GetOrSearchIngestionKeyResponse, error)
+	GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) (*gatewaytypes.IngestionKeysResponse, error)
 
 	// Search Ingestion Keys by Name (this is supposed to be for the current user but for now in gateway code this is ignoring the consumer user)
-	SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) ([]gatewaytypes.GetOrSearchIngestionKeyResponse, error)
+	SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) (*gatewaytypes.IngestionKeysResponse, error)
 
 	// Create Ingestion Key
-	CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.CreateIngestionKeyResponse, error)
+	CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.CreatedIngestionKeyResponse, error)
 
 	// Update Ingestion Key
 	UpdateIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string, name string, tags []string, expiresAt time.Time) error
 
 	// Delete Ingestion Key
 	DeleteIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string) error
+
+	// Create Ingestion Key Limit
+	CreateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, keyID string, signal string, limitConfig gatewaytypes.LimitConfig) (*gatewaytypes.CreatedIngestionKeyLimitResponse, error)
 }
 
 type Handler interface {
@@ -48,4 +51,6 @@ type Handler interface {
 	UpdateIngestionKey(http.ResponseWriter, *http.Request)
 
 	DeleteIngestionKey(http.ResponseWriter, *http.Request)
+
+	CreateIngestionKeyLimit(http.ResponseWriter, *http.Request)
 }

@@ -21,7 +21,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the ingestion keys for a workspace",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]gatewaytypes.GetOrSearchIngestionKeyResponse, 0),
+		Response:            gatewaytypes.IngestionKeysResponse{},
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
@@ -38,7 +38,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the ingestion keys for a workspace",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]gatewaytypes.GetOrSearchIngestionKeyResponse, 0),
+		Response:            gatewaytypes.IngestionKeysResponse{},
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
@@ -53,9 +53,9 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Tags:                []string{"gateway"},
 		Summary:             "Create ingestion key for workspace",
 		Description:         "This endpoint creates an ingestion key for the workspace",
-		Request:             gatewaytypes.CreateOrUpdateIngestionKeyRequest{},
+		Request:             gatewaytypes.IngestionKeyRequest{},
 		RequestContentType:  "application/json",
-		Response:            gatewaytypes.CreateIngestionKeyResponse{},
+		Response:            gatewaytypes.CreatedIngestionKeyResponse{},
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
@@ -70,7 +70,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Tags:                []string{"gateway"},
 		Summary:             "Update ingestion key for workspace",
 		Description:         "This endpoint updates an ingestion key for the workspace",
-		Request:             gatewaytypes.CreateOrUpdateIngestionKeyRequest{},
+		Request:             gatewaytypes.IngestionKeyRequest{},
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",
@@ -96,6 +96,23 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/gateway/ingestion-keys/{keyId}/limits", handler.New(provider.authZ.AdminAccess(provider.gatewayHandler.CreateIngestionKeyLimit), handler.OpenAPIDef{
+		ID:                  "CreateIngestionKeyLimit",
+		Tags:                []string{"gateway"},
+		Summary:             "Create limit for the ingestion key",
+		Description:         "This endpoint creates an ingestion key limit",
+		Request:             gatewaytypes.IngestionKeyLimitRequest{},
+		RequestContentType:  "application/json",
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
