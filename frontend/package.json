@@ -48,6 +48,7 @@
 		"@signozhq/calendar": "0.0.0",
 		"@signozhq/callout": "0.0.2",
 		"@signozhq/checkbox": "0.0.2",
+		"@signozhq/combobox": "0.0.2",
 		"@signozhq/command": "0.0.0",
 		"@signozhq/design-tokens": "1.1.4",
 		"@signozhq/input": "0.0.2",
