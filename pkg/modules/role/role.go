@@ -55,9 +55,6 @@ type Grant interface {
 
 	// Changes the granted role for the subject.
 	ModifyGrant(context.Context, valuer.UUID, string, string, string) error
-
-	// Assigns the existing users to managed roles.
-	GrantExistingUsers(context.Context, valuer.UUID) error
 }
 
 type RegisterTypeable interface {

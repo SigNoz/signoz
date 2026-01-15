@@ -72,19 +72,3 @@ func (grant *grant) Revoke(ctx context.Context, orgID valuer.UUID, name string, 
 	}
 	return grant.authz.Write(ctx, nil, tuples)
 }
-
-func (grant *grant) GrantExistingUsers(ctx context.Context, orgID valuer.UUID) error {
-	users, err := grant.store.ListUsersByOrgID(ctx, orgID)
-	if err != nil {
-		return err
-	}
-
-	for _, user := range users {
-		err := grant.Grant(ctx, orgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role), user.ID.String())
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}

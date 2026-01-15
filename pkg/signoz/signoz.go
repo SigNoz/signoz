@@ -86,7 +86,7 @@ func New(
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
-	authzCallback func(context.Context, sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config],
+	authzCallback func(context.Context, sqlstore.SQLStore, organization.Getter) factory.ProviderFactory[authz.AuthZ, authz.Config],
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	roleModuleCallback func(sqlstore.SQLStore, authz.AuthZ, []role.RegisterTypeable) role.Module,
 ) (*SigNoz, error) {
@@ -278,7 +278,7 @@ func New(
 	}
 
 	// Initialize authz
-	authzProviderFactory := authzCallback(ctx, sqlstore)
+	authzProviderFactory := authzCallback(ctx, sqlstore, orgGetter)
 	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
 	if err != nil {
 		return nil, err

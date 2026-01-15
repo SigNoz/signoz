@@ -39,10 +39,6 @@ func (module *setter) Create(ctx context.Context, organization *types.Organizati
 		return err
 	}
 
-	if err := module.grant.GrantExistingUsers(ctx, organization.ID); err != nil {
-		return err
-	}
-
 	return nil
 }
 
