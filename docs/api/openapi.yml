@@ -1665,7 +1665,7 @@ paths:
       description: This endpoint creates a role
       operationId: CreateRole
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
@@ -1675,7 +1675,7 @@ paths:
                   status:
                     type: string
                 type: object
-          description: OK
+          description: Created
         "401":
           content:
             application/json:
@@ -1702,18 +1702,24 @@ paths:
       summary: Create role
       tags:
       - role
-  /api/v1/roles/:id:
+  /api/v1/roles/{id}:
     delete:
       deprecated: false
       description: This endpoint deletes a role
       operationId: DeleteRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        "204":
           content:
             application/json:
               schema:
                 type: string
-          description: OK
+          description: No Content
         "401":
           content:
             application/json:
@@ -1744,6 +1750,12 @@ paths:
       deprecated: false
       description: This endpoint gets a role
       operationId: GetRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -1786,13 +1798,19 @@ paths:
       deprecated: false
       description: This endpoint patches a role
       operationId: PatchRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        "204":
           content:
             application/json:
               schema:
                 type: string
-          description: OK
+          description: No Content
         "401":
           content:
             application/json:
