@@ -13,7 +13,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 	// ! TODO: double check the API endpoint names
 	// *********************************************
 
-	if err := router.Handle("/api/v2/gateway/ingestion-keys", handler.New(provider.authZ.AdminAccess(provider.gatewayHandler.GetIngestionKeys), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/gateway/me/ingestion-keys", handler.New(provider.authZ.AdminAccess(provider.gatewayHandler.GetIngestionKeys), handler.OpenAPIDef{
 		ID:                  "GetIngestionKeys",
 		Tags:                []string{"gateway"},
 		Summary:             "Get ingestion keys for workspace",

@@ -51,7 +51,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	}, nil
 }
 
-func (provider *Provider) GetIngestionKeysByWorkspaceID(ctx context.Context, orgID valuer.UUID, workspaceID valuer.UUID, page, perPage int) ([]byte, error) {
+func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]byte, error) {
 	qParams := url.Values{}
 	qParams.Add("page", strconv.Itoa(page))
 	qParams.Add("per_page", strconv.Itoa(perPage))
