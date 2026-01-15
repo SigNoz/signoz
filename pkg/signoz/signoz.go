@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -71,6 +72,7 @@ type SigNoz struct {
 	Handlers               Handlers
 	QueryParser            queryparser.QueryParser
 	Flagger                flagger.Flagger
+	Gateway                gateway.Gateway
 }
 
 func New(
@@ -89,6 +91,7 @@ func New(
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
 	authzCallback func(context.Context, sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config],
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, role.Module, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
+	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -336,6 +339,12 @@ func New(
 		return nil, err
 	}
 
+	gatewayFactory := gatewayProviderFactory(licensing)
+	gateway, err := gatewayFactory.New(ctx, providerSettings, gateway.Config{})
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize authns
 	store := sqlauthnstore.NewStore(sqlstore)
 	authNs, err := authNsCallback(ctx, providerSettings, store, licensing)
@@ -382,7 +391,7 @@ func New(
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboardModule)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger)
+	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger, gateway)
 
 	// Initialize the API server
 	apiserver, err := factory.NewProviderFromNamedMap(
@@ -457,5 +466,6 @@ func New(
 		Handlers:               handlers,
 		QueryParser:            queryParser,
 		Flagger:                flagger,
+		Gateway:                gateway,
 	}, nil
 }
