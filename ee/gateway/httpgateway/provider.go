@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/gatewaytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/tidwall/gjson"
 )
 
 type Provider struct {
@@ -64,7 +65,7 @@ func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUI
 	}
 
 	var ingestionKeys []gatewaytypes.IngestionKey
-	if err := json.Unmarshal(responseBody, &ingestionKeys); err != nil {
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &ingestionKeys); err != nil {
 		return nil, err
 	}
 
@@ -83,7 +84,7 @@ func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID v
 	}
 
 	var ingestionKeys []gatewaytypes.IngestionKey
-	if err := json.Unmarshal(responseBody, &ingestionKeys); err != nil {
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &ingestionKeys); err != nil {
 		return nil, err
 	}
 
