@@ -39,6 +39,12 @@ type Gateway interface {
 
 	// Create Ingestion Key Limit
 	CreateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, keyID string, signal string, limitConfig gatewaytypes.LimitConfig) (*gatewaytypes.CreatedIngestionKeyLimitResponse, error)
+
+	// Update Ingestion Key Limit
+	UpdateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string, signal string, limitConfig gatewaytypes.LimitConfig) error
+
+	// Delete Ingestion Key Limit
+	DeleteIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string) error
 }
 
 type Handler interface {
@@ -53,4 +59,8 @@ type Handler interface {
 	DeleteIngestionKey(http.ResponseWriter, *http.Request)
 
 	CreateIngestionKeyLimit(http.ResponseWriter, *http.Request)
+
+	UpdateIngestionKeyLimit(http.ResponseWriter, *http.Request)
+
+	DeleteIngestionKeyLimit(http.ResponseWriter, *http.Request)
 }

@@ -106,13 +106,47 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Description:         "This endpoint creates an ingestion key limit",
 		Request:             gatewaytypes.IngestionKeyLimitRequest{},
 		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
+		Response:            gatewaytypes.CreatedIngestionKeyLimitResponse{},
+		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/gateway/ingestion-keys/limits/{limitId}", handler.New(provider.authZ.AdminAccess(provider.gatewayHandler.UpdateIngestionKeyLimit), handler.OpenAPIDef{
+		ID:                  "UpdateIngestionKeyLimit",
+		Tags:                []string{"gateway"},
+		Summary:             "Update limit for the ingestion key",
+		Description:         "This endpoint updates an ingestion key limit",
+		Request:             gatewaytypes.IngestionKeyLimitRequest{},
+		RequestContentType:  "application/json",
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPatch).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/gateway/ingestion-keys/limits/{limitId}", handler.New(provider.authZ.AdminAccess(provider.gatewayHandler.DeleteIngestionKeyLimit), handler.OpenAPIDef{
+		ID:                  "DeleteIngestionKeyLimit",
+		Tags:                []string{"gateway"},
+		Summary:             "Delete limit for the ingestion key",
+		Description:         "This endpoint deletes an ingestion key limit",
+		Request:             nil,
+		RequestContentType:  "application/json",
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
