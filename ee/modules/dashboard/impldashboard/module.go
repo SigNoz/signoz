@@ -129,7 +129,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err := module.deletePublic(ctx, orgID, id)
+		err := module.deletePublic(ctx, id)
 		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return err
 		}
@@ -207,7 +207,7 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, role, lock)
 }
 
-func (module *module) deletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
+func (module *module) deletePublic(ctx context.Context, dashboardID valuer.UUID) error {
 	err := module.store.DeletePublic(ctx, dashboardID.StringValue())
 	if err != nil {
 		return err
