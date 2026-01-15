@@ -627,10 +627,10 @@ export function handleQueryChange(
 					const currentAgg = aggregations?.[0] as MetricAggregation;
 
 					if (
-						aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
-						(aggregateAttribute?.type === ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM &&
-							currentAgg?.timeAggregation === MetricAggregateOperator.INCREASE &&
-							currentAgg?.spaceAggregation === MetricAggregateOperator.SUM)
+						(aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
+							aggregateAttribute?.type === ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM) &&
+						currentAgg?.timeAggregation === MetricAggregateOperator.INCREASE &&
+						currentAgg?.spaceAggregation === MetricAggregateOperator.SUM
 					) {
 						set(tempQuery, 'aggregations', [
 							{
