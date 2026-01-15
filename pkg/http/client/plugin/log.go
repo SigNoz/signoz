@@ -87,11 +87,6 @@ func redactSensitiveHeaders(headers http.Header) http.Header {
 	sensitiveHeaders := map[string]bool{
 		"Authorization":          true,
 		"Cookie":                 true,
-		"X-Api-Key":              true,
-		"X-Api-Secret":           true,
-		"X-Api-Token":            true,
-		"X-Api-Username":         true,
-		"X-Api-Password":         true,
 		"X-Signoz-Cloud-Api-Key": true,
 	}
 
