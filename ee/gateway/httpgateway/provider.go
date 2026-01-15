@@ -3,6 +3,7 @@ package httpgateway
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -13,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/http/client"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/types/gatewaytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -51,13 +53,22 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	}, nil
 }
 
-func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]byte, error) {
+func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]gatewaytypes.IngestionKey, error) {
 	qParams := url.Values{}
 	qParams.Add("page", strconv.Itoa(page))
 	qParams.Add("per_page", strconv.Itoa(perPage))
 
-	// ! TODO: make this strongly typed
-	return provider.do(ctx, orgID, http.MethodGet, "/api/v2/gateway/ingestion-keys", qParams, nil)
+	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/me/keys", qParams, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var ingestionKeys []gatewaytypes.IngestionKey
+	if err := json.Unmarshal(responseBody, &ingestionKeys); err != nil {
+		return nil, err
+	}
+
+	return ingestionKeys, nil
 }
 
 func (provider *Provider) do(ctx context.Context, orgID valuer.UUID, method string, path string, queryParams url.Values, body []byte) ([]byte, error) {

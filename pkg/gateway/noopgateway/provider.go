@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/types/gatewaytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -21,6 +22,6 @@ func New(_ context.Context, _ factory.ProviderSettings, _ gateway.Config) (gatew
 	return &provider{}, nil
 }
 
-func (p *provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]byte, error) {
+func (p *provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]gatewaytypes.IngestionKey, error) {
 	return nil, errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
 }
