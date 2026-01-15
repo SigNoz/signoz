@@ -53,7 +53,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Tags:                []string{"gateway"},
 		Summary:             "Create ingestion key for workspace",
 		Description:         "This endpoint creates an ingestion key for the workspace",
-		Request:             gatewaytypes.CreateIngestionKeyRequest{},
+		Request:             gatewaytypes.CreateOrUpdateIngestionKeyRequest{},
 		RequestContentType:  "application/json",
 		Response:            gatewaytypes.CreateIngestionKeyResponse{},
 		ResponseContentType: "application/json",
@@ -62,6 +62,23 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/gateway/ingestion-keys/{keyId}", handler.New(provider.authZ.AdminAccess(provider.gatewayHandler.UpdateIngestionKey), handler.OpenAPIDef{
+		ID:                  "UpdateIngestionKey",
+		Tags:                []string{"gateway"},
+		Summary:             "Update ingestion key for workspace",
+		Description:         "This endpoint updates an ingestion key for the workspace",
+		Request:             gatewaytypes.CreateOrUpdateIngestionKeyRequest{},
+		RequestContentType:  "application/json",
+		Response:            gatewaytypes.CreateIngestionKeyResponse{},
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
 

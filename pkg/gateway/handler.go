@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/gatewaytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/gorilla/mux"
 )
 
 type handler struct {
@@ -116,7 +117,7 @@ func (handler *handler) CreateIngestionKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var req gatewaytypes.CreateIngestionKeyRequest
+	var req gatewaytypes.CreateOrUpdateIngestionKeyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
 		return
@@ -129,6 +130,42 @@ func (handler *handler) CreateIngestionKey(rw http.ResponseWriter, r *http.Reque
 	}
 
 	render.Success(rw, http.StatusOK, createKeyResponse)
+}
+
+func (handler *handler) UpdateIngestionKey(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	keyID := mux.Vars(r)["keyId"]
+	if keyID == "" {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "keyId is required"))
+		return
+	}
+
+	var req gatewaytypes.CreateOrUpdateIngestionKeyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
+		return
+	}
+
+	err = handler.gateway.UpdateIngestionKey(ctx, orgID, keyID, req.Name, req.Tags, req.ExpiresAt)
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to update ingestion key from gateway"))
+		return
+	}
+
+	render.Success(rw, http.StatusOK, nil)
 }
 
 func parseIntWithDefaultValue(value string, defaultValue int) (int, error) {

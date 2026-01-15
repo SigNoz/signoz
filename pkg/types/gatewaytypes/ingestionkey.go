@@ -47,7 +47,7 @@ type UsageMetric struct {
 	Size  int64 `json:"size"`
 }
 
-type CreateIngestionKeyRequest struct {
+type CreateOrUpdateIngestionKeyRequest struct {
 	Name      string    `json:"name"`
 	Tags      []string  `json:"tags"`
 	ExpiresAt time.Time `json:"expires_at"`

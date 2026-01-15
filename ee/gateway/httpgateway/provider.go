@@ -93,7 +93,7 @@ func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID v
 }
 
 func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.CreateIngestionKeyResponse, error) {
-	requestBody := gatewaytypes.CreateIngestionKeyRequest{
+	requestBody := gatewaytypes.CreateOrUpdateIngestionKeyRequest{
 		Name:      name,
 		Tags:      tags,
 		ExpiresAt: expiresAt,
@@ -114,6 +114,25 @@ func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.U
 	}
 
 	return &createKeyResponse, nil
+}
+
+func (provider *Provider) UpdateIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string, name string, tags []string, expiresAt time.Time) error {
+	requestBody := gatewaytypes.CreateOrUpdateIngestionKeyRequest{
+		Name:      name,
+		Tags:      tags,
+		ExpiresAt: expiresAt,
+	}
+	requestBodyBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		return err
+	}
+
+	_, err = provider.do(ctx, orgID, http.MethodPatch, "/v1/workspaces/me/keys/"+keyID, nil, requestBodyBytes)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (provider *Provider) do(ctx context.Context, orgID valuer.UUID, method string, path string, queryParams url.Values, body []byte) ([]byte, error) {
