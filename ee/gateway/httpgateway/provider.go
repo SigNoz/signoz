@@ -160,11 +160,11 @@ func (provider *Provider) DeleteIngestionKey(ctx context.Context, orgID valuer.U
 	return nil
 }
 
-func (provider *Provider) CreateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, keyID string, signal string, limitConfig gatewaytypes.LimitConfig) (*gatewaytypes.CreatedIngestionKeyLimitResponse, error) {
+func (provider *Provider) CreateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, keyID string, signal string, limitConfig gatewaytypes.LimitConfig, tags []string) (*gatewaytypes.CreatedIngestionKeyLimitResponse, error) {
 	requestBody := gatewaytypes.IngestionKeyLimitRequest{
 		Signal: signal,
 		Config: limitConfig,
-		KeyID:  keyID,
+		Tags:   tags,
 	}
 	requestBodyBytes, err := json.Marshal(requestBody)
 	if err != nil {
@@ -184,10 +184,10 @@ func (provider *Provider) CreateIngestionKeyLimit(ctx context.Context, orgID val
 	return &createdIngestionKeyLimitResponse, nil
 }
 
-func (provider *Provider) UpdateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string, signal string, limitConfig gatewaytypes.LimitConfig) error {
-	requestBody := gatewaytypes.IngestionKeyLimitRequest{
-		Signal: signal,
+func (provider *Provider) UpdateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string, limitConfig gatewaytypes.LimitConfig, tags []string) error {
+	requestBody := gatewaytypes.UpdateIngestionKeyLimitRequest{
 		Config: limitConfig,
+		Tags:   tags,
 	}
 	requestBodyBytes, err := json.Marshal(requestBody)
 	if err != nil {
