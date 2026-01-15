@@ -73,9 +73,14 @@ type CreatedIngestionKeyResponse struct {
 type IngestionKeyLimitRequest struct {
 	Signal string      `json:"signal"`
 	Config LimitConfig `json:"config"`
-	KeyID  string      `json:"key_id"`
+	Tags   []string    `json:"tags"`
 }
 
 type CreatedIngestionKeyLimitResponse struct {
 	ID string `json:"id"`
+}
+
+type UpdateIngestionKeyLimitRequest struct {
+	Config LimitConfig `json:"config"`
+	Tags   []string    `json:"tags"`
 }

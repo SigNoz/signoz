@@ -43,11 +43,11 @@ func (p *provider) DeleteIngestionKey(_ context.Context, _ valuer.UUID, _ string
 	return errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
 }
 
-func (p *provider) CreateIngestionKeyLimit(_ context.Context, _ valuer.UUID, _ string, _ string, _ gatewaytypes.LimitConfig) (*gatewaytypes.CreatedIngestionKeyLimitResponse, error) {
+func (p *provider) CreateIngestionKeyLimit(_ context.Context, _ valuer.UUID, _ string, _ string, _ gatewaytypes.LimitConfig, _ []string) (*gatewaytypes.CreatedIngestionKeyLimitResponse, error) {
 	return nil, errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
 }
 
-func (p *provider) UpdateIngestionKeyLimit(_ context.Context, _ valuer.UUID, _ string, _ string, _ gatewaytypes.LimitConfig) error {
+func (p *provider) UpdateIngestionKeyLimit(_ context.Context, _ valuer.UUID, _ string, _ gatewaytypes.LimitConfig, _ []string) error {
 	return errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
 }
 

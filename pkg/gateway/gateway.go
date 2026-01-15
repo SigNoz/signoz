@@ -38,10 +38,10 @@ type Gateway interface {
 	DeleteIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string) error
 
 	// Create Ingestion Key Limit
-	CreateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, keyID string, signal string, limitConfig gatewaytypes.LimitConfig) (*gatewaytypes.CreatedIngestionKeyLimitResponse, error)
+	CreateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, keyID string, signal string, limitConfig gatewaytypes.LimitConfig, tags []string) (*gatewaytypes.CreatedIngestionKeyLimitResponse, error)
 
 	// Update Ingestion Key Limit
-	UpdateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string, signal string, limitConfig gatewaytypes.LimitConfig) error
+	UpdateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string, limitConfig gatewaytypes.LimitConfig, tags []string) error
 
 	// Delete Ingestion Key Limit
 	DeleteIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string) error

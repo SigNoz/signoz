@@ -225,7 +225,7 @@ func (handler *handler) CreateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 		return
 	}
 
-	response, err := handler.gateway.CreateIngestionKeyLimit(ctx, orgID, keyID, req.Signal, req.Config)
+	response, err := handler.gateway.CreateIngestionKeyLimit(ctx, orgID, keyID, req.Signal, req.Config, req.Tags)
 	if err != nil {
 		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to create ingestion key limit from gateway"))
 		return
@@ -255,13 +255,13 @@ func (handler *handler) UpdateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 		return
 	}
 
-	var req gatewaytypes.IngestionKeyLimitRequest
+	var req gatewaytypes.UpdateIngestionKeyLimitRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
 		return
 	}
 
-	err = handler.gateway.UpdateIngestionKeyLimit(ctx, orgID, limitID, req.Signal, req.Config)
+	err = handler.gateway.UpdateIngestionKeyLimit(ctx, orgID, limitID, req.Config, req.Tags)
 	if err != nil {
 		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to update ingestion key limit from gateway"))
 		return
