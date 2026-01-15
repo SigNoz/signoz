@@ -20,6 +20,16 @@
 			width: 32px;
 		}
 	}
+
+	.y-axis-unit-selector-v2 {
+		flex-direction: row !important;
+		align-items: center;
+		gap: 24px !important;
+
+		.y-axis-unit-selector-component {
+			width: 100%;
+		}
+	}
 }
 
 .lightMode {

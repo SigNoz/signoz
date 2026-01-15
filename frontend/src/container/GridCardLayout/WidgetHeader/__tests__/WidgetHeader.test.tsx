@@ -24,6 +24,8 @@ const TABLE_WIDGET_TITLE = 'Table Widget';
 const WIDGET_HEADER_SEARCH = 'widget-header-search';
 const WIDGET_HEADER_SEARCH_INPUT = 'widget-header-search-input';
 const TEST_WIDGET_TITLE_RESOLVED = 'Test Widget Title';
+const CREATE_ALERTS_TEXT = 'Create Alerts';
+const WIDGET_HEADER_OPTIONS_ID = 'widget-header-options';
 
 const mockStore = configureStore([thunk]);
 const createMockStore = (): ReturnType<typeof mockStore> =>
@@ -101,6 +103,9 @@ jest.mock('lucide-react', () => ({
 	CircleX: (): JSX.Element => <svg data-testid="lucide-circle-x" />,
 	TriangleAlert: (): JSX.Element => <svg data-testid="lucide-triangle-alert" />,
 	X: (): JSX.Element => <svg data-testid="lucide-x" />,
+	SquareArrowOutUpRight: (): JSX.Element => (
+		<svg data-testid="lucide-square-arrow-out-up-right" />
+	),
 }));
 jest.mock('antd', () => ({
 	...jest.requireActual('antd'),
@@ -181,7 +186,6 @@ describe('WidgetHeader', () => {
 				title={TEST_WIDGET_TITLE}
 				widget={mockWidget}
 				onView={mockOnView}
-				parentHover={false}
 				queryResponse={mockQueryResponse}
 				isWarning={false}
 				isFetchingResponse={false}
@@ -204,7 +208,6 @@ describe('WidgetHeader', () => {
 				title="Empty Widget"
 				widget={emptyWidget}
 				onView={mockOnView}
-				parentHover={false}
 				queryResponse={mockQueryResponse}
 				isWarning={false}
 				isFetchingResponse={false}
@@ -227,7 +230,6 @@ describe('WidgetHeader', () => {
 				title={TABLE_WIDGET_TITLE}
 				widget={tableWidget}
 				onView={mockOnView}
-				parentHover={false}
 				queryResponse={mockQueryResponse}
 				isWarning={false}
 				isFetchingResponse={false}
@@ -255,7 +257,6 @@ describe('WidgetHeader', () => {
 				title={TABLE_WIDGET_TITLE}
 				widget={tableWidget}
 				onView={mockOnView}
-				parentHover={false}
 				queryResponse={mockQueryResponse}
 				isWarning={false}
 				isFetchingResponse={false}
@@ -298,7 +299,6 @@ describe('WidgetHeader', () => {
 				title={TEST_WIDGET_TITLE}
 				widget={mockWidget}
 				onView={mockOnView}
-				parentHover={false}
 				queryResponse={errorResponse}
 				isWarning={false}
 				isFetchingResponse={false}
@@ -340,7 +340,6 @@ describe('WidgetHeader', () => {
 				title={TEST_WIDGET_TITLE}
 				widget={mockWidget}
 				onView={mockOnView}
-				parentHover={false}
 				queryResponse={warningResponse}
 				isWarning
 				isFetchingResponse={false}
@@ -370,7 +369,6 @@ describe('WidgetHeader', () => {
 				title={TEST_WIDGET_TITLE}
 				widget={mockWidget}
 				onView={mockOnView}
-				parentHover={false}
 				queryResponse={fetchingResponse}
 				isWarning={false}
 				isFetchingResponse
@@ -389,7 +387,6 @@ describe('WidgetHeader', () => {
 				title={TEST_WIDGET_TITLE}
 				widget={mockWidget}
 				onView={mockOnView}
-				parentHover={false}
 				queryResponse={mockQueryResponse}
 				isWarning={false}
 				isFetchingResponse={false}
@@ -399,7 +396,7 @@ describe('WidgetHeader', () => {
 			/>,
 		);
 
-		const moreOptionsIcon = screen.getByTestId('widget-header-options');
+		const moreOptionsIcon = screen.getByTestId(WIDGET_HEADER_OPTIONS_ID);
 		expect(moreOptionsIcon).toBeInTheDocument();
 	});
 
@@ -414,7 +411,6 @@ describe('WidgetHeader', () => {
 				title={TABLE_WIDGET_TITLE}
 				widget={tableWidget}
 				onView={mockOnView}
-				parentHover={false}
 				queryResponse={mockQueryResponse}
 				isWarning={false}
 				isFetchingResponse={false}
@@ -433,7 +429,6 @@ describe('WidgetHeader', () => {
 				title={TEST_WIDGET_TITLE}
 				widget={mockWidget}
 				onView={mockOnView}
-				parentHover={false}
 				queryResponse={mockQueryResponse}
 				isWarning={false}
 				isFetchingResponse={false}
@@ -454,7 +449,6 @@ describe('WidgetHeader', () => {
 				title={TEST_WIDGET_TITLE}
 				widget={mockWidget}
 				onView={mockOnView}
-				parentHover={false}
 				queryResponse={mockQueryResponse}
 				isWarning={false}
 				isFetchingResponse={false}
@@ -465,5 +459,67 @@ describe('WidgetHeader', () => {
 		);
 
 		expect(screen.getByTestId('threshold')).toBeInTheDocument();
+	});
+
+	describe('Create Alerts Menu Item', () => {
+		it('renders Create Alerts menu item with external link icon when included in headerMenuList', async () => {
+			render(
+				<WidgetHeader
+					title={TEST_WIDGET_TITLE}
+					widget={mockWidget}
+					onView={mockOnView}
+					queryResponse={mockQueryResponse}
+					isWarning={false}
+					isFetchingResponse={false}
+					tableProcessedDataRef={tableProcessedDataRef}
+					setSearchTerm={mockSetSearchTerm}
+					headerMenuList={[MenuItemKeys.CreateAlerts]}
+				/>,
+			);
+
+			const moreOptionsIcon = await screen.findByTestId(WIDGET_HEADER_OPTIONS_ID);
+			expect(moreOptionsIcon).toBeInTheDocument();
+			await userEvent.hover(moreOptionsIcon);
+
+			await screen.findByText(CREATE_ALERTS_TEXT);
+
+			const externalLinkIcon = await screen.findByTestId(
+				'lucide-square-arrow-out-up-right',
+			);
+			expect(externalLinkIcon).toBeInTheDocument();
+		});
+
+		it('Create Alerts menu item is enabled and clickable', async () => {
+			const mockCreateAlertsHandler = jest.fn();
+			const useCreateAlerts = jest.requireMock(
+				'hooks/queryBuilder/useCreateAlerts',
+			).default;
+			useCreateAlerts.mockReturnValue(mockCreateAlertsHandler);
+
+			render(
+				<WidgetHeader
+					title={TEST_WIDGET_TITLE}
+					widget={mockWidget}
+					onView={mockOnView}
+					queryResponse={mockQueryResponse}
+					isWarning={false}
+					isFetchingResponse={false}
+					tableProcessedDataRef={tableProcessedDataRef}
+					setSearchTerm={mockSetSearchTerm}
+					headerMenuList={[MenuItemKeys.CreateAlerts]}
+				/>,
+			);
+
+			expect(useCreateAlerts).toHaveBeenCalledWith(mockWidget, 'dashboardView');
+
+			const moreOptionsIcon = await screen.findByTestId(WIDGET_HEADER_OPTIONS_ID);
+			await userEvent.hover(moreOptionsIcon);
+
+			const createAlertsMenuItem = await screen.findByText(CREATE_ALERTS_TEXT);
+
+			// Verify the menu item is clickable by actually clicking it
+			await userEvent.click(createAlertsMenuItem);
+			expect(mockCreateAlertsHandler).toHaveBeenCalledTimes(1);
+		});
 	});
 });

@@ -7,15 +7,24 @@ import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { QueryParams } from 'constants/query';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
+import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
 import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useTimezone } from 'providers/Timezone';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { DataType } from '../TableView';
 import {
@@ -33,7 +42,6 @@ interface ITableViewActionsProps {
 	isListViewPanel: boolean;
 	isfilterInLoading: boolean;
 	isfilterOutLoading: boolean;
-	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
 	onClickHandler: (
 		operator: string,
 		fieldKey: string,
@@ -41,6 +49,7 @@ interface ITableViewActionsProps {
 		dataType: string | undefined,
 		logType: MetricsType | undefined,
 	) => () => void;
+	handleChangeSelectedView?: ChangeViewFunctionType;
 }
 
 // Memoized Tree Component
@@ -60,7 +69,8 @@ const BodyContent: React.FC<{
 	fieldData: Record<string, string>;
 	record: DataType;
 	bodyHtml: { __html: string };
-}> = React.memo(({ fieldData, record, bodyHtml }) => {
+	textToCopy: string;
+}> = React.memo(({ fieldData, record, bodyHtml, textToCopy }) => {
 	const { isLoading, treeData, error } = useAsyncJSONProcessing(
 		fieldData.value,
 		record.field === 'body',
@@ -92,11 +102,13 @@ const BodyContent: React.FC<{
 
 	if (record.field === 'body') {
 		return (
-			<span
-				style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
-			>
-				<span dangerouslySetInnerHTML={bodyHtml} />
-			</span>
+			<CopyClipboardHOC entityKey="body" textToCopy={textToCopy}>
+				<span
+					style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
+				>
+					<span dangerouslySetInnerHTML={bodyHtml} />
+				</span>
+			</CopyClipboardHOC>
 		);
 	}
 
@@ -115,10 +127,12 @@ export default function TableViewActions(
 		isfilterInLoading,
 		isfilterOutLoading,
 		onClickHandler,
-		onGroupByAttribute,
+		handleChangeSelectedView,
 	} = props;
 
 	const { pathname } = useLocation();
+	const { stagedQuery, updateQueriesData } = useQueryBuilder();
+	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const { dataType, logType: fieldType } = getFieldAttributes(record.field);
 
 	// there is no option for where clause in old logs explorer and live logs page
@@ -141,6 +155,42 @@ export default function TableViewActions(
 	}, [record.field, record.value]);
 
 	const fieldFilterKey = filterKeyForField(fieldData.field);
+
+	const handleGroupByAttribute = useCallback((): void => {
+		if (!stagedQuery) return;
+		const normalizedDataType: DataTypes | undefined =
+			dataType && Object.values(DataTypes).includes(dataType as DataTypes)
+				? (dataType as DataTypes)
+				: undefined;
+
+		const updatedQuery = updateQueriesData(stagedQuery, 'queryData', (item) => {
+			const newGroupByItem: BaseAutocompleteData = {
+				key: fieldFilterKey,
+				type: fieldType || '',
+				dataType: normalizedDataType,
+			};
+
+			const updatedGroupBy = [...(item.groupBy || []), newGroupByItem];
+
+			return { ...item, groupBy: updatedGroupBy };
+		});
+
+		const queryData: ICurrentQueryData = {
+			name: viewName,
+			id: updatedQuery.id,
+			query: updatedQuery,
+		};
+
+		handleChangeSelectedView?.(ExplorerViews.TIMESERIES, queryData);
+	}, [
+		stagedQuery,
+		updateQueriesData,
+		fieldFilterKey,
+		fieldType,
+		dataType,
+		handleChangeSelectedView,
+		viewName,
+	]);
 
 	// Memoize textToCopy computation
 	const textToCopy = useMemo(() => {
@@ -172,7 +222,12 @@ export default function TableViewActions(
 		switch (record.field) {
 			case 'body':
 				return (
-					<BodyContent fieldData={fieldData} record={record} bodyHtml={bodyHtml} />
+					<BodyContent
+						fieldData={fieldData}
+						record={record}
+						bodyHtml={bodyHtml}
+						textToCopy={textToCopy}
+					/>
 				);
 
 			case 'timestamp':
@@ -194,6 +249,7 @@ export default function TableViewActions(
 		record,
 		fieldData,
 		bodyHtml,
+		textToCopy,
 		formatTimezoneAdjustedTimestamp,
 		cleanTimestamp,
 	]);
@@ -202,10 +258,15 @@ export default function TableViewActions(
 	if (record.field === 'body') {
 		return (
 			<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
-				<BodyContent fieldData={fieldData} record={record} bodyHtml={bodyHtml} />
+				<BodyContent
+					fieldData={fieldData}
+					record={record}
+					bodyHtml={bodyHtml}
+					textToCopy={textToCopy}
+				/>
 				{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
 					<span className="action-btn">
-						<Tooltip title="Filter for value">
+						<Tooltip title="Filter for value" mouseLeaveDelay={0}>
 							<Button
 								className="filter-btn periscope-btn"
 								icon={
@@ -224,7 +285,7 @@ export default function TableViewActions(
 								)}
 							/>
 						</Tooltip>
-						<Tooltip title="Filter out value">
+						<Tooltip title="Filter out value" mouseLeaveDelay={0}>
 							<Button
 								className="filter-btn periscope-btn"
 								icon={
@@ -254,9 +315,7 @@ export default function TableViewActions(
 											className="group-by-clause"
 											type="text"
 											icon={<GroupByIcon />}
-											onClick={(): Promise<void> | void =>
-												onGroupByAttribute?.(fieldFilterKey)
-											}
+											onClick={handleGroupByAttribute}
 										>
 											Group By Attribute
 										</Button>
@@ -285,7 +344,7 @@ export default function TableViewActions(
 			</CopyClipboardHOC>
 			{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
 				<span className="action-btn">
-					<Tooltip title="Filter for value">
+					<Tooltip title="Filter for value" mouseLeaveDelay={0}>
 						<Button
 							className="filter-btn periscope-btn"
 							icon={
@@ -304,7 +363,7 @@ export default function TableViewActions(
 							)}
 						/>
 					</Tooltip>
-					<Tooltip title="Filter out value">
+					<Tooltip title="Filter out value" mouseLeaveDelay={0}>
 						<Button
 							className="filter-btn periscope-btn"
 							icon={
@@ -334,9 +393,7 @@ export default function TableViewActions(
 										className="group-by-clause"
 										type="text"
 										icon={<GroupByIcon />}
-										onClick={(): Promise<void> | void =>
-											onGroupByAttribute?.(fieldFilterKey)
-										}
+										onClick={handleGroupByAttribute}
 									>
 										Group By Attribute
 									</Button>
@@ -359,5 +416,5 @@ export default function TableViewActions(
 }
 
 TableViewActions.defaultProps = {
-	onGroupByAttribute: undefined,
+	handleChangeSelectedView: undefined,
 };

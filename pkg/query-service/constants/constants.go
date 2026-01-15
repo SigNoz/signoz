@@ -40,13 +40,6 @@ const NormalizedMetricsMapQueryThreads = 10
 var NormalizedMetricsMapRegex = regexp.MustCompile(`[^a-zA-Z0-9]`)
 var NormalizedMetricsMapQuantileRegex = regexp.MustCompile(`(?i)([._-]?quantile.*)$`)
 
-// TODO(srikanthccv): remove after backfilling is done
-func UseMetricsPreAggregation() bool {
-	return GetOrDefaultEnv("USE_METRICS_PRE_AGGREGATION", "true") == "true"
-}
-
-var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
-
 func GetEvalDelay() time.Duration {
 	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
 	evalDelayDuration, err := time.ParseDuration(evalDelayStr)
@@ -685,7 +678,6 @@ var OldToNewTraceFieldsMap = map[string]string{
 var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
 var IsDotMetricsEnabled = false
-var PreferSpanMetrics = false
 var MaxJSONFlatteningDepth = 1
 
 func init() {
@@ -693,9 +685,6 @@ func init() {
 	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
 	if GetOrDefaultEnv(DotMetricsEnabled, "true") == "true" {
 		IsDotMetricsEnabled = true
-	}
-	if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
-		PreferSpanMetrics = true
 	}
 
 	// set max flattening depth

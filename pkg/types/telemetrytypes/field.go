@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -17,9 +18,13 @@ var (
 	FieldSelectorMatchTypeFuzzy = FieldSelectorMatchType{valuer.NewString("fuzzy")}
 )
 
-// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries
-// e.g., "body.status" where "body." is the prefix
-const BodyJSONStringSearchPrefix = `body.`
+const (
+	// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries
+	// e.g., "body.status" where "body." is the prefix
+	BodyJSONStringSearchPrefix = "body."
+	ArraySep                   = jsontypeexporter.ArraySeparator
+	ArrayAnyIndex              = "[*]."
+)
 
 type TelemetryFieldKey struct {
 	Name          string        `json:"name"`
@@ -29,7 +34,7 @@ type TelemetryFieldKey struct {
 	FieldContext  FieldContext  `json:"fieldContext,omitempty"`
 	FieldDataType FieldDataType `json:"fieldDataType,omitempty"`
 
-	JSONDataType *JSONDataType       `json:"-,omitempty"`
+	JSONDataType *JSONDataType       `json:"-"`
 	Indexes      []JSONDataTypeIndex `json:"-"`
 	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
 }
@@ -118,6 +123,10 @@ type TelemetryFieldValues struct {
 	BoolValues    []bool    `json:"boolValues,omitempty"`
 	NumberValues  []float64 `json:"numberValues,omitempty"`
 	RelatedValues []string  `json:"relatedValues,omitempty"`
+}
+
+func (t *TelemetryFieldValues) NumValues() int {
+	return len(t.StringValues) + len(t.BoolValues) + len(t.NumberValues)
 }
 
 type MetricContext struct {
