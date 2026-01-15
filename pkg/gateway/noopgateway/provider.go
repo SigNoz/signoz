@@ -38,3 +38,7 @@ func (p *provider) CreateIngestionKey(ctx context.Context, orgID valuer.UUID, na
 func (p *provider) UpdateIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string, name string, tags []string, expiresAt time.Time) error {
 	return errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
 }
+
+func (p *provider) DeleteIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string) error {
+	return errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
+}

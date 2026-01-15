@@ -135,6 +135,15 @@ func (provider *Provider) UpdateIngestionKey(ctx context.Context, orgID valuer.U
 	return nil
 }
 
+func (provider *Provider) DeleteIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string) error {
+	_, err := provider.do(ctx, orgID, http.MethodDelete, "/v1/workspaces/me/keys/"+keyID, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (provider *Provider) do(ctx context.Context, orgID valuer.UUID, method string, path string, queryParams url.Values, body []byte) ([]byte, error) {
 	license, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {

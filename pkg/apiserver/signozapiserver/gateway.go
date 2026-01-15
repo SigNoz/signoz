@@ -21,7 +21,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the ingestion keys for a workspace",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]gatewaytypes.IngestionKey, 0),
+		Response:            make([]gatewaytypes.GetOrSearchIngestionKeyResponse, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
@@ -38,7 +38,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the ingestion keys for a workspace",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]gatewaytypes.IngestionKey, 0),
+		Response:            make([]gatewaytypes.GetOrSearchIngestionKeyResponse, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
@@ -72,13 +72,30 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Description:         "This endpoint updates an ingestion key for the workspace",
 		Request:             gatewaytypes.CreateOrUpdateIngestionKeyRequest{},
 		RequestContentType:  "application/json",
-		Response:            gatewaytypes.CreateIngestionKeyResponse{},
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodPatch).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/gateway/ingestion-keys/{keyId}", handler.New(provider.authZ.AdminAccess(provider.gatewayHandler.DeleteIngestionKey), handler.OpenAPIDef{
+		ID:                  "DeleteIngestionKey",
+		Tags:                []string{"gateway"},
+		Summary:             "Delete ingestion key for workspace",
+		Description:         "This endpoint deletes an ingestion key for the workspace",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
