@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	"go.opentelemetry.io/otel/propagation"
 
@@ -104,6 +105,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.Alertmanager,
 		signoz.SQLStore,
 		signoz.TelemetryStore,
+		signoz.TelemetryMetadataStore,
 		signoz.Prometheus,
 		signoz.Modules.OrgGetter,
 		signoz.Querier,
@@ -355,12 +357,13 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, providerSettings factory.ProviderSettings, queryParser queryparser.QueryParser) (*baserules.Manager, error) {
+func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, providerSettings factory.ProviderSettings, queryParser queryparser.QueryParser) (*baserules.Manager, error) {
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,
+		MetadataStore:       metadataStore,
 		Prometheus:          prometheus,
 		Context:             context.Background(),
 		Logger:              zap.L(),
@@ -376,6 +379,7 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		RuleStore:           ruleStore,
 		MaintenanceStore:    maintenanceStore,
 		SqlStore:            sqlstore,
+		QueryParser:         queryParser,
 	}
 
 	// create Manager

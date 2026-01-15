@@ -316,6 +316,7 @@
 			"application performance monitoring",
 			"java",
 			"java agent",
+			"java-agent",
 			"java apm",
 			"java application",
 			"java instrumentation",
@@ -596,7 +597,8 @@
 			"traces",
 			"tracing",
 			"ts",
-			"typescript"
+			"typescript",
+			"react native"
 		],
 		"id": "javascript",
 		"imgUrl": "/Logos/javascript.svg",
@@ -1982,6 +1984,7 @@
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
 			"aws lambda logs",
 			"aws lambda nodejs logs",
@@ -2057,6 +2060,8 @@
 			"java logs to signoz",
 			"java observability",
 			"logging",
+			"java-agent",
+			"java agent",
 			"logs",
 			"opentelemetry",
 			"otel",
@@ -2064,7 +2069,9 @@
 			"otel logs java",
 			"otel-java-sdk",
 			"sdk",
-			"structured logging java"
+			"structured logging java",
+			"Logback",
+			"log4j"
 		],
 		"link": "/docs/userguide/collecting_application_logs_otel_sdk_java/"
 	},
@@ -2280,6 +2287,7 @@
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
 			"aws ec2",
 			"aws ec2 log collection",
@@ -2347,6 +2355,7 @@
 		],
 		"module": "infra-monitoring-hosts",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
 			"aws container service",
 			"aws ecs",
@@ -2410,6 +2419,7 @@
 		],
 		"module": "infra-monitoring-k8s",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
 			"aws eks",
 			"aws kubernetes",
@@ -2472,6 +2482,7 @@
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
 			"aws elb",
 			"aws elb logs",
@@ -2503,6 +2514,7 @@
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
 			"aws vpc logs",
 			"collect vpc logs",
@@ -2533,6 +2545,7 @@
 		],
 		"module": "dashboards",
 		"relatedSearchKeywords": [
+			"amazon",
 			"amazon rds",
 			"aws",
 			"aws database",
@@ -2598,6 +2611,7 @@
 		],
 		"module": "dashboards",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
 			"aws lambda",
 			"aws lambda insights",
@@ -4431,6 +4445,7 @@
 			"vuejs",
 			"nuxtjs",
 			"svelte",
+			"sveltekit",
 			"nextjs"
 		],
 		"link": "/docs/frontend-monitoring/web-vitals-with-metrics/"
@@ -4464,6 +4479,7 @@
 			"vuejs",
 			"nuxtjs",
 			"svelte",
+			"sveltekit",
 			"nextjs"
 		],
 		"link": "/docs/frontend-monitoring/web-vitals-with-traces/"
@@ -4504,6 +4520,7 @@
 			"vuejs",
 			"nuxtjs",
 			"svelte",
+			"sveltekit",
 			"nextjs"
 		],
 		"link": "/docs/frontend-monitoring/document-load/"
@@ -5412,6 +5429,7 @@
 			"vuejs",
 			"nuxtjs",
 			"svelte",
+			"sveltekit",
 			"nextjs"
 		],
 		"link": "/docs/frontend-monitoring/sending-logs-with-opentelemetry/"
@@ -5441,6 +5459,7 @@
 			"vuejs",
 			"nuxtjs",
 			"svelte",
+			"sveltekit",
 			"nextjs"
 		],
 		"link": "/docs/frontend-monitoring/sending-traces-with-opentelemetry/"
@@ -5470,6 +5489,7 @@
 			"vuejs",
 			"nuxtjs",
 			"svelte",
+			"sveltekit",
 			"nextjs"
 		],
 		"link": "/docs/frontend-monitoring/sending-metrics-with-opentelemetry/"

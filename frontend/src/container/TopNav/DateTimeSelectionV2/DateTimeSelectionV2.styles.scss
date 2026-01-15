@@ -139,7 +139,22 @@
 			font-weight: 400;
 			line-height: normal;
 			letter-spacing: 0.14px;
+
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			gap: 4px;
+			align-items: center;
+
+			.time-value {
+				font-size: 11px;
+				color: var(--bg-vanilla-400);
+				background-color: var(--bg-ink-200);
+				padding: 4px 6px;
+				border-radius: 3px;
+			}
 		}
+
 		.date-time-options-btn:hover {
 			&.ant-btn-text {
 				background-color: rgba(171, 189, 255, 0.04) !important;
@@ -245,6 +260,99 @@
 			display: flex;
 			flex-direction: column;
 			gap: 32px;
+
+			.input-error-message-container {
+				color: var(--bg-cherry-400);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				padding: 8px;
+				cursor: default;
+				font-size: 12px;
+				gap: 8px;
+				background-color: rgba(255, 219, 218, 0.1);
+				border-radius: 3px;
+
+				.input-error-message-title {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+					width: 100%;
+				}
+
+				.input-error-message-description {
+					font-size: 12px;
+					width: 100%;
+				}
+			}
+		}
+
+		.calendar-container {
+			width: 360px;
+			height: 100%;
+
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+
+			.calendar-container-header {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				justify-content: center;
+				gap: 8px;
+				padding: 6px 24px;
+				width: 100%;
+				color: var(--bg-vanilla-400);
+				font-size: 12px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: normal;
+				letter-spacing: 0.14px;
+				line-height: 19px;
+				border-bottom: 1px solid var(--bg-slate-400);
+			}
+
+			.calendar-container-body {
+				height: 100%;
+				width: 100%;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: space-between;
+
+				.periscope-calendar {
+					border-radius: 4px;
+					border: none !important;
+					background: none !important;
+					padding: 0px !important;
+					padding-top: 8px !important;
+				}
+
+				.periscope-calendar-day {
+					button {
+						&:hover {
+							background-color: var(--bg-robin-500) !important;
+							color: var(--bg-vanilla-100) !important;
+						}
+					}
+				}
+
+				.calendar-actions {
+					width: 100%;
+					padding: 8px 16px;
+					display: flex;
+					flex-direction: row;
+					gap: 8px;
+					align-items: center;
+					justify-content: flex-end;
+
+					.apply-btn,
+					.cancel-btn {
+						width: 80px;
+					}
+				}
+			}
 		}
 
 		.recently-used-container {
@@ -335,6 +443,11 @@
 
 			.date-time-options-btn {
 				color: var(--bg-slate-400);
+
+				.time-value {
+					background-color: var(--bg-vanilla-300);
+					color: var(--bg-slate-400);
+				}
 			}
 
 			.active {
@@ -431,6 +544,17 @@
 	.reset-button {
 		background: var(--bg-vanilla-100);
 		border-color: var(--bg-vanilla-300);
+	}
+
+	.calendar-container {
+		.periscope-calendar-day {
+			button {
+				&:hover {
+					background-color: var(--bg-robin-500) !important;
+					color: var(--bg-ink-500) !important;
+				}
+			}
+		}
 	}
 }
 

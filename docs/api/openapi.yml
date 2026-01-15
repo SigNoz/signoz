@@ -3267,6 +3267,11 @@ components:
         rowsScanned:
           minimum: 0
           type: integer
+        stepIntervals:
+          additionalProperties:
+            minimum: 0
+            type: integer
+          type: object
       type: object
     Querybuildertypesv5Filter:
       properties:

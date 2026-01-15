@@ -491,16 +491,18 @@ const fillDataFromList = (
 	listItem: ListItem,
 	columns: DynamicColumns,
 ): void => {
+	const listData = listItem.data || {};
 	columns.forEach((column) => {
 		if (isFormula(column.field)) return;
 
-		Object.keys(listItem.data).forEach((label) => {
+		Object.keys(listData).forEach((label) => {
 			if (column.dataIndex === label) {
-				if (listItem.data[label as ListItemKey] !== '') {
-					if (isObject(listItem.data[label as ListItemKey])) {
-						column.data.push(JSON.stringify(listItem.data[label as ListItemKey]));
+				const listValue = listData[label as ListItemKey];
+				if (listValue !== '') {
+					if (isObject(listValue)) {
+						column.data.push(JSON.stringify(listValue));
 					} else {
-						column.data.push(listItem.data[label as ListItemKey].toString());
+						column.data.push(listValue?.toString() ?? '');
 					}
 				} else {
 					column.data.push('N/A');
@@ -538,7 +540,7 @@ const fillDataFromTable = (
 		);
 
 		columns.forEach((column) => {
-			const rowData = row.data;
+			const rowData = row.data || {};
 			const columnField = column.id || column.title || column.field;
 
 			if (Object.prototype.hasOwnProperty.call(rowData, columnField)) {

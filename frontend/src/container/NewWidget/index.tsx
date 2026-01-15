@@ -860,6 +860,7 @@ function NewWidget({
 							contextLinks={contextLinks}
 							setContextLinks={setContextLinks}
 							enableDrillDown={enableDrillDown}
+							isNewDashboard={isNewDashboard}
 						/>
 					</OverlayScrollbar>
 				</RightContainerWrapper>

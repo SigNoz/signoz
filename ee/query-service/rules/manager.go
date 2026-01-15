@@ -41,6 +41,8 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.SLogger,
 			baserules.WithEvalDelay(evalDelay),
 			baserules.WithSQLStore(opts.SQLStore),
+			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
+			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {
@@ -63,6 +65,8 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Reader,
 			opts.ManagerOpts.Prometheus,
 			baserules.WithSQLStore(opts.SQLStore),
+			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
+			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {
@@ -86,6 +90,8 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Cache,
 			baserules.WithEvalDelay(evalDelay),
 			baserules.WithSQLStore(opts.SQLStore),
+			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
+			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 		if err != nil {
 			return task, err
@@ -144,6 +150,8 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),
+			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
+			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {
@@ -164,6 +172,8 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),
+			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
+			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {
@@ -183,6 +193,8 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),
+			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
+			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 		if err != nil {
 			zap.L().Error("failed to prepare a new anomaly rule for test", zap.String("name", alertname), zap.Error(err))
