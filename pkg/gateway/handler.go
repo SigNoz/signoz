@@ -35,18 +35,6 @@ func (handler *handler) GetIngestionKeys(rw http.ResponseWriter, r *http.Request
 		return
 	}
 
-	workspaceIDString := r.URL.Query().Get("workspace_id")
-	if workspaceIDString == "" {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "workspace_id is required"))
-		return
-	}
-
-	workspaceID, err := valuer.NewUUID(workspaceIDString)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
 	pageString := r.URL.Query().Get("page")
 	perPageString := r.URL.Query().Get("per_page")
 
@@ -62,7 +50,7 @@ func (handler *handler) GetIngestionKeys(rw http.ResponseWriter, r *http.Request
 		return
 	}
 
-	keys, err := handler.gateway.GetIngestionKeysByWorkspaceID(ctx, orgID, workspaceID, page, perPage)
+	keys, err := handler.gateway.GetIngestionKeys(ctx, orgID, page, perPage)
 	if err != nil {
 		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to get ingestion keys from gateway"))
 		return

@@ -20,8 +20,8 @@ const (
 )
 
 type Gateway interface {
-	// Get key by workspace id
-	GetIngestionKeysByWorkspaceID(ctx context.Context, orgID valuer.UUID, workspaceID valuer.UUID, page, perPage int) ([]byte, error)
+	// Get Ingestions Keys (this is supposed to be for the current user but for now in gateway code this is ignoring the consumer user)
+	GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]byte, error)
 }
 
 type Handler interface {
