@@ -184,6 +184,33 @@ func (provider *Provider) CreateIngestionKeyLimit(ctx context.Context, orgID val
 	return &createdIngestionKeyLimitResponse, nil
 }
 
+func (provider *Provider) UpdateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string, signal string, limitConfig gatewaytypes.LimitConfig) error {
+	requestBody := gatewaytypes.IngestionKeyLimitRequest{
+		Signal: signal,
+		Config: limitConfig,
+	}
+	requestBodyBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		return err
+	}
+
+	_, err = provider.do(ctx, orgID, http.MethodPatch, "/v1/workspaces/me/keys/limits/"+limitID, nil, requestBodyBytes)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (provider *Provider) DeleteIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string) error {
+	_, err := provider.do(ctx, orgID, http.MethodDelete, "/v1/workspaces/me/keys/limits/"+limitID, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (provider *Provider) do(ctx context.Context, orgID valuer.UUID, method string, path string, queryParams url.Values, body []byte) ([]byte, error) {
 	license, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {

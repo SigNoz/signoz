@@ -234,6 +234,72 @@ func (handler *handler) CreateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 	render.Success(rw, http.StatusCreated, response)
 }
 
+func (handler *handler) UpdateIngestionKeyLimit(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	limitID := mux.Vars(r)["limitId"]
+	if limitID == "" {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "limitId is required"))
+		return
+	}
+
+	var req gatewaytypes.IngestionKeyLimitRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
+		return
+	}
+
+	err = handler.gateway.UpdateIngestionKeyLimit(ctx, orgID, limitID, req.Signal, req.Config)
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to update ingestion key limit from gateway"))
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) DeleteIngestionKeyLimit(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	limitID := mux.Vars(r)["limitId"]
+	if limitID == "" {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "limitId is required"))
+		return
+	}
+
+	err = handler.gateway.DeleteIngestionKeyLimit(ctx, orgID, limitID)
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to delete ingestion key limit from gateway"))
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
 func parseIntWithDefaultValue(value string, defaultValue int) (int, error) {
 	if value == "" {
 		return defaultValue, nil
