@@ -7,10 +7,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
 type module struct {
@@ -83,75 +81,5 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 }
 
 func (module *module) MustGetTypeables() []authtypes.Typeable {
-	return nil
-}
-
-func (module *module) SetManagedRoles(ctx context.Context, orgID valuer.UUID) error {
-	// todo[vikrant]: clean this and make this as individual module code!
-	signozAnonymousRole := roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID)
-
-	tuples := []*openfgav1.TupleKey{}
-	roleAssignmentTuples, err := authtypes.TypeableRole.Tuples(
-		authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), orgID, nil),
-		authtypes.RelationAssignee,
-		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, signozAnonymousRole.ID.StringValue()),
-		},
-		orgID,
-	)
-	if err != nil {
-		return err
-	}
-	tuples = append(tuples, roleAssignmentTuples...)
-
-	publicDashboardTuples, err := dashboardtypes.TypeableMetaResourcePublicDashboard.Tuples(
-		authtypes.MustNewSubject(authtypes.TypeableRole, authtypes.MustNewSelector(authtypes.TypeRole, signozAnonymousRole.ID.String()).String(), orgID, &authtypes.RelationAssignee),
-		authtypes.RelationRead,
-		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeMetaResource, "*"),
-		},
-		orgID,
-	)
-	if err != nil {
-		return err
-	}
-	tuples = append(tuples, publicDashboardTuples...)
-
-	err = module.authz.Write(ctx, tuples, nil)
-	if err != nil {
-		return err
-	}
-
-	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		signozAdminRole := roletypes.NewRole(roletypes.SigNozAdminRoleName, roletypes.SigNozAdminRoleDescription, roletypes.RoleTypeManaged, orgID)
-		err := module.store.Create(ctx, roletypes.NewStorableRoleFromRole(signozAdminRole))
-		if err != nil {
-			return err
-		}
-
-		signozEditorRole := roletypes.NewRole(roletypes.SigNozEditorRoleName, roletypes.SigNozEditorRoleDescription, roletypes.RoleTypeManaged, orgID)
-		err = module.store.Create(ctx, roletypes.NewStorableRoleFromRole(signozEditorRole))
-		if err != nil {
-			return err
-		}
-
-		signozViewerRole := roletypes.NewRole(roletypes.SigNozViewerRoleName, roletypes.SigNozViewerRoleDescription, roletypes.RoleTypeManaged, orgID)
-		err = module.store.Create(ctx, roletypes.NewStorableRoleFromRole(signozViewerRole))
-		if err != nil {
-			return err
-		}
-
-		err = module.store.Create(ctx, roletypes.NewStorableRoleFromRole(signozAnonymousRole))
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
