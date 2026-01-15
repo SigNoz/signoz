@@ -58,7 +58,26 @@ func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUI
 	qParams.Add("page", strconv.Itoa(page))
 	qParams.Add("per_page", strconv.Itoa(perPage))
 
-	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/me/keys", qParams, nil)
+	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/v1/workspaces/me/keys", qParams, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var ingestionKeys []gatewaytypes.IngestionKey
+	if err := json.Unmarshal(responseBody, &ingestionKeys); err != nil {
+		return nil, err
+	}
+
+	return ingestionKeys, nil
+}
+
+func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) ([]gatewaytypes.IngestionKey, error) {
+	qParams := url.Values{}
+	qParams.Add("name", name)
+	qParams.Add("page", strconv.Itoa(page))
+	qParams.Add("per_page", strconv.Itoa(perPage))
+
+	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/v1/workspaces/me/keys/search", qParams, nil)
 	if err != nil {
 		return nil, err
 	}

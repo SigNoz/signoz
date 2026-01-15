@@ -25,3 +25,7 @@ func New(_ context.Context, _ factory.ProviderSettings, _ gateway.Config) (gatew
 func (p *provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) ([]gatewaytypes.IngestionKey, error) {
 	return nil, errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
 }
+
+func (p *provider) SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) ([]gatewaytypes.IngestionKey, error) {
+	return nil, errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
+}
