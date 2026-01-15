@@ -54,18 +54,28 @@ type Pagination struct {
 	Total   int `json:"total"`
 }
 
-type GetOrSearchIngestionKeyResponse struct {
-	Data       []IngestionKey `json:"data"`
+type IngestionKeysResponse struct {
+	Keys       []IngestionKey `json:"keys"`
 	Pagination Pagination     `json:"_pagination"`
 }
 
-type CreateOrUpdateIngestionKeyRequest struct {
+type IngestionKeyRequest struct {
 	Name      string    `json:"name"`
 	Tags      []string  `json:"tags"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-type CreateIngestionKeyResponse struct {
+type CreatedIngestionKeyResponse struct {
 	ID    string `json:"id"`
 	Value string `json:"value"`
+}
+
+type IngestionKeyLimitRequest struct {
+	Signal string      `json:"signal"`
+	Config LimitConfig `json:"config"`
+	KeyID  string      `json:"key_id"`
+}
+
+type CreatedIngestionKeyLimitResponse struct {
+	ID string `json:"id"`
 }
