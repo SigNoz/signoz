@@ -35,11 +35,6 @@ var SafeAggregations = map[Aggregation]Monotonicity{
 	{Time: metrictypes.TimeAggregationMax, Space: metrictypes.SpaceAggregationSum}:         MonotonicityIncreasing,
 	{Time: metrictypes.TimeAggregationMax, Space: metrictypes.SpaceAggregationUnspecified}: MonotonicityIncreasing, // Logs/Trace
 
-	// --- Increase Aggregation ---
-	{Time: metrictypes.TimeAggregationIncrease, Space: metrictypes.SpaceAggregationMax}:         MonotonicityIncreasing,
-	{Time: metrictypes.TimeAggregationIncrease, Space: metrictypes.SpaceAggregationSum}:         MonotonicityIncreasing,
-	{Time: metrictypes.TimeAggregationIncrease, Space: metrictypes.SpaceAggregationUnspecified}: MonotonicityIncreasing, // Logs/Trace
-
 	// --- Count Aggregation ---
 	{Time: metrictypes.TimeAggregationCount, Space: metrictypes.SpaceAggregationSum}:         MonotonicityIncreasing,
 	{Time: metrictypes.TimeAggregationCount, Space: metrictypes.SpaceAggregationUnspecified}: MonotonicityIncreasing, // Logs/Trace
