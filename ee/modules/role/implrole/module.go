@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/role"
 	pkgimplrole "github.com/SigNoz/signoz/pkg/modules/role/implrole"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -16,24 +17,36 @@ import (
 type module struct {
 	store     roletypes.Store
 	authz     authz.AuthZ
+	licensing licensing.Licensing
 	pkgModule role.Module
 	registry  []role.RegisterTypeable
 }
 
-func NewModule(store roletypes.Store, authz authz.AuthZ, registry []role.RegisterTypeable) role.Module {
+func NewModule(store roletypes.Store, authz authz.AuthZ, licensing licensing.Licensing, registry []role.RegisterTypeable) role.Module {
 	return &module{
 		store:     store,
 		authz:     authz,
+		licensing: licensing,
 		pkgModule: pkgimplrole.NewModule(store, authz),
 		registry:  registry,
 	}
 }
 
-func (module *module) Create(ctx context.Context, role *roletypes.Role) error {
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, role *roletypes.Role) error {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
 	return module.store.Create(ctx, roletypes.NewStorableRoleFromRole(role))
 }
 
-func (module *module) GetOrCreate(ctx context.Context, role *roletypes.Role) (*roletypes.Role, error) {
+func (module *module) GetOrCreate(ctx context.Context, orgID valuer.UUID, role *roletypes.Role) (*roletypes.Role, error) {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
 	existingRole, err := module.store.GetByOrgIDAndName(ctx, role.Name, role.OrgID)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
@@ -115,10 +128,20 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes
 }
 
 func (module *module) Patch(ctx context.Context, orgID valuer.UUID, role *roletypes.Role) error {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
 	return module.store.Update(ctx, orgID, roletypes.NewStorableRoleFromRole(role))
 }
 
 func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation, additions, deletions []*authtypes.Object) error {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
 	additionTuples, err := roletypes.GetAdditionTuples(id, orgID, relation, additions)
 	if err != nil {
 		return err
@@ -138,6 +161,11 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 }
 
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
 	role, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return err

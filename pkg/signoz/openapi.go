@@ -49,6 +49,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ dashboard.Handler }{},
 		struct{ metricsexplorer.Handler }{},
 		struct{ role.Module }{},
+		struct{ role.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err

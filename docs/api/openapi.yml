@@ -209,7 +209,7 @@ paths:
   /api/v1/dashboards/{id}/public:
     delete:
       deprecated: false
-      description: This endpoints deletes the public sharing config and disables the
+      description: This endpoint deletes the public sharing config and disables the
         public sharing of a dashboard
       operationId: DeletePublicDashboard
       parameters:
@@ -253,7 +253,7 @@ paths:
       - dashboard
     get:
       deprecated: false
-      description: This endpoints returns public sharing config for a dashboard
+      description: This endpoint returns public sharing config for a dashboard
       operationId: GetPublicDashboard
       parameters:
       - in: path
@@ -301,7 +301,7 @@ paths:
       - dashboard
     post:
       deprecated: false
-      description: This endpoints creates public sharing config and enables public
+      description: This endpoint creates public sharing config and enables public
         sharing of the dashboard
       operationId: CreatePublicDashboard
       parameters:
@@ -355,7 +355,7 @@ paths:
       - dashboard
     put:
       deprecated: false
-      description: This endpoints updates the public sharing config for a dashboard
+      description: This endpoint updates the public sharing config for a dashboard
       operationId: UpdatePublicDashboard
       parameters:
       - in: path
@@ -671,7 +671,7 @@ paths:
   /api/v1/global/config:
     get:
       deprecated: false
-      description: This endpoints returns global config
+      description: This endpoint returns global config
       operationId: GetGlobalConfig
       responses:
         "200":
@@ -1484,8 +1484,7 @@ paths:
   /api/v1/public/dashboards/{id}:
     get:
       deprecated: false
-      description: This endpoints returns the sanitized dashboard data for public
-        access
+      description: This endpoint returns the sanitized dashboard data for public access
       operationId: GetPublicDashboardData
       parameters:
       - in: path
@@ -1616,6 +1615,210 @@ paths:
       summary: Reset password
       tags:
       - users
+  /api/v1/roles:
+    get:
+      deprecated: false
+      description: This endpoint lists all roles
+      operationId: ListRoles
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/RoletypesRole'
+                    type: array
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List roles
+      tags:
+      - role
+    post:
+      deprecated: false
+      description: This endpoint creates a role
+      operationId: CreateRole
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create role
+      tags:
+      - role
+  /api/v1/roles/:id:
+    delete:
+      deprecated: false
+      description: This endpoint deletes a role
+      operationId: DeleteRole
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete role
+      tags:
+      - role
+    get:
+      deprecated: false
+      description: This endpoint gets a role
+      operationId: GetRole
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RoletypesRole'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get role
+      tags:
+      - role
+    patch:
+      deprecated: false
+      description: This endpoint patches a role
+      operationId: PatchRole
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Patch role
+      tags:
+      - role
   /api/v1/user:
     get:
       deprecated: false
@@ -3339,6 +3542,25 @@ components:
         error:
           $ref: '#/components/schemas/ErrorsJSON'
         status:
+          type: string
+      type: object
+    RoletypesRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        org_id:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
           type: string
       type: object
     TypesChangePasswordRequest:

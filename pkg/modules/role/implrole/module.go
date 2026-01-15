@@ -20,11 +20,11 @@ func NewModule(store roletypes.Store, authz authz.AuthZ) role.Module {
 	return &module{store: store, authz: authz}
 }
 
-func (module *module) Create(ctx context.Context, role *roletypes.Role) error {
+func (module *module) Create(_ context.Context, _ valuer.UUID, _ *roletypes.Role) error {
 	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (module *module) GetOrCreate(ctx context.Context, role *roletypes.Role) (*roletypes.Role, error) {
+func (module *module) GetOrCreate(_ context.Context, _ valuer.UUID, _ *roletypes.Role) (*roletypes.Role, error) {
 	return nil, errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
@@ -68,15 +68,15 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes
 	return roles, nil
 }
 
-func (module *module) Patch(ctx context.Context, orgID valuer.UUID, role *roletypes.Role) error {
+func (module *module) Patch(_ context.Context, _ valuer.UUID, _ *roletypes.Role) error {
 	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation, additions, deletions []*authtypes.Object) error {
+func (module *module) PatchObjects(_ context.Context, _ valuer.UUID, _ valuer.UUID, _ authtypes.Relation, _, _ []*authtypes.Object) error {
 	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+func (module *module) Delete(_ context.Context, _ valuer.UUID, _ valuer.UUID) error {
 	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
 }
 

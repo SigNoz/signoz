@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -46,19 +47,19 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		signozViewer, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-viewer")
+		signozViewer, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, roletypes.SigNozViewerRoleName)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		signozEditor, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-editor")
+		signozEditor, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, roletypes.SigNozEditorRoleName)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		signozAdmin, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-admin")
+		signozAdmin, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, roletypes.SigNozAdminRoleName)
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -89,13 +90,13 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		signozEditor, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-editor")
+		signozEditor, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, roletypes.SigNozEditorRoleName)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		signozAdmin, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-admin")
+		signozAdmin, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, roletypes.SigNozAdminRoleName)
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -126,13 +127,13 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		role, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, "signoz-admin")
+		signozAdmin, err := middleware.role.GetByOrgIDAndName(req.Context(), orgId, roletypes.SigNozAdminRoleName)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, authtypes.RelationAssignee, authtypes.RelationAssignee, authtypes.TypeableRole, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String())})
+		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, authtypes.RelationAssignee, authtypes.RelationAssignee, authtypes.TypeableRole, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeRole, signozAdmin.ID.String())})
 		if err != nil {
 			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
 			render.Error(rw, err)

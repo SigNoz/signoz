@@ -163,7 +163,7 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.
 		}
 	}
 
-	return errors.New(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "")
+	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "none of the subjects are allowed for requested access")
 
 }
 
@@ -206,6 +206,10 @@ func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Contex
 }
 
 func (provider *provider) Write(ctx context.Context, additions []*openfgav1.TupleKey, deletions []*openfgav1.TupleKey) error {
+	if len(additions) == 0 && len(deletions) == 0 {
+		return nil
+	}
+
 	storeID, modelID := provider.getStoreIDandModelID()
 	deletionTuplesWithoutCondition := make([]*openfgav1.TupleKeyWithoutCondition, len(deletions))
 	for idx, tuple := range deletions {
@@ -370,7 +374,7 @@ func (provider *provider) migrateExistingUsers(ctx context.Context) error {
 		}
 
 		for _, user := range users {
-			grantTuples, err := authtypes.TypeableRole.Tuples(
+			grants, err := authtypes.TypeableRole.Tuples(
 				authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.String(), user.OrgID, nil),
 				authtypes.RelationAssignee,
 				[]authtypes.Selector{
@@ -382,12 +386,8 @@ func (provider *provider) migrateExistingUsers(ctx context.Context) error {
 				return err
 			}
 
-			tuples = append(tuples, grantTuples...)
+			tuples = append(tuples, grants...)
 		}
-	}
-
-	if len(tuples) == 0 {
-		return nil
 	}
 
 	err = provider.Write(ctx, tuples, nil)

@@ -11,10 +11,10 @@ import (
 
 type Module interface {
 	// Creates the role.
-	Create(context.Context, *roletypes.Role) error
+	Create(context.Context, valuer.UUID, *roletypes.Role) error
 
 	// Gets the role if it exists or creates one.
-	GetOrCreate(context.Context, *roletypes.Role) (*roletypes.Role, error)
+	GetOrCreate(context.Context, valuer.UUID, *roletypes.Role) (*roletypes.Role, error)
 
 	// Gets the role
 	Get(context.Context, valuer.UUID, valuer.UUID) (*roletypes.Role, error)

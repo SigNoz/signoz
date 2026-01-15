@@ -35,7 +35,7 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.Create(ctx, roletypes.NewRole(req.Name, req.Description, roletypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID)))
+	err = handler.module.Create(ctx, valuer.MustNewUUID(claims.OrgID), roletypes.NewRole(req.Name, req.Description, roletypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID)))
 	if err != nil {
 		render.Error(rw, err)
 		return

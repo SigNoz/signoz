@@ -61,7 +61,7 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 		return errors.Newf(errors.TypeAlreadyExists, dashboardtypes.ErrCodePublicDashboardAlreadyExists, "dashboard with id %s is already public", storablePublicDashboard.DashboardID)
 	}
 
-	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
+	role, err := module.role.GetOrCreate(ctx, orgID, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashb
 		return err
 	}
 
-	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
+	role, err := module.role.GetOrCreate(ctx, orgID, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
 	if err != nil {
 		return err
 	}
@@ -272,7 +272,7 @@ func (module *module) deletePublic(ctx context.Context, orgID valuer.UUID, dashb
 		return err
 	}
 
-	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
+	role, err := module.role.GetOrCreate(ctx, orgID, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
 	if err != nil {
 		return err
 	}

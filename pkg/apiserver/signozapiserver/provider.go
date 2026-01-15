@@ -41,6 +41,7 @@ type provider struct {
 	dashboardHandler       dashboard.Handler
 	metricsExplorerHandler metricsexplorer.Handler
 	roleModule             role.Module
+	roleHandler            role.Handler
 }
 
 func NewFactory(
@@ -58,9 +59,10 @@ func NewFactory(
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
 	roleModule role.Module,
+	roleHandler role.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler, roleModule)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler, roleModule, roleHandler)
 	})
 }
 
@@ -82,6 +84,7 @@ func newProvider(
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
 	roleModule role.Module,
+	roleHandler role.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -102,6 +105,7 @@ func newProvider(
 		dashboardHandler:       dashboardHandler,
 		metricsExplorerHandler: metricsExplorerHandler,
 		roleModule:             roleModule,
+		roleHandler:            roleHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz, roleModule)
@@ -155,6 +159,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addMetricsExplorerV2Routes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRoleRoutes(router); err != nil {
 		return err
 	}
 

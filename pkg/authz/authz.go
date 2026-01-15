@@ -34,7 +34,9 @@ type AuthZ interface {
 }
 
 type Store interface {
+	// List users by org id.
 	ListUsersByOrgID(context.Context, valuer.UUID) ([]*types.User, error)
 
+	// List roles by org id.
 	ListRolesByOrgID(context.Context, valuer.UUID) ([]*roletypes.StorableRole, error)
 }

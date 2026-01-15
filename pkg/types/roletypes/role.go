@@ -36,11 +36,11 @@ var (
 	SigNozAnonymousRoleName        = "signoz-anonymous"
 	SigNozAnonymousRoleDescription = "Role assigned to anonymous users for access to public resources."
 	SigNozAdminRoleName            = "signoz-admin"
-	SigNozAdminRoleDescription     = ""
+	SigNozAdminRoleDescription     = "Role assigned to users who have full administrative access to SigNoz resources."
 	SigNozEditorRoleName           = "signoz-editor"
-	SigNozEditorRoleDescription    = ""
+	SigNozEditorRoleDescription    = "Role assigned to users who can create, edit, and manage SigNoz resources but do not have full administrative privileges."
 	SigNozViewerRoleName           = "signoz-viewer"
-	SigNozViewerRoleDescription    = ""
+	SigNozViewerRoleDescription    = "Role assigned to users who have read-only access to SigNoz resources."
 )
 
 var (
