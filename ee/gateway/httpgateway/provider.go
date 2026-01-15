@@ -134,6 +134,30 @@ func (provider *Provider) do(ctx context.Context, orgID valuer.UUID, method stri
 		return nil, err
 	}
 
-	// done, return yay
-	return responseBody, nil
+	// only 2XX
+	if response.StatusCode/100 == 2 {
+		return responseBody, nil
+	}
+
+	// return error for non 2XX
+	return nil, provider.errFromStatusCode(response.StatusCode)
+}
+
+func (provider *Provider) errFromStatusCode(code int) error {
+	switch code {
+
+	case http.StatusBadRequest:
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "bad request")
+
+	case http.StatusUnauthorized:
+		return errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+
+	case http.StatusForbidden:
+		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "forbidden")
+
+	case http.StatusNotFound:
+		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "not found")
+	}
+
+	return errors.Newf(errors.TypeInternal, errors.CodeInternal, "internal")
 }
