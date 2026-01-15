@@ -70,7 +70,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	state, err := authtypes.NewStateFromString(query.Get("state"))
 	if err != nil {
 		a.settings.Logger().ErrorContext(ctx, "google: invalid state", "error", err)
-		return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeInvalidState, "google: invalid state")
+		return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeInvalidState, "google: invalid state").WithAdditional(err.Error())
 	}
 
 	authDomain, err := a.store.GetAuthDomainFromID(ctx, state.DomainID)
