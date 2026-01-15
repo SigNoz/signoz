@@ -620,8 +620,13 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
+	filteredKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey, len(keys))
+	for k, v := range keys {
+		filteredKeys[k] = v
+	}
+	delete(filteredKeys, "le")
 
-	delete(keys, "le")
+	query.GroupBy = slices.Clone(query.GroupBy)
 
 	leExists := false
 	for _, g := range query.GroupBy {
@@ -637,10 +642,15 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 		})
 	}
 
+	query.Aggregations = slices.Clone(query.Aggregations)
+
 	query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
 	query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
 	// For heatmap queries, we want to ignore the __normalized filter because we want all data
-	if query.Aggregations[0].TableHints == nil {
+	if query.Aggregations[0].TableHints != nil {
+		hints := *query.Aggregations[0].TableHints
+		query.Aggregations[0].TableHints = &hints
+	} else {
 		query.Aggregations[0].TableHints = &metrictypes.MetricTableHints{}
 	}
 	query.Aggregations[0].TableHints.SkipNormalizationCheck = true
@@ -650,12 +660,12 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 		cteArgs      [][]any
 	)
 
-	timeSeriesCTE, timeSeriesCTEArgs, err := b.buildTimeSeriesCTE(ctx, start, end, query, keys, variables)
+	timeSeriesCTE, timeSeriesCTEArgs, err := b.buildTimeSeriesCTE(ctx, start, end, query, filteredKeys, variables)
 	if err != nil {
 		return nil, err
 	}
 
-	frag, args, err := b.buildTemporalAggregationCTE(ctx, start, end, query, keys, timeSeriesCTE, timeSeriesCTEArgs)
+	frag, args, err := b.buildTemporalAggregationCTE(ctx, start, end, query, filteredKeys, timeSeriesCTE, timeSeriesCTEArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -664,7 +674,7 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	frag, args = b.buildSpatialAggregationCTE(ctx, start, end, query, keys)
+	frag, args = b.buildSpatialAggregationCTE(ctx, start, end, query, filteredKeys)
 	if frag != "" {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
