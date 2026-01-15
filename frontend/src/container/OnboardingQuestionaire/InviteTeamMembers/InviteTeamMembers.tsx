@@ -155,16 +155,21 @@ function InviteTeamMembers({
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const debouncedValidateEmail = useCallback(
-		debounce((email: string, memberId: string) => {
+		debounce((email: string, memberId: string, updatedMembers: TeamMember[]) => {
 			const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 			setEmailValidity((prev) => ({ ...prev, [memberId]: isValid }));
 
-			// Clear hasInvalidEmails when email becomes valid
-			if (isValid) {
-				setHasInvalidEmails((prev) => (prev ? false : prev));
+			// Clear hasInvalidEmails only when ALL emails are valid
+			if (hasInvalidEmails) {
+				const allEmailsValid = updatedMembers.every(
+					(m) => m.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email),
+				);
+				if (allEmailsValid) {
+					setHasInvalidEmails(false);
+				}
 			}
 		}, 500),
-		[],
+		[hasInvalidEmails],
 	);
 
 	const handleEmailChange = useCallback(
@@ -176,7 +181,7 @@ function InviteTeamMembers({
 			if (memberToUpdate && member.id) {
 				memberToUpdate.email = value;
 				setTeamMembersToInvite(updatedMembers);
-				debouncedValidateEmail(value, member.id);
+				debouncedValidateEmail(value, member.id, updatedMembers);
 				// Clear API error when user starts typing
 				if (inviteError) {
 					setInviteError(null);
