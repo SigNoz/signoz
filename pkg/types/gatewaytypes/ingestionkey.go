@@ -40,3 +40,14 @@ type IngestionKey struct {
 		} `json:"metric,omitempty"`
 	} `json:"limits,omitempty"`
 }
+
+type CreateIngestionKeyRequest struct {
+	Name      string    `json:"name"`
+	Tags      []string  `json:"tags"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+type CreateIngestionKeyResponse struct {
+	ID    string `json:"id"`
+	Value string `json:"value"`
+}
