@@ -97,20 +97,20 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 	}
 
 	name := ""
-	if nameClaim := authDomain.AuthDomainConfig().SAML.AttributeMapping.Name; nameClaim != "" {
-		if val := assertionInfo.Values.Get(nameClaim); val != "" {
+	if nameAttribute := authDomain.AuthDomainConfig().SAML.AttributeMapping.Name; nameAttribute != "" {
+		if val := assertionInfo.Values.Get(nameAttribute); val != "" {
 			name = val
 		}
 	}
 
 	var groups []string
-	if groupClaim := authDomain.AuthDomainConfig().SAML.AttributeMapping.Groups; groupClaim != "" {
-		groups = assertionInfo.Values.GetAll(groupClaim)
+	if groupAttribute := authDomain.AuthDomainConfig().SAML.AttributeMapping.Groups; groupAttribute != "" {
+		groups = assertionInfo.Values.GetAll(groupAttribute)
 	}
 
 	role := ""
-	if roleClaim := authDomain.AuthDomainConfig().SAML.AttributeMapping.Role; roleClaim != "" {
-		if val := assertionInfo.Values.Get(roleClaim); val != "" {
+	if roleAttribute := authDomain.AuthDomainConfig().SAML.AttributeMapping.Role; roleAttribute != "" {
+		if val := assertionInfo.Values.Get(roleAttribute); val != "" {
 			role = val
 		}
 	}
