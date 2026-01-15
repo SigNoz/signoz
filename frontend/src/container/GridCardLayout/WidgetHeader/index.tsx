@@ -228,7 +228,7 @@ function WidgetHeader({
 		text: widget.title as string,
 		maxLength: 100,
 	});
-	console.log('queryResponse', queryResponse);
+
 	const renderErrorMessage = useMemo(
 		() => <ErrorContent error={queryResponse.error as APIError} />,
 		[queryResponse.error],
