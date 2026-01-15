@@ -64,7 +64,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 
 	if err := query.Get("error"); err != "" {
 		a.settings.Logger().ErrorContext(ctx, "google: error while authenticating", "error", err, "error_description", query.Get("error_description"))
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: error while authenticating")
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: error while authenticating").WithAdditional(query.Get("error_description"))
 	}
 
 	state, err := authtypes.NewStateFromString(query.Get("state"))
@@ -84,7 +84,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		var retrieveError *oauth2.RetrieveError
 		if errors.As(err, &retrieveError) {
 			a.settings.Logger().ErrorContext(ctx, "google: failed to get token", "error", err, "error_description", retrieveError.ErrorDescription, "body", string(retrieveError.Body))
-			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to get token")
+			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to get token").WithAdditional(retrieveError.ErrorDescription)
 		}
 
 		a.settings.Logger().ErrorContext(ctx, "google: failed to get token", "error", err)
