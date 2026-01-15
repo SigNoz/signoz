@@ -137,15 +137,20 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 	return nil
 }
 
-// todo[vikrant]: delete all the tuples as well here, on delete of role.
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	role, err := module.Get(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	err = role.CanEditDelete()
+	if err != nil {
+		return err
+	}
+
 	return module.store.Delete(ctx, orgID, id)
 }
 
 func (module *module) MustGetTypeables() []authtypes.Typeable {
 	return []authtypes.Typeable{authtypes.TypeableRole, roletypes.TypeableResourcesRoles}
-}
-
-func (module *module) SetManagedRoles(ctx context.Context, orgID valuer.UUID) error {
-	return module.pkgModule.SetManagedRoles(ctx, orgID)
 }

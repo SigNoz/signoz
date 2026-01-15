@@ -128,7 +128,38 @@ func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID
 	}
 }
 
-func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.Object, relation authtypes.Relation) (*PatchableObjects, error) {
+func NewManagedRoles(orgID valuer.UUID) []*Role {
+	return []*Role{
+		NewRole(SigNozAdminRoleName, SigNozAdminRoleDescription, RoleTypeManaged, orgID),
+		NewRole(SigNozEditorRoleName, SigNozEditorRoleDescription, RoleTypeManaged, orgID),
+		NewRole(SigNozViewerRoleName, SigNozViewerRoleDescription, RoleTypeManaged, orgID),
+		NewRole(SigNozAnonymousRoleName, SigNozAnonymousRoleDescription, RoleTypeManaged, orgID),
+	}
+
+}
+
+func (role *Role) PatchMetadata(name, description *string) error {
+	err := role.CanEditDelete()
+	if err != nil {
+		return err
+	}
+
+	if name != nil {
+		role.Name = *name
+	}
+	if description != nil {
+		role.Description = *description
+	}
+	role.UpdatedAt = time.Now()
+	return nil
+}
+
+func (role *Role) NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.Object, relation authtypes.Relation) (*PatchableObjects, error) {
+	err := role.CanEditDelete()
+	if err != nil {
+		return nil, err
+	}
+
 	if len(additions) == 0 && len(deletions) == 0 {
 		return nil, errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty object patch request received, at least one of additions or deletions must be present")
 	}
@@ -148,15 +179,12 @@ func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.O
 	return &PatchableObjects{Additions: additions, Deletions: deletions}, nil
 }
 
-// TODO[vikrantgupta25]: add domain checks for managed roles
-func (role *Role) PatchMetadata(name, description *string) {
-	if name != nil {
-		role.Name = *name
+func (role *Role) CanEditDelete() error {
+	if role.Type == RoleTypeManaged.String() {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "cannot edit/delete managed role: %s", role.Name)
 	}
-	if description != nil {
-		role.Description = *description
-	}
-	role.UpdatedAt = time.Now()
+
+	return nil
 }
 
 func (role *PostableRole) UnmarshalJSON(data []byte) error {

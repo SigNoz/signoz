@@ -441,22 +441,38 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 		return nil, err
 	}
 
-	// TODO[vikrantgupta25]: figure out how to make this work without transaction wrapping
-	// if err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-	err = module.orgSetter.Create(ctx, organization)
+	managedRoles := roletypes.NewManagedRoles(organization.ID)
+	var adminRoleID valuer.UUID
+	for _, r := range managedRoles {
+		if r.Name == roletypes.SigNozAdminRoleName {
+			adminRoleID = r.ID
+			break
+		}
+	}
+
+	err = module.grant.GrantByID(ctx, organization.ID, adminRoleID, authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil))
 	if err != nil {
 		return nil, err
 	}
 
-	err = module.CreateUser(ctx, user, root.WithFactorPassword(password))
-	if err != nil {
+	if err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		err = module.orgSetter.Create(ctx, organization, func(ctx context.Context) error {
+			module.grant.SetManagedRoles(ctx, organization.ID, managedRoles)
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		err = module.createUserWithoutGrant(ctx, user, root.WithFactorPassword(password))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
 		return nil, err
 	}
-
-	// return nil
-	// }); err != nil {
-	// 	return nil, err
-	// }
 
 	return user, nil
 }
@@ -474,4 +490,29 @@ func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	}
 
 	return stats, nil
+}
+
+func (module *Module) createUserWithoutGrant(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
+	createUserOpts := root.NewCreateUserOptions(opts...)
+	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.CreateUser(ctx, input); err != nil {
+			return err
+		}
+
+		if createUserOpts.FactorPassword != nil {
+			if err := module.store.CreatePassword(ctx, createUserOpts.FactorPassword); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	traitsOrProperties := types.NewTraitsFromUser(input)
+	module.analytics.IdentifyUser(ctx, input.OrgID.String(), input.ID.String(), traitsOrProperties)
+	module.analytics.TrackUser(ctx, input.OrgID.String(), input.ID.String(), "User Created", traitsOrProperties)
+
+	return nil
 }

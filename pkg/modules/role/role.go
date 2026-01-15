@@ -40,21 +40,24 @@ type Module interface {
 	// Deletes the role and tuples in authorization server.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
-	// Bootstrap the managed roles.
-	SetManagedRoles(context.Context, valuer.UUID) error
-
 	RegisterTypeable
 }
 
 type Grant interface {
-	// Grants a role to the subject.
+	// Grants a role to the subject based on role name.
 	Grant(context.Context, valuer.UUID, string, string) error
 
-	// Revokes a granted role from the subject.
+	// Grants a role to the subject based on role id.
+	GrantByID(context.Context, valuer.UUID, valuer.UUID, string) error
+
+	// Revokes a granted role from the subject based on role name.
 	Revoke(context.Context, valuer.UUID, string, string) error
 
-	// Changes the granted role for the subject.
+	// Changes the granted role for the subject based on role name.
 	ModifyGrant(context.Context, valuer.UUID, string, string, string) error
+
+	// Bootstrap the managed roles.
+	SetManagedRoles(context.Context, valuer.UUID, []*roletypes.Role) error
 }
 
 type RegisterTypeable interface {

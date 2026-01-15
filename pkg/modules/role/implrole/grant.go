@@ -39,6 +39,21 @@ func (grant *grant) Grant(ctx context.Context, orgID valuer.UUID, name string, s
 	return grant.authz.Write(ctx, tuples, nil)
 }
 
+func (grant *grant) GrantByID(ctx context.Context, orgID valuer.UUID, id valuer.UUID, subject string) error {
+	tuples, err := authtypes.TypeableRole.Tuples(
+		subject,
+		authtypes.RelationAssignee,
+		[]authtypes.Selector{
+			authtypes.MustNewSelector(authtypes.TypeRole, id.StringValue()),
+		},
+		orgID,
+	)
+	if err != nil {
+		return err
+	}
+	return grant.authz.Write(ctx, tuples, nil)
+}
+
 func (grant *grant) ModifyGrant(ctx context.Context, orgID valuer.UUID, existingRoleName string, updatedRoleName string, subject string) error {
 	err := grant.Revoke(ctx, orgID, existingRoleName, subject)
 	if err != nil {
@@ -71,4 +86,23 @@ func (grant *grant) Revoke(ctx context.Context, orgID valuer.UUID, name string, 
 		return err
 	}
 	return grant.authz.Write(ctx, nil, tuples)
+}
+
+func (module *grant) SetManagedRoles(ctx context.Context, _ valuer.UUID, managedRoles []*roletypes.Role) error {
+	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		for _, role := range managedRoles {
+			err := module.store.Create(ctx, roletypes.NewStorableRoleFromRole(role))
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

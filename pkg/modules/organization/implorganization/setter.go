@@ -22,7 +22,7 @@ func NewSetter(store types.OrganizationStore, alertmanager alertmanager.Alertman
 	return &setter{store: store, alertmanager: alertmanager, quickfilter: quickfilter, role: role, grant: grant}
 }
 
-func (module *setter) Create(ctx context.Context, organization *types.Organization) error {
+func (module *setter) Create(ctx context.Context, organization *types.Organization, managedRolesCB func(context.Context) error) error {
 	if err := module.store.Create(ctx, organization); err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func (module *setter) Create(ctx context.Context, organization *types.Organizati
 		return err
 	}
 
-	if err := module.role.SetManagedRoles(ctx, organization.ID); err != nil {
+	if err := managedRolesCB(ctx); err != nil {
 		return err
 	}
 
