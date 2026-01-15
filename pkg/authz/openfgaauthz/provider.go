@@ -386,6 +386,10 @@ func (provider *provider) migrateExistingUsers(ctx context.Context) error {
 		}
 	}
 
+	if len(tuples) == 0 {
+		return nil
+	}
+
 	err = provider.Write(ctx, tuples, nil)
 	if err != nil {
 		return err

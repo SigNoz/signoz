@@ -24,7 +24,7 @@ func NewModule(store roletypes.Store, authz authz.AuthZ, registry []role.Registe
 	return &module{
 		store:     store,
 		authz:     authz,
-		pkgModule: pkgimplrole.NewModule(store),
+		pkgModule: pkgimplrole.NewModule(store, authz),
 		registry:  registry,
 	}
 }

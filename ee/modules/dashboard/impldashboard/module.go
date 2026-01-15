@@ -91,6 +91,7 @@ func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id 
 
 	return []authtypes.Selector{
 		authtypes.MustNewSelector(authtypes.TypeMetaResource, id.StringValue()),
+		authtypes.MustNewSelector(authtypes.TypeMetaResource, "*"),
 	}, storableDashboard.OrgID, nil
 }
 
