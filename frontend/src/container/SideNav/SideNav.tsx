@@ -162,6 +162,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	);
 
 	const [hasScroll, setHasScroll] = useState(false);
+	const [isScrolled, setIsScrolled] = useState(false);
 	const navTopSectionRef = useRef<HTMLDivElement>(null);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const prevSidebarOpenRef = useRef<boolean>(isPinned);
@@ -172,6 +173,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			const { scrollHeight, clientHeight, scrollTop } = navTopSectionRef.current;
 			const isAtBottom = scrollHeight - clientHeight - scrollTop <= 8;
 			setHasScroll(scrollHeight > clientHeight + 24 && !isAtBottom); // 24px - buffer height to show show more
+			setIsScrolled(scrollTop > 0);
 		}
 	}, []);
 
@@ -489,6 +491,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		pathname,
 	]);
 
+	const isSettingsPage = useMemo(() => pathname.startsWith(ROUTES.SETTINGS), [
+		pathname,
+	]);
+
 	const userSettingsDropdownMenuItems: MenuProps['items'] = useMemo(
 		() =>
 			[
@@ -784,6 +790,15 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		[secondaryMenuItems],
 	);
 
+	// Get active "More" items that should be visible in collapsed state
+	const activeMoreMenuItems = useMemo(
+		() => moreMenuItems.filter((item) => activeMenuKey === item.key),
+		[moreMenuItems, activeMenuKey],
+	);
+
+	// Check if sidebar is collapsed (not pinned and not hovered)
+	const isCollapsed = !isPinned && !isHovered;
+
 	const renderNavItems = (
 		items: SidebarItem[],
 		allowPin?: boolean,
@@ -944,7 +959,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				onMouseEnter={(): void => setIsHovered(true)}
 				onMouseLeave={(): void => setIsHovered(false)}
 			>
-				<div className="brand-container">
+				<div className={cx('brand-container', isScrolled && 'scrolled')}>
 					<div className="brand">
 						<div className="brand-company-meta">
 							<div
@@ -1041,46 +1056,50 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							{renderNavItems(primaryMenuItems)}
 						</div>
 
-						{(pinnedMenuItems.length > 0 || isPinned || isHovered) && (
-							<div className="shortcut-nav-items">
-								<div className="nav-title-section">
-									<div className="nav-section-title">
-										<div className="nav-section-title-icon">
-											<MousePointerClick size={16} />
-										</div>
+						{(pinnedMenuItems.length > 0 || isPinned || isHovered || isCollapsed) && (
+							<div
+								className={cx('shortcut-nav-items', isCollapsed && 'sidebar-collapsed')}
+							>
+								{!isCollapsed && (
+									<div className="nav-title-section">
+										<div className="nav-section-title">
+											<div className="nav-section-title-icon">
+												<MousePointerClick size={16} />
+											</div>
 
-										<div className="nav-section-title-text">SHORTCUTS</div>
+											<div className="nav-section-title-text">SHORTCUTS</div>
 
-										{pinnedMenuItems.length > 1 && (
-											<Tooltip title="Manage shortcuts" placement="right">
-												<div
-													className="nav-section-title-icon reorder"
-													onClick={(): void => {
-														logEvent('Sidebar V2: Manage shortcuts clicked', {});
-														setIsReorderShortcutNavItemsModalOpen(true);
-													}}
-												>
-													<Logs size={16} />
-												</div>
-											</Tooltip>
-										)}
-									</div>
-
-									{pinnedMenuItems.length === 0 && (
-										<div className="nav-section-subtitle">
-											You have not added any shortcuts yet.
-										</div>
-									)}
-
-									{pinnedMenuItems.length > 0 && (
-										<div className="nav-items-section">
-											{renderNavItems(
-												pinnedMenuItems.filter((item) => item.isEnabled),
-												true,
+											{pinnedMenuItems.length > 1 && (
+												<Tooltip title="Manage shortcuts" placement="right">
+													<div
+														className="nav-section-title-icon reorder"
+														onClick={(): void => {
+															logEvent('Sidebar V2: Manage shortcuts clicked', {});
+															setIsReorderShortcutNavItemsModalOpen(true);
+														}}
+													>
+														<Logs size={16} />
+													</div>
+												</Tooltip>
 											)}
 										</div>
-									)}
-								</div>
+
+										{pinnedMenuItems.length === 0 && (
+											<div className="nav-section-subtitle">
+												You have not added any shortcuts yet.
+											</div>
+										)}
+									</div>
+								)}
+
+								{(pinnedMenuItems.length > 0 || isCollapsed) && (
+									<div className="nav-items-section">
+										{renderNavItems(
+											pinnedMenuItems.filter((item) => item.isEnabled),
+											true,
+										)}
+									</div>
+								)}
 							</div>
 						)}
 
@@ -1089,50 +1108,59 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 								className={cx(
 									'more-nav-items',
 									isMoreMenuCollapsed ? 'collapsed' : 'expanded',
+									isCollapsed && 'sidebar-collapsed',
 								)}
 							>
-								<div className="nav-title-section">
-									<div
-										className="nav-section-title"
-										onClick={(): void => {
-											// Only allow toggling when sidebar is pinned or hovered
-											if (!isPinned && !isHovered) {
-												return;
-											}
-											const newCollapsedState = !isMoreMenuCollapsed;
-											logEvent('Sidebar V2: More menu clicked', {
-												action: isMoreMenuCollapsed ? 'expand' : 'collapse',
-											});
-											setIsMoreMenuCollapsed(newCollapsedState);
-											// Track if user manually collapsed it
-											if (newCollapsedState) {
-												userManuallyCollapsedRef.current = true;
-											} else {
-												userManuallyCollapsedRef.current = false;
-											}
-										}}
-									>
-										<div className="nav-section-title-icon">
-											<Ellipsis size={16} />
-										</div>
+								{!isCollapsed && (
+									<div className="nav-title-section">
+										<div
+											className="nav-section-title"
+											onClick={(): void => {
+												// Only allow toggling when sidebar is pinned or hovered
+												if (!isPinned && !isHovered) {
+													return;
+												}
+												const newCollapsedState = !isMoreMenuCollapsed;
+												logEvent('Sidebar V2: More menu clicked', {
+													action: isMoreMenuCollapsed ? 'expand' : 'collapse',
+												});
+												setIsMoreMenuCollapsed(newCollapsedState);
+												// Track if user manually collapsed it
+												if (newCollapsedState) {
+													userManuallyCollapsedRef.current = true;
+												} else {
+													userManuallyCollapsedRef.current = false;
+												}
+											}}
+										>
+											<div className="nav-section-title-icon">
+												<Ellipsis size={16} />
+											</div>
 
-										<div className="nav-section-title-text">MORE</div>
+											<div className="nav-section-title-text">MORE</div>
 
-										<div className="collapse-expand-section-icon">
-											{isMoreMenuCollapsed ? (
-												<ChevronDown size={16} />
-											) : (
-												<ChevronUp size={16} />
-											)}
+											<div className="collapse-expand-section-icon">
+												{isMoreMenuCollapsed ? (
+													<ChevronDown size={16} />
+												) : (
+													<ChevronUp size={16} />
+												)}
+											</div>
 										</div>
 									</div>
-								</div>
+								)}
 
 								<div className="nav-items-section">
-									{renderNavItems(
-										moreMenuItems.filter((item) => item.isEnabled),
-										true,
-									)}
+									{/* Show all items when expanded, only active items when collapsed */}
+									{isCollapsed
+										? renderNavItems(
+												activeMoreMenuItems.filter((item) => item.isEnabled),
+												true,
+										  )
+										: renderNavItems(
+												moreMenuItems.filter((item) => item.isEnabled),
+												true,
+										  )}
 								</div>
 							</div>
 						)}
@@ -1182,7 +1210,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									trigger={['click']}
 									onOpenChange={(open): void => setIsDropdownOpen(open)}
 								>
-									<div className="nav-item">
+									<div className={cx('nav-item', isSettingsPage && 'active')}>
+										<div className="nav-item-active-marker" />
 										<div className="nav-item-data" data-testid="settings-nav-item">
 											<div className="nav-item-icon">{userSettingsMenuItem.icon}</div>
 
