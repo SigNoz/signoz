@@ -1,12 +1,14 @@
 package gateway
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/gatewaytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -97,6 +99,36 @@ func (handler *handler) SearchIngestionKeys(rw http.ResponseWriter, r *http.Requ
 	}
 
 	render.Success(rw, http.StatusOK, keys)
+}
+
+func (handler *handler) CreateIngestionKey(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	var req gatewaytypes.CreateIngestionKeyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
+		return
+	}
+
+	createKeyResponse, err := handler.gateway.CreateIngestionKey(ctx, orgID, req.Name, req.Tags, req.ExpiresAt)
+	if err != nil {
+		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to create ingestion key from gateway"))
+		return
+	}
+
+	render.Success(rw, http.StatusOK, createKeyResponse)
 }
 
 func parseIntWithDefaultValue(value string, defaultValue int) (int, error) {

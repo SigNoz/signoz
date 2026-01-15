@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -89,6 +90,30 @@ func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID v
 	}
 
 	return ingestionKeys, nil
+}
+
+func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.CreateIngestionKeyResponse, error) {
+	requestBody := gatewaytypes.CreateIngestionKeyRequest{
+		Name:      name,
+		Tags:      tags,
+		ExpiresAt: expiresAt,
+	}
+	requestBodyBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, err
+	}
+
+	responseBody, err := provider.do(ctx, orgID, http.MethodPost, "/v1/workspaces/me/keys", nil, requestBodyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	var createKeyResponse gatewaytypes.CreateIngestionKeyResponse
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &createKeyResponse); err != nil {
+		return nil, err
+	}
+
+	return &createKeyResponse, nil
 }
 
 func (provider *Provider) do(ctx context.Context, orgID valuer.UUID, method string, path string, queryParams url.Values, body []byte) ([]byte, error) {
