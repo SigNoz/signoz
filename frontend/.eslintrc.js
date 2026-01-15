@@ -7,8 +7,6 @@ module.exports = {
 		'jest/globals': true,
 	},
 	extends: [
-		'airbnb',
-		'airbnb-typescript',
 		'eslint:recommended',
 		'plugin:react/recommended',
 		'plugin:@typescript-eslint/recommended',
@@ -35,6 +33,7 @@ module.exports = {
 		'react-hooks',
 		'prettier',
 		'jest',
+		'jsx-a11y',
 	],
 	settings: {
 		react: {
@@ -72,9 +71,6 @@ module.exports = {
 		'react-hooks/rules-of-hooks': 'error',
 		'react-hooks/exhaustive-deps': 'error',
 
-		// airbnb
-		'no-underscore-dangle': 'off',
-		'no-console': 'off',
 		'import/prefer-default-export': 'off',
 		'import/extensions': [
 			'error',
