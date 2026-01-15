@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/gatewaytypes"
 	"github.com/gorilla/mux"
 )
 
@@ -20,7 +21,24 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the ingestion keys for a workspace",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]byte, 0), // ! TODO: make this strongly typed
+		Response:            make([]gatewaytypes.IngestionKey, 0),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/gateway/me/ingestion-keys/search", handler.New(provider.authZ.AdminAccess(provider.gatewayHandler.SearchIngestionKeys), handler.OpenAPIDef{
+		ID:                  "SearchIngestionKeys",
+		Tags:                []string{"gateway"},
+		Summary:             "Search ingestion keys for workspace",
+		Description:         "This endpoint returns the ingestion keys for a workspace",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            make([]gatewaytypes.IngestionKey, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
