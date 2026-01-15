@@ -1,3 +1,4 @@
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { FontSize } from 'container/OptionsMenu/types';
 import { MouseEvent } from 'react';
 import { IField } from 'types/api/logs/fields';
@@ -14,6 +15,7 @@ export interface RawLogViewProps {
 	fontSize: FontSize;
 	selectedFields?: IField[];
 	onLogClick?: (log: ILog, event: MouseEvent) => void;
+	handleChangeSelectedView?: ChangeViewFunctionType;
 }
 
 export interface RawLogContentProps {

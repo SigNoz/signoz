@@ -25,7 +25,11 @@ import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import { LiveLogsListProps } from './types';
 
-function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
+function LiveLogsList({
+	logs,
+	isLoading,
+	handleChangeSelectedView,
+}: LiveLogsListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 
 	const { isConnectionLoading } = useEventSource();
@@ -36,7 +40,6 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 		activeLog,
 		onClearActiveLog,
 		onAddToQuery,
-		onGroupByAttribute,
 		onSetActiveLog,
 	} = useActiveLog();
 
@@ -72,6 +75,7 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 						linesPerRow={options.maxLines}
 						selectedFields={selectedFields}
 						fontSize={options.fontSize}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				);
 			}
@@ -85,10 +89,12 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
 					fontSize={options.fontSize}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			);
 		},
 		[
+			handleChangeSelectedView,
 			onAddToQuery,
 			onSetActiveLog,
 			options.fontSize,
@@ -147,6 +153,7 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 								appendTo: 'end',
 								activeLogIndex,
 							}}
+							handleChangeSelectedView={handleChangeSelectedView}
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
@@ -170,12 +177,11 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 					log={activeLog}
 					onClose={onClearActiveLog}
 					onAddToQuery={onAddToQuery}
-					onGroupByAttribute={onGroupByAttribute}
 					onClickActionItem={onAddToQuery}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			)}
 		</div>
 	);
 }
-
 export default memo(LiveLogsList);
