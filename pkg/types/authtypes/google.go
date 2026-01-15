@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const wildCardDomain = "*"
@@ -31,7 +32,7 @@ type GoogleConfig struct {
 	// The service account will impersonate this admin to call the directory API
 	// Use "*" as key for wildcard/default that matches any domain
 	// Example: {"example.com": "admin@exmaple.com", "*": "fallbackadmin@company.com"}
-	DomainToAdminEmail map[string]string `json:"adminEmail,omitempty"`
+	DomainToAdminEmail map[string]valuer.Email `json:"adminEmail,omitempty"`
 
 	// If true, fetch transitive group membership (recursive - groups that contains other groups)
 	FetchTransitiveGroupMembership bool `json:"fetchTransitiveGroupMembership,omitempty"`
@@ -82,10 +83,10 @@ func (config *GoogleConfig) GetAdminEmailForDomain(userEmail string) string {
 	domain := extractDomainFromEmail(userEmail)
 
 	if adminEmail, ok := config.DomainToAdminEmail[domain]; ok {
-		return adminEmail
+		return adminEmail.StringValue()
 	}
 
-	return config.DomainToAdminEmail[wildCardDomain]
+	return config.DomainToAdminEmail[wildCardDomain].StringValue()
 }
 
 func extractDomainFromEmail(email string) string {
