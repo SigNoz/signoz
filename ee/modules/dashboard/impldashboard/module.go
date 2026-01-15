@@ -11,14 +11,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -26,13 +24,11 @@ type module struct {
 	pkgDashboardModule dashboard.Module
 	store              dashboardtypes.Store
 	settings           factory.ScopedProviderSettings
-	role               role.Module
-	grant              role.Grant
 	querier            querier.Querier
 	licensing          licensing.Licensing
 }
 
-func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module, grant role.Grant, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
+func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard")
 	pkgDashboardModule := pkgimpldashboard.NewModule(store, settings, analytics, orgGetter, queryParser)
 
@@ -40,8 +36,6 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 		pkgDashboardModule: pkgDashboardModule,
 		store:              store,
 		settings:           scopedProviderSettings,
-		role:               role,
-		grant:              grant,
 		querier:            querier,
 		licensing:          licensing,
 	}
@@ -51,37 +45,6 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
-
-	storablePublicDashboard, err := module.store.GetPublic(ctx, publicDashboard.DashboardID.StringValue())
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		return err
-	}
-	if storablePublicDashboard != nil {
-		return errors.Newf(errors.TypeAlreadyExists, dashboardtypes.ErrCodePublicDashboardAlreadyExists, "dashboard with id %s is already public", storablePublicDashboard.DashboardID)
-	}
-
-	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
-	if err != nil {
-		return err
-	}
-
-	err = module.grant.Grant(ctx, orgID, roletypes.SigNozAnonymousRoleName, authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.StringValue(), orgID, nil))
-	if err != nil {
-		return err
-	}
-
-	additionObject := authtypes.MustNewObject(
-		authtypes.Resource{
-			Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
-			Type: authtypes.TypeMetaResource,
-		},
-		authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.ID.String()),
-	)
-
-	err = module.role.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, []*authtypes.Object{additionObject}, nil)
-	if err != nil {
-		return err
 	}
 
 	err = module.store.CreatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
@@ -188,29 +151,6 @@ func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashb
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
-
-	publicDashboard, err := module.GetPublic(ctx, orgID, dashboardID)
-	if err != nil {
-		return err
-	}
-
-	role, err := module.role.GetOrCreate(ctx, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
-	if err != nil {
-		return err
-	}
-
-	deletionObject := authtypes.MustNewObject(
-		authtypes.Resource{
-			Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
-			Type: authtypes.TypeMetaResource,
-		},
-		authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.ID.String()),
-	)
-
-	err = module.role.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, nil, []*authtypes.Object{deletionObject})
-	if err != nil {
-		return err
 	}
 
 	err = module.store.DeletePublic(ctx, dashboardID.StringValue())

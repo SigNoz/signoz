@@ -15,10 +15,11 @@ type setter struct {
 	alertmanager alertmanager.Alertmanager
 	quickfilter  quickfilter.Module
 	role         role.Module
+	grant        role.Grant
 }
 
-func NewSetter(store types.OrganizationStore, alertmanager alertmanager.Alertmanager, quickfilter quickfilter.Module, role role.Module) organization.Setter {
-	return &setter{store: store, alertmanager: alertmanager, quickfilter: quickfilter, role: role}
+func NewSetter(store types.OrganizationStore, alertmanager alertmanager.Alertmanager, quickfilter quickfilter.Module, role role.Module, grant role.Grant) organization.Setter {
+	return &setter{store: store, alertmanager: alertmanager, quickfilter: quickfilter, role: role, grant: grant}
 }
 
 func (module *setter) Create(ctx context.Context, organization *types.Organization) error {
@@ -35,6 +36,10 @@ func (module *setter) Create(ctx context.Context, organization *types.Organizati
 	}
 
 	if err := module.role.SetManagedRoles(ctx, organization.ID); err != nil {
+		return err
+	}
+
+	if err := module.grant.GrantExistingUsers(ctx, organization.ID); err != nil {
 		return err
 	}
 

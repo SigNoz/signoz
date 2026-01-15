@@ -35,7 +35,7 @@ func (migration *addManagedRoles) Register(migrations *migrate.Migrations) error
 	return nil
 }
 
-func (a *addManagedRoles) Up(ctx context.Context, db *bun.DB) error {
+func (migration *addManagedRoles) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -96,6 +96,6 @@ func (a *addManagedRoles) Up(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-func (a *addManagedRoles) Down(_ context.Context, _ *bun.DB) error {
+func (migration *addManagedRoles) Down(_ context.Context, _ *bun.DB) error {
 	return nil
 }

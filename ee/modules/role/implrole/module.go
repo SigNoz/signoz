@@ -137,60 +137,6 @@ func (module *module) PatchObjects(ctx context.Context, orgID valuer.UUID, id va
 	return nil
 }
 
-func (module *module) Assign(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
-	role, err := module.GetByOrgIDAndName(ctx, orgID, name)
-	if err != nil {
-		return err
-	}
-
-	tuples, err := authtypes.TypeableRole.Tuples(
-		subject,
-		authtypes.RelationAssignee,
-		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, role.ID.StringValue()),
-		},
-		orgID,
-	)
-	if err != nil {
-		return err
-	}
-	return module.authz.Write(ctx, tuples, nil)
-}
-
-func (module *module) Revoke(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
-	role, err := module.GetByOrgIDAndName(ctx, orgID, name)
-	if err != nil {
-		return err
-	}
-
-	tuples, err := authtypes.TypeableRole.Tuples(
-		subject,
-		authtypes.RelationAssignee,
-		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, role.ID.StringValue()),
-		},
-		orgID,
-	)
-	if err != nil {
-		return err
-	}
-	return module.authz.Write(ctx, nil, tuples)
-}
-
-func (module *module) UpdateAssignment(ctx context.Context, orgID valuer.UUID, existingRoleName string, updatedRolename string, subject string) error {
-	err := module.Revoke(ctx, orgID, existingRoleName, subject)
-	if err != nil {
-		return err
-	}
-
-	err = module.Assign(ctx, orgID, updatedRolename, subject)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // todo[vikrant]: delete all the tuples as well here, on delete of role.
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	return module.store.Delete(ctx, orgID, id)

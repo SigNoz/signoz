@@ -26,6 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/services"
@@ -89,10 +90,10 @@ func NewModules(
 	config Config,
 	dashboard dashboard.Module,
 	role role.Module,
-	grant role.Grant,
 ) Modules {
+	grant := implrole.NewGrant(implrole.NewStore(sqlstore), authz)
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
-	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter, role)
+	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter, role, grant)
 	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics, grant)
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -75,10 +76,26 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.S
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, roletypes.ErrCodeRoleNotFound, "no roles found in org_id: %s", orgID)
+		return nil, err
 	}
 
 	return roles, nil
+}
+
+func (store *store) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
+	users := make([]*types.User, 0)
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&users).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func (store *store) Update(ctx context.Context, orgID valuer.UUID, role *roletypes.StorableRole) error {
