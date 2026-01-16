@@ -348,6 +348,7 @@ function convertV5DataByType(
 					list: null,
 					bucketStarts: h.bucketStarts,
 					bucketBounds: h.bucketBounds,
+					bucketCount: h.bucketCount,
 					timestamps: h.timestamps,
 					counts: h.counts,
 				})),

@@ -12,6 +12,7 @@ import heatmapPlugin from 'lib/uPlotLib/plugins/heatmapPlugin';
 import {
 	calculateTimeBuckets,
 	calculateValueBuckets,
+	createExplicitValueBuckets,
 	rebucketTimeData,
 	rebucketValueData,
 } from 'lib/uPlotLib/utils/adaptiveBucketing';
@@ -43,6 +44,7 @@ type TooltipData = {
 
 const LOWER_PERCENTILE_THRESHOLD = 0.01;
 const UPPER_PERCENTILE_THRESHOLD = 0.99;
+const BUCKET_EPSILON = 0.000001;
 
 const DEFAULT_HEATMAP_STATE = {
 	data: ([[], [], [], [], [], []] as unknown) as AlignedData,
@@ -62,7 +64,15 @@ const DEFAULT_HEATMAP_STATE = {
 	p99Count: 0,
 	totalCount: 0,
 	timeBucketIntervalMs: 60000,
+	ySplits: undefined as number[] | undefined,
 };
+
+function formatBucketValue(val: number): string {
+	if (Math.abs(val) < 0.01 || Math.abs(val) > 1e6) {
+		return val.toExponential(2);
+	}
+	return val.toFixed(2);
+}
 
 function buildDerivedStarts(
 	bucketEnds: number[],
@@ -293,6 +303,7 @@ function HeatmapPanelWrapper({
 		};
 	}, [queryResponse]);
 
+	/* eslint-disable sonarjs/cognitive-complexity */
 	const {
 		data,
 		heatmapQueryName,
@@ -301,6 +312,7 @@ function HeatmapPanelWrapper({
 		totalCount,
 		timeBucketIntervalMs,
 		valueBucketResult,
+		ySplits,
 	} = useMemo(() => {
 		if (!rawDataStats) {
 			return DEFAULT_HEATMAP_STATE;
@@ -314,7 +326,13 @@ function HeatmapPanelWrapper({
 				p99Count,
 				totalCount,
 			} = rawDataStats;
-			const { timestamps, bucketBounds, bucketStarts, counts } = heatmapResult;
+			const {
+				timestamps,
+				bucketBounds,
+				bucketStarts,
+				counts,
+				bucketCount,
+			} = heatmapResult;
 
 			const useLogScale = widget.isLogScale;
 
@@ -355,34 +373,74 @@ function HeatmapPanelWrapper({
 
 			const focused = focusHeatmap(bucketBounds, bucketStarts, bucketedCounts);
 
-			const valueBucketConfig = {
-				minCellSize: 16,
-				maxBuckets: 100,
-			};
+			// If bucketCount is specified (user explicitly set N in heatmap(field, N)),
+			const isBucketCountSpecified = bucketCount && bucketCount > 0;
 
-			// Calculate value buckets based on focused data and available height
+			let valueBucketResult;
+			let finalCounts;
+			let finalLabels;
 
-			const valueBucketResult = calculateValueBuckets(
-				focused.minY,
-				focused.maxY,
-				availableHeight,
-				valueBucketConfig,
-				useLogScale,
-			);
+			if (isBucketCountSpecified) {
+				const originalBuckets = focused.bucketEnds.map((end, i) => ({
+					start: focused.derivedStarts[i],
+					end,
+				}));
 
-			const originalBuckets = focused.bucketEnds.map((end, i) => ({
-				start: focused.derivedStarts[i],
-				end,
-			}));
+				// Filter out zero-width or reversed buckets
+				const validIndices: number[] = [];
+				const filteredBuckets = originalBuckets.filter((bucket, index) => {
+					const isValid = bucket.end > bucket.start + BUCKET_EPSILON;
+					if (isValid) {
+						validIndices.push(index);
+					}
+					return isValid;
+				});
 
-			const {
-				bucketedCounts: finalCounts,
-				bucketLabels: finalLabels,
-			} = rebucketValueData(
-				originalBuckets,
-				focused.focusedCounts,
-				valueBucketResult,
-			);
+				const labeledBuckets = filteredBuckets;
+
+				valueBucketResult = createExplicitValueBuckets(
+					labeledBuckets,
+					availableHeight,
+				);
+
+				finalCounts = focused.focusedCounts.map((row) =>
+					validIndices.map((idx) => row[idx]),
+				);
+
+				finalLabels = labeledBuckets.map((bucket) => {
+					const start = formatBucketValue(bucket.start);
+					const end = formatBucketValue(bucket.end);
+					return `${start}-${end}`;
+				});
+			} else {
+				const valueBucketConfig = {
+					minCellSize: 16,
+					maxBuckets: 100,
+				};
+
+				// Calculate value buckets based on focused data and available height
+				valueBucketResult = calculateValueBuckets(
+					focused.minY,
+					focused.maxY,
+					availableHeight,
+					valueBucketConfig,
+					useLogScale,
+				);
+
+				const originalBuckets = focused.bucketEnds.map((end, i) => ({
+					start: focused.derivedStarts[i],
+					end,
+				}));
+
+				const rebucketResult = rebucketValueData(
+					originalBuckets,
+					focused.focusedCounts,
+					valueBucketResult,
+				);
+
+				finalCounts = rebucketResult.bucketedCounts;
+				finalLabels = rebucketResult.bucketLabels;
+			}
 
 			// Prepare data for uPlot heatmap
 
@@ -390,8 +448,13 @@ function HeatmapPanelWrapper({
 			const len = xValues.length;
 			const numBuckets = valueBucketResult.buckets.length;
 
-			const bucketStartsFlat = valueBucketResult.buckets.map((b) => b.start);
-			const bucketEndsFlat = valueBucketResult.buckets.map((b) => b.end);
+			let bucketStartsFlat = valueBucketResult.buckets.map((b) => b.start);
+			let bucketEndsFlat = valueBucketResult.buckets.map((b) => b.end);
+
+			if (isBucketCountSpecified) {
+				bucketStartsFlat = valueBucketResult.buckets.map((_, i) => i);
+				bucketEndsFlat = valueBucketResult.buckets.map((_, i) => i + 1);
+			}
 
 			const minBounds = Array(len).fill(0);
 			const maxBounds = Array(len).fill(numBuckets);
@@ -403,8 +466,19 @@ function HeatmapPanelWrapper({
 				.fill(null)
 				.map(() => [...bucketEndsFlat]);
 
-			const yMin = valueBucketResult.buckets[0]?.start ?? 0;
-			const yMax = valueBucketResult.buckets[numBuckets - 1]?.end ?? 100;
+			let yMin = valueBucketResult.buckets[0]?.start ?? 0;
+			let yMax = valueBucketResult.buckets[numBuckets - 1]?.end ?? 100;
+
+			if (isBucketCountSpecified) {
+				yMin = 0;
+				yMax = numBuckets;
+			}
+
+			let ySplits: number[] | undefined;
+
+			if (isBucketCountSpecified) {
+				ySplits = Array.from({ length: numBuckets }, (_, i) => i + 0.5);
+			}
 
 			return {
 				data: ([
@@ -417,6 +491,7 @@ function HeatmapPanelWrapper({
 				] as unknown) as AlignedData,
 				heatmapQueryName: heatmapResult.queryName,
 				yAxisRange: { min: yMin, max: yMax },
+				ySplits,
 				bucketLabels: finalLabels,
 				bucketedTimestamps,
 				valueBucketResult,
@@ -448,8 +523,6 @@ function HeatmapPanelWrapper({
 		});
 		return (ms: number): string => fmt.format(new Date(ms));
 	}, [timezone.value]);
-
-	const ySplits = undefined;
 
 	const calculateYAxisSize = useMemo(
 		() => (
@@ -567,6 +640,11 @@ function HeatmapPanelWrapper({
 
 	const findBucketLabel = useMemo(
 		() => (splitValue: number): string => {
+			if (!valueBucketResult.bucketSize) {
+				const bucketIdx = Math.floor(splitValue);
+				return bucketLabels[bucketIdx] || '';
+			}
+
 			const bucketIdx = valueBucketResult.buckets.findIndex(
 				(bucket) => splitValue >= bucket.start && splitValue <= bucket.end,
 			);
@@ -596,7 +674,7 @@ function HeatmapPanelWrapper({
 
 			return bucketLabels[closestIdx] || '';
 		},
-		[valueBucketResult.buckets, bucketLabels],
+		[valueBucketResult.buckets, valueBucketResult.bucketSize, bucketLabels],
 	);
 
 	const heatmapColors = useMemo(() => {
@@ -615,11 +693,10 @@ function HeatmapPanelWrapper({
 				heatmapPlugin({
 					palette: [...heatmapColors],
 					showGrid: true,
-					gridColor: isDarkMode
-						? 'rgba(0, 0, 0, 0.85)'
-						: 'rgba(255, 255, 255, 0.85)',
+					gridColor: isDarkMode ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 1)',
+					gridLineWidth: 0.75,
 					hoverStroke: isDarkMode ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.50)',
-					hoverLineWidth: 1,
+					hoverLineWidth: 0.75,
 					emptyColor: isDarkMode ? 'rgb(18, 20, 22)' : 'rgb(240, 242, 245)',
 					onClick: handleCellClick,
 					onHover: handleCellHover,
@@ -637,6 +714,7 @@ function HeatmapPanelWrapper({
 					show: true,
 					stroke: axisColor,
 					grid: { show: false },
+					splits: ySplits ? (): number[] => ySplits : undefined,
 					values: (_u: uPlot, splits: number[]): string[] =>
 						splits.map((split) => {
 							const label = findBucketLabel(split);
@@ -658,7 +736,6 @@ function HeatmapPanelWrapper({
 				},
 				y: {
 					range: (): [number, number] => [yAxisRange.min, yAxisRange.max],
-					splits: ySplits,
 				},
 			},
 			series: [

@@ -11,7 +11,7 @@ export interface TimeBucketResult {
 }
 
 export interface ValueBucketResult {
-	bucketSize: number;
+	bucketSize?: number;
 	numberOfBuckets: number;
 	cellHeight: number;
 	buckets: Array<{ start: number; end: number }>;
@@ -109,6 +109,20 @@ function calculateLogValueBuckets(
 		bucketSize: (buckets[0]?.end ?? 0) - (buckets[0]?.start ?? 0) || 1,
 		numberOfBuckets,
 		cellHeight,
+		buckets,
+	};
+}
+
+export function createExplicitValueBuckets(
+	buckets: Array<{ start: number; end: number }>,
+	availableHeight: number,
+): ValueBucketResult {
+	const numberOfBuckets = buckets.length;
+	const count = Math.max(1, numberOfBuckets);
+
+	return {
+		numberOfBuckets,
+		cellHeight: availableHeight / count,
 		buckets,
 	};
 }

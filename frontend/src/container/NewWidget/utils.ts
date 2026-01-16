@@ -598,23 +598,27 @@ export function handleQueryChange(
 					set(tempQuery, 'orderBy', undefined);
 				}
 
-				if (
-					newPanelType === PANEL_TYPES.HEATMAP &&
-					dataSource === DataSource.METRICS
-				) {
-					const { aggregateAttribute } = tempQuery;
-					if (
-						aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
-						aggregateAttribute?.type === ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM
+				if (newPanelType === PANEL_TYPES.HEATMAP) {
+					if (dataSource === DataSource.METRICS) {
+						const { aggregateAttribute } = tempQuery;
+						if (
+							aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
+							aggregateAttribute?.type === ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM
+						) {
+							set(tempQuery, 'aggregations', [
+								{
+									metricName: aggregateAttribute?.key || '',
+									timeAggregation: MetricAggregateOperator.INCREASE,
+									spaceAggregation: MetricAggregateOperator.SUM,
+									temporality: '',
+								} as MetricAggregation,
+							]);
+						}
+					} else if (
+						dataSource === DataSource.LOGS ||
+						dataSource === DataSource.TRACES
 					) {
-						set(tempQuery, 'aggregations', [
-							{
-								metricName: aggregateAttribute?.key || '',
-								timeAggregation: MetricAggregateOperator.INCREASE,
-								spaceAggregation: MetricAggregateOperator.SUM,
-								temporality: '',
-							} as MetricAggregation,
-						]);
+						set(tempQuery, 'aggregations', [{ expression: 'heatmap(' }]);
 					}
 				}
 

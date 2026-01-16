@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
@@ -13,6 +14,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
+)
+
+const (
+	defaultHeatmapBuckets = "20"
+	// Histogram max buckets limit is 250
+	maxHeatmapBuckets = 250
 )
 
 type aggExprRewriter struct {
@@ -227,6 +234,23 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		}
 	} else {
 		// Non-If functions: map every argument as a column/value
+		if name == qbtypes.RequestTypeHeatmap.StringValue() {
+			buckets := defaultHeatmapBuckets
+			if len(args) == 2 {
+				buckets = args[1].String()
+				val, err := strconv.Atoi(buckets)
+				if err != nil {
+					return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid heatmap bucket count '%s': must be a number", buckets)
+				}
+				if val <= 0 || val > maxHeatmapBuckets {
+					return errors.NewInvalidInputf(errors.CodeInvalidInput, "heatmap buckets count %d exceeds range [1, %d]", val, maxHeatmapBuckets)
+				}
+				args = args[:1]
+				fn.Params.Items.Items = args
+			}
+			fn.Name.Name = fmt.Sprintf("histogram(%s)", buckets)
+		}
+
 		for i, arg := range args {
 			orig := arg.String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
@@ -267,4 +291,43 @@ func parseFragment(sql string) (chparser.Expr, error) {
 		return nil, errors.NewInternalf(errors.CodeInternal, "no select items in re-written expression %q", sql)
 	}
 	return sel.SelectItems[0].Expr, nil
+}
+
+// ParseHeatmapBuckets extracts bucket count from heatmap aggregation expression.
+func ParseHeatmapBuckets(expr string) (int, error) {
+	wrapped := fmt.Sprintf("SELECT %s", expr)
+	p := chparser.NewParser(wrapped)
+	stmts, err := p.ParseStmts()
+	if err != nil || len(stmts) == 0 {
+		return 0, err
+	}
+
+	sel, ok := stmts[0].(*chparser.SelectQuery)
+	if !ok || len(sel.SelectItems) == 0 {
+		return 0, nil
+	}
+
+	functionExpr, ok := sel.SelectItems[0].Expr.(*chparser.FunctionExpr)
+	if !ok || strings.ToLower(functionExpr.Name.Name) != "heatmap" {
+		return 0, nil
+	}
+
+	if functionExpr.Params != nil && functionExpr.Params.Items != nil {
+		items := functionExpr.Params.Items.Items
+		if len(items) == 2 {
+			val := strings.Trim(items[1].String(), "'")
+			count, err := strconv.Atoi(val)
+			if err != nil {
+				return 0, fmt.Errorf("invalid bucket count '%s': %w", val, err)
+			}
+			if count <= 0 {
+				return 0, nil
+			}
+			if count > maxHeatmapBuckets {
+				return maxHeatmapBuckets, nil
+			}
+			return count, nil
+		}
+	}
+	return 0, nil
 }

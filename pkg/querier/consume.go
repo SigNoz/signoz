@@ -25,6 +25,12 @@ var (
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
 )
 
+type heatmapPoint struct {
+	timestamp int64
+	bucketEnd float64
+	value     float64
+}
+
 // consume reads every row and shapes it into the payload expected for the
 // given request type.
 //
@@ -32,7 +38,7 @@ var (
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
 // * Distribution- *qbtypes.DistributionData
-func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
+func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string, bucketCount int) (any, error) {
 	var (
 		payload any
 		err     error
@@ -46,7 +52,7 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)
 	case qbtypes.RequestTypeHeatmap:
-		payload, err = readAsHeatmap(rows, queryName)
+		payload, err = readAsHeatmap(rows, queryName, bucketCount)
 		// TODO: add support for other request types
 	}
 
@@ -472,16 +478,16 @@ func numericAsFloat(v any) float64 {
 	}
 }
 
-func readAsHeatmap(rows driver.Rows, queryName string) (*qbtypes.HeatmapData, error) {
+func readAsHeatmap(rows driver.Rows, queryName string, bucketCount int) (*qbtypes.HeatmapData, error) {
 	colNames := rows.Columns()
 	if slices.Contains(colNames, "__result_0") {
-		return readAsHeatmapFromArray(rows, queryName)
+		return readAsHeatmapFromArray(rows, queryName, bucketCount)
 	}
 
-	return readAsHeatmapFromRows(rows, queryName)
+	return readAsHeatmapFromRows(rows, queryName, bucketCount)
 }
 
-func readAsHeatmapFromRows(rows driver.Rows, queryName string) (*qbtypes.HeatmapData, error) {
+func readAsHeatmapFromRows(rows driver.Rows, queryName string, bucketCount int) (*qbtypes.HeatmapData, error) {
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 
@@ -507,11 +513,7 @@ func readAsHeatmapFromRows(rows driver.Rows, queryName string) (*qbtypes.Heatmap
 		scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
 	}
 
-	heatmapPoints := make([]struct {
-		ts        int64
-		bucketEnd float64
-		value     float64
-	}, 0, 128)
+	heatmapPoints := make([]heatmapPoint, 0, 128)
 	uniqueTs := make(map[int64]bool, 64)
 	uniqueEnd := make(map[float64]bool, 32)
 	startByEnd := make(map[float64]float64, 32)
@@ -576,32 +578,32 @@ func readAsHeatmapFromRows(rows driver.Rows, queryName string) (*qbtypes.Heatmap
 			if math.IsNaN(bucketEnd) || math.IsInf(bucketEnd, 0) || math.IsNaN(value) || math.IsInf(value, 0) {
 				continue
 			}
-			if startFound && (math.IsNaN(bucketStart) || math.IsInf(bucketStart, 0)) {
-				continue
-			}
-
-			heatmapPoints = append(heatmapPoints, struct {
-				ts        int64
-				bucketEnd float64
-				value     float64
-			}{ts: ts, bucketEnd: bucketEnd, value: value})
-			uniqueTs[ts] = true
-			uniqueEnd[bucketEnd] = true
 			if startFound {
+				if math.IsNaN(bucketStart) || math.IsInf(bucketStart, 0) {
+					continue
+				}
 				if _, exists := startByEnd[bucketEnd]; !exists {
 					startByEnd[bucketEnd] = bucketStart
 				}
 			}
+
+			heatmapPoints = append(heatmapPoints, heatmapPoint{
+				timestamp: ts,
+				bucketEnd: bucketEnd,
+				value:     value,
+			})
+			uniqueTs[ts] = true
+			uniqueEnd[bucketEnd] = true
 		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return buildHeatmapData(queryName, heatmapPoints, uniqueTs, uniqueEnd, startByEnd)
+	return buildHeatmapData(heatmapPoints, uniqueTs, uniqueEnd, startByEnd, bucketCount, queryName)
 }
 
-func readAsHeatmapFromArray(rows driver.Rows, queryName string) (*qbtypes.HeatmapData, error) {
+func readAsHeatmapFromArray(rows driver.Rows, queryName string, bucketCount int) (*qbtypes.HeatmapData, error) {
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 
@@ -620,11 +622,7 @@ func readAsHeatmapFromArray(rows driver.Rows, queryName string) (*qbtypes.Heatma
 		scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
 	}
 
-	heatmapPoints := make([]struct {
-		ts        int64
-		bucketEnd float64
-		value     float64
-	}, 0, 128)
+	heatmapPoints := make([]heatmapPoint, 0, 100)
 	uniqueTs := make(map[int64]bool, 64)
 	uniqueEnd := make(map[float64]bool, 32)
 	startByEnd := make(map[float64]float64, 32)
@@ -651,22 +649,35 @@ func readAsHeatmapFromArray(rows driver.Rows, queryName string) (*qbtypes.Heatma
 			histData = derefValue(scan[resultIdx])
 		}
 
-		if bins, ok := histData.([]any); ok {
-			for _, b := range bins {
-				if binTuple, ok := b.([]any); ok && len(binTuple) >= 3 {
-					upper := numericAsFloat(binTuple[1])
-					count := numericAsFloat(binTuple[2])
+		vHist := reflect.ValueOf(histData)
+		if vHist.Kind() == reflect.Slice {
+			for i := 0; i < vHist.Len(); i++ {
+				b := vHist.Index(i).Interface()
+
+				vBin := reflect.ValueOf(b)
+				if vBin.Kind() == reflect.Slice && vBin.Len() >= 3 {
+					lower := numericAsFloat(vBin.Index(0).Interface())
+					upper := numericAsFloat(vBin.Index(1).Interface())
+					count := numericAsFloat(vBin.Index(2).Interface())
+
 					if math.IsNaN(upper) || math.IsInf(upper, 0) || math.IsNaN(count) || math.IsInf(count, 0) {
 						continue
 					}
+					if math.IsNaN(lower) {
+						continue
+					}
 
-					heatmapPoints = append(heatmapPoints, struct {
-						ts        int64
-						bucketEnd float64
-						value     float64
-					}{ts: ts, bucketEnd: upper, value: count})
+					heatmapPoints = append(heatmapPoints, heatmapPoint{
+						timestamp: ts,
+						bucketEnd: upper,
+						value:     count,
+					})
 					uniqueTs[ts] = true
 					uniqueEnd[upper] = true
+
+					if _, exists := startByEnd[upper]; !exists {
+						startByEnd[upper] = lower
+					}
 				}
 			}
 		}
@@ -675,14 +686,10 @@ func readAsHeatmapFromArray(rows driver.Rows, queryName string) (*qbtypes.Heatma
 		return nil, err
 	}
 
-	return buildHeatmapData(queryName, heatmapPoints, uniqueTs, uniqueEnd, startByEnd)
+	return buildHeatmapData(heatmapPoints, uniqueTs, uniqueEnd, startByEnd, bucketCount, queryName)
 }
 
-func buildHeatmapData(queryName string, points []struct {
-	ts        int64
-	bucketEnd float64
-	value     float64
-}, uniqueTs map[int64]bool, uniqueEnd map[float64]bool, startByEnd map[float64]float64) (*qbtypes.HeatmapData, error) {
+func buildHeatmapData(points []heatmapPoint, uniqueTs map[int64]bool, uniqueEnd map[float64]bool, startByEnd map[float64]float64, bucketCount int, queryName string) (*qbtypes.HeatmapData, error) {
 	sortedTs := make([]int64, 0, len(uniqueTs))
 	for t := range uniqueTs {
 		sortedTs = append(sortedTs, t)
@@ -696,13 +703,13 @@ func buildHeatmapData(queryName string, points []struct {
 	sort.Float64s(sortedEnds)
 
 	bucketStarts := make([]float64, len(sortedEnds))
-	for i, end := range sortedEnds {
-		if start, ok := startByEnd[end]; ok {
-			bucketStarts[i] = start
-			continue
-		}
+	for i := range sortedEnds {
 		if i == 0 {
-			bucketStarts[i] = 0
+			if start, ok := startByEnd[sortedEnds[i]]; ok {
+				bucketStarts[i] = start
+			} else {
+				bucketStarts[i] = 0
+			}
 		} else {
 			bucketStarts[i] = sortedEnds[i-1]
 		}
@@ -723,18 +730,76 @@ func buildHeatmapData(queryName string, points []struct {
 	}
 
 	for _, p := range points {
-		if tI, ok := tsIdx[p.ts]; ok {
+		if tI, ok := tsIdx[p.timestamp]; ok {
 			if lI, ok := endIdx[p.bucketEnd]; ok {
 				counts[tI][lI] = p.value
 			}
 		}
 	}
 
+	if bucketCount > 0 && len(sortedEnds) > bucketCount {
+		sortedEnds, bucketStarts, counts = mergeBuckets(sortedEnds, bucketStarts, counts, bucketCount)
+	}
+
 	return &qbtypes.HeatmapData{
 		QueryName:    queryName,
 		BucketBounds: sortedEnds,
 		BucketStarts: bucketStarts,
+		BucketCount:  bucketCount,
 		Timestamps:   sortedTs,
 		Counts:       counts,
 	}, nil
+}
+
+// mergeBuckets merges excess buckets to match the requested bucket count
+func mergeBuckets(bucketEnds []float64, bucketStarts []float64, counts [][]float64, targetCount int) ([]float64, []float64, [][]float64) {
+	if len(bucketEnds) <= targetCount {
+		return bucketEnds, bucketStarts, counts
+	}
+
+	mergeFactor := float64(len(bucketEnds)) / float64(targetCount)
+
+	mergedEnds := make([]float64, 0, targetCount)
+	mergedStarts := make([]float64, 0, targetCount)
+	mergedCounts := make([][]float64, len(counts))
+	for i := range mergedCounts {
+		mergedCounts[i] = make([]float64, 0, targetCount)
+	}
+
+	for targetIdx := 0; targetIdx < targetCount; targetIdx++ {
+		startIdx := int(float64(targetIdx) * mergeFactor)
+		endIdx := int(float64(targetIdx+1) * mergeFactor)
+		if targetIdx == targetCount-1 {
+			endIdx = len(bucketEnds)
+		}
+
+		if startIdx >= len(bucketEnds) {
+			break
+		}
+		if endIdx > len(bucketEnds) {
+			endIdx = len(bucketEnds)
+		}
+
+		var start float64
+		if targetIdx == 0 {
+			start = bucketStarts[startIdx]
+			start = bucketStarts[startIdx]
+		} else {
+			start = mergedEnds[targetIdx-1]
+		}
+		end := bucketEnds[endIdx-1]
+
+		mergedStarts = append(mergedStarts, start)
+		mergedEnds = append(mergedEnds, end)
+
+		for rowIdx := range counts {
+			sum := 0.0
+			for bucketIdx := startIdx; bucketIdx < endIdx; bucketIdx++ {
+				sum += counts[rowIdx][bucketIdx]
+			}
+			mergedCounts[rowIdx] = append(mergedCounts[rowIdx], sum)
+		}
+	}
+
+	return mergedEnds, mergedStarts, mergedCounts
 }

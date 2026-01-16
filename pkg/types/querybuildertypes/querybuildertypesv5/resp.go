@@ -197,6 +197,7 @@ type HeatmapData struct {
 	QueryName    string      `json:"queryName"`
 	BucketStarts []float64   `json:"bucketStarts,omitempty"`
 	BucketBounds []float64   `json:"bucketBounds"`
+	BucketCount  int         `json:"bucketCount,omitempty"`
 	Timestamps   []int64     `json:"timestamps"`
 	Counts       [][]float64 `json:"counts"`
 	Unit         string      `json:"unit,omitempty"`

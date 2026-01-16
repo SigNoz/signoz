@@ -409,6 +409,7 @@ export interface HeatmapData {
 	queryName: string;
 	bucketStarts?: number[];
 	bucketBounds: number[];
+	bucketCount?: number;
 	timestamps: number[];
 	counts: number[][];
 }

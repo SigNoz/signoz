@@ -451,6 +451,13 @@ export const useQueryOperations: UseQueryOperations = ({
 				aggregateOperator: newOperators[0].value,
 			};
 
+			if (
+				panelType === PANEL_TYPES.HEATMAP &&
+				(nextSource === DataSource.LOGS || nextSource === DataSource.TRACES)
+			) {
+				newQuery.aggregations = [{ expression: 'heatmap(' }];
+			}
+
 			setOperators(newOperators);
 			handleSetQueryData(index, newQuery);
 		},

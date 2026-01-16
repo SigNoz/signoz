@@ -4,6 +4,7 @@ type HeatmapPluginOptions = {
 	palette: string[];
 	showGrid?: boolean;
 	gridColor?: string;
+	gridLineWidth?: number;
 	hoverStroke?: string;
 	hoverLineWidth?: number;
 	emptyColor?: string;
@@ -24,7 +25,7 @@ function heatmapPlugin(
 ): uPlot.Plugin {
 	const showGrid = opts.showGrid ?? true;
 	const hoverStroke = opts.hoverStroke || 'rgba(255,255,255,0.85)';
-	const hoverLineWidth = opts.hoverLineWidth ?? 1;
+	const hoverLineWidth = opts.hoverLineWidth ?? 0.75;
 	const emptyColor = opts.emptyColor || 'rgb(18, 20, 22)';
 	const { palette } = opts;
 
@@ -47,10 +48,10 @@ function heatmapPlugin(
 		right: number,
 		bottom: number,
 	): { x: number; y: number; w: number; h: number } => {
-		const x = Math.floor(Math.min(left, right));
-		const x2 = Math.ceil(Math.max(left, right));
-		const y = Math.floor(Math.min(top, bottom));
-		const y2 = Math.ceil(Math.max(top, bottom));
+		const x = Math.round(Math.min(left, right));
+		const x2 = Math.round(Math.max(left, right));
+		const y = Math.round(Math.min(top, bottom));
+		const y2 = Math.round(Math.max(top, bottom));
 		return {
 			x,
 			y,
@@ -230,8 +231,8 @@ function heatmapPlugin(
 	): void => {
 		ctx.save();
 		ctx.globalAlpha = 1;
-		ctx.lineWidth = 1;
-		ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
+		ctx.lineWidth = opts.gridLineWidth ?? 0.75;
+		ctx.strokeStyle = opts.gridColor || 'rgba(0, 0, 0, 1)';
 		ctx.beginPath();
 
 		if (isUniformBuckets && gridRects.length > 0) {
