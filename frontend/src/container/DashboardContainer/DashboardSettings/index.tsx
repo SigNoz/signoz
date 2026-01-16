@@ -6,14 +6,15 @@ import { Braces, Globe, Table } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
+import { VariablesSettingsTabHandle } from '../DashboardDescription/types';
+import DashboardVariableSettings from './DashboardVariableSettings';
 import GeneralDashboardSettings from './General';
 import PublicDashboardSetting from './PublicDashboard';
-import VariablesSetting from './Variables';
 
-function DashboardSettingsContent({
-	variableViewModeRef,
+function DashboardSettings({
+	variablesSettingsTabHandle,
 }: {
-	variableViewModeRef: React.MutableRefObject<(() => void) | undefined>;
+	variablesSettingsTabHandle: VariablesSettingsTabHandle;
 }): JSX.Element {
 	const { user } = useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
@@ -63,7 +64,11 @@ function DashboardSettingsContent({
 				</Button>
 			),
 			key: 'variables',
-			children: <VariablesSetting variableViewModeRef={variableViewModeRef} />,
+			children: (
+				<DashboardVariableSettings
+					variablesSettingsTabHandle={variablesSettingsTabHandle}
+				/>
+			),
 		},
 		...(enablePublicDashboard ? [publicDashboardItem] : []),
 	];
@@ -71,4 +76,4 @@ function DashboardSettingsContent({
 	return <Tabs items={items} animated className="settings-tabs" />;
 }
 
-export default DashboardSettingsContent;
+export default DashboardSettings;
