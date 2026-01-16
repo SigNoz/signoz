@@ -25,7 +25,6 @@ import { FormContainer, Label } from './styles';
 
 type FormValues = {
 	email: string;
-	firstName: string;
 	organizationName: string;
 	password: string;
 	confirmPassword: string;
@@ -62,7 +61,6 @@ function SignUp(): JSX.Element {
 
 	// Watch form values for reactive validation
 	const email = Form.useWatch('email', form);
-	const firstName = Form.useWatch('firstName', form);
 	const password = Form.useWatch('password', form);
 	const confirmPassword = Form.useWatch('confirmPassword', form);
 
@@ -72,7 +70,6 @@ function SignUp(): JSX.Element {
 			getInviteDetailsResponse.data.data
 		) {
 			const responseDetails = getInviteDetailsResponse.data.data;
-			form.setFieldValue('firstName', responseDetails.name);
 			form.setFieldValue('email', responseDetails.email);
 			form.setFieldValue('organizationName', responseDetails.organization);
 			setIsDetailsDisable(true);
@@ -113,12 +110,11 @@ function SignUp(): JSX.Element {
 
 	const signUp = async (values: FormValues): Promise<void> => {
 		try {
-			const { organizationName, password, email, firstName } = values;
+			const { organizationName, password, email } = values;
 			const user = await signUpApi({
 				email,
 				orgDisplayName: organizationName,
 				password,
-				name: firstName || undefined,
 				token: params.get('token') || undefined,
 			});
 
@@ -214,11 +210,10 @@ function SignUp(): JSX.Element {
 		(): boolean =>
 			!loading &&
 			Boolean(email?.trim()) &&
-			Boolean(firstName?.trim()) &&
 			Boolean(password?.trim()) &&
 			Boolean(confirmPassword?.trim()) &&
 			!confirmPasswordError,
-		[loading, email, firstName, password, confirmPassword, confirmPasswordError],
+		[loading, email, password, confirmPassword, confirmPasswordError],
 	);
 
 	return (
@@ -255,19 +250,6 @@ function SignUp(): JSX.Element {
 										required
 										id="signupEmail"
 										disabled={isDetailsDisable}
-										className="signup-form-input"
-									/>
-								</FormContainer.Item>
-							</div>
-
-							<div className="signup-field-container">
-								<Label htmlFor="firstName">Name</Label>
-								<FormContainer.Item noStyle name="firstName">
-									<Input
-										placeholder="e.g. John"
-										type="text"
-										required
-										id="firstName"
 										className="signup-form-input"
 									/>
 								</FormContainer.Item>

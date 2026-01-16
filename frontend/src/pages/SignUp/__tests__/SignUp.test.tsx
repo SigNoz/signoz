@@ -81,7 +81,6 @@ describe('SignUp Component - Regular Signup', () => {
 
 			expect(screen.getByText(/create your account/i)).toBeInTheDocument();
 			expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-			expect(screen.getByLabelText(/^name$/i)).toBeInTheDocument();
 			expect(screen.getByLabelText(/set your password/i)).toBeInTheDocument();
 			expect(
 				screen.getByLabelText(/confirm your new password/i),
@@ -220,7 +219,6 @@ describe('SignUp Component - Regular Signup', () => {
 			render(<SignUp />, undefined, { initialRoute: '/signup' });
 
 			const emailInput = screen.getByLabelText(/email address/i);
-			const nameInput = screen.getByLabelText(/^name$/i);
 			const passwordInput = screen.getByPlaceholderText(/enter new password/i);
 			const confirmPasswordInput = screen.getByPlaceholderText(
 				/confirm your new password/i,
@@ -230,7 +228,6 @@ describe('SignUp Component - Regular Signup', () => {
 			});
 
 			await user.type(emailInput, 'test@signoz.io');
-			await user.type(nameInput, 'Test User');
 			await user.type(passwordInput, 'password123');
 			await user.type(confirmPasswordInput, 'password123');
 
@@ -270,7 +267,6 @@ describe('SignUp Component - Regular Signup', () => {
 			render(<SignUp />, undefined, { initialRoute: '/signup' });
 
 			const emailInput = screen.getByLabelText(/email address/i);
-			const nameInput = screen.getByLabelText(/^name$/i);
 			const passwordInput = screen.getByPlaceholderText(/enter new password/i);
 			const confirmPasswordInput = screen.getByPlaceholderText(
 				/confirm your new password/i,
@@ -280,7 +276,6 @@ describe('SignUp Component - Regular Signup', () => {
 			});
 
 			await user.type(emailInput, 'existing@signoz.io');
-			await user.type(nameInput, 'Test User');
 			await user.type(passwordInput, 'password123');
 			await user.type(confirmPasswordInput, 'password123');
 
@@ -325,11 +320,9 @@ describe('SignUp Component - Accept Invite', () => {
 			});
 
 			const emailInput = await screen.findByLabelText(/email address/i);
-			const nameInput = await screen.findByLabelText(/^name$/i);
 
 			await waitFor(() => {
 				expect(emailInput).toHaveValue('invited@signoz.io');
-				expect(nameInput).toHaveValue('Invited User');
 			});
 		});
 
@@ -473,12 +466,9 @@ describe('SignUp Component - Accept Invite', () => {
 
 			// Verify form is still accessible and fields are enabled
 			const emailInput = await screen.findByLabelText(/email address/i);
-			const nameInput = await screen.findByLabelText(/^name$/i);
 
 			expect(emailInput).toBeInTheDocument();
-			expect(nameInput).toBeInTheDocument();
 			expect(emailInput).not.toBeDisabled();
-			expect(nameInput).not.toBeDisabled();
 		});
 
 		it('displays error when accept invite API fails', async () => {
