@@ -77,6 +77,7 @@ function VariableItem({
 			variableData.defaultValue?.toString()) ??
 			'',
 	);
+	const [isTextboxFocused, setIsTextboxFocused] = useState<boolean>(false);
 	const textboxInputRef = useRef<InputRef>(null);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -379,7 +380,7 @@ function VariableItem({
 	}, [variableData.type, variableData.customValue]);
 
 	return (
-		<div className="variable-item">
+		<div className={`variable-item${isTextboxFocused ? ' focused' : ''}`}>
 			<Typography.Text className="variable-name" ellipsis>
 				${variableData.name}
 				{variableData.description && (
@@ -399,7 +400,11 @@ function VariableItem({
 						onChange={(e): void => {
 							setTextboxInputValue(e.target.value);
 						}}
+						onFocus={(): void => {
+							setIsTextboxFocused(true);
+						}}
 						onBlur={(e): void => {
+							setIsTextboxFocused(false);
 							const value = e.target.value.trim();
 							// If empty, reset to default value
 							if (!value && variableData.defaultValue) {

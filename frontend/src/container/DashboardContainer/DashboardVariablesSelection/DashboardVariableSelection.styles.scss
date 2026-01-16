@@ -25,6 +25,12 @@
 		}
 	}
 
+	&.focused {
+		.variable-value {
+			border: 1px solid var(--bg-robin-400);
+		}
+	}
+
 	.variable-value {
 		display: flex;
 		min-width: 120px;
@@ -93,6 +99,12 @@
 
 .lightMode {
 	.variable-item {
+		&.focused {
+			.variable-value {
+				border: 1px solid var(--bg-robin-400);
+			}
+		}
+
 		.variable-name {
 			border: 1px solid var(--bg-vanilla-300);
 			background: var(--bg-vanilla-100);
