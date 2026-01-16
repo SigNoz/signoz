@@ -66,3 +66,11 @@ _Select all that apply_
 - [ ] Manually tested
 - [ ] Breaking changes documented
 - [ ] Backward compatibility considered
+
+---
+
+## 👀 Notes for Reviewers
+
+<!-- Anything reviewers should keep in mind while reviewing -->
+
+---
