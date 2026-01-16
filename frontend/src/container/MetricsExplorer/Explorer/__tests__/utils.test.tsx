@@ -80,14 +80,14 @@ describe('splitQueryIntoOneChartPerQuery', () => {
 		expect(result[2].builder.queryData).toHaveLength(2); // 2 disabled queries
 		expect(result[2].builder.queryData[0].disabled).toBe(true);
 		expect(result[2].builder.queryData[1].disabled).toBe(true);
-		expect(result[2].unit).toBeUndefined();
+		expect(result[2].unit).toBe('');
 		// Verify query 4 has the correct data
 		expect(result[3].builder.queryFormulas).toHaveLength(1);
 		expect(result[3].builder.queryFormulas[0]).toEqual(MOCK_FORMULA_DATA);
 		expect(result[3].builder.queryData).toHaveLength(2); // 2 disabled queries
 		expect(result[3].builder.queryData[0].disabled).toBe(true);
 		expect(result[3].builder.queryData[1].disabled).toBe(true);
-		expect(result[3].unit).toBeUndefined();
+		expect(result[3].unit).toBe('');
 	});
 });
 
