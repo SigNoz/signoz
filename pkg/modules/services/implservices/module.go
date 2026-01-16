@@ -506,6 +506,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 			FormatTableResultForUI: true,
 			FillGaps:               false,
 		},
+		NoCache: true,
 	}
 
 	return &reqV5, startMs, endMs, nil
@@ -861,6 +862,7 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 		CompositeQuery: qbtypes.CompositeQuery{
 			Queries: queries,
 		},
+		NoCache: true,
 	}
 
 	return &reqV5, nil
@@ -1137,6 +1139,7 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 		CompositeQuery: qbtypes.CompositeQuery{
 			Queries: queries,
 		},
+		NoCache: true,
 	}
 
 	return &reqV5, nil
