@@ -29,6 +29,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/role"
 	pkgimplrole "github.com/SigNoz/signoz/pkg/modules/role/implrole"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -116,14 +117,14 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 
 			return authNs, nil
 		},
-		func(ctx context.Context, sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.ProviderFactory[authz.AuthZ, authz.Config] {
-			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), orgGetter)
+		func(ctx context.Context, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, userGetter user.Getter, roleGetter role.Getter) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), orgGetter, userGetter, roleGetter)
 		},
-		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module, grant role.Grant, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
-			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, role, grant, queryParser, querier, licensing)
+		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, roleSetter role.Setter, grant role.Grant, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
+			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, roleSetter, grant, queryParser, querier, licensing)
 		},
-		func(store sqlstore.SQLStore, authz authz.AuthZ, licensing licensing.Licensing, registry []role.RegisterTypeable) role.Module {
-			return implrole.NewModule(pkgimplrole.NewStore(store), authz, licensing, registry)
+		func(store sqlstore.SQLStore, authz authz.AuthZ, licensing licensing.Licensing, registry []role.RegisterTypeable) role.Setter {
+			return implrole.NewSetter(pkgimplrole.NewStore(store), authz, licensing, registry)
 		},
 	)
 

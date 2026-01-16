@@ -22,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -87,9 +88,9 @@ func New(
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
-	authzCallback func(context.Context, sqlstore.SQLStore, organization.Getter) factory.ProviderFactory[authz.AuthZ, authz.Config],
-	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, role.Module, role.Grant, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
-	roleModuleCallback func(sqlstore.SQLStore, authz.AuthZ, licensing.Licensing, []role.RegisterTypeable) role.Module,
+	authzCallback func(context.Context, sqlstore.SQLStore, organization.Getter, user.Getter, role.Getter) factory.ProviderFactory[authz.AuthZ, authz.Config],
+	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, role.Setter, role.Grant, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
+	roleSetterCallback func(sqlstore.SQLStore, authz.AuthZ, licensing.Licensing, []role.RegisterTypeable) role.Setter,
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -278,15 +279,18 @@ func New(
 		return nil, err
 	}
 
+	// Initialize user getter
+	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
+
+	// Initialize the role getter
+	roleGetter := implrole.NewGetter(implrole.NewStore(sqlstore))
+
 	// Initialize authz
-	authzProviderFactory := authzCallback(ctx, sqlstore, orgGetter)
+	authzProviderFactory := authzCallback(ctx, sqlstore, orgGetter, userGetter, roleGetter)
 	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
 	if err != nil {
 		return nil, err
 	}
-
-	// Initialize user getter
-	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 
 	// Initialize notification manager from the available notification manager provider factories
 	nfManager, err := factory.NewProviderFromNamedMap(
@@ -378,10 +382,10 @@ func New(
 	}
 
 	// Initialize all modules
-	role := roleModuleCallback(sqlstore, authz, licensing, nil)
+	roleSetter := roleSetterCallback(sqlstore, authz, licensing, nil)
 	grant := implrole.NewGrant(implrole.NewStore(sqlstore), authz)
-	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, role, grant, queryParser, querier, licensing)
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, role, grant)
+	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, roleSetter, grant, queryParser, querier, licensing)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, roleSetter, roleGetter, grant)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger)

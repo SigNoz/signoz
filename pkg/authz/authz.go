@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -31,12 +29,4 @@ type AuthZ interface {
 
 	// Lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
 	ListObjects(context.Context, string, authtypes.Relation, authtypes.Typeable) ([]*authtypes.Object, error)
-}
-
-type Store interface {
-	// List users by org id.
-	ListUsersByOrgID(context.Context, valuer.UUID) ([]*types.User, error)
-
-	// List roles by org id.
-	ListRolesByOrgID(context.Context, valuer.UUID) ([]*roletypes.StorableRole, error)
 }

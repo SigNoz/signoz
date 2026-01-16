@@ -7,6 +7,8 @@ import (
 	pkgopenfgaauthz "github.com/SigNoz/signoz/pkg/authz/openfgaauthz"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -18,14 +20,14 @@ type provider struct {
 	pkgAuthzService authz.AuthZ
 }
 
-func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, orgGetter organization.Getter) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, orgGetter organization.Getter, userGetter user.Getter, roleGetter role.Getter) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
-		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, orgGetter)
+		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, orgGetter, userGetter, roleGetter)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, orgGetter organization.Getter) (authz.AuthZ, error) {
-	pkgOpenfgaAuthzProvider := pkgopenfgaauthz.NewProviderFactory(sqlstore, openfgaSchema, orgGetter)
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, orgGetter organization.Getter, userGetter user.Getter, roleGetter role.Getter) (authz.AuthZ, error) {
+	pkgOpenfgaAuthzProvider := pkgopenfgaauthz.NewProviderFactory(sqlstore, openfgaSchema, orgGetter, userGetter, roleGetter)
 	pkgAuthzService, err := pkgOpenfgaAuthzProvider.New(ctx, settings, config)
 	if err != nil {
 		return nil, err

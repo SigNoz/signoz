@@ -41,9 +41,10 @@ func TestNewHandlers(t *testing.T) {
 	queryParser := queryparser.New(providerSettings)
 	require.NoError(t, err)
 	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser)
-	roleModule := implrole.NewModule(implrole.NewStore(sqlstore), nil)
+	roleSetter := implrole.NewSetter(implrole.NewStore(sqlstore), nil)
+	roleGetter := implrole.NewGetter(implrole.NewStore(sqlstore))
 	grantModule := implrole.NewGrant(implrole.NewStore(sqlstore), nil)
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, roleModule, grantModule)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, roleSetter, roleGetter, grantModule)
 
 	handlers := NewHandlers(modules, providerSettings, nil, nil, nil, nil)
 

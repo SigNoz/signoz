@@ -40,7 +40,7 @@ type provider struct {
 	dashboardModule        dashboard.Module
 	dashboardHandler       dashboard.Handler
 	metricsExplorerHandler metricsexplorer.Handler
-	roleModule             role.Module
+	roleGetter             role.Getter
 	roleHandler            role.Handler
 }
 
@@ -58,11 +58,11 @@ func NewFactory(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
-	roleModule role.Module,
+	roleGetter role.Getter,
 	roleHandler role.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler, roleModule, roleHandler)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler, roleGetter, roleHandler)
 	})
 }
 
@@ -83,7 +83,7 @@ func newProvider(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
-	roleModule role.Module,
+	roleGetter role.Getter,
 	roleHandler role.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
@@ -104,11 +104,11 @@ func newProvider(
 		dashboardModule:        dashboardModule,
 		dashboardHandler:       dashboardHandler,
 		metricsExplorerHandler: metricsExplorerHandler,
-		roleModule:             roleModule,
+		roleGetter:             roleGetter,
 		roleHandler:            roleHandler,
 	}
 
-	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz, roleModule)
+	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz, roleGetter)
 
 	if err := provider.AddToRouter(router); err != nil {
 		return nil, err

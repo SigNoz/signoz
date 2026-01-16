@@ -26,13 +26,13 @@ type module struct {
 	pkgDashboardModule dashboard.Module
 	store              dashboardtypes.Store
 	settings           factory.ScopedProviderSettings
-	role               role.Module
+	roleSetter         role.Setter
 	grant              role.Grant
 	querier            querier.Querier
 	licensing          licensing.Licensing
 }
 
-func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module, grant role.Grant, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
+func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, roleSetter role.Setter, grant role.Grant, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard")
 	pkgDashboardModule := pkgimpldashboard.NewModule(store, settings, analytics, orgGetter, queryParser)
 
@@ -40,7 +40,7 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 		pkgDashboardModule: pkgDashboardModule,
 		store:              store,
 		settings:           scopedProviderSettings,
-		role:               role,
+		roleSetter:         roleSetter,
 		grant:              grant,
 		querier:            querier,
 		licensing:          licensing,
@@ -61,7 +61,7 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 		return errors.Newf(errors.TypeAlreadyExists, dashboardtypes.ErrCodePublicDashboardAlreadyExists, "dashboard with id %s is already public", storablePublicDashboard.DashboardID)
 	}
 
-	role, err := module.role.GetOrCreate(ctx, orgID, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
+	role, err := module.roleSetter.GetOrCreate(ctx, orgID, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 		authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.ID.String()),
 	)
 
-	err = module.role.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, []*authtypes.Object{additionObject}, nil)
+	err = module.roleSetter.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, []*authtypes.Object{additionObject}, nil)
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashb
 		return err
 	}
 
-	role, err := module.role.GetOrCreate(ctx, orgID, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
+	role, err := module.roleSetter.GetOrCreate(ctx, orgID, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashb
 		authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.ID.String()),
 	)
 
-	err = module.role.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, nil, []*authtypes.Object{deletionObject})
+	err = module.roleSetter.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, nil, []*authtypes.Object{deletionObject})
 	if err != nil {
 		return err
 	}
@@ -272,7 +272,7 @@ func (module *module) deletePublic(ctx context.Context, orgID valuer.UUID, dashb
 		return err
 	}
 
-	role, err := module.role.GetOrCreate(ctx, orgID, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
+	role, err := module.roleSetter.GetOrCreate(ctx, orgID, roletypes.NewRole(roletypes.SigNozAnonymousRoleName, roletypes.SigNozAnonymousRoleDescription, roletypes.RoleTypeManaged, orgID))
 	if err != nil {
 		return err
 	}
@@ -285,7 +285,7 @@ func (module *module) deletePublic(ctx context.Context, orgID valuer.UUID, dashb
 		authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.ID.String()),
 	)
 
-	err = module.role.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, nil, []*authtypes.Object{deletionObject})
+	err = module.roleSetter.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, nil, []*authtypes.Object{deletionObject})
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
-	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/types"
 )
 
@@ -14,12 +13,10 @@ type setter struct {
 	store        types.OrganizationStore
 	alertmanager alertmanager.Alertmanager
 	quickfilter  quickfilter.Module
-	role         role.Module
-	grant        role.Grant
 }
 
-func NewSetter(store types.OrganizationStore, alertmanager alertmanager.Alertmanager, quickfilter quickfilter.Module, role role.Module, grant role.Grant) organization.Setter {
-	return &setter{store: store, alertmanager: alertmanager, quickfilter: quickfilter, role: role, grant: grant}
+func NewSetter(store types.OrganizationStore, alertmanager alertmanager.Alertmanager, quickfilter quickfilter.Module) organization.Setter {
+	return &setter{store: store, alertmanager: alertmanager, quickfilter: quickfilter}
 }
 
 func (module *setter) Create(ctx context.Context, organization *types.Organization, createManagedRoles func(context.Context) error) error {

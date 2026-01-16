@@ -67,7 +67,8 @@ type Modules struct {
 	SpanPercentile  spanpercentile.Module
 	MetricsExplorer metricsexplorer.Module
 	Promote         promote.Module
-	Role            role.Module
+	RoleSetter      role.Setter
+	RoleGetter      role.Getter
 	Grant           role.Grant
 }
 
@@ -88,11 +89,12 @@ func NewModules(
 	queryParser queryparser.QueryParser,
 	config Config,
 	dashboard dashboard.Module,
-	role role.Module,
+	roleSetter role.Setter,
+	roleGetter role.Getter,
 	grant role.Grant,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
-	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter, role, grant)
+	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
 	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics, grant)
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
@@ -115,7 +117,8 @@ func NewModules(
 		Services:        implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
 		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
-		Role:            role,
+		RoleSetter:      roleSetter,
+		RoleGetter:      roleGetter,
 		Grant:           grant,
 	}
 }

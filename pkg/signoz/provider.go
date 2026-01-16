@@ -249,7 +249,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			modules.Dashboard,
 			handlers.Dashboard,
 			handlers.MetricsExplorer,
-			modules.Role,
+			modules.RoleGetter,
 			handlers.Role,
 		),
 	)

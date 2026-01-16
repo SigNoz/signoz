@@ -8,6 +8,8 @@ import (
 	authz "github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -32,18 +34,19 @@ type provider struct {
 	storeID       string
 	modelID       string
 	orgGetter     organization.Getter
-	store         authz.Store
+	userGetter    user.Getter
+	roleGetter    role.Getter
 	mtx           sync.RWMutex
 	stopChan      chan struct{}
 }
 
-func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, orgGetter organization.Getter) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, orgGetter organization.Getter, userGetter user.Getter, roleGetter role.Getter) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
-		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, orgGetter)
+		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, orgGetter, userGetter, roleGetter)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, orgGetter organization.Getter) (authz.AuthZ, error) {
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, orgGetter organization.Getter, userGetter user.Getter, roleGetter role.Getter) (authz.AuthZ, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/authz/openfgaauthz")
 
 	store, err := NewSQLStore(sqlstore)
@@ -70,7 +73,8 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 		openfgaServer: openfgaServer,
 		openfgaSchema: openfgaSchema,
 		orgGetter:     orgGetter,
-		store:         NewStore(sqlstore),
+		userGetter:    userGetter,
+		roleGetter:    roleGetter,
 		mtx:           sync.RWMutex{},
 		stopChan:      make(chan struct{}),
 	}, nil
@@ -358,12 +362,12 @@ func (provider *provider) migrateExistingUsers(ctx context.Context) error {
 
 	tuples := []*openfgav1.TupleKey{}
 	for _, org := range orgs {
-		users, err := provider.store.ListUsersByOrgID(ctx, org.ID)
+		users, err := provider.userGetter.ListByOrgID(ctx, org.ID)
 		if err != nil {
 			return err
 		}
 
-		roles, err := provider.store.ListRolesByOrgID(ctx, org.ID)
+		roles, err := provider.roleGetter.List(ctx, org.ID)
 		if err != nil {
 			return err
 		}
