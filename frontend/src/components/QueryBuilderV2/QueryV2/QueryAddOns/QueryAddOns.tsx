@@ -172,7 +172,7 @@ function QueryAddOns({
 	const [selectedViews, setSelectedViews] = useState<AddOn[]>([]);
 
 	const initializedRef = useRef(false);
-	const prevAvailableKeysCountRef = useRef<number | null>(null);
+	const prevAvailableKeysRef = useRef<Set<string> | null>(null);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index,
@@ -217,12 +217,14 @@ function QueryAddOns({
 		setAddOns(filteredAddOns);
 
 		const availableAddOnKeys = new Set(filteredAddOns.map((a) => a.key));
-		const hasAvailabilityCountChanged =
-			prevAvailableKeysCountRef.current !== null &&
-			prevAvailableKeysCountRef.current !== availableAddOnKeys.size;
-		prevAvailableKeysCountRef.current = availableAddOnKeys.size;
+		const previousKeys = prevAvailableKeysRef.current;
+		const hasAvailabilityItemsChanged =
+			previousKeys !== null &&
+			(previousKeys.size !== availableAddOnKeys.size ||
+				[...availableAddOnKeys].some((key) => !previousKeys.has(key)));
+		prevAvailableKeysRef.current = availableAddOnKeys;
 
-		if (!initializedRef.current || hasAvailabilityCountChanged) {
+		if (!initializedRef.current || hasAvailabilityItemsChanged) {
 			initializedRef.current = true;
 
 			const activeAddOnKeys = new Set(
