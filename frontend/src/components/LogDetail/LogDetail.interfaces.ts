@@ -1,16 +1,16 @@
 import { DrawerProps } from 'antd';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { ActionItemProps } from 'container/LogDetailedView/ActionItem';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { VIEWS } from './constants';
 
 export type LogDetailProps = {
 	log: ILog | null;
 	selectedTab: VIEWS;
-	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
+	handleChangeSelectedView?: ChangeViewFunctionType;
 	isListViewPanel?: boolean;
 	listViewPanelSelectedFields?: IField[] | null;
 } & Pick<AddToQueryHOCProps, 'onAddToQuery'> &

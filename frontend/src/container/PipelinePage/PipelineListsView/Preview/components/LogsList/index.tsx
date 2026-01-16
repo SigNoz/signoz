@@ -14,7 +14,6 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
-		onGroupByAttribute,
 	} = useActiveLog();
 
 	const makeLogDetailsHandler = (log: ILog) => (): void => onSetActiveLog(log);
@@ -49,7 +48,6 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}
 				onClickActionItem={onAddToQuery}
-				onGroupByAttribute={onGroupByAttribute}
 			/>
 		</div>
 	);
