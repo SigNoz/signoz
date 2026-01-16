@@ -12,6 +12,7 @@ import {
 	Typography,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -40,7 +41,7 @@ import {
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
@@ -52,9 +53,11 @@ import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
 
 import DashboardGraphSlider from '../ComponentsSlider';
+import DashboardSettings from '../DashboardSettings';
 import { Base64Icons } from '../DashboardSettings/General/utils';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
+import { VariablesSettingsTab } from './types';
 import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
 
 interface DashboardDescriptionProps {
@@ -100,6 +103,11 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		setSelectedRowWidgetId,
 		handleDashboardLockToggle,
 	} = useDashboard();
+
+	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
+	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(
+		false,
+	);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
@@ -340,6 +348,18 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		publicDashboardResponse?.data,
 	]);
 
+	const onConfigureClick = useCallback((): void => {
+		setIsSettingsDrawerOpen(true);
+	}, []);
+
+	const onSettingsDrawerClose = useCallback((): void => {
+		setIsSettingsDrawerOpen(false);
+		// good use case for a state library like Jotai
+		if (variablesSettingsTabHandle.current) {
+			variablesSettingsTabHandle.current.resetState();
+		}
+	}, []);
+
 	return (
 		<Card className="dashboard-description-container">
 			<div className="dashboard-header">
@@ -504,7 +524,26 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						/>
 					</Popover>
 					{!isDashboardLocked && editDashboard && (
-						<SettingsDrawer drawerTitle="Dashboard Configuration" />
+						<>
+							<Button
+								type="text"
+								className="configure-button"
+								icon={<ConfigureIcon />}
+								data-testid="show-drawer"
+								onClick={onConfigureClick}
+							>
+								Configure
+							</Button>
+							<SettingsDrawer
+								drawerTitle="Dashboard Configuration"
+								isOpen={isSettingsDrawerOpen}
+								onClose={onSettingsDrawerClose}
+							>
+								<DashboardSettings
+									variablesSettingsTabHandle={variablesSettingsTabHandle}
+								/>
+							</SettingsDrawer>
+						</>
 					)}
 					{!isDashboardLocked && addPanelPermission && (
 						<Button

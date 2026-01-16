@@ -1,3 +1,4 @@
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { ILog } from 'types/api/logs/log';
 
 export interface ILiveLogsLog {
@@ -8,4 +9,5 @@ export interface ILiveLogsLog {
 export type LiveLogsListProps = {
 	logs: ILiveLogsLog[];
 	isLoading: boolean;
+	handleChangeSelectedView?: ChangeViewFunctionType;
 };
