@@ -443,23 +443,6 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 		},
 		{Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:    "avg_latency",
-				Signal:  telemetrytypes.SignalMetrics,
-				Filter:  &qbtypes.Filter{Expression: filterExpr},
-				GroupBy: groupByService,
-				Aggregations: []qbtypes.MetricAggregation{
-					{
-						MetricName:       "signoz_latency.sum",
-						Temporality:      metrictypes.Delta,
-						TimeAggregation:  metrictypes.TimeAggregationAvg,
-						SpaceAggregation: metrictypes.SpaceAggregationAvg,
-						ReduceTo:         qbtypes.ReduceToAvg,
-					},
-				},
-			},
-		},
-		{Type: qbtypes.QueryTypeBuilder,
-			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Name:    "num_calls",
 				Signal:  telemetrytypes.SignalMetrics,
 				Filter:  &qbtypes.Filter{Expression: filterExpr},
@@ -519,7 +502,6 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 
 	type agg struct {
 		p99Latency float64
-		avgLatency float64
 		numCalls   float64
 		numErrors  float64
 	}
@@ -562,8 +544,6 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 			switch sd.QueryName {
 			case "p99_latency":
 				a.p99Latency = val * math.Pow(10, 6) // convert to nanoseconds because frontend expects this
-			case "avg_latency":
-				a.avgLatency = val * math.Pow(10, 6) // convert to nanoseconds because frontend expects this
 			case "num_calls":
 				a.numCalls = val
 			case "num_errors":
@@ -590,7 +570,6 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 		out = append(out, &servicetypesv1.ResponseItem{
 			ServiceName:  svcName,
 			Percentile99: a.p99Latency,
-			AvgDuration:  a.avgLatency,
 			CallRate:     callRate,
 			ErrorRate:    errorRate,
 			DataWarning:  servicetypesv1.DataWarning{TopLevelOps: []string{}},
