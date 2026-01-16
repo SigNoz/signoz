@@ -6,6 +6,7 @@ import cx from 'classnames';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
@@ -108,6 +109,7 @@ type ListLogViewProps = {
 	activeLog?: ILog | null;
 	linesPerRow: number;
 	fontSize: FontSize;
+	handleChangeSelectedView?: ChangeViewFunctionType;
 };
 
 function ListLogView({
@@ -118,6 +120,7 @@ function ListLogView({
 	activeLog,
 	linesPerRow,
 	fontSize,
+	handleChangeSelectedView,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
@@ -131,7 +134,6 @@ function ListLogView({
 		onAddToQuery: handleAddToQuery,
 		onSetActiveLog: handleSetActiveContextLog,
 		onClearActiveLog: handleClearActiveContextLog,
-		onGroupByAttribute,
 	} = useActiveLog();
 
 	const isDarkMode = useIsDarkMode();
@@ -255,7 +257,7 @@ function ListLogView({
 					onAddToQuery={handleAddToQuery}
 					selectedTab={VIEW_TYPES.CONTEXT}
 					onClose={handlerClearActiveContextLog}
-					onGroupByAttribute={onGroupByAttribute}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			)}
 		</>
@@ -264,6 +266,7 @@ function ListLogView({
 
 ListLogView.defaultProps = {
 	activeLog: null,
+	handleChangeSelectedView: undefined,
 };
 
 LogGeneralField.defaultProps = {
