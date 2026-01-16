@@ -320,6 +320,10 @@ function VariableItem({
 	]);
 
 	const variableValue = useMemo(() => {
+		if (queryType === 'TEXTBOX') {
+			return variableTextboxValue;
+		}
+
 		if (variableMultiSelect) {
 			let value = variableData.selectedValue;
 			if (isEmpty(value)) {
@@ -352,6 +356,8 @@ function VariableItem({
 		variableData.selectedValue,
 		variableData.showALLOption,
 		variableDefaultValue,
+		variableTextboxValue,
+		queryType,
 		previewValues,
 	]);
 

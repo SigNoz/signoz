@@ -563,3 +563,215 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 		});
 	});
 });
+
+describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
+	const DASHBOARD_ID = 'test-dashboard-id';
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+		mockGetUrlVariables.mockReturnValue({});
+		// eslint-disable-next-line sonarjs/no-identical-functions
+		mockNormalizeUrlValueForVariable.mockImplementation((urlValue) => {
+			if (urlValue === undefined || urlValue === null) {
+				return urlValue;
+			}
+			return urlValue as IDashboardVariable['selectedValue'];
+		});
+	});
+
+	describe('Textbox Variable defaultValue Migration', () => {
+		it('should set defaultValue from textboxValue for TEXTBOX variables without defaultValue (BWC)', async () => {
+			// Mock dashboard with TEXTBOX variable that has textboxValue but no defaultValue
+			// This simulates old data format before the migration
+			/* eslint-disable @typescript-eslint/no-explicit-any */
+			mockGetDashboard.mockResolvedValue({
+				httpStatusCode: 200,
+				data: {
+					id: DASHBOARD_ID,
+					title: 'Test Dashboard',
+					data: {
+						variables: {
+							myTextbox: {
+								id: 'textbox-id',
+								name: 'myTextbox',
+								type: 'TEXTBOX',
+								textboxValue: 'legacy-default-value',
+								// defaultValue is intentionally missing to test BWC
+								multiSelect: false,
+								showALLOption: false,
+								sort: 'DISABLED',
+							} as any,
+						},
+					},
+				},
+			} as any);
+			/* eslint-enable @typescript-eslint/no-explicit-any */
+
+			const { getByTestId } = renderWithDashboardProvider(
+				`/dashboard/${DASHBOARD_ID}`,
+				{
+					dashboardId: DASHBOARD_ID,
+				},
+			);
+
+			await waitFor(() => {
+				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
+			});
+
+			// Verify that defaultValue is set from textboxValue
+			await waitFor(() => {
+				const dashboardVariables = getByTestId('dashboard-variables');
+				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
+
+				expect(parsedVariables.myTextbox.type).toBe('TEXTBOX');
+				expect(parsedVariables.myTextbox.textboxValue).toBe('legacy-default-value');
+				expect(parsedVariables.myTextbox.defaultValue).toBe('legacy-default-value');
+			});
+		});
+
+		it('should not override existing defaultValue for TEXTBOX variables', async () => {
+			// Mock dashboard with TEXTBOX variable that already has defaultValue
+			/* eslint-disable @typescript-eslint/no-explicit-any */
+			mockGetDashboard.mockResolvedValue({
+				httpStatusCode: 200,
+				data: {
+					id: DASHBOARD_ID,
+					title: 'Test Dashboard',
+					data: {
+						variables: {
+							myTextbox: {
+								id: 'textbox-id',
+								name: 'myTextbox',
+								type: 'TEXTBOX',
+								textboxValue: 'old-textbox-value',
+								defaultValue: 'existing-default-value',
+								multiSelect: false,
+								showALLOption: false,
+								sort: 'DISABLED',
+							} as any,
+						},
+					},
+				},
+			} as any);
+			/* eslint-enable @typescript-eslint/no-explicit-any */
+
+			const { getByTestId } = renderWithDashboardProvider(
+				`/dashboard/${DASHBOARD_ID}`,
+				{
+					dashboardId: DASHBOARD_ID,
+				},
+			);
+
+			await waitFor(() => {
+				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
+			});
+
+			// Verify that existing defaultValue is preserved
+			await waitFor(() => {
+				const dashboardVariables = getByTestId('dashboard-variables');
+				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
+
+				expect(parsedVariables.myTextbox.type).toBe('TEXTBOX');
+				expect(parsedVariables.myTextbox.defaultValue).toBe(
+					'existing-default-value',
+				);
+			});
+		});
+
+		it('should set empty defaultValue when textboxValue is also empty for TEXTBOX variables', async () => {
+			// Mock dashboard with TEXTBOX variable with empty textboxValue and no defaultValue
+			/* eslint-disable @typescript-eslint/no-explicit-any */
+			mockGetDashboard.mockResolvedValue({
+				httpStatusCode: 200,
+				data: {
+					id: DASHBOARD_ID,
+					title: 'Test Dashboard',
+					data: {
+						variables: {
+							myTextbox: {
+								id: 'textbox-id',
+								name: 'myTextbox',
+								type: 'TEXTBOX',
+								textboxValue: '',
+								// defaultValue is intentionally missing
+								multiSelect: false,
+								showALLOption: false,
+								sort: 'DISABLED',
+							} as any,
+						},
+					},
+				},
+			} as any);
+			/* eslint-enable @typescript-eslint/no-explicit-any */
+
+			const { getByTestId } = renderWithDashboardProvider(
+				`/dashboard/${DASHBOARD_ID}`,
+				{
+					dashboardId: DASHBOARD_ID,
+				},
+			);
+
+			await waitFor(() => {
+				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
+			});
+
+			// Verify that defaultValue is set to empty string
+			await waitFor(() => {
+				const dashboardVariables = getByTestId('dashboard-variables');
+				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
+
+				expect(parsedVariables.myTextbox.type).toBe('TEXTBOX');
+				expect(parsedVariables.myTextbox.defaultValue).toBe('');
+			});
+		});
+
+		it('should not apply BWC logic to non-TEXTBOX variables', async () => {
+			// Mock dashboard with QUERY variable that has no defaultValue
+			/* eslint-disable @typescript-eslint/no-explicit-any */
+			mockGetDashboard.mockResolvedValue({
+				httpStatusCode: 200,
+				data: {
+					id: DASHBOARD_ID,
+					title: 'Test Dashboard',
+					data: {
+						variables: {
+							myQuery: {
+								id: 'query-id',
+								name: 'myQuery',
+								type: 'QUERY',
+								queryValue: 'SELECT * FROM test',
+								textboxValue: 'should-not-be-used',
+								// defaultValue is intentionally missing
+								multiSelect: false,
+								showALLOption: false,
+								sort: 'DISABLED',
+							} as any,
+						},
+					},
+				},
+			} as any);
+			/* eslint-enable @typescript-eslint/no-explicit-any */
+
+			const { getByTestId } = renderWithDashboardProvider(
+				`/dashboard/${DASHBOARD_ID}`,
+				{
+					dashboardId: DASHBOARD_ID,
+				},
+			);
+
+			await waitFor(() => {
+				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
+			});
+
+			// Verify that defaultValue is NOT set from textboxValue for QUERY type
+			await waitFor(() => {
+				const dashboardVariables = getByTestId('dashboard-variables');
+				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
+
+				expect(parsedVariables.myQuery.type).toBe('QUERY');
+				// defaultValue should not be set to textboxValue for non-TEXTBOX variables
+				expect(parsedVariables.myQuery.defaultValue).not.toBe('should-not-be-used');
+			});
+		});
+	});
+});

@@ -8,14 +8,14 @@ import './DashboardVariableSelection.styles.scss';
 
 import { orange } from '@ant-design/colors';
 import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
-import { Input, Popover, Tooltip, Typography } from 'antd';
+import { Input, InputRef, Popover, Tooltip, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { debounce, isArray, isEmpty, isString } from 'lodash-es';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -70,6 +70,14 @@ function VariableItem({
 	const [tempSelection, setTempSelection] = useState<
 		string | string[] | undefined
 	>(undefined);
+
+	// Local state for textbox input to ensure smooth editing experience
+	const [textboxInputValue, setTextboxInputValue] = useState<string>(
+		(variableData.selectedValue?.toString() ||
+			variableData.defaultValue?.toString()) ??
+			'',
+	);
+	const textboxInputRef = useRef<InputRef>(null);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -384,16 +392,38 @@ function VariableItem({
 			<div className="variable-value">
 				{variableData.type === 'TEXTBOX' ? (
 					<Input
+						ref={textboxInputRef}
 						placeholder="Enter value"
 						bordered={false}
-						key={variableData.selectedValue?.toString()}
-						defaultValue={variableData.selectedValue?.toString()}
+						value={textboxInputValue}
 						onChange={(e): void => {
-							debouncedHandleChange(e.target.value || '');
+							setTextboxInputValue(e.target.value);
 						}}
+						onBlur={(e): void => {
+							const value = e.target.value.trim();
+							// If empty, reset to default value
+							if (!value && variableData.defaultValue) {
+								setTextboxInputValue(variableData.defaultValue.toString());
+								debouncedHandleChange(variableData.defaultValue.toString());
+							} else {
+								debouncedHandleChange(value);
+							}
+						}}
+						onKeyDown={(e): void => {
+							if (e.key === 'Enter') {
+								const value = textboxInputValue.trim();
+								if (!value && variableData.defaultValue) {
+									setTextboxInputValue(variableData.defaultValue.toString());
+									debouncedHandleChange(variableData.defaultValue.toString());
+								} else {
+									debouncedHandleChange(value);
+								}
+								textboxInputRef.current?.blur();
+							}
+						}}
+						className="textbox-input"
 						style={{
-							width:
-								50 + ((variableData.selectedValue?.toString()?.length || 0) * 7 || 50),
+							width: 50 + ((textboxInputValue?.length || 0) * 7 || 50),
 						}}
 					/>
 				) : (
