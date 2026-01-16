@@ -367,7 +367,10 @@ function VariableItem({
 			multiSelect: variableMultiSelect,
 			showALLOption: queryType === 'DYNAMIC' ? true : variableShowALLOption,
 			sort: variableSortType,
-			defaultValue: variableDefaultValue,
+			// the reason we need to do this is because defaultValues are treated differently in case of textbox type
+			// They are the exact same and not like the other types where defaultValue is a separate field
+			defaultValue:
+				queryType === 'TEXTBOX' ? variableTextboxValue : variableDefaultValue,
 			modificationUUID: generateUUID(),
 			id: variableData.id || generateUUID(),
 			order: variableData.order,
@@ -725,7 +728,6 @@ function VariableItem({
 								className="default-input"
 								onChange={(e): void => {
 									setVariableTextboxValue(e.target.value);
-									setVariableDefaultValue(e.target.value);
 								}}
 								placeholder="Enter a default value (if any)..."
 								style={{ width: 400 }}
