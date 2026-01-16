@@ -108,7 +108,7 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(othersCheckbox);
 
 			expect(
-				await screen.findByPlaceholderText(/please specify the tool/i),
+				await screen.findByPlaceholderText(/what tool do you currently use/i),
 			).toBeInTheDocument();
 		});
 
@@ -218,7 +218,10 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(othersCheckbox);
 
 			expect(
-				await screen.findByPlaceholderText(/please specify your interest/i, {}),
+				await screen.findByPlaceholderText(
+					/what got you interested in signoz/i,
+					{},
+				),
 			).toBeInTheDocument();
 		});
 	});

@@ -155,6 +155,7 @@ describe('SignUp Component - Regular Signup', () => {
 
 			await user.type(passwordInput, 'password123');
 			await user.type(confirmPasswordInput, 'password456');
+			await user.tab(); // Blur the confirm password field to trigger validation
 
 			expect(
 				await screen.findByText(/passwords don't match/i),
@@ -173,6 +174,7 @@ describe('SignUp Component - Regular Signup', () => {
 
 			await user.type(passwordInput, 'password123');
 			await user.type(confirmPasswordInput, 'password456');
+			await user.tab(); // Blur the confirm password field to trigger validation
 
 			expect(
 				await screen.findByText(/passwords don't match/i),
@@ -180,6 +182,7 @@ describe('SignUp Component - Regular Signup', () => {
 
 			await user.clear(confirmPasswordInput);
 			await user.type(confirmPasswordInput, 'password123');
+			await user.tab(); // Blur again to trigger validation
 
 			await waitFor(() => {
 				expect(
