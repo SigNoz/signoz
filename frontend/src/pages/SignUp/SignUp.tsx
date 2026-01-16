@@ -183,9 +183,28 @@ function SignUp(): JSX.Element {
 	const handleValuesChange: (changedValues: Partial<FormValues>) => void = (
 		changedValues,
 	) => {
+		// Clear error if passwords match while typing (but don't set error until blur)
 		if ('password' in changedValues || 'confirmPassword' in changedValues) {
 			const { password, confirmPassword } = form.getFieldsValue();
 
+			if (password && confirmPassword && password === confirmPassword) {
+				setConfirmPasswordError(false);
+			}
+		}
+	};
+
+	const handlePasswordBlur = (): void => {
+		const { password, confirmPassword } = form.getFieldsValue();
+		// Only validate if confirm password has a value
+		if (confirmPassword) {
+			const isSamePassword = password === confirmPassword;
+			setConfirmPasswordError(!isSamePassword);
+		}
+	};
+
+	const handleConfirmPasswordBlur = (): void => {
+		const { password, confirmPassword } = form.getFieldsValue();
+		if (password && confirmPassword) {
 			const isSamePassword = password === confirmPassword;
 			setConfirmPasswordError(!isSamePassword);
 		}
@@ -256,26 +275,36 @@ function SignUp(): JSX.Element {
 
 							<div className="signup-field-container">
 								<Label htmlFor="currentPassword">Set your password</Label>
-								<FormContainer.Item noStyle name="password">
+								<FormContainer.Item
+									name="password"
+									validateTrigger="onBlur"
+									rules={[{ required: true, message: 'Please enter password!' }]}
+								>
 									<AntdInput.Password
 										required
 										id="currentPassword"
 										placeholder="Enter new password"
 										disabled={loading}
 										className="signup-antd-input"
+										onBlur={handlePasswordBlur}
 									/>
 								</FormContainer.Item>
 							</div>
 
 							<div className="signup-field-container">
 								<Label htmlFor="confirmPassword">Confirm your new password</Label>
-								<FormContainer.Item noStyle name="confirmPassword">
+								<FormContainer.Item
+									name="confirmPassword"
+									validateTrigger="onBlur"
+									rules={[{ required: true, message: 'Please enter confirm password!' }]}
+								>
 									<AntdInput.Password
 										required
 										id="confirmPassword"
 										placeholder="Confirm your new password"
 										disabled={loading}
 										className="signup-antd-input"
+										onBlur={handleConfirmPasswordBlur}
 									/>
 								</FormContainer.Item>
 							</div>

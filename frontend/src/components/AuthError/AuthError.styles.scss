@@ -1,7 +1,7 @@
 .auth-error-container {
 	margin-top: 24px;
 	width: 100%;
-	animation: horizontal-shaking 0.35s ease-in-out 3;
+	animation: horizontal-shaking 300ms ease-out 3;
 
 	.error-content {
 		background: rgba(229, 72, 77, 0.1);

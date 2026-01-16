@@ -234,31 +234,46 @@ function OrgQuestions({
 							Which observability tool do you currently use?
 						</label>
 						<div className="observability-tools-checkbox-container">
-							{Object.entries(observabilityTools).map(([tool, label]) => (
-								<div
-									key={tool}
-									className="checkbox-item observability-tool-checkbox-item"
-								>
-									<Checkbox
-										id={`checkbox-${tool}`}
-										checked={observabilityTool === tool}
-										onCheckedChange={createObservabilityToolHandler(tool)}
-										labelName={label}
-									/>
-								</div>
-							))}
-							{observabilityTool === 'Others' && (
-								<div className="observability-tool-other-input">
-									<Input
-										type="text"
-										className="onboarding-questionaire-other-input"
-										placeholder="Please specify the tool"
-										value={otherTool || ''}
-										autoFocus
-										onChange={(e): void => setOtherTool(e.target.value)}
-									/>
-								</div>
-							)}
+							{Object.entries(observabilityTools).map(([tool, label]) => {
+								if (tool === 'Others') {
+									return (
+										<div
+											key={tool}
+											className="checkbox-item observability-tool-checkbox-item observability-tool-others-item"
+										>
+											<Checkbox
+												id={`checkbox-${tool}`}
+												checked={observabilityTool === tool}
+												onCheckedChange={createObservabilityToolHandler(tool)}
+												labelName={observabilityTool === 'Others' ? '' : label}
+											/>
+											{observabilityTool === 'Others' && (
+												<Input
+													type="text"
+													className="onboarding-questionaire-other-input"
+													placeholder="What tool do you currently use?"
+													value={otherTool || ''}
+													autoFocus
+													onChange={(e): void => setOtherTool(e.target.value)}
+												/>
+											)}
+										</div>
+									);
+								}
+								return (
+									<div
+										key={tool}
+										className="checkbox-item observability-tool-checkbox-item"
+									>
+										<Checkbox
+											id={`checkbox-${tool}`}
+											checked={observabilityTool === tool}
+											onCheckedChange={createObservabilityToolHandler(tool)}
+											labelName={label}
+										/>
+									</div>
+								);
+							})}
 						</div>
 					</div>
 

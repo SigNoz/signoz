@@ -126,18 +126,18 @@ export function AboutSigNozQuestions({
 								</div>
 							))}
 
-							<div className="checkbox-item">
+							<div className="checkbox-item checkbox-item-others">
 								<Checkbox
 									id="others-checkbox"
 									checked={interestInSignoz.includes('Others')}
 									onCheckedChange={createInterestChangeHandler('Others')}
-									labelName="Others"
+									labelName={interestInSignoz.includes('Others') ? '' : 'Others'}
 								/>
 								{interestInSignoz.includes('Others') && (
 									<Input
 										type="text"
 										className="onboarding-questionaire-other-input"
-										placeholder="Please specify your interest"
+										placeholder="What got you interested in SigNoz?"
 										value={otherInterestInSignoz}
 										autoFocus
 										onChange={(e): void => setOtherInterestInSignoz(e.target.value)}

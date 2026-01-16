@@ -94,6 +94,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			setIsValidPassword(false);
 		}
 
+		// Only clear error if passwords match while typing (but don't set error until blur)
 		if (
 			password &&
 			confirmPassword &&
@@ -101,11 +102,38 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			confirmPassword.trim()
 		) {
 			const isValid = validatePassword();
+			setIsValidPassword(isValid);
 
+			// Only clear error if passwords match, don't set error on mismatch
+			if (isValid) {
+				setConfirmPasswordError(false);
+			}
+		}
+	}, 100);
+
+	const handlePasswordBlur = (): void => {
+		const { confirmPassword } = form.getFieldsValue();
+		// Only validate if confirm password has a value
+		if (confirmPassword && confirmPassword.trim()) {
+			const isValid = validatePassword();
 			setIsValidPassword(isValid);
 			setConfirmPasswordError(!isValid);
 		}
-	}, 100);
+	};
+
+	const handleConfirmPasswordBlur = (): void => {
+		const { password, confirmPassword } = form.getFieldsValue();
+		if (
+			password &&
+			password.trim() &&
+			confirmPassword &&
+			confirmPassword.trim()
+		) {
+			const isValid = validatePassword();
+			setIsValidPassword(isValid);
+			setConfirmPasswordError(!isValid);
+		}
+	};
 
 	const handleSubmit = (): void => {
 		const isValid = validatePassword();
@@ -151,6 +179,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 									<AntdInput.Password
 										tabIndex={0}
 										onChange={handleValuesChange}
+										onBlur={handlePasswordBlur}
 										id="password"
 										data-testid="password"
 										placeholder="Enter new password"
@@ -168,6 +197,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 								>
 									<AntdInput.Password
 										onChange={handleValuesChange}
+										onBlur={handleConfirmPasswordBlur}
 										id="confirmPassword"
 										data-testid="confirmPassword"
 										placeholder="Confirm your new password"

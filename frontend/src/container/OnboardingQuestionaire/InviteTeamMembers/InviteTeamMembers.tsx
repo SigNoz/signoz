@@ -9,7 +9,14 @@ import inviteUsers from 'api/v1/invite/bulk/create';
 import AuthError from 'components/AuthError/AuthError';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
-import { ArrowRight, CircleAlert, Loader2, Plus, Trash2 } from 'lucide-react';
+import {
+	ArrowRight,
+	ChevronDown,
+	CircleAlert,
+	Loader2,
+	Plus,
+	Trash2,
+} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import APIError from 'types/api/error';
@@ -59,12 +66,12 @@ function InviteTeamMembers({
 
 	useEffect(() => {
 		if (isEmpty(teamMembers)) {
-			const teamMember = {
+			const initialTeamMembers = Array.from({ length: 3 }, () => ({
 				...defaultTeamMember,
 				id: uuid(),
-			};
+			}));
 
-			setTeamMembersToInvite([teamMember]);
+			setTeamMembersToInvite(initialTeamMembers);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [teamMembers]);
@@ -291,6 +298,7 @@ function InviteTeamMembers({
 												onChange={(value): void => handleRoleChange(value, member)}
 												className="team-member-role-select"
 												placeholder="Select roles"
+												suffixIcon={<ChevronDown size={14} />}
 											>
 												<Select.Option value="VIEWER">Viewer</Select.Option>
 												<Select.Option value="EDITOR">Editor</Select.Option>
@@ -319,7 +327,7 @@ function InviteTeamMembers({
 									variant="dashed"
 									color="secondary"
 									className="add-another-member-button"
-									prefixIcon={<Plus size={14} />}
+									prefixIcon={<Plus size={12} />}
 									onClick={handleAddTeamMember}
 								>
 									Add another

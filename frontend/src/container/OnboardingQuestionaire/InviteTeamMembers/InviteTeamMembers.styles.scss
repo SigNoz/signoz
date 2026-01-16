@@ -1,17 +1,15 @@
 .invite-team-members-table {
 	width: 100%;
 	min-height: 0;
-	max-height: 315px;
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 8px;
 }
 
 .invite-team-members-table-header {
 	display: flex;
 	gap: 16px;
 	align-items: center;
-	padding-top: 12px;
 	flex-shrink: 0;
 	height: auto;
 	width: 100%;
@@ -46,36 +44,18 @@
 .invite-team-members-container {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: 16px !important;
 	width: 100%;
 	flex: 0 1 auto;
 	min-height: 0;
-	overflow-y: auto;
 	overflow-x: hidden;
-
-	&::-webkit-scrollbar {
-		width: 0.1rem;
-	}
-
-	&::-webkit-scrollbar-corner {
-		background: transparent;
-	}
-
-	&::-webkit-scrollbar-thumb {
-		background: rgb(136, 136, 136);
-		border-radius: 0.625rem;
-	}
-
-	&::-webkit-scrollbar-track {
-		background: transparent;
-	}
 }
 
 .invite-team-members-error-callout {
 	background: rgba(229, 72, 77, 0.1);
 	border: 1px solid rgba(229, 72, 77, 0.2);
 	border-radius: 4px;
-	animation: horizontal-shaking 0.35s ease-in-out 3;
+	animation: horizontal-shaking 300ms ease-out 3;
 }
 
 .team-member-row {
@@ -257,7 +237,6 @@
 	justify-content: flex-start !important;
 	align-items: center;
 	margin-top: 0;
-	padding-top: 4px;
 	flex-shrink: 0;
 	height: auto;
 }
@@ -266,18 +245,18 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: 8px;
+	gap: 6px;
 	border-radius: 2px;
 	border: 1px dashed var(--semantic-secondary-border, #23262e) !important;
 	background: transparent !important;
 	color: var(--semantic-secondary-foreground, #adb4c2);
 	font-family: Inter, sans-serif;
-	font-size: 13px;
-	font-weight: 400;
+	font-size: 11px;
+	font-weight: 500;
 	line-height: 1;
-	letter-spacing: -0.065px;
-	height: 24px !important;
-	padding: 0 12px;
+	letter-spacing: 0;
+	height: auto !important;
+	padding: 6px 8px;
 	transition: all 0.2s;
 	cursor: pointer;
 
