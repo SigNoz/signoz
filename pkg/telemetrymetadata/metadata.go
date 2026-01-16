@@ -698,16 +698,22 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 	// hit the limit?
 	complete := rowCount <= limit
 
-	// Add synthetic metrics-only key isTopLevelOperation so filters can be parsed even if not present in metrics tables
 	for _, selector := range fieldKeySelectors {
-		if selector.Name == "isTopLevelOperation" {
-			keys = append(keys, &telemetrytypes.TelemetryFieldKey{
-				Name:          "isTopLevelOperation",
-				Signal:        telemetrytypes.SignalMetrics,
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeBool,
-			})
-			break
+		for _, key := range telemetrymetrics.MetricScopeFieldDefinitions {
+			if selector.Signal != telemetrytypes.SignalUnspecified && selector.Signal != telemetrytypes.SignalMetrics {
+				continue
+			}
+			if selector.FieldContext != telemetrytypes.FieldContextUnspecified && selector.FieldContext != key.FieldContext {
+				continue
+			}
+
+			if selector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified && selector.FieldDataType != key.FieldDataType {
+				continue
+			}
+			if matchesSelectorName(selector.Name, key.Name, selector.SelectorMatchType) {
+				keys = append(keys, &key)
+				break
+			}
 		}
 	}
 

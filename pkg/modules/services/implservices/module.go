@@ -556,7 +556,6 @@ func (m *module) mapSpanMetricsRespToServices(resp *qbtypes.QueryRangeResponse, 
 	serviceNames := make([]string, 0, len(perSvc))
 
 	for svcName, a := range perSvc {
-		// a.calls is already a rate (calls/second) from TimeAggregationRate, no need to divide by periodSeconds
 		errorRate := 0.0
 		if a.numCalls > 0 {
 			errorRate = a.numErrors * 100 / a.numCalls
@@ -927,7 +926,6 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 		return []servicetypesv1.OperationItem{}
 	}
 
-	// Convert to OperationItem array and sort by P99 desc
 	out := make([]servicetypesv1.OperationItem, 0, len(perOp))
 	for opName, a := range perOp {
 		out = append(out, servicetypesv1.OperationItem{
@@ -940,7 +938,6 @@ func (m *module) mapSpanMetricsTopOpsResp(resp *qbtypes.QueryRangeResponse) []se
 		})
 	}
 
-	// Sort by P99 descending (matching traces behavior)
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].P99 > out[j].P99
 	})
@@ -1196,7 +1193,6 @@ func (m *module) mapSpanMetricsEntryPointOpsResp(resp *qbtypes.QueryRangeRespons
 		return []servicetypesv1.OperationItem{}
 	}
 
-	// Convert to OperationItem array and sort by P99 desc
 	out := make([]servicetypesv1.OperationItem, 0, len(perOp))
 	for opName, a := range perOp {
 		out = append(out, servicetypesv1.OperationItem{
@@ -1209,7 +1205,6 @@ func (m *module) mapSpanMetricsEntryPointOpsResp(resp *qbtypes.QueryRangeRespons
 		})
 	}
 
-	// Sort by P99 descending (matching traces behavior)
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].P99 > out[j].P99
 	})
