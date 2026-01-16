@@ -43,6 +43,12 @@ interface MockFilterConfig {
 }
 
 const SERVICE_NAME_KEY = 'service.name';
+const OTEL_DEMO = 'otel-demo';
+const SAMPLE_FLASK = 'sample-flask';
+const OTLP_PYTHON = 'otlp-python';
+const MQ_KAFKA = 'mq-kafka';
+
+const MOCK_SERVICE_NAMES = [MQ_KAFKA, OTEL_DEMO, OTLP_PYTHON, SAMPLE_FLASK];
 
 const createMockFilter = (
 	overrides: Partial<MockFilterConfig> = {},
@@ -76,7 +82,7 @@ const createMockQueryBuilderData = (hasActiveFilters = false): any => ({
 											type: 'resource',
 										},
 										op: 'in',
-										value: ['otel-demo', 'sample-flask'],
+										value: [OTEL_DEMO, SAMPLE_FLASK],
 									},
 							  ]
 							: [],
@@ -93,24 +99,32 @@ describe('CheckboxFilter - User Flows', () => {
 		// Reset all mocks
 		jest.clearAllMocks();
 
-		// Default mock implementations using the same structure as existing tests
-		mockUseGetAggregateValues.mockReturnValue({
+		// Default mock implementations for useGetAggregateValues
+		mockUseGetAggregateValues.mockReturnValue(({
 			data: {
 				payload: {
-					stringAttributeValues: [
-						'mq-kafka',
-						'otel-demo',
-						'otlp-python',
-						'sample-flask',
-					],
+					stringAttributeValues: MOCK_SERVICE_NAMES,
 				},
 			},
 			isLoading: false,
-		} as UseQueryResult<SuccessResponse<IAttributeValuesResponse>>);
+			refetch: jest.fn(),
+		} as unknown) as UseQueryResult<SuccessResponse<IAttributeValuesResponse>>);
 
+		// Default mock implementations for useGetQueryKeyValueSuggestions
+		// Returns data in the format expected by the hook
 		mockUseGetQueryKeyValueSuggestions.mockReturnValue({
-			data: null,
+			data: {
+				data: {
+					data: {
+						values: {
+							stringValues: MOCK_SERVICE_NAMES,
+							numberValues: [],
+						},
+					},
+				},
+			},
 			isLoading: false,
+			refetch: jest.fn(),
 		} as any);
 
 		// Setup MSW server for API calls
@@ -347,6 +361,111 @@ describe('CheckboxFilter - User Flows', () => {
 		);
 
 		expect(filtersForServiceName).toHaveLength(0);
+	});
+
+	it('should refetch aggregate values when active query changes for non-meter sources', async () => {
+		const mockRefetch = jest.fn();
+
+		// Mock the hook to return a refetch function we can spy on for useGetAggregateValues
+		mockUseGetAggregateValues.mockReturnValue(({
+			data: {
+				payload: {
+					stringAttributeValues: MOCK_SERVICE_NAMES,
+				},
+			},
+			isLoading: false,
+			refetch: mockRefetch,
+		} as unknown) as UseQueryResult<SuccessResponse<IAttributeValuesResponse>>);
+
+		// Start with lastUsedQuery = 0
+		mockUseQueryBuilder.mockReturnValue(createMockQueryBuilderData(false) as any);
+
+		const mockFilter = createMockFilter({ defaultOpen: true });
+
+		const { rerender } = render(
+			<CheckboxFilter
+				filter={mockFilter}
+				source={QuickFiltersSource.LOGS_EXPLORER}
+			/>,
+		);
+
+		// Wait for initial render
+		await waitFor(() => {
+			expect(screen.getByText('mq-kafka')).toBeInTheDocument();
+		});
+
+		// Simulate changing lastUsedQuery to 1
+		mockUseQueryBuilder.mockReturnValue({
+			...createMockQueryBuilderData(false),
+			lastUsedQuery: 1,
+		} as any);
+
+		rerender(
+			<CheckboxFilter
+				filter={mockFilter}
+				source={QuickFiltersSource.LOGS_EXPLORER}
+			/>,
+		);
+
+		// Verify refetch was called due to lastUsedQuery change
+		await waitFor(() => {
+			expect(mockRefetch).toHaveBeenCalled();
+		});
+	});
+
+	it('should refetch key value suggestions when active query changes for meter sources', async () => {
+		const mockRefetch = jest.fn();
+
+		// Mock the hook to return a refetch function we can spy on for useGetQueryKeyValueSuggestions
+		mockUseGetQueryKeyValueSuggestions.mockReturnValue({
+			data: {
+				data: {
+					data: {
+						values: {
+							stringValues: MOCK_SERVICE_NAMES,
+							numberValues: [],
+						},
+					},
+				},
+			},
+			isLoading: false,
+			refetch: mockRefetch,
+		} as any);
+
+		// Start with lastUsedQuery = 0
+		mockUseQueryBuilder.mockReturnValue(createMockQueryBuilderData(false) as any);
+
+		const mockFilter = createMockFilter({ defaultOpen: true });
+
+		const { rerender } = render(
+			<CheckboxFilter
+				filter={mockFilter}
+				source={QuickFiltersSource.METER_EXPLORER}
+			/>,
+		);
+
+		// Wait for initial render
+		await waitFor(() => {
+			expect(screen.getByText('mq-kafka')).toBeInTheDocument();
+		});
+
+		// Simulate changing lastUsedQuery to 1
+		mockUseQueryBuilder.mockReturnValue({
+			...createMockQueryBuilderData(false),
+			lastUsedQuery: 1,
+		} as any);
+
+		rerender(
+			<CheckboxFilter
+				filter={mockFilter}
+				source={QuickFiltersSource.METER_EXPLORER}
+			/>,
+		);
+
+		// Verify refetch was called due to lastUsedQuery change
+		await waitFor(() => {
+			expect(mockRefetch).toHaveBeenCalled();
+		});
 	});
 
 	it('should extend an existing IN filter when checking an additional value', async () => {

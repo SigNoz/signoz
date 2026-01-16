@@ -23,7 +23,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep, isFunction, isNull } from 'lodash-es';
+import { isFunction, isNull } from 'lodash-es';
 import { Frown, Settings2 as SettingsIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useMemo, useState } from 'react';
@@ -100,37 +100,45 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		return true;
 	}, []);
 
+	const activeQueryIndex = useMemo(() => {
+		if (isListView) {
+			return source === QuickFiltersSource.TRACES_EXPLORER
+				? lastUsedQuery || 0
+				: 0;
+		}
+		return lastUsedQuery || 0;
+	}, [isListView, source, lastUsedQuery]);
+
 	// clear all the filters for the query which is in sync with filters
 	const handleReset = (): void => {
-		const activeQueryIndex = isListView ? 0 : lastUsedQuery || 0;
-		const updatedQuery = cloneDeep(
-			currentQuery?.builder.queryData?.[activeQueryIndex],
-		);
+		const activeQuery = currentQuery?.builder.queryData?.[activeQueryIndex];
 
-		if (!updatedQuery) {
+		if (!activeQuery) {
 			return;
-		}
-
-		if (updatedQuery?.filters?.items) {
-			updatedQuery.filters.items = [];
 		}
 
 		const preparedQuery: Query = {
 			...currentQuery,
 			builder: {
 				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((item, idx) => ({
-					...item,
-					filter: {
-						...item.filter,
-						expression: '',
-					},
-					filters: {
-						...item.filters,
-						items: idx === lastUsedQuery ? [] : [...(item.filters?.items || [])],
-						op: item.filters?.op || 'AND',
-					},
-				})),
+				queryData: currentQuery.builder.queryData.map((item, idx) => {
+					if (idx !== activeQueryIndex) {
+						return item;
+					}
+
+					return {
+						...item,
+						filter: {
+							...item.filter,
+							expression: '',
+						},
+						filters: {
+							...item.filters,
+							items: [],
+							op: item.filters?.op || 'AND',
+						},
+					};
+				}),
 			},
 		};
 
