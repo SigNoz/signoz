@@ -162,6 +162,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewUpdateOrgPreferenceFactory(sqlstore, sqlschema),
 		sqlmigration.NewRenameOrgDomainsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddManagedRolesFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddAuthzIndexFactory(sqlstore, sqlschema),
 	)
 }
 

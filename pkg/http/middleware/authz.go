@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -38,6 +39,19 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 		claims, err := authtypes.ClaimsFromContext(req.Context())
 		if err != nil {
 			render.Error(rw, err)
+			return
+		}
+
+		commentCtx := ctxtypes.CommentFromContext(req.Context())
+		authtype, ok := commentCtx.Map()["auth_type"]
+		if ok && authtype == ctxtypes.AuthTypeAPIKey.StringValue() {
+			if err := claims.IsViewer(); err != nil {
+				middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
+				render.Error(rw, err)
+				return
+			}
+
+			next(rw, req)
 			return
 		}
 
@@ -84,6 +98,19 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
+		commentCtx := ctxtypes.CommentFromContext(req.Context())
+		authtype, ok := commentCtx.Map()["auth_type"]
+		if ok && authtype == ctxtypes.AuthTypeAPIKey.StringValue() {
+			if err := claims.IsEditor(); err != nil {
+				middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
+				render.Error(rw, err)
+				return
+			}
+
+			next(rw, req)
+			return
+		}
+
 		orgId, err := valuer.NewUUID(claims.OrgID)
 		if err != nil {
 			render.Error(rw, err)
@@ -118,6 +145,19 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 		claims, err := authtypes.ClaimsFromContext(req.Context())
 		if err != nil {
 			render.Error(rw, err)
+			return
+		}
+
+		commentCtx := ctxtypes.CommentFromContext(req.Context())
+		authtype, ok := commentCtx.Map()["auth_type"]
+		if ok && authtype == ctxtypes.AuthTypeAPIKey.StringValue() {
+			if err := claims.IsAdmin(); err != nil {
+				middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
+				render.Error(rw, err)
+				return
+			}
+
+			next(rw, req)
 			return
 		}
 
