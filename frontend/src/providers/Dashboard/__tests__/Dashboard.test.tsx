@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import getDashboard from 'api/v1/dashboards/id/get';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
@@ -379,12 +379,9 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 			// Empty URL variables - tests initialization flow
 			mockGetUrlVariables.mockReturnValue({});
 
-			const { getByTestId } = renderWithDashboardProvider(
-				`/dashboard/${DASHBOARD_ID}`,
-				{
-					dashboardId: DASHBOARD_ID,
-				},
-			);
+			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
+				dashboardId: DASHBOARD_ID,
+			});
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
@@ -415,16 +412,14 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 			});
 
 			// Verify dashboard state contains the variables with default values
-			await waitFor(() => {
-				const dashboardVariables = getByTestId('dashboard-variables');
-				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
+			const dashboardVariables = await screen.findByTestId('dashboard-variables');
+			const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
-				expect(parsedVariables).toHaveProperty('environment');
-				expect(parsedVariables).toHaveProperty('services');
-				// Default allSelected values should be preserved
-				expect(parsedVariables.environment.allSelected).toBe(false);
-				expect(parsedVariables.services.allSelected).toBe(false);
-			});
+			expect(parsedVariables).toHaveProperty('environment');
+			expect(parsedVariables).toHaveProperty('services');
+			// Default allSelected values should be preserved
+			expect(parsedVariables.environment.allSelected).toBe(false);
+			expect(parsedVariables.services.allSelected).toBe(false);
 		});
 
 		it('should merge URL variables with dashboard data and normalize values correctly', async () => {
@@ -438,12 +433,9 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 				.mockReturnValueOnce('development')
 				.mockReturnValueOnce(['db', 'cache']);
 
-			const { getByTestId } = renderWithDashboardProvider(
-				`/dashboard/${DASHBOARD_ID}`,
-				{
-					dashboardId: DASHBOARD_ID,
-				},
-			);
+			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
+				dashboardId: DASHBOARD_ID,
+			});
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
@@ -474,18 +466,16 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 			});
 
 			// Verify the dashboard state reflects the normalized URL values
-			await waitFor(() => {
-				const dashboardVariables = getByTestId('dashboard-variables');
-				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
+			const dashboardVariables = await screen.findByTestId('dashboard-variables');
+			const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
-				// The selectedValue should be updated with normalized URL values
-				expect(parsedVariables.environment.selectedValue).toBe('development');
-				expect(parsedVariables.services.selectedValue).toEqual(['db', 'cache']);
+			// The selectedValue should be updated with normalized URL values
+			expect(parsedVariables.environment.selectedValue).toBe('development');
+			expect(parsedVariables.services.selectedValue).toEqual(['db', 'cache']);
 
-				// allSelected should be set to false when URL values override
-				expect(parsedVariables.environment.allSelected).toBe(false);
-				expect(parsedVariables.services.allSelected).toBe(false);
-			});
+			// allSelected should be set to false when URL values override
+			expect(parsedVariables.environment.allSelected).toBe(false);
+			expect(parsedVariables.services.allSelected).toBe(false);
 		});
 
 		it('should handle ALL_SELECTED_VALUE from URL and set allSelected correctly', async () => {
@@ -495,12 +485,9 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 
 			mockGetUrlVariables.mockReturnValue(urlVariables);
 
-			const { getByTestId } = renderWithDashboardProvider(
-				`/dashboard/${DASHBOARD_ID}`,
-				{
-					dashboardId: DASHBOARD_ID,
-				},
-			);
+			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
+				dashboardId: DASHBOARD_ID,
+			});
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
@@ -513,8 +500,8 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 			);
 
 			// Verify that allSelected is set to true for the services variable
-			await waitFor(() => {
-				const dashboardVariables = getByTestId('dashboard-variables');
+			await waitFor(async () => {
+				const dashboardVariables = await screen.findByTestId('dashboard-variables');
 				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
 				expect(parsedVariables.services.allSelected).toBe(true);
@@ -607,20 +594,17 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 			} as any);
 			/* eslint-enable @typescript-eslint/no-explicit-any */
 
-			const { getByTestId } = renderWithDashboardProvider(
-				`/dashboard/${DASHBOARD_ID}`,
-				{
-					dashboardId: DASHBOARD_ID,
-				},
-			);
+			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
+				dashboardId: DASHBOARD_ID,
+			});
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
 			});
 
 			// Verify that defaultValue is set from textboxValue
-			await waitFor(() => {
-				const dashboardVariables = getByTestId('dashboard-variables');
+			await waitFor(async () => {
+				const dashboardVariables = await screen.findByTestId('dashboard-variables');
 				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
 				expect(parsedVariables.myTextbox.type).toBe('TEXTBOX');
@@ -655,20 +639,17 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 			} as any);
 			/* eslint-enable @typescript-eslint/no-explicit-any */
 
-			const { getByTestId } = renderWithDashboardProvider(
-				`/dashboard/${DASHBOARD_ID}`,
-				{
-					dashboardId: DASHBOARD_ID,
-				},
-			);
+			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
+				dashboardId: DASHBOARD_ID,
+			});
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
 			});
 
 			// Verify that existing defaultValue is preserved
-			await waitFor(() => {
-				const dashboardVariables = getByTestId('dashboard-variables');
+			await waitFor(async () => {
+				const dashboardVariables = await screen.findByTestId('dashboard-variables');
 				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
 				expect(parsedVariables.myTextbox.type).toBe('TEXTBOX');
@@ -704,20 +685,17 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 			} as any);
 			/* eslint-enable @typescript-eslint/no-explicit-any */
 
-			const { getByTestId } = renderWithDashboardProvider(
-				`/dashboard/${DASHBOARD_ID}`,
-				{
-					dashboardId: DASHBOARD_ID,
-				},
-			);
+			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
+				dashboardId: DASHBOARD_ID,
+			});
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
 			});
 
 			// Verify that defaultValue is set to empty string
-			await waitFor(() => {
-				const dashboardVariables = getByTestId('dashboard-variables');
+			await waitFor(async () => {
+				const dashboardVariables = await screen.findByTestId('dashboard-variables');
 				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
 				expect(parsedVariables.myTextbox.type).toBe('TEXTBOX');
@@ -752,20 +730,17 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 			} as any);
 			/* eslint-enable @typescript-eslint/no-explicit-any */
 
-			const { getByTestId } = renderWithDashboardProvider(
-				`/dashboard/${DASHBOARD_ID}`,
-				{
-					dashboardId: DASHBOARD_ID,
-				},
-			);
+			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
+				dashboardId: DASHBOARD_ID,
+			});
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
 			});
 
 			// Verify that defaultValue is NOT set from textboxValue for QUERY type
-			await waitFor(() => {
-				const dashboardVariables = getByTestId('dashboard-variables');
+			await waitFor(async () => {
+				const dashboardVariables = await screen.findByTestId('dashboard-variables');
 				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
 				expect(parsedVariables.myQuery.type).toBe('QUERY');
