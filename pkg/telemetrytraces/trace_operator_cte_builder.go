@@ -926,10 +926,16 @@ func (b *traceOperatorCTEBuilder) buildHeatmapQuery(ctx context.Context, selectF
 	sb.GroupBy("ts")
 	sb.OrderBy("ts")
 
+	bucketCount := 0
+	if len(b.operator.Aggregations) > 0 {
+		bucketCount, _ = querybuilder.ParseHeatmapBuckets(b.operator.Aggregations[0].Expression)
+	}
+
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, chArgs...)
 	return &qbtypes.Statement{
-		Query: sql,
-		Args:  args,
+		Query:       sql,
+		Args:        args,
+		BucketCount: bucketCount,
 	}, nil
 }
 

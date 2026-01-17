@@ -783,7 +783,6 @@ func mergeBuckets(bucketEnds []float64, bucketStarts []float64, counts [][]float
 		var start float64
 		if targetIdx == 0 {
 			start = bucketStarts[startIdx]
-			start = bucketStarts[startIdx]
 		} else {
 			start = mergedEnds[targetIdx-1]
 		}
