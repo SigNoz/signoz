@@ -789,12 +789,12 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		alertsFound, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+		assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 		if c.expectAlerts != 0 {
 			foundCount := 0
 			for _, item := range rule.Active {
@@ -905,12 +905,12 @@ func TestThresholdRuleNoData(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		alertsFound, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		assert.Equal(t, 1, retVal.(int), "case %d", idx)
+		assert.Equal(t, 1, alertsFound, "case %d", idx)
 		for _, item := range rule.Active {
 			if c.expectNoData {
 				assert.True(t, strings.Contains(item.Labels.Get(labels.AlertNameLabel), "[No data]"), "case %d", idx)
@@ -1025,15 +1025,15 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		alertsFound, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
 		if c.expectAlerts == 0 {
-			assert.Equal(t, 0, retVal.(int), "case %d", idx)
+			assert.Equal(t, 0, alertsFound, "case %d", idx)
 		} else {
-			assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
 					if name == "related_traces" {
@@ -1162,15 +1162,15 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		alertsFound, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
 		if c.expectAlerts == 0 {
-			assert.Equal(t, 0, retVal.(int), "case %d", idx)
+			assert.Equal(t, 0, alertsFound, "case %d", idx)
 		} else {
-			assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
 					if name == "related_logs" {
@@ -1428,12 +1428,12 @@ func TestMultipleThresholdRule(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		alertsFound, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+		assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 		if c.expectAlerts != 0 {
 			foundCount := 0
 			for _, item := range rule.Active {
