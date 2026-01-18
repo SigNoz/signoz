@@ -16,13 +16,13 @@
 
 # Scaffold Owners
 
-/pkg/config/ @therealpandey
-/pkg/errors/ @therealpandey
-/pkg/factory/ @therealpandey
-/pkg/types/ @therealpandey
-/pkg/valuer/ @therealpandey
-/cmd/ @therealpandey
-.golangci.yml @therealpandey
+/pkg/config/ @vikrantgupta25
+/pkg/errors/ @vikrantgupta25
+/pkg/factory/ @vikrantgupta25
+/pkg/types/ @vikrantgupta25
+/pkg/valuer/ @vikrantgupta25
+/cmd/ @vikrantgupta25
+.golangci.yml @vikrantgupta25
 
 # Zeus Owners
 
@@ -90,11 +90,11 @@
 
 # AuthN / AuthZ Owners
 
-/pkg/authz/ @vikrantgupta25 @therealpandey
+/pkg/authz/ @vikrantgupta25
 
 # Integration tests
 
-/tests/integration/ @therealpandey
+/tests/integration/ @vikrantgupta25
 
 # Dashboard Owners
 
