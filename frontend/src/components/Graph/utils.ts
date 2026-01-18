@@ -1,4 +1,5 @@
 import { Chart, ChartConfiguration, ChartData, Color } from 'chart.js';
+// eslint-disable-next-line import/namespace -- side-effect import that registers Chart.js date adapter
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';

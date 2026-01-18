@@ -12,7 +12,6 @@ frontend/coverage
 
 # production
 frontend/build
-frontend/.vscode
 frontend/.yarnclean
 frontend/.temp_cache
 frontend/test-results
@@ -31,7 +30,6 @@ frontend/src/constants/env.ts
 
 .idea
 
-**/.vscode
 **/build
 **/storage
 **/locust-scripts/__pycache__/

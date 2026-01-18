@@ -73,6 +73,7 @@ const compositeQueryParam = {
 		},
 	],
 	id: '12e1d311-cb47-4b76-af68-65d8e85c9e0d',
+	unit: '',
 };
 
 jest.mock('react-router-dom', () => ({

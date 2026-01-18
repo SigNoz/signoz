@@ -788,11 +788,18 @@ function FormAlertRules({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
 			?.active || false;
 
+	const source = useMemo(() => urlQuery.get(QueryParams.source) as YAxisSource, [
+		urlQuery,
+	]);
+
 	// Only update automatically when creating a new metrics-based alert rule
-	const shouldUpdateYAxisUnit = useMemo(
-		() => isNewRule && alertType === AlertTypes.METRICS_BASED_ALERT,
-		[isNewRule, alertType],
-	);
+	const shouldUpdateYAxisUnit = useMemo(() => {
+		// Do not update if we are coming to the page from dashboards (we still show warning)
+		if (source === YAxisSource.DASHBOARDS) {
+			return false;
+		}
+		return isNewRule && alertType === AlertTypes.METRICS_BASED_ALERT;
+	}, [isNewRule, alertType, source]);
 
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
 		alertDef.condition.selectedQueryName,

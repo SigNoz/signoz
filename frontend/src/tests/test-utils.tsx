@@ -344,6 +344,8 @@ const customRender = (
 	});
 };
 
+// eslint-disable-next-line import/export -- re-exporting custom render alongside @testing-library/react
 export * from '@testing-library/react';
 export { default as userEvent } from '@testing-library/user-event';
+// eslint-disable-next-line import/export -- custom render wraps the original
 export { customRender as render };
