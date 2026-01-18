@@ -1,10 +1,13 @@
 # CODEOWNERS info: https://help.github.com/en/articles/about-code-owners
+
 # Owners are automatically requested for review for PRs that changes code
+
 # that they own.
 
 /frontend/ @SigNoz/frontend-maintainers
 
 # Onboarding
+
 /frontend/src/container/OnboardingV2Container/onboarding-configs/onboarding-config-with-links.json @makeavish
 /frontend/src/container/OnboardingV2Container/AddDataSource/AddDataSource.tsx @makeavish
 
@@ -12,6 +15,7 @@
 .github @SigNoz/devops
 
 # Scaffold Owners
+
 /pkg/config/ @therealpandey
 /pkg/errors/ @therealpandey
 /pkg/factory/ @therealpandey
@@ -21,33 +25,94 @@
 .golangci.yml @therealpandey
 
 # Zeus Owners
+
 /pkg/zeus/ @vikrantgupta25
 /ee/zeus/ @vikrantgupta25
 /pkg/licensing/ @vikrantgupta25
 /ee/licensing/ @vikrantgupta25
 
 # SQL Owners
+
 /pkg/sqlmigration/ @vikrantgupta25
 /ee/sqlmigration/ @vikrantgupta25
 /pkg/sqlschema/ @vikrantgupta25
 /ee/sqlschema/ @vikrantgupta25
 
 # Analytics Owners
+
 /pkg/analytics/ @vikrantgupta25
 /pkg/statsreporter/ @vikrantgupta25
 
 # Querier Owners
+
 /pkg/querier/ @srikanthccv
 /pkg/variables/ @srikanthccv
 /pkg/types/querybuildertypes/ @srikanthccv
+/pkg/types/telemetrytypes/ @srikanthccv
 /pkg/querybuilder/ @srikanthccv
 /pkg/telemetrylogs/ @srikanthccv
 /pkg/telemetrymetadata/ @srikanthccv
 /pkg/telemetrymetrics/ @srikanthccv
 /pkg/telemetrytraces/ @srikanthccv
 
-# AuthN / AuthZ Owners 
+
+# Metrics
+
+/pkg/types/metrictypes/ @srikanthccv
+/pkg/types/metricsexplorertypes/ @srikanthccv
+/pkg/modules/metricsexplorer/ @srikanthccv
+/pkg/prometheus/ @srikanthccv
+
+# APM
+
+/pkg/types/servicetypes/ @srikanthccv
+/pkg/types/apdextypes/ @srikanthccv
+/pkg/modules/apdex/ @srikanthccv
+/pkg/modules/services/ @srikanthccv
+
+# Dashboard
+
+/pkg/types/dashboardtypes/ @srikanthccv
+/pkg/modules/dashboard/ @srikanthccv
+
+# Rule/Alertmanager
+
+/pkg/types/ruletypes/ @srikanthccv
+/pkg/types/alertmanagertypes @srikanthccv
+/pkg/alertmanager/ @srikanthccv
+/pkg/ruler/ @srikanthccv
+
+# Correlation-adjacent
+
+/pkg/contextlinks/ @srikanthccv
+/pkg/types/parsertypes/ @srikanthccv
+/pkg/queryparser/ @srikanthccv
+
+# AuthN / AuthZ Owners
+
 /pkg/authz/ @vikrantgupta25 @therealpandey
 
 # Integration tests
+
 /tests/integration/ @therealpandey
+
+# Dashboard Owners
+
+/frontend/src/hooks/dashboard/ @SigNoz/pulse-frontend
+
+## Dashboard List
+
+/frontend/src/pages/DashboardsListPage/ @SigNoz/pulse-frontend
+/frontend/src/container/ListOfDashboard/ @SigNoz/pulse-frontend
+
+## Dashboard Page
+
+/frontend/src/pages/DashboardPage/ @SigNoz/pulse-frontend
+/frontend/src/container/DashboardContainer/ @SigNoz/pulse-frontend
+/frontend/src/container/GridCardLayout/ @SigNoz/pulse-frontend
+/frontend/src/container/NewWidget/ @SigNoz/pulse-frontend
+
+## Public Dashboard Page
+
+/frontend/src/pages/PublicDashboard/ @SigNoz/pulse-frontend
+/frontend/src/container/PublicDashboardContainer/ @SigNoz/pulse-frontend
