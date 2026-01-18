@@ -10,7 +10,7 @@ from typing import Any, Callable, List
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
-from src.querier import (
+from fixtures.querier import (
     build_builder_query,
     get_all_series,
     get_series_values,
