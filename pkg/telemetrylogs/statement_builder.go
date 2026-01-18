@@ -83,6 +83,8 @@ func (b *logQueryStatementBuilder) Build(
 		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, q, query, start, end, keys, false, variables)
+	case qbtypes.RequestTypeBucket:
+		return b.buildBucketQuery(ctx, q, query, start, end, keys, variables)
 	}
 
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
@@ -687,4 +689,81 @@ func (b *logQueryStatementBuilder) buildResourceFilterCTE(
 		query,
 		variables,
 	)
+}
+
+func (b *logQueryStatementBuilder) buildBucketQuery(
+	ctx context.Context,
+	_ *sqlbuilder.SelectBuilder,
+	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+
+	if len(query.Aggregations) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "at least one aggregation is required for bucket query")
+	}
+
+	var (
+		cteFragments []string
+		cteArgs      [][]any
+	)
+
+	sb := sqlbuilder.NewSelectBuilder()
+
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
+		return nil, err
+	} else if frag != "" {
+		cteFragments = append(cteFragments, frag)
+		cteArgs = append(cteArgs, args)
+	}
+
+	sb.Select(fmt.Sprintf(
+		"toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts",
+		int64(query.StepInterval.Seconds()),
+	))
+
+	aggExpr := query.Aggregations[0]
+	rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+		ctx, aggExpr.Expression,
+		uint64(query.StepInterval.Seconds()),
+		keys,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	sb.SelectMore(fmt.Sprintf("%s AS __result_0", rewritten))
+
+	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
+
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	sb.GroupBy("ts")
+	sb.OrderBy("ts")
+
+	bucketCount := 0
+	if len(query.Aggregations) > 0 {
+		bucketCount, _ = querybuilder.ParseBucketCount(query.Aggregations[0].Expression)
+	}
+
+	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, chArgs...)
+
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
+	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
+
+	stmt := &qbtypes.Statement{
+		Query:       finalSQL,
+		Args:        finalArgs,
+		BucketCount: bucketCount,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
 }

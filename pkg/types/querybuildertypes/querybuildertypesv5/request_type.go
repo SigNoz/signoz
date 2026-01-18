@@ -20,4 +20,6 @@ var (
 	RequestTypeTrace = RequestType{valuer.NewString("trace")}
 	// []Bucket (struct{Lower,Upper,Count float64}), example: histogram
 	RequestTypeDistribution = RequestType{valuer.NewString("distribution")}
+	// BucketData (struct{Timestamps, BucketBounds, Counts}), example: bucket panel
+	RequestTypeBucket = RequestType{valuer.NewString("bucket")}
 )

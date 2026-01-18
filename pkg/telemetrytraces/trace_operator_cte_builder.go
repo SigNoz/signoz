@@ -402,6 +402,8 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 		return b.buildTraceQuery(ctx, selectFromCTE)
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, selectFromCTE)
+	case qbtypes.RequestTypeBucket:
+		return b.buildBucketQuery(ctx, selectFromCTE)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 	}
@@ -902,4 +904,58 @@ func (b *traceOperatorCTEBuilder) aggOrderBy(k qbtypes.OrderBy) (int, bool) {
 		}
 	}
 	return 0, false
+}
+
+func (b *traceOperatorCTEBuilder) buildBucketQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
+	if len(b.operator.Aggregations) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "at least one aggregation is required for heatmap query")
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+
+	sb.Select(fmt.Sprintf(
+		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
+		int64(b.operator.StepInterval.Seconds()),
+	))
+
+	keySelectors := b.getKeySelectors()
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
+	if err != nil {
+		return nil, err
+	}
+
+	aggExpr := b.operator.Aggregations[0]
+	rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
+		ctx,
+		aggExpr.Expression,
+		uint64(b.operator.StepInterval.Seconds()),
+		keys,
+	)
+	if err != nil {
+		return nil, errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"failed to rewrite aggregation expression '%s': %v",
+			aggExpr.Expression,
+			err,
+		)
+	}
+
+	sb.SelectMore(fmt.Sprintf("%s AS __result_0", rewritten))
+
+	sb.From(selectFromCTE)
+
+	sb.GroupBy("ts")
+	sb.OrderBy("ts")
+
+	bucketCount := 0
+	if len(b.operator.Aggregations) > 0 {
+		bucketCount, _ = querybuilder.ParseBucketCount(b.operator.Aggregations[0].Expression)
+	}
+
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, chArgs...)
+	return &qbtypes.Statement{
+		Query:       sql,
+		Args:        args,
+		BucketCount: bucketCount,
+	}, nil
 }
