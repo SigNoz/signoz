@@ -479,8 +479,18 @@ func numericAsFloat(v any) float64 {
 }
 
 func readAsHeatmap(rows driver.Rows, queryName string, bucketCount int) (*qbtypes.HeatmapData, error) {
-	colNames := rows.Columns()
-	if slices.Contains(colNames, "__result_0") {
+	colTypes := rows.ColumnTypes()
+	useArrayParser := false
+	for _, ct := range colTypes {
+		if ct.Name() == "__result_0" {
+			if strings.HasPrefix(ct.DatabaseTypeName(), "Array") {
+				useArrayParser = true
+				break
+			}
+		}
+	}
+
+	if useArrayParser {
 		return readAsHeatmapFromArray(rows, queryName, bucketCount)
 	}
 
