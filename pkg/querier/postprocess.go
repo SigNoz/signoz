@@ -46,6 +46,30 @@ func getQueryName(spec any) string {
 	return getqueryInfo(spec).Name
 }
 
+func hasOrderSpecified(req *qbtypes.QueryRangeRequest) bool {
+	for _, query := range req.CompositeQuery.Queries {
+		switch spec := query.Spec.(type) {
+		case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+			if len(spec.Order) > 0 {
+				return true
+			}
+		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+			if len(spec.Order) > 0 {
+				return true
+			}
+		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+			if len(spec.Order) > 0 {
+				return true
+			}
+		case qbtypes.QueryBuilderFormula:
+			if len(spec.Order) > 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (q *querier) postProcessResults(ctx context.Context, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, error) {
 	// Convert results to typed format for processing
 	typedResults := make(map[string]*qbtypes.Result)
@@ -581,10 +605,13 @@ func (q *querier) filterDisabledQueries(results map[string]*qbtypes.Result, req 
 }
 
 // formatScalarResultsAsTable formats scalar results as a unified table for UI display
-func (q *querier) formatScalarResultsAsTable(results map[string]*qbtypes.Result, _ *qbtypes.QueryRangeRequest) map[string]any {
+func (q *querier) formatScalarResultsAsTable(results map[string]*qbtypes.Result, req *qbtypes.QueryRangeRequest) map[string]any {
 	if len(results) == 0 {
 		return map[string]any{"table": &qbtypes.ScalarData{}}
 	}
+
+	// apply default sorting if no order specified
+	applyDefaultSort := !hasOrderSpecified(req)
 
 	// Convert all results to ScalarData first
 	scalarResults := make(map[string]*qbtypes.ScalarData)
@@ -600,13 +627,13 @@ func (q *querier) formatScalarResultsAsTable(results map[string]*qbtypes.Result,
 	if len(scalarResults) == 1 {
 		for _, sd := range scalarResults {
 			if hasMultipleQueries(sd) {
-				return map[string]any{"table": deduplicateRows(sd)}
+				return map[string]any{"table": deduplicateRows(sd, applyDefaultSort)}
 			}
 		}
 	}
 
 	// Otherwise merge all results
-	merged := mergeScalarData(scalarResults)
+	merged := mergeScalarData(scalarResults, applyDefaultSort)
 	return map[string]any{"table": merged}
 }
 
@@ -687,7 +714,7 @@ func hasMultipleQueries(sd *qbtypes.ScalarData) bool {
 }
 
 // deduplicateRows removes duplicate rows based on group columns
-func deduplicateRows(sd *qbtypes.ScalarData) *qbtypes.ScalarData {
+func deduplicateRows(sd *qbtypes.ScalarData, applyDefaultSort bool) *qbtypes.ScalarData {
 	// Find group column indices
 	groupIndices := []int{}
 	for i, col := range sd.Columns {
@@ -720,8 +747,10 @@ func deduplicateRows(sd *qbtypes.ScalarData) *qbtypes.ScalarData {
 		data = append(data, row)
 	}
 
-	// Sort by first aggregation column
-	sortByFirstAggregation(data, sd.Columns)
+	// sort by first aggregation (descending) if no order was specified
+	if applyDefaultSort {
+		sortByFirstAggregation(data, sd.Columns)
+	}
 
 	return &qbtypes.ScalarData{
 		Columns: sd.Columns,
@@ -730,7 +759,7 @@ func deduplicateRows(sd *qbtypes.ScalarData) *qbtypes.ScalarData {
 }
 
 // mergeScalarData merges multiple scalar data results
-func mergeScalarData(results map[string]*qbtypes.ScalarData) *qbtypes.ScalarData {
+func mergeScalarData(results map[string]*qbtypes.ScalarData, applyDefaultSort bool) *qbtypes.ScalarData {
 	// Collect unique group columns
 	groupCols := []string{}
 	groupColMap := make(map[string]*qbtypes.ColumnDescriptor)
@@ -831,8 +860,10 @@ func mergeScalarData(results map[string]*qbtypes.ScalarData) *qbtypes.ScalarData
 		data = append(data, row)
 	}
 
-	// Sort by first aggregation column
-	sortByFirstAggregation(data, columns)
+	// sort by first aggregation (descending) if no order was specified
+	if applyDefaultSort {
+		sortByFirstAggregation(data, columns)
+	}
 
 	return &qbtypes.ScalarData{
 		Columns: columns,
@@ -888,7 +919,7 @@ func sortByFirstAggregation(data [][]any, columns []*qbtypes.ColumnDescriptor) {
 
 // compareValues compares two values for sorting (handles n/a and numeric types)
 func compareValues(a, b any) int {
-	// Handle n/a values
+	// n/a values gets pushed to the end
 	if a == "n/a" && b == "n/a" {
 		return 0
 	}
