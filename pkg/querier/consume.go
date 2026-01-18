@@ -25,6 +25,12 @@ var (
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
 )
 
+type BucketPoint struct {
+	timestamp int64
+	bucketEnd float64
+	value     float64
+}
+
 // consume reads every row and shapes it into the payload expected for the
 // given request type.
 //
@@ -45,6 +51,8 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 		payload, err = readAsScalar(rows, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)
+	case qbtypes.RequestTypeBucket:
+		payload, err = readAsBucket(rows, queryName)
 		// TODO: add support for other request types
 	}
 
@@ -468,4 +476,183 @@ func numericAsFloat(v any) float64 {
 	default:
 		return math.NaN()
 	}
+}
+
+func readAsBucket(rows driver.Rows, queryName string) (*qbtypes.BucketData, error) {
+	colNames := rows.Columns()
+	colTypes := rows.ColumnTypes()
+
+	type colIndices struct {
+		ts, end, start, val int
+	}
+	cols := colIndices{ts: -1, end: -1, start: -1, val: -1}
+	for i, name := range colNames {
+		switch name {
+		case "ts":
+			cols.ts = i
+		case "le", "bucket_end":
+			cols.end = i
+		case "bucket_start":
+			cols.start = i
+		case "count", "value":
+			cols.val = i
+		}
+	}
+
+	scan := make([]any, len(colNames))
+	for i := range scan {
+		st := colTypes[i].ScanType()
+		if st == nil {
+			var v any
+			scan[i] = &v
+		} else {
+			scan[i] = reflect.New(st).Interface()
+		}
+	}
+
+	bucketPoints := make([]BucketPoint, 0, 128)
+	uniqueTs := make(map[int64]bool, 64)
+	uniqueEnd := make(map[float64]bool, 32)
+	startByEnd := make(map[float64]float64, 32)
+
+	for rows.Next() {
+		if err := rows.Scan(scan...); err != nil {
+			return nil, err
+		}
+
+		var ts int64
+		var bucketEnd float64
+		var bucketStart float64
+		var value float64
+		var endFound, valueFound, startFound bool
+
+		if cols.ts >= 0 {
+			if val := derefValue(scan[cols.ts]); val != nil {
+				if t, ok := val.(time.Time); ok {
+					ts = t.UnixMilli()
+				} else if t, ok := val.(uint64); ok {
+					ts = int64(t) * 1000
+				}
+			}
+		}
+		if cols.end >= 0 {
+			if val := derefValue(scan[cols.end]); val != nil {
+				if s, ok := val.(string); ok {
+					if s == "+Inf" {
+						bucketEnd = math.Inf(1)
+						endFound = true
+					} else {
+						f, err := strconv.ParseFloat(s, 64)
+						if err == nil {
+							bucketEnd = f
+							endFound = true
+						}
+					}
+				} else {
+					bucketEnd = numericAsFloat(val)
+					if !math.IsNaN(bucketEnd) {
+						endFound = true
+					}
+				}
+			}
+		}
+		if cols.start >= 0 {
+			if val := derefValue(scan[cols.start]); val != nil {
+				bucketStart = numericAsFloat(val)
+				if !math.IsNaN(bucketStart) {
+					startFound = true
+				}
+			}
+		}
+		if cols.val >= 0 {
+			if val := derefValue(scan[cols.val]); val != nil {
+				value = numericAsFloat(val)
+				valueFound = true
+			}
+		}
+
+		if endFound && valueFound {
+			if math.IsNaN(bucketEnd) || math.IsInf(bucketEnd, 0) || math.IsNaN(value) || math.IsInf(value, 0) {
+				continue
+			}
+			if startFound {
+				if math.IsNaN(bucketStart) || math.IsInf(bucketStart, 0) {
+					continue
+				}
+				if _, exists := startByEnd[bucketEnd]; !exists {
+					startByEnd[bucketEnd] = bucketStart
+				}
+			}
+
+			bucketPoints = append(bucketPoints, BucketPoint{
+				timestamp: ts,
+				bucketEnd: bucketEnd,
+				value:     value,
+			})
+			uniqueTs[ts] = true
+			uniqueEnd[bucketEnd] = true
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return buildBucketData(bucketPoints, uniqueTs, uniqueEnd, startByEnd, queryName)
+}
+
+func buildBucketData(points []BucketPoint, uniqueTs map[int64]bool, uniqueEnd map[float64]bool, startByEnd map[float64]float64, queryName string) (*qbtypes.BucketData, error) {
+	sortedTs := make([]int64, 0, len(uniqueTs))
+	for t := range uniqueTs {
+		sortedTs = append(sortedTs, t)
+	}
+	slices.Sort(sortedTs)
+
+	sortedEnds := make([]float64, 0, len(uniqueEnd))
+	for end := range uniqueEnd {
+		sortedEnds = append(sortedEnds, end)
+	}
+	sort.Float64s(sortedEnds)
+
+	bucketStarts := make([]float64, len(sortedEnds))
+	for i := range sortedEnds {
+		if i == 0 {
+			if start, ok := startByEnd[sortedEnds[i]]; ok {
+				bucketStarts[i] = start
+			} else {
+				bucketStarts[i] = 0
+			}
+		} else {
+			bucketStarts[i] = sortedEnds[i-1]
+		}
+	}
+
+	counts := make([][]float64, len(sortedTs))
+	for i := range counts {
+		counts[i] = make([]float64, len(sortedEnds))
+	}
+
+	tsIdx := make(map[int64]int, len(sortedTs))
+	for i, t := range sortedTs {
+		tsIdx[t] = i
+	}
+	endIdx := make(map[float64]int, len(sortedEnds))
+	for i, l := range sortedEnds {
+		endIdx[l] = i
+	}
+
+	for _, p := range points {
+		if tI, ok := tsIdx[p.timestamp]; ok {
+			if lI, ok := endIdx[p.bucketEnd]; ok {
+				counts[tI][lI] = p.value
+			}
+		}
+	}
+
+	return &qbtypes.BucketData{
+		QueryName:    queryName,
+		BucketBounds: sortedEnds,
+		BucketStarts: bucketStarts,
+		Timestamps:   sortedTs,
+		Counts:       counts,
+	}, nil
 }
