@@ -131,6 +131,7 @@ export interface IBaseWidget {
 	legendPosition?: LegendPosition;
 	customLegendColors?: Record<string, string>;
 	contextLinks?: ContextLinksData;
+	heatmapColorPalette?: string;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

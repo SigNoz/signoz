@@ -73,6 +73,7 @@ const operatorArgMeta: Record<
 	[TracesAggregatorOperator.RATE_AVG]: { acceptsArgs: true, multiple: false },
 	[TracesAggregatorOperator.RATE_MIN]: { acceptsArgs: true, multiple: false },
 	[TracesAggregatorOperator.RATE_MAX]: { acceptsArgs: true, multiple: false },
+	[TracesAggregatorOperator.HEATMAP]: { acceptsArgs: true, multiple: true },
 };
 
 function getFunctionContextAtCursor(

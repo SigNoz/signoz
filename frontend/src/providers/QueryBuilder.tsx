@@ -662,49 +662,59 @@ export function QueryBuilderProvider({
 		});
 	}, [createNewBuilderFormula]);
 
-	const addTraceOperator = useCallback((expression = '') => {
-		const trimmed = (expression || '').trim();
+	const addTraceOperator = useCallback(
+		(expression = '') => {
+			const trimmed = (expression || '').trim();
+			let aggregations = initialQueryBuilderFormTraceOperatorValues.aggregations;
 
-		setCurrentQuery((prevState) => {
-			const existing = prevState.builder.queryTraceOperator?.[0] || null;
-			const updated: IBuilderTraceOperator = existing
-				? { ...existing, expression: trimmed }
-				: {
-						...initialQueryBuilderFormTraceOperatorValues,
-						queryName: TRACE_OPERATOR_QUERY_NAME,
-						expression: trimmed,
-				  };
+			if (!trimmed && panelType === PANEL_TYPES.HEATMAP) {
+				aggregations = [{ expression: 'heatmap(' }];
+			}
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					// enforce single trace operator and replace only expression
-					queryTraceOperator: [updated],
-				},
-			};
-		});
-		// eslint-disable-next-line sonarjs/no-identical-functions
-		setSupersetQuery((prevState) => {
-			const existing = prevState.builder.queryTraceOperator?.[0] || null;
-			const updated: IBuilderTraceOperator = existing
-				? { ...existing, expression: trimmed }
-				: {
-						...initialQueryBuilderFormTraceOperatorValues,
-						queryName: TRACE_OPERATOR_QUERY_NAME,
-						expression: trimmed,
-				  };
+			setCurrentQuery((prevState) => {
+				const existing = prevState.builder.queryTraceOperator?.[0] || null;
+				const updated: IBuilderTraceOperator = existing
+					? { ...existing, expression: trimmed }
+					: {
+							...initialQueryBuilderFormTraceOperatorValues,
+							queryName: TRACE_OPERATOR_QUERY_NAME,
+							expression: trimmed,
+							aggregations,
+					  };
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					// enforce single trace operator and replace only expression
-					queryTraceOperator: [updated],
-				},
-			};
-		});
-	}, []);
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						// enforce single trace operator and replace only expression
+						queryTraceOperator: [updated],
+					},
+				};
+			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				const existing = prevState.builder.queryTraceOperator?.[0] || null;
+				const updated: IBuilderTraceOperator = existing
+					? { ...existing, expression: trimmed }
+					: {
+							...initialQueryBuilderFormTraceOperatorValues,
+							queryName: TRACE_OPERATOR_QUERY_NAME,
+							expression: trimmed,
+							aggregations,
+					  };
+
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						// enforce single trace operator and replace only expression
+						queryTraceOperator: [updated],
+					},
+				};
+			});
+		},
+		[panelType],
+	);
 
 	const removeTraceOperator = useCallback(() => {
 		setCurrentQuery((prevState) => ({

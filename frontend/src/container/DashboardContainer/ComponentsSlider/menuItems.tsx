@@ -2,6 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import {
 	BarChart3,
+	Grid3X3,
 	LineChart,
 	List,
 	PieChart,
@@ -44,6 +45,11 @@ const Items: ItemsProps[] = [
 		name: PANEL_TYPES.HISTOGRAM,
 		icon: <BarChart3 size={16} color={Color.BG_ROBIN_400} />,
 		display: PanelDisplay.HISTOGRAM,
+	},
+	{
+		name: PANEL_TYPES.HEATMAP,
+		icon: <Grid3X3 size={16} color={Color.BG_ROBIN_400} />,
+		display: PanelDisplay.HEATMAP,
 	},
 ];
 
