@@ -13,7 +13,7 @@ func (provider *provider) addGlobalRoutes(router *mux.Router) error {
 		ID:                  "GetGlobalConfig",
 		Tags:                []string{"global"},
 		Summary:             "Get global config",
-		Description:         "This endpoints returns global config",
+		Description:         "This endpoint returns global config",
 		Request:             nil,
 		RequestContentType:  "",
 		Response:            new(types.GettableGlobalConfig),

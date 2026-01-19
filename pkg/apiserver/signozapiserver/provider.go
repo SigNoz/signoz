@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -39,6 +40,8 @@ type provider struct {
 	dashboardModule        dashboard.Module
 	dashboardHandler       dashboard.Handler
 	metricsExplorerHandler metricsexplorer.Handler
+	roleGetter             role.Getter
+	roleHandler            role.Handler
 }
 
 func NewFactory(
@@ -55,9 +58,11 @@ func NewFactory(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
+	roleGetter role.Getter,
+	roleHandler role.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler, roleGetter, roleHandler)
 	})
 }
 
@@ -78,6 +83,8 @@ func newProvider(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
+	roleGetter role.Getter,
+	roleHandler role.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -97,9 +104,11 @@ func newProvider(
 		dashboardModule:        dashboardModule,
 		dashboardHandler:       dashboardHandler,
 		metricsExplorerHandler: metricsExplorerHandler,
+		roleGetter:             roleGetter,
+		roleHandler:            roleHandler,
 	}
 
-	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
+	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz, roleGetter)
 
 	if err := provider.AddToRouter(router); err != nil {
 		return nil, err
@@ -150,6 +159,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addMetricsExplorerV2Routes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRoleRoutes(router); err != nil {
 		return err
 	}
 

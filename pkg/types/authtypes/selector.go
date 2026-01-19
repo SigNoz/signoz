@@ -24,7 +24,7 @@ var (
 	typeRoleSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
 	typeAnonymousSelectorRegex    = regexp.MustCompile(`^\*$`)
 	typeOrganizationSelectorRegex = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
-	typeMetaResourceSelectorRegex = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
+	typeMetaResourceSelectorRegex = regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)
 	// metaresources selectors are used to select either all or none
 	typeMetaResourcesSelectorRegex = regexp.MustCompile(`^\*$`)
 )

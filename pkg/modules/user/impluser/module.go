@@ -12,10 +12,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/role"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
+	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -28,10 +31,11 @@ type Module struct {
 	settings  factory.ScopedProviderSettings
 	orgSetter organization.Setter
 	analytics analytics.Analytics
+	grant     role.Grant
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) root.Module {
+func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics, grant role.Grant) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -40,6 +44,7 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		settings:  settings,
 		orgSetter: orgSetter,
 		analytics: analytics,
+		grant:     grant,
 	}
 }
 
@@ -162,6 +167,12 @@ func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID)
 func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
+	// since assign is idempotant multiple calls to assign won't cause issues in case of retries.
+	err := module.grant.Grant(ctx, input.OrgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(input.Role), authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
+	if err != nil {
+		return err
+	}
+
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if err := module.store.CreateUser(ctx, input); err != nil {
 			return err
@@ -222,8 +233,19 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		}
 	}
 
-	user.UpdatedAt = time.Now()
+	if user.Role != existingUser.Role {
+		err = m.grant.ModifyGrant(ctx,
+			orgID,
+			roletypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role),
+			roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role),
+			authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil),
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
 
+	user.UpdatedAt = time.Now()
 	updatedUser, err := m.store.UpdateUser(ctx, orgID, id, user)
 	if err != nil {
 		return nil, err
@@ -254,8 +276,8 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	return updatedUser, nil
 }
 
-func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
-	user, err := m.store.GetUser(ctx, valuer.MustNewUUID(id))
+func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
+	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
 	}
@@ -265,7 +287,7 @@ func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, d
 	}
 
 	// don't allow to delete the last admin user
-	adminUsers, err := m.store.GetUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
+	adminUsers, err := module.store.GetUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
 	if err != nil {
 		return err
 	}
@@ -274,11 +296,17 @@ func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, d
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot delete the last admin")
 	}
 
-	if err := m.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
+	// since revoke is idempotant multiple calls to revoke won't cause issues in case of retries
+	err = module.grant.Revoke(ctx, orgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role), authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
+	if err != nil {
 		return err
 	}
 
-	m.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
+	if err := module.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
+		return err
+	}
+
+	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
 		"deleted_by": deletedBy,
 	})
 
@@ -413,13 +441,34 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 		return nil, err
 	}
 
+	managedRoles := roletypes.NewManagedRoles(organization.ID)
+	var adminRoleID valuer.UUID
+	for _, r := range managedRoles {
+		if r.Name == roletypes.SigNozAdminRoleName {
+			adminRoleID = r.ID
+			break
+		}
+	}
+
+	err = module.grant.GrantByID(ctx, organization.ID, adminRoleID, authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil))
+	if err != nil {
+		return nil, err
+	}
+
 	if err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err := module.orgSetter.Create(ctx, organization)
+		err = module.orgSetter.Create(ctx, organization, func(ctx context.Context) error {
+			err = module.grant.SetManagedRoles(ctx, organization.ID, managedRoles)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
 		if err != nil {
 			return err
 		}
 
-		err = module.CreateUser(ctx, user, root.WithFactorPassword(password))
+		err = module.createUserWithoutGrant(ctx, user, root.WithFactorPassword(password))
 		if err != nil {
 			return err
 		}
@@ -445,4 +494,29 @@ func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	}
 
 	return stats, nil
+}
+
+func (module *Module) createUserWithoutGrant(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
+	createUserOpts := root.NewCreateUserOptions(opts...)
+	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.CreateUser(ctx, input); err != nil {
+			return err
+		}
+
+		if createUserOpts.FactorPassword != nil {
+			if err := module.store.CreatePassword(ctx, createUserOpts.FactorPassword); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	traitsOrProperties := types.NewTraitsFromUser(input)
+	module.analytics.IdentifyUser(ctx, input.OrgID.String(), input.ID.String(), traitsOrProperties)
+	module.analytics.TrackUser(ctx, input.OrgID.String(), input.ID.String(), "User Created", traitsOrProperties)
+
+	return nil
 }

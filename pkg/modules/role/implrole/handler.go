@@ -14,11 +14,12 @@ import (
 )
 
 type handler struct {
-	module role.Module
+	setter role.Setter
+	getter role.Getter
 }
 
-func NewHandler(module role.Module) role.Handler {
-	return &handler{module: module}
+func NewHandler(setter role.Setter, getter role.Getter) role.Handler {
+	return &handler{setter: setter, getter: getter}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,7 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.Create(ctx, roletypes.NewRole(req.Name, req.Description, roletypes.RoleTypeCustom.StringValue(), valuer.MustNewUUID(claims.OrgID)))
+	err = handler.setter.Create(ctx, valuer.MustNewUUID(claims.OrgID), roletypes.NewRole(req.Name, req.Description, roletypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID)))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -63,7 +64,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), roleID)
+	role, err := handler.getter.Get(ctx, valuer.MustNewUUID(claims.OrgID), roleID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -102,7 +103,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	objects, err := handler.module.GetObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, relation)
+	objects, err := handler.setter.GetObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, relation)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -113,7 +114,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 
 func (handler *handler) GetResources(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	resources := handler.module.GetResources(ctx)
+	resources := handler.setter.GetResources(ctx)
 
 	var resourceRelations = struct {
 		Resources []*authtypes.Resource                   `json:"resources"`
@@ -133,7 +134,7 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roles, err := handler.module.List(ctx, valuer.MustNewUUID(claims.OrgID))
+	roles, err := handler.getter.List(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -162,14 +163,19 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	role, err := handler.getter.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	role.PatchMetadata(req.Name, req.Description)
-	err = handler.module.Patch(ctx, valuer.MustNewUUID(claims.OrgID), role)
+	err = role.PatchMetadata(req.Name, req.Description)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.setter.Patch(ctx, valuer.MustNewUUID(claims.OrgID), role)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -204,13 +210,19 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	patchableObjects, err := roletypes.NewPatchableObjects(req.Additions, req.Deletions, relation)
+	role, err := handler.getter.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.module.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), id, relation, patchableObjects.Additions, patchableObjects.Deletions)
+	patchableObjects, err := role.NewPatchableObjects(req.Additions, req.Deletions, relation)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.setter.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), id, relation, patchableObjects.Additions, patchableObjects.Deletions)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -233,7 +245,7 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.Delete(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	err = handler.setter.Delete(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
