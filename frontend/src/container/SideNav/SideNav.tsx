@@ -428,7 +428,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	}, [isReorderShortcutNavItemsModalOpen, pinnedMenuItems]);
 
 	useEffect(() => {
-		const isSidebarOpen = isPinned || isHovered;
+		const isSidebarOpen = isPinned || isHovered || isDropdownOpen;
 		const wasSidebarOpen = prevSidebarOpenRef.current;
 
 		if (!isSidebarOpen) {
@@ -440,7 +440,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			setIsMoreMenuCollapsed(false);
 		}
 		prevSidebarOpenRef.current = isSidebarOpen;
-	}, [isPinned, isHovered]);
+	}, [isPinned, isHovered, isDropdownOpen]);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -796,8 +796,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		[moreMenuItems, activeMenuKey],
 	);
 
-	// Check if sidebar is collapsed (not pinned and not hovered)
-	const isCollapsed = !isPinned && !isHovered;
+	// Check if sidebar is collapsed (not pinned, not hovered, and no dropdown open)
+	const isCollapsed = !isPinned && !isHovered && !isDropdownOpen;
 
 	const renderNavItems = (
 		items: SidebarItem[],
@@ -1056,7 +1056,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							{renderNavItems(primaryMenuItems)}
 						</div>
 
-						{(pinnedMenuItems.length > 0 || isPinned || isHovered || isCollapsed) && (
+						{(pinnedMenuItems.length > 0 || !isCollapsed) && (
 							<div
 								className={cx('shortcut-nav-items', isCollapsed && 'sidebar-collapsed')}
 							>
@@ -1116,8 +1116,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										<div
 											className="nav-section-title"
 											onClick={(): void => {
-												// Only allow toggling when sidebar is pinned or hovered
-												if (!isPinned && !isHovered) {
+												// Only allow toggling when sidebar is open (pinned, hovered, or dropdown open)
+												if (isCollapsed) {
 													return;
 												}
 												const newCollapsedState = !isMoreMenuCollapsed;

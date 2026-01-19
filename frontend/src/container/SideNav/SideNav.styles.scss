@@ -34,7 +34,7 @@
 	.brand-company-meta {
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: 6px;
 		flex-shrink: 0;
 		width: 100%;
 		justify-content: center;
@@ -58,7 +58,7 @@
 			justify-content: center;
 			gap: 8px;
 			flex-shrink: 0;
-			width: 24px;
+			width: 20px;
 			height: 16px;
 			position: relative;
 
@@ -290,7 +290,7 @@
 					align-items: center;
 					gap: 8px;
 
-					padding: 0 19px;
+					padding: 0 17px !important;
 
 					.nav-section-title-text {
 						display: none;
@@ -609,7 +609,7 @@
 		.shortcut-nav-items,
 		.more-nav-items {
 			.nav-section-title {
-				padding: 0 19px !important;
+				padding: 0 17px !important;
 
 				.nav-section-title-icon {
 					display: none;
@@ -628,7 +628,7 @@
 			.shortcut-nav-items,
 			.more-nav-items {
 				.nav-section-title {
-					padding: 0 19px !important;
+					padding: 0 17px !important;
 
 					.nav-section-title-icon {
 						display: flex;
