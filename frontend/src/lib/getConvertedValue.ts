@@ -5,6 +5,10 @@ import {
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { isUniversalUnit } from 'components/YAxisUnitSelector/utils';
 
+// 1 byte = 8 bits
+// Or 1 bit = 1/8 bytes
+const BIT_FACTOR = 1 / 8;
+
 const unitsMapping = [
 	{
 		label: 'Data',
@@ -22,57 +26,52 @@ const unitsMapping = [
 			{
 				label: 'bits(IEC)',
 				value: 'bits',
-				factor: 8, // 1 byte = 8 bits
+				factor: BIT_FACTOR,
 			},
 			{
 				label: 'bits(SI)',
 				value: 'decbits',
-				factor: 8, // 1 byte = 8 bits
-			},
-			{
-				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.BITS],
-				value: UniversalYAxisUnit.BITS,
-				factor: 8,
+				factor: BIT_FACTOR,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.KILOBITS],
 				value: UniversalYAxisUnit.KILOBITS,
-				factor: 8 * 1000,
+				factor: BIT_FACTOR * 1000,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.MEGABITS],
 				value: UniversalYAxisUnit.MEGABITS,
-				factor: 8 * 1000 ** 2,
+				factor: BIT_FACTOR * 1000 ** 2,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.GIGABITS],
 				value: UniversalYAxisUnit.GIGABITS,
-				factor: 8 * 1000 ** 3,
+				factor: BIT_FACTOR * 1000 ** 3,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.TERABITS],
 				value: UniversalYAxisUnit.TERABITS,
-				factor: 8 * 1000 ** 4,
+				factor: BIT_FACTOR * 1000 ** 4,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PETABITS],
 				value: UniversalYAxisUnit.PETABITS,
-				factor: 8 * 1000 ** 5,
+				factor: BIT_FACTOR * 1000 ** 5,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABITS],
 				value: UniversalYAxisUnit.EXABITS,
-				factor: 8 * 1000 ** 6,
+				factor: BIT_FACTOR * 1000 ** 6,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABITS],
 				value: UniversalYAxisUnit.ZETTABITS,
-				factor: 8 * 1000 ** 7,
+				factor: BIT_FACTOR * 1000 ** 7,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABITS],
 				value: UniversalYAxisUnit.YOTTABITS,
-				factor: 8 * 1000 ** 8,
+				factor: BIT_FACTOR * 1000 ** 8,
 			},
 			{
 				label: 'kibibytes',
@@ -172,12 +171,12 @@ const unitsMapping = [
 			{
 				label: 'bits/sec(IEC)',
 				value: 'binbps',
-				factor: 8, // 1 byte = 8 bits
+				factor: BIT_FACTOR, // 1 byte = 8 bits
 			},
 			{
 				label: 'bits/sec(SI)',
 				value: 'bps',
-				factor: 8, // 1 byte = 8 bits
+				factor: BIT_FACTOR, // 1 byte = 8 bits
 			},
 			{
 				label: 'kibibytes/sec',
@@ -187,7 +186,7 @@ const unitsMapping = [
 			{
 				label: 'kibibits/sec',
 				value: 'Kibits',
-				factor: 8 * 1024, // 1 KiB = 8 Kibits
+				factor: BIT_FACTOR * 1024, // 1 KiB = 8 Kibits
 			},
 			{
 				label: 'kilobytes/sec',
@@ -197,7 +196,7 @@ const unitsMapping = [
 			{
 				label: 'kilobits/sec',
 				value: 'Kbits',
-				factor: 8 * 1000, // 1 KB = 8 Kbits
+				factor: BIT_FACTOR * 1000, // 1 KB = 8 Kbits
 			},
 			{
 				label: 'mebibytes/sec',
@@ -207,7 +206,7 @@ const unitsMapping = [
 			{
 				label: 'mebibits/sec',
 				value: 'Mibits',
-				factor: 8 * 1024 ** 2, // 1 MiB = 8 Mibits
+				factor: BIT_FACTOR * 1024 ** 2, // 1 MiB = 8 Mibits
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABYTES_SECOND],
@@ -242,32 +241,32 @@ const unitsMapping = [
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABITS_SECOND],
 				value: UniversalYAxisUnit.EXABITS_SECOND,
-				factor: 8 * 1000 ** 6,
+				factor: BIT_FACTOR * 1000 ** 6,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABITS_SECOND],
 				value: UniversalYAxisUnit.ZETTABITS_SECOND,
-				factor: 8 * 1000 ** 7,
+				factor: BIT_FACTOR * 1000 ** 7,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABITS_SECOND],
 				value: UniversalYAxisUnit.YOTTABITS_SECOND,
-				factor: 8 * 1000 ** 8,
+				factor: BIT_FACTOR * 1000 ** 8,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXBIBITS_SECOND],
 				value: UniversalYAxisUnit.EXBIBITS_SECOND,
-				factor: 8 * 1024 ** 6,
+				factor: BIT_FACTOR * 1024 ** 6,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZEBIBITS_SECOND],
 				value: UniversalYAxisUnit.ZEBIBITS_SECOND,
-				factor: 8 * 1024 ** 7,
+				factor: BIT_FACTOR * 1024 ** 7,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOBIBITS_SECOND],
 				value: UniversalYAxisUnit.YOBIBITS_SECOND,
-				factor: 8 * 1024 ** 8,
+				factor: BIT_FACTOR * 1024 ** 8,
 			},
 		],
 	},

@@ -54,14 +54,9 @@ describe('convertValue', () => {
 			expect(convertValue(1024, 'kbytes', 'mbytes')).toBe(1);
 		});
 
-		it('should convert yotabytes to terabytes', () => {
-			expect(
-				convertValue(
-					1,
-					UniversalYAxisUnit.YOTTABYTES,
-					UniversalYAxisUnit.TERABYTES,
-				),
-			).toBe(10 ** 12);
+		it('should convert bits to gigabytes', () => {
+			// 12 GB = 103079215104 bits
+			expect(convertValue(103079215104, 'bits', 'gbytes')).toBe(12);
 		});
 	});
 
