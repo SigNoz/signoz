@@ -42,37 +42,37 @@ const unitsMapping = [
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.MEGABITS],
 				value: UniversalYAxisUnit.MEGABITS,
-				factor: 8 * 1000 * 1000,
+				factor: 8 * 1000 ** 2,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.GIGABITS],
 				value: UniversalYAxisUnit.GIGABITS,
-				factor: 8 * 1000 * 1000 * 1000,
+				factor: 8 * 1000 ** 3,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.TERABITS],
 				value: UniversalYAxisUnit.TERABITS,
-				factor: 8 * 1000 * 1000 * 1000 * 1000,
+				factor: 8 * 1000 ** 4,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PETABITS],
 				value: UniversalYAxisUnit.PETABITS,
-				factor: 8 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 8 * 1000 ** 5,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABITS],
 				value: UniversalYAxisUnit.EXABITS,
-				factor: 8 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 8 * 1000 ** 6,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABITS],
 				value: UniversalYAxisUnit.ZETTABITS,
-				factor: 8 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 8 * 1000 ** 7,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABITS],
 				value: UniversalYAxisUnit.YOTTABITS,
-				factor: 8 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 8 * 1000 ** 8,
 			},
 			{
 				label: 'kibibytes',
@@ -87,72 +87,72 @@ const unitsMapping = [
 			{
 				label: 'mebibytes',
 				value: 'mbytes',
-				factor: 1024 * 1024,
+				factor: 1024 ** 2,
 			},
 			{
 				label: 'megabytes',
 				value: 'decmbytes',
-				factor: 1000 * 1000,
+				factor: 1000 ** 2,
 			},
 			{
 				label: 'gibibytes',
 				value: 'gbytes',
-				factor: 1024 * 1024 * 1024,
+				factor: 1024 ** 3,
 			},
 			{
 				label: 'gigabytes',
 				value: 'decgbytes',
-				factor: 1000 * 1000 * 1000,
+				factor: 1000 ** 3,
 			},
 			{
 				label: 'tebibytes',
 				value: 'tbytes',
-				factor: 1024 * 1024 * 1024 * 1024,
+				factor: 1024 ** 4,
 			},
 			{
 				label: 'terabytes',
 				value: 'dectbytes',
-				factor: 1000 * 1000 * 1000 * 1000,
+				factor: 1000 ** 4,
 			},
 			{
 				label: 'pebibytes',
 				value: 'pbytes',
-				factor: 1024 * 1024 * 1024 * 1024 * 1024,
+				factor: 1024 ** 5,
 			},
 			{
 				label: 'petabytes',
 				value: 'decpbytes',
-				factor: 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 1000 ** 5,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABYTES],
 				value: UniversalYAxisUnit.EXABYTES,
-				factor: 1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 1000 ** 6,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXBIBYTES],
 				value: UniversalYAxisUnit.EXBIBYTES,
-				factor: 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+				factor: 1024 ** 6,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABYTES],
 				value: UniversalYAxisUnit.ZETTABYTES,
-				factor: 1000 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 1000 ** 7,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZEBIBYTES],
 				value: UniversalYAxisUnit.ZEBIBYTES,
-				factor: 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+				factor: 1024 ** 7,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABYTES],
 				value: UniversalYAxisUnit.YOTTABYTES,
-				factor: 1000 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 1000 ** 8,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOBIBYTES],
 				value: UniversalYAxisUnit.YOBIBYTES,
-				factor: 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+				factor: 1024 ** 8,
 			},
 		],
 	},
@@ -202,72 +202,72 @@ const unitsMapping = [
 			{
 				label: 'mebibytes/sec',
 				value: 'MiBs',
-				factor: 1024 * 1024,
+				factor: 1024 ** 2,
 			},
 			{
 				label: 'mebibits/sec',
 				value: 'Mibits',
-				factor: 8 * 1024 * 1024, // 1 MiB = 8 Mibits
+				factor: 8 * 1024 ** 2, // 1 MiB = 8 Mibits
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABYTES_SECOND],
 				value: UniversalYAxisUnit.EXABYTES_SECOND,
-				factor: 1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 1000 ** 6,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABYTES_SECOND],
 				value: UniversalYAxisUnit.ZETTABYTES_SECOND,
-				factor: 1000 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 1000 ** 7,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABYTES_SECOND],
 				value: UniversalYAxisUnit.YOTTABYTES_SECOND,
-				factor: 1000 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 1000 ** 8,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXBIBYTES_SECOND],
 				value: UniversalYAxisUnit.EXBIBYTES_SECOND,
-				factor: 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+				factor: 1024 ** 6,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZEBIBYTES_SECOND],
 				value: UniversalYAxisUnit.ZEBIBYTES_SECOND,
-				factor: 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+				factor: 1024 ** 7,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOBIBYTES_SECOND],
 				value: UniversalYAxisUnit.YOBIBYTES_SECOND,
-				factor: 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+				factor: 1024 ** 8,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABITS_SECOND],
 				value: UniversalYAxisUnit.EXABITS_SECOND,
-				factor: 8 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 8 * 1000 ** 6,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABITS_SECOND],
 				value: UniversalYAxisUnit.ZETTABITS_SECOND,
-				factor: 8 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 8 * 1000 ** 7,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABITS_SECOND],
 				value: UniversalYAxisUnit.YOTTABITS_SECOND,
-				factor: 8 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: 8 * 1000 ** 8,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXBIBITS_SECOND],
 				value: UniversalYAxisUnit.EXBIBITS_SECOND,
-				factor: 8 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+				factor: 8 * 1024 ** 6,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZEBIBITS_SECOND],
 				value: UniversalYAxisUnit.ZEBIBITS_SECOND,
-				factor: 8 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+				factor: 8 * 1024 ** 7,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOBIBITS_SECOND],
 				value: UniversalYAxisUnit.YOBIBITS_SECOND,
-				factor: 8 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+				factor: 8 * 1024 ** 8,
 			},
 		],
 	},
@@ -409,7 +409,7 @@ function findUnitObject(
 	return unitObj || null;
 }
 
-function getFormattedUnit(unit: string): string {
+export function getFormattedUnit(unit: string): string {
 	const isUniversalYAxisUnit = isUniversalUnit(unit);
 	if (isUniversalYAxisUnit) {
 		return UniversalUnitToGrafanaUnit[unit as UniversalYAxisUnit] || unit;

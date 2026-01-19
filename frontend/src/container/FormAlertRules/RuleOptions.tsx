@@ -366,9 +366,7 @@ function RuleOptions({
 
 	const selectedCategory = getCategoryByOptionId(yAxisUnit);
 
-	const categorySelectOptions = getCategorySelectOptionByName(
-		selectedCategory || '',
-	);
+	const categorySelectOptions = getCategorySelectOptionByName(selectedCategory);
 
 	const step3Label = alertDef.alertType === 'METRIC_BASED_ALERT' ? '3' : '2';
 
