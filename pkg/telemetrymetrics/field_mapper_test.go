@@ -218,3 +218,124 @@ func TestGetFieldKeyName(t *testing.T) {
 		})
 	}
 }
+
+func TestColumnExpressionFor(t *testing.T) {
+	ctx := context.Background()
+
+	testCases := []struct {
+		name           string
+		key            telemetrytypes.TelemetryFieldKey
+		keys           map[string][]*telemetrytypes.TelemetryFieldKey
+		expectedResult string
+		expectedError  error
+	}{
+		{
+			name: "Simple column type - metric_name",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "metric_name",
+				FieldContext: telemetrytypes.FieldContextMetric,
+			},
+			keys:           nil,
+			expectedResult: "metric_name AS `metric_name`",
+			expectedError:  nil,
+		},
+		{
+			name: "Map column type - string label",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			keys:           nil,
+			expectedResult: "JSONExtractString(labels, 'user.id') AS `user.id`",
+			expectedError:  nil,
+		},
+		{
+			name: "Map column type - number label",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "request.size",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			},
+			keys:           nil,
+			expectedResult: "JSONExtractString(labels, 'request.size') AS `request.size`",
+			expectedError:  nil,
+		},
+		{
+			name: "Map column type - bool label",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "request.success",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeBool,
+			},
+			keys:           nil,
+			expectedResult: "JSONExtractString(labels, 'request.success') AS `request.success`",
+			expectedError:  nil,
+		},
+		{
+			name: "Map column type - resource label",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			keys:           nil,
+			expectedResult: "JSONExtractString(labels, 'service.name') AS `service.name`",
+			expectedError:  nil,
+		},
+		{
+			name: "Field with duplicate contexts in keys",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "host.name",
+			},
+			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"host.name": {
+					{
+						Name:          "host.name",
+						FieldContext:  telemetrytypes.FieldContextResource,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+					{
+						Name:          "host.name",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			expectedResult: "JSONExtractString(labels, 'host.name') AS `host.name`",
+			expectedError:  nil,
+		},
+		{
+			name: "Field with missing context fallback to keys",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "host.name",
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"host.name": {
+					{
+						Name:          "host.name",
+						FieldContext:  telemetrytypes.FieldContextResource,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			expectedResult: "JSONExtractString(labels, 'host.name') AS `host.name`",
+			expectedError:  nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fm := NewFieldMapper()
+			result, err := fm.ColumnExpressionFor(ctx, &tc.key, tc.keys)
+
+			if tc.expectedError != nil {
+				assert.Equal(t, tc.expectedError, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedResult, result)
+			}
+		})
+	}
+}
