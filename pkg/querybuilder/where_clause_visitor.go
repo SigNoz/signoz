@@ -868,7 +868,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 
 	if len(fieldKeysForName) > 1 {
 		warnMsg := fmt.Sprintf(
-			"Key `%s` is ambiguous, found %d different combinations of field context / data type: %v.",
+			"Key `%s` is ambiguous, found %d different combinations of field context / data type: %s.",
 			fieldKey.Name,
 			len(fieldKeysForName),
 			fieldKeysForName,

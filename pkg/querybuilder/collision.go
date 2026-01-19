@@ -256,7 +256,9 @@ func AdjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys 
 				indexes = append(indexes, matchingKey.Indexes...)
 			}
 			key.Materialized = materialized
-			key.Indexes = indexes
+			if len(indexes) > 0 {
+				key.Indexes = indexes
+			}
 
 			if len(fieldContextsSeen) == 1 {
 				// all matching keys have same field context, use it

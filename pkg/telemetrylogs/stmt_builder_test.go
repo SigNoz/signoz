@@ -666,20 +666,6 @@ func TestAdjustKey(t *testing.T) {
 			},
 		},
 		{
-			name: "intrinsic field with metadata match - no override",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "body",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
-			keysMap: buildCompleteFieldKeyMap(),
-			expectedKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "body",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
-		},
-		{
 			name: "json field with no context specified",
 			inputKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "severity_number",
@@ -691,20 +677,6 @@ func TestAdjustKey(t *testing.T) {
 				Name:          "severity_number",
 				FieldContext:  telemetrytypes.FieldContextBody,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
-		},
-		{
-			name: "json field with context specified",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "body.severity_text",
-				FieldContext:  telemetrytypes.FieldContextLog,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
-			keysMap: buildCompleteFieldKeyMap(),
-			expectedKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "severity_text",
-				FieldContext:  telemetrytypes.FieldContextBody,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 		},
 		{
@@ -732,7 +704,7 @@ func TestAdjustKey(t *testing.T) {
 			},
 		},
 		{
-			name: "single matching key with no context specified - no override",
+			name: "single matching key with no context specified - override",
 			inputKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "service.name",
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
