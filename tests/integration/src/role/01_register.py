@@ -1,12 +1,11 @@
 import pytest
 from http import HTTPStatus
-from typing import Callable, List
+from typing import Callable
 
 import requests
-from wiremock.resources.mappings import Mapping
 from sqlalchemy import sql
 
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.types import Operation, SigNoz
 
 
