@@ -257,6 +257,15 @@ export const onUpdateVariableNode = (
 ): void => {
 	const visited = new Set<string>();
 
+	// If nodeToUpdate is not in topologicalOrder (e.g., CUSTOM variable),
+	// we still need to mark its children as needing updates
+	if (!topologicalOrder.includes(nodeToUpdate)) {
+		// Mark direct children of the node as visited so they get processed
+		(graph[nodeToUpdate] || []).forEach((child) => {
+			visited.add(child);
+		});
+	}
+
 	// Start processing from the node to update
 	topologicalOrder.forEach((node) => {
 		if (node === nodeToUpdate || visited.has(node)) {
