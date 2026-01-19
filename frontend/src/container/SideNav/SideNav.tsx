@@ -167,6 +167,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const prevSidebarOpenRef = useRef<boolean>(isPinned);
 	const userManuallyCollapsedRef = useRef<boolean>(false);
+	const hasInitializedDefaultsRef = useRef<boolean>(false);
 
 	const checkScroll = useCallback((): void => {
 		if (navTopSectionRef.current) {
@@ -372,6 +373,37 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		},
 		[updateUserPreferenceInContext, updateUserPreferenceMutation],
 	);
+
+	// Set default shortcuts on mount if shortcuts are empty
+	useEffect(() => {
+		// Only run when userPreferences are loaded (not null) and we haven't initialized yet
+		if (userPreferences === null || hasInitializedDefaultsRef.current) {
+			return;
+		}
+
+		const navShortcutsPreference = userPreferences.find(
+			(preference) => preference.name === USER_PREFERENCES.NAV_SHORTCUTS,
+		);
+		const navShortcuts = (navShortcutsPreference?.value as unknown) as
+			| string[]
+			| undefined;
+
+		// Check if shortcuts are empty (preference doesn't exist or is empty array)
+		const isEmpty =
+			!navShortcutsPreference ||
+			!isArray(navShortcuts) ||
+			navShortcuts.length === 0;
+
+		if (isEmpty) {
+			const defaultShortcuts = defaultMoreMenuItems.filter(
+				(item) => item.isPinned,
+			);
+			updateNavShortcutsPreference(defaultShortcuts);
+		}
+
+		// Mark as initialized so we don't check again in this session
+		hasInitializedDefaultsRef.current = true;
+	}, [userPreferences, updateNavShortcutsPreference]);
 
 	const onTogglePin = useCallback(
 		(item: SidebarItem): void => {
