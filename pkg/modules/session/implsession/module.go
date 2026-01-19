@@ -123,7 +123,7 @@ func (module *module) DeprecatedCreateSessionByEmailPassword(ctx context.Context
 	}
 
 	if !factorPassword.Equals(password) {
-		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email orpassword")
+		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email or password")
 	}
 
 	identity := authtypes.NewIdentity(users[0].ID, users[0].OrgID, users[0].Email, users[0].Role)
@@ -157,7 +157,15 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", err
 	}
 
-	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, types.RoleViewer, callbackIdentity.OrgID)
+	authDomain, err := module.authDomain.GetByOrgIDAndID(ctx, callbackIdentity.OrgID, callbackIdentity.State.DomainID)
+	if err != nil {
+		return "", err
+	}
+
+	roleMapping := authDomain.AuthDomainConfig().RoleMapping
+	role := roleMapping.NewRoleFromCallbackIdentity(callbackIdentity)
+
+	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, role, callbackIdentity.OrgID)
 	if err != nil {
 		return "", err
 	}

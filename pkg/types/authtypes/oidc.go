@@ -22,18 +22,13 @@ type OIDCConfig struct {
 	ClientSecret string `json:"clientSecret"`
 
 	// Mapping of claims to the corresponding fields in the token.
-	ClaimMapping ClaimMapping `json:"claimMapping"`
+	ClaimMapping AttributeMapping `json:"claimMapping"`
 
 	// Whether to skip email verification. Defaults to "false"
 	InsecureSkipEmailVerified bool `json:"insecureSkipEmailVerified"`
 
 	// Uses the userinfo endpoint to get additional claims for the token. This is especially useful where upstreams return "thin" id tokens
 	GetUserInfo bool `json:"getUserInfo"`
-}
-
-type ClaimMapping struct {
-	// Configurable key which contains the email claims. Defaults to "email"
-	Email string `json:"email"`
 }
 
 func (config *OIDCConfig) UnmarshalJSON(data []byte) error {
@@ -56,8 +51,10 @@ func (config *OIDCConfig) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "clientSecret is required")
 	}
 
-	if temp.ClaimMapping.Email == "" {
-		temp.ClaimMapping.Email = "email"
+	if temp.ClaimMapping == (AttributeMapping{}) {
+		if err := json.Unmarshal([]byte("{}"), &temp.ClaimMapping); err != nil {
+			return err
+		}
 	}
 
 	*config = OIDCConfig(temp)
