@@ -136,17 +136,19 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 
 	for idx := range query.SelectFields {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:         query.SelectFields[idx].Name,
-			Signal:       telemetrytypes.SignalTraces,
-			FieldContext: query.SelectFields[idx].FieldContext,
+			Name:          query.SelectFields[idx].Name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  query.SelectFields[idx].FieldContext,
+			FieldDataType: query.SelectFields[idx].FieldDataType,
 		})
 	}
 
 	for idx := range query.Order {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:         query.Order[idx].Key.Name,
-			Signal:       telemetrytypes.SignalTraces,
-			FieldContext: query.Order[idx].Key.FieldContext,
+			Name:          query.Order[idx].Key.Name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  query.Order[idx].Key.FieldContext,
+			FieldDataType: query.Order[idx].Key.FieldDataType,
 		})
 	}
 

@@ -328,6 +328,11 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeNumber,
 			},
+			{
+				Name:          "severity_number",
+				FieldContext:  telemetrytypes.FieldContextBody,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			},
 		},
 		"created_at": {
 			{

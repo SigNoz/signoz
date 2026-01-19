@@ -682,14 +682,14 @@ func TestAdjustKey(t *testing.T) {
 		{
 			name: "json field with no context specified",
 			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "body.severity_text",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				Name:          "severity_number",
+				FieldContext:  telemetrytypes.FieldContextBody,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
 			keysMap: buildCompleteFieldKeyMap(),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "body.severity_text",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				Name:          "severity_number",
+				FieldContext:  telemetrytypes.FieldContextBody,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
 		},
@@ -832,11 +832,12 @@ func TestAdjustKey(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -848,7 +849,6 @@ func TestAdjustKey(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 

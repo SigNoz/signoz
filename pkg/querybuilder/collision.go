@@ -164,7 +164,7 @@ func AdjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys 
 		// NOTE: if a user is highly opinionated and use attribute.duration_nano:string
 		// It will be defaulted to intrinsic field duration_nano as the actual attribute might be attribute.duration_nano:number
 
-		// We don't have a match, then it's doesn't exist in attribute or resource attribute
+		// We don't have a match, then it doesn't exist in attribute or resource attribute
 		// use the intrinsic/calculated field
 		if !match {
 			// This is the case where user is using an intrinsic/calculated field
@@ -206,7 +206,7 @@ func AdjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys 
 		// Also consider if context is actually part of the key name
 		contextPrefixedMatchingKeys := []*telemetrytypes.TelemetryFieldKey{}
 		if key.FieldContext != telemetrytypes.FieldContextUnspecified {
-			for _, metadataKey := range keys[key.FieldContext.StringValue()+key.Name] {
+			for _, metadataKey := range keys[key.FieldContext.StringValue()+"."+key.Name] {
 				// Since we prefixed the context in the name, we only need to match data type
 				if key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || key.FieldDataType == metadataKey.FieldDataType {
 					contextPrefixedMatchingKeys = append(contextPrefixedMatchingKeys, metadataKey)
