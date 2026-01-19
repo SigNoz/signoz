@@ -53,4 +53,5 @@ export enum QueryParams {
 	variables = 'variables',
 	version = 'version',
 	showNewCreateAlertsPage = 'showNewCreateAlertsPage',
+	source = 'source',
 }
