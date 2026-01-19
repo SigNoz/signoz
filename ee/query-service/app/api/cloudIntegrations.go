@@ -76,7 +76,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	ingestionUrl, signozApiUrl, apiErr := ah.getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
+	signozApiUrl, apiErr := ah.getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
 	if apiErr != nil {
 		RespondError(w, basemodel.WrapApiError(
 			apiErr, "couldn't deduce ingestion url and signoz api url",
@@ -84,7 +84,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	result.IngestionUrl = ingestionUrl
+	result.IngestionUrl = ah.opts.GlobalConfig.IngestionURL.String()
 	result.SigNozAPIUrl = signozApiUrl
 
 	gatewayUrl := ah.opts.GatewayUrl
@@ -186,7 +186,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 }
 
 func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (
-	string, string, *basemodel.ApiError,
+	string, *basemodel.ApiError,
 ) {
 	// TODO: remove this struct from here
 	type deploymentResponse struct {
@@ -200,7 +200,7 @@ func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licens
 
 	respBytes, err := ah.Signoz.Zeus.GetDeployment(ctx, licenseKey)
 	if err != nil {
-		return "", "", basemodel.InternalError(fmt.Errorf(
+		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't query for deployment info: error: %w", err,
 		))
 	}
@@ -209,7 +209,7 @@ func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licens
 
 	err = json.Unmarshal(respBytes, resp)
 	if err != nil {
-		return "", "", basemodel.InternalError(fmt.Errorf(
+		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't unmarshal deployment info response: error: %w", err,
 		))
 	}
@@ -219,16 +219,14 @@ func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licens
 
 	if len(regionDns) < 1 || len(deploymentName) < 1 {
 		// Fail early if actual response structure and expectation here ever diverge
-		return "", "", basemodel.InternalError(fmt.Errorf(
+		return "", basemodel.InternalError(fmt.Errorf(
 			"deployment info response not in expected shape. couldn't determine region dns and deployment name",
 		))
 	}
 
-	ingestionUrl := fmt.Sprintf("https://ingest.%s", regionDns)
-
 	signozApiUrl := fmt.Sprintf("https://%s.%s", deploymentName, regionDns)
 
-	return ingestionUrl, signozApiUrl, nil
+	return signozApiUrl, nil
 }
 
 type ingestionKey struct {
