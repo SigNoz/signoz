@@ -396,6 +396,265 @@ def test_logs_list(
     assert "d-001" in values
 
 
+def test_logs_list_with_order_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Setup:
+    Insert 3 logs with service.name in attributes and resources
+
+    Tests:
+    1. Query logs ordered by attribute.service.name ascending
+    2. Query logs ordered by resource.service.name ascending
+    3. Query logs ordered by service.name ascending
+    """
+    insert_logs(
+        [
+            Logs(
+                timestamp=datetime.now(tz=timezone.utc) - timedelta(seconds=3),
+                resources={},
+                attributes={"service.name": "c", "id": "log-001"},
+                body="Log with DEBUG severity",
+                severity_text="DEBUG",
+            ),
+            Logs(
+                timestamp=datetime.now(tz=timezone.utc) - timedelta(seconds=2),
+                resources={},
+                attributes={"service.name": "d", "id": "log-002"},
+                body="Log with ERROR severity",
+                severity_text="ERROR",
+            ),
+            Logs(
+                timestamp=datetime.now(tz=timezone.utc) - timedelta(seconds=1),
+                resources={"service.name": "b"},
+                attributes={"id": "log-003"},
+                body="Log with INFO severity",
+                severity_text="INFO",
+            ),
+            Logs(
+                timestamp=datetime.now(tz=timezone.utc) - timedelta(seconds=1),
+                resources={"service.name": "a"},
+                attributes={"id": "log-004"},
+                body="Log with INFO severity",
+                severity_text="INFO",
+            ),
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+
+    # Case 1: Query logs ordered by attribute.service.name ascending
+    # Order should be : log-003 (""), log-004 (""), log-001 ("c"), log-002 ("d")
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (datetime.now(tz=timezone.utc) - timedelta(minutes=1)).timestamp()
+                * 1000
+            ),
+            "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+            "requestType": "raw",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "order": [
+                                {"key": {"name": "service.name", "fieldContext": "attribute"}, "direction": "asc"}
+                            ],
+                        },
+                    }
+                ]
+            },
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+    
+    # Verify that both queries return the same results with specifying context with key name
+    response_ = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (datetime.now(tz=timezone.utc) - timedelta(minutes=1)).timestamp()
+                * 1000
+            ),
+            "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+            "requestType": "raw",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "order": [
+                                {"key": {"name": "attribute.service.name"}, "direction": "asc"}
+                            ],
+                        },
+                    }
+                ]
+            },
+        },
+    )
+    assert response_.status_code == HTTPStatus.OK
+    assert response_.json()["status"] == "success"
+
+    assert response.json()["data"]["data"]["results"] == response_.json()["data"]["data"]["results"]
+
+
+    results = response.json()["data"]["data"]["results"]
+    rows = results[0]["rows"]
+    ids = [row["data"]["attributes_string"].get("id","") for row in rows]
+
+    # 1 => c ; 2 => d ; 3 => "",(b); 4 => "",(a)
+    assert ids == ["log-004", "log-003", "log-001", "log-002"]
+
+
+    # Case 2: Query logs ordered by resource.service.name ascending
+    # Order should be : log-001 (""), log-002 (""), log-003 ("go")
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (datetime.now(tz=timezone.utc) - timedelta(minutes=1)).timestamp()
+                * 1000
+            ),
+            "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+            "requestType": "raw",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "order": [
+                                {"key": {"name": "service.name", "fieldContext": "resource"}, "direction": "desc"}
+                            ],
+                        },
+                    }
+                ]
+            },
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    # Verify that both queries return the same results with specifying context with key name
+    response_ = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (datetime.now(tz=timezone.utc) - timedelta(minutes=1)).timestamp()
+                * 1000
+            ),
+            "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+            "requestType": "raw",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "order": [
+                                {"key": {"name": "resource.service.name"}, "direction": "desc"}
+                            ],
+                        },
+                    }
+                ]
+            },
+        },
+    )
+
+    assert response_.status_code == HTTPStatus.OK
+    assert response_.json()["status"] == "success"
+
+    assert response.json()["data"]["data"]["results"] == response_.json()["data"]["data"]["results"]
+
+    results = response.json()["data"]["data"]["results"]
+    rows = results[0]["rows"]
+    ids = [row["data"]["attributes_string"].get("id","") for row in rows]
+
+    # 1 => NULL,c ; 2 => NULL,d ; 3 => b; 4 => a
+    # Note: NULLs are sorted after non-NULLs in descending order
+    assert ids == ["log-003", "log-004", "log-001", "log-002"]
+
+
+    # Case 3: Query logs ordered by service.name ascending
+    # Order should be : log-003 ("go"), log-002 ("erlang"), log-001 ("java")
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (datetime.now(tz=timezone.utc) - timedelta(minutes=1)).timestamp()
+                * 1000
+            ),
+            "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+            "requestType": "raw",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "order": [
+                                {"key": {"name": "service.name"}, "direction": "asc"}
+                            ],
+                        },
+                    }
+                ]
+            },
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    rows = results[0]["rows"]
+    ids = [row["data"]["attributes_string"].get("id","") for row in rows]
+
+    # 1 => c ; 2 => d ; 3 => b; 4 => a
+    assert ids == ["log-004", "log-003", "log-001", "log-002"]
+
+    
 def test_logs_time_series_count(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument

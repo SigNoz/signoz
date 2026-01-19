@@ -218,6 +218,71 @@ def test_traces_list(
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
+    # Query results with context appended to key names
+    response_ = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp()
+                * 1000
+            ),
+            "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+            "requestType": "raw",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "disabled": False,
+                            "limit": 10,
+                            "offset": 0,
+                            "order": [
+                                {"key": {"name": "timestamp"}, "direction": "desc"},
+                            ],
+                            "selectFields": [
+                                {
+                                    "name": "resource.service.name",
+                                    "fieldDataType": "string",
+                                    "signal": "traces",
+                                },
+                                {
+                                    "name": "span.name:string",
+                                    "signal": "traces",
+                                },
+                                {
+                                    "name": "span.duration_nano",
+                                    "signal": "traces",
+                                },
+                                {
+                                    "name": "span.http_method",
+                                    "signal": "traces",
+                                },
+                                {
+                                    "name": "span.response_status_code",
+                                    "signal": "traces",
+                                },
+                            ],
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+    assert response_.status_code == HTTPStatus.OK
+    assert response_.json()["status"] == "success"
+
+    assert response.json()["data"]["data"]["results"] == response_.json()["data"]["data"]["results"]
+
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
 
