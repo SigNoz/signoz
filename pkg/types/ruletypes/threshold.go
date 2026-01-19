@@ -83,7 +83,7 @@ func (eval EvalData) HasActiveAlert(sampleLabelFp uint64) bool {
 type RuleThreshold interface {
 	// Eval runs the given series through the threshold rules
 	// using the given EvalData and returns the matching series
-	Eval(series v3.Series, unit string, evalData EvalData) (Vector, error)
+	Eval(series *v3.Series, unit string, evalData EvalData) (Vector, error)
 	GetRuleReceivers() []RuleReceivers
 }
 
@@ -122,7 +122,7 @@ func (r BasicRuleThresholds) Validate() error {
 	return errors.Join(errs...)
 }
 
-func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalData) (Vector, error) {
+func (r BasicRuleThresholds) Eval(series *v3.Series, unit string, evalData EvalData) (Vector, error) {
 	var resultVector Vector
 	thresholds := []BasicRuleThreshold(r)
 	sortThresholds(thresholds)
@@ -138,14 +138,14 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 			continue
 		} else if evalData.SendUnmatched {
 			// Sanitise the series points to remove any NaN or Inf values
-			series.Points = removeGroupinSetPoints(series)
-			if len(series.Points) == 0 {
+			cleanedSeries := cleanSeriesPoints(*series)
+			if len(cleanedSeries.Points) == 0 {
 				continue
 			}
 			// prepare the sample with the first point of the series
 			smpl := Sample{
-				Point:      Point{T: series.Points[0].Timestamp, V: series.Points[0].Value},
-				Metric:     PrepareSampleLabelsForRule(series.Labels, threshold.Name),
+				Point:      Point{T: cleanedSeries.Points[0].Timestamp, V: cleanedSeries.Points[0].Value},
+				Metric:     PrepareSampleLabelsForRule(cleanedSeries.Labels, threshold.Name),
 				Target:     *threshold.TargetValue,
 				TargetUnit: threshold.TargetUnit,
 			}
@@ -255,18 +255,23 @@ func (b BasicRuleThreshold) Validate() error {
 	return errors.Join(errs...)
 }
 
-func (b BasicRuleThreshold) matchesRecoveryThreshold(series v3.Series, ruleUnit string) (Sample, bool) {
+func (b BasicRuleThreshold) matchesRecoveryThreshold(series *v3.Series, ruleUnit string) (Sample, bool) {
 	return b.shouldAlertWithTarget(series, b.recoveryTarget(ruleUnit))
 }
-func (b BasicRuleThreshold) shouldAlert(series v3.Series, ruleUnit string) (Sample, bool) {
+func (b BasicRuleThreshold) shouldAlert(series *v3.Series, ruleUnit string) (Sample, bool) {
 	return b.shouldAlertWithTarget(series, b.target(ruleUnit))
 }
 
-func removeGroupinSetPoints(series v3.Series) []v3.Point {
-	var result []v3.Point
+// cleanSeriesPoints removes points that are NaN or Inf
+// and returns the copy of the series with the points removed
+func cleanSeriesPoints(series v3.Series) v3.Series {
+	result := v3.Series{
+		Labels:      series.Labels,
+		LabelsArray: series.LabelsArray,
+	}
 	for _, s := range series.Points {
 		if s.Timestamp >= 0 && !math.IsNaN(s.Value) && !math.IsInf(s.Value, 0) {
-			result = append(result, s)
+			result.Points = append(result.Points, s)
 		}
 	}
 	return result
@@ -284,13 +289,12 @@ func PrepareSampleLabelsForRule(seriesLabels map[string]string, thresholdName st
 	return lb.Labels()
 }
 
-func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float64) (Sample, bool) {
+func (b BasicRuleThreshold) shouldAlertWithTarget(s *v3.Series, target float64) (Sample, bool) {
 	var shouldAlert bool
 	var alertSmpl Sample
-	lbls := PrepareSampleLabelsForRule(series.Labels, b.Name)
+	lbls := PrepareSampleLabelsForRule(s.Labels, b.Name)
 
-	series.Points = removeGroupinSetPoints(series)
-
+	series := cleanSeriesPoints(*s)
 	// nothing to evaluate
 	if len(series.Points) == 0 {
 		return alertSmpl, false

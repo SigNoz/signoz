@@ -82,7 +82,7 @@ func TestThresholdRuleEvalBackwardCompat(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		resultVectors, err := rule.Threshold.Eval(c.values, rule.Unit(), ruletypes.EvalData{
+		resultVectors, err := rule.Threshold.Eval(&c.values, rule.Unit(), ruletypes.EvalData{
 			ActiveAlerts: map[uint64]struct{}{},
 		})
 		assert.NoError(t, err, "Test case %d", idx)
@@ -461,7 +461,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		vector, err := rule.Threshold.Eval(c.values, rule.Unit(), ruletypes.EvalData{})
+		vector, err := rule.Threshold.Eval(&c.values, rule.Unit(), ruletypes.EvalData{})
 		assert.NoError(t, err)
 
 		for name, value := range c.values.Labels {
@@ -471,7 +471,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 		}
 
 		// Get result vectors from threshold evaluation
-		resultVectors, err := rule.Threshold.Eval(c.values, rule.Unit(), ruletypes.EvalData{})
+		resultVectors, err := rule.Threshold.Eval(&c.values, rule.Unit(), ruletypes.EvalData{})
 		assert.NoError(t, err, "Test case %d", idx)
 
 		// Compare result vectors with expected behavior
@@ -1584,7 +1584,7 @@ func TestThresholdRuleEval_SendUnmatchedBypassesRecovery(t *testing.T) {
 	alertLabels := ruletypes.PrepareSampleLabelsForRule(series.Labels, "primary")
 	activeAlerts := map[uint64]struct{}{alertLabels.Hash(): {}}
 
-	resultVectors, err := rule.Threshold.Eval(series, rule.Unit(), ruletypes.EvalData{
+	resultVectors, err := rule.Threshold.Eval(&series, rule.Unit(), ruletypes.EvalData{
 		ActiveAlerts:  activeAlerts,
 		SendUnmatched: true,
 	})
@@ -1852,7 +1852,7 @@ func runEvalTests(t *testing.T, postableRule ruletypes.PostableRule, testCases [
 				SendUnmatched: c.sendUnmatched,
 			}
 
-			resultVectors, err := rule.Threshold.Eval(values, rule.Unit(), evalData)
+			resultVectors, err := rule.Threshold.Eval(&values, rule.Unit(), evalData)
 			assert.NoError(t, err)
 
 			if c.expectSamples != nil {
@@ -1960,7 +1960,7 @@ func runMultiThresholdEvalTests(t *testing.T, postableRule ruletypes.PostableRul
 				ActiveAlerts: activeAlerts,
 			}
 
-			resultVectors, err := rule.Threshold.Eval(values, rule.Unit(), evalData)
+			resultVectors, err := rule.Threshold.Eval(&values, rule.Unit(), evalData)
 			assert.NoError(t, err)
 
 			// Validate total sample count

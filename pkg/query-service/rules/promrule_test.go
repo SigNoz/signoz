@@ -705,7 +705,8 @@ func TestPromRuleEval(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		resultVectors, err := rule.Threshold.Eval(toCommonSeries(c.values), rule.Unit(), ruletypes.EvalData{})
+		series := toCommonSeries(c.values)
+		resultVectors, err := rule.Threshold.Eval(&series, rule.Unit(), ruletypes.EvalData{})
 		assert.NoError(t, err)
 
 		// Compare full result vector with expected vector
