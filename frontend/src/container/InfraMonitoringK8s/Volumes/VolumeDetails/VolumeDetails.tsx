@@ -9,7 +9,7 @@ import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import GetMinMax from 'lib/getMinMax';
 import { X } from 'lucide-react';

@@ -1,12 +1,11 @@
-import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	CustomTimeType,
-	Time as TimeV2,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { GetMinMaxPayload } from 'lib/getMinMax';
 
 export const getGlobalTime = (
-	selectedTime: Time | TimeV2 | CustomTimeType,
+	selectedTime: Time | CustomTimeType,
 	globalTime: GetMinMaxPayload,
 ): GetMinMaxPayload | undefined => {
 	if (selectedTime === 'custom') {

@@ -1,10 +1,8 @@
 import './styles.scss';
 
 import { Select } from 'antd';
-import {
-	RelativeDurationOptions,
-	Time,
-} from 'container/TopNav/DateTimeSelection/config';
+import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
+import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import LogsCountInInterval from './components/LogsCountInInterval';

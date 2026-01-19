@@ -8,11 +8,11 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
+import { RelativeDurationSuggestionOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
 import {
 	LexicalContext,
 	Option,
-	RelativeDurationSuggestionOptions,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import dayjs from 'dayjs';
 import { Clock, PenLine, TriangleAlertIcon } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';

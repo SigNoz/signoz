@@ -1,9 +1,10 @@
-import GetMinMax, { GetMinMaxPayload } from 'lib/getMinMax';
+export interface IOptions {
+	label: string;
+	key: string;
+	value: number;
+}
 
-import { Time } from '../DateTimeSelection/config';
-import { CustomTimeType, Time as TimeV2 } from '../DateTimeSelectionV2/config';
-
-export const options: IOptions[] = [
+export const refreshIntervalOptions: IOptions[] = [
 	{
 		label: 'off',
 		key: 'off',
@@ -60,18 +61,3 @@ export const options: IOptions[] = [
 		value: 86400000,
 	},
 ];
-
-export interface IOptions {
-	label: string;
-	key: string;
-	value: number;
-}
-
-export const getMinMax = (
-	selectedTime: Time | TimeV2 | CustomTimeType,
-	minTime: number,
-	maxTime: number,
-): GetMinMaxPayload =>
-	selectedTime !== 'custom'
-		? GetMinMax(selectedTime)
-		: GetMinMax(selectedTime, [minTime, maxTime]);

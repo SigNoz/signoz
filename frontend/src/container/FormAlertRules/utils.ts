@@ -1,5 +1,5 @@
 import { SelectProps } from 'antd';
-import { Time } from 'container/TopNav/DateTimeSelection/config';
+import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import getStep from 'lib/getStep';
 import {

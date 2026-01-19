@@ -7,6 +7,7 @@ import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import _omit from 'lodash-es/omit';
 import { Check } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -23,7 +24,7 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { getMinMax, options } from './config';
+import { refreshIntervalOptions } from './constants';
 import { ButtonContainer } from './styles';
 
 const DEFAULT_REFRESH_INTERVAL = '30s';
@@ -70,20 +71,23 @@ function AutoRefresh({
 	const params = useUrlQuery();
 
 	const defaultOption = useMemo(
-		() => options.find((option) => option.key === DEFAULT_REFRESH_INTERVAL),
+		() =>
+			refreshIntervalOptions.find(
+				(option) => option.key === DEFAULT_REFRESH_INTERVAL,
+			),
 		[],
 	);
 
 	const [selectedOption, setSelectedOption] = useState<string>(
-		localStorageValue || options[0].key,
+		localStorageValue || refreshIntervalOptions[0].key,
 	);
 
 	useEffect(() => {
-		setSelectedOption(localStorageValue || options[0].key);
+		setSelectedOption(localStorageValue || refreshIntervalOptions[0].key);
 	}, [localStorageValue, params, defaultOption]);
 
 	const getOption = useMemo(
-		() => options.find((option) => option.key === selectedOption),
+		() => refreshIntervalOptions.find((option) => option.key === selectedOption),
 		[selectedOption],
 	);
 
@@ -95,7 +99,7 @@ function AutoRefresh({
 		}
 
 		if (selectedOption !== 'off' && selectedValue) {
-			const { maxTime, minTime } = getMinMax(
+			const { maxTime, minTime } = getMinMaxForSelectedTime(
 				globalTime.selectedTime,
 				globalTime.minTime,
 				globalTime.maxTime,
@@ -175,7 +179,7 @@ function AutoRefresh({
 					>
 						Refresh Interval
 					</Typography.Paragraph>
-					{options
+					{refreshIntervalOptions
 						.filter((e) => e.label !== 'off')
 						.map((option) => (
 							<Button
