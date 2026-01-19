@@ -261,7 +261,7 @@ func (provider *Provider) do(ctx context.Context, orgID valuer.UUID, method stri
 	}
 
 	errorMessage := gjson.GetBytes(responseBody, "error").String()
-	if errorMessage != "" {
+	if errorMessage == "" {
 		errorMessage = "unknown error"
 	}
 
