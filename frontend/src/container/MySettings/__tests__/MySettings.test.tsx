@@ -226,10 +226,24 @@ describe('MySettings Flows', () => {
 	});
 
 	describe('License section', () => {
-		it('Should render license section content', () => {
+		it('Should render license section content when license key exists', () => {
 			expect(screen.getByText('License')).toBeInTheDocument();
 			expect(screen.getByText('License key')).toBeInTheDocument();
 			expect(screen.getByText('Your SigNoz license key.')).toBeInTheDocument();
+		});
+
+		it('Should not render license section when license key is missing', () => {
+			render(<MySettingsContainer />, undefined, {
+				appContextOverrides: {
+					activeLicense: null,
+				},
+			});
+
+			expect(screen.queryByText('License')).not.toBeInTheDocument();
+			expect(screen.queryByText('License key')).not.toBeInTheDocument();
+			expect(
+				screen.queryByText('Your SigNoz license key.'),
+			).not.toBeInTheDocument();
 		});
 
 		it('Should copy license key and show success toast', async () => {
