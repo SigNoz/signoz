@@ -183,6 +183,7 @@ export function QueryBuilderProvider({
 			const setupedQueryData = builder.queryData.map((item) => {
 				const currentElement: IBuilderQuery = {
 					...item,
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					groupBy: item.groupBy.map(({ id: _, ...item }) => ({
 						...item,
 						id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
@@ -671,16 +672,28 @@ export function QueryBuilderProvider({
 				aggregations = [{ expression: 'heatmap(' }];
 			}
 
-			setCurrentQuery((prevState) => {
-				const existing = prevState.builder.queryTraceOperator?.[0] || null;
-				const updated: IBuilderTraceOperator = existing
-					? { ...existing, expression: trimmed }
+			const getUpdatedTraceOperator = (
+				existing: IBuilderTraceOperator | null,
+			): IBuilderTraceOperator =>
+				existing
+					? {
+							...existing,
+							expression: trimmed,
+							aggregations:
+								!trimmed && panelType === PANEL_TYPES.HEATMAP
+									? aggregations
+									: existing.aggregations,
+					  }
 					: {
 							...initialQueryBuilderFormTraceOperatorValues,
 							queryName: TRACE_OPERATOR_QUERY_NAME,
 							expression: trimmed,
 							aggregations,
 					  };
+
+			const updateState = (prevState: QueryState): QueryState => {
+				const existing = prevState.builder.queryTraceOperator?.[0] || null;
+				const updated = getUpdatedTraceOperator(existing);
 
 				return {
 					...prevState,
@@ -690,28 +703,10 @@ export function QueryBuilderProvider({
 						queryTraceOperator: [updated],
 					},
 				};
-			});
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			setSupersetQuery((prevState) => {
-				const existing = prevState.builder.queryTraceOperator?.[0] || null;
-				const updated: IBuilderTraceOperator = existing
-					? { ...existing, expression: trimmed }
-					: {
-							...initialQueryBuilderFormTraceOperatorValues,
-							queryName: TRACE_OPERATOR_QUERY_NAME,
-							expression: trimmed,
-							aggregations,
-					  };
+			};
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						// enforce single trace operator and replace only expression
-						queryTraceOperator: [updated],
-					},
-				};
-			});
+			setCurrentQuery(updateState);
+			setSupersetQuery(updateState);
 		},
 		[panelType],
 	);
