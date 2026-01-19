@@ -673,7 +673,7 @@ def perform_oidc_login(
     idp: types.TestContainerIDP,
     driver: webdriver.Chrome,
     get_session_context: Callable[[str], str],
-    idp_login: Callable[[str, str], None],
+    idp_login: Callable[[str, str], None], # pylint: disable=redefined-outer-name
     email: str,
     password: str,
 ) -> None:
@@ -708,7 +708,7 @@ def perform_saml_login(
     signoz: types.SigNoz, # pylint: disable=unused-argument
     driver: webdriver.Chrome,
     get_session_context: Callable[[str], str],
-    idp_login: Callable[[str, str], None],
+    idp_login: Callable[[str, str], None], # pylint: disable=redefined-outer-name
     email: str,
     password: str,
 ) -> None:
