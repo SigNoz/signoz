@@ -27,7 +27,7 @@
 
 	&.focused {
 		.variable-value {
-			border: 1px solid var(--bg-robin-400);
+			outline: 1px solid var(--bg-robin-400);
 		}
 	}
 

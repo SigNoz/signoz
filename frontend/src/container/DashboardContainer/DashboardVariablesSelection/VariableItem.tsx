@@ -398,6 +398,7 @@ function VariableItem({
 						data-testid={`variable-textbox-${variableData.id}`}
 						bordered={false}
 						value={textboxInputValue}
+						title={textboxInputValue}
 						onChange={(e): void => {
 							setTextboxInputValue(e.target.value);
 						}}
@@ -426,10 +427,6 @@ function VariableItem({
 								}
 								textboxInputRef.current?.blur();
 							}
-						}}
-						className="textbox-input"
-						style={{
-							width: 50 + ((textboxInputValue?.length || 0) * 7 || 50),
 						}}
 					/>
 				) : (
