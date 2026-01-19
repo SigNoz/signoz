@@ -1,11 +1,11 @@
 package querier
 
 import (
-	"errors"
 	"log/slog"
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/stretchr/testify/assert"
 )
@@ -176,7 +176,7 @@ func TestRemoveAllVarMatchers(t *testing.T) {
 }
 
 func TestEnhancePromQLError(t *testing.T) {
-	parseErr := errors.New("unexpected character: '.' at position 12")
+	parseErr := errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unexpected character: '.' at position 12")
 
 	t.Run("dotted name patterns", func(t *testing.T) {
 		tests := []struct {
