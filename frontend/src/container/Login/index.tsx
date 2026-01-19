@@ -37,7 +37,7 @@ type FormValues = {
 	url: string;
 };
 
-function Login(): JSX.Element {
+function Login(): JSX.Element | null {
 	const urlQueryParams = useUrlQuery();
 	// override for callbackAuthN in case of some misconfiguration
 	const isPasswordAuthNEnabled = (urlQueryParams.get('password') || 'N') === 'Y';
@@ -60,6 +60,7 @@ function Login(): JSX.Element {
 		sessionsContextLoading,
 		setIsLoadingSessionsContext,
 	] = useState<boolean>(false);
+	const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
 	const [form] = Form.useForm<FormValues>();
 	const { showErrorModal } = useErrorModal();
 
@@ -175,6 +176,7 @@ function Login(): JSX.Element {
 	// once the callback authN redirects to the login screen with access_token and refresh_token navigate them to homepage
 	useEffect(() => {
 		if (accessToken && refreshToken) {
+			setIsAuthenticating(true);
 			afterLogin(accessToken, refreshToken);
 		}
 	}, [accessToken, refreshToken]);
@@ -194,6 +196,7 @@ function Login(): JSX.Element {
 					orgId: sessionsOrgId,
 				});
 
+				setIsAuthenticating(true);
 				afterLogin(
 					createSessionEmailPasswordResponse.data.accessToken,
 					createSessionEmailPasswordResponse.data.refreshToken,
@@ -249,6 +252,11 @@ function Login(): JSX.Element {
 			);
 		}
 	}, [sessionsOrgWarning, showErrorModal]);
+
+	// Don't render the login form if authentication is in progress to prevent flash
+	if (isAuthenticating) {
+		return null;
+	}
 
 	return (
 		<div className="login-form-container">
