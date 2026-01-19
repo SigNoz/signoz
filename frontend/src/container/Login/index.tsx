@@ -5,11 +5,13 @@ import getVersion from 'api/v1/version/get';
 import get from 'api/v2/sessions/context/get';
 import post from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
+import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { ErrorV2 } from 'types/api';
@@ -62,6 +64,7 @@ function Login(): JSX.Element {
 	] = useState<boolean>(false);
 	const [form] = Form.useForm<FormValues>();
 	const { showErrorModal } = useErrorModal();
+	const { isLoggedIn } = useAppContext();
 
 	// setupCompleted information to route to signup page in case setup is incomplete
 	const {
@@ -249,6 +252,11 @@ function Login(): JSX.Element {
 			);
 		}
 	}, [sessionsOrgWarning, showErrorModal]);
+
+	if (isLoggedIn) {
+		// Route to home immediately via PrivateRoute, but show loading to prevent UI flashing
+		return <Spinner tip="Loading..." />;
+	}
 
 	return (
 		<div className="login-form-container">
