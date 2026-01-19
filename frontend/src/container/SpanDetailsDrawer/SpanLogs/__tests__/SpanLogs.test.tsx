@@ -117,6 +117,7 @@ const defaultProps = {
 		startTime: 1640995200000,
 		endTime: 1640995260000,
 	},
+	isTraceOnlyLoading: false,
 	logs: [],
 	isLoading: false,
 	isError: false,
@@ -141,6 +142,7 @@ describe('SpanLogs', () => {
 
 		// Should show simple empty state (no emptyStateConfig provided)
 		expect(
+			// eslint-disable-next-line sonarjs/no-duplicate-string
 			screen.getByText('No logs found for selected span.'),
 		).toBeInTheDocument();
 		expect(
@@ -210,5 +212,28 @@ describe('SpanLogs', () => {
 		await user.click(logExplorerButton);
 
 		expect(mockHandleExplorerPageRedirect).toHaveBeenCalledTimes(1);
+	});
+
+	it('should show loading state when isTraceOnlyLoading is true', () => {
+		// Render with isTraceOnlyLoading true and emptyStateConfig present
+		render(
+			<SpanLogs
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...defaultProps}
+				isTraceOnlyLoading
+				emptyStateConfig={getEmptyLogsListConfig(jest.fn())}
+			/>,
+		);
+
+		// Should show loading spinner
+		expect(screen.getByTestId('logs-loading')).toBeInTheDocument();
+
+		// Should NOT show enhanced empty state
+		expect(screen.queryByTestId('empty-logs-search')).not.toBeInTheDocument();
+
+		// Should NOT show simple empty state
+		expect(
+			screen.queryByText('No logs found for selected span.'),
+		).not.toBeInTheDocument();
 	});
 });
