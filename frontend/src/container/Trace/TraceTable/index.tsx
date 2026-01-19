@@ -10,9 +10,7 @@ import {
 import { formUrlParams } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
-import history from 'lib/history';
 import omit from 'lodash-es/omit';
-import { HTMLAttributes } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { updateURL } from 'store/actions/trace/util';
@@ -25,6 +23,7 @@ import {
 	UPDATE_SPANS_AGGREGATE_PAGE_SIZE,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
+import { genericNavigate } from 'utils/genericNavigate';
 import { v4 } from 'uuid';
 
 dayjs.extend(duration);
@@ -203,15 +202,13 @@ function TraceTable(): JSX.Element {
 			style={{
 				cursor: 'pointer',
 			}}
-			onRow={(record: TableType): HTMLAttributes<TableType> => ({
-				onClick: (event): void => {
+			onRow={(
+				record: TableType,
+			): { onClick: (event: React.MouseEvent) => void } => ({
+				onClick: (event: React.MouseEvent): void => {
 					event.preventDefault();
 					event.stopPropagation();
-					if (event.metaKey || event.ctrlKey) {
-						window.open(getLink(record), '_blank');
-					} else {
-						history.push(getLink(record));
-					}
+					genericNavigate(getLink(record), event);
 				},
 			})}
 			pagination={{

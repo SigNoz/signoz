@@ -3,7 +3,6 @@ import getAll from 'api/alerts/getAll';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
@@ -13,6 +12,7 @@ import { useQuery } from 'react-query';
 import { Link, useLocation } from 'react-router-dom';
 import { GettableAlert } from 'types/api/alerts/get';
 import { USER_ROLES } from 'types/roles';
+import { genericNavigate } from 'utils/genericNavigate';
 
 export default function AlertRules({
 	onUpdateChecklistDoneItem,
@@ -114,7 +114,10 @@ export default function AlertRules({
 		</div>
 	);
 
-	const onEditHandler = (record: GettableAlert) => (): void => {
+	const onEditHandler = (
+		record: GettableAlert,
+		event?: React.MouseEvent | React.KeyboardEvent,
+	): void => {
 		logEvent('Homepage: Alert clicked', {
 			ruleId: record.id,
 			ruleName: record.alert,
@@ -131,7 +134,7 @@ export default function AlertRules({
 
 		params.set(QueryParams.ruleId, record.id.toString());
 
-		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+		genericNavigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`, event);
 	};
 
 	const renderAlertRules = (): JSX.Element => (
@@ -143,10 +146,10 @@ export default function AlertRules({
 						tabIndex={0}
 						className="alert-rule-item home-data-item"
 						key={rule.id}
-						onClick={onEditHandler(rule)}
+						onClick={(event: React.MouseEvent): void => onEditHandler(rule, event)}
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter') {
-								onEditHandler(rule);
+								onEditHandler(rule, e);
 							}
 						}}
 					>

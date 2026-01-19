@@ -30,6 +30,7 @@ import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { isIngestionActive } from 'utils/app';
+import { genericNavigate } from 'utils/genericNavigate';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -550,11 +551,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(event: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
 													});
-													history.push(ROUTES.LOGS_EXPLORER);
+													genericNavigate(ROUTES.LOGS_EXPLORER, event);
 												}}
 											>
 												Open Logs Explorer
@@ -564,11 +565,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(event: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
 													});
-													history.push(ROUTES.TRACES_EXPLORER);
+													genericNavigate(ROUTES.TRACES_EXPLORER, event);
 												}}
 											>
 												Open Traces Explorer
@@ -578,11 +579,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(event: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
 													});
-													history.push(ROUTES.METRICS_EXPLORER_EXPLORER);
+													genericNavigate(ROUTES.METRICS_EXPLORER_EXPLORER, event);
 												}}
 											>
 												Open Metrics Explorer
@@ -619,11 +620,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Plus size={14} />}
-												onClick={(): void => {
+												onClick={(event: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
 													});
-													history.push(ROUTES.ALL_DASHBOARD);
+													genericNavigate(ROUTES.ALL_DASHBOARD, event);
 												}}
 											>
 												Create dashboard
@@ -661,11 +662,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Plus size={14} />}
-												onClick={(): void => {
+												onClick={(event: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
 													});
-													history.push(ROUTES.ALERTS_NEW);
+													genericNavigate(ROUTES.ALERTS_NEW, event);
 												}}
 											>
 												Create an alert

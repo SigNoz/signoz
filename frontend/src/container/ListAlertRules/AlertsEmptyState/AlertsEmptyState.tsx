@@ -5,10 +5,10 @@ import { Button, Divider, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
-import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
+import { genericNavigate } from 'utils/genericNavigate';
 
 import AlertInfoCard from './AlertInfoCard';
 import { ALERT_CARDS, ALERT_INFO_LINKS } from './alertLinks';
@@ -36,9 +36,9 @@ export function AlertsEmptyState(): JSX.Element {
 
 	const [loading, setLoading] = useState(false);
 
-	const onClickNewAlertHandler = useCallback(() => {
+	const onClickNewAlertHandler = useCallback((event: React.MouseEvent): void => {
 		setLoading(false);
-		history.push(ROUTES.ALERTS_NEW);
+		genericNavigate(ROUTES.ALERTS_NEW, event);
 	}, []);
 
 	return (
@@ -70,7 +70,9 @@ export function AlertsEmptyState(): JSX.Element {
 						<div className="action-container">
 							<Button
 								className="add-alert-btn"
-								onClick={onClickNewAlertHandler}
+								onClick={(event: React.MouseEvent): void =>
+									onClickNewAlertHandler(event)
+								}
 								icon={<PlusOutlined />}
 								disabled={!addNewAlert}
 								loading={loading}
