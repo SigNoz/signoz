@@ -3,6 +3,15 @@ import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 const toggleThemeFunction = jest.fn();
 const logEventFunction = jest.fn();
+const copyToClipboardFn = jest.fn();
+
+jest.mock('react-use', () => ({
+	__esModule: true,
+	useCopyToClipboard: (): [unknown, (text: string) => void] => [
+		null,
+		copyToClipboardFn,
+	],
+}));
 
 jest.mock('hooks/useDarkMode', () => ({
 	__esModule: true,
@@ -213,6 +222,33 @@ describe('MySettings Flows', () => {
 			});
 
 			expect(submitButton).not.toBeDisabled();
+		});
+	});
+
+	describe('License section', () => {
+		it('Should render license section content', () => {
+			expect(screen.getByText('License')).toBeInTheDocument();
+			expect(screen.getByText('License key')).toBeInTheDocument();
+			expect(screen.getByText('Your SigNoz license key.')).toBeInTheDocument();
+		});
+
+		it('Should copy license key and show success toast', async () => {
+			render(<MySettingsContainer />, undefined, {
+				appContextOverrides: {
+					activeLicense: {
+						key: 'test-license-key-12345',
+					} as any,
+				},
+			});
+
+			fireEvent.click(screen.getByTestId('license-key-copy-btn'));
+
+			await waitFor(() => {
+				expect(copyToClipboardFn).toHaveBeenCalledWith('test-license-key-12345');
+				expect(successNotification).toHaveBeenCalledWith({
+					message: 'Copied to clipboard',
+				});
+			});
 		});
 	});
 });

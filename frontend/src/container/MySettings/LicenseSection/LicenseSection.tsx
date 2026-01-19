@@ -38,11 +38,23 @@ function LicenseSection(): JSX.Element {
 								<Typography.Text code>
 									{getMaskedKey(activeLicense.key)}
 								</Typography.Text>
-								<Copy
-									size={14}
-									style={{ cursor: 'pointer' }}
+								<button
+									type="button"
+									aria-label="Copy license key"
+									data-testid="license-key-copy-btn"
 									onClick={(): void => handleCopyKey(activeLicense.key)}
-								/>
+									style={{
+										display: 'inline-flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										background: 'transparent',
+										border: 'none',
+										padding: 0,
+										cursor: 'pointer',
+									}}
+								>
+									<Copy size={14} />
+								</button>
 							</span>
 						) : (
 							<Typography.Text>N/A</Typography.Text>
