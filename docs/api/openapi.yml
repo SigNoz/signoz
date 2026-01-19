@@ -2067,6 +2067,361 @@ paths:
       summary: Get features
       tags:
       - features
+  /api/v2/gateway/ingestion-keys:
+    get:
+      deprecated: false
+      description: This endpoint returns the ingestion keys for a workspace
+      operationId: GetIngestionKeys
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GatewaytypesIngestionKeysResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get ingestion keys for workspace
+      tags:
+      - gateway
+    post:
+      deprecated: false
+      description: This endpoint creates an ingestion key for the workspace
+      operationId: CreateIngestionKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewaytypesIngestionKeyRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GatewaytypesCreatedIngestionKeyResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create ingestion key for workspace
+      tags:
+      - gateway
+  /api/v2/gateway/ingestion-keys/{keyId}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes an ingestion key for the workspace
+      operationId: DeleteIngestionKey
+      parameters:
+      - in: path
+        name: keyId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete ingestion key for workspace
+      tags:
+      - gateway
+    patch:
+      deprecated: false
+      description: This endpoint updates an ingestion key for the workspace
+      operationId: UpdateIngestionKey
+      parameters:
+      - in: path
+        name: keyId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewaytypesIngestionKeyRequest'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update ingestion key for workspace
+      tags:
+      - gateway
+  /api/v2/gateway/ingestion-keys/{keyId}/limits:
+    post:
+      deprecated: false
+      description: This endpoint creates an ingestion key limit
+      operationId: CreateIngestionKeyLimit
+      parameters:
+      - in: path
+        name: keyId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewaytypesIngestionKeyLimitRequest'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GatewaytypesCreatedIngestionKeyLimitResponse'
+                  status:
+                    type: string
+                type: object
+          description: Created
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create limit for the ingestion key
+      tags:
+      - gateway
+  /api/v2/gateway/ingestion-keys/limits/{limitId}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes an ingestion key limit
+      operationId: DeleteIngestionKeyLimit
+      parameters:
+      - in: path
+        name: limitId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete limit for the ingestion key
+      tags:
+      - gateway
+    patch:
+      deprecated: false
+      description: This endpoint updates an ingestion key limit
+      operationId: UpdateIngestionKeyLimit
+      parameters:
+      - in: path
+        name: limitId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewaytypesIngestionKeyLimitRequest'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update limit for the ingestion key
+      tags:
+      - gateway
+  /api/v2/gateway/ingestion-keys/search:
+    get:
+      deprecated: false
+      description: This endpoint returns the ingestion keys for a workspace
+      operationId: SearchIngestionKeys
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GatewaytypesIngestionKeysResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Search ingestion keys for workspace
+      tags:
+      - gateway
   /api/v2/metric/alerts:
     get:
       deprecated: false
@@ -3050,6 +3405,150 @@ components:
           additionalProperties: {}
           nullable: true
           type: object
+      type: object
+    GatewaytypesCreatedIngestionKeyLimitResponse:
+      properties:
+        id:
+          type: string
+      type: object
+    GatewaytypesCreatedIngestionKeyResponse:
+      properties:
+        id:
+          type: string
+        value:
+          type: string
+      type: object
+    GatewaytypesIngestionKey:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        expires_at:
+          format: date-time
+          type: string
+        id:
+          type: string
+        limits:
+          items:
+            $ref: '#/components/schemas/GatewaytypesLimit'
+          nullable: true
+          type: array
+        name:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+        updated_at:
+          format: date-time
+          type: string
+        value:
+          type: string
+        workspace_id:
+          type: string
+      type: object
+    GatewaytypesIngestionKeyLimitRequest:
+      properties:
+        config:
+          $ref: '#/components/schemas/GatewaytypesLimitConfig'
+        signal:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
+    GatewaytypesIngestionKeyRequest:
+      properties:
+        expires_at:
+          format: date-time
+          type: string
+        name:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
+    GatewaytypesIngestionKeysResponse:
+      properties:
+        _pagination:
+          $ref: '#/components/schemas/GatewaytypesPagination'
+        keys:
+          items:
+            $ref: '#/components/schemas/GatewaytypesIngestionKey'
+          nullable: true
+          type: array
+      type: object
+    GatewaytypesLimit:
+      properties:
+        config:
+          $ref: '#/components/schemas/GatewaytypesLimitConfig'
+        created_at:
+          format: date-time
+          type: string
+        id:
+          type: string
+        key_id:
+          type: string
+        metric:
+          $ref: '#/components/schemas/GatewaytypesLimitMetric'
+        signal:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+        updated_at:
+          format: date-time
+          type: string
+      type: object
+    GatewaytypesLimitConfig:
+      properties:
+        day:
+          $ref: '#/components/schemas/GatewaytypesLimitThreshold'
+        second:
+          $ref: '#/components/schemas/GatewaytypesLimitThreshold'
+      type: object
+    GatewaytypesLimitMetric:
+      properties:
+        day:
+          $ref: '#/components/schemas/GatewaytypesUsageMetric'
+        second:
+          $ref: '#/components/schemas/GatewaytypesUsageMetric'
+      type: object
+    GatewaytypesLimitThreshold:
+      properties:
+        count:
+          format: int64
+          type: integer
+        size:
+          format: int64
+          type: integer
+      type: object
+    GatewaytypesPagination:
+      properties:
+        page:
+          type: integer
+        pages:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+      type: object
+    GatewaytypesUsageMetric:
+      properties:
+        count:
+          format: int64
+          type: integer
+        size:
+          format: int64
+          type: integer
       type: object
     MetricsexplorertypesMetricAlert:
       properties:

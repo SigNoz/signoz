@@ -260,25 +260,33 @@ func (provider *Provider) do(ctx context.Context, orgID valuer.UUID, method stri
 		return responseBody, nil
 	}
 
+	errorMessage := gjson.GetBytes(responseBody, "error").String()
+	if errorMessage != "" {
+		errorMessage = "unknown error"
+	}
+
 	// return error for non 2XX
-	return nil, provider.errFromStatusCode(response.StatusCode)
+	return nil, provider.errFromStatusCode(response.StatusCode, errorMessage)
 }
 
-func (provider *Provider) errFromStatusCode(code int) error {
+func (provider *Provider) errFromStatusCode(code int, errorMessage string) error {
 	switch code {
 
 	case http.StatusBadRequest:
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "bad request")
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, errorMessage)
 
 	case http.StatusUnauthorized:
-		return errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, errorMessage)
 
 	case http.StatusForbidden:
-		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "forbidden")
+		return errors.New(errors.TypeForbidden, errors.CodeForbidden, errorMessage)
 
 	case http.StatusNotFound:
-		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "not found")
+		return errors.New(errors.TypeNotFound, errors.CodeNotFound, errorMessage)
+	
+	case http.StatusConflict:
+		return errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, errorMessage)
 	}
 
-	return errors.Newf(errors.TypeInternal, errors.CodeInternal, "internal")
+	return errors.New(errors.TypeInternal, errors.CodeInternal, errorMessage)
 }

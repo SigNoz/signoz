@@ -55,7 +55,7 @@ func (handler *handler) GetIngestionKeys(rw http.ResponseWriter, r *http.Request
 
 	response, err := handler.gateway.GetIngestionKeys(ctx, orgID, page, perPage)
 	if err != nil {
-		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to get ingestion keys from gateway"))
+		render.Error(rw, err)
 		return
 	}
 
@@ -95,7 +95,7 @@ func (handler *handler) SearchIngestionKeys(rw http.ResponseWriter, r *http.Requ
 
 	response, err := handler.gateway.SearchIngestionKeysByName(ctx, orgID, name, page, perPage)
 	if err != nil {
-		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to search ingestion keys from gateway"))
+		render.Error(rw, err)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (handler *handler) CreateIngestionKey(rw http.ResponseWriter, r *http.Reque
 
 	response, err := handler.gateway.CreateIngestionKey(ctx, orgID, req.Name, req.Tags, req.ExpiresAt)
 	if err != nil {
-		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to create ingestion key from gateway"))
+		render.Error(rw, err)
 		return
 	}
 
@@ -161,7 +161,7 @@ func (handler *handler) UpdateIngestionKey(rw http.ResponseWriter, r *http.Reque
 
 	err = handler.gateway.UpdateIngestionKey(ctx, orgID, keyID, req.Name, req.Tags, req.ExpiresAt)
 	if err != nil {
-		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to update ingestion key from gateway"))
+		render.Error(rw, err)
 		return
 	}
 
@@ -191,7 +191,7 @@ func (handler *handler) DeleteIngestionKey(rw http.ResponseWriter, r *http.Reque
 
 	err = handler.gateway.DeleteIngestionKey(ctx, orgID, keyID)
 	if err != nil {
-		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to delete ingestion key from gateway"))
+		render.Error(rw, err)
 		return
 	}
 
@@ -227,7 +227,7 @@ func (handler *handler) CreateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 
 	response, err := handler.gateway.CreateIngestionKeyLimit(ctx, orgID, keyID, req.Signal, req.Config, req.Tags)
 	if err != nil {
-		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to create ingestion key limit from gateway"))
+		render.Error(rw, err)
 		return
 	}
 
@@ -263,7 +263,7 @@ func (handler *handler) UpdateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 
 	err = handler.gateway.UpdateIngestionKeyLimit(ctx, orgID, limitID, req.Config, req.Tags)
 	if err != nil {
-		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to update ingestion key limit from gateway"))
+		render.Error(rw, err)
 		return
 	}
 
@@ -293,7 +293,7 @@ func (handler *handler) DeleteIngestionKeyLimit(rw http.ResponseWriter, r *http.
 
 	err = handler.gateway.DeleteIngestionKeyLimit(ctx, orgID, limitID)
 	if err != nil {
-		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to delete ingestion key limit from gateway"))
+		render.Error(rw, err)
 		return
 	}
 
