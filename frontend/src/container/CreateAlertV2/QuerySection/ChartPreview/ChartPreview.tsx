@@ -1,12 +1,14 @@
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
-import { useEffect, useState } from 'react';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -32,11 +34,22 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 	const [, setQueryStatus] = useState<string>('');
+	const urlQuery = useUrlQuery();
 
 	const yAxisUnit = alertState.yAxisUnit || '';
 
-	const shouldUpdateYAxisUnit =
-		!isEditMode && alertType === AlertTypes.METRICS_BASED_ALERT;
+	const source = useMemo(() => urlQuery.get(QueryParams.source) as YAxisSource, [
+		urlQuery,
+	]);
+
+	// Only update automatically when creating a new metrics-based alert rule
+	const shouldUpdateYAxisUnit = useMemo(() => {
+		// Do not update if we are coming to the page from dashboards (we still show warning)
+		if (source === YAxisSource.DASHBOARDS) {
+			return false;
+		}
+		return !isEditMode && alertType === AlertTypes.METRICS_BASED_ALERT;
+	}, [isEditMode, alertType, source]);
 
 	const selectedQueryName = thresholdState.selectedQuery;
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
