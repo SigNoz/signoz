@@ -240,8 +240,10 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
 
 	kind := q.kind
-	// all metric queries are time series then reduced if required
-	if q.spec.Signal == telemetrytypes.SignalMetrics {
+	// All metric queries are time series then reduced if required
+	// Expect bucket requests as it should be executed as it is
+	if q.spec.Signal == telemetrytypes.SignalMetrics &&
+		kind != qbtypes.RequestTypeBucket {
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 

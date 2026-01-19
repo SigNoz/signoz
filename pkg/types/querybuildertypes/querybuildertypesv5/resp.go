@@ -193,6 +193,15 @@ type RawStream struct {
 	Error chan error
 }
 
+type BucketData struct {
+	QueryName    string      `json:"queryName"`
+	BucketStarts []float64   `json:"bucketStarts,omitempty"`
+	BucketBounds []float64   `json:"bucketBounds"`
+	BucketCount  int         `json:"bucketCount,omitempty"`
+	Timestamps   []int64     `json:"timestamps"`
+	Counts       [][]float64 `json:"counts"`
+}
+
 func roundToNonZeroDecimals(val float64, n int) float64 {
 	if val == 0 || math.IsNaN(val) || math.IsInf(val, 0) {
 		return val
