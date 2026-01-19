@@ -408,7 +408,7 @@ def test_logs_list_with_order_by(
 
     Tests:
     1. Query logs ordered by attribute.service.name ascending
-    2. Query logs ordered by resource.service.name ascending
+    2. Query logs ordered by resource.service.name descending
     3. Query logs ordered by service.name ascending
     """
     insert_logs(
@@ -527,7 +527,7 @@ def test_logs_list_with_order_by(
     assert ids == ["log-004", "log-003", "log-001", "log-002"]
 
 
-    # Case 2: Query logs ordered by resource.service.name ascending
+    # Case 2: Query logs ordered by resource.service.name descending
     # Order should be : log-001 (""), log-002 (""), log-003 ("go")
 
     response = requests.post(
