@@ -24,16 +24,15 @@ function LicenseSection(): JSX.Element {
 	};
 
 	return (
-		<div className="user-info-section">
-			<div className="user-info-section-header">
-				<div className="user-info-section-title">License</div>
-				<div className="user-info-section-subtitle">Your SigNoz license key.</div>
+		<div className="user-preference-section">
+			<div className="user-preference-section-header">
+				<div className="user-preference-section-title">License</div>
 			</div>
 
 			<div className="user-preference-section-content">
 				<div className="user-preference-section-content-item">
 					<div className="user-preference-section-content-item-title-action">
-						<span>License Key</span>
+						<span>License key</span>
 						{activeLicense?.key ? (
 							<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 								<Typography.Text code>
@@ -48,6 +47,10 @@ function LicenseSection(): JSX.Element {
 						) : (
 							<Typography.Text>N/A</Typography.Text>
 						)}
+					</div>
+
+					<div className="user-preference-section-content-item-description">
+						Your SigNoz license key.
 					</div>
 				</div>
 			</div>
