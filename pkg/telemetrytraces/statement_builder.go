@@ -128,7 +128,7 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 		groupBy := query.GroupBy[idx]
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
 			Name:          groupBy.Name,
-			Signal:        telemetrytypes.SignalLogs,
+			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  groupBy.FieldContext,
 			FieldDataType: groupBy.FieldDataType,
 		})
