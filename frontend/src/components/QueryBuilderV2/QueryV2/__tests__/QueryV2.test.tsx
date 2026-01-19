@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { render, screen } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { Having, IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { UseQueryOperations } from 'types/common/operations.types';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
@@ -18,6 +18,13 @@ jest.mock(
 	() =>
 		function () {
 			return <div>QueryAggregation</div>;
+		},
+);
+jest.mock(
+	'../QuerySearch/QuerySearch',
+	() =>
+		function () {
+			return <div>QuerySearch</div>;
 		},
 );
 jest.mock(
@@ -70,7 +77,7 @@ describe('QueryV2 - base render', () => {
 		jest.clearAllMocks();
 	});
 
-	it('renders limit input when dataSource is logs', () => {
+	it('renders limit input when dataSource is logs', async () => {
 		const baseQuery: IBuilderQuery = {
 			queryName: 'A',
 			dataSource: DataSource.LOGS,
@@ -114,5 +121,13 @@ describe('QueryV2 - base render', () => {
 		expect(limitInput).toHaveAttribute('type', 'number');
 		expect(limitInput).toHaveAttribute('name', 'limit');
 		expect(limitInput).toHaveAttribute('data-testid', 'input-Limit');
+
+		// Clear the input and ensure it stays visible (post-mount should not auto-hide)
+		const user = userEvent.setup();
+		await user.click(limitInput);
+		expect(limitInput.value).toBe('10');
+		await user.keyboard('{Backspace>2}'); // press backspace twice
+		expect(limitInput.value).toBe('');
+		expect(limitInput).toBeInTheDocument();
 	});
 });
