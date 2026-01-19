@@ -67,6 +67,11 @@ describe('CreateAlertRule', () => {
 		useCompositeQueryParamSpy.mockReturnValue(initialQueriesMap.metrics);
 	});
 
+	it('should render new flow by default', () => {
+		render(<CreateAlertRule />);
+		expect(screen.getByText(CREATE_ALERT_V2_TEXT)).toBeInTheDocument();
+	});
+
 	it('should render classic flow when showClassicCreateAlertsPage is true', () => {
 		mockGetUrlQuery.mockImplementation((key: string) => {
 			if (key === QueryParams.showClassicCreateAlertsPage) {
