@@ -363,6 +363,7 @@ func New(
 		telemetrylogs.LogResourceKeysTblName,
 		telemetrymetadata.DBName,
 		telemetrymetadata.AttributesMetadataLocalTableName,
+		telemetrymetadata.ColumnEvolutionMetadataTableName,
 	)
 
 	global, err := factory.NewProviderFromNamedMap(

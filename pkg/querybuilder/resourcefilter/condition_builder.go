@@ -44,12 +44,12 @@ func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
 
 func (b *defaultConditionBuilder) ConditionFor(
 	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	op qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-    _ uint64,
-    _ uint64,
 ) (string, error) {
 
 	if key.FieldContext != telemetrytypes.FieldContextResource {
@@ -60,15 +60,15 @@ func (b *defaultConditionBuilder) ConditionFor(
 	// as we store resource values as string
 	formattedValue := querybuilder.FormatValueForContains(value)
 
-	column, err := b.fm.ColumnFor(ctx, key)
+	columns, err := b.fm.ColumnFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
 
-	keyIdxFilter := sb.Like(column.Name, keyIndexFilter(key))
+	keyIdxFilter := sb.Like(columns[0].Name, keyIndexFilter(key))
 	valueForIndexFilter := valueForIndexFilter(op, key, value)
 
-	fieldName, err := b.fm.FieldFor(ctx, key)
+	fieldName, err := b.fm.FieldFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -78,12 +78,12 @@ func (b *defaultConditionBuilder) ConditionFor(
 		return sb.And(
 			sb.E(fieldName, formattedValue),
 			keyIdxFilter,
-			sb.Like(column.Name, valueForIndexFilter),
+			sb.Like(columns[0].Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorNotEqual:
 		return sb.And(
 			sb.NE(fieldName, formattedValue),
-			sb.NotLike(column.Name, valueForIndexFilter),
+			sb.NotLike(columns[0].Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorGreaterThan:
 		return sb.And(sb.GT(fieldName, formattedValue), keyIdxFilter), nil
@@ -98,7 +98,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		return sb.And(
 			sb.ILike(fieldName, formattedValue),
 			keyIdxFilter,
-			sb.ILike(column.Name, valueForIndexFilter),
+			sb.ILike(columns[0].Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorNotLike, qbtypes.FilterOperatorNotILike:
 		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else
@@ -138,7 +138,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		valConditions := make([]string, 0, len(values))
 		if valuesForIndexFilter, ok := valueForIndexFilter.([]string); ok {
 			for _, v := range valuesForIndexFilter {
-				valConditions = append(valConditions, sb.Like(column.Name, v))
+				valConditions = append(valConditions, sb.Like(columns[0].Name, v))
 			}
 		}
 		mainCondition = sb.And(mainCondition, keyIdxFilter, sb.Or(valConditions...))
@@ -157,7 +157,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		valConditions := make([]string, 0, len(values))
 		if valuesForIndexFilter, ok := valueForIndexFilter.([]string); ok {
 			for _, v := range valuesForIndexFilter {
-				valConditions = append(valConditions, sb.NotLike(column.Name, v))
+				valConditions = append(valConditions, sb.NotLike(columns[0].Name, v))
 			}
 		}
 		mainCondition = sb.And(mainCondition, sb.And(valConditions...))
@@ -165,12 +165,12 @@ func (b *defaultConditionBuilder) ConditionFor(
 
 	case qbtypes.FilterOperatorExists:
 		return sb.And(
-			sb.E(fmt.Sprintf("simpleJSONHas(%s, '%s')", column.Name, key.Name), true),
+			sb.E(fmt.Sprintf("simpleJSONHas(%s, '%s')", columns[0].Name, key.Name), true),
 			keyIdxFilter,
 		), nil
 	case qbtypes.FilterOperatorNotExists:
 		return sb.And(
-			sb.NE(fmt.Sprintf("simpleJSONHas(%s, '%s')", column.Name, key.Name), true),
+			sb.NE(fmt.Sprintf("simpleJSONHas(%s, '%s')", columns[0].Name, key.Name), true),
 		), nil
 
 	case qbtypes.FilterOperatorRegexp:
@@ -187,7 +187,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		return sb.And(
 			sb.ILike(fieldName, fmt.Sprintf(`%%%s%%`, formattedValue)),
 			keyIdxFilter,
-			sb.ILike(column.Name, valueForIndexFilter),
+			sb.ILike(columns[0].Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorNotContains:
 		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else

@@ -26,17 +26,18 @@ func NewConditionBuilder(fm qbtypes.FieldMapper, metadataStore telemetrytypes.Me
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
+	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	column, err := c.fm.ColumnFor(ctx, key)
+	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
 
-	if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
+	if columns[0].IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
 		cond, err := c.buildJSONCondition(ctx, key, operator, value, sb)
 		if err != nil {
 			return "", err
@@ -48,7 +49,7 @@ func (c *conditionBuilder) conditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	tblFieldName, err := c.fm.FieldFor(ctx, key)
+	tblFieldName, err := c.fm.FieldFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -174,6 +175,22 @@ func (c *conditionBuilder) conditionFor(
 		}
 
 		var value any
+		column := columns[0]
+		if len(key.Evolutions) > 0 {
+			// hardcoded for now, make it dynamic while supporting JSON
+			fieldName := "__all__"
+			// we will use the corresponding column and its evolution entry for the query
+			newColumns, _, err := selectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs, fieldName)
+			if err != nil {
+				return "", err
+			}
+			// this means the exists conditions are already taken care off, we don't need to add it
+			if len(newColumns) > 1 {
+				return "", nil
+			}
+			column = newColumns[0]
+		}
+
 		switch column.Type.GetType() {
 		case schema.ColumnTypeEnumJSON:
 			if operator == qbtypes.FilterOperatorExists {
@@ -228,6 +245,7 @@ func (c *conditionBuilder) conditionFor(
 			}
 		default:
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
+
 		}
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
@@ -235,14 +253,15 @@ func (c *conditionBuilder) conditionFor(
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	_ uint64,
-	_ uint64,
 ) (string, error) {
-	condition, err := c.conditionFor(ctx, key, operator, value, sb)
+
+	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
@@ -250,12 +269,12 @@ func (c *conditionBuilder) ConditionFor(
 	if !(key.FieldContext == telemetrytypes.FieldContextBody && querybuilder.BodyJSONQueryEnabled) && operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
-		field, _ := c.fm.FieldFor(ctx, key)
+		field, _ := c.fm.FieldFor(ctx, startNs, endNs, key)
 		if slices.Contains(maps.Keys(IntrinsicFields), field) && key.FieldContext != telemetrytypes.FieldContextBody {
 			return condition, nil
 		}
 
-		existsCondition, err := c.conditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb)
+		existsCondition, err := c.conditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}
