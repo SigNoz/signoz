@@ -78,9 +78,9 @@ func validateClickHouseQuery(query string) error {
 	p := clickhouse.NewParser(queryBuffer.String())
 	_, err = p.ParseStmts()
 	if err != nil {
-		// TODO: errors returned here is errors.errorString, rather than using regex to parser the error
+		// TODO: errors returned here is errors.errorString
 		// we should think on using some other library that parses the CH query in more accurate manner,
-		// current CH parser only does very minimal checks.
+		// current CH parser does very minimal checks and on just the known keywords, without validating the syntax of given query.
 		// Sample Error: "line 0:36 expected table name or subquery, got ;\nSELECT department, avg(salary) FROM ;\n                                    ^\n"
 		return &QueryParseError{
 			ErrorMessage: err.Error(),
