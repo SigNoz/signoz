@@ -2844,10 +2844,6 @@ components:
       type: object
     AuthtypesGoogleConfig:
       properties:
-        adminEmail:
-          additionalProperties:
-            type: string
-          type: object
         allowedGroups:
           items:
             type: string
@@ -2856,6 +2852,10 @@ components:
           type: string
         clientSecret:
           type: string
+        domainToAdminEmail:
+          additionalProperties:
+            type: string
+          type: object
         fetchGroups:
           type: boolean
         fetchTransitiveGroupMembership:
