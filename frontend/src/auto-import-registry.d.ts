@@ -15,6 +15,7 @@ import '@signozhq/button';
 import '@signozhq/calendar';
 import '@signozhq/callout';
 import '@signozhq/checkbox';
+import '@signozhq/combobox';
 import '@signozhq/command';
 import '@signozhq/design-tokens';
 import '@signozhq/input';
