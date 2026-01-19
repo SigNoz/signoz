@@ -395,6 +395,7 @@ function VariableItem({
 					<Input
 						ref={textboxInputRef}
 						placeholder="Enter value"
+						data-testid={`variable-textbox-${variableData.id}`}
 						bordered={false}
 						value={textboxInputValue}
 						onChange={(e): void => {

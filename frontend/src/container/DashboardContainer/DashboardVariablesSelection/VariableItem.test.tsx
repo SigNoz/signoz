@@ -80,7 +80,9 @@ describe('VariableItem', () => {
 				/>
 			</MockQueryClientProvider>,
 		);
-		expect(screen.getByPlaceholderText('Enter value')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('variable-textbox-test_variable'),
+		).toBeInTheDocument();
 	});
 
 	test('calls onValueUpdate when Input value changes and blurs', async () => {
@@ -102,7 +104,7 @@ describe('VariableItem', () => {
 			</MockQueryClientProvider>,
 		);
 
-		const inputElement = screen.getByPlaceholderText('Enter value');
+		const inputElement = screen.getByTestId('variable-textbox-test_variable');
 
 		// Change the value
 		act(() => {
