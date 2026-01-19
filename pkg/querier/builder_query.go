@@ -195,7 +195,7 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	}
 
 	// Execute the query with proper context for partial value detection
-	result, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
+	result, err := q.executeWithContext(ctx, stmt.Query, stmt.Args, stmt.BucketCount)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 }
 
 // executeWithContext executes the query with query window and step context for partial value detection
-func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
+func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any, bucketCount int) (*qbtypes.Result, error) {
 	totalRows := uint64(0)
 	totalBytes := uint64(0)
 	elapsed := time.Duration(0)
@@ -245,7 +245,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 
-	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
+	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name, bucketCount)
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +352,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		warnings = stmt.Warnings
 		warningsDocURL = stmt.WarningsDocURL
 		// Execute with proper context for partial value detection
-		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
+		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args, stmt.BucketCount)
 		if err != nil {
 			return nil, err
 		}

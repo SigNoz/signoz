@@ -46,6 +46,7 @@ type Statement struct {
 	Args           []any
 	Warnings       []string
 	WarningsDocURL string
+	BucketCount    int
 }
 
 // StatementBuilder builds the query.

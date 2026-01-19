@@ -25,6 +25,12 @@ var (
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
 )
 
+type BucketPoint struct {
+	timestamp int64
+	bucketEnd float64
+	value     float64
+}
+
 // consume reads every row and shapes it into the payload expected for the
 // given request type.
 //
@@ -32,7 +38,7 @@ var (
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
 // * Distribution- *qbtypes.DistributionData
-func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
+func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string, bucketCount int) (any, error) {
 	var (
 		payload any
 		err     error
@@ -45,6 +51,8 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 		payload, err = readAsScalar(rows, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)
+	case qbtypes.RequestTypeBucket:
+		payload, err = readAsBucket(rows, queryName, bucketCount)
 		// TODO: add support for other request types
 	}
 
@@ -468,4 +476,209 @@ func numericAsFloat(v any) float64 {
 	default:
 		return math.NaN()
 	}
+}
+
+func readAsBucket(rows driver.Rows, queryName string, bucketCount int) (*qbtypes.BucketData, error) {
+	colNames := rows.Columns()
+	colTypes := rows.ColumnTypes()
+
+	var tsIdx, resultIdx int = -1, -1
+	for i, name := range colNames {
+		switch name {
+		case "ts":
+			tsIdx = i
+		case "__result_0":
+			resultIdx = i
+		}
+	}
+
+	scan := make([]any, len(colNames))
+	for i := range scan {
+		st := colTypes[i].ScanType()
+		if st == nil {
+			var v any
+			scan[i] = &v
+		} else {
+			scan[i] = reflect.New(st).Interface()
+		}
+	}
+
+	bucketPoints := make([]BucketPoint, 0)
+	uniqueTs := make(map[int64]bool)
+	uniqueEnd := make(map[float64]bool)
+	startByEnd := make(map[float64]float64)
+
+	for rows.Next() {
+		if err := rows.Scan(scan...); err != nil {
+			return nil, err
+		}
+
+		var ts int64
+		var histData any
+
+		if tsIdx >= 0 {
+			if val := derefValue(scan[tsIdx]); val != nil {
+				if t, ok := val.(time.Time); ok {
+					ts = t.UnixMilli()
+				} else if t, ok := val.(uint64); ok {
+					ts = int64(t) * 1000
+				}
+			}
+		}
+
+		if resultIdx >= 0 {
+			histData = derefValue(scan[resultIdx])
+		}
+
+		vHist := reflect.ValueOf(histData)
+		if vHist.Kind() == reflect.Slice {
+			for i := 0; i < vHist.Len(); i++ {
+				b := vHist.Index(i).Interface()
+
+				vBin := reflect.ValueOf(b)
+				if vBin.Kind() == reflect.Slice && vBin.Len() >= 3 {
+					lower := numericAsFloat(vBin.Index(0).Interface())
+					upper := numericAsFloat(vBin.Index(1).Interface())
+					count := numericAsFloat(vBin.Index(2).Interface())
+
+					if math.IsNaN(upper) || math.IsInf(upper, 0) || math.IsNaN(count) || math.IsInf(count, 0) {
+						continue
+					}
+					if math.IsNaN(lower) {
+						continue
+					}
+
+					bucketPoints = append(bucketPoints, BucketPoint{
+						timestamp: ts,
+						bucketEnd: upper,
+						value:     count,
+					})
+					uniqueTs[ts] = true
+					uniqueEnd[upper] = true
+
+					if _, exists := startByEnd[upper]; !exists {
+						startByEnd[upper] = lower
+					}
+				}
+			}
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return buildBucketData(bucketPoints, uniqueTs, uniqueEnd, startByEnd, queryName, bucketCount)
+}
+
+func buildBucketData(points []BucketPoint, uniqueTs map[int64]bool, uniqueEnd map[float64]bool, startByEnd map[float64]float64, queryName string, bucketCount int) (*qbtypes.BucketData, error) {
+	sortedTs := make([]int64, 0, len(uniqueTs))
+	for t := range uniqueTs {
+		sortedTs = append(sortedTs, t)
+	}
+	slices.Sort(sortedTs)
+
+	sortedEnds := make([]float64, 0, len(uniqueEnd))
+	for end := range uniqueEnd {
+		sortedEnds = append(sortedEnds, end)
+	}
+	sort.Float64s(sortedEnds)
+
+	bucketStarts := make([]float64, len(sortedEnds))
+	for i := range sortedEnds {
+		if i == 0 {
+			if start, ok := startByEnd[sortedEnds[i]]; ok {
+				bucketStarts[i] = start
+			} else {
+				bucketStarts[i] = 0
+			}
+		} else {
+			bucketStarts[i] = sortedEnds[i-1]
+		}
+	}
+
+	counts := make([][]float64, len(sortedTs))
+	for i := range counts {
+		counts[i] = make([]float64, len(sortedEnds))
+	}
+
+	tsIdx := make(map[int64]int, len(sortedTs))
+	for i, t := range sortedTs {
+		tsIdx[t] = i
+	}
+	endIdx := make(map[float64]int, len(sortedEnds))
+	for i, l := range sortedEnds {
+		endIdx[l] = i
+	}
+
+	for _, p := range points {
+		if tI, ok := tsIdx[p.timestamp]; ok {
+			if lI, ok := endIdx[p.bucketEnd]; ok {
+				counts[tI][lI] = p.value
+			}
+		}
+	}
+
+	if bucketCount > 0 && len(sortedEnds) > bucketCount {
+		sortedEnds, bucketStarts, counts = mergeBuckets(sortedEnds, bucketStarts, counts, bucketCount)
+	}
+
+	return &qbtypes.BucketData{
+		QueryName:    queryName,
+		BucketBounds: sortedEnds,
+		BucketStarts: bucketStarts,
+		Timestamps:   sortedTs,
+		Counts:       counts,
+	}, nil
+}
+
+// mergeBuckets merges excess buckets to match the requested bucket count
+func mergeBuckets(bucketEnds []float64, bucketStarts []float64, counts [][]float64, targetCount int) ([]float64, []float64, [][]float64) {
+	if len(bucketEnds) <= targetCount {
+		return bucketEnds, bucketStarts, counts
+	}
+
+	mergeFactor := float64(len(bucketEnds)) / float64(targetCount)
+
+	mergedEnds := make([]float64, 0, targetCount)
+	mergedStarts := make([]float64, 0, targetCount)
+	mergedCounts := make([][]float64, len(counts))
+	for i := range mergedCounts {
+		mergedCounts[i] = make([]float64, 0, targetCount)
+	}
+
+	for targetIdx := 0; targetIdx < targetCount; targetIdx++ {
+		startIdx := int(float64(targetIdx) * mergeFactor)
+		endIdx := int(float64(targetIdx+1) * mergeFactor)
+		if targetIdx == targetCount-1 {
+			endIdx = len(bucketEnds)
+		}
+
+		if startIdx >= len(bucketEnds) {
+			break
+		}
+		if endIdx > len(bucketEnds) {
+			endIdx = len(bucketEnds)
+		}
+
+		var start float64
+		if targetIdx == 0 {
+			start = bucketStarts[startIdx]
+		} else {
+			start = mergedEnds[targetIdx-1]
+		}
+		end := bucketEnds[endIdx-1]
+
+		mergedStarts = append(mergedStarts, start)
+		mergedEnds = append(mergedEnds, end)
+
+		for rowIdx := range counts {
+			sum := 0.0
+			for bucketIdx := startIdx; bucketIdx < endIdx; bucketIdx++ {
+				sum += counts[rowIdx][bucketIdx]
+			}
+			mergedCounts[rowIdx] = append(mergedCounts[rowIdx], sum)
+		}
+	}
+
+	return mergedEnds, mergedStarts, mergedCounts
 }
