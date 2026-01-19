@@ -1,19 +1,19 @@
-import { Button, Collapse, Input, Select, Typography } from 'antd';
+import { Button, Collapse, Input, Select, Skeleton, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
-import { UpdateMetricMetadataProps } from 'api/metricsExplorer/updateMetricMetadata';
 import { ResizeTable } from 'components/ResizeTable';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
-import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/useUpdateMetricMetadata';
+import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/v2/useUpdateMetricMetadata';
 import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
@@ -23,23 +23,22 @@ import {
 } from '../Summary/constants';
 import { MetricTypeRenderer } from '../Summary/utils';
 import { METRIC_METADATA_KEYS } from './constants';
-import { MetadataProps } from './types';
-import { determineIsMonotonic } from './utils';
+import { MetadataProps, MetricMetadataState, TableFields } from './types';
+import { transformUpdateMetricMetadataRequest } from './utils';
 
 function Metadata({
 	metricName,
 	metadata,
-	refetchMetricDetails,
+	isErrorMetricMetadata,
+	isLoadingMetricMetadata,
 }: MetadataProps): JSX.Element {
 	const [isEditing, setIsEditing] = useState(false);
-	const [
-		metricMetadata,
-		setMetricMetadata,
-	] = useState<UpdateMetricMetadataProps>({
-		metricType: metadata?.metric_type || MetricType.SUM,
-		description: metadata?.description || '',
-		temporality: metadata?.temporality,
-		unit: metadata?.unit,
+
+	const [metricMetadata, setMetricMetadata] = useState<MetricMetadataState>({
+		metricType: MetricType.SUM,
+		description: '',
+		temporality: undefined,
+		unit: undefined,
 	});
 	const { notifications } = useNotifications();
 	const {
@@ -51,6 +50,18 @@ function Metadata({
 	);
 	const queryClient = useQueryClient();
 
+	// Initialize state from metadata api data
+	useEffect(() => {
+		if (metadata) {
+			setMetricMetadata({
+				metricType: metadata.metricType,
+				description: metadata.description,
+				temporality: metadata.temporality,
+				unit: metadata.unit,
+			});
+		}
+	}, [metadata]);
+
 	const tableData = useMemo(
 		() =>
 			metadata
@@ -59,7 +70,7 @@ function Metadata({
 						temporality: metadata?.temporality,
 				  })
 						// Filter out monotonic as user input is not required
-						.filter((key) => key !== 'monotonic')
+						.filter((key) => key !== TableFields.IS_MONOTONIC)
 						.map((key) => ({
 							key,
 							value: {
@@ -72,30 +83,37 @@ function Metadata({
 	);
 
 	// Render un-editable field value
-	const renderUneditableField = useCallback((key: string, value: string) => {
-		if (key === 'metric_type') {
-			return <MetricTypeRenderer type={value as MetricType} />;
-		}
-		let fieldValue = value;
-		if (key === 'unit') {
-			fieldValue = getUniversalNameFromMetricUnit(value);
-		}
-		return <FieldRenderer field={fieldValue || '-'} />;
-	}, []);
+	const renderUneditableField = useCallback(
+		(key: keyof MetricMetadataState, value: string) => {
+			if (isErrorMetricMetadata) {
+				return <FieldRenderer field="-" />;
+			}
+			if (key === TableFields.METRIC_TYPE) {
+				return <MetricTypeRenderer type={value as MetricType} />;
+			}
+			let fieldValue = value;
+			if (key === TableFields.UNIT) {
+				fieldValue = getUniversalNameFromMetricUnit(value);
+			}
+			return <FieldRenderer field={fieldValue || '-'} />;
+		},
+		[isErrorMetricMetadata],
+	);
 
 	const renderColumnValue = useCallback(
-		(field: { value: string; key: string }): JSX.Element => {
+		(field: { value: string; key: keyof MetricMetadataState }): JSX.Element => {
 			if (!isEditing) {
 				return renderUneditableField(field.key, field.value);
 			}
 
 			// Don't allow editing of unit if it's already set
-			const metricUnitAlreadySet = field.key === 'unit' && Boolean(metadata?.unit);
+			const metricUnitAlreadySet =
+				field.key === TableFields.UNIT && Boolean(metadata?.unit);
 			if (metricUnitAlreadySet) {
 				return renderUneditableField(field.key, field.value);
 			}
 
-			if (field.key === 'metric_type') {
+			if (field.key === TableFields.METRIC_TYPE) {
 				return (
 					<Select
 						data-testid="metric-type-select"
@@ -113,7 +131,7 @@ function Metadata({
 					/>
 				);
 			}
-			if (field.key === 'unit') {
+			if (field.key === TableFields.UNIT) {
 				return (
 					<YAxisUnitSelector
 						value={metricMetadata.unit}
@@ -125,7 +143,7 @@ function Metadata({
 					/>
 				);
 			}
-			if (field.key === 'temporality') {
+			if (field.key === TableFields.Temporality) {
 				return (
 					<Select
 						data-testid="temporality-select"
@@ -143,16 +161,12 @@ function Metadata({
 					/>
 				);
 			}
-			if (field.key === 'description') {
+			if (field.key === TableFields.DESCRIPTION) {
 				return (
 					<Input
 						data-testid="description-input"
 						name={field.key}
-						defaultValue={
-							metricMetadata[
-								field.key as Exclude<keyof UpdateMetricMetadataProps, 'isMonotonic'>
-							]
-						}
+						defaultValue={metricMetadata.description}
 						onChange={(e): void => {
 							setMetricMetadata((prev) => ({
 								...prev,
@@ -202,17 +216,11 @@ function Metadata({
 		updateMetricMetadata(
 			{
 				metricName,
-				payload: {
-					...metricMetadata,
-					isMonotonic: determineIsMonotonic(
-						metricMetadata.metricType,
-						metricMetadata.temporality,
-					),
-				},
+				payload: transformUpdateMetricMetadataRequest(metricMetadata),
 			},
 			{
 				onSuccess: (response): void => {
-					if (response?.statusCode === 200) {
+					if (response?.httpStatusCode === 200) {
 						logEvent(MetricsExplorerEvents.MetricMetadataUpdated, {
 							[MetricsExplorerEventKeys.MetricName]: metricName,
 							[MetricsExplorerEventKeys.Tab]: 'summary',
@@ -221,9 +229,12 @@ function Metadata({
 						notifications.success({
 							message: 'Metadata updated successfully',
 						});
-						refetchMetricDetails();
 						setIsEditing(false);
-						queryClient.invalidateQueries(['metricsList']);
+						queryClient.invalidateQueries([REACT_QUERY_KEY.GET_METRICS_LIST]);
+						queryClient.invalidateQueries([
+							REACT_QUERY_KEY.GET_METRIC_METADATA,
+							metricName,
+						]);
 					} else {
 						notifications.error({
 							message:
@@ -243,21 +254,36 @@ function Metadata({
 		metricName,
 		metricMetadata,
 		notifications,
-		refetchMetricDetails,
 		queryClient,
 	]);
 
+	const cancelEdit = useCallback(
+		(e: React.MouseEvent<HTMLElement, MouseEvent>): void => {
+			e.stopPropagation();
+			if (metadata) {
+				setMetricMetadata({
+					metricType: metadata.metricType,
+					description: metadata.description,
+					temporality: metadata.temporality,
+					unit: metadata.unit,
+				});
+			}
+			setIsEditing(false);
+		},
+		[metadata],
+	);
+
 	const actionButton = useMemo(() => {
+		if (isLoadingMetricMetadata) {
+			return null;
+		}
 		if (isEditing) {
 			return (
 				<div className="action-menu">
 					<Button
 						className="action-button"
 						type="text"
-						onClick={(e): void => {
-							e.stopPropagation();
-							setIsEditing(false);
-						}}
+						onClick={cancelEdit}
 						disabled={isUpdatingMetricsMetadata}
 					>
 						<X size={14} />
@@ -294,10 +320,35 @@ function Metadata({
 				</Button>
 			</div>
 		);
-	}, [handleSave, isEditing, isUpdatingMetricsMetadata]);
+	}, [
+		isLoadingMetricMetadata,
+		isEditing,
+		isUpdatingMetricsMetadata,
+		cancelEdit,
+		handleSave,
+	]);
 
-	const items = useMemo(
-		() => [
+	const items = useMemo(() => {
+		let children;
+		if (isLoadingMetricMetadata) {
+			children = (
+				<div className="metrics-metadata-skeleton-container">
+					<Skeleton active title={false} paragraph={{ rows: 8 }} />
+				</div>
+			);
+		} else {
+			children = (
+				<ResizeTable
+					columns={columns}
+					tableLayout="fixed"
+					dataSource={tableData}
+					pagination={false}
+					showHeader={false}
+					className="metrics-accordion-content metrics-metadata-container"
+				/>
+			);
+		}
+		return [
 			{
 				label: (
 					<div className="metrics-accordion-header metrics-metadata-header">
@@ -306,20 +357,10 @@ function Metadata({
 					</div>
 				),
 				key: 'metric-metadata',
-				children: (
-					<ResizeTable
-						columns={columns}
-						tableLayout="fixed"
-						dataSource={tableData}
-						pagination={false}
-						showHeader={false}
-						className="metrics-accordion-content metrics-metadata-container"
-					/>
-				),
+				children,
 			},
-		],
-		[actionButton, columns, tableData],
-	);
+		];
+	}, [actionButton, columns, isLoadingMetricMetadata, tableData]);
 
 	return (
 		<Collapse

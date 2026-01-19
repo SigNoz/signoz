@@ -2,16 +2,16 @@ import { ApiV2Instance as axios } from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { GetMetricMetadataResponse } from 'types/api/metricsExplorer/v2';
+import { GetMetricAlertsResponse } from 'types/api/metricsExplorer/v2';
 
-export const getMetricMetadata = async (
+export const getMetricAlerts = async (
 	metricName: string,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
-): Promise<SuccessResponseV2<GetMetricMetadataResponse>> => {
+): Promise<SuccessResponseV2<GetMetricAlertsResponse>> => {
 	try {
 		const encodedMetricName = encodeURIComponent(metricName);
-		const response = await axios.get('/metrics/metadata', {
+		const response = await axios.get('/metric/alerts', {
 			params: {
 				metricName: encodedMetricName,
 			},
