@@ -366,6 +366,45 @@ func (q QueryBuilderTraceOperator) Copy() QueryBuilderTraceOperator {
 	return c
 }
 
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+func (q *QueryBuilderTraceOperator) UnmarshalJSON(data []byte) error {
+	// Define a type alias to avoid infinite recursion
+	type Alias QueryBuilderTraceOperator
+
+	var temp Alias
+	// Use UnmarshalJSONWithContext for better error messages
+	if err := UnmarshalJSONWithContext(data, &temp, "query spec"); err != nil {
+		return err
+	}
+
+	// Copy the decoded values back to the original struct
+	*q = QueryBuilderTraceOperator(temp)
+
+	// Nomarlize the query after unmarshaling
+	q.Normalize()
+	return nil
+}
+
+// Normalize normalizes all the field keys in the query
+func (q *QueryBuilderTraceOperator) Normalize() {
+
+	// normalize select fields
+	for idx := range q.SelectFields {
+		q.SelectFields[idx].Normalize()
+	}
+
+	// normalize group by fields
+	for idx := range q.GroupBy {
+		q.GroupBy[idx].Normalize()
+	}
+
+	// normalize order by fields
+	for idx := range q.Order {
+		q.Order[idx].Key.Normalize()
+	}
+
+}
+
 // ValidateUniqueTraceOperator ensures only one trace operator exists in queries
 func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 	traceOperatorCount := 0
