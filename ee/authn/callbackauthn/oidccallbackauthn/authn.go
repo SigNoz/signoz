@@ -20,7 +20,7 @@ const (
 	redirectPath string = "/api/v1/complete/oidc"
 )
 
-var scopes []string = []string{"email", "profile", "openid", "groups"}
+var defaultScopes []string = []string{"email", "profile", oidc.ScopeOpenID}
 
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
@@ -179,6 +179,13 @@ func (a *AuthN) oidcProviderAndoauth2Config(ctx context.Context, siteURL *url.UR
 	oidcProvider, err := oidc.NewProvider(ctx, authDomain.AuthDomainConfig().OIDC.Issuer)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	scopes := make([]string, len(defaultScopes))
+	copy(scopes, defaultScopes)
+
+	if authDomain.AuthDomainConfig().RoleMapping != nil && len(authDomain.AuthDomainConfig().RoleMapping.GroupMappings) > 0 {
+		scopes = append(scopes, "groups")
 	}
 
 	return oidcProvider, &oauth2.Config{
