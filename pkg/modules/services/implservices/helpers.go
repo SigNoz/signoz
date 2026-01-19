@@ -10,10 +10,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 )
 
-// spanMetricsSingleBucketStep forces a single bucket for percentile aggregations
-// by making the step interval very large - currently 1 year
-func spanMetricsSingleBucketStep() qbtypes.Step {
-	return qbtypes.Step{Duration: 365 * 24 * time.Hour}
+// spanMetricsSingleBucketStep keeps pxx queries in a single bucket
+// while staying within the requested time range.
+func spanMetricsSingleBucketStep(startMs, endMs uint64) qbtypes.Step {
+	if endMs <= startMs {
+		return qbtypes.Step{Duration: time.Second}
+	}
+	duration := time.Duration(endMs-startMs) * time.Millisecond
+	if duration < time.Second {
+		duration = time.Second
+	}
+	return qbtypes.Step{Duration: duration}
 }
 
 // validateTagFilterItems validates the tag filter items. This should be used before using

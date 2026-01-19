@@ -429,7 +429,7 @@ func (m *module) buildSpanMetricsQueryRangeRequest(req *servicetypesv1.Request) 
 				Signal:       telemetrytypes.SignalMetrics,
 				Filter:       &qbtypes.Filter{Expression: filterExpr},
 				GroupBy:      groupByService,
-				StepInterval: spanMetricsSingleBucketStep(),
+				StepInterval: spanMetricsSingleBucketStep(startMs, endMs),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
@@ -747,7 +747,7 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 				Signal:       telemetrytypes.SignalMetrics,
 				Filter:       &qbtypes.Filter{Expression: filterExpr},
 				GroupBy:      groupByOperation,
-				StepInterval: spanMetricsSingleBucketStep(),
+				StepInterval: spanMetricsSingleBucketStep(startMs, endMs),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
@@ -765,7 +765,7 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 				Signal:       telemetrytypes.SignalMetrics,
 				Filter:       &qbtypes.Filter{Expression: filterExpr},
 				GroupBy:      groupByOperation,
-				StepInterval: spanMetricsSingleBucketStep(),
+				StepInterval: spanMetricsSingleBucketStep(startMs, endMs),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
@@ -783,7 +783,7 @@ func (m *module) buildSpanMetricsTopOpsQueryRangeRequest(req *servicetypesv1.Ope
 				Signal:       telemetrytypes.SignalMetrics,
 				Filter:       &qbtypes.Filter{Expression: filterExpr},
 				GroupBy:      groupByOperation,
-				StepInterval: spanMetricsSingleBucketStep(),
+				StepInterval: spanMetricsSingleBucketStep(startMs, endMs),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
@@ -1014,7 +1014,7 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 				Signal:       telemetrytypes.SignalMetrics,
 				Filter:       &qbtypes.Filter{Expression: filterExpr},
 				GroupBy:      groupByOperation,
-				StepInterval: spanMetricsSingleBucketStep(),
+				StepInterval: spanMetricsSingleBucketStep(startMs, endMs),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
@@ -1032,7 +1032,7 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 				Signal:       telemetrytypes.SignalMetrics,
 				Filter:       &qbtypes.Filter{Expression: filterExpr},
 				GroupBy:      groupByOperation,
-				StepInterval: spanMetricsSingleBucketStep(),
+				StepInterval: spanMetricsSingleBucketStep(startMs, endMs),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
@@ -1050,7 +1050,7 @@ func (m *module) buildSpanMetricsEntryPointOpsQueryRangeRequest(req *servicetype
 				Signal:       telemetrytypes.SignalMetrics,
 				Filter:       &qbtypes.Filter{Expression: filterExpr},
 				GroupBy:      groupByOperation,
-				StepInterval: spanMetricsSingleBucketStep(),
+				StepInterval: spanMetricsSingleBucketStep(startMs, endMs),
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "signoz_latency.bucket",
