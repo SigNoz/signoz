@@ -140,23 +140,3 @@ func (q *QueryBuilderQuery[T]) UnmarshalJSON(data []byte) error {
 
 	return nil
 }
-
-// Normalize normalizes all the field keys in the query
-func (q *QueryBuilderQuery[T]) Normalize() {
-
-	// normalize select fields
-	for idx := range q.SelectFields {
-		q.SelectFields[idx].Normalize()
-	}
-
-	// normalize group by fields
-	for idx := range q.GroupBy {
-		q.GroupBy[idx].Normalize()
-	}
-
-	// normalize order by fields
-	for idx := range q.Order {
-		q.Order[idx].Key.Normalize()
-	}
-
-}
