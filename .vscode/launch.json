@@ -1,0 +1,62 @@
+{
+  "configurations": [
+    {
+      "name": "enterprise",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "buildFlags": [
+        "-race",
+        "-ldflags=-X github.com/SigNoz/signoz/pkg/version.version=dev -X github.com/SigNoz/signoz/pkg/version.variant=enterprise -X github.com/SigNoz/signoz/ee/zeus.url=https://api.staging.signoz.cloud"
+      ],
+      "program": "${workspaceFolder}/cmd/enterprise/",
+      "args": ["server"],
+      "env": {
+        "SIGNOZ_VERSION_BANNER_ENABLED": "true",
+        "SIGNOZ_INSTRUMENTATION_LOGS_LEVEL": "debug",
+        "SIGNOZ_SQLSTORE_PROVIDER": "sqlite",
+        "SIGNOZ_SQLSTORE_SQLITE_PATH": "${workspaceFolder}/.dev/data/sqlite/enterprise.db",
+        "SIGNOZ_WEB_ENABLED": "false",
+        "SIGNOZ_SQLMIGRATOR_LOCK_INTERVAL": "1m",
+        "SIGNOZ_ALERTMANAGER_PROVIDER": "signoz",
+        "SIGNOZ_TELEMETRYSTORE_PROVIDER": "clickhouse",
+        "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER": "cluster",
+        "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN": "tcp://0.0.0.0:9001",
+        "SIGNOZ_PROMETHEUS_ACTIVE__QUERY__TRACKER_ENABLED": "false",
+        "SIGNOZ_EMAILING_ENABLED": "false",
+        "DOT_METRICS_ENABLED": "true",
+        "SIGNOZ_GLOBAL_INGESTION__URL": "http://localhost:3001",
+        "SIGNOZ_TOKENIZER_PROVIDER": "opaque"
+      }
+    },
+    {
+      "name": "community",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "buildFlags": [
+        "-race",
+        "-ldflags=-X github.com/SigNoz/signoz/pkg/version.version=dev -X github.com/SigNoz/signoz/pkg/version.variant=community -X github.com/SigNoz/signoz/ee/zeus.url=https://api.staging.signoz.cloud"
+      ],
+      "program": "${workspaceFolder}/cmd/community/",
+      "args": ["server"],
+      "env": {
+        "SIGNOZ_VERSION_BANNER_ENABLED": "true",
+        "SIGNOZ_INSTRUMENTATION_LOGS_LEVEL": "debug",
+        "SIGNOZ_SQLSTORE_PROVIDER": "sqlite",
+        "SIGNOZ_SQLSTORE_SQLITE_PATH": "${workspaceFolder}/.dev/data/sqlite/community.db",
+        "SIGNOZ_WEB_ENABLED": "false",
+        "SIGNOZ_SQLMIGRATOR_LOCK_INTERVAL": "1m",
+        "SIGNOZ_ALERTMANAGER_PROVIDER": "signoz",
+        "SIGNOZ_TELEMETRYSTORE_PROVIDER": "clickhouse",
+        "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER": "cluster",
+        "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN": "tcp://0.0.0.0:9001",
+        "SIGNOZ_PROMETHEUS_ACTIVE__QUERY__TRACKER_ENABLED": "false",
+        "SIGNOZ_EMAILING_ENABLED": "false",
+        "DOT_METRICS_ENABLED": "true",
+        "SIGNOZ_GLOBAL_INGESTION__URL": "http://localhost:3001",
+        "SIGNOZ_TOKENIZER_PROVIDER": "opaque"
+      }
+    }
+  ]
+}
