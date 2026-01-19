@@ -32,7 +32,7 @@ type AuthN struct {
 }
 
 func New(store authtypes.AuthNStore, licensing licensing.Licensing, providerSettings factory.ProviderSettings) (*AuthN, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/authn/callbackauthn/oidccallbackauthn")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn")
 
 	httpClient, err := client.New(providerSettings.Logger, providerSettings.TracerProvider, providerSettings.MeterProvider)
 	if err != nil {
