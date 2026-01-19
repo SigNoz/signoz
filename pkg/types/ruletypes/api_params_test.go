@@ -405,7 +405,7 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 						"spec": [{
 							"name": "existing_threshold",
 							"target": 50.0,
-							"targetUnit": "MB",
+							"targetUnit": "MBs",
 							"ruleUnit": "bytes",
 							"matchType": "1",
 							"op": "1"
