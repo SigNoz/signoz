@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -264,12 +263,12 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 		query := QueryBuilderQuery[TraceAggregation]{
 			SelectFields: []telemetrytypes.TelemetryFieldKey{
 				{
-					Name:         "Service.Name",
-					FieldContext: telemetrytypes.FieldContext{String: valuer.NewString("RESOURCE")},
+					Name:         "service.name",
+					FieldContext: telemetrytypes.FieldContextResource,
 				},
 				{
-					Name:         "Span.Name",
-					FieldContext: telemetrytypes.FieldContext{String: valuer.NewString("SPAN")},
+					Name:         "span.name",
+					FieldContext: telemetrytypes.FieldContextSpan,
 				},
 			},
 		}
@@ -277,9 +276,9 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 		query.Normalize()
 
 		// Normalize only changes FieldContext, not the Name
-		assert.Equal(t, "Service.Name", query.SelectFields[0].Name)
+		assert.Equal(t, "service.name", query.SelectFields[0].Name)
 		assert.Equal(t, telemetrytypes.FieldContextResource, query.SelectFields[0].FieldContext)
-		assert.Equal(t, "Span.Name", query.SelectFields[1].Name)
+		assert.Equal(t, "span.name", query.SelectFields[1].Name)
 		assert.Equal(t, telemetrytypes.FieldContextSpan, query.SelectFields[1].FieldContext)
 	})
 
@@ -288,8 +287,8 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 			GroupBy: []GroupByKey{
 				{
 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-						Name:         "Service.Name",
-						FieldContext: telemetrytypes.FieldContext{String: valuer.NewString("RESOURCE")},
+						Name:         "service.name",
+						FieldContext: telemetrytypes.FieldContextResource,
 					},
 				},
 			},
@@ -297,7 +296,7 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 
 		query.Normalize()
 
-		assert.Equal(t, "Service.Name", query.GroupBy[0].Name)
+		assert.Equal(t, "service.name", query.GroupBy[0].Name)
 		assert.Equal(t, telemetrytypes.FieldContextResource, query.GroupBy[0].FieldContext)
 	})
 
@@ -307,8 +306,8 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 				{
 					Key: OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name:         "Timestamp",
-							FieldContext: telemetrytypes.FieldContext{String: valuer.NewString("SPAN")},
+							Name:         "timestamp",
+							FieldContext: telemetrytypes.FieldContextSpan,
 						},
 					},
 					Direction: OrderDirectionDesc,
@@ -318,7 +317,7 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 
 		query.Normalize()
 
-		assert.Equal(t, "Timestamp", query.Order[0].Key.Name)
+		assert.Equal(t, "timestamp", query.Order[0].Key.Name)
 		assert.Equal(t, telemetrytypes.FieldContextSpan, query.Order[0].Key.FieldContext)
 	})
 
@@ -330,8 +329,8 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 						{
 							Key: OrderByKey{
 								TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-									Name:         "Value",
-									FieldContext: telemetrytypes.FieldContext{String: valuer.NewString("SPAN")},
+									Name:         "value",
+									FieldContext: telemetrytypes.FieldContextSpan,
 								},
 							},
 							Direction: OrderDirectionAsc,
@@ -340,8 +339,8 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 					GroupBy: []GroupByKey{
 						{
 							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-								Name:         "Region",
-								FieldContext: telemetrytypes.FieldContext{String: valuer.NewString("RESOURCE")},
+								Name:         "region",
+								FieldContext: telemetrytypes.FieldContextResource,
 							},
 						},
 					},
@@ -351,9 +350,9 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 
 		query.Normalize()
 
-		assert.Equal(t, "Value", query.SecondaryAggregations[0].Order[0].Key.Name)
+		assert.Equal(t, "value", query.SecondaryAggregations[0].Order[0].Key.Name)
 		assert.Equal(t, telemetrytypes.FieldContextSpan, query.SecondaryAggregations[0].Order[0].Key.FieldContext)
-		assert.Equal(t, "Region", query.SecondaryAggregations[0].GroupBy[0].Name)
+		assert.Equal(t, "region", query.SecondaryAggregations[0].GroupBy[0].Name)
 		assert.Equal(t, telemetrytypes.FieldContextResource, query.SecondaryAggregations[0].GroupBy[0].FieldContext)
 	})
 
@@ -372,13 +371,13 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 	t.Run("normalize all fields together", func(t *testing.T) {
 		query := QueryBuilderQuery[TraceAggregation]{
 			SelectFields: []telemetrytypes.TelemetryFieldKey{
-				{Name: "Service.Name", FieldContext: telemetrytypes.FieldContext{String: valuer.NewString("RESOURCE")}},
+				{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource},
 			},
 			GroupBy: []GroupByKey{
 				{
 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-						Name:         "Host.Name",
-						FieldContext: telemetrytypes.FieldContext{String: valuer.NewString("RESOURCE")},
+						Name:         "host.name",
+						FieldContext: telemetrytypes.FieldContextResource,
 					},
 				},
 			},
@@ -386,8 +385,8 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 				{
 					Key: OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name:         "Duration",
-							FieldContext: telemetrytypes.FieldContext{String: valuer.NewString("SPAN")},
+							Name:         "duration",
+							FieldContext: telemetrytypes.FieldContextSpan,
 						},
 					},
 				},
@@ -398,8 +397,8 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 						{
 							Key: OrderByKey{
 								TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-									Name:         "Count",
-									FieldContext: telemetrytypes.FieldContext{String: valuer.NewString("SPAN")},
+									Name:         "count",
+									FieldContext: telemetrytypes.FieldContextSpan,
 								},
 							},
 						},
@@ -407,8 +406,8 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 					GroupBy: []GroupByKey{
 						{
 							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-								Name:         "Status.Code",
-								FieldContext: telemetrytypes.FieldContext{String: valuer.NewString("SPAN")},
+								Name:         "status.code",
+								FieldContext: telemetrytypes.FieldContextSpan,
 							},
 						},
 					},
@@ -418,11 +417,11 @@ func TestQueryBuilderQuery_Normalize(t *testing.T) {
 
 		query.Normalize()
 
-		assert.Equal(t, "Service.Name", query.SelectFields[0].Name)
-		assert.Equal(t, "Host.Name", query.GroupBy[0].Name)
-		assert.Equal(t, "Duration", query.Order[0].Key.Name)
-		assert.Equal(t, "Count", query.SecondaryAggregations[0].Order[0].Key.Name)
-		assert.Equal(t, "Status.Code", query.SecondaryAggregations[0].GroupBy[0].Name)
+		assert.Equal(t, "service.name", query.SelectFields[0].Name)
+		assert.Equal(t, "host.name", query.GroupBy[0].Name)
+		assert.Equal(t, "duration", query.Order[0].Key.Name)
+		assert.Equal(t, "count", query.SecondaryAggregations[0].Order[0].Key.Name)
+		assert.Equal(t, "status.code", query.SecondaryAggregations[0].GroupBy[0].Name)
 	})
 }
 
@@ -440,13 +439,13 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 				"expression": "service.name = 'frontend'"
 			},
 			"groupBy": [{
-				"name": "Service.Name",
-				"fieldContext": "RESOURCE"
+				"name": "service.name",
+				"fieldContext": "resource"
 			}],
 			"order": [{
 				"key": {
-					"name": "Timestamp",
-					"fieldContext": "SPAN"
+					"name": "timestamp",
+					"fieldContext": "span"
 				},
 				"direction": "desc"
 			}],
@@ -467,11 +466,11 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 		assert.Equal(t, "service.name = 'frontend'", query.Filter.Expression)
 		assert.Equal(t, 1, len(query.GroupBy))
 		// Normalized during unmarshaling - only FieldContext is normalized, not Name
-		assert.Equal(t, "Service.Name", query.GroupBy[0].Name)
+		assert.Equal(t, "service.name", query.GroupBy[0].Name)
 		assert.Equal(t, telemetrytypes.FieldContextResource, query.GroupBy[0].FieldContext)
 		assert.Equal(t, 1, len(query.Order))
 		// Normalized during unmarshaling - only FieldContext is normalized, not Name
-		assert.Equal(t, "Timestamp", query.Order[0].Key.Name)
+		assert.Equal(t, "timestamp", query.Order[0].Key.Name)
 		assert.Equal(t, telemetrytypes.FieldContextSpan, query.Order[0].Key.FieldContext)
 		assert.Equal(t, OrderDirectionDesc, query.Order[0].Direction)
 		assert.Equal(t, 100, query.Limit)
@@ -541,7 +540,7 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 			"source": "traces",
 			"aggregations": [{
 				"expression": "count()",
-				"alias": "count"
+				"alias": "span.count"
 			}],
 			"disabled": true,
 			"filter": {
@@ -606,6 +605,8 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 		// Source is set in the JSON, so it should be "traces", not SourceUnspecified
 		assert.Equal(t, "traces", query.Source.String.StringValue())
 		assert.True(t, query.Disabled)
+		assert.Equal(t, query.Aggregations[0].Expression, "count()")
+		assert.Equal(t, query.Aggregations[0].Alias, "span.count")
 		assert.NotNil(t, query.Filter)
 		assert.NotNil(t, query.GroupBy)
 		assert.NotNil(t, query.Order)
@@ -625,17 +626,17 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 			"name": "A",
 			"signal": "traces",
 			"selectFields": [{
-				"name": "Service.Name",
-				"fieldContext": "RESOURCE"
+				"name": "service.name",
+				"fieldContext": "resource"
 			}],
 			"groupBy": [{
-				"name": "Host.Name",
-				"fieldContext": "RESOURCE"
+				"name": "host.name",
+				"fieldContext": "resource"
 			}],
 			"order": [{
 				"key": {
-					"name": "Duration",
-					"fieldContext": "SPAN"
+					"name": "duration",
+					"fieldContext": "span"
 				},
 				"direction": "desc"
 			}]
@@ -646,11 +647,11 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 		require.NoError(t, err)
 
 		// FieldContext should be normalized, Name should remain as-is
-		assert.Equal(t, "Service.Name", query.SelectFields[0].Name)
+		assert.Equal(t, "service.name", query.SelectFields[0].Name)
 		assert.Equal(t, telemetrytypes.FieldContextResource, query.SelectFields[0].FieldContext)
-		assert.Equal(t, "Host.Name", query.GroupBy[0].Name)
+		assert.Equal(t, "host.name", query.GroupBy[0].Name)
 		assert.Equal(t, telemetrytypes.FieldContextResource, query.GroupBy[0].FieldContext)
-		assert.Equal(t, "Duration", query.Order[0].Key.Name)
+		assert.Equal(t, "duration", query.Order[0].Key.Name)
 		assert.Equal(t, telemetrytypes.FieldContextSpan, query.Order[0].Key.FieldContext)
 	})
 }
