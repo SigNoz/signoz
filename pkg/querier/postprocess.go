@@ -342,13 +342,14 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 		}
 
 		// Check if we're dealing with time series or scalar data
-		if req.RequestType == qbtypes.RequestTypeTimeSeries {
+		switch req.RequestType {
+		case qbtypes.RequestTypeTimeSeries:
 			result := q.processTimeSeriesFormula(ctx, results, formula, req)
 			if result != nil {
 				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
 				results[name] = result
 			}
-		} else if req.RequestType == qbtypes.RequestTypeScalar {
+		case qbtypes.RequestTypeScalar:
 			result := q.processScalarFormula(ctx, results, formula, req)
 			if result != nil {
 				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
@@ -723,8 +724,9 @@ func deduplicateRows(sd *qbtypes.ScalarData, applyDefaultSort bool) *qbtypes.Sca
 		}
 	}
 
-	// Build unique rows map
+	// Build unique rows map, preserve order
 	uniqueRows := make(map[string][]any)
+	var keyOrder []string
 	for _, row := range sd.Data {
 		key := buildRowKey(row, groupIndices)
 		if existing, found := uniqueRows[key]; found {
@@ -738,13 +740,14 @@ func deduplicateRows(sd *qbtypes.ScalarData, applyDefaultSort bool) *qbtypes.Sca
 			rowCopy := make([]any, len(row))
 			copy(rowCopy, row)
 			uniqueRows[key] = rowCopy
+			keyOrder = append(keyOrder, key)
 		}
 	}
 
-	// Convert back to slice
+	// Convert back to slice, preserve the original order
 	data := make([][]any, 0, len(uniqueRows))
-	for _, row := range uniqueRows {
-		data = append(data, row)
+	for _, key := range keyOrder {
+		data = append(data, uniqueRows[key])
 	}
 
 	// sort by first aggregation (descending) if no order was specified
@@ -799,10 +802,12 @@ func mergeScalarData(results map[string]*qbtypes.ScalarData, applyDefaultSort bo
 		}
 	}
 
-	// Merge rows
+	// Merge rows, preserve order
 	rowMap := make(map[string][]any)
+	var keyOrder []string
 
-	for queryName, sd := range results {
+	for _, queryName := range queryNames {
+		sd := results[queryName]
 		// Create index mappings
 		groupMap := make(map[string]int)
 		for i, col := range sd.Columns {
@@ -831,6 +836,7 @@ func mergeScalarData(results map[string]*qbtypes.ScalarData, applyDefaultSort bo
 					newRow[i] = "n/a"
 				}
 				rowMap[key] = newRow
+				keyOrder = append(keyOrder, key)
 			}
 
 			// Set aggregation values for this query
@@ -854,10 +860,10 @@ func mergeScalarData(results map[string]*qbtypes.ScalarData, applyDefaultSort bo
 		}
 	}
 
-	// Convert to slice
+	// Convert to slice, preserving insertion order
 	data := make([][]any, 0, len(rowMap))
-	for _, row := range rowMap {
-		data = append(data, row)
+	for _, key := range keyOrder {
+		data = append(data, rowMap[key])
 	}
 
 	// sort by first aggregation (descending) if no order was specified
