@@ -380,6 +380,23 @@ describe('extractQueryPairs', () => {
 
 		consoleSpy.mockRestore();
 	});
+
+	test('should treat lowercase exists as non-value operator', () => {
+		const input = 'body exists service.name contains "test"';
+		const result = extractQueryPairs(input);
+
+		expect(result).toHaveLength(2);
+		expect(result[0].key).toBe('body');
+		expect(result[0].operator).toBe('exists');
+		expect(result[0].value).toBeUndefined();
+		expect(result[0].valuesPosition).toEqual([]);
+		expect(result[0].isComplete).toBe(false);
+		expect(result[1].key).toBe('service.name');
+		expect(result[1].operator).toBe('contains');
+		expect(result[1].value).toBe('"test"');
+		expect(result[1].valuesPosition).toEqual([]);
+		expect(result[1].isComplete).toBe(true);
+	});
 });
 
 describe('createContext', () => {
