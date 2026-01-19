@@ -99,6 +99,83 @@ def test_user_invite_accept_role_grant(
             assert tuple_row["_user"] == _user
 
 
+
+def test_user_update_role_grant(
+    request: pytest.FixtureRequest,
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    # Get the editor user's id
+    editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
+    user_me_response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user/me"),
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=2,
+    )
+    assert user_me_response.status_code == HTTPStatus.OK
+    editor_id = user_me_response.json()["data"]["id"]
+
+    # Get the role id for viewer
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    roles_response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/roles"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert roles_response.status_code == HTTPStatus.OK
+    roles_data = roles_response.json()["data"]
+    org_id = roles_data[0]["org_id"]
+    viewer_role_id = next(role["id"] for role in roles_data if role["name"] == "signoz-viewer")
+
+    # Update the user's role to viewer
+    update_payload = {
+        "role": "VIEWER"
+    }
+    update_response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/user/{editor_id}"),
+        json=update_payload,
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert update_response.status_code == HTTPStatus.OK
+
+    # Check that user no longer has the editor role in the db
+    with signoz.sqlstore.conn.connect() as conn:
+        editor_role_id = next(role["id"] for role in roles_data if role["name"] == "signoz-editor")
+        editor_tuple_object_id = f"organization/{org_id}/role/{editor_role_id}"
+        viewer_tuple_object_id = f"organization/{org_id}/role/{viewer_role_id}"
+        # Check there is no tuple for signoz-editor assignment
+        editor_tuple_result = conn.execute(
+            sql.text("SELECT * FROM tuple WHERE object_id = :object_id AND relation = 'assignee'"),
+            {"object_id": editor_tuple_object_id},
+        )
+        for row in editor_tuple_result.mappings().fetchall():
+            if request.config.getoption("--sqlstore-provider") == "sqlite":
+                user_object_id = f"organization/{org_id}/user/{editor_id}"
+                assert row["user_object_id"] != user_object_id
+            else:
+                _user = f"user:organization/{org_id}/user/{editor_id}"
+                assert row["_user"] != _user
+
+        # Check that a tuple exists for signoz-viewer assignment
+        viewer_tuple_result = conn.execute(
+            sql.text("SELECT * FROM tuple WHERE object_id = :object_id AND relation = 'assignee'"),
+            {"object_id": viewer_tuple_object_id},
+        )
+        row = viewer_tuple_result.mappings().fetchone()
+        assert row is not None
+        assert row['object_type'] == "role"
+        assert row['relation'] == "assignee"
+        if request.config.getoption("--sqlstore-provider") == "sqlite":
+            user_object_id = f"organization/{org_id}/user/{editor_id}"
+            assert row["user_object_type"] == "user"
+            assert row["user_object_id"] == user_object_id
+        else:
+            _user = f"user:organization/{org_id}/user/{editor_id}"
+            assert row["user_type"] == "user"
+            assert row["_user"] == _user
+
 def test_user_delete_role_revoke(
     request: pytest.FixtureRequest,
     signoz: SigNoz,
