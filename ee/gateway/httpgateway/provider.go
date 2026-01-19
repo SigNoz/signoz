@@ -194,7 +194,7 @@ func (provider *Provider) UpdateIngestionKeyLimit(ctx context.Context, orgID val
 		return err
 	}
 
-	_, err = provider.do(ctx, orgID, http.MethodPatch, "/v1/workspaces/me/keys/limits/"+limitID, nil, requestBodyBytes)
+	_, err = provider.do(ctx, orgID, http.MethodPatch, "/v1/workspaces/me/limits/"+limitID, nil, requestBodyBytes)
 	if err != nil {
 		return err
 	}
@@ -203,7 +203,7 @@ func (provider *Provider) UpdateIngestionKeyLimit(ctx context.Context, orgID val
 }
 
 func (provider *Provider) DeleteIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string) error {
-	_, err := provider.do(ctx, orgID, http.MethodDelete, "/v1/workspaces/me/keys/limits/"+limitID, nil, nil)
+	_, err := provider.do(ctx, orgID, http.MethodDelete, "/v1/workspaces/me/limits/"+limitID, nil, nil)
 	if err != nil {
 		return err
 	}
