@@ -33,6 +33,19 @@
 			height: calc(100vh - 48px);
 			border-right: 1px solid var(--Slate-500, #161922);
 			background: var(--Ink-500, #0b0c0e);
+			margin-top: 4px;
+
+			.nav-item {
+				.nav-item-data {
+					margin: 0px 8px 0px 4px;
+				}
+
+				&.active {
+					.nav-item-data .nav-item-label {
+						color: var(--bg-vanilla-100, #fff);
+					}
+				}
+			}
 		}
 
 		.settings-page-content {
@@ -81,6 +94,14 @@
 			.settings-page-sidenav {
 				border-right: 1px solid var(--bg-vanilla-300);
 				background: var(--bg-vanilla-100);
+
+				.nav-item {
+					&.active {
+						.nav-item-data .nav-item-label {
+							color: var(--bg-ink-500);
+						}
+					}
+				}
 			}
 
 			.settings-page-content {
