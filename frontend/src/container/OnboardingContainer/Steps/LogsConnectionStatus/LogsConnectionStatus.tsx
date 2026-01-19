@@ -18,7 +18,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 const enum ApplicationLogsType {
 	FROM_LOG_FILE = 'from-log-file',
@@ -68,7 +68,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 					],
 					groupBy: [],
 					legend: '',
-					reduceTo: 'sum',
+					reduceTo: ReduceOperators.SUM,
 					offset: 0,
 					pageSize: 100,
 					timeAggregation: '',

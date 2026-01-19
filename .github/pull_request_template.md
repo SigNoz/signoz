@@ -1,72 +1,76 @@
-## 📄 Summary
-
-<!-- Describe the purpose of the PR in a few sentences. What does it fix/add/update? -->
+## Pull Request
 
 ---
 
-## ✅ Changes
-
-- [ ] Feature: Brief description
-- [ ] Bug fix: Brief description
-
----
-
-## 🏷️ Required: Add Relevant Labels
-
-> ⚠️ **Manually add appropriate labels in the PR sidebar**  
-Please select one or more labels (as applicable):
-
-ex:
-
-- `frontend`
-- `backend`
-- `devops`
-- `bug`
-- `enhancement`
-- `ui`
-- `test`
+### 📄 Summary
+> Why does this change exist?  
+> What problem does it solve, and why is this the right approach?
 
 ---
 
-## 👥 Reviewers
+### ✅ Change Type
+_Select all that apply_
 
-> Tag the relevant teams for review:
-
-- frontend / backend / devops
-
----
-
-## 🧪 How to Test
-
-<!-- Describe how reviewers can test this PR -->
-1. ...
-2. ...
-3. ...
+- [ ] ✨ Feature
+- [ ] 🐛 Bug fix
+- [ ] ♻️ Refactor
+- [ ] 🛠️ Infra / Tooling
+- [ ] 🧪 Test-only
 
 ---
 
-## 🔍 Related Issues
+### 🐛 Bug Context
+> Required if this PR fixes a bug
 
-<!-- Reference any related issues (e.g. Fixes #123, Closes #456) -->
-Closes #
+#### Root Cause
+> What caused the issue?  
+> Regression, faulty assumption, edge case, refactor, etc.
+
+#### Fix Strategy
+> How does this PR address the root cause?
 
 ---
 
-## 📸 Screenshots / Screen Recording (if applicable / mandatory for UI related changes)
+### 🧪 Testing Strategy
+> How was this change validated?
 
-<!-- Add screenshots or GIFs to help visualize changes -->
+- Tests added/updated:
+- Manual verification:
+- Edge cases covered:
 
 ---
 
-## 📋 Checklist
+### ⚠️ Risk & Impact Assessment
+> What could break? How do we recover?
 
-- [ ] Dev Review
-- [ ] Test cases added (Unit/ Integration / E2E)
-- [ ] Manually tested the changes
+- Blast radius:
+- Potential regressions:
+- Rollback plan:
 
+---
+
+### 📝 Changelog
+> Fill only if this affects users, APIs, UI, or documented behavior  
+> Use **N/A** for internal or non-user-facing changes
+
+| Field | Value |
+|------|-------|
+| Deployment Type | Cloud / OSS / Enterprise |
+| Change Type | Feature / Bug Fix / Maintenance |
+| Description | User-facing summary |
+
+---
+
+### 📋 Checklist
+- [ ] Tests added or explicitly not required
+- [ ] Manually tested
+- [ ] Breaking changes documented
+- [ ] Backward compatibility considered
 
 ---
 
 ## 👀 Notes for Reviewers
 
 <!-- Anything reviewers should keep in mind while reviewing -->
+
+---

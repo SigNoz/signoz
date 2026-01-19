@@ -3,7 +3,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuidv4 } from 'uuid';
 
 export const getHostLogsQueryPayload = (
@@ -45,7 +45,7 @@ export const getHostLogsQueryPayload = (
 					],
 					groupBy: [],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					offset: 0,
 					pageSize: 100,
 				},

@@ -6,6 +6,7 @@ import (
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -20,13 +21,6 @@ func makeKey(name string, dataType telemetrytypes.JSONDataType, materialized boo
 		Name:         name,
 		JSONDataType: &dataType,
 		Materialized: materialized,
-	}
-}
-
-// makeGetTypes creates a getTypes function from a map of path -> types
-func makeGetTypes(typesMap map[string][]telemetrytypes.JSONDataType) func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
-	return func(_ context.Context, path string) ([]telemetrytypes.JSONDataType, error) {
-		return typesMap[path], nil
 	}
 }
 
@@ -237,7 +231,7 @@ func TestNode_FieldPath(t *testing.T) {
 // ============================================================================
 
 func TestPlanJSON_BasicStructure(t *testing.T) {
-	_, getTypes := testTypeSet()
+	_, metadataStore := testTypeSet()
 
 	tests := []struct {
 		name         string
@@ -292,7 +286,7 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			plans, err := PlanJSON(context.Background(), tt.key, qbtypes.FilterOperatorEqual, "John", getTypes)
+			plans, err := PlanJSON(context.Background(), tt.key, qbtypes.FilterOperatorEqual, "John", metadataStore)
 			if tt.expectErr {
 				require.Error(t, err)
 				require.Nil(t, plans)
@@ -306,7 +300,7 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 }
 
 func TestPlanJSON_ArrayPaths(t *testing.T) {
-	_, getTypes := testTypeSet()
+	_, metadataStore := testTypeSet()
 
 	tests := []struct {
 		name         string
@@ -442,7 +436,7 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			key := makeKey(tt.path, telemetrytypes.String, false)
-			plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, "John", getTypes)
+			plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, "John", metadataStore)
 			require.NoError(t, err)
 			require.NotNil(t, plans)
 			require.Len(t, plans, 1)
@@ -453,13 +447,13 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 }
 
 func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
-	_, getTypes := testTypeSet()
+	_, metadataStore := testTypeSet()
 	path := "education[].awards[].type"
 	value := "sports"
 
 	t.Run("Non-promoted plan", func(t *testing.T) {
 		key := makeKey(path, telemetrytypes.String, false)
-		plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, value, getTypes)
+		plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, value, metadataStore)
 		require.NoError(t, err)
 		require.Len(t, plans, 1)
 
@@ -501,7 +495,7 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 
 	t.Run("Promoted plan", func(t *testing.T) {
 		key := makeKey(path, telemetrytypes.String, true)
-		plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, value, getTypes)
+		plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, value, metadataStore)
 		require.NoError(t, err)
 		require.Len(t, plans, 2)
 
@@ -576,7 +570,7 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 }
 
 func TestPlanJSON_EdgeCases(t *testing.T) {
-	_, getTypes := testTypeSet()
+	_, metadataStore := testTypeSet()
 
 	tests := []struct {
 		name         string
@@ -695,7 +689,7 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 				keyType = telemetrytypes.String
 			}
 			key := makeKey(tt.path, keyType, false)
-			plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, tt.value, getTypes)
+			plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, tt.value, metadataStore)
 			require.NoError(t, err)
 			got := plansToYAML(t, plans)
 			require.YAMLEq(t, tt.expectedYAML, got)
@@ -704,10 +698,10 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 }
 
 func TestPlanJSON_TreeStructure(t *testing.T) {
-	_, getTypes := testTypeSet()
+	_, metadataStore := testTypeSet()
 	path := "education[].awards[].participated[].team[].branch"
 	key := makeKey(path, telemetrytypes.String, false)
-	plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, "John", getTypes)
+	plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, "John", metadataStore)
 	require.NoError(t, err)
 	require.Len(t, plans, 1)
 
@@ -812,12 +806,9 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
 // Test Data Setup
 // ============================================================================
 
-// testTypeSet returns a map of path->types and a getTypes function for testing
+// testTypeSet returns a map of path->types and a mock MetadataStore for testing
 // This represents the type information available in the test JSON structure
-//
-// TODO(Piyush): Remove this unparam nolint
-// nolint:unparam
-func testTypeSet() (map[string][]telemetrytypes.JSONDataType, func(ctx context.Context, path string) ([]telemetrytypes.JSONDataType, error)) {
+func testTypeSet() (map[string][]telemetrytypes.JSONDataType, telemetrytypes.MetadataStore) {
 	types := map[string][]telemetrytypes.JSONDataType{
 		"user.name":                                           {telemetrytypes.String},
 		"user.age":                                            {telemetrytypes.Int64, telemetrytypes.String},
@@ -876,5 +867,17 @@ func testTypeSet() (map[string][]telemetrytypes.JSONDataType, func(ctx context.C
 		"message": {telemetrytypes.String},
 	}
 
-	return types, makeGetTypes(types)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	for path, dataTypes := range types {
+		for _, dataType := range dataTypes {
+			mockMetadataStore.SetKey(&telemetrytypes.TelemetryFieldKey{
+				Name:          path,
+				JSONDataType:  &dataType,
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextBody,
+				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[dataType],
+			})
+		}
+	}
+	return types, mockMetadataStore
 }

@@ -1,2 +1,1 @@
 # Log pipelines integration tests
-

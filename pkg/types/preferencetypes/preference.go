@@ -140,7 +140,7 @@ func NewAvailablePreference() map[Name]Preference {
 			Name:          NameNavShortcuts,
 			Description:   "A list of shortcuts to be shown in the navigation.",
 			ValueType:     ValueTypeArray,
-			DefaultValue:  MustNewValue([]any{}, ValueTypeArray),
+			DefaultValue:  MustNewValue([]any{"services", "logs", "traces", "infrastructure"}, ValueTypeArray),
 			AllowedScopes: []Scope{ScopeUser},
 			AllowedValues: []string{},
 			Value:         MustNewValue([]any{}, ValueTypeArray),
@@ -170,7 +170,7 @@ func NewAvailablePreference() map[Name]Preference {
 			DefaultValue:  MustNewValue([]any{"deployment.environment"}, ValueTypeArray),
 			AllowedScopes: []Scope{ScopeUser},
 			AllowedValues: []string{},
-			Value:         MustNewValue([]any{"deployment.environment"}, ValueTypeArray),
+			Value:         MustNewValue([]any{}, ValueTypeArray),
 		},
 	}
 }
@@ -191,7 +191,7 @@ func NewPreference(name Name, scope Scope, available map[Name]Preference) (*Pref
 		ValueType:     preference.ValueType,
 		DefaultValue:  preference.DefaultValue,
 		AllowedScopes: preference.AllowedScopes,
-		Value:         preference.DefaultValue,
+		Value:         preference.Value,
 	}, nil
 }
 

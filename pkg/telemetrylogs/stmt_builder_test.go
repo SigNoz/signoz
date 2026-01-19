@@ -32,7 +32,6 @@ func resourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.LogAggregation
 		cb,
 		mockMetadataStore,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 }
@@ -197,11 +196,11 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -213,7 +212,6 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -318,11 +316,11 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -334,7 +332,6 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -427,11 +424,11 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -443,9 +440,10 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
+
+	//
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -491,7 +489,8 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 				GroupBy: []qbtypes.GroupByKey{
 					{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "body.status",
+							Name:         "status",
+							FieldContext: telemetrytypes.FieldContextBody,
 						},
 					},
 				},
@@ -501,11 +500,11 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -517,7 +516,6 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -597,11 +595,11 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
+	cb := NewConditionBuilder(fm, mockMetadataStore)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -613,7 +611,6 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 

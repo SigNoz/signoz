@@ -16,11 +16,12 @@ import (
 )
 
 type conditionBuilder struct {
-	fm qbtypes.FieldMapper
+	fm            qbtypes.FieldMapper
+	metadataStore telemetrytypes.MetadataStore
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
-	return &conditionBuilder{fm: fm}
+func NewConditionBuilder(fm qbtypes.FieldMapper, metadataStore telemetrytypes.MetadataStore) *conditionBuilder {
+	return &conditionBuilder{fm: fm, metadataStore: metadataStore}
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -30,20 +31,21 @@ func (c *conditionBuilder) conditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-
-	switch operator {
-	case qbtypes.FilterOperatorContains,
-		qbtypes.FilterOperatorNotContains,
-		qbtypes.FilterOperatorILike,
-		qbtypes.FilterOperatorNotILike,
-		qbtypes.FilterOperatorLike,
-		qbtypes.FilterOperatorNotLike:
-		value = querybuilder.FormatValueForContains(value)
-	}
-
 	column, err := c.fm.ColumnFor(ctx, key)
 	if err != nil {
 		return "", err
+	}
+
+	if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
+		cond, err := c.buildJSONCondition(ctx, key, operator, value, sb)
+		if err != nil {
+			return "", err
+		}
+		return cond, nil
+	}
+
+	if operator.IsStringSearchOperator() {
+		value = querybuilder.FormatValueForContains(value)
 	}
 
 	tblFieldName, err := c.fm.FieldFor(ctx, key)
@@ -163,9 +165,7 @@ func (c *conditionBuilder) conditionFor(
 	// in the UI based query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-
-		// Check if this is a body JSON search - by FieldContext
-		if key.FieldContext == telemetrytypes.FieldContextBody {
+		if key.FieldContext == telemetrytypes.FieldContextBody && !querybuilder.BodyJSONQueryEnabled {
 			if operator == qbtypes.FilterOperatorExists {
 				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			} else {
@@ -247,7 +247,7 @@ func (c *conditionBuilder) ConditionFor(
 		return "", err
 	}
 
-	if operator.AddDefaultExistsFilter() {
+	if !(key.FieldContext == telemetrytypes.FieldContextBody && querybuilder.BodyJSONQueryEnabled) && operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
 		field, _ := c.fm.FieldFor(ctx, key)
