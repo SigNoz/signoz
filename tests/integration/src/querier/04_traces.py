@@ -488,6 +488,284 @@ def test_traces_list(
     assert set(values) == set(["topic-service", "http-service"])
 
 
+def test_traces_aggergate_order_by_count(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[List[Traces]], None],
+) -> None:
+    """
+    Setup:
+    Insert 4 traces with different attributes.
+    http-service: POST /integration -> SELECT, HTTP PATCH
+    topic-service: topic publish
+
+    Tests:
+    1. Query traces count for spans grouped by service.name and host.name
+    """
+    http_service_trace_id = TraceIdGenerator.trace_id()
+    http_service_span_id = TraceIdGenerator.span_id()
+    http_service_db_span_id = TraceIdGenerator.span_id()
+    http_service_patch_span_id = TraceIdGenerator.span_id()
+    topic_service_trace_id = TraceIdGenerator.trace_id()
+    topic_service_span_id = TraceIdGenerator.span_id()
+
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+
+    insert_traces(
+        [
+            Traces(
+                timestamp=now - timedelta(seconds=4),
+                duration=timedelta(seconds=3),
+                trace_id=http_service_trace_id,
+                span_id=http_service_span_id,
+                parent_span_id="",
+                name="POST /integration",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "http-service",
+                    "os.type": "linux",
+                    "host.name": "linux-000",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": "000",
+                },
+                attributes={
+                    "net.transport": "IP.TCP",
+                    "http.scheme": "http",
+                    "http.user_agent": "Integration Test",
+                    "http.request.method": "POST",
+                    "http.response.status_code": "200",
+                },
+            ),
+            Traces(
+                timestamp=now - timedelta(seconds=3.5),
+                duration=timedelta(seconds=0.5),
+                trace_id=http_service_trace_id,
+                span_id=http_service_db_span_id,
+                parent_span_id=http_service_span_id,
+                name="SELECT",
+                kind=TracesKind.SPAN_KIND_CLIENT,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "http-service",
+                    "os.type": "linux",
+                    "host.name": "linux-000",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": "000",
+                },
+                attributes={
+                    "db.name": "integration",
+                    "db.operation": "SELECT",
+                    "db.statement": "SELECT * FROM integration",
+                },
+            ),
+            Traces(
+                timestamp=now - timedelta(seconds=3),
+                duration=timedelta(seconds=1),
+                trace_id=http_service_trace_id,
+                span_id=http_service_patch_span_id,
+                parent_span_id=http_service_span_id,
+                name="HTTP PATCH",
+                kind=TracesKind.SPAN_KIND_CLIENT,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "http-service",
+                    "os.type": "linux",
+                    "host.name": "linux-000",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": "000",
+                },
+                attributes={
+                    "http.request.method": "PATCH",
+                    "http.status_code": "404",
+                },
+            ),
+            Traces(
+                timestamp=now - timedelta(seconds=1),
+                duration=timedelta(seconds=4),
+                trace_id=topic_service_trace_id,
+                span_id=topic_service_span_id,
+                parent_span_id="",
+                name="topic publish",
+                kind=TracesKind.SPAN_KIND_PRODUCER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "topic-service",
+                    "os.type": "linux",
+                    "host.name": "linux-001",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": "001",
+                },
+                attributes={
+                    "message.type": "SENT",
+                    "messaging.operation": "publish",
+                    "messaging.message.id": "001",
+                },
+            ),
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    request_payload = {
+        "schemaVersion": "v1",
+        "start": int(
+            (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp()
+            * 1000
+        ),
+        "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        "requestType": "time_series",
+        "compositeQuery": {
+            "queries": [
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "A",
+                        "signal": "traces",
+                        "disabled": False,
+                        "order": [
+                            {"key": {"name": "count()"},
+                              "direction": "desc"}
+                        ],
+                        "aggregations": [{"expression": "count()", "alias": "count_"}],
+                    }
+                }
+            ]
+        }
+    }
+
+    # Query traces count for spans
+
+    # Case 1: count by count()
+    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "count()"
+    response1 = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json=request_payload
+    )
+
+    assert response1.status_code == HTTPStatus.OK
+    assert response1.json()["status"] == "success"
+
+    # Case 2: count by count() with context specified in the key
+    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "count()"
+    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["fieldContext"] = "span"
+    response2 = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json=request_payload
+    )
+
+    assert response2.status_code == HTTPStatus.OK
+    assert response2.json()["status"] == "success"
+
+    assert response1.json()['data']['data']['results'] == response2.json()['data']['data']['results']
+
+    # Case 3: count by span.count() and context specified in the key [BAD REQUEST]
+    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "span.count()"
+    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["fieldContext"] = "span"
+    response3 = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json=request_payload
+    )
+
+    assert response3.status_code == HTTPStatus.BAD_REQUEST
+
+
+    # Case 4: count by span.count() and context specified in the key
+    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "span.count()"
+    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["fieldContext"] = ""
+    response4 = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json=request_payload
+    )
+
+    assert response4.status_code == HTTPStatus.OK
+    assert response4.json()["status"] == "success"
+    assert response1.json()['data']['data']['results'] == response4.json()['data']['data']['results']   
+
+
+    # Case 5: count by count_
+    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "count_"
+    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["fieldContext"] = ""
+    response5 = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json=request_payload
+    )
+
+    assert response5.status_code == HTTPStatus.OK
+    assert response5.json()["status"] == "success"
+
+    assert response1.json()['data']['data']['results'] == response5.json()['data']['data']['results']
+
+    # Case 6: count by span.count_
+    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "span.count_"
+    response6 = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json=request_payload
+    )
+
+    assert response6.status_code == HTTPStatus.OK
+    assert response6.json()["status"] == "success"
+
+    assert response1.json()['data']['data']['results'] == response6.json()['data']['data']['results']
+
+    # Case 7: count by span.count_ and context specified in the key [BAD REQUEST    ]
+    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "span.count_"
+    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["fieldContext"] = "span"
+
+    response7 = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json=request_payload
+    )
+
+    assert response7.status_code == HTTPStatus.BAD_REQUEST
+
+    results = response1.json()["data"]["data"]["results"]
+
+    assert len(results) == 1
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    assert len(series) == 1
+    assert series[0]["values"][0]["value"] == 4
+
+
 def test_traces_fill_gaps(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
