@@ -11,6 +11,7 @@ from fixtures.auth import (
     USER_ADMIN_PASSWORD,
     add_license,
 )
+from fixtures.idputils import get_oidc_domain, get_user_by_email, perform_oidc_login
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
 
 
@@ -129,56 +130,6 @@ def test_oidc_authn(
     assert found_user["role"] == "VIEWER"
 
 
-def _get_oidc_domain(signoz: SigNoz, admin_token: str) -> dict:
-    """Helper to get the OIDC domain."""
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    return next(
-        (
-            domain
-            for domain in response.json()["data"]
-            if domain["name"] == "oidc.integration.test"
-        ),
-        None,
-    )
-
-
-def _get_user_by_email(signoz: SigNoz, admin_token: str, email: str) -> dict:
-    """Helper to get a user by email."""
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    return next(
-        (user for user in response.json()["data"] if user["email"] == email),
-        None,
-    )
-
-
-def _perform_oidc_login(
-    signoz: SigNoz, # pylint: disable=unused-argument
-    idp: TestContainerIDP,
-    driver: webdriver.Chrome,
-    get_session_context: Callable[[str], str],
-    idp_login: Callable[[str, str], None],
-    email: str,
-    password: str,
-) -> None:
-    """Helper to perform OIDC login flow."""
-    session_context = get_session_context(email)
-    url = session_context["orgs"][0]["authNSupport"]["callback"][0]["url"]
-    parsed_url = urlparse(url)
-    actual_url = (
-        f"{idp.container.host_configs['6060'].get(parsed_url.path)}?{parsed_url.query}"
-    )
-    driver.get(actual_url)
-    idp_login(email, password)
-
-
 def test_oidc_update_domain_with_group_mappings(
     signoz: SigNoz,
     idp: TestContainerIDP,
@@ -189,7 +140,7 @@ def test_oidc_update_domain_with_group_mappings(
     Updates OIDC domain to add role mapping with group mappings and claim mapping.
     """
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    domain = _get_oidc_domain(signoz, admin_token)
+    domain = get_oidc_domain(signoz, admin_token)
     client_id = f"oidc.integration.test.{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
     settings = get_oidc_settings(client_id)
 
@@ -245,10 +196,10 @@ def test_oidc_role_mapping_single_group_admin(
     email = "admin-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["signoz-admins"])
 
-    _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    found_user = _get_user_by_email(signoz, admin_token, email)
+    found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
     assert found_user["role"] == "ADMIN"
@@ -269,10 +220,10 @@ def test_oidc_role_mapping_single_group_editor(
     email = "editor-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["signoz-editors"])
 
-    _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    found_user = _get_user_by_email(signoz, admin_token, email)
+    found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
     assert found_user["role"] == "EDITOR"
@@ -295,10 +246,10 @@ def test_oidc_role_mapping_multiple_groups_highest_wins(
     email = "multi-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["signoz-viewers", "signoz-admins"])
 
-    _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    found_user = _get_user_by_email(signoz, admin_token, email)
+    found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
     assert found_user["role"] == "ADMIN"
@@ -320,10 +271,10 @@ def test_oidc_role_mapping_explicit_viewer_group(
     email = "viewer-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["signoz-viewers"])
 
-    _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    found_user = _get_user_by_email(signoz, admin_token, email)
+    found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
     assert found_user["role"] == "VIEWER"
@@ -344,10 +295,10 @@ def test_oidc_role_mapping_unmapped_group_uses_default(
     email = "unmapped-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["some-other-group"])
 
-    _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    found_user = _get_user_by_email(signoz, admin_token, email)
+    found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
     assert found_user["role"] == "VIEWER"
@@ -363,7 +314,7 @@ def test_oidc_update_domain_with_use_role_claim(
     Updates OIDC domain to enable useRoleClaim.
     """
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    domain = _get_oidc_domain(signoz, admin_token)
+    domain = get_oidc_domain(signoz, admin_token)
     client_id = f"oidc.integration.test.{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
     settings = get_oidc_settings(client_id)
 
@@ -422,10 +373,10 @@ def test_oidc_role_mapping_role_claim_takes_precedence(
     email = "role-claim-precedence@oidc.integration.test"
     create_user_idp_with_role(email, "password123", True, "ADMIN", ["signoz-editors"])
 
-    _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    found_user = _get_user_by_email(signoz, admin_token, email)
+    found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
     assert found_user["role"] == "ADMIN"
@@ -450,10 +401,10 @@ def test_oidc_role_mapping_invalid_role_claim_fallback(
     email = "invalid-role-user@oidc.integration.test"
     create_user_idp_with_role(email, "password123", True, "SUPERADMIN", ["signoz-editors"])
 
-    _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    found_user = _get_user_by_email(signoz, admin_token, email)
+    found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
     assert found_user["role"] == "EDITOR"
@@ -478,10 +429,10 @@ def test_oidc_role_mapping_case_insensitive(
     email = "lowercase-role-user@oidc.integration.test"
     create_user_idp_with_role(email, "password123", True, "editor", [])
 
-    _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    found_user = _get_user_by_email(signoz, admin_token, email)
+    found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
     assert found_user["role"] == "EDITOR"
@@ -508,7 +459,7 @@ def test_oidc_name_mapping(
         last_name="Doe"
     )
 
-    _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
     
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
@@ -542,7 +493,7 @@ def test_oidc_empty_name_uses_fallback(
     # Create user without first/last name
     create_user_idp(email, "password123", True)
 
-    _perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
     
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
@@ -570,7 +521,7 @@ def test_cleanup_oidc_domain(
 ) -> None:
     """Cleanup: Remove the OIDC domain after tests complete."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    domain = _get_oidc_domain(signoz, admin_token)
+    domain = get_oidc_domain(signoz, admin_token)
     
     if domain:
         response = requests.delete(

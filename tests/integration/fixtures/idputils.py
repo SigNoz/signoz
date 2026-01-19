@@ -1,5 +1,5 @@
 from typing import Any, Callable, Dict, List
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from xml.etree import ElementTree
 
 import pytest
@@ -636,3 +636,83 @@ def _ensure_groups_client_scope(client: KeycloakAdmin) -> None:
             },
             skip_exists=True,
         )
+
+
+def get_oidc_domain(signoz: types.SigNoz, admin_token: str) -> dict:
+    """Helper to get the OIDC domain."""
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    return next(
+        (
+            domain
+            for domain in response.json()["data"]
+            if domain["name"] == "oidc.integration.test"
+        ),
+        None,
+    )
+
+
+def get_user_by_email(signoz: types.SigNoz, admin_token: str, email: str) -> dict:
+    """Helper to get a user by email."""
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        timeout=2,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    return next(
+        (user for user in response.json()["data"] if user["email"] == email),
+        None,
+    )
+
+
+def perform_oidc_login(
+    signoz: types.SigNoz, # pylint: disable=unused-argument
+    idp: types.TestContainerIDP,
+    driver: webdriver.Chrome,
+    get_session_context: Callable[[str], str],
+    idp_login: Callable[[str, str], None],
+    email: str,
+    password: str,
+) -> None:
+    """Helper to perform OIDC login flow."""
+    session_context = get_session_context(email)
+    url = session_context["orgs"][0]["authNSupport"]["callback"][0]["url"]
+    parsed_url = urlparse(url)
+    actual_url = (
+        f"{idp.container.host_configs['6060'].get(parsed_url.path)}?{parsed_url.query}"
+    )
+    driver.get(actual_url)
+    idp_login(email, password)
+
+
+def get_saml_domain(signoz: types.SigNoz, admin_token: str) -> dict:
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    return next(
+        (
+            domain
+            for domain in response.json()["data"]
+            if domain["name"] == "saml.integration.test"
+        ),
+        None,
+    )
+
+
+def perform_saml_login(
+    signoz: types.SigNoz, # pylint: disable=unused-argument
+    driver: webdriver.Chrome,
+    get_session_context: Callable[[str], str],
+    idp_login: Callable[[str, str], None],
+    email: str,
+    password: str,
+) -> None:
+    session_context = get_session_context(email)
+    url = session_context["orgs"][0]["authNSupport"]["callback"][0]["url"]
+    driver.get(url)
+    idp_login(email, password)
