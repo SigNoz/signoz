@@ -698,6 +698,25 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 	// hit the limit?
 	complete := rowCount <= limit
 
+	for _, selector := range fieldKeySelectors {
+		for _, key := range telemetrymetrics.MetricScopeFieldDefinitions {
+			if selector.Signal != telemetrytypes.SignalUnspecified && selector.Signal != telemetrytypes.SignalMetrics {
+				continue
+			}
+			if selector.FieldContext != telemetrytypes.FieldContextUnspecified && selector.FieldContext != key.FieldContext {
+				continue
+			}
+
+			if selector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified && selector.FieldDataType != key.FieldDataType {
+				continue
+			}
+			if matchesSelectorName(selector.Name, key.Name, selector.SelectorMatchType) {
+				keys = append(keys, &key)
+				break
+			}
+		}
+	}
+
 	return keys, complete, nil
 }
 

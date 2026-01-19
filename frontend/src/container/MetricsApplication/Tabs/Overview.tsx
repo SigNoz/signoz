@@ -46,7 +46,6 @@ import GraphControlsPanel from './Overview/GraphControlsPanel/GraphControlsPanel
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
-import TopOperationMetrics from './Overview/TopOperationMetrics';
 import { Button, Card } from './styles';
 import { IServiceName } from './types';
 import {
@@ -72,10 +71,6 @@ function Application(): JSX.Element {
 	const urlQuery = useUrlQuery();
 
 	const { featureFlags } = useAppContext();
-	const isSpanMetricEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
-			?.active || false;
-
 	const handleSetTimeStamp = useCallback((selectTime: number) => {
 		setSelectedTimeStamp(selectTime);
 	}, []);
@@ -396,7 +391,7 @@ function Application(): JSX.Element {
 
 				<Col span={12}>
 					<Card>
-						{isSpanMetricEnabled ? <TopOperationMetrics /> : <TopOperation />}{' '}
+						<TopOperation />
 					</Card>
 				</Col>
 			</Row>
