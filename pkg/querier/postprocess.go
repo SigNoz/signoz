@@ -46,30 +46,6 @@ func getQueryName(spec any) string {
 	return getqueryInfo(spec).Name
 }
 
-func hasOrderSpecified(req *qbtypes.QueryRangeRequest) bool {
-	for _, query := range req.CompositeQuery.Queries {
-		switch spec := query.Spec.(type) {
-		case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-			if len(spec.Order) > 0 {
-				return true
-			}
-		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-			if len(spec.Order) > 0 {
-				return true
-			}
-		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
-			if len(spec.Order) > 0 {
-				return true
-			}
-		case qbtypes.QueryBuilderFormula:
-			if len(spec.Order) > 0 {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 func (q *querier) postProcessResults(ctx context.Context, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, error) {
 	// Convert results to typed format for processing
 	typedResults := make(map[string]*qbtypes.Result)
@@ -612,7 +588,7 @@ func (q *querier) formatScalarResultsAsTable(results map[string]*qbtypes.Result,
 	}
 
 	// apply default sorting if no order specified
-	applyDefaultSort := !hasOrderSpecified(req)
+	applyDefaultSort := !req.HasOrderSpecified()
 
 	// Convert all results to ScalarData first
 	scalarResults := make(map[string]*qbtypes.ScalarData)
