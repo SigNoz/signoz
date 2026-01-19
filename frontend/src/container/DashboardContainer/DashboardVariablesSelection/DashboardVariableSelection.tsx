@@ -94,7 +94,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 				cycleNodes,
 			});
 		}
-	}, [setVariablesToGetUpdated, variables, variablesTableData]);
+	}, [variables, variablesTableData]);
 
 	// this handles the case where the dependency order changes i.e. variable list updated via creation or deletion etc. and we need to refetch the variables
 	// also trigger when the global time changes

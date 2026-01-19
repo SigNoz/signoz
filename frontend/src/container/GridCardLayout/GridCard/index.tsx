@@ -318,7 +318,9 @@ function GridCardGraph({
 					version={version}
 					threshold={threshold}
 					headerMenuList={menuList}
-					isFetchingResponse={queryResponse.isFetching}
+					isFetchingResponse={
+						queryResponse.isFetching || variablesToGetUpdated.length > 0
+					}
 					setRequestData={setRequestData}
 					onClickHandler={onClickHandler}
 					onDragSelect={onDragSelect}
