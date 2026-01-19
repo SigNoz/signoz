@@ -1,9 +1,17 @@
 import MySettingsContainer from 'container/MySettings';
-import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 const toggleThemeFunction = jest.fn();
 const logEventFunction = jest.fn();
 const copyToClipboardFn = jest.fn();
+const editUserFn = jest.fn();
 
 jest.mock('react-use', () => ({
 	__esModule: true,
@@ -11,6 +19,11 @@ jest.mock('react-use', () => ({
 		null,
 		copyToClipboardFn,
 	],
+}));
+
+jest.mock('api/v1/user/id/update', () => ({
+	__esModule: true,
+	default: (...args: unknown[]): Promise<unknown> => editUserFn(...args),
 }));
 
 jest.mock('hooks/useDarkMode', () => ({
@@ -53,6 +66,7 @@ const PASSWORD_VALIDATION_MESSAGE_TEST_ID = 'password-validation-message';
 describe('MySettings Flows', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		editUserFn.mockResolvedValue({});
 		render(<MySettingsContainer />);
 	});
 
@@ -233,21 +247,22 @@ describe('MySettings Flows', () => {
 		});
 
 		it('Should not render license section when license key is missing', () => {
-			render(<MySettingsContainer />, undefined, {
+			const { container } = render(<MySettingsContainer />, undefined, {
 				appContextOverrides: {
 					activeLicense: null,
 				},
 			});
 
-			expect(screen.queryByText('License')).not.toBeInTheDocument();
-			expect(screen.queryByText('License key')).not.toBeInTheDocument();
+			const scoped = within(container);
+			expect(scoped.queryByText('License')).not.toBeInTheDocument();
+			expect(scoped.queryByText('License key')).not.toBeInTheDocument();
 			expect(
-				screen.queryByText('Your SigNoz license key.'),
+				scoped.queryByText('Your SigNoz license key.'),
 			).not.toBeInTheDocument();
 		});
 
 		it('Should copy license key and show success toast', async () => {
-			render(<MySettingsContainer />, undefined, {
+			const { container } = render(<MySettingsContainer />, undefined, {
 				appContextOverrides: {
 					activeLicense: {
 						key: 'test-license-key-12345',
@@ -255,7 +270,7 @@ describe('MySettings Flows', () => {
 				},
 			});
 
-			fireEvent.click(screen.getByTestId('license-key-copy-btn'));
+			fireEvent.click(within(container).getByTestId('license-key-copy-btn'));
 
 			await waitFor(() => {
 				expect(copyToClipboardFn).toHaveBeenCalledWith('test-license-key-12345');
