@@ -32,7 +32,7 @@ type GoogleConfig struct {
 	// The service account will impersonate this admin to call the directory API
 	// Use "*" as key for wildcard/default that matches any domain
 	// Example: {"example.com": "admin@exmaple.com", "*": "fallbackadmin@company.com"}
-	DomainToAdminEmail map[string]valuer.Email `json:"adminEmail,omitempty"`
+	DomainToAdminEmail map[string]valuer.Email `json:"domainToAdminEmail,omitempty"`
 
 	// If true, fetch transitive group membership (recursive - groups that contains other groups)
 	FetchTransitiveGroupMembership bool `json:"fetchTransitiveGroupMembership,omitempty"`
