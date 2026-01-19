@@ -1,7 +1,13 @@
 import './styles.scss';
 
+import { Button } from 'antd';
+import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { RotateCcw } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { Labels } from 'types/api/alerts/def';
 
@@ -12,6 +18,7 @@ function CreateAlertHeader(): JSX.Element {
 	const { alertState, setAlertState, isEditMode } = useCreateAlertState();
 
 	const { currentQuery } = useQueryBuilder();
+	const { safeNavigate } = useSafeNavigate();
 
 	const groupByLabels = useMemo(() => {
 		const labels = new Array<string>();
@@ -34,6 +41,19 @@ function CreateAlertHeader(): JSX.Element {
 		[groupByLabels],
 	);
 
+	const handleSwitchToClassicExperience = useCallback(() => {
+		logEvent('Alert: Switch to classic experience button clicked', {});
+
+		const params = new URLSearchParams();
+		params.set(
+			QueryParams.compositeQuery,
+			encodeURIComponent(JSON.stringify(currentQuery)),
+		);
+		params.set(QueryParams.showClassicCreateAlertsPage, 'true');
+		const url = `${ROUTES.ALERTS_NEW}?${params.toString()}`;
+		safeNavigate(url);
+	}, [currentQuery, safeNavigate]);
+
 	return (
 		<div
 			className={classNames('alert-header', { 'edit-alert-header': isEditMode })}
@@ -41,6 +61,12 @@ function CreateAlertHeader(): JSX.Element {
 			{!isEditMode && (
 				<div className="alert-header__tab-bar">
 					<div className="alert-header__tab">New Alert Rule</div>
+					<Button
+						icon={<RotateCcw size={16} />}
+						onClick={handleSwitchToClassicExperience}
+					>
+						Switch to Classic Experience
+					</Button>
 				</div>
 			)}
 			<div className="alert-header__content">

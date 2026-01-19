@@ -123,7 +123,7 @@ describe('Create alert page redirection', () => {
 					<CreateAlertPage />,
 					{},
 					{
-						initialRoute: `${ROUTES.ALERTS_NEW}?alertType=${alertType}`,
+						initialRoute: `${ROUTES.ALERTS_NEW}?alertType=${alertType}&showClassicCreateAlertsPage=true`,
 					},
 				);
 

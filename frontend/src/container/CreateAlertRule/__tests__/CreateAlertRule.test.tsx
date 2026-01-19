@@ -29,8 +29,17 @@ jest.mock('container/FormAlertRules', () => ({
 }));
 jest.mock('container/CreateAlertV2', () => ({
 	__esModule: true,
-	default: function MockCreateAlertV2(): JSX.Element {
-		return <div>Create Alert V2</div>;
+	default: function MockCreateAlertV2({
+		alertType,
+	}: {
+		alertType: AlertTypes;
+	}): JSX.Element {
+		return (
+			<div>
+				<h1>Create Alert V2</h1>
+				<p>{alertType}</p>
+			</div>
+		);
 	},
 }));
 
@@ -58,27 +67,27 @@ describe('CreateAlertRule', () => {
 		useCompositeQueryParamSpy.mockReturnValue(initialQueriesMap.metrics);
 	});
 
-	it('should render v1 flow when showNewCreateAlertsPage is false', () => {
-		mockGetUrlQuery.mockReturnValue(null);
-		render(<CreateAlertRule />);
-		expect(screen.getByText(FORM_ALERT_RULES_TEXT)).toBeInTheDocument();
-	});
-
-	it('should render v2 flow when showNewCreateAlertsPage is true', () => {
+	it('should render classic flow when showClassicCreateAlertsPage is true', () => {
 		mockGetUrlQuery.mockImplementation((key: string) => {
-			if (key === QueryParams.showNewCreateAlertsPage) {
+			if (key === QueryParams.showClassicCreateAlertsPage) {
 				return 'true';
 			}
 			return null;
 		});
 		render(<CreateAlertRule />);
+		expect(screen.getByText(FORM_ALERT_RULES_TEXT)).toBeInTheDocument();
+	});
+
+	it('should render new flow by default', () => {
+		mockGetUrlQuery.mockReturnValue(null);
+		render(<CreateAlertRule />);
 		expect(screen.getByText(CREATE_ALERT_V2_TEXT)).toBeInTheDocument();
 	});
 
-	it('should render v1 flow when ruleType is anomaly_rule even if showNewCreateAlertsPage is true', () => {
+	it('should render classic flow when ruleType is anomaly_rule even if showClassicCreateAlertsPage is not true', () => {
 		mockGetUrlQuery.mockImplementation((key: string) => {
-			if (key === QueryParams.showNewCreateAlertsPage) {
-				return 'true';
+			if (key === QueryParams.showClassicCreateAlertsPage) {
+				return 'false';
 			}
 			if (key === QueryParams.ruleType) {
 				return 'anomaly_rule';
@@ -98,7 +107,7 @@ describe('CreateAlertRule', () => {
 			return null;
 		});
 		render(<CreateAlertRule />);
-		expect(screen.getByText(FORM_ALERT_RULES_TEXT)).toBeInTheDocument();
+		expect(screen.getByText(CREATE_ALERT_V2_TEXT)).toBeInTheDocument();
 		expect(screen.getByText(AlertTypes.LOGS_BASED_ALERT)).toBeInTheDocument();
 	});
 
@@ -117,7 +126,7 @@ describe('CreateAlertRule', () => {
 			},
 		});
 		render(<CreateAlertRule />);
-		expect(screen.getByText(FORM_ALERT_RULES_TEXT)).toBeInTheDocument();
+		expect(screen.getByText(CREATE_ALERT_V2_TEXT)).toBeInTheDocument();
 		expect(screen.getByText(AlertTypes.TRACES_BASED_ALERT)).toBeInTheDocument();
 	});
 
@@ -125,7 +134,7 @@ describe('CreateAlertRule', () => {
 		mockGetUrlQuery.mockReturnValue(null);
 		useCompositeQueryParamSpy.mockReturnValue(null);
 		render(<CreateAlertRule />);
-		expect(screen.getByText(FORM_ALERT_RULES_TEXT)).toBeInTheDocument();
+		expect(screen.getByText(CREATE_ALERT_V2_TEXT)).toBeInTheDocument();
 		expect(screen.getByText(AlertTypes.METRICS_BASED_ALERT)).toBeInTheDocument();
 	});
 });
