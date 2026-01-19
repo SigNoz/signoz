@@ -1,12 +1,14 @@
+.query-table-controls {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
 .query-table {
 	position: relative;
 	height: inherit;
-	.query-table--download {
-		position: absolute;
-		top: 15px;
-		right: 0px;
-		z-index: 1;
-	}
 
 	.ant-table {
 		&::-webkit-scrollbar {
