@@ -47,9 +47,17 @@ export function getCategoryByOptionId(id: string): string | undefined {
 }
 
 export function getCategorySelectOptionByName(
-	name: string,
+	name: string | undefined,
 ): DefaultOptionType[] {
+	if (!name) {
+		return [];
+	}
+
 	const categories = getYAxisCategories(YAxisSource.ALERTS);
+	if (!categories.length) {
+		return [];
+	}
+
 	return (
 		categories
 			.find((category) => category.name === name)
