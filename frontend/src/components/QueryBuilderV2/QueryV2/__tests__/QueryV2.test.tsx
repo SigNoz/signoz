@@ -3,11 +3,11 @@
 import '@testing-library/jest-dom';
 
 import { jest } from '@jest/globals';
-import { fireEvent } from '@testing-library/react';
+import { fireEvent, waitFor } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { render, screen } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils';
 import {
 	Having,
 	IBuilderQuery,
@@ -161,7 +161,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		expect(limitInput).toHaveAttribute('data-testid', 'input-Limit');
 	});
 
-	it('Cmd+Enter on an input triggers handleRunQuery via container handler', () => {
+	it('Cmd+Enter on an input triggers handleRunQuery via container handler', async () => {
 		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
 
 		const limitInput = screen.getByPlaceholderText('Enter limit');
@@ -175,6 +175,23 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 
 		const legendInput = screen.getByPlaceholderText('Write legend format');
 		fireEvent.keyDown(legendInput, {
+			key: 'Enter',
+			code: 'Enter',
+			metaKey: true,
+		});
+
+		expect(handleRunQueryMock).toHaveBeenCalled();
+
+		const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
+		// Wait for CodeMirror to initialize
+		await waitFor(() => {
+			const editor = document.querySelector(CM_EDITOR_SELECTOR);
+			expect(editor).toBeInTheDocument();
+		});
+
+		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
+		await userEvent.click(editor);
+		fireEvent.keyDown(editor, {
 			key: 'Enter',
 			code: 'Enter',
 			metaKey: true,
