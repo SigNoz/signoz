@@ -281,7 +281,10 @@ def test_traces_list(
     assert response_.status_code == HTTPStatus.OK
     assert response_.json()["status"] == "success"
 
-    assert response.json()["data"]["data"]["results"] == response_.json()["data"]["data"]["results"]
+    assert (
+        response.json()["data"]["data"]["results"]
+        == response_.json()["data"]["data"]["results"]
+    )
 
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
