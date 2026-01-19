@@ -261,6 +261,30 @@ describe('MySettings Flows', () => {
 			).not.toBeInTheDocument();
 		});
 
+		it('Should mask license key in the UI', () => {
+			const { container } = render(<MySettingsContainer />, undefined, {
+				appContextOverrides: {
+					activeLicense: {
+						key: 'abcd',
+					} as any,
+				},
+			});
+
+			expect(within(container).getByText('ab********cd')).toBeInTheDocument();
+		});
+
+		it('Should not mask license key if it is too short', () => {
+			const { container } = render(<MySettingsContainer />, undefined, {
+				appContextOverrides: {
+					activeLicense: {
+						key: 'abc',
+					} as any,
+				},
+			});
+
+			expect(within(container).getByText('abc')).toBeInTheDocument();
+		});
+
 		it('Should copy license key and show success toast', async () => {
 			const { container } = render(<MySettingsContainer />, undefined, {
 				appContextOverrides: {

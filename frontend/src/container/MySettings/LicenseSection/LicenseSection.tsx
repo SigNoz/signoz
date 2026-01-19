@@ -9,10 +9,6 @@ function LicenseSection(): JSX.Element | null {
 	const { notifications } = useNotifications();
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
-	if (!activeLicense?.key) {
-		return null;
-	}
-
 	const getMaskedKey = (key: string): string => {
 		if (!key || key.length < 4) return key || 'N/A';
 		return `${key.substring(0, 2)}********${key
@@ -26,6 +22,10 @@ function LicenseSection(): JSX.Element | null {
 			message: 'Copied to clipboard',
 		});
 	};
+
+	if (!activeLicense?.key) {
+		return <></>;
+	}
 
 	return (
 		<div className="user-preference-section">
