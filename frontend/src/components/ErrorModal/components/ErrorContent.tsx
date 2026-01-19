@@ -6,13 +6,15 @@ import ErrorIcon from 'assets/Error';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { BookOpenText, ChevronsDown } from 'lucide-react';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
+import { ReactNode } from 'react';
 import APIError from 'types/api/error';
 
 interface ErrorContentProps {
 	error: APIError;
+	icon?: ReactNode;
 }
 
-function ErrorContent({ error }: ErrorContentProps): JSX.Element {
+function ErrorContent({ error, icon }: ErrorContentProps): JSX.Element {
 	const {
 		url: errorUrl,
 		errors: errorMessages,
@@ -25,9 +27,7 @@ function ErrorContent({ error }: ErrorContentProps): JSX.Element {
 			<section className="error-content__summary-section">
 				<header className="error-content__summary">
 					<div className="error-content__summary-left">
-						<div className="error-content__icon-wrapper">
-							<ErrorIcon />
-						</div>
+						<div className="error-content__icon-wrapper">{icon || <ErrorIcon />}</div>
 
 						<div className="error-content__summary-text">
 							<h2 className="error-content__error-code">{errorCode}</h2>
@@ -94,5 +94,9 @@ function ErrorContent({ error }: ErrorContentProps): JSX.Element {
 		</section>
 	);
 }
+
+ErrorContent.defaultProps = {
+	icon: undefined,
+};
 
 export default ErrorContent;
