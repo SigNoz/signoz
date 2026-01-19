@@ -1,6 +1,6 @@
 import uPlot from 'uplot';
 
-type HeatmapPluginOptions = {
+export type HeatmapPluginOptions = {
 	palette: string[];
 	showGrid?: boolean;
 	gridColor?: string;
@@ -20,6 +20,150 @@ type HeatmapPluginOptions = {
 
 const P99_THRESHOLD = 0.99;
 
+export const rectFromBounds = (
+	left: number,
+	top: number,
+	right: number,
+	bottom: number,
+): { x: number; y: number; w: number; h: number } => {
+	const x = Math.round(Math.min(left, right));
+	const x2 = Math.round(Math.max(left, right));
+	const y = Math.round(Math.min(top, bottom));
+	const y2 = Math.round(Math.max(top, bottom));
+	return {
+		x,
+		y,
+		w: Math.max(1, x2 - x),
+		h: Math.max(1, y2 - y),
+	};
+};
+
+export const getBucketIndexForY = (
+	yVal: number,
+	starts: number[],
+	ends: number[],
+): number => {
+	if (!Number.isFinite(yVal) || starts.length === 0 || ends.length === 0)
+		return -1;
+	const n = Math.min(starts.length, ends.length);
+	for (let i = 0; i < n; i += 1) {
+		const s = starts[i];
+		const e = ends[i];
+		if (Number.isFinite(s) && Number.isFinite(e)) {
+			const lo = Math.min(s, e);
+			const hi = Math.max(s, e);
+			if (yVal >= lo && yVal < hi) return i;
+		}
+	}
+
+	const last = n - 1;
+	if (last >= 0) {
+		const lastHi = Math.max(starts[last], ends[last]);
+		if (Number.isFinite(lastHi) && yVal === lastHi) return last;
+	}
+
+	return -1;
+};
+
+export const normalizeIntensity = (
+	value: number,
+	maxForScale: number,
+	logDenom: number,
+): number => {
+	if (!Number.isFinite(value) || value <= 0) return 0;
+	if (!Number.isFinite(maxForScale) || maxForScale <= 0) return 1;
+
+	const clampedValue = Math.min(value, maxForScale);
+	if (maxForScale <= 2 || !Number.isFinite(logDenom) || logDenom <= 0) {
+		return Math.min(1, Math.max(0, clampedValue / maxForScale));
+	}
+
+	return Math.min(1, Math.max(0, Math.log1p(clampedValue) / logDenom));
+};
+
+export const computeStepSize = (xVals: number[]): number => {
+	if (xVals.length < 2) return 1;
+
+	const diffs: number[] = [];
+	for (let i = 1; i < xVals.length; i += 1) {
+		const d = xVals[i] - xVals[i - 1];
+		if (Number.isFinite(d) && d > 0) diffs.push(d);
+	}
+	if (diffs.length === 0) {
+		return 1;
+	}
+	diffs.sort((a, b) => a - b);
+
+	const idx = Math.floor((diffs.length - 1) * 0.25);
+	const step = diffs[idx] ?? diffs[0] ?? 1;
+	return step > 0 ? step : 1;
+};
+
+export const getXValBounds = (
+	xVals: number[],
+	xi: number,
+	fallbackStep: number,
+): { leftVal: number; rightVal: number } => {
+	const x = xVals[xi];
+	const prev = xi > 0 ? xVals[xi - 1] : undefined;
+	const next = xi < xVals.length - 1 ? xVals[xi + 1] : undefined;
+
+	const halfFallback =
+		(Number.isFinite(fallbackStep) && fallbackStep > 0 ? fallbackStep : 1) / 2;
+
+	let leftVal =
+		typeof prev === 'number' && Number.isFinite(prev) && Number.isFinite(x)
+			? (prev + x) / 2
+			: x - halfFallback;
+	let rightVal =
+		typeof next === 'number' && Number.isFinite(next) && Number.isFinite(x)
+			? (x + next) / 2
+			: x + halfFallback;
+
+	if (
+		!Number.isFinite(leftVal) ||
+		!Number.isFinite(rightVal) ||
+		leftVal === rightVal
+	) {
+		leftVal = x - halfFallback;
+		rightVal = x + halfFallback;
+	}
+
+	if (Number.isFinite(x) && Number.isFinite(fallbackStep) && fallbackStep > 0) {
+		leftVal = Math.max(leftVal, x - fallbackStep);
+		rightVal = Math.min(rightVal, x + fallbackStep);
+		if (leftVal === rightVal) {
+			leftVal = x - halfFallback;
+			rightVal = x + halfFallback;
+		}
+	}
+
+	return { leftVal, rightVal };
+};
+
+export const computeScale = (
+	values: number[][],
+): { maxForScale: number; logDenom: number } => {
+	const positiveVals = values
+		.flatMap((row) => row)
+		.filter((v) => Number.isFinite(v) && v > 0);
+
+	if (positiveVals.length === 0) {
+		return { maxForScale: 0, logDenom: 0 };
+	}
+
+	positiveVals.sort((a, b) => a - b);
+	const maxObserved = positiveVals[positiveVals.length - 1];
+	const p99 =
+		positiveVals[Math.floor((positiveVals.length - 1) * P99_THRESHOLD)];
+	const maxForScale = p99 && p99 < maxObserved ? p99 : maxObserved;
+
+	return {
+		maxForScale,
+		logDenom: maxForScale > 0 ? Math.log1p(maxForScale) : 0,
+	};
+};
+
 function heatmapPlugin(
 	opts: HeatmapPluginOptions = { palette: [] },
 ): uPlot.Plugin {
@@ -29,157 +173,15 @@ function heatmapPlugin(
 	const emptyColor = opts.emptyColor || 'rgb(18, 20, 22)';
 	const { palette } = opts;
 
+	let hoverBox: HTMLDivElement | null = null;
+	let overBBox: DOMRect | null = null;
+
 	let lastScaleInput: number[][] | null = null;
 	let lastCacheKey = '';
 	let cachedScale: { maxForScale: number; logDenom: number } | null = null;
 
-	let hoverBox: HTMLDivElement | null = null;
-	let overBBox: DOMRect | null = null;
-
-	let hoveredXi: number | null = null;
-	let hoveredYi: number | null = null;
-	let hoveredCount = 0;
-	let cachedStepForHover: number | null = null;
-	let lastXValsForHover: number[] | null = null;
-
-	const rectFromBounds = (
-		left: number,
-		top: number,
-		right: number,
-		bottom: number,
-	): { x: number; y: number; w: number; h: number } => {
-		const x = Math.round(Math.min(left, right));
-		const x2 = Math.round(Math.max(left, right));
-		const y = Math.round(Math.min(top, bottom));
-		const y2 = Math.round(Math.max(top, bottom));
-		return {
-			x,
-			y,
-			w: Math.max(1, x2 - x),
-			h: Math.max(1, y2 - y),
-		};
-	};
-
-	const pickFillStyle = (normalizedIntensity: number): string => {
-		const safeT = Number.isFinite(normalizedIntensity)
-			? Math.min(1, Math.max(0, normalizedIntensity))
-			: 0;
-		const idx = Math.min(palette.length - 1, Math.floor(safeT * palette.length));
-		return palette[idx] ?? palette[palette.length - 1];
-	};
-
-	const getBucketIndexForY = (
-		yVal: number,
-		starts: number[],
-		ends: number[],
-	): number => {
-		if (!Number.isFinite(yVal) || starts.length === 0 || ends.length === 0)
-			return -1;
-		const n = Math.min(starts.length, ends.length);
-		for (let i = 0; i < n; i += 1) {
-			const s = starts[i];
-			const e = ends[i];
-			if (Number.isFinite(s) && Number.isFinite(e)) {
-				const lo = Math.min(s, e);
-				const hi = Math.max(s, e);
-				if (yVal >= lo && yVal < hi) return i;
-			}
-		}
-
-		const last = n - 1;
-		if (last >= 0) {
-			const lastHi = Math.max(starts[last], ends[last]);
-			if (Number.isFinite(lastHi) && yVal === lastHi) return last;
-		}
-
-		return -1;
-	};
-
-	const normalizeIntensity = (
-		value: number,
-		maxForScale: number,
-		logDenom: number,
-	): number => {
-		if (!Number.isFinite(value) || value <= 0) return 0;
-		if (!Number.isFinite(maxForScale) || maxForScale <= 0) return 1;
-
-		const clampedValue = Math.min(value, maxForScale);
-		if (maxForScale <= 2 || !Number.isFinite(logDenom) || logDenom <= 0) {
-			return Math.min(1, Math.max(0, clampedValue / maxForScale));
-		}
-
-		return Math.min(1, Math.max(0, Math.log1p(clampedValue) / logDenom));
-	};
-
 	let lastStepInput: number[] | null = null;
 	let cachedStep = 1;
-
-	const getStepSize = (xVals: number[]): number => {
-		if (xVals === lastStepInput) return cachedStep;
-		if (xVals.length < 2) return 1;
-
-		const diffs: number[] = [];
-		for (let i = 1; i < xVals.length; i += 1) {
-			const d = xVals[i] - xVals[i - 1];
-			if (Number.isFinite(d) && d > 0) diffs.push(d);
-		}
-		if (diffs.length === 0) {
-			lastStepInput = xVals;
-			cachedStep = 1;
-			return 1;
-		}
-		diffs.sort((a, b) => a - b);
-
-		const idx = Math.floor((diffs.length - 1) * 0.25);
-		const step = diffs[idx] ?? diffs[0] ?? 1;
-		const result = step > 0 ? step : 1;
-
-		lastStepInput = xVals;
-		cachedStep = result;
-		return result;
-	};
-
-	const getXValBounds = (
-		xVals: number[],
-		xi: number,
-		fallbackStep: number,
-	): { leftVal: number; rightVal: number } => {
-		const x = xVals[xi];
-		const prev = xi > 0 ? xVals[xi - 1] : undefined;
-		const next = xi < xVals.length - 1 ? xVals[xi + 1] : undefined;
-
-		const halfFallback =
-			(Number.isFinite(fallbackStep) && fallbackStep > 0 ? fallbackStep : 1) / 2;
-
-		let leftVal =
-			typeof prev === 'number' && Number.isFinite(prev) && Number.isFinite(x)
-				? (prev + x) / 2
-				: x - halfFallback;
-		let rightVal =
-			typeof next === 'number' && Number.isFinite(next) && Number.isFinite(x)
-				? (x + next) / 2
-				: x + halfFallback;
-
-		if (
-			!Number.isFinite(leftVal) ||
-			!Number.isFinite(rightVal) ||
-			leftVal === rightVal
-		) {
-			leftVal = x - halfFallback;
-			rightVal = x + halfFallback;
-		}
-
-		if (Number.isFinite(x) && Number.isFinite(fallbackStep) && fallbackStep > 0) {
-			leftVal = Math.max(leftVal, x - fallbackStep);
-			rightVal = Math.min(rightVal, x + fallbackStep);
-			if (leftVal === rightVal) {
-				leftVal = x - halfFallback;
-				rightVal = x + halfFallback;
-			}
-		}
-
-		return { leftVal, rightVal };
-	};
 
 	const getScale = (
 		values: number[][],
@@ -198,30 +200,31 @@ function heatmapPlugin(
 			return cachedScale;
 		}
 
-		const positiveVals = values
-			.flatMap((row) => row)
-			.filter((v) => Number.isFinite(v) && v > 0);
-
-		if (positiveVals.length === 0) {
-			lastScaleInput = values;
-			lastCacheKey = cacheKey;
-			cachedScale = { maxForScale: 0, logDenom: 0 };
-			return cachedScale;
-		}
-
-		positiveVals.sort((a, b) => a - b);
-		const maxObserved = positiveVals[positiveVals.length - 1];
-		const p99 =
-			positiveVals[Math.floor((positiveVals.length - 1) * P99_THRESHOLD)];
-		const maxForScale = p99 && p99 < maxObserved ? p99 : maxObserved;
-
+		cachedScale = computeScale(values);
 		lastScaleInput = values;
 		lastCacheKey = cacheKey;
-		cachedScale = {
-			maxForScale,
-			logDenom: maxForScale > 0 ? Math.log1p(maxForScale) : 0,
-		};
 		return cachedScale;
+	};
+
+	const getStepSize = (xVals: number[]): number => {
+		if (xVals === lastStepInput) return cachedStep;
+		cachedStep = computeStepSize(xVals);
+		lastStepInput = xVals;
+		return cachedStep;
+	};
+
+	let hoveredXi: number | null = null;
+	let hoveredYi: number | null = null;
+	let hoveredCount = 0;
+	let cachedStepForHover: number | null = null;
+	let lastXValsForHover: number[] | null = null;
+
+	const pickFillStyle = (normalizedIntensity: number): string => {
+		const safeT = Number.isFinite(normalizedIntensity)
+			? Math.min(1, Math.max(0, normalizedIntensity))
+			: 0;
+		const idx = Math.min(palette.length - 1, Math.floor(safeT * palette.length));
+		return palette[idx] ?? palette[palette.length - 1];
 	};
 
 	const drawGridLines = (
@@ -442,7 +445,7 @@ function heatmapPlugin(
 
 				const xVals = (data[0] as number[]) || [];
 				if (lastXValsForHover !== xVals) {
-					cachedStepForHover = getStepSize(xVals);
+					cachedStepForHover = computeStepSize(xVals);
 					lastXValsForHover = xVals;
 				}
 				const step = cachedStepForHover || 1;

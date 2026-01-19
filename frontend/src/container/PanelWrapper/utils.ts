@@ -102,3 +102,147 @@ export const getTimeRangeFromStepInterval = (
 	const endTime = xValue + stepInterval;
 	return { startTime, endTime };
 };
+
+export type FocusedHeatmap = {
+	bucketEnds: number[];
+	derivedStarts: number[];
+	focusedCounts: number[][];
+	minY: number;
+	maxY: number;
+};
+
+const LOWER_PERCENTILE_THRESHOLD = 0.01;
+const UPPER_PERCENTILE_THRESHOLD = 0.99;
+
+// formatBucketValue function returns the formatted bucket value
+export function formatBucketValue(val: number): string {
+	if ((Math.abs(val) > 0 && Math.abs(val) < 0.01) || Math.abs(val) > 1e6) {
+		return val.toExponential(2);
+	}
+	return val.toFixed(2);
+}
+
+// buildDerivedStarts function returns the derived starts for the given bucket ends
+export function buildDerivedStarts(
+	bucketEnds: number[],
+	bucketStarts?: number[],
+): number[] {
+	if (bucketStarts?.length === bucketEnds.length) return bucketStarts;
+	return bucketEnds.map((_, idx) => (idx === 0 ? 0 : bucketEnds[idx - 1]));
+}
+
+// computeBucketTotals function returns the bucket totals and the total count
+export function computeBucketTotals(
+	counts: number[][],
+	bucketCount: number,
+): { bucketTotals: number[]; total: number } {
+	const bucketTotals = new Array(bucketCount).fill(0);
+	let total = 0;
+
+	for (let rowIndex = 0; rowIndex < counts.length; rowIndex += 1) {
+		const row = counts[rowIndex] || [];
+		const rowLen = Math.min(row.length, bucketTotals.length);
+		for (let bucketIndex = 0; bucketIndex < rowLen; bucketIndex += 1) {
+			const v = row[bucketIndex];
+			if (Number.isFinite(v) && v > 0) {
+				bucketTotals[bucketIndex] += v;
+				total += v;
+			}
+		}
+	}
+
+	return { bucketTotals, total };
+}
+
+// findCumulativeIndex function returns the index of the bucketTotals array where the cumulative sum is greater than or equal to the target
+export function findCumulativeIndex(
+	bucketTotals: number[],
+	target: number,
+): number {
+	let cum = 0;
+	for (let i = 0; i < bucketTotals.length; i += 1) {
+		cum += bucketTotals[i];
+		if (cum >= target) return i;
+	}
+	return bucketTotals.length - 1;
+}
+
+// findNonZeroRange function returns the min and max index of the non zero values in the bucketTotals array
+export function findNonZeroRange(
+	bucketTotals: number[],
+): { minIdx: number; maxIdx: number } {
+	let minIdx = 0;
+	let maxIdx = bucketTotals.length - 1;
+
+	for (let i = 0; i < bucketTotals.length; i += 1) {
+		if (bucketTotals[i] > 0) {
+			minIdx = i;
+			break;
+		}
+	}
+	for (let i = bucketTotals.length - 1; i >= 0; i -= 1) {
+		if (bucketTotals[i] > 0) {
+			maxIdx = i;
+			break;
+		}
+	}
+
+	return { minIdx, maxIdx };
+}
+
+// focusHeatmap function returns the focused heatmap data
+export function focusHeatmap(
+	bucketEndsFull: number[],
+	bucketStarts: number[] | undefined,
+	counts: number[][],
+): FocusedHeatmap {
+	const derivedStartsFull = buildDerivedStarts(bucketEndsFull, bucketStarts);
+
+	const { bucketTotals, total } = computeBucketTotals(
+		counts,
+		bucketEndsFull.length,
+	);
+
+	let minIdx = 0;
+	let maxIdx = bucketEndsFull.length - 1;
+
+	if (total > 0) {
+		const lowerTarget = total * LOWER_PERCENTILE_THRESHOLD;
+		const upperTarget = total * UPPER_PERCENTILE_THRESHOLD;
+
+		const lowerIdx = findCumulativeIndex(bucketTotals, lowerTarget);
+		let upperIdx = findCumulativeIndex(bucketTotals, upperTarget);
+
+		if (upperIdx <= lowerIdx) {
+			const nonZero = findNonZeroRange(bucketTotals);
+			upperIdx = nonZero.maxIdx;
+			minIdx = nonZero.minIdx;
+			maxIdx = upperIdx;
+		} else {
+			minIdx = lowerIdx;
+			maxIdx = upperIdx;
+		}
+
+		minIdx = Math.max(0, minIdx - 1);
+		maxIdx = Math.min(bucketEndsFull.length - 1, maxIdx + 1);
+	}
+
+	const bucketEnds = bucketEndsFull.slice(minIdx, maxIdx + 1);
+	const derivedStarts = derivedStartsFull.slice(minIdx, maxIdx + 1);
+	const focusedCounts = counts.map((row) =>
+		(row || []).slice(minIdx, maxIdx + 1),
+	);
+
+	const minY = derivedStarts[0] ?? bucketEnds[0];
+	let actualMaxIdx = bucketEnds.length - 1;
+	for (let i = bucketEnds.length - 1; i >= 0; i -= 1) {
+		const hasData = focusedCounts.some((row) => (row[i] ?? 0) > 0);
+		if (hasData) {
+			actualMaxIdx = i;
+			break;
+		}
+	}
+	const maxY = bucketEnds[actualMaxIdx];
+
+	return { bucketEnds, derivedStarts, focusedCounts, minY, maxY };
+}

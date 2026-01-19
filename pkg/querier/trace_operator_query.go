@@ -43,7 +43,7 @@ func (q *traceOperatorQuery) Execute(ctx context.Context) (*qbtypes.Result, erro
 	}
 
 	// Execute the query with proper context
-	result, err := q.executeWithContext(ctx, stmt.Query, stmt.Args, stmt.BucketCount)
+	result, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (q *traceOperatorQuery) Execute(ctx context.Context) (*qbtypes.Result, erro
 	return result, nil
 }
 
-func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query string, args []any, bucketCount int) (*qbtypes.Result, error) {
+func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
 	totalRows := uint64(0)
 	totalBytes := uint64(0)
 	elapsed := time.Duration(0)
@@ -72,7 +72,7 @@ func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query strin
 	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
 
 	// Use the consume function like builderQuery does
-	payload, err := consume(rows, q.kind, queryWindow, q.spec.StepInterval, q.spec.Name, bucketCount)
+	payload, err := consume(rows, q.kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
 	}

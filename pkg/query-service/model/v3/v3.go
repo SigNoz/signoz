@@ -67,7 +67,6 @@ const (
 	AggregateOperatorHistQuant90   AggregateOperator = "hist_quantile_90"
 	AggregateOperatorHistQuant95   AggregateOperator = "hist_quantile_95"
 	AggregateOperatorHistQuant99   AggregateOperator = "hist_quantile_99"
-	AggregateOperatorHeatmap       AggregateOperator = "heatmap"
 )
 
 func (a AggregateOperator) Validate() error {
@@ -101,8 +100,7 @@ func (a AggregateOperator) Validate() error {
 		AggregateOperatorHistQuant75,
 		AggregateOperatorHistQuant90,
 		AggregateOperatorHistQuant95,
-		AggregateOperatorHistQuant99,
-		AggregateOperatorHeatmap:
+		AggregateOperatorHistQuant99:
 		return nil
 	default:
 		return fmt.Errorf("invalid operator: %s", a)
@@ -202,11 +200,11 @@ func (q QueryType) Validate() error {
 type PanelType string
 
 const (
-	PanelTypeValue   PanelType = "value"
-	PanelTypeGraph   PanelType = "graph"
-	PanelTypeTable   PanelType = "table"
-	PanelTypeList    PanelType = "list"
-	PanelTypeTrace   PanelType = "trace"
+	PanelTypeValue PanelType = "value"
+	PanelTypeGraph PanelType = "graph"
+	PanelTypeTable PanelType = "table"
+	PanelTypeList  PanelType = "list"
+	PanelTypeTrace PanelType = "trace"
 	PanelTypeHeatmap PanelType = "heatmap"
 )
 

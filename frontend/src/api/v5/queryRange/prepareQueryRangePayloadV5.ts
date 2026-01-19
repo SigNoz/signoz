@@ -60,7 +60,7 @@ export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 		case PANEL_TYPES.HISTOGRAM:
 			return 'distribution';
 		case PANEL_TYPES.HEATMAP:
-			return 'heatmap';
+			return 'bucket';
 		default:
 			return '';
 	}

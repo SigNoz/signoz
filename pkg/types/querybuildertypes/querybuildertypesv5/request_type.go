@@ -20,6 +20,4 @@ var (
 	RequestTypeTrace = RequestType{valuer.NewString("trace")}
 	// []Bucket (struct{Lower,Upper,Count float64}), example: histogram
 	RequestTypeDistribution = RequestType{valuer.NewString("distribution")}
-	// 2D heatmap data with bucket bounds and counts over time, example: heatmap panel
-	RequestTypeHeatmap = RequestType{valuer.NewString("heatmap")}
 )

@@ -195,7 +195,7 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	}
 
 	// Execute the query with proper context for partial value detection
-	result, err := q.executeWithContext(ctx, stmt.Query, stmt.Args, stmt.BucketCount)
+	result, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 }
 
 // executeWithContext executes the query with query window and step context for partial value detection
-func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any, bucketCount int) (*qbtypes.Result, error) {
+func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
 	totalRows := uint64(0)
 	totalBytes := uint64(0)
 	elapsed := time.Duration(0)
@@ -240,14 +240,12 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
 
 	kind := q.kind
-	// All metric queries are time series then reduced if required
-	// Expect heatmap requests as it should be executed as it is
-	if q.spec.Signal == telemetrytypes.SignalMetrics &&
-		kind != qbtypes.RequestTypeHeatmap {
+	// all metric queries are time series then reduced if required
+	if q.spec.Signal == telemetrytypes.SignalMetrics {
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 
-	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name, bucketCount)
+	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +352,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		warnings = stmt.Warnings
 		warningsDocURL = stmt.WarningsDocURL
 		// Execute with proper context for partial value detection
-		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args, stmt.BucketCount)
+		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
 		if err != nil {
 			return nil, err
 		}

@@ -804,11 +804,6 @@ func (mc *migrateCommon) buildAggregationExpression(operator string, attribute m
 			return fmt.Sprintf("p99(%s)", key)
 		}
 		return "p99()"
-	case "heatmap":
-		if key != "" {
-			return fmt.Sprintf("heatmap(%s)", key)
-		}
-		return ""
 	case "rate":
 		if key != "" {
 			return fmt.Sprintf("rate(%s)", key)

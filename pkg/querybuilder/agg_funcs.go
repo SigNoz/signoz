@@ -229,11 +229,6 @@ var (
 		FuncName:    "max",
 		RequireArgs: true, Numeric: true, Rate: true, MinArgs: 1, MaxArgs: 1,
 	}
-	AggrFuncHeatmap = AggrFunc{
-		Name:        valuer.NewString("heatmap"),
-		FuncName:    "histogram",
-		RequireArgs: true, Numeric: true, MinArgs: 1, MaxArgs: 2,
-	}
 )
 
 func init() {
@@ -276,7 +271,6 @@ func init() {
 		AggrFuncRateAvg,
 		AggrFuncRateMin,
 		AggrFuncRateMax,
-		AggrFuncHeatmap,
 	}
 
 	for _, aggFunc := range aggFuncs {
