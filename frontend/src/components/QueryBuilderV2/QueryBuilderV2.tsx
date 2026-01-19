@@ -4,7 +4,7 @@ import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import { Formula } from 'container/QueryBuilder/components/Formula';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -33,6 +33,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		addTraceOperator,
 		panelType,
 		initialDataSource,
+		handleRunQuery,
 	} = useQueryBuilder();
 
 	const containerRef = useRef(null);
@@ -157,10 +158,31 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
 	);
 
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLDivElement>): void => {
+			const target = e.target as HTMLElement | null;
+			const tagName = target?.tagName || '';
+
+			const isInputElement =
+				tagName === 'INPUT' ||
+				tagName === 'TEXTAREA' ||
+				tagName === 'SELECT' ||
+				(target?.getAttribute('contenteditable') || '').toLowerCase() === 'true';
+
+			// Allow input elements in qb to run the query when Cmd/Ctrl + Enter is pressed
+			if (isInputElement && (e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+				e.preventDefault();
+				e.stopPropagation();
+				handleRunQuery();
+			}
+		},
+		[handleRunQuery],
+	);
+
 	return (
 		<QueryBuilderV2Provider>
 			<div className="query-builder-v2">
-				<div className="qb-content-container">
+				<div className="qb-content-container" onKeyDownCapture={handleKeyDown}>
 					{!isMultiQueryAllowed ? (
 						<QueryV2
 							ref={containerRef}
