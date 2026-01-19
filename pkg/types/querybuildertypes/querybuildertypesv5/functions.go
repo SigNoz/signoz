@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -32,6 +33,37 @@ var (
 	FunctionNameAnomaly       = FunctionName{valuer.NewString("anomaly")}
 	FunctionNameFillZero      = FunctionName{valuer.NewString("fillZero")}
 )
+
+// Validate checks if the FunctionName is valid and one of the known types
+func (fn FunctionName) Validate() error {
+	switch fn {
+	case FunctionNameCutOffMin,
+		FunctionNameCutOffMax,
+		FunctionNameClampMin,
+		FunctionNameClampMax,
+		FunctionNameAbsolute,
+		FunctionNameRunningDiff,
+		FunctionNameLog2,
+		FunctionNameLog10,
+		FunctionNameCumulativeSum,
+		FunctionNameEWMA3,
+		FunctionNameEWMA5,
+		FunctionNameEWMA7,
+		FunctionNameMedian3,
+		FunctionNameMedian5,
+		FunctionNameMedian7,
+		FunctionNameTimeShift,
+		FunctionNameAnomaly,
+		FunctionNameFillZero:
+		return nil
+	default:
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid function name: %s",
+			fn.StringValue(),
+		)
+	}
+}
 
 // ApplyFunction applies the given function to the result data
 func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
