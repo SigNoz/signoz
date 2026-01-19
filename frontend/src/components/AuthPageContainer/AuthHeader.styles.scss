@@ -1,0 +1,82 @@
+@import '@signozhq/design-tokens/dist/style.css';
+
+.auth-header {
+	width: 100%;
+	max-width: 1176px;
+	margin: 0 auto;
+	padding: 12px 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	position: relative;
+	z-index: 10;
+}
+
+.auth-header-logo {
+	display: flex;
+	align-items: center;
+	gap: 4.9px;
+	text-decoration: none;
+}
+
+.auth-header-logo-icon {
+	width: 17.5px;
+	height: 17.5px;
+	flex-shrink: 0;
+}
+
+.auth-header-logo-text {
+	font-family: Satoshi, var(--font-family-inter, Inter), sans-serif;
+	font-size: 15.4px;
+	font-weight: 500;
+	line-height: 17.5px;
+	color: var(--text-neutral-dark-50, #eceef2);
+	white-space: nowrap;
+}
+
+.auth-header-help-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: 32px;
+	padding: 10px 16px;
+	background: var(--bg-ink-400, #121317);
+	border: none;
+	border-radius: 2px;
+	cursor: pointer;
+	transition: opacity 0.2s ease;
+
+	span {
+		font-family: var(--font-family-inter, Inter, sans-serif);
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 1;
+		color: var(--text-neutral-dark-100, #adb4c2);
+		text-align: center;
+	}
+
+	svg {
+		flex-shrink: 0;
+		color: var(--text-neutral-dark-100, #adb4c2);
+	}
+
+	&:hover {
+		opacity: 0.8;
+	}
+}
+
+.lightMode {
+	.auth-header-logo-text {
+		color: var(--text-neutral-light-100, #62636c);
+	}
+
+	.auth-header-help-button {
+		background: var(--bg-vanilla-200, #f5f5f5);
+
+		span,
+		svg {
+			color: var(--text-neutral-light-200, #80828d);
+		}
+	}
+}

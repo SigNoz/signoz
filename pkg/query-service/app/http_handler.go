@@ -3147,7 +3147,10 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval", kafkaSpanEval)
 	if err != nil {
 		zap.L().Error(err.Error())
-		RespondError(w, apiErr, nil)
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: err,
+		}, nil)
 		return
 	}
 
