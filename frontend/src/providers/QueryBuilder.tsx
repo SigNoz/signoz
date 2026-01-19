@@ -183,7 +183,6 @@ export function QueryBuilderProvider({
 			const setupedQueryData = builder.queryData.map((item) => {
 				const currentElement: IBuilderQuery = {
 					...item,
-					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					groupBy: item.groupBy.map(({ id: _, ...item }) => ({
 						...item,
 						id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
