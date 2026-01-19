@@ -44,6 +44,10 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
+	// process tblFieldName and value for explicit type handling to be able to run and not error out
+	key.Signal = telemetrytypes.SignalMetrics // TODO(nikhilmantri0902): can we do this to handle null checks for metrics typecasting?
+	tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
+
 	switch operator {
 	case qbtypes.FilterOperatorEqual:
 		return sb.E(tblFieldName, value), nil
