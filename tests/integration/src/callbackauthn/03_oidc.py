@@ -11,7 +11,7 @@ from fixtures.auth import (
     USER_ADMIN_PASSWORD,
     add_license,
 )
-from fixtures.idputils import get_oidc_domain, get_user_by_email, perform_oidc_login
+from fixtures.idputils import get_oidc_domain, get_user_by_email, perform_oidc_login, delete_keycloak_client
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
 
 
@@ -517,6 +517,7 @@ def test_oidc_empty_name_uses_fallback(
 #!########################################################################
 def test_cleanup_oidc_domain(
     signoz: SigNoz,
+    idp: TestContainerIDP,
     get_token: Callable[[str, str], str],
 ) -> None:
     """Cleanup: Remove the OIDC domain after tests complete."""
@@ -531,3 +532,7 @@ def test_cleanup_oidc_domain(
         )
         # 204 No Content or 200 OK are both valid
         assert response.status_code in [HTTPStatus.OK, HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND]
+
+        # also remove the oidc client from the idp
+        oidc_client_id = f"oidc.integration.test.{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
+        delete_keycloak_client(idp, oidc_client_id)

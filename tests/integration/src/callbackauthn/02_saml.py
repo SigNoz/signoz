@@ -11,7 +11,7 @@ from fixtures.auth import (
     USER_ADMIN_PASSWORD,
     add_license,
 )
-from fixtures.idputils import get_saml_domain, perform_saml_login, get_user_by_email
+from fixtures.idputils import get_saml_domain, perform_saml_login, get_user_by_email, delete_keycloak_client    
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
 
 
@@ -566,10 +566,5 @@ def test_cleanup_saml_domain(
         assert response.status_code in [HTTPStatus.OK, HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND]
 
         # also remove the saml client from the idp
-        response = requests.delete(
-            idp.container.host_configs["6060"].get(f"/realms/master/clients/{domain['id']}"),
-            headers={"Authorization": f"Bearer {admin_token}"},
-            timeout=2,
-        )
-        
-        assert response.status_code in [HTTPStatus.OK, HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND]
+        saml_client_id = f"{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
+        delete_keycloak_client(idp, saml_client_id)

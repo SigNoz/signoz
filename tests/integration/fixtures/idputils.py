@@ -716,3 +716,19 @@ def perform_saml_login(
     url = session_context["orgs"][0]["authNSupport"]["callback"][0]["url"]
     driver.get(url)
     idp_login(email, password)
+
+
+def delete_keycloak_client(idp: types.TestContainerIDP, client_id: str) -> None:
+    keycloak_client = KeycloakAdmin(
+        server_url=idp.container.host_configs["6060"].base(),
+        username=IDP_ROOT_USERNAME,
+        password=IDP_ROOT_PASSWORD,
+        realm_name="master",
+    )
+    try:
+        # Get the internal Keycloak client ID from the clientId
+        internal_client_id = keycloak_client.get_client_id(client_id=client_id)
+        if internal_client_id:
+            keycloak_client.delete_client(internal_client_id)
+    except Exception:  # pylint: disable=broad-exception-caught
+        pass  # Client doesn't exist or already deleted, that's fine
