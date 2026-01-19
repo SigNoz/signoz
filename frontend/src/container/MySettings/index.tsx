@@ -15,6 +15,7 @@ import { useMutation } from 'react-query';
 import { UserPreference } from 'types/api/preferences/preference';
 import { showErrorNotification } from 'utils/error';
 
+import LicenseSection from './LicenseSection';
 import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
 import UserInfo from './UserInfo';
 
@@ -230,6 +231,8 @@ function MySettings(): JSX.Element {
 					</div>
 				</div>
 			</div>
+
+			<LicenseSection />
 		</div>
 	);
 }
