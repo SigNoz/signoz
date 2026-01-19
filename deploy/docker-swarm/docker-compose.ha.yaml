@@ -195,7 +195,7 @@ services:
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-swarm
-      - SIGNOZ_JWT_SECRET=secret
+      - SIGNOZ_TOKENIZER_JWT_SECRET=secret
       - DOT_METRICS_ENABLED=true
     healthcheck:
       test:
