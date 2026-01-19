@@ -510,29 +510,3 @@ def test_oidc_empty_name_uses_fallback(
     assert found_user is not None
     assert found_user["role"] == "VIEWER"
     # Note: displayName may be empty - this is a known limitation
-
-
-#!########################################################################
-#!############## KEEP THIS IN THE END ALWAYS #############################
-#!########################################################################
-def test_cleanup_oidc_domain(
-    signoz: SigNoz,
-    idp: TestContainerIDP,
-    get_token: Callable[[str, str], str],
-) -> None:
-    """Cleanup: Remove the OIDC domain after tests complete."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    domain = get_oidc_domain(signoz, admin_token)
-    
-    if domain:
-        response = requests.delete(
-            signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
-            headers={"Authorization": f"Bearer {admin_token}"},
-            timeout=2,
-        )
-        # 204 No Content or 200 OK are both valid
-        assert response.status_code in [HTTPStatus.OK, HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND]
-
-        # also remove the oidc client from the idp
-        oidc_client_id = f"oidc.integration.test.{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
-        delete_keycloak_client(idp, oidc_client_id)

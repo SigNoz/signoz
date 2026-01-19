@@ -26,15 +26,6 @@ def create_saml_client(
             realm_name="master",
         )
 
-        # DELETE existing client if it exists (to ensure mappers are updated)
-        saml_client_id = f"{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
-        try:
-            existing_client_id = client.get_client_id(client_id=saml_client_id)
-            if existing_client_id:
-                client.delete_client(existing_client_id)
-        except Exception: # pylint: disable=broad-exception-caught
-            pass  # Client doesn't exist, that's fine
-
         client.create_client(
             skip_exists=True,
             payload={
@@ -210,14 +201,6 @@ def create_oidc_client(
         )
 
         _ensure_groups_client_scope(client)
-
-        # DELETE existing client if it exists (to ensure redirect URIs are updated)
-        try:
-            existing_client_id = client.get_client_id(client_id=client_id)
-            if existing_client_id:
-                client.delete_client(existing_client_id)
-        except Exception: # pylint: disable=broad-exception-caught
-            pass  # Client doesn't exist, that's fine
 
         client.create_client(
             skip_exists=True,

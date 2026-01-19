@@ -542,29 +542,3 @@ def test_saml_empty_name_fallback(
     
     assert found_user is not None
     assert found_user["role"] == "VIEWER"
-
-
-#!########################################################################
-#!############## KEEP THIS IN THE END ALWAYS #############################
-#!########################################################################
-def test_cleanup_saml_domain(
-    signoz: SigNoz,
-    idp: TestContainerIDP,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-) -> None:
-    """Cleanup: Remove the SAML domain after tests complete."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    domain = get_saml_domain(signoz, admin_token)
-    
-    if domain:
-        response = requests.delete(
-            signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
-            headers={"Authorization": f"Bearer {admin_token}"},
-            timeout=2,
-        )
-        # 204 No Content or 200 OK are both valid
-        assert response.status_code in [HTTPStatus.OK, HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND]
-
-        # also remove the saml client from the idp
-        saml_client_id = f"{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
-        delete_keycloak_client(idp, saml_client_id)
