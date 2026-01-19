@@ -645,6 +645,12 @@ export function handleQueryChange(
 							} as MetricAggregation,
 						]);
 					}
+				} else if (
+					currentPanelType === PANEL_TYPES.HEATMAP &&
+					newPanelType !== PANEL_TYPES.HEATMAP &&
+					(dataSource === DataSource.LOGS || dataSource === DataSource.TRACES)
+				) {
+					set(tempQuery, 'aggregations', [{ expression: 'count() ' }]);
 				}
 
 				return tempQuery;

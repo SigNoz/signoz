@@ -344,7 +344,7 @@ export async function GetMetricQueryRange(
 		return response;
 	}
 
-	if (response.payload?.data?.result && response.payload?.data?.resultType !== 'heatmap') {
+	if (response.payload?.data?.result && response.payload?.data?.resultType !== 'bucket') {
 		const v2Range = convertNewDataToOld(response.payload);
 
 		response.payload = v2Range;
