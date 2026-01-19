@@ -813,6 +813,7 @@ func testTypeSet() (map[string][]telemetrytypes.JSONDataType, telemetrytypes.Met
 		"user.name":                                           {telemetrytypes.String},
 		"user.age":                                            {telemetrytypes.Int64, telemetrytypes.String},
 		"user.height":                                         {telemetrytypes.Float64},
+		"tags":                                                {telemetrytypes.ArrayString},
 		"education":                                           {telemetrytypes.ArrayJSON},
 		"education[].name":                                    {telemetrytypes.String},
 		"education[].type":                                    {telemetrytypes.String, telemetrytypes.Int64},

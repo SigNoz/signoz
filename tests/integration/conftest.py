@@ -1,4 +1,18 @@
+import json
+import os
+import tempfile
+
 import pytest
+
+if not os.environ.get("DOCKER_CONFIG"):
+    os.environ["DOCKER_CONFIG"] = tempfile.mkdtemp(prefix="docker-config-")
+os.environ.setdefault("DOCKER_CREDENTIAL_STORE", "")
+os.environ.setdefault("DOCKER_CREDENTIAL_HELPER", "")
+
+docker_config_path = os.path.join(os.environ["DOCKER_CONFIG"], "config.json")
+if not os.path.exists(docker_config_path):
+    with open(docker_config_path, "w", encoding="utf-8") as config_file:
+        json.dump({"auths": {}, "credsStore": ""}, config_file)
 
 pytest_plugins = [
     "fixtures.auth",
@@ -18,6 +32,7 @@ pytest_plugins = [
     "fixtures.driver",
     "fixtures.idp",
     "fixtures.idputils",
+    "fixtures.jsontypeexporter",
 ]
 
 
@@ -55,7 +70,7 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--clickhouse-version",
         action="store",
-        default="25.5.6",
+        default="25.8.6",
         help="clickhouse version",
     )
     parser.addoption(
@@ -70,3 +85,5 @@ def pytest_addoption(parser: pytest.Parser):
         default="v0.129.7",
         help="schema migrator version",
     )
+
+

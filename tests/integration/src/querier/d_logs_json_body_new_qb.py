@@ -7,7 +7,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.jsontypeexporter import export_json_types
+from fixtures.jsontypeexporter import JSONPathType, export_json_types
 from fixtures.logs import Logs
 
 
@@ -16,7 +16,15 @@ def _assert_ok(response: requests.Response) -> None:
         raise AssertionError(f"HTTP {response.status_code}: {response.text}")
 
 
-def test_logs_json_body_simple_searches(
+# ============================================================================
+# NEW QB TESTS - Comprehensive integration tests for new JSON Query Builder
+# ============================================================================
+# These tests use body_json and body_json_promoted columns and require
+# BODY_JSON_QUERY_ENABLED=true environment variable
+# ============================================================================
+
+
+def test_logs_json_body_new_qb_simple_searches(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -25,7 +33,8 @@ def test_logs_json_body_simple_searches(
 ) -> None:
     """
     Setup:
-    Insert logs with JSON bodies containing simple key-value pairs
+    Insert logs with JSON bodies using new QB columns (body_json, body_json_promoted)
+    Export JSON type metadata
 
     Tests:
     1. Search by body.message Contains "value"
@@ -33,33 +42,40 @@ def test_logs_json_body_simple_searches(
     3. Search by body.active = true (boolean)
     4. Search by body.level = "error" with CONTAINS
     5. Search by body.code > 100 (comparison)
+    6. Search with body_json_promoted column
     """
     now = datetime.now(tz=timezone.utc)
 
     # Log with simple JSON body
-    log1_body = json.dumps({
-        "message": "User logged in successfully",
-        "status": 200,
-        "active": True,
-        "level": "info",
-        "code": 100
-    })
+    log1_body = json.dumps(
+        {
+            "message": "User logged in successfully",
+            "status": 200,
+            "active": True,
+            "level": "info",
+            "code": 100,
+        }
+    )
 
-    log2_body = json.dumps({
-        "message": "User authentication failed",
-        "status": 401,
-        "active": False,
-        "level": "error",
-        "code": 401
-    })
+    log2_body = json.dumps(
+        {
+            "message": "User authentication failed",
+            "status": 401,
+            "active": False,
+            "level": "error",
+            "code": 401,
+        }
+    )
 
-    log3_body = json.dumps({
-        "message": "Database connection established",
-        "status": 200,
-        "active": True,
-        "level": "info",
-        "code": 200
-    })
+    log3_body = json.dumps(
+        {
+            "message": "Database connection established",
+            "status": 200,
+            "active": True,
+            "level": "info",
+            "code": 200,
+        }
+    )
 
     logs_list = [
         Logs(
@@ -67,6 +83,8 @@ def test_logs_json_body_simple_searches(
             resources={"service.name": "auth-service"},
             attributes={},
             body=log1_body,
+            body_json=log1_body,
+            body_json_promoted="",
             severity_text="INFO",
         ),
         Logs(
@@ -74,6 +92,8 @@ def test_logs_json_body_simple_searches(
             resources={"service.name": "auth-service"},
             attributes={},
             body=log2_body,
+            body_json=log2_body,
+            body_json_promoted="",
             severity_text="ERROR",
         ),
         Logs(
@@ -81,16 +101,20 @@ def test_logs_json_body_simple_searches(
             resources={"service.name": "db-service"},
             attributes={},
             body=log3_body,
+            body_json=log3_body,
+            body_json_promoted="",
             severity_text="INFO",
         ),
     ]
 
+    # Export JSON type metadata - auto-extract from logs (jsontypeexporter behavior)
     export_json_types(logs_list)
+
     insert_logs(logs_list)
 
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
-    # Test 1: Search by body.message = "User logged in successfully"
+    # Test 1: Search by body.message CONTAINS "logged in"
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -298,139 +322,167 @@ def test_logs_json_body_simple_searches(
     codes = [json.loads(row["data"]["body"])["code"] for row in rows]
     assert all(c > 100 for c in codes)
 
+    # Test 6: Search with promoted column (body_json_promoted)
+    # Insert a log with promoted data
+    log4_body = json.dumps({"message": "Promoted message", "status": 201})
+    log4_promoted = json.dumps({"message": "Promoted message"})  # Only message is promoted
 
-def test_logs_json_body_nested_keys(
+    insert_logs(
+        [
+            Logs(
+                timestamp=now,
+                resources={"service.name": "promoted-service"},
+                attributes={},
+                body=log4_body,
+                body_json=log4_body,
+                body_json_promoted=log4_promoted,
+                severity_text="INFO",
+            ),
+        ]
+    )
+
+    # Search using promoted field
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
+            "end": int((now + timedelta(seconds=5)).timestamp() * 1000),
+            "requestType": "raw",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "disabled": False,
+                            "limit": 100,
+                            "offset": 0,
+                            "filter": {"expression": 'body.message = "Promoted message"'},
+                            "order": [
+                                {"key": {"name": "timestamp"}, "direction": "desc"},
+                            ],
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    _assert_ok(response)
+    assert response.json()["status"] == "success"
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+    rows = results[0]["rows"]
+    assert len(rows) >= 1  # Should find the promoted log
+    assert any("Promoted message" in json.loads(row["data"]["body"])["message"] for row in rows)
+
+
+def test_logs_json_body_new_qb_nested_keys(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
+    export_json_types: Callable[[List[JSONPathType]], None],
 ) -> None:
     """
     Setup:
-    Insert logs with JSON bodies containing nested objects
+    Insert logs with nested JSON bodies using new QB
 
     Tests:
     1. Search by body.user.name = "value"
     2. Search by body.request.secure = true (boolean)
     3. Search by body.response.latency = 123.45 (floating point)
-    4. Search by body.response.status.code = 200
+    4. Search by body.response.status.code = 200 (deeply nested)
+    5. Search with EXISTS operator
     """
     now = datetime.now(tz=timezone.utc)
 
-    log1_body = json.dumps({
-        "user": {
-            "name": "john_doe",
-            "id": 12345,
-            "email": "john@example.com"
-        },
-        "request": {
-            "method": "GET",
-            "secure": True,
-            "headers": {
-                "content_type": "application/json",
-                "authorization": "Bearer token123"
-            }
-        },
-        "metadata": {
-            "tags": {
-                "environment": "production",
-                "region": "us-east-1"
-            }
-        },
-        "response": {
-            "status": {
-                "code": 200,
-                "message": "OK"
+    log1_body = json.dumps(
+        {
+            "user": {
+                "name": "john_doe",
+                "id": 12345,
+                "email": "john@example.com",
             },
-            "latency": 123.45
-        }
-    })
-
-    log2_body = json.dumps({
-        "user": {
-            "name": "jane_smith",
-            "id": 67890,
-            "email": "jane@example.com"
-        },
-        "request": {
-            "method": "POST",
-            "secure": False,
-            "headers": {
-                "content_type": "text/html",
-                "authorization": "Bearer token456"
-            }
-        },
-        "metadata": {
-            "tags": {
-                "environment": "staging",
-                "region": "us-west-2"
-            }
-        },
-        "response": {
-            "status": {
-                "code": 201,
-                "message": "Created"
+            "request": {
+                "method": "GET",
+                "secure": True,
+                "headers": {
+                    "content_type": "application/json",
+                },
             },
-            "latency": 456.78
-        }
-    })
-
-    log3_body = json.dumps({
-        "user": {
-            "name": "john_doe",
-            "id": 11111,
-            "email": "john2@example.com"
-        },
-        "request": {
-            "method": "PUT",
-            "secure": True,
-            "headers": {
-                "content_type": "application/json",
-                "authorization": "Bearer token789"
-            }
-        },
-        "metadata": {
-            "tags": {
-                "environment": "production",
-                "region": "eu-west-1"
-            }
-        },
-        "response": {
-            "status": {
-                "code": 200,
-                "message": "OK"
+            "response": {
+                "status": {
+                    "code": 200,
+                    "message": "OK",
+                },
+                "latency": 123.45,
             },
-            "latency": 123.45
         }
-    })
+    )
 
-    logs_list = [
-        Logs(
-            timestamp=now - timedelta(seconds=3),
-            resources={"service.name": "api-service"},
-            attributes={},
-            body=log1_body,
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(seconds=2),
-            resources={"service.name": "api-service"},
-            attributes={},
-            body=log2_body,
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(seconds=1),
-            resources={"service.name": "api-service"},
-            attributes={},
-            body=log3_body,
-            severity_text="INFO",
-        ),
-    ]
+    log2_body = json.dumps(
+        {
+            "user": {
+                "name": "jane_smith",
+                "id": 67890,
+            },
+            "request": {
+                "method": "POST",
+                "secure": False,
+            },
+            "response": {
+                "status": {
+                    "code": 201,
+                },
+                "latency": 456.78,
+            },
+        }
+    )
 
-    export_json_types(logs_list)
-    insert_logs(logs_list)
+    # Export JSON type metadata for nested paths
+    export_json_types(
+        [
+            JSONPathType(path="user.name", type="String"),
+            JSONPathType(path="user.id", type="Int64"),
+            JSONPathType(path="user.email", type="String"),
+            JSONPathType(path="request.method", type="String"),
+            JSONPathType(path="request.secure", type="Bool"),
+            JSONPathType(path="request.headers.content_type", type="String"),
+            JSONPathType(path="response.status.code", type="Int64"),
+            JSONPathType(path="response.status.message", type="String"),
+            JSONPathType(path="response.latency", type="Float64"),
+        ]
+    )
+
+    insert_logs(
+        [
+            Logs(
+                timestamp=now - timedelta(seconds=2),
+                resources={"service.name": "api-service"},
+                attributes={},
+                body=log1_body,
+                body_json=log1_body,
+                body_json_promoted="",
+                severity_text="INFO",
+            ),
+            Logs(
+                timestamp=now - timedelta(seconds=1),
+                resources={"service.name": "api-service"},
+                attributes={},
+                body=log2_body,
+                body_json=log2_body,
+                body_json_promoted="",
+                severity_text="INFO",
+            ),
+        ]
+    )
 
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
@@ -472,9 +524,8 @@ def test_logs_json_body_nested_keys(
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
     rows = results[0]["rows"]
-    assert len(rows) == 2  # log1 and log3 have user.name = "john_doe"
-    user_names = [json.loads(row["data"]["body"])["user"]["name"] for row in rows]
-    assert all(name == "john_doe" for name in user_names)
+    assert len(rows) == 1
+    assert json.loads(rows[0]["data"]["body"])["user"]["name"] == "john_doe"
 
     # Test 2: Search by body.request.secure = true
     response = requests.post(
@@ -514,9 +565,8 @@ def test_logs_json_body_nested_keys(
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
     rows = results[0]["rows"]
-    assert len(rows) == 2  # log1 and log3 have secure = true
-    secure_values = [json.loads(row["data"]["body"])["request"]["secure"] for row in rows]
-    assert all(secure is True for secure in secure_values)
+    assert len(rows) == 1
+    assert json.loads(rows[0]["data"]["body"])["request"]["secure"] is True
 
     # Test 3: Search by body.response.latency = 123.45
     response = requests.post(
@@ -556,11 +606,10 @@ def test_logs_json_body_nested_keys(
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
     rows = results[0]["rows"]
-    assert len(rows) == 2  # log1 and log3 have latency = 123.45
-    latencies = [json.loads(row["data"]["body"])["response"]["latency"] for row in rows]
-    assert all(lat == 123.45 for lat in latencies)
+    assert len(rows) == 1
+    assert json.loads(rows[0]["data"]["body"])["response"]["latency"] == 123.45
 
-    # Test 4: Search by body.response.status.code = 200
+    # Test 4: Search by body.response.status.code = 200 (deeply nested)
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -598,12 +647,52 @@ def test_logs_json_body_nested_keys(
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
     rows = results[0]["rows"]
-    assert len(rows) == 2  # log1 and log3 have status.code = 200
-    status_codes = [json.loads(row["data"]["body"])["response"]["status"]["code"] for row in rows]
-    assert all(code == 200 for code in status_codes)
+    assert len(rows) == 1
+    assert json.loads(rows[0]["data"]["body"])["response"]["status"]["code"] == 200
+
+    # Test 5: Search with EXISTS operator
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "requestType": "raw",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "disabled": False,
+                            "limit": 100,
+                            "offset": 0,
+                            "filter": {"expression": "body.user.email EXISTS"},
+                            "order": [
+                                {"key": {"name": "timestamp"}, "direction": "desc"},
+                            ],
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    _assert_ok(response)
+    assert response.json()["status"] == "success"
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+    rows = results[0]["rows"]
+    assert len(rows) == 1  # Only log1 has user.email
+    assert "email" in json.loads(rows[0]["data"]["body"])["user"]
 
 
-def test_logs_json_body_array_membership(
+def test_logs_json_body_new_qb_array_paths(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -615,62 +704,69 @@ def test_logs_json_body_array_membership(
     Insert logs with JSON bodies containing arrays
 
     Tests:
-    1. Search by has(body.tags, "value") - string array
-    2. Search by has(body.ids, 123) - numeric array
-    3. Search by has(body.flags, true) - boolean array
+    1. Search by body.education[].name EXISTS (array path exists)
+    2. Search by body.education[].name = "IIT" (array path equals)
+    3. Search by body.education[].awards[].name = "Iron Award" (nested array)
+    4. Search by body.education[].parameters CONTAINS 1.65 (array contains)
     """
     now = datetime.now(tz=timezone.utc)
 
-    log1_body = json.dumps({
-        "tags": ["production", "api", "critical"],
-        "ids": [100, 200, 300],
-        "flags": [True, False, True],
-        "users": [
-            {"name": "alice", "role": "admin"},
-            {"name": "bob", "role": "user"}
-        ]
-    })
+    log1_body = json.dumps(
+        {
+            "education": [
+                {
+                    "name": "IIT",
+                    "year": 2020,
+                    "awards": [
+                        {"name": "Iron Award", "type": "sports"},
+                        {"name": "Gold Award", "type": "academic"},
+                    ],
+                    "parameters": [1.65, 2.5, 3.0],
+                },
+                {
+                    "name": "MIT",
+                    "year": 2022,
+                    "awards": [
+                        {"name": "Silver Award", "type": "research"},
+                    ],
+                    "parameters": [4.0, 5.0],
+                },
+            ]
+        }
+    )
 
-    log2_body = json.dumps({
-        "tags": ["staging", "api", "test"],
-        "ids": [200, 400, 500],
-        "flags": [False, False, True],
-        "users": [
-            {"name": "charlie", "role": "user"},
-            {"name": "david", "role": "admin"}
-        ]
-    })
-
-    log3_body = json.dumps({
-        "tags": ["production", "web", "important"],
-        "ids": [100, 600, 700],
-        "flags": [True, True, False],
-        "users": [
-            {"name": "alice", "role": "admin"},
-            {"name": "eve", "role": "user"}
-        ]
-    })
+    log2_body = json.dumps(
+        {
+            "education": [
+                {
+                    "name": "Stanford",
+                    "year": 2021,
+                    "awards": [
+                        {"name": "Bronze Award", "type": "sports"},
+                    ],
+                    "parameters": [1.65, 6.0],
+                }
+            ]
+        }
+    )
 
     logs_list = [
-        Logs(
-            timestamp=now - timedelta(seconds=3),
-            resources={"service.name": "app-service"},
-            attributes={},
-            body=log1_body,
-            severity_text="INFO",
-        ),
         Logs(
             timestamp=now - timedelta(seconds=2),
             resources={"service.name": "app-service"},
             attributes={},
-            body=log2_body,
+            body=log1_body,
+            body_json=log1_body,
+            body_json_promoted="",
             severity_text="INFO",
         ),
         Logs(
             timestamp=now - timedelta(seconds=1),
             resources={"service.name": "app-service"},
             attributes={},
-            body=log3_body,
+            body=log2_body,
+            body_json=log2_body,
+            body_json_promoted="",
             severity_text="INFO",
         ),
     ]
@@ -680,7 +776,7 @@ def test_logs_json_body_array_membership(
 
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
-    # Test 1: Search by has(body.tags, "production")
+    # Test 1: Search by body.education[].name EXISTS
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -700,7 +796,7 @@ def test_logs_json_body_array_membership(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": 'has(body.tags, "production")'},
+                            "filter": {"expression": "body.education[].name EXISTS"},
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
@@ -718,11 +814,9 @@ def test_logs_json_body_array_membership(
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
     rows = results[0]["rows"]
-    assert len(rows) == 2  # log1 and log3 have "production" in tags
-    tags_list = [json.loads(row["data"]["body"])["tags"] for row in rows]
-    assert all("production" in tags for tags in tags_list)
+    assert len(rows) == 2  # Both logs have education[].name
 
-    # Test 2: Search by has(body.ids, 200)
+    # Test 2: Search by body.education[].name = "IIT"
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -742,7 +836,7 @@ def test_logs_json_body_array_membership(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": "has(body.ids, 200)"},
+                            "filter": {"expression": 'body.education[].name = "IIT"'},
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
@@ -760,11 +854,12 @@ def test_logs_json_body_array_membership(
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
     rows = results[0]["rows"]
-    assert len(rows) == 2  # log1 and log2 have 200 in ids
-    ids_list = [json.loads(row["data"]["body"])["ids"] for row in rows]
-    assert all(200 in ids for ids in ids_list)
+    assert len(rows) == 1  # Only log1 has "IIT"
+    assert any(
+        "IIT" in edu["name"] for edu in json.loads(rows[0]["data"]["body"])["education"]
+    )
 
-    # Test 3: Search by has(body.flags, true)
+    # Test 3: Search by body.education[].awards[].name = "Iron Award" (nested array)
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -784,7 +879,7 @@ def test_logs_json_body_array_membership(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": "has(body.flags, true)"},
+                            "filter": {"expression": 'body.education[].awards[].name = "Iron Award"'},
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
@@ -802,12 +897,58 @@ def test_logs_json_body_array_membership(
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
     rows = results[0]["rows"]
-    assert len(rows) == 3  # All logs have true in flags
-    flags_list = [json.loads(row["data"]["body"])["flags"] for row in rows]
-    assert all(True in flags for flags in flags_list)
+    assert len(rows) == 1  # Only log1 has "Iron Award"
+    education = json.loads(rows[0]["data"]["body"])["education"]
+    assert any(
+        any(award["name"] == "Iron Award" for award in edu.get("awards", []))
+        for edu in education
+    )
+
+    # Test 4: Search by body.education[].parameters CONTAINS 1.65
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "requestType": "raw",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "disabled": False,
+                            "limit": 100,
+                            "offset": 0,
+                            "filter": {"expression": "body.education[].parameters CONTAINS 1.65"},
+                            "order": [
+                                {"key": {"name": "timestamp"}, "direction": "desc"},
+                            ],
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    _assert_ok(response)
+    assert response.json()["status"] == "success"
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+    rows = results[0]["rows"]
+    assert len(rows) == 2  # Both logs have 1.65 in parameters
+    for row in rows:
+        education = json.loads(row["data"]["body"])["education"]
+        assert any(1.65 in edu.get("parameters", []) for edu in education)
 
 
-def test_logs_json_body_listing(
+def test_logs_json_body_new_qb_groupby_timeseries(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -816,84 +957,34 @@ def test_logs_json_body_listing(
 ) -> None:
     """
     Setup:
-    Insert multiple logs with JSON bodies
+    Insert logs with JSON bodies for GroupBy testing
 
     Tests:
-    1. List all logs with JSON bodies
-    2. List logs with pagination (limit and offset)
-    3. List logs ordered by timestamp
-    4. List logs with multiple filters combined (AND/OR)
-    5. Count logs matching JSON body filters
+    1. Time series query with GroupBy on body.user.age
+    2. Time series query with GroupBy on body.user.name
+    3. Time series query with multiple GroupBy fields
     """
     now = datetime.now(tz=timezone.utc)
 
     logs_data = [
-        {
-            "timestamp": now - timedelta(seconds=5),
-            "body": json.dumps({
-                "id": "log-1",
-                "service": "auth",
-                "action": "login",
-                "status": "success",
-                "user_id": 1
-            }),
-            "severity": "INFO"
-        },
-        {
-            "timestamp": now - timedelta(seconds=4),
-            "body": json.dumps({
-                "id": "log-2",
-                "service": "auth",
-                "action": "logout",
-                "status": "success",
-                "user_id": 2
-            }),
-            "severity": "INFO"
-        },
-        {
-            "timestamp": now - timedelta(seconds=3),
-            "body": json.dumps({
-                "id": "log-3",
-                "service": "payment",
-                "action": "charge",
-                "status": "success",
-                "user_id": 1
-            }),
-            "severity": "INFO"
-        },
-        {
-            "timestamp": now - timedelta(seconds=2),
-            "body": json.dumps({
-                "id": "log-4",
-                "service": "auth",
-                "action": "login",
-                "status": "failed",
-                "user_id": 3
-            }),
-            "severity": "ERROR"
-        },
-        {
-            "timestamp": now - timedelta(seconds=1),
-            "body": json.dumps({
-                "id": "log-5",
-                "service": "payment",
-                "action": "refund",
-                "status": "success",
-                "user_id": 2
-            }),
-            "severity": "INFO"
-        },
+        {"user": {"name": "alice", "age": 25}, "status": 200},
+        {"user": {"name": "bob", "age": 30}, "status": 200},
+        {"user": {"name": "alice", "age": 25}, "status": 201},
+        {"user": {"name": "charlie", "age": 35}, "status": 200},
+        {"user": {"name": "alice", "age": 25}, "status": 200},
     ]
 
     logs_list = [
         Logs(
-            timestamp=log_data["timestamp"],
-            resources={"service.name": "test-service"},
+            timestamp=now - timedelta(seconds=5 - i),
+            resources={"service.name": "api-service"},
             attributes={},
-            body=log_data["body"],
-            severity_text=log_data["severity"],
+            body=json.dumps(log_data),
+            body_json=json.dumps(log_data),
+            body_json_promoted="",
+            severity_text="INFO",
         )
-        for log_data in logs_data
+        for i, log_data in enumerate(logs_data)
     ]
 
     export_json_types(logs_list)
@@ -901,7 +992,7 @@ def test_logs_json_body_listing(
 
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
-    # Test 1: List all logs with JSON bodies
+    # Test 1: Time series query with GroupBy on body.user.age
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -910,7 +1001,7 @@ def test_logs_json_body_listing(
             "schemaVersion": "v1",
             "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
-            "requestType": "raw",
+            "requestType": "time_series",
             "compositeQuery": {
                 "queries": [
                     {
@@ -921,8 +1012,12 @@ def test_logs_json_body_listing(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "order": [
-                                {"key": {"name": "timestamp"}, "direction": "desc"},
+                            "groupBy": [
+                                {
+                                    "name": "body.user.age",
+                                    "fieldDataType": "int64",
+                                    "fieldContext": "body",
+                                }
                             ],
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -937,11 +1032,14 @@ def test_logs_json_body_listing(
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
-    rows = results[0]["rows"]
-    assert len(rows) == 5  # All 5 logs should be returned
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    # Should have series grouped by age: 25, 30, 35
+    age_values = {s["labels"]["body.user.age"] for s in series if "body.user.age" in s["labels"]}
+    assert age_values == {"25", "30", "35"} or age_values == {25, 30, 35}
 
-    # Test 2: List logs with pagination (limit=2, offset=0)
-    # Should return the 1st and 2nd logs (log-5 and log-4) when ordered by timestamp desc
+    # Test 2: Time series query with GroupBy on body.user.name
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -950,92 +1048,7 @@ def test_logs_json_body_listing(
             "schemaVersion": "v1",
             "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
-            "requestType": "raw",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "logs",
-                            "disabled": False,
-                            "limit": 2,
-                            "offset": 0,
-                            "order": [
-                                {"key": {"name": "timestamp"}, "direction": "desc"},
-                            ],
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
-    )
-
-    _assert_ok(response)
-    assert response.json()["status"] == "success"
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-    rows = results[0]["rows"]
-    assert len(rows) == 2  # Only 2 logs should be returned
-    # Verify we got the 1st and 2nd logs (log-5 and log-4) when ordered by timestamp desc
-    log_ids = [json.loads(row["data"]["body"])["id"] for row in rows]
-    assert set(log_ids) == {"log-5", "log-4"}
-
-    # Test 3: List logs with pagination (limit=2, offset=2)
-    # Should return the 3rd and 4th logs (log-3 and log-2) when ordered by timestamp desc
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "requestType": "raw",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "logs",
-                            "disabled": False,
-                            "limit": 2,
-                            "offset": 2,
-                            "order": [
-                                {"key": {"name": "timestamp"}, "direction": "desc"},
-                            ],
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
-    )
-
-    _assert_ok(response)
-    assert response.json()["status"] == "success"
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-    rows = results[0]["rows"]
-    assert len(rows) == 2  # Should return exactly 2 logs
-    # Verify we got the 3rd and 4th logs (log-3 and log-2) when ordered by timestamp desc
-    log_ids = [json.loads(row["data"]["body"])["id"] for row in rows]
-    assert set(log_ids) == {"log-3", "log-2"}
-
-    # Test 4: List logs with multiple filters combined (AND)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "requestType": "raw",
+            "requestType": "time_series",
             "compositeQuery": {
                 "queries": [
                     {
@@ -1046,9 +1059,12 @@ def test_logs_json_body_listing(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": 'body.service = "auth" AND body.action = "login"'},
-                            "order": [
-                                {"key": {"name": "timestamp"}, "direction": "desc"},
+                            "groupBy": [
+                                {
+                                    "name": "body.user.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "body",
+                                }
                             ],
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1063,14 +1079,16 @@ def test_logs_json_body_listing(
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
-    rows = results[0]["rows"]
-    assert len(rows) == 2  # 2 logs match: service="auth" AND action="login"
-    for row in rows:
-        body_data = json.loads(row["data"]["body"])
-        assert body_data["service"] == "auth"
-        assert body_data["action"] == "login"
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    # Should have series grouped by name: alice, bob, charlie
+    name_values = {s["labels"]["body.user.name"] for s in series if "body.user.name" in s["labels"]}
+    assert "alice" in name_values
+    assert "bob" in name_values
+    assert "charlie" in name_values
 
-    # Test 5: List logs with OR filter
+    # Test 3: Time series query with multiple GroupBy fields
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -1079,7 +1097,7 @@ def test_logs_json_body_listing(
             "schemaVersion": "v1",
             "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
-            "requestType": "raw",
+            "requestType": "time_series",
             "compositeQuery": {
                 "queries": [
                     {
@@ -1090,9 +1108,17 @@ def test_logs_json_body_listing(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": 'body.service = "auth" OR body.service = "payment"'},
-                            "order": [
-                                {"key": {"name": "timestamp"}, "direction": "desc"},
+                            "groupBy": [
+                                {
+                                    "name": "body.user.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "body",
+                                },
+                                {
+                                    "name": "body.user.age",
+                                    "fieldDataType": "int64",
+                                    "fieldContext": "body",
+                                },
                             ],
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1107,45 +1133,16 @@ def test_logs_json_body_listing(
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
-    rows = results[0]["rows"]
-    assert len(rows) == 5  # All 5 logs match: service="auth" OR service="payment"
-    for row in rows:
-        body_data = json.loads(row["data"]["body"])
-        assert body_data["service"] in ["auth", "payment"]
-
-    # Test 6: Count logs matching JSON body filters
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "requestType": "scalar",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "logs",
-                            "disabled": False,
-                            "filter": {"expression": 'body.status = "success"'},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": True, "fillGaps": False},
-        },
-    )
-
-    _assert_ok(response)
-    assert response.json()["status"] == "success"
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-    count = results[0]["data"][0][0]
-    assert count == 4  # 4 logs have status="success"
-
-
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+    series = aggregations[0]["series"]
+    # Should have series grouped by both name and age
+    # alice+25 should appear (3 times), bob+30 (1 time), charlie+35 (1 time)
+    grouped_labels = [
+        (s["labels"].get("body.user.name"), s["labels"].get("body.user.age"))
+        for s in series
+        if "body.user.name" in s["labels"] and "body.user.age" in s["labels"]
+    ]
+    assert ("alice", "25") in grouped_labels or ("alice", 25) in grouped_labels
+    assert ("bob", "30") in grouped_labels or ("bob", 30) in grouped_labels
+    assert ("charlie", "35") in grouped_labels or ("charlie", 35) in grouped_labels

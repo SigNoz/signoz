@@ -174,6 +174,19 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 		expectedErr error
 	}{
 		{
+			name:        "Has Array test",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "has(body.tags, 'production')"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Args: []any{uint64(1747945619), uint64(1747983448), "production", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
 			name:        "Simple string filter",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{

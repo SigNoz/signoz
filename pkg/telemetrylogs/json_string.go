@@ -49,7 +49,8 @@ func inferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 		if len(v) > 0 {
 			valueType, _ = inferDataType(v[0], operator, key)
 		}
-		return valueType, v
+		// convert the scaler type to the array type
+		return telemetrytypes.ScalerFieldTypeToArrayFieldType[valueType], v
 	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
 		valueType = telemetrytypes.FieldDataTypeInt64
 	case float32, float64:

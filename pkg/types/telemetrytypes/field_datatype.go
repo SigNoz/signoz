@@ -93,6 +93,14 @@ var (
 		FieldDataTypeArrayFloat64: "Array(Float64)",
 		FieldDataTypeArrayBool:    "Array(Bool)",
 	}
+
+	ScalerFieldTypeToArrayFieldType = map[FieldDataType]FieldDataType{
+		FieldDataTypeString:  FieldDataTypeArrayString,
+		FieldDataTypeBool:    FieldDataTypeArrayBool,
+		FieldDataTypeNumber:  FieldDataTypeArrayNumber,
+		FieldDataTypeInt64:   FieldDataTypeArrayInt64,
+		FieldDataTypeFloat64: FieldDataTypeArrayFloat64,
+	}
 )
 
 func (f FieldDataType) CHDataType() string {

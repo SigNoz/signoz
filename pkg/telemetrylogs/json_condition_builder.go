@@ -72,10 +72,10 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 
 			// switch operator for array membership checks
 			switch operator {
-			case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorIn:
-				operator = qbtypes.FilterOperatorEqual
-			case qbtypes.FilterOperatorNotContains, qbtypes.FilterOperatorNotIn:
-				operator = qbtypes.FilterOperatorNotEqual
+			case qbtypes.FilterOperatorContains:
+				operator = qbtypes.FilterOperatorIn
+			case qbtypes.FilterOperatorNotContains:
+				operator = qbtypes.FilterOperatorNotIn
 			}
 		}
 
