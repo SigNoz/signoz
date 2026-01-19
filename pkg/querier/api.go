@@ -235,27 +235,36 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 			switch spec := item.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
 				if spec.Filter != nil && spec.Filter.Expression != "" {
-					replaced, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
+					replaced, warnings, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
 					if err != nil {
 						errs = append(errs, err)
+					}
+					for _, w := range warnings {
+						a.set.Logger.Warn(w)
 					}
 					spec.Filter.Expression = replaced
 				}
 				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
 			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
 				if spec.Filter != nil && spec.Filter.Expression != "" {
-					replaced, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
+					replaced, warnings, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
 					if err != nil {
 						errs = append(errs, err)
+					}
+					for _, w := range warnings {
+						a.set.Logger.Warn(w)
 					}
 					spec.Filter.Expression = replaced
 				}
 				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 				if spec.Filter != nil && spec.Filter.Expression != "" {
-					replaced, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
+					replaced, warnings, err := variables.ReplaceVariablesInExpression(spec.Filter.Expression, queryRangeRequest.Variables)
 					if err != nil {
 						errs = append(errs, err)
+					}
+					for _, w := range warnings {
+						a.set.Logger.Warn(w)
 					}
 					spec.Filter.Expression = replaced
 				}
