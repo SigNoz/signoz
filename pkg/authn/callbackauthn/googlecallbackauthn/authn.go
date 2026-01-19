@@ -219,7 +219,7 @@ func (a *AuthN) getGroups(ctx context.Context, adminService *admin.Service, user
 			call = call.PageToken(pageToken)
 		}
 
-		groupList, err := call.Do()
+		groupList, err := call.Context(ctx).Do()
 		if err != nil {
 			a.settings.Logger().ErrorContext(ctx, "google: unable to list groups", "error", err)
 			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to list groups")
