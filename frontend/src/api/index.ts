@@ -229,6 +229,17 @@ export const GatewayApiV2Instance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${gatewayApiV2}`,
 });
 
+// generated API Instance
+export const generatedAPIInstance = axios.create({
+	baseURL: ENVIRONMENT.baseURL,
+});
+
+generatedAPIInstance.interceptors.request.use(interceptorsRequestResponse);
+generatedAPIInstance.interceptors.response.use(
+	interceptorsResponse,
+	interceptorRejected,
+);
+
 GatewayApiV2Instance.interceptors.response.use(
 	interceptorsResponse,
 	interceptorRejected,
