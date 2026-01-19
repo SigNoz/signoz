@@ -887,7 +887,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 
 			keys := make([]string, 0, len(queryRangeParams.Variables))
 
-			querytemplate.AssignReservedVarsV3(queryRangeParams)
+			querytemplate.AssignReservedVars(queryRangeParams.Variables, queryRangeParams.Start, queryRangeParams.End)
 
 			for k := range queryRangeParams.Variables {
 				keys = append(keys, k)
@@ -927,7 +927,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				continue
 			}
 
-			querytemplate.AssignReservedVarsV3(queryRangeParams)
+			querytemplate.AssignReservedVars(queryRangeParams.Variables, queryRangeParams.Start, queryRangeParams.End)
 
 			keys := make([]string, 0, len(queryRangeParams.Variables))
 

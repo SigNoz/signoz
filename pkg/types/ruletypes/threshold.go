@@ -252,6 +252,15 @@ func (b BasicRuleThreshold) Validate() error {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid match type: %s", string(b.MatchType)))
 	}
 
+	// Only validate unit if specified
+	if b.TargetUnit != "" {
+		unit := converter.Unit(b.TargetUnit)
+		err := unit.Validate()
+		if err != nil {
+			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid unit"))
+		}
+	}
+
 	return errors.Join(errs...)
 }
 
