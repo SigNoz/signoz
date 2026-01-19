@@ -211,7 +211,10 @@ describe('VariableItem Integration Tests', () => {
 			await user.clear(textInput);
 			await user.type(textInput, 'new-text-value');
 
-			// Should call onValueUpdate after debounce
+			// Blur the input to trigger the value update
+			await user.tab();
+
+			// Should call onValueUpdate after blur
 			await waitFor(
 				() => {
 					expect(mockOnValueUpdate).toHaveBeenCalledWith(

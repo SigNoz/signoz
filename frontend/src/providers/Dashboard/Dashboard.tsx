@@ -291,6 +291,10 @@ export function DashboardProvider({
 
 						variable.order = order;
 						existingOrders.add(order);
+						// ! BWC - Specific case for backward compatibility where textboxValue was used instead of defaultValue
+						if (variable.type === 'TEXTBOX' && !variable.defaultValue) {
+							variable.defaultValue = variable.textboxValue || '';
+						}
 					}
 
 					if (variable.id === undefined) {

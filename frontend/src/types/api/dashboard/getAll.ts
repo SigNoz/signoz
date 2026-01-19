@@ -37,6 +37,7 @@ export interface IDashboardVariable {
 	// Custom
 	customValue?: string;
 	// Textbox
+	// special case of variable where defaultValue is same as this. Otherwise, defaultValue is a single field
 	textboxValue?: string;
 
 	sort: TSortVariableValuesType;

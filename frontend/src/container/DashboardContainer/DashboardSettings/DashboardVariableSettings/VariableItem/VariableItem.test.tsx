@@ -1,6 +1,12 @@
 /* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/no-duplicate-string */
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 import {
 	IDashboardVariable,
 	TSortVariableValuesType,
@@ -637,6 +643,188 @@ describe('VariableItem Component', () => {
 
 			await renderAndSave(variable1, existingVariables);
 			await expectCircularDependencyError();
+		});
+	});
+
+	describe('Textbox Variable Default Value Handling', () => {
+		test('saves textbox variable with defaultValue and selectedValue set to textboxValue', async () => {
+			const user = userEvent.setup();
+			const textboxVariable: IDashboardVariable = {
+				id: TEST_VAR_IDS.VAR1,
+				name: TEST_VAR_NAMES.VAR1,
+				description: 'Test Textbox Variable',
+				type: 'TEXTBOX',
+				textboxValue: 'my-default-value',
+				...VARIABLE_DEFAULTS,
+				order: 0,
+			};
+
+			renderVariableItem(textboxVariable);
+
+			// Click save button
+			const saveButton = screen.getByText(SAVE_BUTTON_TEXT);
+			await user.click(saveButton);
+
+			// Verify that onSave was called with defaultValue and selectedValue equal to textboxValue
+			expect(onSave).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({
+					type: 'TEXTBOX',
+					textboxValue: 'my-default-value',
+					defaultValue: 'my-default-value',
+					selectedValue: 'my-default-value',
+				}),
+				expect.anything(),
+			);
+		});
+
+		test('saves textbox variable with empty values when textboxValue is empty', async () => {
+			const user = userEvent.setup();
+			const textboxVariable: IDashboardVariable = {
+				id: TEST_VAR_IDS.VAR1,
+				name: TEST_VAR_NAMES.VAR1,
+				description: 'Test Textbox Variable',
+				type: 'TEXTBOX',
+				textboxValue: '',
+				...VARIABLE_DEFAULTS,
+				order: 0,
+			};
+
+			renderVariableItem(textboxVariable);
+
+			// Click save button
+			const saveButton = screen.getByText(SAVE_BUTTON_TEXT);
+			await user.click(saveButton);
+
+			// Verify that onSave was called with empty defaultValue and selectedValue
+			expect(onSave).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({
+					type: 'TEXTBOX',
+					textboxValue: '',
+					defaultValue: '',
+					selectedValue: '',
+				}),
+				expect.anything(),
+			);
+		});
+
+		test('updates textbox defaultValue and selectedValue when user changes textboxValue input', async () => {
+			const user = userEvent.setup();
+			const textboxVariable: IDashboardVariable = {
+				id: TEST_VAR_IDS.VAR1,
+				name: TEST_VAR_NAMES.VAR1,
+				description: 'Test Textbox Variable',
+				type: 'TEXTBOX',
+				textboxValue: 'initial-value',
+				...VARIABLE_DEFAULTS,
+				order: 0,
+			};
+
+			renderVariableItem(textboxVariable);
+
+			// Change the textbox value
+			const textboxInput = screen.getByPlaceholderText(
+				'Enter a default value (if any)...',
+			);
+			await user.clear(textboxInput);
+			await user.type(textboxInput, 'updated-value');
+
+			// Click save button
+			const saveButton = screen.getByText(SAVE_BUTTON_TEXT);
+			await user.click(saveButton);
+
+			// Verify that onSave was called with the updated defaultValue and selectedValue
+			expect(onSave).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({
+					type: 'TEXTBOX',
+					textboxValue: 'updated-value',
+					defaultValue: 'updated-value',
+					selectedValue: 'updated-value',
+				}),
+				expect.anything(),
+			);
+		});
+
+		test('non-textbox variables use variableDefaultValue instead of textboxValue', async () => {
+			const user = userEvent.setup();
+			const queryVariable: IDashboardVariable = {
+				id: TEST_VAR_IDS.VAR1,
+				name: TEST_VAR_NAMES.VAR1,
+				description: 'Test Query Variable',
+				type: 'QUERY',
+				queryValue: 'SELECT * FROM test',
+				textboxValue: 'should-not-be-used',
+				defaultValue: 'query-default-value',
+				...VARIABLE_DEFAULTS,
+				order: 0,
+			};
+
+			renderVariableItem(queryVariable);
+
+			// Click save button
+			const saveButton = screen.getByText(SAVE_BUTTON_TEXT);
+			await user.click(saveButton);
+
+			// Verify that onSave was called with defaultValue not being textboxValue
+			expect(onSave).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({
+					type: 'QUERY',
+					defaultValue: 'query-default-value',
+				}),
+				expect.anything(),
+			);
+
+			// Verify that defaultValue is NOT the textboxValue
+			const savedVariable = onSave.mock.calls[0][1];
+			expect(savedVariable.defaultValue).not.toBe('should-not-be-used');
+		});
+
+		test('switching to textbox type sets defaultValue and selectedValue correctly on save', async () => {
+			const user = userEvent.setup();
+			// Start with a QUERY variable
+			const queryVariable: IDashboardVariable = {
+				id: TEST_VAR_IDS.VAR1,
+				name: TEST_VAR_NAMES.VAR1,
+				description: 'Test Variable',
+				type: 'QUERY',
+				queryValue: 'SELECT * FROM test',
+				...VARIABLE_DEFAULTS,
+				order: 0,
+			};
+
+			renderVariableItem(queryVariable);
+
+			// Switch to TEXTBOX type
+			const textboxButton = findButtonByText(TEXT.TEXTBOX);
+			expect(textboxButton).toBeInTheDocument();
+			if (textboxButton) {
+				await user.click(textboxButton);
+			}
+
+			// Enter a default value in the textbox input
+			const textboxInput = screen.getByPlaceholderText(
+				'Enter a default value (if any)...',
+			);
+			await user.type(textboxInput, 'new-textbox-default');
+
+			// Click save button
+			const saveButton = screen.getByText(SAVE_BUTTON_TEXT);
+			await user.click(saveButton);
+
+			// Verify that onSave was called with type TEXTBOX and correct defaultValue and selectedValue
+			expect(onSave).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({
+					type: 'TEXTBOX',
+					textboxValue: 'new-textbox-default',
+					defaultValue: 'new-textbox-default',
+					selectedValue: 'new-textbox-default',
+				}),
+				expect.anything(),
+			);
 		});
 	});
 });
