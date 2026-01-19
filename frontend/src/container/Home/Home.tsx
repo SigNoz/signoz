@@ -57,6 +57,10 @@ export default function Home(): JSX.Element {
 	const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(
 		defaultChecklistItemsState,
 	);
+	const isChecklistCompleted = useMemo(
+	() => checklistItems.every((item) => item.completed),
+	[checklistItems],
+);
 
 	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] = useState(
 		false,
@@ -680,20 +684,23 @@ export default function Home(): JSX.Element {
 					{(isLogsIngestionActive ||
 						isTracesIngestionActive ||
 						isMetricsIngestionActive) && (
-						<>
-							<AlertRules
-								onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-								loadingUserPreferences={loadingUserPreferences}
-							/>
-							<Dashboards
-								onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-								loadingUserPreferences={loadingUserPreferences}
-							/>
-						</>
-					)}
+							<>
+								<AlertRules
+									onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
+									loadingUserPreferences={loadingUserPreferences}
+								/>
+								<Dashboards
+									onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
+									loadingUserPreferences={loadingUserPreferences}
+								/>
+							</>
+						)}
 				</div>
 				<div className="home-right-content">
-					{!isWelcomeChecklistSkipped && !loadingUserPreferences && (
+					{!isWelcomeChecklistSkipped &&
+	!loadingUserPreferences &&
+	!isChecklistCompleted && (
+
 						<AnimatePresence initial={false}>
 							<Card className="checklist-card">
 								<Card.Content>
@@ -752,17 +759,17 @@ export default function Home(): JSX.Element {
 					{(isLogsIngestionActive ||
 						isTracesIngestionActive ||
 						isMetricsIngestionActive) && (
-						<>
-							<Services
-								onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-								loadingUserPreferences={loadingUserPreferences}
-							/>
-							<SavedViews
-								onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-								loadingUserPreferences={loadingUserPreferences}
-							/>
-						</>
-					)}
+							<>
+								<Services
+									onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
+									loadingUserPreferences={loadingUserPreferences}
+								/>
+								<SavedViews
+									onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
+									loadingUserPreferences={loadingUserPreferences}
+								/>
+							</>
+						)}
 				</div>
 			</div>
 		</div>
