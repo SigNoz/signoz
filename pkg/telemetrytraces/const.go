@@ -1,6 +1,9 @@
 package telemetrytraces
 
-import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+import (
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+)
 
 var (
 	IntrinsicFields = map[string]telemetrytypes.TelemetryFieldKey{
@@ -371,6 +374,21 @@ var (
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+	}
+
+	DefaultTracesSortingOrder = []qbtypes.OrderBy{
+		{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: DefaultFields["timestamp"],
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		},
+		{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: DefaultFields["span_id"],
+			},
+			Direction: qbtypes.OrderDirectionDesc,
 		},
 	}
 )
