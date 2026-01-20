@@ -410,8 +410,6 @@ function TraceOperatorEditor({
 									run: (): boolean => {
 										if (onRun && typeof onRun === 'function') {
 											onRun(value);
-										} else {
-											handleRunQuery();
 										}
 										return true;
 									},
