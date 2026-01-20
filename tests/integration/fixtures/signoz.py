@@ -65,6 +65,7 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
                 "SIGNOZ_INSTRUMENTATION_LOGS_LEVEL": "debug",
                 "SIGNOZ_PROMETHEUS_ACTIVE__QUERY__TRACKER_ENABLED": False,
                 "SIGNOZ_GATEWAY_URL": gateway.container_configs["8080"].base(),
+                "SIGNOZ_TOKENIZER_JWT_SECRET": "secret",
             }
             | sqlstore.env
             | clickhouse.env
@@ -97,14 +98,15 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
                         f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v1/health",
                         timeout=2,
                     )
-                    return response.status_code == HTTPStatus.OK
+                    if response.status_code == HTTPStatus.OK:
+                        return
                 except Exception:  # pylint: disable=broad-exception-caught
                     logger.info(
                         "Attempt %s at readiness check for SigNoz container %s failed, going to retry ...",
                         attempt + 1,
                         container,
                     )
-                    time.sleep(2)
+                time.sleep(2)
             raise TimeoutError("timeout exceeded while waiting")
 
         try:

@@ -48,7 +48,7 @@ type UpdateableAuthDomain struct {
 }
 
 type StorableAuthDomain struct {
-	bun.BaseModel `bun:"table:org_domains"`
+	bun.BaseModel `bun:"table:auth_domain"`
 
 	types.Identifiable
 	Name  string      `bun:"name" json:"name"`
@@ -63,6 +63,7 @@ type AuthDomainConfig struct {
 	SAML          *SamlConfig   `json:"samlConfig"`
 	Google        *GoogleConfig `json:"googleAuthConfig"`
 	OIDC          *OIDCConfig   `json:"oidcConfig"`
+	RoleMapping   *RoleMapping  `json:"roleMapping"`
 }
 
 type AuthDomain struct {

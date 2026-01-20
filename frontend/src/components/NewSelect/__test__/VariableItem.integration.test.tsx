@@ -7,7 +7,7 @@ import { VirtuosoMockContext } from 'react-virtuoso';
 import configureStore from 'redux-mock-store';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
-import VariableItem from '../../../container/NewDashboard/DashboardVariablesSelection/VariableItem';
+import VariableItem from '../../../container/DashboardContainer/DashboardVariablesSelection/VariableItem';
 
 // Mock the dashboard variables query
 jest.mock('api/dashboard/variables/dashboardVariablesQuery', () => ({
@@ -211,7 +211,10 @@ describe('VariableItem Integration Tests', () => {
 			await user.clear(textInput);
 			await user.type(textInput, 'new-text-value');
 
-			// Should call onValueUpdate after debounce
+			// Blur the input to trigger the value update
+			await user.tab();
+
+			// Should call onValueUpdate after blur
 			await waitFor(
 				() => {
 					expect(mockOnValueUpdate).toHaveBeenCalledWith(

@@ -2,7 +2,6 @@ package telemetrylogs
 
 import (
 	"github.com/SigNoz/signoz-otel-collector/constants"
-	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -37,8 +36,6 @@ const (
 
 	BodyJSONColumnPrefix     = constants.BodyJSONColumnPrefix
 	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
-	ArraySep                 = jsontypeexporter.ArraySeparator
-	ArrayAnyIndex            = "[*]."
 )
 
 var (
@@ -48,8 +45,7 @@ var (
 		FieldContext:  telemetrytypes.FieldContextLog,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	}
-	BodyJSONStringSearchPrefix = `body.`
-	IntrinsicFields            = map[string]telemetrytypes.TelemetryFieldKey{
+	IntrinsicFields = map[string]telemetrytypes.TelemetryFieldKey{
 		"body": {
 			Name:          "body",
 			Signal:        telemetrytypes.SignalLogs,

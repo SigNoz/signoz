@@ -79,21 +79,19 @@ function LogsExplorer(): JSX.Element {
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
-			handleSetConfig(
-				defaultTo(explorerViewToPanelType[view], PANEL_TYPES.LIST),
-				DataSource.LOGS,
+			const nextPanelType = defaultTo(
+				explorerViewToPanelType[view],
+				PANEL_TYPES.LIST,
 			);
 
+			handleSetConfig(nextPanelType, DataSource.LOGS);
 			setSelectedView(view);
 
 			if (view !== ExplorerViews.LIST) {
 				setShowLiveLogs(false);
 			}
 
-			handleExplorerTabChange(
-				explorerViewToPanelType[view],
-				querySearchParameters,
-			);
+			handleExplorerTabChange(nextPanelType, querySearchParameters);
 		},
 		[handleSetConfig, handleExplorerTabChange, setSelectedView],
 	);
