@@ -16,7 +16,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 export interface ChartPreviewProps {
 	alertDef: AlertDef;
-	source: YAxisSource;
+	source?: YAxisSource;
 }
 
 function ChartPreview({ alertDef, source }: ChartPreviewProps): JSX.Element {
