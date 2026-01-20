@@ -4,9 +4,29 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+export interface AuthtypesAttributeMappingDTO {
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	groups?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	role?: string;
+}
+
 export interface AuthtypesAuthDomainConfigDTO {
 	googleAuthConfig?: AuthtypesGoogleConfigDTO;
 	oidcConfig?: AuthtypesOIDCConfigDTO;
+	roleMapping?: AuthtypesRoleMappingDTO;
 	samlConfig?: AuthtypesSamlConfigDTO;
 	/**
 	 * @type boolean
@@ -48,13 +68,6 @@ export interface AuthtypesCallbackAuthNSupportDTO {
 	 * @type string
 	 */
 	url?: string;
-}
-
-export interface AuthtypesClaimMappingDTO {
-	/**
-	 * @type string
-	 */
-	email?: string;
 }
 
 export interface AuthtypesDeprecatedGettableLoginDTO {
@@ -100,6 +113,7 @@ export interface AuthtypesGettableAuthDomainDTO {
 	 * @type string
 	 */
 	orgId?: string;
+	roleMapping?: AuthtypesRoleMappingDTO;
 	samlConfig?: AuthtypesSamlConfigDTO;
 	/**
 	 * @type boolean
@@ -135,7 +149,15 @@ export interface AuthtypesGettableTokenDTO {
 	tokenType?: string;
 }
 
+export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
+	[key: string]: string;
+};
+
 export interface AuthtypesGoogleConfigDTO {
+	/**
+	 * @type array
+	 */
+	allowedGroups?: string[];
 	/**
 	 * @type string
 	 */
@@ -145,13 +167,33 @@ export interface AuthtypesGoogleConfigDTO {
 	 */
 	clientSecret?: string;
 	/**
+	 * @type object
+	 */
+	domainToAdminEmail?: AuthtypesGoogleConfigDTODomainToAdminEmail;
+	/**
+	 * @type boolean
+	 */
+	fetchGroups?: boolean;
+	/**
+	 * @type boolean
+	 */
+	fetchTransitiveGroupMembership?: boolean;
+	/**
+	 * @type boolean
+	 */
+	insecureSkipEmailVerified?: boolean;
+	/**
 	 * @type string
 	 */
 	redirectURI?: string;
+	/**
+	 * @type string
+	 */
+	serviceAccountJson?: string;
 }
 
 export interface AuthtypesOIDCConfigDTO {
-	claimMapping?: AuthtypesClaimMappingDTO;
+	claimMapping?: AuthtypesAttributeMappingDTO;
 	/**
 	 * @type string
 	 */
@@ -228,7 +270,31 @@ export interface AuthtypesPostableRotateTokenDTO {
 	refreshToken?: string;
 }
 
+/**
+ * @nullable
+ */
+export type AuthtypesRoleMappingDTOGroupMappings = {
+	[key: string]: string;
+} | null;
+
+export interface AuthtypesRoleMappingDTO {
+	/**
+	 * @type string
+	 */
+	defaultRole?: string;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	groupMappings?: AuthtypesRoleMappingDTOGroupMappings;
+	/**
+	 * @type boolean
+	 */
+	useRoleAttribute?: boolean;
+}
+
 export interface AuthtypesSamlConfigDTO {
+	attributeMapping?: AuthtypesAttributeMappingDTO;
 	/**
 	 * @type boolean
 	 */

@@ -5,7 +5,7 @@
 import type { AxiosError, AxiosRequestConfig } from 'axios';
 import Axios from 'axios';
 
-import { generatedAPIInstance } from '../../index';
+import { GeneratedAPIInstance } from '../../index';
 
 /**
  * Custom instance wrapper for Orval.
@@ -17,7 +17,7 @@ import { generatedAPIInstance } from '../../index';
 export const customInstance = <T>(config: AxiosRequestConfig): Promise<T> => {
 	const source = Axios.CancelToken.source();
 
-	const promise = generatedAPIInstance({
+	const promise = GeneratedAPIInstance({
 		...config,
 		cancelToken: source.token,
 	}).then(({ data }) => data);
