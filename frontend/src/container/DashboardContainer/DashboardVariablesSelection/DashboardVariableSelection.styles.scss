@@ -1,0 +1,126 @@
+.variable-item {
+	display: flex;
+	align-items: center;
+
+	.variable-name {
+		display: flex;
+		min-width: 56px;
+		height: 32px;
+		padding: 6px 6px 6px 8px;
+		align-items: center;
+		gap: 4px;
+		border-radius: 2px 0px 0px 2px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+		color: var(--bg-robin-300);
+		font-family: Inter;
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 16px; /* 133.333% */
+
+		.info-icon {
+			margin-left: 4px;
+			color: var(--bg-vanilla-400);
+		}
+	}
+
+	&.focused {
+		.variable-value {
+			outline: 1px solid var(--bg-robin-400);
+		}
+	}
+
+	.variable-value {
+		display: flex;
+		min-width: 120px;
+		height: 32px;
+		padding: 6px 6px 6px 8px;
+		align-items: center;
+		gap: 4px;
+		border-radius: 0px 2px 2px 0px;
+		border: 1px solid var(--bg-slate-400);
+		border-left: none;
+		background: var(--bg-ink-400);
+		color: var(--bg-vanilla-400);
+		font-family: Inter;
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 16px; /* 133.333% */
+	}
+
+	.variable-select {
+		.ant-select-item {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.rc-virtual-list-holder {
+			[data-testid='option-ALL'] {
+				border-bottom: 1px solid var(--bg-slate-400);
+				padding-bottom: 12px;
+				margin-bottom: 8px;
+			}
+		}
+
+		.all-label {
+			display: flex;
+			gap: 16px;
+		}
+
+		.dropdown-checkbox-label {
+			display: grid;
+			grid-template-columns: 24px 1fr;
+		}
+
+		.dropdown-value {
+			display: grid;
+			grid-template-columns: 1fr max-content;
+
+			.option-text {
+				padding: 0 8px;
+			}
+
+			.toggle-tag-label {
+				padding-left: 8px;
+				right: 40px;
+				font-weight: 500;
+			}
+		}
+	}
+}
+
+.dropdown-styles {
+	min-width: 400px;
+	max-width: 500px;
+}
+
+.lightMode {
+	.variable-item {
+		&.focused {
+			.variable-value {
+				border: 1px solid var(--bg-robin-400);
+			}
+		}
+
+		.variable-name {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+			color: var(--bg-robin-300);
+		}
+
+		.variable-value {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+			color: var(--bg-ink-400);
+		}
+	}
+}
+
+.cycle-error-alert {
+	margin-bottom: 12px;
+	padding: 4px 12px;
+	font-size: 12px;
+}

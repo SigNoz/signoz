@@ -65,11 +65,14 @@ function Filter({
 
 	const uniqueLabels: Array<string> = useMemo(() => {
 		const allLabelsSet = new Set<string>();
-		allAlerts.forEach((e) =>
+		allAlerts.forEach((e) => {
+			if (!e.labels) {
+				return;
+			}
 			Object.keys(e.labels).forEach((e) => {
 				allLabelsSet.add(e);
-			}),
-		);
+			});
+		});
 		return [...allLabelsSet];
 	}, [allAlerts]);
 
