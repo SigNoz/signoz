@@ -1,3 +1,4 @@
+import userEvent from '@testing-library/user-event';
 import MySettingsContainer from 'container/MySettings';
 import {
 	act,
@@ -286,6 +287,7 @@ describe('MySettings Flows', () => {
 		});
 
 		it('Should copy license key and show success toast', async () => {
+			const user = userEvent.setup();
 			const { container } = render(<MySettingsContainer />, undefined, {
 				appContextOverrides: {
 					activeLicense: {
@@ -294,7 +296,7 @@ describe('MySettings Flows', () => {
 				},
 			});
 
-			fireEvent.click(within(container).getByTestId('license-key-copy-btn'));
+			await user.click(within(container).getByTestId('license-key-copy-btn'));
 
 			await waitFor(() => {
 				expect(copyToClipboardFn).toHaveBeenCalledWith('test-license-key-12345');

@@ -1,0 +1,84 @@
+.license-section {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	.license-section-header {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+
+		.license-section-title {
+			color: #fff;
+			font-family: Inter;
+			font-size: 16px;
+			font-style: normal;
+			line-height: 24px;
+			letter-spacing: -0.08px;
+		}
+	}
+
+	.license-section-content {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+
+		.license-section-content-item {
+			padding: 16px;
+			border: 1px solid var(--Slate-500, #161922);
+			background: var(--Ink-400, #121317);
+			border-radius: 3px;
+
+			.license-section-content-item-title-action {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 8px;
+
+				color: var(--Vanilla-300, #eee);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: normal;
+				letter-spacing: -0.07px;
+
+				margin-bottom: 8px;
+			}
+
+			.license-section-content-item-description {
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: Inter;
+				font-size: 12px;
+				font-style: normal;
+				line-height: 20px;
+				letter-spacing: -0.07px;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.license-section {
+		.license-section-header {
+			.license-section-title {
+				color: var(--bg-ink-400);
+			}
+		}
+
+		.license-section-content {
+			.license-section-content-item {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+
+				.license-section-content-item-title-action {
+					color: var(--bg-ink-400);
+				}
+
+				.license-section-content-item-description {
+					color: var(--bg-ink-300);
+				}
+			}
+		}
+	}
+}

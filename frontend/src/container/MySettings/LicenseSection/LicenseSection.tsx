@@ -1,3 +1,6 @@
+import './LicenseSection.styles.scss';
+
+import { Button } from '@signozhq/button';
 import { Typography } from 'antd';
 import { useNotifications } from 'hooks/useNotifications';
 import { Copy } from 'lucide-react';
@@ -28,38 +31,29 @@ function LicenseSection(): JSX.Element | null {
 	}
 
 	return (
-		<div className="user-preference-section">
-			<div className="user-preference-section-header">
-				<div className="user-preference-section-title">License</div>
+		<div className="license-section">
+			<div className="license-section-header">
+				<div className="license-section-title">License</div>
 			</div>
 
-			<div className="user-preference-section-content">
-				<div className="user-preference-section-content-item">
-					<div className="user-preference-section-content-item-title-action">
+			<div className="license-section-content">
+				<div className="license-section-content-item">
+					<div className="license-section-content-item-title-action">
 						<span>License key</span>
 						<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 							<Typography.Text code>{getMaskedKey(activeLicense.key)}</Typography.Text>
-							<button
-								type="button"
+							<Button
+								variant="ghost"
 								aria-label="Copy license key"
 								data-testid="license-key-copy-btn"
 								onClick={(): void => handleCopyKey(activeLicense.key)}
-								style={{
-									display: 'inline-flex',
-									alignItems: 'center',
-									justifyContent: 'center',
-									background: 'transparent',
-									border: 'none',
-									padding: 0,
-									cursor: 'pointer',
-								}}
 							>
 								<Copy size={14} />
-							</button>
+							</Button>
 						</span>
 					</div>
 
-					<div className="user-preference-section-content-item-description">
+					<div className="license-section-content-item-description">
 						Your SigNoz license key.
 					</div>
 				</div>
