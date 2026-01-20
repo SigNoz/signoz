@@ -104,10 +104,9 @@ export const createDynamicVariableToWidgetsMap = (
 	// Check each widget for usage of dynamic variables
 	if (Array.isArray(widgets)) {
 		widgets.forEach((widget) => {
-			if (
-				widget.query?.builder?.queryData &&
-				widget.query?.queryType === EQueryType.QUERY_BUILDER
-			) {
+			if (widget.query?.queryType === EQueryType.QUERY_BUILDER) {
+				if (!Array.isArray(widget.query.builder.queryData)) return;
+
 				widget.query.builder.queryData.forEach((queryData: IBuilderQuery) => {
 					// Check filter items for dynamic variables
 					queryData.filters?.items?.forEach((filter: TagFilterItem) => {
@@ -138,6 +137,34 @@ export const createDynamicVariableToWidgetsMap = (
 							}
 						});
 					}
+				});
+			} else if (widget.query?.queryType === EQueryType.PROM) {
+				if (!Array.isArray(widget.query.promql)) return;
+
+				widget.query.promql.forEach((promqlQuery) => {
+					dynamicVariables.forEach((variable) => {
+						if (
+							variable.dynamicVariablesAttribute &&
+							promqlQuery.query?.includes(`$${variable.name}`) &&
+							!dynamicVariableToWidgetsMap[variable.id].includes(widget.id)
+						) {
+							dynamicVariableToWidgetsMap[variable.id].push(widget.id);
+						}
+					});
+				});
+			} else if (widget.query?.queryType === EQueryType.CLICKHOUSE) {
+				if (!Array.isArray(widget.query.clickhouse_sql)) return;
+
+				widget.query.clickhouse_sql.forEach((clickhouseQuery) => {
+					dynamicVariables.forEach((variable) => {
+						if (
+							variable.dynamicVariablesAttribute &&
+							clickhouseQuery.query?.includes(`$${variable.name}`) &&
+							!dynamicVariableToWidgetsMap[variable.id].includes(widget.id)
+						) {
+							dynamicVariableToWidgetsMap[variable.id].push(widget.id);
+						}
+					});
 				});
 			}
 		});

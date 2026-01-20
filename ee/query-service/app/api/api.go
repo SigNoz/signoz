@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
@@ -36,6 +37,7 @@ type APIHandlerOptions struct {
 	GatewayUrl                    string
 	// Querier Influx Interval
 	FluxInterval time.Duration
+	GlobalConfig global.Config
 }
 
 type APIHandler struct {
