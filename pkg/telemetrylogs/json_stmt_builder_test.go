@@ -159,6 +159,56 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 	}
 }
 
+
+func TestStatementBuilderListQueryBodyHas(t *testing.T) {
+	enableBodyJSONQuery(t)
+	defer func() {
+		disableBodyJSONQuery(t)
+	}()
+
+	statementBuilder := buildJSONTestStatementBuilder(t)
+	cases := []struct {
+		name        string
+		requestType qbtypes.RequestType
+		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		expected    qbtypes.Statement
+		expectedErr error
+	}{
+		{
+			name:        "Simple has filter",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "has(body.education[].parameters, 1.65)"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_json.`user.name`, 'String') = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "x", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			if c.expectedErr != nil {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), c.expectedErr.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, c.expected.Query, q.Query)
+				require.Equal(t, c.expected.Args, q.Args)
+				require.Equal(t, c.expected.Warnings, q.Warnings)
+			}
+		})
+	}
+}
+
+
 func TestStatementBuilderListQueryBody(t *testing.T) {
 	enableBodyJSONQuery(t)
 	defer func() {
@@ -706,8 +756,8 @@ func buildTestTelemetryMetadataStore(promotedPaths ...string) *telemetrytypestes
 }
 
 func buildJSONTestStatementBuilder(_ *testing.T, promotedPaths ...string) *logQueryStatementBuilder {
-	fm := NewFieldMapper()
 	mockMetadataStore := buildTestTelemetryMetadataStore(promotedPaths...)
+	fm := NewFieldMapper(mockMetadataStore)
 	cb := NewConditionBuilder(fm, mockMetadataStore)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)

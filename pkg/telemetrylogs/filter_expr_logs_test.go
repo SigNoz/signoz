@@ -15,7 +15,7 @@ import (
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogs(t *testing.T) {
-	fm := NewFieldMapper()
+	fm := NewFieldMapper(nil)
 	cb := NewConditionBuilder(fm, nil)
 
 	// Define a comprehensive set of field keys to support all test cases
@@ -2422,7 +2422,7 @@ func TestFilterExprLogs(t *testing.T) {
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogsConflictNegation(t *testing.T) {
-	fm := NewFieldMapper()
+	fm := NewFieldMapper(nil)
 	cb := NewConditionBuilder(fm, nil)
 
 	// Define a comprehensive set of field keys to support all test cases
