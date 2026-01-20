@@ -1,6 +1,9 @@
 
 node_modules
 
+.vscode
+!.vscode/settings.json
+
 deploy/docker/environment_tiny/common_test
 frontend/node_modules
 frontend/.pnp
