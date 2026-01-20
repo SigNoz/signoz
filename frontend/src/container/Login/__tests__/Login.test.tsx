@@ -146,7 +146,7 @@ describe('Login Component', () => {
 			).toBeInTheDocument();
 			expect(getByTestId('email')).toBeInTheDocument();
 			expect(getByTestId('initiate_login')).toBeInTheDocument();
-			expect(getByPlaceholderText('name@yourcompany.com')).toBeInTheDocument();
+			expect(getByPlaceholderText('e.g. john@signoz.io')).toBeInTheDocument();
 		});
 
 		it('shows loading state when version data is being fetched', () => {
@@ -213,19 +213,27 @@ describe('Login Component', () => {
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({ status: 'success', data: mockSingleOrgPasswordAuth }),
-					),
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
 				),
 			);
 
 			const { getByTestId } = render(<Login />);
 
-			const emailInput = getByTestId('email');
-			const nextButton = getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
@@ -253,10 +261,21 @@ describe('Login Component', () => {
 
 			const { getByTestId, getByText } = render(<Login />);
 
-			const emailInput = getByTestId('email');
-			const nextButton = getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
@@ -269,19 +288,27 @@ describe('Login Component', () => {
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({ status: 'success', data: mockSingleOrgPasswordAuth }),
-					),
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
 				),
 			);
 
 			const { getByTestId } = render(<Login />);
 
-			const emailInput = getByTestId('email');
-			const nextButton = getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
@@ -298,25 +325,33 @@ describe('Login Component', () => {
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({ status: 'success', data: mockMultiOrgMixedAuth }),
-					),
+					res(ctx.status(200), ctx.json({ data: mockMultiOrgMixedAuth })),
 				),
 			);
 
 			const { getByTestId, getByText } = render(<Login />);
 
-			const emailInput = getByTestId('email');
-			const nextButton = getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
 				expect(getByText('Organization Name')).toBeInTheDocument();
-				expect(screen.getByRole('combobox')).toBeInTheDocument();
 			});
+			await screen.findByRole('combobox');
 
 			// Click on the dropdown to reveal the options
 			await user.click(screen.getByRole('combobox'));
@@ -338,25 +373,30 @@ describe('Login Component', () => {
 
 			render(<Login />);
 
-			const emailInput = screen.getByTestId('email');
-			const nextButton = screen.getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = screen.getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = screen.getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
-			await waitFor(() => {
-				expect(screen.getByRole('combobox')).toBeInTheDocument();
-			});
+			await screen.findByRole('combobox');
 
 			// Select CALLBACK_AUTHN_ORG
 			await user.click(screen.getByRole('combobox'));
 			await user.click(screen.getByText(CALLBACK_AUTHN_ORG));
 
-			await waitFor(() => {
-				expect(
-					screen.getByRole('button', { name: /login with callback/i }),
-				).toBeInTheDocument();
-			});
+			await screen.findByRole('button', { name: /sign in with sso/i });
 		});
 	});
 
@@ -366,19 +406,27 @@ describe('Login Component', () => {
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({ status: 'success', data: mockSingleOrgPasswordAuth }),
-					),
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
 				),
 			);
 
 			const { getByTestId, getByText } = render(<Login />);
 
-			const emailInput = getByTestId('email');
-			const nextButton = getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
@@ -393,10 +441,7 @@ describe('Login Component', () => {
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({ status: 'success', data: mockSingleOrgCallbackAuth }),
-					),
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgCallbackAuth })),
 				),
 			);
 
@@ -404,10 +449,21 @@ describe('Login Component', () => {
 				initialRoute: '/login?password=Y',
 			});
 
-			const emailInput = getByTestId('email');
-			const nextButton = getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
@@ -423,19 +479,27 @@ describe('Login Component', () => {
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({ status: 'success', data: mockSingleOrgCallbackAuth }),
-					),
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgCallbackAuth })),
 				),
 			);
 
 			const { getByTestId, queryByTestId } = render(<Login />);
 
-			const emailInput = getByTestId('email');
-			const nextButton = getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
@@ -458,19 +522,27 @@ describe('Login Component', () => {
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({ status: 'success', data: mockSingleOrgCallbackAuth }),
-					),
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgCallbackAuth })),
 				),
 			);
 
 			const { getByTestId, queryByTestId } = render(<Login />);
 
-			const emailInput = getByTestId('email');
-			const nextButton = getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
@@ -494,10 +566,7 @@ describe('Login Component', () => {
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({ status: 'success', data: mockSingleOrgPasswordAuth }),
-					),
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
 				),
 				rest.post('*/api/v2/sessions/email_password', async (_, res, ctx) =>
 					res(
@@ -509,10 +578,21 @@ describe('Login Component', () => {
 
 			const { getByTestId } = render(<Login />);
 
-			const emailInput = getByTestId('email');
-			const nextButton = getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
@@ -537,10 +617,7 @@ describe('Login Component', () => {
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({ status: 'success', data: mockSingleOrgPasswordAuth }),
-					),
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
 				),
 				rest.post('*/api/v2/sessions/email_password', (_, res, ctx) =>
 					res(
@@ -558,10 +635,21 @@ describe('Login Component', () => {
 
 			const { getByTestId, getByText } = render(<Login />);
 
-			const emailInput = getByTestId('email');
-			const nextButton = getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
@@ -599,7 +687,7 @@ describe('Login Component', () => {
 			});
 
 			await waitFor(() => {
-				expect(getByText('AUTH_ERROR')).toBeInTheDocument();
+				expect(getByText('Authentication failed')).toBeInTheDocument();
 			});
 		});
 
@@ -611,7 +699,7 @@ describe('Login Component', () => {
 
 			await waitFor(() => {
 				expect(queryByText('invalid-json')).not.toBeInTheDocument();
-				expect(getByText('AUTH_ERROR')).toBeInTheDocument();
+				expect(getByText('Authentication failed')).toBeInTheDocument();
 			});
 		});
 	});
@@ -622,19 +710,27 @@ describe('Login Component', () => {
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({ status: 'success', data: mockOrgWithWarning }),
-					),
+					res(ctx.status(200), ctx.json({ data: mockOrgWithWarning })),
 				),
 			);
 
 			render(<Login />);
 
-			const emailInput = screen.getByTestId('email');
-			const nextButton = screen.getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = screen.getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = screen.getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
@@ -666,24 +762,30 @@ describe('Login Component', () => {
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({ status: 'success', data: mockMultiOrgWithWarning }),
-					),
+					res(ctx.status(200), ctx.json({ data: mockMultiOrgWithWarning })),
 				),
 			);
 
 			const { getByTestId } = render(<Login />);
 
-			const emailInput = getByTestId('email');
-			const nextButton = getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
-			await waitFor(() => {
-				expect(screen.getByRole('combobox')).toBeInTheDocument();
-			});
+			await screen.findByRole('combobox');
 
 			// Select the organization with a warning
 			await user.click(screen.getByRole('combobox'));
@@ -713,10 +815,21 @@ describe('Login Component', () => {
 
 			render(<Login />);
 
-			const emailInput = screen.getByTestId('email');
-			const nextButton = screen.getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = screen.getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = screen.getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			// Button should be disabled during API call
@@ -737,14 +850,25 @@ describe('Login Component', () => {
 			// Initially shows "Next" button
 			expect(screen.getByTestId('initiate_login')).toBeInTheDocument();
 
-			const emailInput = screen.getByTestId('email');
-			const nextButton = screen.getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = screen.getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = screen.getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
-				// Should show "Login" button for password auth
+				// Should show "Sign in with Password" button for password auth
 				expect(screen.getByTestId('password_authn_submit')).toBeInTheDocument();
 				expect(screen.queryByTestId('initiate_login')).not.toBeInTheDocument();
 			});
@@ -768,10 +892,21 @@ describe('Login Component', () => {
 
 			render(<Login />);
 
-			const emailInput = screen.getByTestId('email');
-			const nextButton = screen.getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = screen.getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = screen.getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
@@ -810,10 +945,21 @@ describe('Login Component', () => {
 
 			render(<Login />);
 
-			const emailInput = screen.getByTestId('email');
-			const nextButton = screen.getByTestId('initiate_login');
+			// Wait for version API to complete (email input becomes enabled)
+			const emailInput = await waitFor(() => {
+				const input = screen.getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
 
 			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
+
+			const nextButton = await waitFor(() => {
+				const button = screen.getByTestId('initiate_login');
+				expect(button).not.toBeDisabled();
+				return button;
+			});
+
 			await user.click(nextButton);
 
 			await waitFor(() => {
